@@ -1,0 +1,28 @@
+{
+  "schema": {
+    "title": "Method Name Filter Configuration",
+    "type": "object",
+    "properties": {
+      "methodNames": {
+        "title": "Method names",
+        "type": "array",
+        "minItems" : 1,
+        "items": {
+          "type": "object",
+          "title": "Method name",
+          "properties": {
+            "name": {
+              "title": "Method Name",
+              "type": "string"
+            }
+          }
+        },
+        "uniqueItems": true
+      }
+    },
+    "required": ["methodNames"]
+  },
+  "form": [
+    "methodNames"
+  ]
+}

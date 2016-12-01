@@ -1,0 +1,16 @@
+{
+  "host": "smtp.ukr.net",
+  "port": 465,
+  "username": "thingsboard@ukr.net",
+  "password": "thingsboard123",
+  "otherProperties": [
+    {
+      "key":"mailsmtp.auth",
+      "value":"true"
+    },
+    {
+      "key":"mail.smtp.starttls.enable",
+      "value":"true"
+    }
+  ]
+}

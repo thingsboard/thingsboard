@@ -1,0 +1,37 @@
+{
+  "schema": {
+    "title": "Device Messaging configuration",
+    "type": "object",
+    "properties": {
+      "maxDeviceCountPerCustomer": {
+        "title": "Maximum amount of devices per customer",
+        "type": "integer",
+        "default": 1024,
+        "minimum": 0,
+        "maximum": 1024
+      },
+      "defaultTimeout": {
+        "title": "Default request timeout",
+        "type": "integer",
+        "default": 20000,
+        "minimum": 0
+      },
+      "maxTimeout": {
+        "title": "Maximum request timeout",
+        "type": "integer",
+        "default": 60000,
+        "minimum": 0
+      }
+    },
+    "required": [
+      "maxDeviceCountPerCustomer",
+      "defaultTimeout",
+      "maxTimeout"
+    ]
+  },
+  "form": [
+    "maxDeviceCountPerCustomer",
+    "defaultTimeout",
+    "maxTimeout"
+  ]
+}

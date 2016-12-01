@@ -1,0 +1,30 @@
+{
+  "schema": {
+    "title": "Send Mail Action Configuration",
+    "type": "object",
+    "properties": {
+      "alarmIdTemplate": {
+        "title": "Alarm Id template",
+        "type": "string",
+        "default": "TODO"
+      },
+      "alarmBodyTemplate": {
+        "title": "Alarm body template",
+        "type": "string",
+        "default": "TODO"
+      }
+    },
+    "required": [
+      "alarmIdTemplate",
+      "alarmBodyTemplate"
+    ]
+  },
+  "form": [
+    "alarmIdTemplate",
+    {
+      "key": "alarmBodyTemplate",
+      "type": "textarea",
+      "rows": 2
+    }
+  ]
+}

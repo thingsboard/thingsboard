@@ -1,0 +1,16 @@
+{
+  "schema": {
+    "title": "Time Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "timeFormat": {
+        "title": "Time format",
+        "type": "string",
+        "default": "yyyy MM dd HH:mm:ss.SSS"
+      }
+    }
+  },
+  "form": [
+    "timeFormat"
+  ]
+}

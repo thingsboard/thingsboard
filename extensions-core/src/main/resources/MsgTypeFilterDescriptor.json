@@ -1,0 +1,40 @@
+{
+  "schema": {
+    "title": "Message Type Filter Configuration",
+    "type": "object",
+    "properties": {
+      "messageTypes": {
+        "title": "Message types",
+        "type": "array",
+        "minItems" : 1,
+        "items": [
+          {
+            "value": "GET_ATTRIBUTES",
+            "label": "Get attributes"
+          },
+          {
+            "value": "POST_ATTRIBUTES",
+            "label": "Post attributes"
+          },
+          {
+            "value": "POST_TELEMETRY",
+            "label": "Post telemetry"
+          },
+          {
+            "value": "RPC_REQUEST",
+            "label": "RPC Request"
+          }
+        ],
+        "uniqueItems": true
+      }
+    },
+    "required": ["messageTypes"]
+  },
+  "form": [
+    {
+      "key": "messageTypes",
+      "type": "rc-select",
+      "multiple": true
+    }
+  ]
+}

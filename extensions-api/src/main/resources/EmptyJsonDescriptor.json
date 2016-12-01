@@ -1,0 +1,12 @@
+{
+  "schema": {
+    "description": "Empty Schema",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+    }
+  },
+  "form": [
+    "*"
+  ]
+}

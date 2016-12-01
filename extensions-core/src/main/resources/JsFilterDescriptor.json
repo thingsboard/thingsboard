@@ -1,0 +1,21 @@
+{
+  "schema": {
+    "title": "Filter Configuration",
+    "type": "object",
+    "properties": {
+      "filter": {
+        "title": "Filter",
+        "type": "string"
+      }
+    },
+    "required": [
+      "filter"
+    ]
+  },
+  "form": [
+    {
+      "key": "filter",
+      "type": "javascript"
+    }
+  ]
+}

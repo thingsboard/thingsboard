@@ -1,0 +1,61 @@
+{
+  "schema": {
+    "title": "Mail Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "host": {
+        "title": "Mail server host",
+        "type": "string"
+      },
+      "port": {
+        "title": "Mail server port",
+        "type": "integer",
+        "default": 25,
+        "minimum": 0,
+        "maximum": 65536
+      },
+      "username": {
+        "title": "Username",
+        "type": "string"
+      },
+      "password": {
+        "title": "Password",
+        "type": "string"
+      },
+      "otherProperties": {
+        "title": "Other mail properties",
+        "type": "array",
+        "items": {
+          "title": "Mail property",
+          "type": "object",
+          "properties": {
+            "key": {
+              "title": "Key",
+              "type": "string"
+            },
+            "value": {
+              "title": "Value",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "required": [
+      "host",
+      "port",
+      "username",
+      "password"
+    ]
+  },
+  "form": [
+    "host",
+    "port",
+    "username",
+    {
+      "key": "password",
+      "type": "password"
+    },
+    "otherProperties"
+  ]
+}

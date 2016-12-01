@@ -1,0 +1,18 @@
+{
+  "schema": {
+    "title": "RPC Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "defaultTimeout": {
+        "title": "Default timeout",
+        "type": "number"
+      }
+    },
+    "required": [
+      "defaultTimeout"
+    ]
+  },
+  "form": [
+    "*"
+  ]
+}
