@@ -14,10 +14,10 @@
 # limitations under the License.
 #
 
-FROM java:8-jre
+FROM openjdk:8-jre
 
-ADD run_web_app.sh /root/run_web_app.sh
+ADD run_thingsboard.sh /root/run_thingsboard.sh
 
-RUN chmod +x /root/run_web_app.sh
+RUN chmod +x /root/run_thingsboard.sh
 
 WORKDIR /root

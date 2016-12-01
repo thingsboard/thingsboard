@@ -26,18 +26,18 @@ services:
     links:
       - cassandra:db
       - zookeeper:zk
-      - db-schema:db-schema
+      - thingsboard-db-schema:thingsboard-db-schema
     volumes:
       - "../application/target/thingsboard.deb:/root/thingsboard.deb"
     env_file:
       - thingsboard.env
-    entrypoint: ./run_web_app.sh
-  db-schema:
-    build: db-schema 
+    entrypoint: ./run_thingsboard.sh
+  thingsboard-db-schema:
+    build: thingsboard-db-schema
     links:
       - cassandra:db
     env_file:
-      - db-schema.env
+      - thingsboard-db-schema.env
     volumes:
       - "../dao/src/main/resources/schema.cql:/root/schema.cql"
       - "../dao/src/main/resources/demo-data.cql:/root/demo-data.cql"

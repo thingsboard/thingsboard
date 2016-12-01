@@ -21,16 +21,24 @@ dpkg -i /root/thingsboard.deb
 reachable=0
 while [ $reachable -eq 0 ];
 do
-  echo "db-schema container is still in progress. waiting until it completed..."
+  echo "thingsboard-db-schema container is still in progress. waiting until it completed..."
   sleep 3
-  ping -q -c 1 db-schema > /dev/null 2>&1
+  ping -q -c 1 thingsboard-db-schema > /dev/null 2>&1
   if [ "$?" -ne 0 ];
   then
-    echo "db-schema container completed!"
+    echo "thingsboard-db-schema container completed!"
     reachable=1
   fi
 done
 
-echo "Starting 'Thingsboard' service..."
-thingsboard start
+# Copying env variables into conf files
+printenv | while read x; do echo export $x; done >> /usr/share/thingsboard/conf/thingsboard.conf
 
+cat /usr/share/thingsboard/conf/thingsboard.conf
+
+echo "Starting 'Thingsboard' service..."
+service thingsboard start
+
+# Wait until log file is created
+sleep 3
+tail -f /var/log/thingsboard/thingsboard.log

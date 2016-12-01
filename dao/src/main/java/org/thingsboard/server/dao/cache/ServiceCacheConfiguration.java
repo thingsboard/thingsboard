@@ -15,10 +15,7 @@
  */
 package org.thingsboard.server.dao.cache;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.DiscoveryStrategyConfig;
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.config.MaxSizeConfig;
+import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.GroupProperty;
@@ -41,10 +38,13 @@ public class ServiceCacheConfiguration {
 
     private static final String HAZELCAST_CLUSTER_NAME = "hazelcast";
 
-    @Value("${cache.device_credentials.max_size}")
-    private Integer deviceCredentialsCacheMaxSize;
+    @Value("${cache.device_credentials.max_size.size}")
+    private Integer cacheDeviceCredentialsMaxSizeSize;
+    @Value("${cache.device_credentials.max_size.policy}")
+    private String cacheDeviceCredentialsMaxSizePolicy;
     @Value("${cache.device_credentials.time_to_live}")
-    private Integer deviceCredentialsCacheTTL;
+    private Integer cacheDeviceCredentialsTTL;
+
 
     @Value("${zk.enabled}")
     private boolean zkEnabled;
@@ -69,8 +69,13 @@ public class ServiceCacheConfiguration {
         }
 
         MapConfig deviceCredentialsCacheConfig = new MapConfig(CacheConstants.DEVICE_CREDENTIALS_CACHE);
-        deviceCredentialsCacheConfig.setTimeToLiveSeconds(deviceCredentialsCacheTTL);
-        deviceCredentialsCacheConfig.setMaxSizeConfig(new MaxSizeConfig(deviceCredentialsCacheMaxSize, MaxSizeConfig.MaxSizePolicy.PER_NODE));
+        deviceCredentialsCacheConfig.setTimeToLiveSeconds(cacheDeviceCredentialsTTL);
+        deviceCredentialsCacheConfig.setEvictionPolicy(EvictionPolicy.LRU);
+        deviceCredentialsCacheConfig.setMaxSizeConfig(
+                new MaxSizeConfig(
+                        cacheDeviceCredentialsMaxSizeSize,
+                        MaxSizeConfig.MaxSizePolicy.valueOf(cacheDeviceCredentialsMaxSizePolicy))
+        );
         config.addMapConfig(deviceCredentialsCacheConfig);
 
         return Hazelcast.newHazelcastInstance(config);
