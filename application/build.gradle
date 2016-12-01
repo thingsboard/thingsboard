@@ -112,7 +112,7 @@ buildDeb {
 
     archiveName = "${pkgName}.deb"
 
-    requires("openjdk-8-jre").or("java8-runtime").or("oracle-java8-installer")
+    requires("openjdk-8-jre").or("java8-runtime").or("oracle-java8-installer").or("openjdk-8-jre-headless")
 
     configurationFile("${pkgInstallFolder}/conf/${pkgName}.conf")
     configurationFile("${pkgInstallFolder}/conf/${pkgName}.yml")
