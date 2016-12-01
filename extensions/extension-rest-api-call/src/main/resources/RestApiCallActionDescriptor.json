@@ -1,0 +1,63 @@
+{
+  "schema": {
+    "title": "REST API Call Action Configuration",
+    "type": "object",
+    "properties": {
+      "sync": {
+        "title": "Requires delivery confirmation",
+        "type": "boolean"
+      },
+      "template": {
+        "title": "Body Template",
+        "type": "string"
+      },
+      "actionPath": {
+        "title": "Action Path",
+        "type": "string",
+        "default": "/"
+      },
+      "requestMethod": {
+        "title": "Request method",
+        "type": "array",
+        "minItems" : 1,
+        "items": [
+          {
+            "value": "POST",
+            "label": "POST"
+          },
+          {
+            "value": "PUT",
+            "label": "PUT"
+          }
+        ],
+        "uniqueItems": true
+      },
+      "expectedResultCode": {
+        "title": "Expected Result Code",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "sync",
+      "template",
+      "actionPath",
+      "expectedResultCode",
+      "requestMethod"
+    ]
+  },
+  "form": [
+    "sync",
+    {
+      "key": "template",
+      "type": "textarea",
+      "rows": 5
+    },
+    "actionPath",
+    {
+      "key": "requestMethod",
+      "type": "rc-select",
+      "multiple": false
+    },
+    "expectedResultCode"
+  ]
+}

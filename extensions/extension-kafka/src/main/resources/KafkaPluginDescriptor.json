@@ -1,0 +1,80 @@
+{
+  "schema": {
+    "title": "Kafka Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "bootstrapServers": {
+        "title": "Bootstrap Servers",
+        "type": "string",
+        "default": "localhost:9092"
+      },
+      "retries": {
+        "title": "Automatically Retry Times If Fails",
+        "type": "integer",
+        "default": 0
+      },
+      "batchSize": {
+        "title": "Producer Batch Size On Client",
+        "type": "integer",
+        "default": 16384
+      },
+      "linger": {
+        "title": "Time To Buffer Locally Before Sending To Kafka Broker (in ms)",
+        "type": "integer",
+        "default": 0
+      },
+      "bufferMemory": {
+        "title": "Buffer Max Size On Client",
+        "type": "integer",
+        "default": 33554432
+      },
+      "acks": {
+        "title": "Minimum Number Of Replicas That Must Acknowledge A Write (-1 for 'all')",
+        "type": "integer",
+        "default": -1
+      },
+      "keySerializer": {
+        "title": "Key Serializer",
+        "type": "string",
+        "default": "org.apache.kafka.common.serialization.StringSerializer"
+      },
+      "valueSerializer": {
+        "title": "Value Serializer",
+        "type": "string",
+        "default": "org.apache.kafka.common.serialization.StringSerializer"
+      },
+      "otherProperties": {
+        "title": "Other Kafka properties",
+        "type": "array",
+        "items": {
+          "title": "Kafka property",
+          "type": "object",
+          "properties": {
+            "key": {
+              "title": "Key",
+              "type": "string"
+            },
+            "value": {
+              "title": "Value",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "required": [
+      "bootstrapServers"
+    ]
+  },
+  "form": [
+    "bootstrapServers",
+    "retries",
+    "batchSize",
+    "linger",
+    "bufferMemory",
+    "acks",
+    "keySerializer",
+    "valueSerializer",
+    "otherProperties"
+  ]
+}

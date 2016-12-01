@@ -1,0 +1,79 @@
+{
+  "schema": {
+    "title": "RabbitMQ Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "host": {
+        "title": "Host",
+        "type": "string"
+      },
+      "port": {
+        "title": "Port",
+        "type": "integer",
+        "default": 5672,
+        "minimum": 0,
+        "maximum": 65536
+      },
+      "virtualHost": {
+        "title": "Virtual Host",
+        "type": "string"
+      },
+      "userName": {
+        "title": "Username",
+        "type": "string"
+      },
+      "password": {
+        "title": "Password",
+        "type": "string"
+      },
+      "automaticRecoveryEnabled": {
+        "title": "Automatic Recovery Enabled",
+        "type": "boolean"
+      },
+      "connectionTimeout": {
+        "title": "Connection Timeout",
+        "type": "integer"
+      },
+      "handshakeTimeout": {
+        "title": "Handshake Timeout",
+        "type": "integer"
+      },
+      "clientProperties": {
+        "title": "Client properties",
+        "type": "array",
+        "items": {
+          "title": "Client property",
+          "type": "object",
+          "properties": {
+            "key": {
+              "title": "Key",
+              "type": "string"
+            },
+            "value": {
+              "title": "Value",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "required": [
+      "host",
+      "port"
+    ]
+  },
+  "form": [
+    "host",
+    "port",
+    "virtualHost",
+    "userName",
+    {
+      "key": "password",
+      "type": "password"
+    },
+    "automaticRecoveryEnabled",
+    "connectionTimeout",
+    "handshakeTimeout",
+    "clientProperties"
+  ]
+}

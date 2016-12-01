@@ -1,0 +1,34 @@
+{
+  "schema": {
+    "title": "Kafka Action Configuration",
+    "type": "object",
+    "properties": {
+      "sync": {
+        "title": "Requires delivery confirmation",
+        "type": "boolean"
+      },
+      "topic": {
+        "title": "Topic Name",
+        "type": "string"
+      },
+      "template": {
+        "title": "Body Template",
+        "type": "string"
+      }
+    },
+    "required": [
+      "sync",
+      "topic",
+      "template"
+    ]
+  },
+  "form": [
+    "sync",
+    "topic",
+    {
+      "key": "template",
+      "type": "textarea",
+      "rows": 5
+    }
+  ]
+}
