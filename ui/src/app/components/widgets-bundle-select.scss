@@ -1,0 +1,80 @@
+/**
+ * Copyright © 2016 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../scss/mixins";
+
+tb-widgets-bundle-select {
+  md-select {
+    margin: 0;
+    padding: 5px 20px;
+  }
+  .tb-bundle-item {
+    height: 24px;
+    line-height: 24px;
+  }
+}
+
+.tb-widgets-bundle-select {
+  .tb-bundle-item {
+    height: 48px;
+    line-height: 48px;
+  }
+}
+
+tb-widgets-bundle-select, .tb-widgets-bundle-select {
+  .md-text {
+    width: 100%;
+  }
+  .tb-bundle-item {
+    display: block;
+    span {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .tb-bundle-system {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      float: right;
+    }
+  }
+  md-option {
+    height: auto !important;
+    white-space: normal !important;
+  }
+}
+
+md-toolbar {
+  tb-widgets-bundle-select {
+    md-select {
+      background: rgba(255,255,255,0.2);
+      .md-select-value {
+        color: #fff;
+        font-size: 1.2rem;
+        span:first-child:after {
+            color: #fff;
+        }
+      }
+      .md-select-value.md-select-placeholder {
+        color: #fff;
+        opacity: 0.8;
+      }
+    }
+    md-select.ng-invalid.ng-touched {
+      .md-select-value {
+        color: #fff !important;
+      }
+    }
+  }
+}

@@ -1,0 +1,163 @@
+<!--
+
+    Copyright © 2016 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-tabs ng-class="{'tb-headless': !displayAdvanced()}" id="tabs" md-border-bottom flex class="tb-absolute-fill"
+         md-selected="selectedTab">
+    <md-tab label="{{ 'widget-config.settings' | translate }}">
+        <div id="settings-tab">
+            <md-content class="md-padding" layout="column">
+                <md-input-container class="md-block">
+                    <label translate>widget-config.title</label>
+                    <input name="title" ng-model="title">
+                </md-input-container>
+                <span translate>widget-config.general-settings</span>
+                <div layout="row" layout-align="start center">
+                    <div layout="row" layout-padding>
+                        <md-checkbox flex aria-label="{{ 'widget-config.display-title' | translate }}"
+                                     ng-model="showTitle">{{ 'widget-config.display-title' | translate }}
+                        </md-checkbox>
+                    </div>
+                    <div flex
+                         md-color-picker
+                         ng-model="backgroundColor"
+                         label="{{ 'widget-config.background-color' | translate }}"
+                         icon="format_color_fill"
+                         default="#fff"
+                         md-color-clear-button="false"
+                         open-on-input="true"
+                         md-color-generic-palette="false"
+                         md-color-history="false"
+                    ></div>
+                    <div flex
+                         md-color-picker
+                         ng-model="color"
+                         label="{{ 'widget-config.text-color' | translate }}"
+                         icon="format_color_fill"
+                         default="rgba(0, 0, 0, 0.87)"
+                         md-color-clear-button="false"
+                         open-on-input="true"
+                         md-color-generic-palette="false"
+                         md-color-history="false"
+                    ></div>
+                    <md-input-container flex>
+                        <label translate>widget-config.padding</label>
+                        <input ng-model="padding">
+                    </md-input-container>
+                </div>
+                <div ng-show="widgetType === types.widgetType.timeseries.value" layout="row"
+                     layout-align="center center">
+                    <span translate style="padding-right: 8px;">widget-config.timewindow</span>
+                    <tb-timewindow as-button="true" flex ng-model="timewindow"></tb-timewindow>
+                </div>
+                <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
+                             ng-show="widgetType !== types.widgetType.rpc.value">
+                    <v-pane id="datasources-pane" expanded="forceExpandDatasources">
+                        <v-pane-header>
+                            {{ 'widget-config.datasources' | translate }}
+                        </v-pane-header>
+                        <v-pane-content>
+                            <div ng-if="datasources.length === 0">
+                                <span translate layout-align="center center"
+                                      class="tb-prompt">datasource.add-datasource-prompt</span>
+                            </div>
+                            <div ng-if="datasources.length > 0">
+                                <div flex layout="row" layout-align="start center">
+                                    <span flex="5"></span>
+                                    <div flex layout="row" layout-align="start center"
+                                         style="padding: 0 0 0 10px; margin: 5px;">
+                                        <span translate style="min-width: 110px;">widget-config.datasource-type</span>
+                                        <span translate flex
+                                              style="padding-left: 10px;">widget-config.datasource-parameters</span>
+                                        <span style="min-width: 40px;"></span>
+                                    </div>
+                                </div>
+                                <div style="max-height: 300px; overflow: auto; padding-bottom: 15px;">
+                                    <div flex layout="row" layout-align="start center"
+                                         ng-repeat="datasource in datasources">
+                                        <span flex="5">{{$index + 1}}.</span>
+                                        <div class="md-whiteframe-4dp" flex layout="row" layout-align="start center"
+                                             style="padding: 0 0 0 10px; margin: 5px;">
+                                            <tb-datasource flex ng-model="datasource.value"
+                                                           widget-type="widgetType"
+                                                           device-aliases="deviceAliases"
+                                                           functions-only="functionsOnly"
+                                                           datakey-settings-schema="datakeySettingsSchema"
+                                                           generate-data-key="generateDataKey(chip,type)"
+                                                           fetch-device-keys="fetchDeviceKeys({deviceAliasId: deviceAliasId, query: query, type: type})"
+                                                           on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})"></tb-datasource>
+                                            <md-button ng-disabled="loading" class="md-icon-button md-primary"
+                                                       style="min-width: 40px;"
+                                                       ng-click="removeDatasource($event, datasource)"
+                                                       aria-label="{{ 'action.remove' | translate }}">
+                                                <md-tooltip md-direction="top">
+                                                    {{ 'widget-config.remove-datasource' | translate }}
+                                                </md-tooltip>
+                                                <md-icon aria-label="{{ 'action.delete' | translate }}"
+                                                         class="material-icons">
+                                                    close
+                                                </md-icon>
+                                            </md-button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div flex layout="row" layout-align="start center">
+                                <md-button ng-disabled="loading" class="md-primary md-raised"
+                                           ng-click="addDatasource($event)" aria-label="{{ 'action.add' | translate }}">
+                                    <md-tooltip md-direction="top">
+                                        {{ 'widget-config.add-datasource' | translate }}
+                                    </md-tooltip>
+                                    <md-icon class="material-icons">add</md-icon>
+                                    <span translate>action.add</span>
+                                </md-button>
+                            </div>
+                        </v-pane-content>
+                    </v-pane>
+                </v-accordion>
+                <v-accordion id="target-devices-accordion" control="targetDevicesAccordion" class="vAccordion--default"
+                             ng-show="widgetType === types.widgetType.rpc.value">
+                    <v-pane id="target-devices-pane" expanded="true">
+                        <v-pane-header>
+                            {{ 'widget-config.target-device' | translate }}
+                        </v-pane-header>
+                        <v-pane-content style="padding: 0 5px;">
+                            <tb-device-alias-select flex
+                                                    tb-required="widgetType === types.widgetType.rpc.value && !widgetEditMode"
+                                                    device-aliases="deviceAliases"
+                                                    ng-model="targetDeviceAlias.value"
+                                                    on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})">
+                            </tb-device-alias-select>
+                        </v-pane-content>
+                    </v-pane>
+                </v-accordion>
+            </md-content>
+        </div>
+    </md-tab>
+    <md-tab ng-if="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
+        <md-content class="md-padding" layout="column">
+            <ng-form name="ngform"
+                     layout="column"
+                     layout-padding>
+                <tb-json-form schema="currentSettingsSchema"
+                              form="currentSettingsForm"
+                              model="currentSettings"
+                              form-control="ngform">
+                </tb-json-form>
+            </ng-form>
+        </md-content>
+    </md-tab>
+</md-tabs>

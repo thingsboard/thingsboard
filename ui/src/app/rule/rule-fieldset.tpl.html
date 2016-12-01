@@ -1,0 +1,200 @@
+<!--
+
+    Copyright © 2016 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-button ng-click="onActivateRule({event: $event})" ng-show="!isEdit && !isReadOnly && rule.state === 'SUSPENDED'" class="md-raised md-primary">{{ 'rule.activate' | translate }}</md-button>
+<md-button ng-click="onSuspendRule({event: $event})" ng-show="!isEdit && !isReadOnly && rule.state === 'ACTIVE'" class="md-raised md-primary">{{ 'rule.suspend' | translate }}</md-button>
+<md-button ng-click="onDeleteRule({event: $event})" ng-show="!isEdit && !isReadOnly" class="md-raised md-primary">{{ 'rule.delete' | translate }}</md-button>
+
+<md-content class="md-padding tb-rule" layout="column">
+    <fieldset ng-disabled="loading || !isEdit || isReadOnly">
+        <md-input-container class="md-block">
+            <label translate>rule.name</label>
+            <input required name="name" ng-model="rule.name">
+            <div ng-messages="theForm.name.$error">
+                <div translate ng-message="required">rule.name-required</div>
+            </div>
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>rule.description</label>
+            <textarea ng-model="rule.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
+    </fieldset>
+    <v-accordion id="filters-accordion" class="vAccordion--default"
+                 ng-class="{'tb-readonly-label' : (!isEdit || isReadOnly)}">
+            <v-pane id="filters-pane" expanded="true">
+                <v-pane-header>
+                    {{ 'rule.filters' | translate }}
+                </v-pane-header>
+                <v-pane-content>
+                    <div ng-if="rule.filters.length === 0">
+                                <span translate layout-align="center center"
+                                      class="tb-prompt">rule.add-filter-prompt</span>
+                    </div>
+                    <div ng-if="rule.filters.length > 0">
+                        <div flex layout="row" layout-align="start center">
+                            <span  ng-if="isEdit && !isReadOnly" style="min-width: 40px; margin: 0 6px;"></br></span>
+                            <span flex="5"></span>
+                            <div flex layout="row" layout-align="start center"
+                                 style="padding: 0 0 0 10px; margin: 5px;">
+                                <span translate flex="50">rule.filter-name</span>
+                                <span translate flex="50">rule.filter-type</span>
+                                <span style="min-width: 80px; margin: 0 12px;"></br></span>
+                            </div>
+                        </div>
+                        <div class="tb-filters" style="max-height: 300px; overflow: auto; padding-bottom: 15px;">
+                            <ul dnd-list="filters" dnd-disable-if="!isEdit || isReadOnly">
+                                <li ng-repeat="filter in filters"
+                                    dnd-draggable="filter"
+                                    dnd-moved="filters.splice($index, 1)"
+                                    dnd-disable-if="!isEdit || isReadOnly"
+                                    dnd-effect-allowed="move">
+                                        <div flex layout="row" layout-align="start center">
+                                            <md-button ng-if="isEdit && !isReadOnly" dnd-handle class="md-icon-button md-primary handle"
+                                                       style="min-width: 40px;"
+                                                       aria-label="{{ 'action.drag' | translate }}">
+                                                <md-tooltip md-direction="top">
+                                                    {{ 'action.drag' | translate }}
+                                                </md-tooltip>
+                                                <md-icon aria-label="{{ 'action.drag' | translate }}"
+                                                         class="material-icons">
+                                                    drag_handle
+                                                </md-icon>
+                                            </md-button>
+                                            <dnd-nodrag flex layout="row" layout-align="start center">
+                                                <span flex="5">{{$index + 1}}.</span>
+                                                <tb-component flex
+                                                              component="filter.value"
+                                                              type="types.componentType.filter"
+                                                              title="rule.filter"
+                                                              read-only="!isEdit || isReadOnly"
+                                                              on-remove-component="removeFilter(event, filter)">
+                                                </tb-component>
+                                            </dnd-nodrag>
+                                        </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div ng-if="isEdit && !isReadOnly" flex layout="row" layout-align="start center">
+                        <md-button ng-disabled="loading" class="md-primary md-raised"
+                                   ng-click="addFilter($event)" aria-label="{{ 'action.add' | translate }}">
+                            <md-tooltip md-direction="top">
+                                {{ 'rule.add-filter' | translate }}
+                            </md-tooltip>
+                            <md-icon class="material-icons">add</md-icon>
+                            <span translate>action.add</span>
+                        </md-button>
+                    </div>
+                </v-pane-content>
+            </v-pane>
+        </v-accordion>
+        <v-accordion id="processor-accordion" class="vAccordion--default"
+                     ng-class="{'tb-readonly-label' : (!isEdit || isReadOnly)}">
+            <v-pane id="processor-pane" expanded="true">
+                <v-pane-header>
+                    {{ 'rule.processor' | translate }}
+                </v-pane-header>
+                <v-pane-content>
+                    <div ng-if="rule.processor && rule.processor != null">
+                        <div flex layout="row" layout-align="start center"
+                             style="padding: 0 0 0 10px; margin: 5px;">
+                            <span translate flex="50">rule.processor-name</span>
+                            <span translate flex="50">rule.processor-type</span>
+                            <span style="min-width: 80px; margin: 0 12px;"></br></span>
+                        </div>
+                        <div flex layout="row" layout-align="start center" style="padding-bottom: 15px;">
+                            <tb-component flex
+                                          component="rule.processor"
+                                          type="types.componentType.processor"
+                                          title="rule.processor"
+                                          read-only="!isEdit || isReadOnly"
+                                          on-remove-component="removeProcessor(event)">
+                            </tb-component>
+                        </div>
+                    </div>
+                    <div ng-if="!rule.processor || rule.processor == null">
+                                    <span ng-if="!isEdit || isReadOnly" translate layout-align="center center"
+                                          class="tb-prompt">rule.no-processor-configured</span>
+                        <div ng-if="isEdit && !isReadOnly" flex layout="row" layout-align="start center">
+                            <md-button ng-disabled="loading" class="md-primary md-raised"
+                                       ng-click="addProcessor($event)" aria-label="{{ 'action.create' | translate }}">
+                                <md-tooltip md-direction="top">
+                                    {{ 'rule.create-processor' | translate }}
+                                </md-tooltip>
+                                <md-icon class="material-icons">add</md-icon>
+                                <span translate>action.create</span>
+                            </md-button>
+                        </div>
+                    </div>
+                </v-pane-content>
+            </v-pane>
+        </v-accordion>
+        <fieldset ng-disabled="loading || !isEdit || isReadOnly">
+            <md-input-container ng-if="!isEdit || isReadOnly" flex class="md-block">
+                <label translate>plugin.plugin</label>
+                <input required name="name" ng-model="plugin.name">
+            </md-input-container>
+            <tb-plugin-select ng-show="isEdit && !isReadOnly" flex
+                      ng-model="plugin"
+                      tb-required="true"
+                      the-form="theForm"
+                      plugins-scope="action">
+            </tb-plugin-select>
+        </fieldset>
+        <v-accordion ng-if="plugin != null" id="plugin-action-accordion" class="vAccordion--default"
+                     ng-class="{'tb-readonly-label' : (!isEdit || isReadOnly)}">
+            <v-pane id="plugin-action-pane" expanded="true">
+                <v-pane-header>
+                    {{ 'rule.plugin-action' | translate }}
+                </v-pane-header>
+                <v-pane-content>
+                    <div ng-if="rule.action && rule.action != null">
+                        <div flex layout="row" layout-align="start center"
+                             style="padding: 0 0 0 10px; margin: 5px;">
+                            <span translate flex="50">rule.action-name</span>
+                            <span translate flex="50">rule.action-type</span>
+                            <span style="min-width: 80px; margin: 0 12px;"></br></span>
+                        </div>
+                        <div flex layout="row" layout-align="start center" style="padding-bottom: 15px;">
+                            <tb-component flex
+                                          component="rule.action"
+                                          type="types.componentType.action"
+                                          plugin-clazz="plugin.clazz"
+                                          title="rule.plugin-action"
+                                          read-only="!isEdit || isReadOnly"
+                                          on-remove-component="removeAction(event)">
+                            </tb-component>
+                        </div>
+                    </div>
+                    <div ng-if="!rule.action || rule.action == null">
+                        <span translate layout-align="center center"
+                              class="tb-prompt">rule.create-action-prompt</span>
+                        <div ng-if="isEdit && !isReadOnly" flex layout="row" layout-align="start center">
+                            <md-button ng-disabled="loading" class="md-primary md-raised"
+                                       ng-click="addAction($event)" aria-label="{{ 'action.create' | translate }}">
+                                <md-tooltip md-direction="top">
+                                    {{ 'rule.create-action' | translate }}
+                                </md-tooltip>
+                                <md-icon class="material-icons">add</md-icon>
+                                <span translate>action.create</span>
+                            </md-button>
+                        </div>
+                    </div>
+                </v-pane-content>
+            </v-pane>
+        </v-accordion>
+</md-content>

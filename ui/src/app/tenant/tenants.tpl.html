@@ -1,0 +1,27 @@
+<!--
+
+    Copyright © 2016 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<tb-grid grid-configuration="vm.tenantGridConfig">
+	<details-buttons tb-help="'tenants'" help-container-id="help-container">
+		<div id="help-container"></div>
+	</details-buttons>
+	<tb-tenant tenant="vm.grid.operatingItem()"
+			   is-edit="vm.grid.detailsConfig.isDetailsEditMode"
+			   the-form="vm.grid.detailsForm"
+			   on-manage-users="vm.openTenantUsers(event, vm.grid.detailsConfig.currentItem)"
+			   on-delete-tenant="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-tenant>
+</tb-grid>

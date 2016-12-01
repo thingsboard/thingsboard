@@ -1,0 +1,402 @@
+/**
+ * Copyright © 2016 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "~compass-sass-mixins/lib/compass";
+@import "constants";
+@import "animations";
+
+@font-face {
+  font-family: 'Segment7Standard';
+  src: url('../font/Segment7Standard.otf') format('opentype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+/***************
+ * TYPE DEFAULTS
+ ***************/
+
+button, html, input, select, textarea {
+  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.mdi-set {
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+}
+
+a {
+  color: #106CC8;
+  text-decoration: none;
+  font-weight: 400;
+  border-bottom: 1px solid rgba(64, 84, 178, 0.25);
+  @include transition(border-bottom 0.35s);
+}
+
+a:hover, a:focus {
+  border-bottom: 1px solid #4054B2;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+h1 {
+  font-size: 3.400rem;
+  font-weight: 400;
+  line-height: 4rem;
+}
+
+h2 {
+  font-size: 2.400rem;
+  font-weight: 400;
+  line-height: 3.2rem;
+}
+
+h3 {
+  font-size: 2.000rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+}
+
+h4 {
+  font-size: 1.600rem;
+  font-weight: 400;
+  letter-spacing: 0.010em;
+  line-height: 2.4rem;
+}
+
+p {
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.010em;
+  line-height: 1.6em;
+  margin: 0.8em 0 1.6em;
+}
+
+strong {
+  font-weight: 500;
+}
+
+blockquote {
+  border-left: 3px solid rgba(0, 0, 0, 0.12);
+  font-style: italic;
+  margin-left: 0;
+  padding-left: 16px;
+}
+
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+/*********************************
+ * MATERIAL DESIGN CUSTOMIZATIONS
+ ********************************/
+
+a.md-button {
+  border-bottom: none;
+}
+
+form {
+  md-content {
+    background-color: #fff;
+  }
+}
+
+md-bottom-sheet .md-subheader {
+  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.md-chips {
+  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+}
+
+md-content.md-default-theme, md-content {
+  background-color: $gray;
+}
+
+md-card {
+  background-color: #fff;
+  h2:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.md-button:not([disabled]).md-icon-button:hover {
+  background-color: rgba(158, 158, 158, 0.2);
+}
+
+md-toolbar:not(.md-hue-1),
+.md-fab {
+  fill: #fff;
+}
+
+md-toolbar md-input-container .md-errors-spacer {
+  min-height: 0px;
+}
+
+md-toolbar {
+  md-select.md-default-theme:not([disabled]):focus .md-select-value, md-select:not([disabled]):focus .md-select-value {
+    color: #fff;
+  }
+}
+
+md-menu-item {
+  overflow: hidden;
+  fill: #737373;
+}
+
+md-menu-item {
+  .md-button {
+    display: block;
+  }
+}
+
+div.md-toast-text {
+  width: 100%;
+  max-width: 500px;
+  max-height: inherit;
+  word-wrap: break-word;
+}
+
+md-toast .md-button {
+  min-width: 88px;
+}
+
+md-sidenav {
+  overflow: hidden;
+  fill: #737373;
+}
+
+.md-panel-outer-wrapper {
+  overflow-y: auto;
+}
+
+.md-radio-interactive input, button {
+  pointer-events: all;
+}
+
+/***********************
+ * THINGSBOARD SPECIFIC
+ ***********************/
+
+.tb-readonly-label {
+  color: rgba(0,0,0,0.54);
+}
+
+/***********************
+ * Prompt
+ ***********************/
+
+.tb-prompt {
+  color: rgba(0,0,0,0.38);
+  text-transform: uppercase;
+  display: flex;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+/***********************
+ * Errors
+ ***********************/
+
+.tb-error-messages {
+  height: 24px; //30px
+}
+
+.tb-error-message {
+  font-size: 12px;
+  line-height: 14px;
+  overflow: hidden;
+  padding: 10px 0px 0px 10px;
+  color: rgb(221,44,0);
+  margin-top: -6px;
+}
+
+.tb-error-message.ng-animate {
+  @include transition(all .3s cubic-bezier(.55,0,.55,.2));
+}
+
+.tb-error-message.ng-enter-prepare, .tb-error-message.ng-enter {
+  opacity:0;
+  margin-top: -24px;
+}
+
+.tb-error-message.ng-enter.ng-enter-active {
+  opacity:1;
+  margin-top: -6px;
+}
+
+.tb-error-message.ng-leave {
+  opacity:1;
+  margin-top: -6px;
+}
+.tb-error-message.ng-leave.ng-leave-active {
+  opacity:0;
+  margin-top: -24px;
+}
+
+/***********************
+ * Tabs
+ ***********************/
+
+md-tabs.tb-headless {
+  margin-top: -50px;
+}
+
+/***********************
+ * Buttons
+ ***********************/
+
+.md-button.tb-card-button {
+  width: 100%;
+  height: 100%;
+  max-width: 240px;
+  span {
+    padding: 10px 10px 20px 10px;
+    font-size: 18px;
+    font-weight: 400;
+    white-space: normal;
+    line-height: 18px;
+  }
+}
+
+.md-button.tb-add-new-widget {
+  border-style: dashed;
+  border-width: 2px;
+  font-size: 24px;
+  padding-right: 12px;
+}
+
+/***********************
+ * Header buttons
+ ***********************/
+
+section.tb-header-buttons {
+  position: absolute;
+  right: 0px;
+  top: 86px;
+  z-index: 3;
+  @media (min-width: $layout-breakpoint-sm) {
+    top: 86px;
+  }
+}
+
+section.tb-top-header-buttons {
+  top: 23px;
+}
+
+.tb-header-buttons .tb-btn-header {
+  @include animation(tbMoveFromTopFade .3s ease both);
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.tb-header-buttons .tb-btn-header.ng-hide {
+  @include animation(tbMoveToTopFade .3s ease both);
+}
+
+/***********************
+ * Footer buttons
+ ***********************/
+
+section.tb-footer-buttons {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2;
+}
+
+.tb-footer-buttons .tb-btn-footer {
+  @include animation(tbMoveFromBottomFade .3s ease both);
+  position: relative !important;
+  display: inline-block !important;
+}
+
+.tb-footer-buttons .tb-btn-footer.ng-hide {
+  @include animation(tbMoveToBottomFade .3s ease both);
+}
+
+._md-toast-open-bottom .tb-footer-buttons {
+  @include transition(all .4s cubic-bezier(.25, .8, .25, 1));
+  @include transform(translate3d(0, -42px, 0));
+}
+
+/***********************
+ * Icons
+ ***********************/
+
+.md-icon-button.tb-md-32 {
+  vertical-align: middle;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  margin: 0px !important;
+  padding: 0px !important;
+}
+
+.material-icons.tb-md-20 {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.material-icons.tb-md-96 {
+  font-size: 96px;
+  width: 96px;
+  height: 96px;
+}
+
+/***********************
+ * Layout
+ ***********************/
+
+.tb-absolute-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.tb-progress-cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  opacity: 1;
+}
+
+/***********************
+ * ACE
+ ***********************/
+
+.ace_editor {
+  font-size: 16px !important;
+}

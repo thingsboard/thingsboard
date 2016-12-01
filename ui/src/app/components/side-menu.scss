@@ -1,0 +1,84 @@
+/**
+ * Copyright © 2016 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "~compass-sass-mixins/lib/compass";
+
+.tb-side-menu .md-button.tb-active {
+  background-color: rgba(255, 255, 255, 0.15);
+  font-weight: 500;
+}
+
+.tb-side-menu, .tb-side-menu ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 0;
+}
+
+.tb-side-menu .tb-menu-toggle-list a.md-button {
+  padding: 0 16px 0 32px;
+  text-transform: none;
+  text-rendering: optimizeLegibility;
+  font-weight: 500;
+}
+
+.tb-side-menu .tb-menu-toggle-list .md-button {
+  padding: 0 16px 0 32px;
+  text-transform: none;
+}
+
+.tb-side-menu .tb-menu-toggle-list .tb-menu-toggle-list a.md-button {
+  padding: 0 16px 0 48px;
+}
+
+.tb-side-menu > li {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tb-side-menu .md-button-toggle .md-toggle-icon {
+  background-size: 100% auto;
+  display: inline-block;
+  margin: auto 0 auto auto;
+  width: 15px;
+  @include transition(transform .3s, ease-in-out);
+}
+
+.tb-side-menu .md-button {
+  display: block;
+  border-radius: 0;
+  color: inherit;
+  cursor: pointer;
+  line-height: 40px;
+  margin: 0;
+  max-height: 40px;
+  overflow: hidden;
+  padding: 0px 16px;
+  text-align: left;
+  text-decoration: none;
+  white-space: normal;
+  width: 100%;
+}
+
+.tb-side-menu tb-menu-link span.md-toggle-icon {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.tb-side-menu ng-md-icon {
+  margin-right: 8px;
+}
+
+.tb-side-menu md-icon {
+  margin-right: 8px;
+}

@@ -1,0 +1,27 @@
+{
+  "schema": {
+    "title": "Simple Schema",
+    "type": "object",
+    "properties": {
+      "fieldA": {
+        "type": "string"
+      },
+      "fieldB": {
+        "type": "string"
+      },
+      "fieldC": {
+        "description": "Age in years",
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "fieldA",
+      "fieldB",
+      "fieldC"
+    ]
+  },
+  "form": [
+    "*"
+  ]
+}

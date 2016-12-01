@@ -1,0 +1,134 @@
+/**
+ * Copyright © 2016 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.dao.device;
+
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.model.DeviceCredentialsEntity;
+import org.thingsboard.server.dao.service.DataValidator;
+
+import java.util.Optional;
+
+import static org.thingsboard.server.dao.DaoUtil.getData;
+import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateString;
+
+@Service
+@Slf4j
+public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
+
+    @Autowired
+    private DeviceCredentialsDao deviceCredentialsDao;
+
+    @Autowired
+    private DeviceService deviceService;
+
+    @Override
+    public DeviceCredentials findDeviceCredentialsByDeviceId(DeviceId deviceId) {
+        log.trace("Executing findDeviceCredentialsByDeviceId [{}]", deviceId);
+        validateId(deviceId, "Incorrect deviceId " + deviceId);
+        DeviceCredentialsEntity deviceCredentialsEntity = deviceCredentialsDao.findByDeviceId(deviceId.getId());
+        return getData(deviceCredentialsEntity);
+    }
+
+    @Override
+    public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
+        log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
+        validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
+        DeviceCredentialsEntity deviceCredentialsEntity = deviceCredentialsDao.findByCredentialsId(credentialsId);
+        return getData(deviceCredentialsEntity);
+    }
+
+    @Override
+    public DeviceCredentials updateDeviceCredentials(DeviceCredentials deviceCredentials) {
+        return saveOrUpdare(deviceCredentials);
+    }
+
+    @Override
+    public DeviceCredentials createDeviceCredentials(DeviceCredentials deviceCredentials) {
+        return saveOrUpdare(deviceCredentials);
+    }
+
+    private DeviceCredentials saveOrUpdare(DeviceCredentials deviceCredentials) {
+        log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
+        credentialsValidator.validate(deviceCredentials);
+        return getData(deviceCredentialsDao.save(deviceCredentials));
+    }
+
+    @Override
+    public void deleteDeviceCredentials(DeviceCredentials deviceCredentials) {
+        log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
+        deviceCredentialsDao.removeById(deviceCredentials.getUuidId());
+    }
+
+    private DataValidator<DeviceCredentials> credentialsValidator =
+            new DataValidator<DeviceCredentials>() {
+
+                @Override
+                protected void validateCreate(DeviceCredentials deviceCredentials) {
+                    DeviceCredentialsEntity existingCredentialsEntity = deviceCredentialsDao.findByCredentialsId(deviceCredentials.getCredentialsId());
+                    if (existingCredentialsEntity != null) {
+                        throw new DataValidationException("Create of existent device credentials!");
+                    }
+                }
+
+                @Override
+                protected void validateUpdate(DeviceCredentials deviceCredentials) {
+                    DeviceCredentialsEntity existingCredentialsEntity = deviceCredentialsDao.findById(deviceCredentials.getUuidId());
+                    if (existingCredentialsEntity == null) {
+                        throw new DataValidationException("Unable to update non-existent device credentials!");
+                    }
+                    DeviceCredentialsEntity sameCredentialsIdEntity = deviceCredentialsDao.findByCredentialsId(deviceCredentials.getCredentialsId());
+                    if (sameCredentialsIdEntity != null && !sameCredentialsIdEntity.getId().equals(deviceCredentials.getUuidId())) {
+                        throw new DataValidationException("Specified credentials are already registered!");
+                    }
+                }
+
+                @Override
+                protected void validateDataImpl(DeviceCredentials deviceCredentials) {
+                    if (deviceCredentials.getDeviceId() == null) {
+                        throw new DataValidationException("Device credentials should be assigned to device!");
+                    }
+                    if (deviceCredentials.getCredentialsType() == null) {
+                        throw new DataValidationException("Device credentials type should be specified!");
+                    }
+                    if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
+                        throw new DataValidationException("Device credentials id should be specified!");
+                    }
+                    switch (deviceCredentials.getCredentialsType()) {
+                        case ACCESS_TOKEN:
+                            if (deviceCredentials.getCredentialsId().length() < 1 || deviceCredentials.getCredentialsId().length() > 20) {
+                                throw new DataValidationException("Incorrect access token length [" + deviceCredentials.getCredentialsId().length() + "]!");
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    Device device = deviceService.findDeviceById(deviceCredentials.getDeviceId());
+                    if (device == null) {
+                        throw new DataValidationException("Can't assign device credentials to non-existent device!");
+                    }
+                }
+            };
+
+}

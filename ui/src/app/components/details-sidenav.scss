@@ -1,0 +1,49 @@
+/**
+ * Copyright © 2016 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../scss/constants';
+
+.tb-details-title {
+  font-size: 1.600rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  margin: 20px 8px 0 0;
+}
+
+.tb-details-subtitle {
+  font-size: 1.000rem;
+  margin: 10px 0;
+  opacity: 0.8;
+}
+
+md-sidenav.tb-sidenav-details {
+  width: 100% !important;
+  max-width: 100% !important;
+  z-index: 59 !important;
+  @media (min-width: $layout-breakpoint-gt-sm) {
+    width: 80% !important;
+  }
+  @media (min-width: $layout-breakpoint-gt-md) {
+    width: 65% !important;
+  }
+  @media (min-width: $layout-breakpoint-lg) {
+    width: 45% !important;
+  }
+  tb-dashboard {
+    md-content {
+      background-color: $primary-hue-3;
+    }
+  }
+}

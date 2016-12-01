@@ -1,0 +1,71 @@
+<!--
+
+    Copyright © 2016 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-button ng-click="onActivatePlugin({event: $event})" ng-show="!isEdit && !isReadOnly && plugin.state === 'SUSPENDED'" class="md-raised md-primary">{{ 'plugin.activate' | translate }}</md-button>
+<md-button ng-click="onSuspendPlugin({event: $event})" ng-show="!isEdit && !isReadOnly && plugin.state === 'ACTIVE'" class="md-raised md-primary">{{ 'plugin.suspend' | translate }}</md-button>
+<md-button ng-click="onDeletePlugin({event: $event})" ng-show="!isEdit && !isReadOnly" class="md-raised md-primary">{{ 'plugin.delete' | translate }}</md-button>
+
+<md-content class="md-padding" layout="column" style="overflow-x: hidden">
+    <fieldset ng-disabled="loading || !isEdit || isReadOnly">
+        <md-input-container class="md-block">
+            <label translate>plugin.name</label>
+            <input required name="name" ng-model="plugin.name">
+            <div ng-messages="theForm.name.$error">
+                <div translate ng-message="required">plugin.name-required</div>
+            </div>
+        </md-input-container>
+        <md-input-container class="md-block">
+            <label translate>plugin.description</label>
+            <textarea ng-model="plugin.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
+        <section flex layout="row">
+            <md-input-container flex class="md-block">
+                <label translate>plugin.api-token</label>
+                <input required name="apiToken" ng-model="plugin.apiToken">
+                <div ng-messages="theForm.apiToken.$error">
+                    <div translate ng-message="required">plugin.api-token-required</div>
+                </div>
+            </md-input-container>
+            <md-input-container flex class="md-block">
+                <label translate>plugin.type</label>
+                <md-select required name="pluginType" ng-model="plugin.clazz" ng-disabled="loading || !isEdit">
+                    <md-option ng-repeat="component in pluginComponents" ng-value="component.clazz">
+                        {{component.name}}
+                    </md-option>
+                </md-select>
+                <div ng-messages="theForm.pluginType.$error">
+                    <div translate ng-message="required">plugin.type-required</div>
+                </div>
+            </md-input-container>
+        </section>
+        <md-card flex class="plugin-config" ng-if="showPluginConfig">
+            <md-card-title>
+                <md-card-title-text>
+                    <span translate class="md-headline" ng-class="{'tb-readonly-label' : (loading || !isEdit || isReadOnly)}">plugin.configuration</span>
+                </md-card-title-text>
+            </md-card-title>
+            <md-card-content>
+                <tb-json-form schema="pluginComponent.configurationDescriptor.schema"
+                              form="pluginComponent.configurationDescriptor.form"
+                              model="pluginConfiguration.data"
+                              readonly="loading || !isEdit || isReadOnly"
+                              form-control="theForm">
+                </tb-json-form>
+            </md-card-content>
+        </md-card>
+    </fieldset>
+</md-content>
