@@ -1,5 +1,8 @@
-# iotrules
-IoT Rules Engine
+# thingsboard
+OpenSource IoT Platform
+
+![Dashboard](/img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
+
 
 **Docker usage**
 
