@@ -1,12 +1,27 @@
-# thingsboard
-OpenSource IoT Platform
-
-![Dashboard](/img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
+# Thingsboard
 
 
-**Docker usage**
+<img src="./img/logo.png?raw=true" width="100" height="100">
 
-**start platfrom using docker:**
+## Introduction
+
+Tningsboard is an open-source IoT platform for data collection, processing, visualization, and device management.
+
+![Dashboard](./img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
+
+
+## Community
+
+
+## Contribute
+
+
+## Support
+
+
+## Docker usage
+
+**start platform using docker:**
 - install docker
 - cd to 'docker' folder
 - create folder for cassandra data directory on your local env (host)
@@ -30,3 +45,7 @@ if you would like to change cassandra port, change it to "9999:9042" for example
 - modify .env file to point to the directory created in previous step
 - start ./deploy_cassandra_zookeeper.sh script to run cassandra with thingsboard schema and zookeper services
 - Start boot class: _org.thingsboard.server.ThingsboardServerApplication_
+
+## Licenses
+
+This project is released under [Apache 2.0 license](./LICENSE).
