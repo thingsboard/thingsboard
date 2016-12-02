@@ -14,7 +14,7 @@ Thingsboard documentation is hosted on [thingsboard.io](http://thingsboard.io/do
 
 ## Getting Started
 
-Collect and Visualize your IoT data in minutes by following this [guide](http://localhost:4000/docs/getting-started-guides/helloworld/).
+Collect and Visualize your IoT data in minutes by following this [guide](http://thingsboard.io/docs/getting-started-guides/helloworld/).
 
 ## Support
 
