@@ -16,7 +16,7 @@ Visualize your IoT data in minutes.
 
 ## Getting Started
 
- - [Getting Started](http://localhost:4000/docs/getting-started-guides/helloworld/)
+Build your first Thingsboard application by following this [guide](http://localhost:4000/docs/getting-started-guides/helloworld/).
 
 ## Support
 
