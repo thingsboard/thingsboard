@@ -8,6 +8,16 @@ Thingsboard is an open-source IoT platform for data collection, processing, visu
 
 Thingsboard documentation is hosted on [thingsboard.io](http://thingsboard.io/docs).
 
+## Sample Dashboard
+
+Visualize your IoT data in minutes.
+
+![Dashboard](./img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
+
+## Getting Started
+
+ - [Getting Started](http://localhost:4000/docs/getting-started-guides/helloworld/)
+
 ## Support
 
  - [Community chat](https://gitter.im/thingsboard/chat)
@@ -16,6 +26,4 @@ Thingsboard documentation is hosted on [thingsboard.io](http://thingsboard.io/do
 
 ## Licenses
 
-This project is released under [Apache 2.0 license](./LICENSE).
-
-![Dashboard](./img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
+This project is released under [Apache 2.0 License](./LICENSE).
