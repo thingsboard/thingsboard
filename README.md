@@ -10,13 +10,11 @@ Thingsboard documentation is hosted on [thingsboard.io](http://thingsboard.io/do
 
 ## Sample Dashboard
 
-Visualize your IoT data in minutes.
-
 ![Dashboard](./img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
 
 ## Getting Started
 
-Build your first Thingsboard application by following this [guide](http://localhost:4000/docs/getting-started-guides/helloworld/).
+Collect and Visualize your IoT data in minutes by following this [guide](http://localhost:4000/docs/getting-started-guides/helloworld/).
 
 ## Support
 
