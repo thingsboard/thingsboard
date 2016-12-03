@@ -19,12 +19,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
-    <artifactId>server</artifactId>
+    <artifactId>thingsboard</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Thingsboard Server Components</name>
-    <url>http://thingsboard.org</url>
+    <name>Thingsboard</name>
+    <url>http://thingsboard.io</url>
     <inceptionYear>2016</inceptionYear>
 
     <properties>

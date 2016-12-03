@@ -194,6 +194,17 @@ VALUES (
 	'test device c1'
 );
 
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text, additional_info)
+VALUES (
+	c8f1a6f0-b993-11e6-8a04-9ff4e1b7933c,
+	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
+	minTimeuuid ( 0 ),
+	'DHT11 Demo Device',
+	'dht11 demo device',
+	'{"description":"Demo device that is used in sample applications that upload data from DHT11 temperature and humidity sensor"}'
+);
+
+
 INSERT INTO thingsboard.device_credentials ( id, device_id, credentials_type, credentials_id)
 VALUES (
 	now(),
@@ -232,6 +243,14 @@ VALUES (
 	minTimeuuid ( '2016-11-01 01:02:05+0004' ),
 	'ACCESS_TOKEN',
 	'C1_TEST_TOKEN'
+);
+
+INSERT INTO thingsboard.device_credentials ( id, device_id, credentials_type, credentials_id)
+VALUES (
+	now(),
+	c8f1a6f0-b993-11e6-8a04-9ff4e1b7933c,
+	'ACCESS_TOKEN',
+	'DHT11_DEMO_TOKEN'
 );
 
 /** Demo data **/
@@ -399,4 +418,16 @@ VALUES (
 	'[{"configuration":{"messageTypes":["RPC_REQUEST"]},"name":"RPC Request Filter","clazz":"org.thingsboard.server.extensions.core.filter.MsgTypeFilter"},{"configuration":{"methodNames":[{"name":"getDevices"},{"name":"sendMsg"}]},"name":"Messaging methods filter","clazz":"org.thingsboard.server.extensions.core.filter.MethodNameFilter"}]',
 	null,
 	'{"configuration":{},"clazz":"org.thingsboard.server.extensions.core.action.rpc.RpcPluginAction","name":"Messaging RPC Action"}'
+);
+
+/** Demo dashboards **/
+
+INSERT INTO thingsboard.dashboard ( id, tenant_id, customer_id, configuration, title, search_text)
+VALUES (
+	now(),
+	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
+	minTimeuuid ( 0 ),
+	'{"description":"Demo dashboard for sample applications that upload temperature and humidity received from DHT11 or DHT22 sensors","widgets":[{"isSystemType":true,"bundleAlias":"digital_gauges","typeAlias":"digital_thermometer","type":"latest","title":"New widget","sizeX":5,"sizeY":5,"config":{"datasources":[{"type":"device","dataKeys":[{"name":"temperature","type":"timeseries","label":"temperature","color":"#2196f3","settings":{},"_hash":0.3720839051412099}],"deviceAliasId":1,"name":"DHT11"}],"timewindow":{"realtime":{"timewindowMs":60000}},"showTitle":false,"backgroundColor":"#000000","color":"rgba(0, 0, 0, 0.87)","padding":"0px","settings":{"maxValue":50,"donutStartAngle":90,"showValue":true,"showMinMax":true,"gaugeWidthScale":1,"levelColors":["#304ffe","#7e57c2","#ff4081","#d32f2f"],"refreshAnimationType":"<>","refreshAnimationTime":700,"startAnimationType":"<>","startAnimationTime":700,"titleFont":{"family":"RobotoDraft","size":12,"style":"normal","weight":"500"},"labelFont":{"family":"RobotoDraft","size":8,"style":"normal","weight":"500"},"valueFont":{"family":"Segment7Standard","style":"normal","weight":"500","size":18},"minMaxFont":{"family":"Segment7Standard","size":12,"style":"normal","weight":"500"},"dashThickness":1.5,"decimals":0,"minValue":0,"units":"°C","gaugeColor":"#333333","neonGlowBrightness":35,"gaugeType":"donut","showTitle":false},"title":"Temperature"},"row":0,"col":0},{"isSystemType":true,"bundleAlias":"digital_gauges","typeAlias":"digital_vertical_bar","type":"latest","title":"New widget","sizeX":3,"sizeY":5,"config":{"datasources":[{"type":"device","dataKeys":[{"name":"humidity","type":"timeseries","label":"humidity","color":"#2196f3","settings":{},"_hash":0.9492802776509441}],"deviceAliasId":"1","name":"DHT11"}],"timewindow":{"realtime":{"timewindowMs":60000}},"showTitle":false,"backgroundColor":"#000000","color":"rgba(0, 0, 0, 0.87)","padding":"0px","settings":{"maxValue":100,"donutStartAngle":90,"showValue":true,"showMinMax":true,"gaugeWidthScale":0.75,"levelColors":["#3d5afe","#f44336"],"refreshAnimationType":"<>","refreshAnimationTime":700,"startAnimationType":"<>","startAnimationTime":700,"titleFont":{"family":"RobotoDraft","size":12,"style":"normal","weight":"500"},"labelFont":{"family":"RobotoDraft","size":8,"style":"normal","weight":"500"},"valueFont":{"family":"Segment7Standard","style":"normal","weight":"500","size":14},"minMaxFont":{"family":"Segment7Standard","size":8,"style":"normal","weight":"normal","color":"#cccccc"},"neonGlowBrightness":20,"decimals":0,"showUnitTitle":true,"gaugeColor":"#171a1c","gaugeType":"verticalBar","showTitle":false,"minValue":0,"dashThickness":1.2},"title":"Humidity"},"row":0,"col":5}],"deviceAliases":{"1":{"alias":"DHT11","deviceId":"c8f1a6f0-b993-11e6-8a04-9ff4e1b7933c"}}}',
+    'Temperature & Humidity Demo Dashboard',
+	'temperature & humidity demo dashboard'
 );
