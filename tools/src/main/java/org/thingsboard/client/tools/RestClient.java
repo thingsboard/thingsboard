@@ -1,4 +1,4 @@
-/**
+package org.thingsboard.client.tools; /**
  * Copyright © 2016 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,6 +60,10 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeviceCredentials getCredentials(DeviceId id) {
         return restTemplate.getForEntity(baseURL + "/api/device/" + id.getId().toString() + "/credentials", DeviceCredentials.class).getBody();
+    }
+
+    public RestTemplate getRestTemplate() {
+        return restTemplate;
     }
 
     @Override

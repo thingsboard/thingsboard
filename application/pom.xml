@@ -86,6 +86,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.cassandraunit</groupId>
             <artifactId>cassandra-unit</artifactId>
             <exclusions>
@@ -211,6 +217,12 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.server</groupId>
+            <artifactId>tools</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
