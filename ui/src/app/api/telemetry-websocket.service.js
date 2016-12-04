@@ -21,7 +21,7 @@ export default angular.module('thingsboard.api.telemetryWebsocket', [thingsboard
     .name;
 
 /*@ngInject*/
-function TelemetryWebsocketService($log, $websocket, $timeout, $window, types, userService) {
+function TelemetryWebsocketService($websocket, $timeout, $window, types, userService) {
 
     var isOpening = false,
         isOpened = false,
@@ -57,9 +57,7 @@ function TelemetryWebsocketService($log, $websocket, $timeout, $window, types, u
         if (isOpened && (cmdsWrapper.tsSubCmds.length > 0 ||
             cmdsWrapper.historyCmds.length > 0 ||
             cmdsWrapper.attrSubCmds.length > 0)) {
-            $log.debug("Sending subscription commands!");
             dataStream.send(angular.copy(cmdsWrapper)).then(function () {
-                $log.debug("Subscription commands were sent!");
                 checkToClose();
             });
             cmdsWrapper.tsSubCmds = [];
@@ -69,21 +67,17 @@ function TelemetryWebsocketService($log, $websocket, $timeout, $window, types, u
         tryOpenSocket();
     }
 
-    function onError (message) {
-        $log.debug("Websocket error:");
-        $log.debug(message);
+    function onError (/*message*/) {
         isOpening = false;
     }
 
     function onOpen () {
-        $log.debug("Websocket opened");
         isOpening = false;
         isOpened = true;
         publishCommands();
     }
 
     function onClose () {
-        $log.debug("Websocket closed");
         isOpening = false;
         isOpened = false;
     }
