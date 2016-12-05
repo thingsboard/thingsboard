@@ -27,5 +27,5 @@ $command rm -f
 echo "building images.."
 $command build
 
-echo "starting cassandra, zookeeper, db-schema images..."
-$command up -d cassandra zookeeper db-schema
+echo "starting cassandra, zookeeper, thingsboard-db-schema images..."
+$command up -d cassandra zookeeper thingsboard-db-schema
