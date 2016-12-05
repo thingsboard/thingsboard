@@ -19,11 +19,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.thingsboard.server</groupId>
+        <groupId>org.thingsboard</groupId>
         <version>0.0.1-SNAPSHOT</version>
         <artifactId>common</artifactId>
     </parent>
-    <groupId>org.thingsboard.server.common</groupId>
+    <groupId>org.thingsboard.common</groupId>
     <artifactId>data</artifactId>
     <packaging>jar</packaging>
 

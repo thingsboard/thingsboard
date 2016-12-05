@@ -21,11 +21,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.thingsboard.server</groupId>
+        <groupId>org.thingsboard</groupId>
         <version>0.0.1-SNAPSHOT</version>
         <artifactId>extensions</artifactId>
     </parent>
-    <groupId>org.thingsboard.server.extensions</groupId>
+    <groupId>org.thingsboard.extensions</groupId>
     <artifactId>extension-rest-api-call</artifactId>
     <packaging>jar</packaging>
 
@@ -49,7 +49,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>extensions-api</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -59,7 +59,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>extensions-core</artifactId>
             <scope>provided</scope>
         </dependency>

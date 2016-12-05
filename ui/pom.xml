@@ -21,9 +21,9 @@
     <parent>
         <groupId>org.thingsboard</groupId>
         <version>0.0.1-SNAPSHOT</version>
-        <artifactId>server</artifactId>
+        <artifactId>thingsboard</artifactId>
     </parent>
-    <groupId>org.thingsboard.server</groupId>
+    <groupId>org.thingsboard</groupId>
     <artifactId>ui</artifactId>
     <packaging>jar</packaging>
 
