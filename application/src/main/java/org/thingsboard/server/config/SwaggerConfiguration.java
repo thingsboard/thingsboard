@@ -15,11 +15,15 @@
  */
 package org.thingsboard.server.config;
 
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeResolver;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Predicate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thingsboard.server.common.data.security.Authority;
 import springfox.documentation.builders.ApiInfoBuilder;
-import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.schema.AlternateTypeRule;
 import springfox.documentation.service.*;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spi.service.contexts.SecurityContext;
@@ -27,18 +31,33 @@ import springfox.documentation.spring.web.plugins.Docket;
 
 import java.util.List;
 
+import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Lists.newArrayList;
+import static springfox.documentation.builders.PathSelectors.regex;
 
 @Configuration
 public class SwaggerConfiguration {
 
       @Bean
       public Docket thingsboardApi() {
+          TypeResolver typeResolver = new TypeResolver();
+          final ResolvedType jsonNodeType =
+                  typeResolver.resolve(
+                          JsonNode.class);
+          final ResolvedType stringType =
+                  typeResolver.resolve(
+                          String.class);
+
             return new Docket(DocumentationType.SWAGGER_2)
                     .groupName("thingsboard")
                     .apiInfo(apiInfo())
+                    .alternateTypeRules(
+                        new AlternateTypeRule(
+                                jsonNodeType,
+                                stringType))
                     .select()
-                    .paths(PathSelectors.any())
+                    .paths(apiPaths())
                     .build()
                     .securitySchemes(newArrayList(jwtTokenKey()))
                     .securityContexts(newArrayList(securityContext()));
@@ -51,8 +70,19 @@ public class SwaggerConfiguration {
       private SecurityContext securityContext() {
             return SecurityContext.builder()
                     .securityReferences(defaultAuth())
-                    .forPaths(PathSelectors.regex("/api.*"))
+                    .forPaths(securityPaths())
                     .build();
+      }
+
+      private Predicate<String> apiPaths() {
+           return regex("/api.*");
+      }
+
+      private Predicate<String> securityPaths() {
+           return and(
+                    regex("/api.*"),
+                    not(regex("/api/noauth.*"))
+           );
       }
 
       List<SecurityReference> defaultAuth() {
@@ -67,7 +97,7 @@ public class SwaggerConfiguration {
       private ApiInfo apiInfo() {
             return new ApiInfoBuilder()
                 .title("Thingsboard REST API")
-                .description("For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/rest-auth'>Documentation page</a>")
+                .description("For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/reference/rest-api/'>REST API documentation page</a>.")
                 .contact(new Contact("Thingsboard team", "http://thingsboard.io", "info@thingsboard.io"))
                 .license("Apache License Version 2.0")
                 .licenseUrl("https://github.com/thingsboard/thingsboard/blob/master/LICENSE")

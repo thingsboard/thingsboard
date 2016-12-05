@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -46,18 +45,6 @@ public class AdminController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @ApiOperation(
-            value = "Save admin settings", notes = "Saves admin settings",
-            response = AdminSettings.class,
-            authorizations = {
-                    @Authorization(value = "X-Authorization", scopes = {
-                            @AuthorizationScope(scope = "SYS_ADMIN", description = "")
-                    })})
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, response = AdminSettings.class, message = "Admin settings successfully updated"),
-            @ApiResponse(code = 400, message = "Invalid admin settings payload supplied"),
-            @ApiResponse(code = 404, message = "Admin settings not found")}
-    )
     @RequestMapping(value = "/settings", method = RequestMethod.POST)
     @ResponseBody 
     public AdminSettings saveAdminSettings(@RequestBody AdminSettings adminSettings) throws ThingsboardException {
