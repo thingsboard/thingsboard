@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright © 2016 The Thingsboard Authors
 #
@@ -14,11 +15,11 @@
 # limitations under the License.
 #
 
-FROM openjdk:8-jre
 
-ADD run_thingsboard.sh /root/run_thingsboard.sh
-ADD thingsboard.deb /root/thingsboard.deb
+cp ../../application/target/thingsboard.deb thingsboard.deb
 
-RUN chmod +x /root/run_thingsboard.sh
+docker build -t thingsboard/application:0.1 .
 
-WORKDIR /root
+docker login
+
+docker push thingsboard/application:0.1

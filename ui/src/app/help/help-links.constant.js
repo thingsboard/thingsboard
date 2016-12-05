@@ -46,8 +46,7 @@ var pluginActionsClazzHelpLinkMap = {
     'org.thingsboard.server.extensions.rest.action.RestApiCallPluginAction': 'pluginActionRestApiCall'
 };
 
-//var helpBaseUrl = "http://thingsboard.io";
-var helpBaseUrl = "http://localhost:4000";
+var helpBaseUrl = "http://thingsboard.io";
 
 export default angular.module('thingsboard.help', [])
     .constant('helpLinks',
