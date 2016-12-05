@@ -1,4 +1,4 @@
-/**
+package org.thingsboard.client.tools; /**
  * Copyright © 2016 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,7 +73,7 @@ public class ResultAccumulator {
 
     @Override
     public String toString() {
-        return "ResultAccumulator{" +
+        return "org.thingsboard.client.tools.ResultAccumulator{" +
                 "successCount=" + getSuccessCount() +
                 ", errorCount=" + getErrorCount() +
                 ", totalTime=" + getTimeSpent() +
