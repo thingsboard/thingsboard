@@ -197,9 +197,8 @@
             <artifactId>springfox-swagger2</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>tools</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>

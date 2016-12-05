@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rpc;
+package org.thingsboard.server.mqtt;
 
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.context.WebApplicationContext;
-import org.thingsboard.server.rpc.mqtt.MqttRpcIntergrationTest;
+import org.thingsboard.server.mqtt.telemetry.MqttTelemetryIntergrationTest;
 
 import java.util.Arrays;
 
@@ -42,7 +42,7 @@ import static org.junit.Assert.assertNotNull;
  */
 @ActiveProfiles("default")
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes=MqttRpcIntergrationTest.class, loader=SpringApplicationContextLoader.class)
+@ContextConfiguration(classes= MqttTelemetryIntergrationTest.class, loader=SpringApplicationContextLoader.class)
 @TestPropertySource("classpath:cassandra-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
@@ -50,7 +50,7 @@ import static org.junit.Assert.assertNotNull;
 @ComponentScan({"org.thingsboard.server"})
 @WebAppConfiguration
 @IntegrationTest("server.port:8080")
-public class AbstractRpcIntegrationTest {
+public class AbstractFeatureIntegrationTest {
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;

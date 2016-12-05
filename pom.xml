@@ -366,6 +366,12 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard</groupId>
+                <artifactId>tools</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard</groupId>
                 <artifactId>dao</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>

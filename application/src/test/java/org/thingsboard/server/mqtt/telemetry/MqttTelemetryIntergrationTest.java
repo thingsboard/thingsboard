@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rpc.mqtt;
+package org.thingsboard.server.mqtt.telemetry;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
@@ -25,7 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.rpc.AbstractRpcIntegrationTest;
+import org.thingsboard.server.mqtt.AbstractFeatureIntegrationTest;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -39,7 +39,7 @@ import static org.junit.Assert.assertNotNull;
  * @author Valerii Sosliuk
  */
 @Slf4j
-public class MqttRpcIntergrationTest extends AbstractRpcIntegrationTest {
+public class MqttTelemetryIntergrationTest extends AbstractFeatureIntegrationTest {
 
     private static final String MQTT_URL = "tcp://localhost:1883";
     private static final String BASE_URL = "http://localhost:8080";

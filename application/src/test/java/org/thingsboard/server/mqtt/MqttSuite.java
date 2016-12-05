@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rpc.mqtt;
+package org.thingsboard.server.mqtt;
 
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
@@ -27,8 +27,8 @@ import java.util.Arrays;
  * @author Valerii Sosliuk
  */
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.rpc.mqtt.*Test"})
-public class MqttRpcSuite {
+@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.mqtt.*.*Test"})
+public class MqttSuite {
 
     @ClassRule
     public static CustomCassandraCQLUnit cassandraUnit =
