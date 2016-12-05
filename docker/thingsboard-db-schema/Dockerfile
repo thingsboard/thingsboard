@@ -23,4 +23,8 @@ RUN apt-get update \
 
 RUN chmod +x /root/install_schema.sh
 
+ADD schema.cql /root/schema.cql
+ADD demo-data.cql /root/demo-data.cql
+ADD system-data.cql /root/system-data.cql
+
 WORKDIR /root
