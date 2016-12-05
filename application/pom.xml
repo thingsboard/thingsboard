@@ -21,9 +21,9 @@
     <parent>
         <groupId>org.thingsboard</groupId>
         <version>0.0.1-SNAPSHOT</version>
-        <artifactId>server</artifactId>
+        <artifactId>thingsboard</artifactId>
     </parent>
-    <groupId>org.thingsboard.server</groupId>
+    <groupId>org.thingsboard</groupId>
     <artifactId>application</artifactId>
     <packaging>jar</packaging>
 
@@ -47,35 +47,35 @@
             <classifier>linux-x86_64</classifier>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>extensions-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>extensions-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server.common</groupId>
+            <groupId>org.thingsboard.common</groupId>
             <artifactId>transport</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server.transport</groupId>
+            <groupId>org.thingsboard.transport</groupId>
             <artifactId>http</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server.transport</groupId>
+            <groupId>org.thingsboard.transport</groupId>
             <artifactId>coap</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server.transport</groupId>
+            <groupId>org.thingsboard.transport</groupId>
             <artifactId>mqtt</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>dao</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>dao</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
@@ -97,7 +97,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard.server</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>ui</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
@@ -212,6 +212,14 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -325,17 +333,17 @@
                             <outputDirectory>${project.build.directory}/extensions</outputDirectory>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>org.thingsboard.server.extensions</groupId>
+                                    <groupId>org.thingsboard.extensions</groupId>
                                     <artifactId>extension-rabbitmq</artifactId>
                                     <classifier>extension</classifier>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.thingsboard.server.extensions</groupId>
+                                    <groupId>org.thingsboard.extensions</groupId>
                                     <artifactId>extension-rest-api-call</artifactId>
                                     <classifier>extension</classifier>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>org.thingsboard.server.extensions</groupId>
+                                    <groupId>org.thingsboard.extensions</groupId>
                                     <artifactId>extension-kafka</artifactId>
                                     <classifier>extension</classifier>
                                 </artifactItem>

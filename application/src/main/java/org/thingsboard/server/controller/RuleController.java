@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +37,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class RuleController extends BaseController {
 
+    @ApiOperation(value = "getRuleById", nickname = "Get Rule By ID")
+    @ApiResponses(value = {
+                        @ApiResponse(code = 200, message = "Success", response = RuleMetaData.class),
+                        @ApiResponse(code = 401, message = "Unauthorized"),
+                        @ApiResponse(code = 403, message = "Forbidden"),
+                        @ApiResponse(code = 404, message = "Not Found")})
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/rule/{ruleId}", method = RequestMethod.GET)
     @ResponseBody
