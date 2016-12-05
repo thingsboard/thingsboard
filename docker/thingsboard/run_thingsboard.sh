@@ -40,5 +40,5 @@ echo "Starting 'Thingsboard' service..."
 service thingsboard start
 
 # Wait until log file is created
-sleep 3
+sleep 10
 tail -f /var/log/thingsboard/thingsboard.log

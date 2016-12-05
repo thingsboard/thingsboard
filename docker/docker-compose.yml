@@ -31,15 +31,11 @@ services:
       - thingsboard.env
     entrypoint: ./run_thingsboard.sh
   thingsboard-db-schema:
-    build: thingsboard-db-schema
+    image: "thingsboard/thingsboard-db-schema:0.1"
     links:
       - cassandra:db
     env_file:
       - thingsboard-db-schema.env
-    volumes:
-      - "../dao/src/main/resources/schema.cql:/root/schema.cql"
-      - "../dao/src/main/resources/demo-data.cql:/root/demo-data.cql"
-      - "../dao/src/main/resources/system-data.cql:/root/system-data.cql"
     entrypoint: ./install_schema.sh
   cassandra:
     image: "cassandra:3.9"
