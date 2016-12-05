@@ -17,6 +17,7 @@
 FROM openjdk:8-jre
 
 ADD run_thingsboard.sh /root/run_thingsboard.sh
+ADD thingsboard.deb /root/thingsboard.deb
 
 RUN chmod +x /root/run_thingsboard.sh
 

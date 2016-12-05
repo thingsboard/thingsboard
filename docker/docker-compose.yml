@@ -18,7 +18,7 @@ version: '2'
 
 services:
   thingsboard:
-    build: thingsboard
+    image: "thingsboard/application:0.1"
     ports:
       - "8080:8080"
       - "1883:1883"
@@ -27,8 +27,6 @@ services:
       - cassandra:db
       - zookeeper:zk
       - thingsboard-db-schema:thingsboard-db-schema
-    volumes:
-      - "../application/target/thingsboard.deb:/root/thingsboard.deb"
     env_file:
       - thingsboard.env
     entrypoint: ./run_thingsboard.sh
