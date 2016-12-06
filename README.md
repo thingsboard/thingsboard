@@ -1,4 +1,5 @@
-# Thingsboard
+# Thingsboard 
+[![Build Status](https://travis-ci.org/thingsboard/thingsboard.svg?branch=master)](https://travis-ci.org/thingsboard/thingsboard)
 
 Thingsboard is an open-source IoT platform for data collection, processing, visualization, and device management.
 
