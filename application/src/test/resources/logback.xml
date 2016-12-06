@@ -7,7 +7,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server" level="DEBUG"/>
+    <logger name="org.thingsboard.server" level="WARN"/>
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.apache.cassandra" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
