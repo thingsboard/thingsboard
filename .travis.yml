@@ -5,5 +5,5 @@ before_install:
 jdk:
  - oraclejdk8
 language: java
-sudo: false
+sudo: required
 script: mvn clean verify
