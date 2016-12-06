@@ -1,3 +1,7 @@
+before_install:
+  - sudo rm /etc/mavenrc
+  - export M2_HOME=/usr/local/maven
+  - export MAVEN_OPTS="-Dmaven.repo.local=$HOME/.m2/repository -Xms1024m -Xmx3072m -XX:PermSize=512m"
 jdk:
  - oraclejdk8
 language: java
