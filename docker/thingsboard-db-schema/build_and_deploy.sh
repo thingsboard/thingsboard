@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright © 2016 The Thingsboard Authors
 #
@@ -14,17 +15,13 @@
 # limitations under the License.
 #
 
-FROM cassandra:3.9
 
-ADD install_schema.sh /root/install_schema.sh
+cp ../../dao/src/main/resources/schema.cql schema.cql
+cp ../../dao/src/main/resources/demo-data.cql demo-data.cql
+cp ../../dao/src/main/resources/system-data.cql system-data.cql
 
-RUN apt-get update \
-        && apt-get install -y nmap
+docker build -t thingsboard/thingsboard-db-schema:1.0 .
 
-RUN chmod +x /root/install_schema.sh
+docker login
 
-ADD schema.cql /root/schema.cql
-ADD demo-data.cql /root/demo-data.cql
-ADD system-data.cql /root/system-data.cql
-
-WORKDIR /root
+docker push thingsboard/thingsboard-db-schema:1.0
