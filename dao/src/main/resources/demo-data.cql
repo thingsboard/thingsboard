@@ -413,20 +413,6 @@ INSERT INTO thingsboard.rule ( id, tenant_id, name, plugin_token, state, search_
 VALUES (
 	minTimeuuid ( '2016-11-01 01:02:11+0000' ),
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
-	'Demo Time RPC Rule',
-	'time',
-    'ACTIVE',
-	'demo time rpc rule',
-	0,
-	'[{"configuration":{"messageTypes":["RPC_REQUEST"]},"name":"RPC Request Filter","clazz":"org.thingsboard.server.extensions.core.filter.MsgTypeFilter"},{"configuration":{"methodNames":[{"name":"getTime"}]},"name":"getTime method filter","clazz":"org.thingsboard.server.extensions.core.filter.MethodNameFilter"}]',
-	null,
-	'{"configuration":{},"clazz":"org.thingsboard.server.extensions.core.action.rpc.RpcPluginAction","name":"getTimeAction"}'
-);
-
-INSERT INTO thingsboard.rule ( id, tenant_id, name, plugin_token, state, search_text, weight, filters, processor, action)
-VALUES (
-	minTimeuuid ( '2016-11-01 01:02:12+0000' ),
-	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	'Demo Messaging RPC Rule',
 	'messaging',
     'ACTIVE',
