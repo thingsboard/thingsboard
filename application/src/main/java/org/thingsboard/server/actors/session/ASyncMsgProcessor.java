@@ -111,7 +111,7 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
             Optional<ServerAddress> newTargetServer = systemContext.getRoutingService().resolve(getDeviceId());
             if (!newTargetServer.equals(currentTargetServer)) {
                 currentTargetServer = newTargetServer;
-                pendingMap.values().stream().forEach(v -> {
+                pendingMap.values().forEach(v -> {
                     forwardToAppActor(context, v, currentTargetServer);
                     if (currentTargetServer.isPresent()) {
                         logger.debug("[{}] Forwarded msg to new server: {}", sessionId, currentTargetServer.get());

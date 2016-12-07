@@ -91,7 +91,7 @@ public class DefaultWebsocketMsgHandler implements WebsocketMsgHandler {
     }
 
     public void clear(PluginContext ctx) {
-        wsSessionsMap.values().stream().forEach(v -> {
+        wsSessionsMap.values().forEach(v -> {
             try {
                 ctx.close(v.getSessionRef());
             } catch (IOException e) {

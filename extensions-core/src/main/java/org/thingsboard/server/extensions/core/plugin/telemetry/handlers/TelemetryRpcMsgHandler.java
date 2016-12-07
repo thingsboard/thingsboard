@@ -97,7 +97,7 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         builder.setDeviceId(cmd.getDeviceId().toString());
         builder.setType(cmd.getType().name());
         builder.setAllKeys(cmd.isAllKeys());
-        cmd.getKeyStates().entrySet().stream().forEach(e -> builder.addKeyStates(SubscriptionKetStateProto.newBuilder().setKey(e.getKey()).setTs(e.getValue()).build()));
+        cmd.getKeyStates().entrySet().forEach(e -> builder.addKeyStates(SubscriptionKetStateProto.newBuilder().setKey(e.getKey()).setTs(e.getValue()).build()));
         ctx.sendPluginRpcMsg(new RpcMsg(address, SUBSCRIPTION_CLAZZ, builder.build().toByteArray()));
     }
 
@@ -144,7 +144,7 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         if (update.getErrorMsg() != null) {
             builder.setErrorMsg(update.getErrorMsg());
         }
-        update.getData().entrySet().stream().forEach(
+        update.getData().entrySet().forEach(
                 e -> {
                     SubscriptionUpdateValueListProto.Builder dataBuilder = SubscriptionUpdateValueListProto.newBuilder();
 
@@ -166,7 +166,7 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
             return new SubscriptionUpdate(proto.getSubscriptionId(), SubscriptionErrorCode.forCode(proto.getErrorCode()), proto.getErrorMsg());
         } else {
             Map<String, List<Object>> data = new TreeMap<>();
-            proto.getDataList().stream().forEach(v -> {
+            proto.getDataList().forEach(v -> {
                 List<Object> values = data.get(v.getKey());
                 if (values == null) {
                     values = new ArrayList<>();

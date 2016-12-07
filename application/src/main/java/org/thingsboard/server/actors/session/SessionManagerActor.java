@@ -66,7 +66,7 @@ public class SessionManagerActor extends ContextAwareActor {
     }
 
     private void broadcast(Object msg) {
-        sessionActors.values().stream().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+        sessionActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
     }
 
     private void onSessionTimeout(SessionTimeoutMsg msg) {

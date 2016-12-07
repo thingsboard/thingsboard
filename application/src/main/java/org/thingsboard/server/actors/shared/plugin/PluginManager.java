@@ -74,7 +74,7 @@ public abstract class PluginManager {
     }
 
     public void broadcast(Object msg) {
-        pluginActors.values().stream().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+        pluginActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
     }
 
     public void remove(PluginId id) {

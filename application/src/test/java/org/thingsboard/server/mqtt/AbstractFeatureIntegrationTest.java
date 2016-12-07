@@ -61,8 +61,10 @@ public class AbstractFeatureIntegrationTest {
     @Autowired
     void setConverters(HttpMessageConverter<?>[] converters) {
 
-        this.mappingJackson2HttpMessageConverter = Arrays.asList(converters).stream().filter(
-                hmc -> hmc instanceof MappingJackson2HttpMessageConverter).findAny().get();
+        this.mappingJackson2HttpMessageConverter = Arrays.stream(converters)
+                .filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter)
+                .findAny()
+                .get();
 
         assertNotNull("the JSON message converter must not be null",
                 this.mappingJackson2HttpMessageConverter);

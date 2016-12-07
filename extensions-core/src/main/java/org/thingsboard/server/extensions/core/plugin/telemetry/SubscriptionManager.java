@@ -68,7 +68,7 @@ public class SubscriptionManager {
         registerSubscription(sessionId, deviceId, subscription);
         List<TsKvEntry> missedUpdates = new ArrayList<>();
         if (subscription.getType() == SubscriptionType.ATTRIBUTES) {
-            subscription.getKeyStates().entrySet().stream().forEach(e -> {
+            subscription.getKeyStates().entrySet().forEach(e -> {
                         Optional<AttributeKvEntry> latestOpt = ctx.loadAttribute(deviceId, DataConstants.CLIENT_SCOPE, e.getKey());
                         if (latestOpt.isPresent()) {
                             AttributeKvEntry latestEntry = latestOpt.get();

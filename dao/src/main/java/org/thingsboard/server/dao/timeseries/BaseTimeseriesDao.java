@@ -143,7 +143,7 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
     public List<TsKvEntry> convertResultToTsKvEntryList(List<Row> rows) {
         List<TsKvEntry> entries = new ArrayList<>(rows.size());
         if (!rows.isEmpty()) {
-            rows.stream().forEach(row -> {
+            rows.forEach(row -> {
                 TsKvEntry kvEntry = convertResultToTsKvEntry(row);
                 if (kvEntry != null) {
                     entries.add(kvEntry);
