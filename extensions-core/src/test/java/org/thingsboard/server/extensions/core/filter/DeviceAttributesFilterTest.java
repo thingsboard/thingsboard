@@ -71,7 +71,7 @@ public class DeviceAttributesFilterTest {
         filter.stop();
     }
 
-    @Test(timeout = 10000)
+    @Test(timeout = 30000)
     public void basicClientAttributesStressTest() {
         DeviceAttributesFilter filter = new DeviceAttributesFilter();
         filter.init(wrap("doubleValue == 1.0 && booleanValue == false"));
