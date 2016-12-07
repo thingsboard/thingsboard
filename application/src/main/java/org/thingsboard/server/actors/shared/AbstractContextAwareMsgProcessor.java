@@ -19,7 +19,6 @@ import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Scheduler;
 import akka.event.LoggingAdapter;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;

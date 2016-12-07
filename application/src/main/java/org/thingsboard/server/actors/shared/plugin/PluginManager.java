@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.actors.shared.plugin;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import akka.actor.ActorContext;
+import akka.actor.ActorRef;
+import akka.actor.Props;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.plugin.PluginActor;
@@ -29,12 +29,9 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.plugin.PluginService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import akka.actor.ActorContext;
-import akka.actor.ActorRef;
-import akka.actor.Props;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 public abstract class PluginManager {
@@ -64,13 +61,9 @@ public abstract class PluginManager {
     abstract TenantId getTenantId();
 
     public ActorRef getOrCreatePluginActor(ActorContext context, PluginId pluginId) {
-        ActorRef pluginActor = pluginActors.get(pluginId);
-        if (pluginActor == null) {
-            pluginActor = context.actorOf(Props.create(new PluginActor.ActorCreator(systemContext, getTenantId(), pluginId))
-                    .withDispatcher(DefaultActorService.PLUGIN_DISPATCHER_NAME), pluginId.toString());
-            pluginActors.put(pluginId, pluginActor);
-        }
-        return pluginActor;
+        return pluginActors.computeIfAbsent(pluginId, pId ->
+                context.actorOf(Props.create(new PluginActor.ActorCreator(systemContext, getTenantId(), pId))
+                        .withDispatcher(DefaultActorService.PLUGIN_DISPATCHER_NAME), pId.toString()));
     }
 
     public void broadcast(Object msg) {

@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.plugin.BasePluginService;
-import org.thingsboard.server.dao.plugin.PluginService;
 
 public class SystemPluginManager extends PluginManager {
 
@@ -30,7 +29,7 @@ public class SystemPluginManager extends PluginManager {
 
     @Override
     FetchFunction<PluginMetaData> getFetchPluginsFunction() {
-        return link -> pluginService.findSystemPlugins(link);
+        return pluginService::findSystemPlugins;
     }
 
     @Override
