@@ -100,7 +100,7 @@ public class TenantActor extends ContextAwareActor {
 
     private void broadcast(Object msg) {
         pluginManager.broadcast(msg);
-        deviceActors.values().stream().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+        deviceActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
     }
 
     private void onToDeviceActorMsg(ToDeviceActorMsg msg) {

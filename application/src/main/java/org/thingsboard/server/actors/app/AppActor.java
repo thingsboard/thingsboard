@@ -121,7 +121,7 @@ public class AppActor extends ContextAwareActor {
 
     private void broadcast(Object msg) {
         pluginManager.broadcast(msg);
-        tenantActors.values().stream().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+        tenantActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
     }
 
     private void onToRuleMsg(ToRuleActorMsg msg) {

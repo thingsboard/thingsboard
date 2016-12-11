@@ -31,7 +31,6 @@ import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.extensions.api.component.*;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -72,7 +71,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     private void registerComponents(Collection<ComponentDescriptor> comps) {
-        comps.stream().forEach(c -> components.put(c.getClazz(), c));
+        comps.forEach(c -> components.put(c.getClazz(), c));
     }
 
     private List<ComponentDescriptor> persist(Set<BeanDefinition> filterDefs, ComponentType type) {
@@ -119,7 +118,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                                 throw new RuntimeException("Plugin " + def.getBeanClassName() + "action " + actionClazz.getName() + " has wrong component type!");
                             }
                         }
-                        scannedComponent.setActions(Arrays.asList(pluginAnnotation.actions()).stream().map(action -> action.getName()).collect(Collectors.joining(",")));
+                        scannedComponent.setActions(Arrays.stream(pluginAnnotation.actions()).map(action -> action.getName()).collect(Collectors.joining(",")));
                         break;
                     default:
                         throw new RuntimeException(type + " is not supported yet!");

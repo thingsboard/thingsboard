@@ -75,7 +75,7 @@ public class MailPlugin extends AbstractPlugin<MailPluginConfiguration> implemen
         if (configuration.getOtherProperties() != null) {
             Properties mailProperties = new Properties();
             configuration.getOtherProperties()
-                    .stream().forEach(p -> mailProperties.put(p.getKey(), p.getValue()));
+                    .forEach(p -> mailProperties.put(p.getKey(), p.getValue()));
             mail.setJavaMailProperties(mailProperties);
         }
         mailSender = mail;

@@ -140,7 +140,7 @@ public class BaseAttributesDao extends AbstractDao implements AttributesDao {
         List<Row> rows = resultSet.all();
         List<AttributeKvEntry> entries = new ArrayList<>(rows.size());
         if (!rows.isEmpty()) {
-            rows.stream().forEach(row -> {
+            rows.forEach(row -> {
                 String key = row.getString(ModelConstants.ATTRIBUTE_KEY_COLUMN);
                 AttributeKvEntry kvEntry = convertResultToAttributesKvEntry(key, row);
                 if (kvEntry != null) {

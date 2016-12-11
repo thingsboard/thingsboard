@@ -39,7 +39,7 @@ public class MsgTypeFilter extends SimpleRuleLifecycleComponent implements RuleF
 
     @Override
     public void init(MsgTypeFilterConfiguration configuration) {
-        msgTypes = Arrays.asList(configuration.getMessageTypes()).stream().map(type -> {
+        msgTypes = Arrays.stream(configuration.getMessageTypes()).map(type -> {
             switch (type) {
                 case "GET_ATTRIBUTES":
                     return MsgType.GET_ATTRIBUTES_REQUEST;

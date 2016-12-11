@@ -166,7 +166,7 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
     @Override
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         publishCurrentServer();
-        getOtherServers().stream().forEach(
+        getOtherServers().forEach(
                 server -> log.info("Found active server: [{}:{}]", server.getHost(), server.getPort())
         );
     }
@@ -194,13 +194,13 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         log.info("Processing [{}] event for [{}:{}]", pathChildrenCacheEvent.getType(), instance.getHost(), instance.getPort());
         switch (pathChildrenCacheEvent.getType()) {
             case CHILD_ADDED:
-                listeners.stream().forEach(listener -> listener.onServerAdded(instance));
+                listeners.forEach(listener -> listener.onServerAdded(instance));
                 break;
             case CHILD_UPDATED:
-                listeners.stream().forEach(listener -> listener.onServerUpdated(instance));
+                listeners.forEach(listener -> listener.onServerUpdated(instance));
                 break;
             case CHILD_REMOVED:
-                listeners.stream().forEach(listener -> listener.onServerRemoved(instance));
+                listeners.forEach(listener -> listener.onServerRemoved(instance));
                 break;
         }
     }

@@ -47,7 +47,7 @@ public class KafkaPlugin extends AbstractPlugin<KafkaPluginConfiguration> {
         properties.put("buffer.memory", configuration.getBufferMemory());
         if (configuration.getOtherProperties() != null) {
             configuration.getOtherProperties()
-                    .stream().forEach(p -> properties.put(p.getKey(), p.getValue()));
+                    .forEach(p -> properties.put(p.getKey(), p.getValue()));
         }
         init();
     }
