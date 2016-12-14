@@ -379,6 +379,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <classifier>boot</classifier>
                     <layout>ZIP</layout>
                     <executable>true</executable>
                     <excludeDevtools>true</excludeDevtools>
@@ -408,7 +409,7 @@
                     <args>
                         <arg>-PprojectBuildDir=${project.build.directory}</arg>
                         <arg>-PprojectVersion=${project.version}</arg>
-                        <arg>-PmainJar=${project.build.directory}/${project.build.finalName}.${project.packaging}</arg>
+                        <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</arg>
                         <arg>-PpkgName=${pkg.name}</arg>
                         <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
                         <arg>-PpkgLogFolder=${pkg.logFolder}</arg>

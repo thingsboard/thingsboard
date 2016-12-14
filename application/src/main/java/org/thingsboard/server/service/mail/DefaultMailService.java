@@ -26,6 +26,7 @@ import javax.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.velocity.app.VelocityEngine;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.thingsboard.server.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -50,6 +51,7 @@ public class DefaultMailService implements MailService {
     private MessageSource messages;
     
     @Autowired
+    @Qualifier("velocityEngine")
     private VelocityEngine engine;
     
     private JavaMailSenderImpl mailSender;
@@ -100,6 +102,11 @@ public class DefaultMailService implements MailService {
         } catch (NumberFormatException e) {
             throw new IncorrectParameterException(String.format("Invalid smtp port value: %s", strPort));
         }
+    }
+
+    @Override
+    public void sendEmail(String email, String subject, String message) throws ThingsboardException {
+        sendMail(mailSender, mailFrom, email, subject, message);
     }
     
     @Override
