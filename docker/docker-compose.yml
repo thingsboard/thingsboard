@@ -23,24 +23,18 @@ services:
       - "8080:8080"
       - "1883:1883"
       - "5683:5683"
-    links:
-      - cassandra:db
-      - zookeeper:zk
-      - thingsboard-db-schema:thingsboard-db-schema
     env_file:
       - thingsboard.env
     entrypoint: ./run_thingsboard.sh
   thingsboard-db-schema:
     image: "thingsboard/thingsboard-db-schema:1.0"
-    links:
-      - cassandra:db
     env_file:
       - thingsboard-db-schema.env
     entrypoint: ./install_schema.sh
-  cassandra:
+  db:
     image: "cassandra:3.9"
     volumes:
       - "${CASSANDRA_DATA_DIR}:/var/lib/cassandra"
-  zookeeper:
+  zk:
     image: "zookeeper:3.4.9"
     restart: always

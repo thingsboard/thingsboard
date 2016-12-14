@@ -28,4 +28,4 @@ echo "building images.."
 $command build
 
 echo "starting cassandra, zookeeper, thingsboard-db-schema images..."
-$command up -d cassandra zookeeper thingsboard-db-schema
+$command up -d db zk thingsboard-db-schema
