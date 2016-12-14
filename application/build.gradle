@@ -49,7 +49,7 @@ ospackage {
     from(mainJar) {
         // Strip the version from the jar filename
         rename { String fileName ->
-            fileName.replace("-${project.version}", "")
+            "${pkgName}.jar"
         }
         fileMode 0500
         into "bin"

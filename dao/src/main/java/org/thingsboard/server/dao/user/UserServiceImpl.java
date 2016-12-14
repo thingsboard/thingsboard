@@ -156,7 +156,7 @@ public class UserServiceImpl implements UserService {
         UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByUserId(userEntity.getId());
         UserCredentials userCredentials = getData(userCredentialsEntity);
         if (!userCredentials.isEnabled()) {
-            throw new IncorrectParameterException("Unable to reset password for unactive user");
+            throw new IncorrectParameterException("Unable to reset password for inactive user");
         }
         userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(30));
         return saveUserCredentials(userCredentials);
