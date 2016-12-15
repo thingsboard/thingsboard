@@ -1,4 +1,4 @@
-package org.thingsboard.client.tools; /**
+/**
  * Copyright © 2016 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,11 @@ package org.thingsboard.client.tools; /**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package org.thingsboard.client.tools;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpRequestExecution;

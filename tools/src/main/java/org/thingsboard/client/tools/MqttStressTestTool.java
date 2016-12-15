@@ -1,4 +1,4 @@
-package org.thingsboard.client.tools; /**
+/**
  * Copyright © 2016 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,9 @@ package org.thingsboard.client.tools; /**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package org.thingsboard.client.tools;
+
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
