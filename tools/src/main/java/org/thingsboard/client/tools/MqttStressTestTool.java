@@ -22,7 +22,12 @@ import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -58,15 +63,19 @@ public class MqttStressTestTool {
 
         List<MqttStressTestClient> clients = new ArrayList<>();
         List<IMqttToken> connectTokens = new ArrayList<>();
+        List<String> deviceCredentialsIds = new ArrayList<>();
         for (int i = 0; i < params.getDeviceCount(); i++) {
             Device device = restClient.createDevice("Device " + UUID.randomUUID());
             DeviceCredentials credentials = restClient.getCredentials(device.getId());
             String[] mqttUrls = params.getMqttUrls();
             String mqttURL = mqttUrls[i % mqttUrls.length];
             MqttStressTestClient client = new MqttStressTestClient(results, mqttURL, credentials.getCredentialsId());
+            deviceCredentialsIds.add(credentials.getCredentialsId());
             connectTokens.add(client.connect());
             clients.add(client);
         }
+
+        dumpDeviceCredentialsIdsToTmpFile(deviceCredentialsIds);
 
         for (IMqttToken tokens : connectTokens) {
             tokens.waitForCompletion();
@@ -112,6 +121,22 @@ public class MqttStressTestTool {
         }
         log.info("Results: {} took {}ms", results, System.currentTimeMillis() - startTime);
         scheduler.shutdownNow();
+    }
+
+    private static void dumpDeviceCredentialsIdsToTmpFile(List<String> deviceCredentialsIds) throws IOException {
+        Path path = Paths.get("/tmp/mqtt.csv");
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            writer.write("deviceCredentialsId");
+            writer.write('\n');
+            deviceCredentialsIds.forEach((deviceCredentialsId) -> {
+                try {
+                    writer.write(deviceCredentialsId);
+                    writer.write('\n');
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
     }
 
 }
