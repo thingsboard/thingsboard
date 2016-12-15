@@ -99,7 +99,6 @@
             <plugin>
                 <groupId>io.gatling</groupId>
                 <artifactId>gatling-maven-plugin</artifactId>
-                <version>${gatling-plugin.version}</version>
             </plugin>
         </plugins>
     </build>
