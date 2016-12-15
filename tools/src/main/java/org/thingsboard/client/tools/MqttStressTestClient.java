@@ -43,10 +43,10 @@ public class MqttStressTestClient {
         this.client = new MqttAsyncClient(brokerUri, clientId, persistence);
     }
 
-    public void connect() throws MqttException {
+    public IMqttToken connect() throws MqttException {
         MqttConnectOptions options = new MqttConnectOptions();
         options.setUserName(deviceToken);
-        client.connect(options, null, new IMqttActionListener() {
+        return client.connect(options, null, new IMqttActionListener() {
             @Override
             public void onSuccess(IMqttToken iMqttToken) {
                 log.info("OnSuccess");
@@ -63,6 +63,22 @@ public class MqttStressTestClient {
         client.disconnect();
     }
 
+
+
+    public void warmUp(byte[] data) throws MqttException {
+        MqttMessage msg = new MqttMessage(data);
+        client.publish("v1/devices/me/telemetry", msg, null, new IMqttActionListener() {
+            @Override
+            public void onSuccess(IMqttToken asyncActionToken) {
+            }
+
+            @Override
+            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+            }
+        }).waitForCompletion();
+    }
+
+
     public void publishTelemetry(byte[] data) throws MqttException {
         long sendTime = System.currentTimeMillis();
         MqttMessage msg = new MqttMessage(data);
@@ -70,14 +86,12 @@ public class MqttStressTestClient {
             @Override
             public void onSuccess(IMqttToken asyncActionToken) {
                 long ackTime = System.currentTimeMillis();
-//                log.info("Delivery time: {}", ackTime - sendTime);
                 results.onResult(true, ackTime - sendTime);
             }
 
             @Override
             public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
                 long failTime = System.currentTimeMillis();
-//                log.info("Failure time: {}", failTime - sendTime);
                 results.onResult(false, failTime - sendTime);
             }
         });

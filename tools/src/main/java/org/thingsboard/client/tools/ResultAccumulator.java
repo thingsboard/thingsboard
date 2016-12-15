@@ -76,7 +76,7 @@ public class ResultAccumulator {
 
     @Override
     public String toString() {
-        return "org.thingsboard.client.tools.ResultAccumulator{" +
+        return "Result {" +
                 "successCount=" + getSuccessCount() +
                 ", errorCount=" + getErrorCount() +
                 ", totalTime=" + getTimeSpent() +

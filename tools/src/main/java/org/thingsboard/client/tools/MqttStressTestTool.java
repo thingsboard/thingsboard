@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
+
 package org.thingsboard.client.tools;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -32,60 +35,83 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class MqttStressTestTool {
 
-    private static final long TEST_DURATION = TimeUnit.MINUTES.toMillis(1);
-    private static final long TEST_ITERATION = TimeUnit.MILLISECONDS.toMillis(100);
-    private static final long TEST_SUB_ITERATION = TimeUnit.MILLISECONDS.toMillis(2);
-    private static final int DEVICE_COUNT = 100;
-    private static final String BASE_URL = "http://localhost:8080";
-    private static final String[] MQTT_URLS = {"tcp://localhost:1883"};
-//    private static final String[] MQTT_URLS = {"tcp://localhost:1883", "tcp://localhost:1884", "tcp://localhost:1885"};
-    private static final String USERNAME = "tenant@thingsboard.org";
-    private static final String PASSWORD = "tenant";
-
-
     public static void main(String[] args) throws Exception {
+        TestParams params = new TestParams();
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
+
+
+        if (params.getDuration() % params.getIterationInterval() != 0) {
+            throw new IllegalArgumentException("Test Duration % Iteration Interval != 0");
+        }
+
+        if ((params.getIterationInterval() * 1000) % params.getDeviceCount() != 0) {
+            throw new IllegalArgumentException("Iteration Interval % Device Count != 0");
+        }
+
         ResultAccumulator results = new ResultAccumulator();
 
         AtomicLong value = new AtomicLong(Long.MAX_VALUE);
         log.info("value: {} ", value.incrementAndGet());
 
-        RestClient restClient = new RestClient(BASE_URL);
-        restClient.login(USERNAME, PASSWORD);
+        RestClient restClient = new RestClient(params.getRestApiUrl());
+        restClient.login(params.getUsername(), params.getPassword());
 
         List<MqttStressTestClient> clients = new ArrayList<>();
-        for (int i = 0; i < DEVICE_COUNT; i++) {
-            Device device = restClient.createDevice("Device " + i);
+        List<IMqttToken> connectTokens = new ArrayList<>();
+        for (int i = 0; i < params.getDeviceCount(); i++) {
+            Device device = restClient.createDevice("Device " + UUID.randomUUID());
             DeviceCredentials credentials = restClient.getCredentials(device.getId());
-            String mqttURL = MQTT_URLS[i % MQTT_URLS.length];
+            String[] mqttUrls = params.getMqttUrls();
+            String mqttURL = mqttUrls[i % mqttUrls.length];
             MqttStressTestClient client = new MqttStressTestClient(results, mqttURL, credentials.getCredentialsId());
-            client.connect();
+            connectTokens.add(client.connect());
             clients.add(client);
         }
-        Thread.sleep(1000);
 
+        for (IMqttToken tokens : connectTokens) {
+            tokens.waitForCompletion();
+        }
 
         byte[] data = "{\"longKey\":73}".getBytes(StandardCharsets.UTF_8);
-        long startTime = System.currentTimeMillis();
-        int iterationsCount = (int) (TEST_DURATION / TEST_ITERATION);
-        int subIterationsCount = (int) (TEST_ITERATION / TEST_SUB_ITERATION);
-        if (clients.size() % subIterationsCount != 0) {
-            throw new IllegalArgumentException("Invalid parameter exception!");
+
+        for (MqttStressTestClient client : clients) {
+            client.warmUp(data);
         }
-        for (int i = 0; i < iterationsCount; i++) {
-            for (int j = 0; j < subIterationsCount; j++) {
-                int packSize = clients.size() / subIterationsCount;
-                for (int k = 0; k < packSize; k++) {
-                    int clientIndex = packSize * j + k;
-                    clients.get(clientIndex).publishTelemetry(data);
-                }
-                Thread.sleep(TEST_SUB_ITERATION);
-            }
-        }
+
         Thread.sleep(1000);
+
+        long startTime = System.currentTimeMillis();
+        int iterationsCount = (int) (params.getDuration() / params.getIterationInterval());
+        int subIterationMicroSeconds = (int) ((params.getIterationInterval() * 1000) / params.getDeviceCount());
+
+        List<ScheduledFuture<Void>> iterationFutures = new ArrayList<>();
+        for (int i = 0; i < iterationsCount; i++) {
+            long delay = i * params.getIterationInterval();
+            iterationFutures.add(scheduler.schedule((Callable<Void>) () -> {
+                long sleepMicroSeconds = 0L;
+                for (MqttStressTestClient client : clients) {
+                    client.publishTelemetry(data);
+                    sleepMicroSeconds += subIterationMicroSeconds;
+                    if (sleepMicroSeconds > 1000) {
+                        Thread.sleep(sleepMicroSeconds / 1000);
+                        sleepMicroSeconds = sleepMicroSeconds % 1000;
+                    }
+                }
+                return null;
+            }, delay, TimeUnit.MILLISECONDS));
+        }
+
+        for (ScheduledFuture<Void> future : iterationFutures) {
+            future.get();
+        }
+
+        Thread.sleep(1000);
+
         for (MqttStressTestClient client : clients) {
             client.disconnect();
         }
         log.info("Results: {} took {}ms", results, System.currentTimeMillis() - startTime);
+        scheduler.shutdownNow();
     }
 
 }
