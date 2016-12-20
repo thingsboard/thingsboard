@@ -210,7 +210,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processDisconnect(ChannelHandlerContext ctx) {
-        processor.process(new SessionCloseMsg(sessionCtx.getSessionId(), false));
         ctx.close();
     }
 
@@ -255,6 +254,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void operationComplete(Future<? super Void> future) throws Exception {
-        processor.process(new SessionCloseMsg(sessionCtx.getSessionId(), false));
+        processor.process(SessionCloseMsg.onError(sessionCtx.getSessionId()));
     }
 }

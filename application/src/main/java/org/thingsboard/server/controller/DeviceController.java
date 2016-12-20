@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
 
 @RestController
 @RequestMapping("/api")
@@ -48,7 +49,7 @@ public class DeviceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public Device saveDevice(@RequestBody Device device) throws ThingsboardException {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
@@ -74,7 +75,7 @@ public class DeviceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/device/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public Device assignDeviceToCustomer(@PathVariable("customerId") String strCustomerId,
                                          @PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
@@ -85,7 +86,7 @@ public class DeviceController extends BaseController {
 
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             checkDeviceId(deviceId);
-            
+
             return checkNotNull(deviceService.assignDeviceToCustomer(deviceId, customerId));
         } catch (Exception e) {
             throw handleException(e);
@@ -94,7 +95,7 @@ public class DeviceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/device/{deviceId}", method = RequestMethod.DELETE)
-    @ResponseBody 
+    @ResponseBody
     public Device unassignDeviceFromCustomer(@PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
         checkParameter("deviceId", strDeviceId);
         try {
@@ -125,19 +126,21 @@ public class DeviceController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
         try {
             checkDeviceId(deviceCredentials.getDeviceId());
-            return checkNotNull(deviceCredentialsService.updateDeviceCredentials(deviceCredentials));
+            DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(deviceCredentials));
+            actorService.onCredentialsUpdate(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId());
+            return result;
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/devices", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenant/devices", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<Device> getTenantDevices(
             @RequestParam int limit,
@@ -154,7 +157,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/devices", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/customer/{customerId}/devices", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<Device> getCustomerDevices(
             @PathVariable("customerId") String strCustomerId,
