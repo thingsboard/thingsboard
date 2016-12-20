@@ -29,7 +29,7 @@ server:
 # Zookeeper connection parameters. Used for service discovery.
 zk:
   # Enable/disable zookeeper discovery service.
-  enabled: "${ZOOKEEPER_ENABLED:true}"
+  enabled: "${ZOOKEEPER_ENABLED:false}"
   # Zookeeper connect string
   url: "${ZOOKEEPER_URL:localhost:2181}"
   # Zookeeper retry interval in milliseconds
