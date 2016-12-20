@@ -28,7 +28,7 @@ public enum MsgType {
 
     RULE_ENGINE_ERROR,
 
-    SESSION_CLOSE;
+    SESSION_OPEN, SESSION_CLOSE;
 
     private final boolean requiresRulesProcessing;
 
