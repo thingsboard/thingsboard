@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.rule;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +25,7 @@ public class SimpleRuleActorChain implements RuleActorChain {
 
     public SimpleRuleActorChain(Set<RuleActorMetaData> ruleSet) {
         rules = new ArrayList<>(ruleSet);
-        Collections.sort(rules, RuleActorMetaData.RULE_ACTOR_MD_COMPARATOR);
+        rules.sort(RuleActorMetaData.RULE_ACTOR_MD_COMPARATOR);
     }
 
     public int size() {

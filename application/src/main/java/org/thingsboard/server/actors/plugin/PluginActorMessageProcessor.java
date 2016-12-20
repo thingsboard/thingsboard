@@ -181,7 +181,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
             logger.info("[{}] Plugin requires restart due to clazz change from {} to {}.",
                     entityId, oldPluginMd.getClazz(), pluginMd.getClazz());
             requiresRestart = true;
-        } else if (oldPluginMd.getConfiguration().equals(pluginMd.getConfiguration())) {
+        } else if (!oldPluginMd.getConfiguration().equals(pluginMd.getConfiguration())) {
             logger.info("[{}] Plugin requires restart due to configuration change from {} to {}.",
                     entityId, oldPluginMd.getConfiguration(), pluginMd.getConfiguration());
             requiresRestart = true;

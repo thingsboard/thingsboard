@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
 @Slf4j
 public class CoapSessionCtx extends DeviceAwareSessionContext {
 
@@ -87,6 +88,8 @@ public class CoapSessionCtx extends DeviceAwareSessionContext {
     private void onSessionClose(SessionCloseMsg msg) {
         if (msg.isTimeout()) {
             exchange.respond(ResponseCode.SERVICE_UNAVAILABLE);
+        } else if (msg.isCredentialsRevoked()) {
+            exchange.respond(ResponseCode.UNAUTHORIZED);
         } else {
             exchange.respond(ResponseCode.INTERNAL_SERVER_ERROR);
         }
@@ -120,7 +123,7 @@ public class CoapSessionCtx extends DeviceAwareSessionContext {
 
     public void close() {
         log.info("[{}] Closing processing context. Timeout: {}", sessionId, exchange.advanced().isTimedOut());
-        processor.process(new SessionCloseMsg(sessionId, exchange.advanced().isTimedOut()));
+        processor.process(exchange.advanced().isTimedOut() ? SessionCloseMsg.onTimeout(sessionId) : SessionCloseMsg.onError(sessionId));
     }
 
     @Override

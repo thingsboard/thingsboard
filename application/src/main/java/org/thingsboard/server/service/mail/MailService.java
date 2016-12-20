@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 public interface MailService {
 
     void updateMailConfiguration();
+
+    void sendEmail(String email, String subject, String message) throws ThingsboardException;
     
     void sendTestMail(JsonNode config, String email) throws ThingsboardException;
     

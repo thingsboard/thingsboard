@@ -109,8 +109,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), attributesData));
 
                     Map<String, Long> subState = new HashMap<>(keys.size());
-                    keys.stream().forEach(key -> subState.put(key, 0L));
-                    attributesData.stream().forEach(v -> subState.put(v.getKey(), v.getTs()));
+                    keys.forEach(key -> subState.put(key, 0L));
+                    attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                     sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.ATTRIBUTES, false, subState);
                 } else {
@@ -119,7 +119,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), attributesData));
 
                     Map<String, Long> subState = new HashMap<>(attributesData.size());
-                    attributesData.stream().forEach(v -> subState.put(v.getKey(), v.getTs()));
+                    attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                     sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.ATTRIBUTES, true, subState);
                 }
@@ -154,8 +154,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                         sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
 
                         Map<String, Long> subState = new HashMap<>(keys.size());
-                        keys.stream().forEach(key -> subState.put(key, startTs));
-                        data.stream().forEach(v -> subState.put(v.getKey(), v.getTs()));
+                        keys.forEach(key -> subState.put(key, startTs));
+                        data.forEach(v -> subState.put(v.getKey(), v.getTs()));
                         SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.TIMESERIES, false, subState);
                         subscriptionManager.addLocalWsSubscription(ctx, sessionId, deviceId, sub);
                     } else {
@@ -168,8 +168,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                                 sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
 
                                 Map<String, Long> subState = new HashMap<>(keys.size());
-                                keys.stream().forEach(key -> subState.put(key, startTs));
-                                data.stream().forEach(v -> subState.put(v.getKey(), v.getTs()));
+                                keys.forEach(key -> subState.put(key, startTs));
+                                data.forEach(v -> subState.put(v.getKey(), v.getTs()));
                                 SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.TIMESERIES, false, subState);
                                 subscriptionManager.addLocalWsSubscription(ctx, sessionId, deviceId, sub);
                             }
@@ -188,7 +188,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                         public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
                             sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
                             Map<String, Long> subState = new HashMap<>(data.size());
-                            data.stream().forEach(v -> subState.put(v.getKey(), v.getTs()));
+                            data.forEach(v -> subState.put(v.getKey(), v.getTs()));
                             SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.TIMESERIES, true, subState);
                             subscriptionManager.addLocalWsSubscription(ctx, sessionId, deviceId, sub);
                         }

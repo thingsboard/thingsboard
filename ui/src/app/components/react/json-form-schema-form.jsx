@@ -26,6 +26,7 @@ import ThingsboardText from './json-form-text.jsx';
 import Select from 'react-schema-form/lib/Select';
 import Radios from 'react-schema-form/lib/Radios';
 import ThingsboardDate from './json-form-date.jsx';
+import ThingsboardImage from './json-form-image.jsx';
 import ThingsboardCheckbox from './json-form-checkbox.jsx';
 import Help from 'react-schema-form/lib/Help';
 import ThingsboardFieldSet from './json-form-fieldset.jsx';
@@ -45,6 +46,7 @@ class ThingsboardSchemaForm extends React.Component {
             'select': Select,
             'radios': Radios,
             'date': ThingsboardDate,
+            'image': ThingsboardImage,
             'checkbox': ThingsboardCheckbox,
             'help': Help,
             'array': ThingsboardArray,

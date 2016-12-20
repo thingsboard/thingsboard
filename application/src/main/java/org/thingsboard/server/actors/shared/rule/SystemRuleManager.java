@@ -29,7 +29,7 @@ public class SystemRuleManager extends RuleManager {
 
     @Override
     FetchFunction<RuleMetaData> getFetchRulesFunction() {
-        return link -> ruleService.findSystemRules(link);
+        return ruleService::findSystemRules;
     }
 
 }

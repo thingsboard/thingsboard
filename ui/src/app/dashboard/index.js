@@ -34,6 +34,7 @@ import DashboardRoutes from './dashboard.routes';
 import DashboardsController from './dashboards.controller';
 import DashboardController from './dashboard.controller';
 import DeviceAliasesController from './device-aliases.controller';
+import DashboardSettingsController from './dashboard-settings.controller';
 import AssignDashboardToCustomerController from './assign-to-customer.controller';
 import AddDashboardsToCustomerController from './add-dashboards-to-customer.controller';
 import AddWidgetController from './add-widget.controller';
@@ -59,6 +60,7 @@ export default angular.module('thingsboard.dashboard', [
     .controller('DashboardsController', DashboardsController)
     .controller('DashboardController', DashboardController)
     .controller('DeviceAliasesController', DeviceAliasesController)
+    .controller('DashboardSettingsController', DashboardSettingsController)
     .controller('AssignDashboardToCustomerController', AssignDashboardToCustomerController)
     .controller('AddDashboardsToCustomerController', AddDashboardsToCustomerController)
     .controller('AddWidgetController', AddWidgetController)

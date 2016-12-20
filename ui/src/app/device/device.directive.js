@@ -20,18 +20,23 @@ import deviceFieldsetTemplate from './device-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DeviceDirective($compile, $templateCache, toast, $translate, types, customerService) {
+export default function DeviceDirective($compile, $templateCache, toast, $translate, types, deviceService, customerService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(deviceFieldsetTemplate);
         element.html(template);
 
         scope.isAssignedToCustomer = false;
-
         scope.assignedCustomer = null;
 
+        scope.deviceCredentials = null;
 
         scope.$watch('device', function(newVal) {
             if (newVal) {
+                deviceService.getDeviceCredentials(scope.device.id.id).then(
+                    function success(credentials) {
+                        scope.deviceCredentials = credentials;
+                    }
+                );
                 if (scope.device.customerId && scope.device.customerId.id !== types.id.nullUid) {
                     scope.isAssignedToCustomer = true;
                     customerService.getCustomer(scope.device.customerId.id).then(
@@ -48,6 +53,10 @@ export default function DeviceDirective($compile, $templateCache, toast, $transl
 
         scope.onDeviceIdCopied = function() {
             toast.showSuccess($translate.instant('device.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
+        };
+
+        scope.onAccessTokenCopied = function() {
+            toast.showSuccess($translate.instant('device.accessTokenCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
         };
 
         $compile(element.contents())(scope);

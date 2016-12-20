@@ -20,9 +20,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.UserId;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SecurityUser extends User {
 
@@ -46,7 +46,7 @@ public class SecurityUser extends User {
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (authorities == null) {
-            authorities = Arrays.asList(SecurityUser.this.getAuthority()).stream()
+            authorities = Stream.of(SecurityUser.this.getAuthority())
                     .map(authority -> new SimpleGrantedAuthority(authority.name()))
                     .collect(Collectors.toList());
         }

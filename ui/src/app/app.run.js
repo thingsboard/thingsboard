@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+import Flow from '@flowjs/ng-flow/dist/ng-flow-standalone.min';
+
 /*@ngInject*/
 export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $filter, loginService, userService, $translate) {
 
+    $window.Flow = Flow;
     var frame = $window.frameElement;
     var unauthorizedDialog = null;
     var forbiddenDialog = null;

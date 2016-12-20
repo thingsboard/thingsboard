@@ -32,13 +32,7 @@ import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.core.AttributesUpdateNotification;
-import org.thingsboard.server.common.msg.core.BasicCommandAckResponse;
-import org.thingsboard.server.common.msg.core.BasicToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.core.SessionCloseMsg;
-import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
-import org.thingsboard.server.common.msg.core.ToDeviceRpcResponseMsg;
-import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
+import org.thingsboard.server.common.msg.core.*;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.kv.BasicAttributeKVMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
@@ -47,6 +41,7 @@ import org.thingsboard.server.common.msg.session.SessionType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutIntMsg;
@@ -74,6 +69,7 @@ import java.util.stream.Collectors;
 public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     private final DeviceId deviceId;
+    private final Map<SessionId, SessionInfo> sessions;
     private final Map<SessionId, SessionInfo> attributeSubscriptions;
     private final Map<SessionId, SessionInfo> rpcSubscriptions;
 
@@ -85,6 +81,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     public DeviceActorMessageProcessor(ActorSystemContext systemContext, LoggingAdapter logger, DeviceId deviceId) {
         super(systemContext, logger);
         this.deviceId = deviceId;
+        this.sessions = new HashMap<>();
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.rpcPendingMap = new HashMap<>();
@@ -281,7 +278,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (!msg.isAdded()) {
             logger.debug("[{}] Clearing attributes/rpc subscription for server [{}]", deviceId, msg.getServerAddress());
             Predicate<Map.Entry<SessionId, SessionInfo>> filter = e -> e.getValue().getServer()
-                .map(serverAddress -> serverAddress.equals(msg.getServerAddress())).orElse(false);
+                    .map(serverAddress -> serverAddress.equals(msg.getServerAddress())).orElse(false);
             attributeSubscriptions.entrySet().removeIf(filter);
             rpcSubscriptions.entrySet().removeIf(filter);
         }
@@ -342,8 +339,12 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private void processSessionStateMsgs(ToDeviceActorMsg msg) {
         SessionId sessionId = msg.getSessionId();
         FromDeviceMsg inMsg = msg.getPayload();
-        if (inMsg instanceof SessionCloseMsg) {
+        if (inMsg instanceof SessionOpenMsg) {
+            logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
+            sessions.put(sessionId, new SessionInfo(SessionType.ASYNC, msg.getServerAddress()));
+        } else if (inMsg instanceof SessionCloseMsg) {
             logger.debug("[{}] Canceling subscriptions for closed session [{}]", deviceId, sessionId);
+            sessions.remove(sessionId);
             attributeSubscriptions.remove(sessionId);
             rpcSubscriptions.remove(sessionId);
         }
@@ -363,4 +364,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         return systemContext.getAttributesService().findAll(this.deviceId, attributeType);
     }
 
+    public void processCredentialsUpdate(ActorContext context, DeviceCredentialsUpdateNotificationMsg msg) {
+        sessions.forEach((k, v) -> {
+            sendMsgToSessionActor(new BasicToDeviceSessionActorMsg(new SessionCloseNotification(), k), v.getServer());
+        });
+        attributeSubscriptions.clear();
+        rpcSubscriptions.clear();
+    }
 }
