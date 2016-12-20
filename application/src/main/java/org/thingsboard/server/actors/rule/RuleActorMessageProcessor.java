@@ -234,18 +234,18 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
         logger.info("[{}] Rule configuration was updated from {} to {}.", entityId, oldRuleMd, ruleMd);
         try {
             fetchPluginInfo();
-            if (!Objects.equals(oldRuleMd.getFilters(), ruleMd.getFilters())) {
+            if (filters == null || !Objects.equals(oldRuleMd.getFilters(), ruleMd.getFilters())) {
                 logger.info("[{}] Rule filters require restart due to json change from {} to {}.",
                         entityId, mapper.writeValueAsString(oldRuleMd.getFilters()), mapper.writeValueAsString(ruleMd.getFilters()));
                 stopFilters();
                 initFilters();
             }
-            if (!Objects.equals(oldRuleMd.getProcessor(), ruleMd.getProcessor())) {
+            if (processor == null || !Objects.equals(oldRuleMd.getProcessor(), ruleMd.getProcessor())) {
                 logger.info("[{}] Rule processor require restart due to configuration change.", entityId);
                 stopProcessor();
                 initProcessor();
             }
-            if (!Objects.equals(oldRuleMd.getAction(), ruleMd.getAction())) {
+            if (action == null || !Objects.equals(oldRuleMd.getAction(), ruleMd.getAction())) {
                 logger.info("[{}] Rule action require restart due to configuration change.", entityId);
                 stopAction();
                 initAction();
@@ -272,13 +272,15 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
         if (action != null) {
             if (filters != null) {
                 filters.forEach(f -> f.resume());
+            } else {
+                initFilters();
             }
             if (processor != null) {
                 processor.resume();
+            } else {
+                initProcessor();
             }
-            if (action != null) {
-                action.resume();
-            }
+            action.resume();
             logger.info("[{}] Rule resumed.", entityId);
         } else {
             start();
