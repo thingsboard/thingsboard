@@ -16,6 +16,7 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import deviceAliasesTemplate from './device-aliases.tpl.html';
+import dashboardBackgroundTemplate from './dashboard-settings.tpl.html';
 import addWidgetTemplate from './add-widget.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -55,6 +56,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.onAddWidgetClosed = onAddWidgetClosed;
     vm.onEditWidgetClosed = onEditWidgetClosed;
     vm.openDeviceAliases = openDeviceAliases;
+    vm.openDashboardSettings = openDashboardSettings;
     vm.removeWidget = removeWidget;
     vm.saveDashboard = saveDashboard;
     vm.saveWidget = saveWidget;
@@ -252,6 +254,24 @@ export default function DashboardController(types, widgetService, userService,
         });
     }
 
+    function openDashboardSettings($event) {
+        $mdDialog.show({
+            controller: 'DashboardSettingsController',
+            controllerAs: 'vm',
+            templateUrl: dashboardBackgroundTemplate,
+            locals: {
+                gridSettings: angular.copy(vm.dashboard.configuration.gridSettings)
+            },
+            parent: angular.element($document[0].body),
+            skipHide: true,
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function (gridSettings) {
+            vm.dashboard.configuration.gridSettings = gridSettings;
+        }, function () {
+        });
+    }
+
     function editWidget($event, widget) {
         $event.stopPropagation();
         var newEditingIndex = vm.widgets.indexOf(widget);
@@ -368,6 +388,15 @@ export default function DashboardController(types, widgetService, userService,
                         w.triggerHandler('resize');
                     }
                 }).then(function (widget) {
+                    var columns = 24;
+                    if (vm.dashboard.configuration.gridSettings && vm.dashboard.configuration.gridSettings.columns) {
+                        columns = vm.dashboard.configuration.gridSettings.columns;
+                    }
+                    if (columns != 24) {
+                        var ratio = columns / 24;
+                        widget.sizeX *= ratio;
+                        widget.sizeY *= ratio;
+                    }
                     vm.widgets.push(widget);
                 }, function () {
                 });

@@ -51,6 +51,7 @@ function Dashboard() {
             widgets: '=',
             deviceAliasList: '=',
             columns: '=',
+            margins: '=',
             isEdit: '=',
             isMobile: '=',
             isMobileDisabled: '=?',
@@ -61,7 +62,8 @@ function Dashboard() {
             onWidgetClicked: '&?',
             loadWidgets: '&?',
             onInit: '&?',
-            onInitFailed: '&?'
+            onInitFailed: '&?',
+            dashboardStyle: '=?'
         },
         controller: DashboardController,
         controllerAs: 'vm',
@@ -108,7 +110,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
         },
         isMobile: vm.isMobileDisabled ? false : vm.isMobile,
         mobileBreakPoint: vm.isMobileDisabled ? 0 : (vm.isMobile ? 20000 : 960),
-        margins: [10, 10],
+        margins: vm.margins ? vm.margins : [10, 10],
         saveGridItemCalculatedHeightInMobile: true
     };
 
@@ -159,6 +161,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
 
     $scope.$watch('vm.columns', function () {
         vm.gridsterOpts.columns = vm.columns ? vm.columns : 24;
+    });
+
+    $scope.$watch('vm.margins', function () {
+        vm.gridsterOpts.margins = vm.margins ? vm.margins : [10, 10];
     });
 
     $scope.$watch('vm.isEdit', function () {

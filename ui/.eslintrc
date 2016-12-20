@@ -11,5 +11,8 @@
       "node_modules",
       "\\.tpl\\.html$"
     ]
+  },
+  "globals": {
+    "FileReader": true
   }
 }

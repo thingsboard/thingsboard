@@ -42,6 +42,7 @@ import 'react-dom';
 import 'material-ui';
 import 'react-schema-form';
 import react from 'ngreact';
+import '@flowjs/ng-flow/dist/ng-flow-standalone.min';
 
 import thingsboardLogin from './login';
 import thingsboardDialogs from './components/datakey-config-dialog.controller';
@@ -88,6 +89,7 @@ angular.module('thingsboard', [
     'angular-carousel',
     'ngclipboard',
     react.name,
+    'flow',
     thingsboardLogin,
     thingsboardDialogs,
     thingsboardMenu,
