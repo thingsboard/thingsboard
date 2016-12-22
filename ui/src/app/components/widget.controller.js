@@ -319,9 +319,10 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
 
     function onRedraw(delay, dataUpdate) {
-        if (!visible) {
+        //TODO:
+        /*if (!visible) {
             return;
-        }
+        }*/
         if (angular.isUndefined(delay)) {
             delay = 0;
         }
