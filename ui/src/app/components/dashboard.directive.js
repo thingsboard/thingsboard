@@ -161,10 +161,20 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
 
     $scope.$watch('vm.columns', function () {
         vm.gridsterOpts.columns = vm.columns ? vm.columns : 24;
+        if (gridster) {
+            gridster.columns = vm.columns;
+            updateGridsterParams();
+        }
+        updateVisibleRect();
     });
 
     $scope.$watch('vm.margins', function () {
         vm.gridsterOpts.margins = vm.margins ? vm.margins : [10, 10];
+        if (gridster) {
+            gridster.margins = vm.margins;
+            updateGridsterParams();
+        }
+        updateVisibleRect();
     });
 
     $scope.$watch('vm.isEdit', function () {
@@ -228,6 +238,26 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
                 dashboardLoaded();
             }
         }, 0, false);
+    }
+
+    function updateGridsterParams() {
+        if (gridster) {
+            if (gridster.colWidth === 'auto') {
+                gridster.curColWidth = (gridster.curWidth + (gridster.outerMargin ? -gridster.margins[1] : gridster.margins[1])) / gridster.columns;
+            } else {
+                gridster.curColWidth = gridster.colWidth;
+            }
+            gridster.curRowHeight = gridster.rowHeight;
+            if (angular.isString(gridster.rowHeight)) {
+                if (gridster.rowHeight === 'match') {
+                    gridster.curRowHeight = Math.round(gridster.curColWidth);
+                } else if (gridster.rowHeight.indexOf('*') !== -1) {
+                    gridster.curRowHeight = Math.round(gridster.curColWidth * gridster.rowHeight.replace('*', '').replace(' ', ''));
+                } else if (gridster.rowHeight.indexOf('/') !== -1) {
+                    gridster.curRowHeight = Math.round(gridster.curColWidth / gridster.rowHeight.replace('/', '').replace(' ', ''));
+                }
+            }
+        }
     }
 
     function updateVisibleRect (force, containerResized) {
