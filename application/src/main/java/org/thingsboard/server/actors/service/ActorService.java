@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.service;
 
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,4 +29,6 @@ public interface ActorService extends SessionMsgProcessor, WebSocketMsgProcessor
     void onPluginStateChange(TenantId tenantId, PluginId pluginId, ComponentLifecycleEvent state);
 
     void onRuleStateChange(TenantId tenantId, RuleId ruleId, ComponentLifecycleEvent state);
+
+    void onCredentialsUpdate(TenantId tenantId, DeviceId deviceId);
 }

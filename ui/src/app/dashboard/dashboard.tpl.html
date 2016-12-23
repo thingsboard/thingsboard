@@ -59,10 +59,22 @@
         <md-button class="md-raised" flex="none" ng-show="vm.isEdit" ng-click="vm.openDeviceAliases($event)">
             {{ 'device.aliases' | translate }}
         </md-button>
+        <md-button class="md-raised" flex="none" ng-show="vm.isEdit" ng-click="vm.openDashboardSettings($event)">
+            {{ 'dashboard.settings' | translate }}
+        </md-button>
     </section>
-    <div class="tb-absolute-fill" ng-class="{ 'tb-padded' : !vm.widgetEditMode, 'tb-shrinked' : vm.isEditingWidget }">
+    <div class="tb-absolute-fill"
+         ng-class="{ 'tb-padded' : !vm.widgetEditMode, 'tb-shrinked' : vm.isEditingWidget }">
         <tb-dashboard
+                dashboard-style="{'background-color': vm.dashboard.configuration.gridSettings.backgroundColor,
+                                  'background-image': 'url('+vm.dashboard.configuration.gridSettings.backgroundImageUrl+')',
+                                  'background-repeat': 'no-repeat',
+                                  'background-attachment': 'scroll',
+                                  'background-size': '100%',
+                                  'background-position': '0% 0%'}"
                 widgets="vm.widgets"
+                columns="vm.dashboard.configuration.gridSettings.columns"
+                margins="vm.dashboard.configuration.gridSettings.margins"
                 device-alias-list="vm.dashboard.configuration.deviceAliases"
                 is-edit="vm.isEdit || vm.widgetEditMode"
                 is-mobile="vm.forceDashboardMobileMode"

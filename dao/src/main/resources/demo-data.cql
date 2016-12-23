@@ -287,10 +287,10 @@ VALUES (
 	'org.thingsboard.server.extensions.core.plugin.mail.MailPlugin',
 	true,
 	'{
-       "host": "smtp.gmail.com",
-       "port": 587,
-       "username": "username@gmail.com",
-       "password": "password",
+       "host": "smtp.sendgrid.net",
+       "port": 2525,
+       "username": "apikey",
+       "password": "your_api_key",
        "otherProperties": [
          {
            "key":"mail.smtp.auth",
@@ -303,14 +303,6 @@ VALUES (
          {
            "key":"mail.smtp.starttls.enable",
            "value":"true"
-         },
-         {
-           "key":"mail.smtp.host",
-           "value":"smtp.gmail.com"
-         },
-         {
-           "key":"mail.smtp.port",
-           "value":"587"
          }
        ]
      }'

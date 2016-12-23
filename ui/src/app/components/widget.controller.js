@@ -159,12 +159,18 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     };
 
     vm.gridsterItemInitialized = gridsterItemInitialized;
+    vm.visibleRectChanged = visibleRectChanged;
 
     function gridsterItemInitialized(item) {
         if (item) {
             gridsterItemElement = $(item.$element);
             updateVisibility();
         }
+    }
+
+    function visibleRectChanged(newVisibleRect) {
+        visibleRect = newVisibleRect;
+        updateVisibility();
     }
 
     initWidget();
@@ -219,11 +225,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }, function () {
             updateBounds();
             $scope.$emit("widgetPositionChanged", widget);
-        });
-
-        $scope.$on('visibleRectChanged', function (event, newVisibleRect) {
-            visibleRect = newVisibleRect;
-            updateVisibility();
         });
 
         $scope.$on('onWidgetFullscreenChanged', function(event, isWidgetExpanded, fullscreenWidget) {
@@ -318,9 +319,10 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
 
     function onRedraw(delay, dataUpdate) {
-        if (!visible) {
+        //TODO:
+        /*if (!visible) {
             return;
-        }
+        }*/
         if (angular.isUndefined(delay)) {
             delay = 0;
         }

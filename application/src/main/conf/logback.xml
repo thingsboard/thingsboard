@@ -24,7 +24,7 @@
         <file>${pkg.logFolder}/${pkg.name}.log</file>
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${pkg.name}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${pkg.logFolder}/${pkg.name}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>

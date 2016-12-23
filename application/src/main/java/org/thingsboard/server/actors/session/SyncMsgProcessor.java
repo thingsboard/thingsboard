@@ -52,7 +52,7 @@ class SyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     public void processTimeoutMsg(ActorContext context, SessionTimeoutMsg msg) {
         if (pendingResponse) {
             try {
-                sessionCtx.onMsg(new SessionCloseMsg(sessionId, true));
+                sessionCtx.onMsg(SessionCloseMsg.onTimeout(sessionId));
             } catch (SessionException e) {
                 logger.warning("Failed to push session close msg", e);
             }

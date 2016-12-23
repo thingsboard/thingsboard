@@ -20,15 +20,14 @@ import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.core.AttributesSubscribeMsg;
-import org.thingsboard.server.common.msg.core.ResponseMsg;
-import org.thingsboard.server.common.msg.core.RpcSubscribeMsg;
+import org.thingsboard.server.common.msg.core.*;
 import org.thingsboard.server.common.msg.core.SessionCloseMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.*;
 
 import akka.actor.ActorContext;
 import akka.event.LoggingAdapter;
+import org.thingsboard.server.common.msg.session.ctrl.*;
 import org.thingsboard.server.common.msg.session.ex.SessionException;
 
 import java.util.HashMap;
@@ -37,7 +36,8 @@ import java.util.Optional;
 
 class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
 
-    Map<Integer, ToDeviceActorMsg> pendingMap = new HashMap<>();
+    private boolean firstMsg = true;
+    private Map<Integer, ToDeviceActorMsg> pendingMap = new HashMap<>();
     private Optional<ServerAddress> currentTargetServer;
     private boolean subscribedToAttributeUpdates;
     private boolean subscribedToRpcCommands;
@@ -49,6 +49,10 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     @Override
     protected void processToDeviceActorMsg(ActorContext ctx, ToDeviceActorSessionMsg msg) {
         updateSessionCtx(msg, SessionType.ASYNC);
+        if (firstMsg) {
+            toDeviceMsg(new SessionOpenMsg()).ifPresent(m -> forwardToAppActor(ctx, m));
+            firstMsg = false;
+        }
         ToDeviceActorMsg pendingMsg = toDeviceMsg(msg);
         FromDeviceMsg fromDeviceMsg = pendingMsg.getPayload();
         switch (fromDeviceMsg.getMsgType()) {
@@ -80,17 +84,21 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     @Override
     public void processToDeviceMsg(ActorContext context, ToDeviceMsg msg) {
         try {
-            switch (msg.getMsgType()) {
-                case STATUS_CODE_RESPONSE:
-                case GET_ATTRIBUTES_RESPONSE:
-                    ResponseMsg responseMsg = (ResponseMsg) msg;
-                    if (responseMsg.getRequestId() >= 0) {
-                        logger.debug("[{}] Pending request processed: {}", responseMsg.getRequestId(), responseMsg);
-                        pendingMap.remove(responseMsg.getRequestId());
-                    }
-                    break;
+            if (msg.getMsgType() != MsgType.SESSION_CLOSE) {
+                switch (msg.getMsgType()) {
+                    case STATUS_CODE_RESPONSE:
+                    case GET_ATTRIBUTES_RESPONSE:
+                        ResponseMsg responseMsg = (ResponseMsg) msg;
+                        if (responseMsg.getRequestId() >= 0) {
+                            logger.debug("[{}] Pending request processed: {}", responseMsg.getRequestId(), responseMsg);
+                            pendingMap.remove(responseMsg.getRequestId());
+                        }
+                        break;
+                }
+                sessionCtx.onMsg(new BasicSessionActorToAdaptorMsg(this.sessionCtx, msg));
+            } else {
+                sessionCtx.onMsg(org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg.onCredentialsRevoked(sessionCtx.getSessionId()));
             }
-            sessionCtx.onMsg(new BasicSessionActorToAdaptorMsg(this.sessionCtx, msg));
         } catch (SessionException e) {
             logger.warning("Failed to push session response msg", e);
         }
@@ -102,7 +110,7 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     }
 
     protected void cleanupSession(ActorContext ctx) {
-        toDeviceMsg(new SessionCloseMsg()).ifPresent(msg -> forwardToAppActor(ctx, msg));
+        toDeviceMsg(new SessionCloseMsg()).ifPresent(m -> forwardToAppActor(ctx, m));
     }
 
     @Override
@@ -110,6 +118,7 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
         if (pendingMap.size() > 0 || subscribedToAttributeUpdates || subscribedToRpcCommands) {
             Optional<ServerAddress> newTargetServer = systemContext.getRoutingService().resolve(getDeviceId());
             if (!newTargetServer.equals(currentTargetServer)) {
+                firstMsg = true;
                 currentTargetServer = newTargetServer;
                 pendingMap.values().forEach(v -> {
                     forwardToAppActor(context, v, currentTargetServer);
