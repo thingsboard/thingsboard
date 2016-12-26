@@ -27,7 +27,7 @@ import java.util.Arrays;
  * @author Valerii Sosliuk
  */
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.mqtt.*.*Test"})
+@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.mqtt.*.MqttServerSideRpcIntegrationTest"})
 public class MqttSuite {
 
     @ClassRule
