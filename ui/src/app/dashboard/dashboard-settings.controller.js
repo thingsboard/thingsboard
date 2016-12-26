@@ -28,6 +28,10 @@ export default function DashboardSettingsController($scope, $mdDialog, gridSetti
 
     vm.gridSettings = gridSettings || {};
 
+    if (angular.isUndefined(vm.gridSettings.showTitle)) {
+        vm.gridSettings.showTitle = true;
+    }
+
     vm.gridSettings.backgroundColor = vm.gridSettings.backgroundColor || 'rgba(0,0,0,0)';
     vm.gridSettings.columns = vm.gridSettings.columns || 24;
     vm.gridSettings.margins = vm.gridSettings.margins || [10, 10];
