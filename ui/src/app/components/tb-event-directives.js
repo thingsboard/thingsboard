@@ -20,7 +20,7 @@ const PREFIX_REGEXP = /^((?:x|data)[\:\-_])/i;
 var tbEventDirectives = {};
 
 angular.forEach(
-    'click dblclick mousedown mouseup mouseover mouseout mousemove mouseenter mouseleave keydown keyup keypress submit focus blur copy cut paste'.split(' '),
+    'click dblclick mousedown mouseup mouseover mouseout mousemove mouseenter mouseleave contextmenu keydown keyup keypress submit focus blur copy cut paste'.split(' '),
     function(eventName) {
         var directiveName = directiveNormalize('tb-' + eventName);
         tbEventDirectives[directiveName] = ['$parse', '$rootScope', function($parse) {

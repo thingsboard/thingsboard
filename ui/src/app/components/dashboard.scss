@@ -20,6 +20,7 @@ div.tb-widget {
   height: 100%;
   margin: 0;
   overflow: hidden;
+  outline: none;
   @include transition(all .2s ease-in-out);
 
   .tb-widget-title {
@@ -91,6 +92,7 @@ md-content.tb-dashboard-content {
   left: 0;
   right: 0;
   bottom: 0;
+  outline: none;
 }
 
 .tb-widget-error-container {

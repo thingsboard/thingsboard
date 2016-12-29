@@ -31,6 +31,11 @@
         <md-dialog-content>
             <div class="md-dialog-content">
                 <fieldset ng-disabled="loading">
+                    <div layout="row" layout-padding>
+                        <md-checkbox flex aria-label="{{ 'dashboard.display-title' | translate }}"
+                                     ng-model="vm.gridSettings.showTitle">{{ 'dashboard.display-title' | translate }}
+                        </md-checkbox>
+                    </div>
                     <md-input-container class="md-block">
                         <label translate>dashboard.columns-count</label>
                         <input required type="number" step="any" name="columns" ng-model="vm.gridSettings.columns" min="10"

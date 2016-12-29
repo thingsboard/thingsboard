@@ -105,7 +105,8 @@
                     <tb-widgets-bundle-select flex-offset="5"
                                               flex
                                               ng-model="widgetsBundle"
-                                              select-first-bundle="false">
+                                              select-first-bundle="false"
+                                              select-bundle-alias="selectedWidgetsBundleAlias">
                     </tb-widgets-bundle-select>
                 </div>
                 <md-button ng-show="widgetsList.length > 0" class="md-accent md-hue-2 md-raised" ng-click="addWidgetToDashboard($event)">
