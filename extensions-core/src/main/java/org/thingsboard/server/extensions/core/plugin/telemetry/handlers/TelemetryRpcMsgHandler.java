@@ -19,6 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.RpcMsgHandler;
@@ -42,9 +43,10 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
     private final SubscriptionManager subscriptionManager;
 
     private static final int SUBSCRIPTION_CLAZZ = 1;
-    private static final int SUBSCRIPTION_UPDATE_CLAZZ = 2;
-    private static final int SESSION_CLOSE_CLAZZ = 3;
-    private static final int SUBSCRIPTION_CLOSE_CLAZZ = 4;
+    private static final int ATTRIBUTES_UPDATE_CLAZZ = 2;
+    private static final int SUBSCRIPTION_UPDATE_CLAZZ = 3;
+    private static final int SESSION_CLOSE_CLAZZ = 4;
+    private static final int SUBSCRIPTION_CLOSE_CLAZZ = 5;
 
     @Override
     public void process(PluginContext ctx, RpcMsg msg) {
@@ -54,6 +56,9 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
                 break;
             case SUBSCRIPTION_UPDATE_CLAZZ:
                 processRemoteSubscriptionUpdate(ctx, msg);
+                break;
+            case ATTRIBUTES_UPDATE_CLAZZ:
+                processAttributeUpdate(ctx, msg);
                 break;
             case SESSION_CLOSE_CLAZZ:
                 processSessionClose(ctx, msg);
@@ -74,6 +79,17 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
             throw new RuntimeException(e);
         }
         subscriptionManager.onRemoteSubscriptionUpdate(ctx, proto.getSessionId(), convert(proto));
+    }
+
+    private void processAttributeUpdate(PluginContext ctx, RpcMsg msg) {
+        AttributeUpdateProto proto;
+        try {
+            proto = AttributeUpdateProto.parseFrom(msg.getMsgData());
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+        subscriptionManager.onAttributesUpdateFromServer(ctx, DeviceId.fromString(proto.getDeviceId()), proto.getScope(),
+                proto.getDataList().stream().map(this::toAttribute).collect(Collectors.toList()));
     }
 
     private void processSubscriptionCmd(PluginContext ctx, RpcMsg msg) {
@@ -167,11 +183,7 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         } else {
             Map<String, List<Object>> data = new TreeMap<>();
             proto.getDataList().forEach(v -> {
-                List<Object> values = data.get(v.getKey());
-                if (values == null) {
-                    values = new ArrayList<>();
-                    data.put(v.getKey(), values);
-                }
+                List<Object> values = data.computeIfAbsent(v.getKey(), k -> new ArrayList<>());
                 for (int i = 0; i < v.getTsCount(); i++) {
                     Object[] value = new Object[2];
                     value[0] = v.getTs(i);
@@ -182,4 +194,59 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
             return new SubscriptionUpdate(proto.getSubscriptionId(), data);
         }
     }
+
+    public void onAttributesUpdate(PluginContext ctx, ServerAddress address, DeviceId deviceId, String scope, List<AttributeKvEntry> attributes) {
+        ctx.sendPluginRpcMsg(new RpcMsg(address, ATTRIBUTES_UPDATE_CLAZZ, getAttributesUpdateProto(deviceId, scope, attributes).toByteArray()));
+    }
+
+    private AttributeUpdateProto getAttributesUpdateProto(DeviceId deviceId, String scope, List<AttributeKvEntry> attributes) {
+        AttributeUpdateProto.Builder builder = AttributeUpdateProto.newBuilder();
+        builder.setDeviceId(deviceId.toString());
+        builder.setScope(scope);
+        attributes.forEach(
+                attr -> {
+                    AttributeUpdateValueListProto.Builder dataBuilder = AttributeUpdateValueListProto.newBuilder();
+                    dataBuilder.setKey(attr.getKey());
+                    dataBuilder.setTs(attr.getLastUpdateTs());
+                    dataBuilder.setValueType(attr.getDataType().ordinal());
+                    switch (attr.getDataType()) {
+                        case BOOLEAN:
+                            dataBuilder.setBoolValue(attr.getBooleanValue().get());
+                            break;
+                        case LONG:
+                            dataBuilder.setLongValue(attr.getLongValue().get());
+                            break;
+                        case DOUBLE:
+                            dataBuilder.setDoubleValue(attr.getDoubleValue().get());
+                            break;
+                        case STRING:
+                            dataBuilder.setStrValue(attr.getStrValue().get());
+                            break;
+                    }
+                    builder.addData(dataBuilder.build());
+                }
+        );
+        return builder.build();
+    }
+
+    private AttributeKvEntry toAttribute(AttributeUpdateValueListProto proto) {
+        KvEntry entry = null;
+        DataType type = DataType.values()[proto.getValueType()];
+        switch (type) {
+            case BOOLEAN:
+                entry = new BooleanDataEntry(proto.getKey(), proto.getBoolValue());
+                break;
+            case LONG:
+                entry = new LongDataEntry(proto.getKey(), proto.getLongValue());
+                break;
+            case DOUBLE:
+                entry = new DoubleDataEntry(proto.getKey(), proto.getDoubleValue());
+                break;
+            case STRING:
+                entry = new StringDataEntry(proto.getKey(), proto.getStrValue());
+                break;
+        }
+        return new BaseAttributeKvEntry(entry, proto.getTs());
+    }
+
 }

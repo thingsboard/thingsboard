@@ -29,6 +29,8 @@ public class DataConstants {
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
 
+    public static final String[] ALL_SCOPES = {CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
+
     public static final String ALARM = "ALARM";
     public static final String ERROR = "ERROR";
     public static final String LC_EVENT = "LC_EVENT";

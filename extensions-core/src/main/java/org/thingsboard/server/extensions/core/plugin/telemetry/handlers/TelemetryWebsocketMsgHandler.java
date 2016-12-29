@@ -104,7 +104,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 SubscriptionState sub;
                 if (keysOptional.isPresent()) {
                     List<String> keys = new ArrayList<>(keysOptional.get());
-                    List<AttributeKvEntry> data = ctx.loadAttributes(deviceId, DataConstants.CLIENT_SCOPE, keys);
+                    List<AttributeKvEntry> data = new ArrayList<>();
+                    Arrays.stream(DataConstants.ALL_SCOPES).forEach(s -> data.addAll(ctx.loadAttributes(deviceId, s, keys)));
                     List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
                     sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), attributesData));
 
@@ -114,7 +115,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
 
                     sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.ATTRIBUTES, false, subState);
                 } else {
-                    List<AttributeKvEntry> data = ctx.loadAttributes(deviceId, DataConstants.CLIENT_SCOPE);
+                    List<AttributeKvEntry> data = new ArrayList<>();
+                    Arrays.stream(DataConstants.ALL_SCOPES).forEach(s -> data.addAll(ctx.loadAttributes(deviceId, s)));
                     List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
                     sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), attributesData));
 
