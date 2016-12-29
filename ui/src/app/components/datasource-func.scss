@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../scss/constants';
+
 .tb-func-datakey-autocomplete {
   .tb-not-found {
     display: block;
@@ -25,5 +28,11 @@
   li {
     height: auto !important;
     white-space: normal !important;
+  }
+}
+
+tb-datasource-func {
+  @media (min-width: $layout-breakpoint-gt-sm) {
+    padding-left: 8px;
   }
 }

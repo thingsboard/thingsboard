@@ -55,11 +55,25 @@ function WidgetsBundleSelect($compile, $templateCache, widgetService, types) {
                     if (widgetsBundles.length > 0) {
                         scope.widgetsBundle = widgetsBundles[0];
                     }
+                } else if (angular.isDefined(scope.selectBundleAlias)) {
+                    selectWidgetsBundleByAlias(scope.selectBundleAlias);
                 }
             },
             function fail() {
             }
         );
+
+        function selectWidgetsBundleByAlias(alias) {
+            if (scope.widgetsBundles && alias) {
+                for (var w in scope.widgetsBundles) {
+                    var widgetsBundle = scope.widgetsBundles[w];
+                    if (widgetsBundle.alias === alias) {
+                        scope.widgetsBundle = widgetsBundle;
+                        break;
+                    }
+                }
+            }
+        }
 
         scope.isSystem = function(item) {
             return item && item.tenantId.id === types.id.nullUid;
@@ -79,6 +93,12 @@ function WidgetsBundleSelect($compile, $templateCache, widgetService, types) {
             scope.updateView();
         });
 
+        scope.$watch('selectBundleAlias', function (newVal, prevVal) {
+            if (newVal !== prevVal) {
+                selectWidgetsBundleByAlias(scope.selectBundleAlias);
+            }
+        });
+
         $compile(element.contents())(scope);
     }
 
@@ -90,7 +110,8 @@ function WidgetsBundleSelect($compile, $templateCache, widgetService, types) {
             bundlesScope: '@',
             theForm: '=?',
             tbRequired: '=?',
-            selectFirstBundle: '='
+            selectFirstBundle: '=',
+            selectBundleAlias: '=?'
         }
     };
 }

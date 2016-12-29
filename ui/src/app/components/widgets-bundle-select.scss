@@ -35,10 +35,12 @@ tb-widgets-bundle-select {
 
 tb-widgets-bundle-select, .tb-widgets-bundle-select {
   .md-text {
+    display: block;
     width: 100%;
   }
   .tb-bundle-item {
-    display: block;
+    display: inline-block;
+    width: 100%;
     span {
       display: inline-block;
       vertical-align: middle;

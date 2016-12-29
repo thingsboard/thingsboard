@@ -34,12 +34,19 @@ function Widget($controller, $compile, widgetService) {
             var widget = locals.widget;
             var gridsterItem;
 
+            scope.$on('visibleRectChanged', function (event, newVisibleRect) {
+                locals.visibleRect = newVisibleRect;
+                if (widgetController) {
+                    widgetController.visibleRectChanged(newVisibleRect);
+                }
+            });
+
             scope.$on('gridster-item-initialized', function (event, item) {
                 gridsterItem = item;
                 if (widgetController) {
                     widgetController.gridsterItemInitialized(gridsterItem);
                 }
-            })
+            });
 
             elem.html('<div flex layout="column" layout-align="center center" style="height: 100%;">' +
                       '     <md-progress-circular md-mode="indeterminate" class="md-accent md-hue-2" md-diameter="120"></md-progress-circular>' +

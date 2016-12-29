@@ -293,7 +293,8 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         var deviceAttributesSubscription = deviceAttributesSubscriptionMap[subscriptionId];
         if (!deviceAttributesSubscription) {
             var subscriptionCommand = {
-                deviceId: deviceId
+                deviceId: deviceId,
+                scope: attributeScope
             };
 
             var type = attributeScope === types.latestTelemetry.value ?

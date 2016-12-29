@@ -15,16 +15,16 @@
     limitations under the License.
 
 -->
-<section flex layout='row' layout-align="start center">
-	   <tb-device-alias-select flex="40"
+<section flex layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
+	   <tb-device-alias-select
 							  tb-required="true"
 							  device-aliases="deviceAliases"
 							  ng-model="deviceAlias"
 							  on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})">
 	   </tb-device-alias-select>
-	   <section flex="120" layout='column'>
-		   <section flex layout='row' layout-align="start center">
-			   <md-chips flex style="padding-left: 4px;"
+	   <section flex layout='column'>
+		   <section flex layout='column' layout-align="center" style="padding-left: 4px;">
+			   <md-chips flex
 						 id="timeseries_datakey_chips"
 						 ng-required="true"
 						 ng-model="timeseriesDataKeys" md-autocomplete-snap
@@ -56,14 +56,19 @@
 							</md-not-found>
 					  </md-autocomplete>
 					  <md-chip-template>
-						<div layout="row" layout-align="start center">
+						<div layout="row" layout-align="start center" class="tb-attribute-chip">
 							<div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
 								<div class="tb-color-result" ng-style="{background: $chip.color}"></div>
 							</div>
-							<div>
-							  {{$chip.label}}:
-							  <strong ng-if="!$chip.postFuncBody">{{$chip.name}}</strong>
-							  <strong ng-if="$chip.postFuncBody">f({{$chip.name}})</strong>
+							<div layout="row" flex>
+							  <div class="tb-chip-label">
+							  	{{$chip.label}}
+							  </div>
+							  <div class="tb-chip-separator">: </div>
+							  <div class="tb-chip-label">
+								  <strong ng-if="!$chip.postFuncBody">{{$chip.name}}</strong>
+								  <strong ng-if="$chip.postFuncBody">f({{$chip.name}})</strong>
+							  </div>
 							</div>
 							<md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
 								<md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
@@ -71,7 +76,7 @@
 						</div>
 					  </md-chip-template>
 			   </md-chips>
-			   <md-chips flex ng-if="widgetType === types.widgetType.latest.value" style="padding-left: 4px;"
+			   <md-chips flex ng-if="widgetType === types.widgetType.latest.value"
                          id="attribute_datakey_chips"
                          ng-required="true"
                          ng-model="attributeDataKeys" md-autocomplete-snap
@@ -103,19 +108,24 @@
 						    </md-not-found>
 					  </md-autocomplete>
 					  <md-chip-template>
-						<div layout="row" layout-align="start center">
-							<div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
-								<div class="tb-color-result" ng-style="{background: $chip.color}"></div>
-							</div>
-							<div>
-							  {{$chip.label}}:
-							  <strong ng-if="!$chip.postFuncBody">{{$chip.name}}</strong>
-							  <strong ng-if="$chip.postFuncBody">f({{$chip.name}})</strong>
-							</div>
-							<md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
-								<md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
-							</md-button>
-						</div>
+						  <div layout="row" layout-align="start center" class="tb-attribute-chip">
+							  <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
+								  <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
+							  </div>
+							  <div layout="row" flex>
+								  <div class="tb-chip-label">
+									  {{$chip.label}}
+								  </div>
+								  <div class="tb-chip-separator">: </div>
+								  <div class="tb-chip-label">
+									  <strong ng-if="!$chip.postFuncBody">{{$chip.name}}</strong>
+									  <strong ng-if="$chip.postFuncBody">f({{$chip.name}})</strong>
+								  </div>
+							  </div>
+							  <md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
+								  <md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
+							  </md-button>
+						  </div>
 					  </md-chip-template>
 			   </md-chips>
 		   </section>

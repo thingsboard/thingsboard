@@ -162,8 +162,13 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             Integer requestId = Integer.valueOf(topicName.substring(MqttTransportHandler.ATTRIBUTES_REQUEST_TOPIC_PREFIX.length()));
             String payload = inbound.payload().toString(UTF8);
             JsonElement requestBody = new JsonParser().parse(payload);
-            return new BasicGetAttributesRequest(requestId,
-                    toStringSet(requestBody, "clientKeys"), toStringSet(requestBody, "sharedKeys"));
+            Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
+            Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
+            if (clientKeys == null && sharedKeys == null) {
+                return new BasicGetAttributesRequest(requestId);
+            } else {
+                return new BasicGetAttributesRequest(requestId, clientKeys, sharedKeys);
+            }
         } catch (RuntimeException e) {
             log.warn("Failed to decode get attributes request", e);
             throw new AdaptorException(e);
@@ -189,7 +194,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         if (element != null) {
             return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
         } else {
-            return Collections.emptySet();
+            return null;
         }
     }
 

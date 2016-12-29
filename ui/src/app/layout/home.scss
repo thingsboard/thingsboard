@@ -29,6 +29,11 @@
 .tb-breadcrumb {
   font-size: 18px !important;
   font-weight: 400 !important;
+  h1, a, span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   a {
     border: none;
     opacity: 0.75;

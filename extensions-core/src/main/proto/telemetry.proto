@@ -36,6 +36,12 @@ message SubscriptionUpdateProto {
     repeated SubscriptionUpdateValueListProto data = 5;
 }
 
+message AttributeUpdateProto {
+    string deviceId = 1;
+    string scope = 2;
+    repeated AttributeUpdateValueListProto data = 3;
+}
+
 message SessionCloseProto {
     string sessionId = 1;
 }
@@ -54,4 +60,14 @@ message SubscriptionUpdateValueListProto {
     string key = 1;
     repeated int64 ts = 2;
     repeated string value = 3;
+}
+
+message AttributeUpdateValueListProto {
+    string key = 1;
+    int64 ts = 2;
+    int32 valueType = 3;
+    string strValue = 4;
+    int64 longValue = 5;
+    double doubleValue = 6;
+    bool boolValue = 7;
 }

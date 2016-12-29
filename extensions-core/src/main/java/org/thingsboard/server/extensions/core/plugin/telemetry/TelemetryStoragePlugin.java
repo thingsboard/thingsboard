@@ -43,7 +43,7 @@ public class TelemetryStoragePlugin extends AbstractPlugin<EmptyComponentConfigu
 
     public TelemetryStoragePlugin() {
         this.subscriptionManager = new SubscriptionManager();
-        this.restMsgHandler = new TelemetryRestMsgHandler();
+        this.restMsgHandler = new TelemetryRestMsgHandler(subscriptionManager);
         this.ruleMsgHandler = new TelemetryRuleMsgHandler(subscriptionManager);
         this.websocketMsgHandler = new TelemetryWebsocketMsgHandler(subscriptionManager);
         this.rpcMsgHandler = new TelemetryRpcMsgHandler(subscriptionManager);

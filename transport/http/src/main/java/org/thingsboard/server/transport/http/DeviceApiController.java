@@ -38,6 +38,7 @@ import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.transport.http.session.HttpSessionCtx;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -60,20 +61,22 @@ public class DeviceApiController {
 
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = "application/json")
     public DeferredResult<ResponseEntity> getDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
-                                                              @RequestParam(value = "clientKeys", required = false) String clientKeys,
-                                                              @RequestParam(value = "sharedKeys", required = false) String sharedKeys) {
+                                                              @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
+                                                              @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
-        if (StringUtils.isEmpty(clientKeys) && StringUtils.isEmpty(sharedKeys)) {
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-        } else {
-            HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
-            if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
-                Set<String> clientKeySet = new HashSet<>(Arrays.asList(clientKeys.split(",")));
-                Set<String> sharedKeySet = new HashSet<>(Arrays.asList(clientKeys.split(",")));
-                process(ctx, new BasicGetAttributesRequest(0, clientKeySet, sharedKeySet));
+        HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
+        if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
+            GetAttributesRequest request;
+            if (StringUtils.isEmpty(clientKeys) && StringUtils.isEmpty(sharedKeys)) {
+                request = new BasicGetAttributesRequest(0);
             } else {
-                responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
+                Set<String> clientKeySet = !StringUtils.isEmpty(clientKeys) ? new HashSet<>(Arrays.asList(clientKeys.split(","))) : null;
+                Set<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? new HashSet<>(Arrays.asList(sharedKeys.split(","))) : null;
+                request = new BasicGetAttributesRequest(0, clientKeySet, sharedKeySet);
             }
+            process(ctx, request);
+        } else {
+            responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
         }
 
         return responseWriter;
