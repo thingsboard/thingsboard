@@ -182,7 +182,7 @@ public class CoapServerTest {
     public void testNoKeysAttributesGetRequest() {
         CoapClient client = new CoapClient(getBaseTestUrl() + DEVICE1_TOKEN + "/" + FeatureType.ATTRIBUTES.name().toLowerCase() + "?data=key1,key2");
         CoapResponse response = client.setTimeout(6000).get();
-        Assert.assertEquals(ResponseCode.BAD_REQUEST, response.getCode());
+        Assert.assertEquals(ResponseCode.CONTENT, response.getCode());
     }
 
     @Test

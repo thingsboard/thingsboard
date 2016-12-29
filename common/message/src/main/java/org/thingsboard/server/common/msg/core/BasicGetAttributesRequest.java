@@ -18,6 +18,8 @@ package org.thingsboard.server.common.msg.core;
 import lombok.ToString;
 import org.thingsboard.server.common.msg.session.MsgType;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 @ToString
@@ -27,6 +29,10 @@ public class BasicGetAttributesRequest extends BasicRequest implements GetAttrib
 
     private final Set<String> clientKeys;
     private final Set<String> sharedKeys;
+
+    public BasicGetAttributesRequest(Integer requestId) {
+        this(requestId, Collections.emptySet(), Collections.emptySet());
+    }
 
     public BasicGetAttributesRequest(Integer requestId, Set<String> clientKeys, Set<String> sharedKeys) {
         super(requestId);
@@ -40,13 +46,13 @@ public class BasicGetAttributesRequest extends BasicRequest implements GetAttrib
     }
 
     @Override
-    public Set<String> getClientAttributeNames() {
-        return clientKeys;
+    public Optional<Set<String>> getClientAttributeNames() {
+        return Optional.of(clientKeys);
     }
 
     @Override
-    public Set<String> getSharedAttributeNames() {
-        return sharedKeys;
+    public Optional<Set<String>> getSharedAttributeNames() {
+        return Optional.ofNullable(sharedKeys);
     }
 
 }

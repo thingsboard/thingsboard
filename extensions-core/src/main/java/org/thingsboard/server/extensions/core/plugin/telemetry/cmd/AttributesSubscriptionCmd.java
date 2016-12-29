@@ -24,10 +24,6 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionT
 @NoArgsConstructor
 public class AttributesSubscriptionCmd extends SubscriptionCmd {
 
-    public AttributesSubscriptionCmd(int cmdId, String deviceId, String keys, boolean unsubscribe) {
-        super(cmdId, deviceId, keys, unsubscribe);
-    }
-
     @Override
     public SubscriptionType getType() {
         return SubscriptionType.ATTRIBUTES;

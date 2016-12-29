@@ -58,10 +58,14 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
         ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, response));
     }
 
-    private List<AttributeKvEntry> getAttributeKvEntries(PluginContext ctx, DeviceId deviceId, String scope, Set<String> names) {
+    private List<AttributeKvEntry> getAttributeKvEntries(PluginContext ctx, DeviceId deviceId, String scope, Optional<Set<String>> names) {
         List<AttributeKvEntry> attributes;
-        if (!names.isEmpty()) {
-            attributes = ctx.loadAttributes(deviceId, scope, new ArrayList<>(names));
+        if (names.isPresent()) {
+            if (!names.get().isEmpty()) {
+                attributes = ctx.loadAttributes(deviceId, scope, new ArrayList<>(names.get()));
+            } else {
+                attributes = ctx.loadAttributes(deviceId, scope);
+            }
         } else {
             attributes = Collections.emptyList();
         }

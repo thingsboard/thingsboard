@@ -175,6 +175,23 @@ public class SubscriptionManager {
         }
     }
 
+    public void onAttributesUpdateFromServer(PluginContext ctx, DeviceId deviceId, String scope, List<AttributeKvEntry> attributes) {
+        Optional<ServerAddress> serverAddress = ctx.resolve(deviceId);
+        if (!serverAddress.isPresent()) {
+            onLocalSubscriptionUpdate(ctx, deviceId, SubscriptionType.ATTRIBUTES, s -> {
+                List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
+                for (AttributeKvEntry kv : attributes) {
+                    if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {
+                        subscriptionUpdate.add(new BasicTsKvEntry(kv.getLastUpdateTs(), kv));
+                    }
+                }
+                return subscriptionUpdate;
+            });
+        } else {
+            rpcHandler.onAttributesUpdate(ctx, serverAddress.get(), deviceId, scope, attributes);
+        }
+    }
+
     private void updateSubscriptionState(String sessionId, Subscription subState, SubscriptionUpdate update) {
         log.trace("[{}] updating subscription state {} using onUpdate {}", sessionId, subState, update);
         update.getLatestValues().entrySet().forEach(e -> subState.setKeyState(e.getKey(), e.getValue()));

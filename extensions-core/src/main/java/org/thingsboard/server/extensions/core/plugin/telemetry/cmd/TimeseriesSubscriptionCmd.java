@@ -26,11 +26,6 @@ public class TimeseriesSubscriptionCmd extends SubscriptionCmd {
 
     private long timeWindow;
 
-    public TimeseriesSubscriptionCmd(int cmdId, String deviceId, String keys, boolean unsubscribe, long timeWindow) {
-        super(cmdId, deviceId, keys, unsubscribe);
-        this.timeWindow = timeWindow;
-    }
-
     public long getTimeWindow() {
         return timeWindow;
     }
