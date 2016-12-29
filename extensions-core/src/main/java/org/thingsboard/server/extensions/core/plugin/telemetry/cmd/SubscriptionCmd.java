@@ -26,6 +26,7 @@ public abstract class SubscriptionCmd implements TelemetryPluginCmd {
     private int cmdId;
     private String deviceId;
     private String keys;
+    private String scope;
     private boolean unsubscribe;
 
     public abstract SubscriptionType getType();
@@ -60,6 +61,14 @@ public abstract class SubscriptionCmd implements TelemetryPluginCmd {
 
     public void setUnsubscribe(boolean unsubscribe) {
         this.unsubscribe = unsubscribe;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setKeys(String keys) {
+        this.keys = keys;
     }
 
     @Override
