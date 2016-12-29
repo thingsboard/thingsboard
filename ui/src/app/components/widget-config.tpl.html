@@ -25,7 +25,7 @@
                     <input name="title" ng-model="title">
                 </md-input-container>
                 <span translate>widget-config.general-settings</span>
-                <div layout="row" layout-align="start center">
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <div layout="row" layout-padding>
                         <md-checkbox flex aria-label="{{ 'widget-config.display-title' | translate }}"
                                      ng-model="showTitle">{{ 'widget-config.display-title' | translate }}
@@ -80,7 +80,7 @@
                                     <div flex layout="row" layout-align="start center"
                                          style="padding: 0 0 0 10px; margin: 5px;">
                                         <span translate style="min-width: 110px;">widget-config.datasource-type</span>
-                                        <span translate flex
+                                        <span hide show-gt-sm translate flex
                                               style="padding-left: 10px;">widget-config.datasource-parameters</span>
                                         <span style="min-width: 40px;"></span>
                                     </div>

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../scss/constants';
+
 .tb-device-alias-autocomplete, .tb-timeseries-datakey-autocomplete, .tb-attribute-datakey-autocomplete {
   .tb-not-found {
     display: block;
@@ -25,5 +28,18 @@
   li {
     height: auto !important;
     white-space: normal !important;
+  }
+}
+
+tb-datasource-device {
+  @media (min-width: $layout-breakpoint-gt-sm) {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  tb-device-alias-select {
+    @media (min-width: $layout-breakpoint-gt-sm) {
+      width: 200px;
+      max-width: 200px;
+    }
   }
 }

@@ -20,15 +20,28 @@
   font-weight: 400;
   text-transform: uppercase;
   margin: 20px 8px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: inherit;
 }
 
 .tb-details-subtitle {
   font-size: 1.000rem;
   margin: 10px 0;
   opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: inherit;
 }
 
 md-sidenav.tb-sidenav-details {
+  .md-toolbar-tools {
+      min-height: 100px;
+      max-height: 120px;
+      height: 100%;
+  }
   width: 100% !important;
   max-width: 100% !important;
   z-index: 59 !important;

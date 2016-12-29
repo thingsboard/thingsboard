@@ -16,7 +16,7 @@
 
 -->
 <md-content flex tb-expand-fullscreen="vm.widgetEditMode" hide-expand-button="vm.widgetEditMode">
-    <section ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode" layout="row" layout-wrap
+    <!--section ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode" layout="row" layout-wrap
              class="tb-header-buttons tb-top-header-buttons md-fab" ng-style="{'right': '50px'}">
         <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit" ng-disabled="loading"
                    class="tb-btn-header md-accent md-hue-2 md-fab md-fab-bottom-right"
@@ -37,7 +37,7 @@
             <ng-md-icon icon="{{vm.isEdit ? 'close' : 'edit'}}"
                         options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
         </md-button>
-    </section>
+    </section-->
     <section ng-show="!loading && vm.noData()" layout-align="center center"
              ng-class="{'tb-padded' : !vm.widgetEditMode}"
              style="text-transform: uppercase; display: flex; z-index: 1;"
@@ -180,14 +180,34 @@
         </div>
     </tb-details-sidenav>
     <!-- </section> -->
-    <section layout="row" layout-wrap class="tb-footer-buttons md-fab ">
-        <md-button ng-disabled="loading" ng-if="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
+    <section layout="row" layout-wrap class="tb-footer-buttons md-fab">
+        <md-button ng-disabled="loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
                    class="tb-btn-footer md-accent md-hue-2 md-fab" ng-click="vm.addWidget($event)"
                    aria-label="{{ 'dashboard.add-widget' | translate }}">
             <md-tooltip md-direction="top">
                 {{ 'dashboard.add-widget' | translate }}
             </md-tooltip>
             <ng-md-icon icon="add"></ng-md-icon>
+        </md-button>
+        <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit && !vm.isAddingWidget && !loading && !vm.widgetEditMode" ng-disabled="loading"
+                   class="tb-btn-footer md-accent md-hue-2 md-fab"
+                   aria-label="{{ 'action.apply' | translate }}"
+                   ng-click="vm.saveDashboard()">
+            <md-tooltip md-direction="top">
+                {{ 'action.apply-changes' | translate }}
+            </md-tooltip>
+            <ng-md-icon icon="done"></ng-md-icon>
+        </md-button>
+        <md-button ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode"
+                   ng-if="vm.isTenantAdmin()" ng-disabled="loading"
+                   class="tb-btn-footer md-accent md-hue-2 md-fab"
+                   aria-label="{{ 'action.edit-mode' | translate }}"
+                   ng-click="vm.toggleDashboardEditMode()">
+            <md-tooltip md-direction="top">
+                {{ (vm.isEdit ? 'action.decline-changes' : 'action.enter-edit-mode') | translate }}
+            </md-tooltip>
+            <ng-md-icon icon="{{vm.isEdit ? 'close' : 'edit'}}"
+                        options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
         </md-button>
     </section>
 </md-content>

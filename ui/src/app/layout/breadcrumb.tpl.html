@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-breadcrumb">
+<div flex class="tb-breadcrumb" layout="row">
 	<h1 flex hide-gt-sm>{{ steps[steps.length-1].ncyBreadcrumbLabel | breadcrumbLabel }}</h1>
 	<span hide-xs hide-sm ng-repeat="step in steps" ng-switch="$last || !!step.abstract">
 	    <a ng-switch-when="false" href="{{step.ncyBreadcrumbLink}}">

@@ -312,15 +312,21 @@ export default function DashboardController(types, widgetService, userService,
         }
     }
 
+    function isHotKeyAllowed(event) {
+        var target = event.target || event.srcElement;
+        var scope = angular.element(target).scope();
+        return scope && scope.$parent !== $rootScope;
+    }
+
     function initHotKeys() {
         $translate(['action.copy', 'action.paste', 'action.delete']).then(function (translations) {
             hotkeys.bindTo($scope)
                 .add({
                     combo: 'ctrl+c',
                     description: translations['action.copy'],
-                    allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                     callback: function (event) {
-                        if (vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
+                        if (isHotKeyAllowed(event) &&
+                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
                             var widget = vm.dashboardContainer.getSelectedWidget();
                             if (widget) {
                                 event.preventDefault();
@@ -332,9 +338,9 @@ export default function DashboardController(types, widgetService, userService,
                 .add({
                     combo: 'ctrl+v',
                     description: translations['action.paste'],
-                    allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                     callback: function (event) {
-                        if (vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
+                        if (isHotKeyAllowed(event) &&
+                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
                             if (itembuffer.hasWidget()) {
                                 event.preventDefault();
                                 pasteWidget(event);
@@ -345,9 +351,9 @@ export default function DashboardController(types, widgetService, userService,
                 .add({
                     combo: 'ctrl+x',
                     description: translations['action.delete'],
-                    allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                     callback: function (event) {
-                        if (vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
+                        if (isHotKeyAllowed(event) &&
+                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
                             var widget = vm.dashboardContainer.getSelectedWidget();
                             if (widget) {
                                 event.preventDefault();
