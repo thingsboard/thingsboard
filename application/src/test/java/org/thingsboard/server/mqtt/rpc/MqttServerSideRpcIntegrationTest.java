@@ -19,11 +19,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.thingsboard.client.tools.RestClient;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.mqtt.AbstractFeatureIntegrationTest;
+
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -40,28 +46,24 @@ public class MqttServerSideRpcIntegrationTest extends AbstractFeatureIntegration
     private static final String USERNAME = "tenant@thingsboard.org";
     private static final String PASSWORD = "tenant";
 
-    private Device savedDevice;
-
-    private String accessToken;
     private RestClient restClient;
 
     @Before
     public void beforeTest() throws Exception {
         restClient = new RestClient(BASE_URL);
         restClient.login(USERNAME, PASSWORD);
-
-        Device device = new Device();
-        device.setName("Test Server-Side RPC Device");
-        savedDevice = restClient.getRestTemplate().postForEntity(BASE_URL + "/api/device", device, Device.class).getBody();
-        DeviceCredentials deviceCredentials =
-                restClient.getRestTemplate().getForEntity(BASE_URL + "/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class).getBody();
-        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
-        accessToken = deviceCredentials.getCredentialsId();
-        assertNotNull(accessToken);
     }
 
     @Test
-    public void testServerMqttTwoWayRpc() throws Exception {
+    public void testServerMqttOneWayRpc() throws Exception {
+        Device device = new Device();
+        device.setName("Test One-Way Server-Side RPC");
+        Device savedDevice = getSavedDevice(device);
+        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
+        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        String accessToken = deviceCredentials.getCredentialsId();
+        assertNotNull(accessToken);
+
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
 
@@ -69,14 +71,125 @@ public class MqttServerSideRpcIntegrationTest extends AbstractFeatureIntegration
         options.setUserName(accessToken);
         client.connect(options);
         Thread.sleep(3000);
-        client.subscribe("v1/devices/me/rpc/request/+",1);
+        client.subscribe("v1/devices/me/rpc/request/+", 1);
         client.setCallback(new TestMqttCallback(client));
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
-        String result = restClient.getRestTemplate().postForEntity(BASE_URL + "api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class).getBody();
-        log.info("Result: " + result);
+        ResponseEntity result = restClient.getRestTemplate().postForEntity(BASE_URL + "api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class);
+        Assert.assertEquals(HttpStatus.OK, result.getStatusCode());
+        Assert.assertNull(result.getBody());
+    }
+
+    @Test
+    public void testServerMqttOneWayRpcDeviceOffline() throws Exception {
+        Device device = new Device();
+        device.setName("Test One-Way Server-Side RPC Device Offline");
+        Device savedDevice = getSavedDevice(device);
+        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
+        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        String accessToken = deviceCredentials.getCredentialsId();
+        assertNotNull(accessToken);
+
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+        String deviceId = savedDevice.getId().getId().toString();
+        try {
+            restClient.getRestTemplate().postForEntity(BASE_URL + "api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class);
+            Assert.fail("HttpClientErrorException expected, but not encountered");
+        } catch (HttpClientErrorException e) {
+            log.error(e.getMessage(), e);
+            Assert.assertEquals(HttpStatus.REQUEST_TIMEOUT, e.getStatusCode());
+            Assert.assertEquals("408 null", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testServerMqttOneWayRpcDeviceDoesNotExist() throws Exception {
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+        String nonExistentDeviceId = UUID.randomUUID().toString();
+        try {
+            restClient.getRestTemplate().postForEntity(BASE_URL + "api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class);
+            Assert.fail("HttpClientErrorException expected, but not encountered");
+        } catch (HttpClientErrorException e) {
+            log.error(e.getMessage(), e);
+            Assert.assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+            Assert.assertEquals("400 null", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testServerMqttTwoWayRpc() throws Exception {
+
+        Device device = new Device();
+        device.setName("Test Two-Way Server-Side RPC");
+        Device savedDevice = getSavedDevice(device);
+        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
+        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        String accessToken = deviceCredentials.getCredentialsId();
+        assertNotNull(accessToken);
+
+        String clientId = MqttAsyncClient.generateClientId();
+        MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
+
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setUserName(accessToken);
+        client.connect(options);
+        Thread.sleep(3000);
+        client.subscribe("v1/devices/me/rpc/request/+", 1);
+        client.setCallback(new TestMqttCallback(client));
+
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+        String deviceId = savedDevice.getId().getId().toString();
+        String result = getStringResult(setGpioRequest, "twoway", deviceId);
         Assert.assertEquals("{\"value1\":\"A\",\"value2\":\"B\"}", result);
+    }
+
+    @Test
+    public void testServerMqttTwoWayRpcDeviceOffline() throws Exception {
+        Device device = new Device();
+        device.setName("Test Two-Way Server-Side RPC Device Offline");
+        Device savedDevice = getSavedDevice(device);
+        DeviceCredentials deviceCredentials = getDeviceCredentials(savedDevice);
+        assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
+        String accessToken = deviceCredentials.getCredentialsId();
+        assertNotNull(accessToken);
+
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+        String deviceId = savedDevice.getId().getId().toString();
+        try {
+            restClient.getRestTemplate().postForEntity(BASE_URL + "api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class);
+            Assert.fail("HttpClientErrorException expected, but not encountered");
+        } catch (HttpClientErrorException e) {
+            log.error(e.getMessage(), e);
+            Assert.assertEquals(HttpStatus.REQUEST_TIMEOUT, e.getStatusCode());
+            Assert.assertEquals("408 null", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testServerMqttTwoWayRpcDeviceDoesNotExist() throws Exception {
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+        String nonExistentDeviceId = UUID.randomUUID().toString();
+        try {
+            restClient.getRestTemplate().postForEntity(BASE_URL + "api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class);
+            Assert.fail("HttpClientErrorException expected, but not encountered");
+        } catch (HttpClientErrorException e) {
+            log.error(e.getMessage(), e);
+            Assert.assertEquals(HttpStatus.BAD_REQUEST, e.getStatusCode());
+            Assert.assertEquals("400 null", e.getMessage());
+        }
+    }
+
+    private Device getSavedDevice(Device device) {
+        return restClient.getRestTemplate().postForEntity(BASE_URL + "/api/device", device, Device.class).getBody();
+    }
+
+    private DeviceCredentials getDeviceCredentials(Device savedDevice) {
+        return restClient.getRestTemplate().getForEntity(BASE_URL + "/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class).getBody();
+    }
+
+    private String getStringResult(String requestData, String callType, String deviceId) {
+        return restClient.getRestTemplate().postForEntity(BASE_URL + "api/plugins/rpc/" + callType + "/" + deviceId, requestData, String.class).getBody();
     }
 
     private static class TestMqttCallback implements MqttCallback {

@@ -29,6 +29,7 @@ import org.thingsboard.server.extensions.api.plugins.handlers.DefaultRestMsgHand
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.RestRequest;
 import org.thingsboard.server.extensions.core.plugin.telemetry.AttributeData;
+import org.thingsboard.server.extensions.core.plugin.telemetry.SubscriptionManager;
 import org.thingsboard.server.extensions.core.plugin.telemetry.TsData;
 
 import javax.servlet.ServletException;
@@ -38,6 +39,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
+
+    private final SubscriptionManager subscriptionManager;
+
+    public TelemetryRestMsgHandler(SubscriptionManager subscriptionManager) {
+        this.subscriptionManager = subscriptionManager;
+    }
 
     @Override
     public void handleHttpGetRequest(PluginContext ctx, PluginRestMsg msg) throws ServletException {
@@ -74,9 +81,8 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     if (!StringUtils.isEmpty(scope)) {
                         attributes = ctx.loadAttributes(deviceId, scope);
                     } else {
-                        attributes = ctx.loadAttributes(deviceId, DataConstants.CLIENT_SCOPE);
-                        attributes.addAll(ctx.loadAttributes(deviceId, DataConstants.SERVER_SCOPE));
-                        attributes.addAll(ctx.loadAttributes(deviceId, DataConstants.SHARED_SCOPE));
+                        attributes = new ArrayList<>();
+                        Arrays.stream(DataConstants.ALL_SCOPES).forEach(s -> attributes.addAll(ctx.loadAttributes(deviceId, s)));
                     }
                     List<String> keys = attributes.stream().map(attrKv -> attrKv.getKey()).collect(Collectors.toList());
                     msg.getResponseHolder().setResult(new ResponseEntity<>(keys, HttpStatus.OK));
@@ -99,9 +105,8 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     if (!StringUtils.isEmpty(scope)) {
                         attributes = getAttributeKvEntries(ctx, scope, deviceId, keys);
                     } else {
-                        attributes = getAttributeKvEntries(ctx, DataConstants.CLIENT_SCOPE, deviceId, keys);
-                        attributes.addAll(getAttributeKvEntries(ctx, DataConstants.SHARED_SCOPE, deviceId, keys));
-                        attributes.addAll(getAttributeKvEntries(ctx, DataConstants.SERVER_SCOPE, deviceId, keys));
+                        attributes = new ArrayList<>();
+                        Arrays.stream(DataConstants.ALL_SCOPES).forEach(s -> attributes.addAll(getAttributeKvEntries(ctx, s, deviceId, keys)));
                     }
                     List<AttributeData> values = attributes.stream().map(attribute -> new AttributeData(attribute.getLastUpdateTs(),
                             attribute.getKey(), attribute.getValue())).collect(Collectors.toList());
@@ -145,6 +150,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                                 @Override
                                 public void onSuccess(PluginContext ctx, Void value) {
                                     msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
+                                    subscriptionManager.onAttributesUpdateFromServer(ctx, deviceId, scope, attributes);
                                 }
 
                                 @Override
@@ -172,7 +178,8 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                 DeviceId deviceId = DeviceId.fromString(pathParams[0]);
                 String scope = pathParams[1];
                 if (DataConstants.SERVER_SCOPE.equals(scope) ||
-                        DataConstants.SHARED_SCOPE.equals(scope)) {
+                        DataConstants.SHARED_SCOPE.equals(scope) ||
+                        DataConstants.CLIENT_SCOPE.equals(scope)) {
                     String keysParam = request.getParameter("keys");
                     if (!StringUtils.isEmpty(keysParam)) {
                         String[] keys = keysParam.split(",");

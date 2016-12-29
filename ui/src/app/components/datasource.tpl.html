@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section flex layout='row' layout-align="start center" class="tb-datasource">
+<section flex layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center" class="tb-datasource">
     <md-input-container style="min-width: 110px;">
         <md-select placeholder="{{ 'datasource.type' | translate }}" required id="datasourceType" ng-model="model.type">
             <md-option ng-repeat="datasourceType in datasourceTypes" value="{{datasourceType}}">
@@ -23,15 +23,15 @@
             </md-option>
         </md-select>
     </md-input-container>
-    <section flex layout='row' layout-align="start center" class="datasource" ng-switch on="model.type">
-        <tb-datasource-func flex style="padding-left: 8px;"
+    <section flex class="datasource" ng-switch on="model.type">
+        <tb-datasource-func flex
                             ng-switch-default
                             ng-model="model"
                             datakey-settings-schema="datakeySettingsSchema"
                             ng-required="model.type === types.datasourceType.function"
                             generate-data-key="generateDataKey({chip: chip, type: type})">
         </tb-datasource-func>
-        <tb-datasource-device flex style="padding-left: 4px; padding-right: 4px;"
+        <tb-datasource-device flex
                               ng-model="model"
                               datakey-settings-schema="datakeySettingsSchema"
                               ng-switch-when="device"

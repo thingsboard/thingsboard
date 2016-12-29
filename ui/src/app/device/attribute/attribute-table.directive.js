@@ -239,6 +239,8 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 index: 0
             }
             scope.widgetsBundle = null;
+            scope.firstBundle = true;
+            scope.selectedWidgetsBundleAlias = types.systemBundleAlias.cards;
 
             scope.deviceAliases = {};
             scope.deviceAliases['1'] = {alias: scope.deviceName, deviceId: scope.deviceId};
@@ -326,13 +328,6 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                     }
                 }
             });
-
-            widgetService.getWidgetsBundleByAlias(types.systemBundleAlias.cards).then(
-                function success(widgetsBundle) {
-                    scope.firstBundle = true;
-                    scope.widgetsBundle = widgetsBundle;
-                }
-            );
         }
 
         scope.exitWidgetMode = function() {
@@ -344,6 +339,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 scope.widgetsIndexWatch();
                 scope.widgetsIndexWatch = null;
             }
+            scope.selectedWidgetsBundleAlias = null;
             scope.mode = 'default';
             scope.getDeviceAttributes(true);
         }

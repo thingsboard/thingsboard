@@ -49,6 +49,7 @@ import thingsboardDialogs from './components/datakey-config-dialog.controller';
 import thingsboardMenu from './services/menu.service';
 import thingsboardUtils from './common/utils.service';
 import thingsboardTypes from './common/types.constant';
+import thingsboardKeyboardShortcut from './components/keyboard-shortcut.filter';
 import thingsboardHelp from './help/help.directive';
 import thingsboardToast from './services/toast';
 import thingsboardHome from './layout';
@@ -95,6 +96,7 @@ angular.module('thingsboard', [
     thingsboardMenu,
     thingsboardUtils,
     thingsboardTypes,
+    thingsboardKeyboardShortcut,
     thingsboardHelp,
     thingsboardToast,
     thingsboardHome,

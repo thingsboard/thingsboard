@@ -29,6 +29,7 @@ import thingsboardDashboard from '../components/dashboard.directive';
 import thingsboardExpandFullscreen from '../components/expand-fullscreen.directive';
 import thingsboardWidgetsBundleSelect from '../components/widgets-bundle-select.directive';
 import thingsboardTypes from '../common/types.constant';
+import thingsboardItemBuffer from '../services/item-buffer.service';
 
 import DashboardRoutes from './dashboard.routes';
 import DashboardsController from './dashboards.controller';
@@ -45,6 +46,7 @@ export default angular.module('thingsboard.dashboard', [
     uiRouter,
     gridster.name,
     thingsboardTypes,
+    thingsboardItemBuffer,
     thingsboardGrid,
     thingsboardApiWidget,
     thingsboardApiUser,

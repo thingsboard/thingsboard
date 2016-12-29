@@ -38,7 +38,9 @@
     "create": "Create",
     "drag": "Drag",
     "refresh": "Refresh",
-    "undo": "Undo"
+    "undo": "Undo",
+    "copy": "Copy",
+    "paste": "Paste"
   },
   "admin": {
     "general": "General",
@@ -211,7 +213,8 @@
     "vertical-margin": "Vertical margin",
     "vertical-margin-required": "Vertical margin value is required.",
     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
-    "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value."
+    "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
+    "display-title": "Display dashboard title"
   },
   "datakey": {
     "settings": "Settings",

@@ -23,7 +23,7 @@ import addWidgetTemplate from './add-widget.tpl.html';
 
 /*@ngInject*/
 export default function DashboardController(types, widgetService, userService,
-                                            dashboardService, $window, $rootScope,
+                                            dashboardService, itembuffer, hotkeys, $window, $rootScope,
                                             $scope, $state, $stateParams, $mdDialog, $timeout, $document, $q, $translate, $filter) {
 
     var user = userService.getCurrentUser();
@@ -48,7 +48,10 @@ export default function DashboardController(types, widgetService, userService,
     vm.addWidgetFromType = addWidgetFromType;
     vm.dashboardInited = dashboardInited;
     vm.dashboardInitFailed = dashboardInitFailed;
+    vm.widgetMouseDown = widgetMouseDown;
     vm.widgetClicked = widgetClicked;
+    vm.prepareDashboardContextMenu = prepareDashboardContextMenu;
+    vm.prepareWidgetContextMenu = prepareWidgetContextMenu;
     vm.editWidget = editWidget;
     vm.isTenantAdmin = isTenantAdmin;
     vm.loadDashboard = loadDashboard;
@@ -63,6 +66,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.toggleDashboardEditMode = toggleDashboardEditMode;
     vm.onRevertWidgetEdit = onRevertWidgetEdit;
     vm.helpLinkIdForWidgetType = helpLinkIdForWidgetType;
+    vm.displayTitle = displayTitle;
 
     vm.widgetsBundle;
 
@@ -194,6 +198,7 @@ export default function DashboardController(types, widgetService, userService,
 
     function dashboardInited(dashboard) {
         vm.dashboardContainer = dashboard;
+        initHotKeys();
     }
 
     function isTenantAdmin() {
@@ -289,9 +294,15 @@ export default function DashboardController(types, widgetService, userService,
                 var delayOffset = transition ? 350 : 0;
                 var delay = transition ? 400 : 300;
                 $timeout(function () {
-                    vm.dashboardContainer.highlightWidget(vm.editingWidgetIndex, delay);
+                    vm.dashboardContainer.highlightWidget(widget, delay);
                 }, delayOffset, false);
             }
+        }
+    }
+
+    function widgetMouseDown($event, widget) {
+        if (vm.isEdit && !vm.isEditingWidget) {
+            vm.dashboardContainer.selectWidget(widget, 0);
         }
     }
 
@@ -299,6 +310,176 @@ export default function DashboardController(types, widgetService, userService,
         if (vm.isEditingWidget) {
             editWidget($event, widget);
         }
+    }
+
+    function isHotKeyAllowed(event) {
+        var target = event.target || event.srcElement;
+        var scope = angular.element(target).scope();
+        return scope && scope.$parent !== $rootScope;
+    }
+
+    function initHotKeys() {
+        $translate(['action.copy', 'action.paste', 'action.delete']).then(function (translations) {
+            hotkeys.bindTo($scope)
+                .add({
+                    combo: 'ctrl+c',
+                    description: translations['action.copy'],
+                    callback: function (event) {
+                        if (isHotKeyAllowed(event) &&
+                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
+                            var widget = vm.dashboardContainer.getSelectedWidget();
+                            if (widget) {
+                                event.preventDefault();
+                                copyWidget(event, widget);
+                            }
+                        }
+                    }
+                })
+                .add({
+                    combo: 'ctrl+v',
+                    description: translations['action.paste'],
+                    callback: function (event) {
+                        if (isHotKeyAllowed(event) &&
+                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
+                            if (itembuffer.hasWidget()) {
+                                event.preventDefault();
+                                pasteWidget(event);
+                            }
+                        }
+                    }
+                })
+                .add({
+                    combo: 'ctrl+x',
+                    description: translations['action.delete'],
+                    callback: function (event) {
+                        if (isHotKeyAllowed(event) &&
+                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
+                            var widget = vm.dashboardContainer.getSelectedWidget();
+                            if (widget) {
+                                event.preventDefault();
+                                removeWidget(event, widget);
+                            }
+                        }
+                    }
+                });
+        });
+    }
+
+    function prepareDashboardContextMenu() {
+        var dashboardContextActions = [];
+        if (vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
+            dashboardContextActions.push(
+                {
+                    action: openDashboardSettings,
+                    enabled: true,
+                    value: "dashboard.settings",
+                    icon: "settings"
+                }
+            );
+            dashboardContextActions.push(
+                {
+                    action: openDeviceAliases,
+                    enabled: true,
+                    value: "device.aliases",
+                    icon: "devices_other"
+                }
+            );
+            dashboardContextActions.push(
+                {
+                    action: pasteWidget,
+                    enabled: itembuffer.hasWidget(),
+                    value: "action.paste",
+                    icon: "content_paste",
+                    shortcut: "M-V"
+                }
+            );
+        }
+        return dashboardContextActions;
+    }
+
+    function pasteWidget($event) {
+        var pos = vm.dashboardContainer.getEventGridPosition($event);
+        itembuffer.pasteWidget(vm.dashboard, pos);
+    }
+
+    function prepareWidgetContextMenu() {
+        var widgetContextActions = [];
+        if (vm.isEdit && !vm.isEditingWidget) {
+            widgetContextActions.push(
+                {
+                    action: editWidget,
+                    enabled: true,
+                    value: "action.edit",
+                    icon: "edit"
+                }
+            );
+            if (!vm.widgetEditMode) {
+                widgetContextActions.push(
+                    {
+                        action: copyWidget,
+                        enabled: true,
+                        value: "action.copy",
+                        icon: "content_copy",
+                        shortcut: "M-C"
+                    }
+                );
+                widgetContextActions.push(
+                    {
+                        action: removeWidget,
+                        enabled: true,
+                        value: "action.delete",
+                        icon: "clear",
+                        shortcut: "M-X"
+                    }
+                );
+            }
+        }
+        return widgetContextActions;
+    }
+
+    function copyWidget($event, widget) {
+        var aliasesInfo = {
+            datasourceAliases: {},
+            targetDeviceAliases: {}
+        };
+        var originalColumns = 24;
+        if (vm.dashboard.configuration.gridSettings &&
+            vm.dashboard.configuration.gridSettings.columns) {
+            originalColumns = vm.dashboard.configuration.gridSettings.columns;
+        }
+        if (widget.config && vm.dashboard.configuration
+            && vm.dashboard.configuration.deviceAliases) {
+            var deviceAlias;
+            if (widget.config.datasources) {
+                for (var i=0;i<widget.config.datasources.length;i++) {
+                    var datasource = widget.config.datasources[i];
+                    if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
+                        deviceAlias = vm.dashboard.configuration.deviceAliases[datasource.deviceAliasId];
+                        if (deviceAlias) {
+                            aliasesInfo.datasourceAliases[i] = {
+                                aliasName: deviceAlias.alias,
+                                deviceId: deviceAlias.deviceId
+                            }
+                        }
+                    }
+                }
+            }
+            if (widget.config.targetDeviceAliasIds) {
+                for (i=0;i<widget.config.targetDeviceAliasIds.length;i++) {
+                    var targetDeviceAliasId = widget.config.targetDeviceAliasIds[i];
+                    if (targetDeviceAliasId) {
+                        deviceAlias = vm.dashboard.configuration.deviceAliases[targetDeviceAliasId];
+                        if (deviceAlias) {
+                            aliasesInfo.targetDeviceAliases[i] = {
+                                aliasName: deviceAlias.alias,
+                                deviceId: deviceAlias.deviceId
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        itembuffer.copyWidget(widget, aliasesInfo, originalColumns);
     }
 
     function helpLinkIdForWidgetType() {
@@ -322,6 +503,15 @@ export default function DashboardController(types, widgetService, userService,
         return link;
     }
 
+    function displayTitle() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showTitle)) {
+            return vm.dashboard.configuration.gridSettings.showTitle;
+        } else {
+            return true;
+        }
+    }
+
     function onRevertWidgetEdit(widgetForm) {
         if (widgetForm.$dirty) {
             widgetForm.$setPristine();
@@ -331,7 +521,9 @@ export default function DashboardController(types, widgetService, userService,
 
     function saveWidget(widgetForm) {
         widgetForm.$setPristine();
-        vm.widgets[vm.editingWidgetIndex] = angular.copy(vm.editingWidget);
+        var widget = angular.copy(vm.editingWidget);
+        vm.widgets[vm.editingWidgetIndex] = widget;
+        vm.dashboardContainer.highlightWidget(widget, 0);
     }
 
     function onEditWidgetClosed() {
@@ -421,8 +613,8 @@ export default function DashboardController(types, widgetService, userService,
         });
     }
 
-    function toggleDashboardEditMode() {
-        vm.isEdit = !vm.isEdit;
+    function setEditMode(isEdit, revert) {
+        vm.isEdit = isEdit;
         if (vm.isEdit) {
             if (vm.widgetEditMode) {
                 vm.prevWidgets = angular.copy(vm.widgets);
@@ -433,14 +625,23 @@ export default function DashboardController(types, widgetService, userService,
             if (vm.widgetEditMode) {
                 vm.widgets = vm.prevWidgets;
             } else {
-                vm.dashboard = vm.prevDashboard;
-                vm.widgets = vm.dashboard.configuration.widgets;
+                if (vm.dashboardContainer) {
+                    vm.dashboardContainer.resetHighlight();
+                }
+                if (revert) {
+                    vm.dashboard = vm.prevDashboard;
+                    vm.widgets = vm.dashboard.configuration.widgets;
+                }
             }
         }
     }
 
+    function toggleDashboardEditMode() {
+        setEditMode(!vm.isEdit, true);
+    }
+
     function saveDashboard() {
-        vm.isEdit = false;
+        setEditMode(false, false);
         notifyDashboardUpdated();
     }
 

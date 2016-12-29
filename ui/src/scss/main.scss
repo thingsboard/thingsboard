@@ -169,6 +169,9 @@ md-menu-item {
 md-menu-item {
   .md-button {
     display: block;
+    .tb-alt-text {
+      float: right;
+    }
   }
 }
 

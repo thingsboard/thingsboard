@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section flex layout='column'>
-   <md-chips flex style="padding-left: 4px;"
+<section flex layout='column' style="padding-left: 4px;">
+   <md-chips flex
 			     id="function_datakey_chips"
 	   			 ng-required="true"
 	             ng-model="funcDataKeys" md-autocomplete-snap
@@ -48,18 +48,23 @@
 				    </md-not-found>
 			  </md-autocomplete>
 		      <md-chip-template>
-		      	<div layout="row" layout-align="start center">
-					<div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
-						<div class="tb-color-result" ng-style="{background: $chip.color}"></div>
-					</div>
-			        <div>
-			          {{$chip.label}}: 
-			          <strong>{{$chip.name}}</strong>
-			        </div>
-				    <md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
-		        		<md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
-		      		</md-button>
-		      	</div>
+				  <div layout="row" layout-align="start center" class="tb-attribute-chip">
+					  <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
+						  <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
+					  </div>
+					  <div layout="row" flex>
+						  <div class="tb-chip-label">
+							  {{$chip.label}}
+						  </div>
+						  <div class="tb-chip-separator">: </div>
+						  <div class="tb-chip-label">
+							  <strong>{{$chip.name}}</strong>
+						  </div>
+					  </div>
+					  <md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
+						  <md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
+					  </md-button>
+				  </div>
 		      </md-chip-template>
 	</md-chips>
 	<div class="tb-error-messages" ng-messages="ngModelCtrl.$error" role="alert">

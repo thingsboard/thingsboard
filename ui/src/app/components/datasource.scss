@@ -38,6 +38,7 @@
 
 .tb-color-preview {
   content: '';
+  min-width: 24px;
   width: 24px;
   height: 24px;
   border: 2px solid #fff;
@@ -50,5 +51,16 @@
   .tb-color-result {
     width: 100%;
     height: 100%;
+  }
+}
+
+.tb-attribute-chip {
+  .tb-chip-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tb-chip-separator {
+    white-space: pre;
   }
 }

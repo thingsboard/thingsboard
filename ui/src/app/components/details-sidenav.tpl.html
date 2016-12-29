@@ -22,13 +22,12 @@
       layout="column">
       <header>
 	      <md-toolbar class="md-theme-light" ng-style="{'height':headerHeightPx+'px'}">
-	      	<div class="md-toolbar-tools">
-	      		<div class="md-toolbar-tools" layout="column" layout-align="start start">
+	      	<div class="md-toolbar-tools" layout="row">
+	      		<div flex class="md-toolbar-tools" layout="column" layout-align="start start">
 		        	<span class="tb-details-title">{{headerTitle}}</span>
 		        	<span class="tb-details-subtitle">{{headerSubtitle}}</span>
 					<span style="width: 100%;" ng-transclude="headerPane"></span>
 	        	</div>
-	        	<span flex></span>
 				<div ng-transclude="detailsButtons"></div>
 	        	<md-button class="md-icon-button" ng-click="closeDetails()">
 	        		<md-icon aria-label="close" class="material-icons">close</md-icon>

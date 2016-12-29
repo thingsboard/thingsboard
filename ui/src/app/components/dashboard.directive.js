@@ -23,6 +23,7 @@ import thingsboardWidget from './widget.directive';
 import thingsboardToast from '../services/toast';
 import thingsboardTimewindow from './timewindow.directive';
 import thingsboardEvents from './tb-event-directives';
+import thingsboardMousepointMenu from './mousepoint-menu.directive';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -38,6 +39,7 @@ export default angular.module('thingsboard.directives.dashboard', [thingsboardTy
     thingsboardWidget,
     thingsboardTimewindow,
     thingsboardEvents,
+    thingsboardMousepointMenu,
     gridster.name])
     .directive('tbDashboard', Dashboard)
     .name;
@@ -59,7 +61,10 @@ function Dashboard() {
             isRemoveActionEnabled: '=',
             onEditWidget: '&?',
             onRemoveWidget: '&?',
+            onWidgetMouseDown: '&?',
             onWidgetClicked: '&?',
+            prepareDashboardContextMenu: '&?',
+            prepareWidgetContextMenu: '&?',
             loadWidgets: '&?',
             onInit: '&?',
             onInitFailed: '&?',
@@ -75,8 +80,9 @@ function Dashboard() {
 function DashboardController($scope, $rootScope, $element, $timeout, $log, toast, types) {
 
     var highlightedMode = false;
-    var highlightedIndex = -1;
-    var mouseDownIndex = -1;
+    var highlightedWidget = null;
+    var selectedWidget = null;
+    var mouseDownWidget = -1;
     var widgetMouseMoved = false;
 
     var gridsterParent = null;
@@ -117,6 +123,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     vm.isWidgetExpanded = false;
     vm.isHighlighted = isHighlighted;
     vm.isNotHighlighted = isNotHighlighted;
+    vm.selectWidget = selectWidget;
+    vm.getSelectedWidget = getSelectedWidget;
     vm.highlightWidget = highlightWidget;
     vm.resetHighlight = resetHighlight;
 
@@ -133,6 +141,17 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     vm.editWidget = editWidget;
     vm.removeWidget = removeWidget;
     vm.loading = loading;
+
+    vm.openDashboardContextMenu = openDashboardContextMenu;
+    vm.openWidgetContextMenu = openWidgetContextMenu;
+
+    vm.getEventGridPosition = getEventGridPosition;
+
+    vm.contextMenuItems = [];
+    vm.contextMenuEvent = null;
+
+    vm.widgetContextMenuItems = [];
+    vm.widgetContextMenuEvent = null;
 
     //$element[0].onmousemove=function(){
     //    widgetMouseMove();
@@ -305,7 +324,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     }
 
     function resetWidgetClick () {
-        mouseDownIndex = -1;
+        mouseDownWidget = -1;
         widgetMouseMoved = false;
     }
 
@@ -315,25 +334,27 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     }
 
     function widgetMouseDown ($event, widget) {
-        mouseDownIndex = vm.widgets.indexOf(widget);
+        mouseDownWidget = widget;
         widgetMouseMoved = false;
+        if (vm.onWidgetMouseDown) {
+            vm.onWidgetMouseDown({event: $event, widget: widget});
+        }
     }
 
     function widgetMouseMove () {
-        if (mouseDownIndex > -1) {
+        if (mouseDownWidget) {
             widgetMouseMoved = true;
         }
     }
 
     function widgetMouseUp ($event, widget) {
         $timeout(function () {
-            if (!widgetMouseMoved && mouseDownIndex > -1) {
-                var index = vm.widgets.indexOf(widget);
-                if (index === mouseDownIndex) {
+            if (!widgetMouseMoved && mouseDownWidget) {
+                if (widget === mouseDownWidget) {
                     widgetClicked($event, widget);
                 }
             }
-            mouseDownIndex = -1;
+            mouseDownWidget = null;
             widgetMouseMoved = false;
         }, 0);
     }
@@ -345,6 +366,41 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
         if (vm.onWidgetClicked) {
             vm.onWidgetClicked({event: $event, widget: widget});
         }
+    }
+
+    function openDashboardContextMenu($event, $mdOpenMousepointMenu) {
+        if (vm.prepareDashboardContextMenu) {
+            vm.contextMenuItems = vm.prepareDashboardContextMenu();
+            if (vm.contextMenuItems && vm.contextMenuItems.length > 0) {
+                vm.contextMenuEvent = $event;
+                $mdOpenMousepointMenu($event);
+            }
+        }
+    }
+
+    function openWidgetContextMenu($event, widget, $mdOpenMousepointMenu) {
+        if (vm.prepareWidgetContextMenu) {
+            vm.widgetContextMenuItems = vm.prepareWidgetContextMenu({widget: widget});
+            if (vm.widgetContextMenuItems && vm.widgetContextMenuItems.length > 0) {
+                vm.widgetContextMenuEvent = $event;
+                $mdOpenMousepointMenu($event);
+            }
+        }
+    }
+
+    function getEventGridPosition(event) {
+        var pos = {
+            row: 0,
+            column: 0
+        }
+        var offset = gridsterParent.offset();
+        var x = event.pageX - offset.left + gridsterParent.scrollLeft();
+        var y = event.pageY - offset.top + gridsterParent.scrollTop();
+        if (gridster) {
+            pos.row = gridster.pixelsToRows(y);
+            pos.column = gridster.pixelsToColumns(x);
+        }
+        return pos;
     }
 
     function editWidget ($event, widget) {
@@ -367,10 +423,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
         }
     }
 
-    function highlightWidget(widgetIndex, delay) {
+    function highlightWidget(widget, delay) {
         highlightedMode = true;
-        highlightedIndex = widgetIndex;
-        var item = $('.gridster-item', gridster.$element)[widgetIndex];
+        highlightedWidget = widget;
+        var item = $('.gridster-item', gridster.$element)[vm.widgets.indexOf(widget)];
         if (item) {
             var height = $(item).outerHeight(true);
             var rectHeight = gridsterParent.height();
@@ -385,17 +441,39 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
         }
     }
 
+    function selectWidget(widget, delay) {
+        selectedWidget = widget;
+        var item = $('.gridster-item', gridster.$element)[vm.widgets.indexOf(widget)];
+        if (item) {
+            var height = $(item).outerHeight(true);
+            var rectHeight = gridsterParent.height();
+            var offset = (rectHeight - height) / 2;
+            var scrollTop = item.offsetTop;
+            if (offset > 0) {
+                scrollTop -= offset;
+            }
+            gridsterParent.animate({
+                scrollTop: scrollTop
+            }, delay);
+        }
+    }
+
+    function getSelectedWidget() {
+        return selectedWidget;
+    }
+
     function resetHighlight() {
         highlightedMode = false;
-        highlightedIndex = -1;
+        highlightedWidget = null;
+        selectedWidget = null;
     }
 
     function isHighlighted(widget) {
-        return highlightedMode && vm.widgets.indexOf(widget) === highlightedIndex;
+        return (highlightedMode && highlightedWidget === widget) || (selectedWidget === widget);
     }
 
     function isNotHighlighted(widget) {
-        return highlightedMode && vm.widgets.indexOf(widget) != highlightedIndex;
+        return highlightedMode && highlightedWidget != widget;
     }
 
     function widgetColor(widget) {

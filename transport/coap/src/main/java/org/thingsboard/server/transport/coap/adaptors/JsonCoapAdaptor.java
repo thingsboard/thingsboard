@@ -167,17 +167,13 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     private FromDeviceMsg convertToGetAttributesRequest(SessionContext ctx, Request inbound) throws AdaptorException {
         List<String> queryElements = inbound.getOptions().getUriQuery();
-        if (queryElements == null || queryElements.size() == 0) {
-            log.warn("[{}] Query is empty!", ctx.getSessionId());
-            throw new AdaptorException(new IllegalArgumentException("Query is empty!"));
+        if (queryElements != null || queryElements.size() > 0) {
+            Set<String> clientKeys = toKeys(ctx, queryElements, "clientKeys");
+            Set<String> sharedKeys = toKeys(ctx, queryElements, "sharedKeys");
+            return new BasicGetAttributesRequest(0, clientKeys, sharedKeys);
+        } else {
+            return new BasicGetAttributesRequest(0);
         }
-
-        Set<String> clientKeys = toKeys(ctx, queryElements, "clientKeys");
-        Set<String> sharedKeys = toKeys(ctx, queryElements, "sharedKeys");
-        if (clientKeys.isEmpty() && sharedKeys.isEmpty()) {
-            throw new AdaptorException("No clientKeys and serverKeys parameters!");
-        }
-        return new BasicGetAttributesRequest(0, clientKeys, sharedKeys);
     }
 
     private Set<String> toKeys(SessionContext ctx, List<String> queryElements, String attributeName) throws AdaptorException {
@@ -191,7 +187,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         if (!StringUtils.isEmpty(keys)) {
             return new HashSet<>(Arrays.asList(keys.split(",")));
         } else {
-            return Collections.emptySet();
+            return null;
         }
     }
 
