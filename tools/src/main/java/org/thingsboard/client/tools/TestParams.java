@@ -27,7 +27,7 @@ public class TestParams {
     static final String TEST_PROPERTIES = "test.properties";
     static final long DEFAULT_TEST_DURATION = TimeUnit.MINUTES.toMillis(1);
     static final long DEFAULT_TEST_INTERVAL = TimeUnit.MILLISECONDS.toMillis(100);
-    static final int DEFAULT_DEVICE_COUNT = 100;
+    static final int DEFAULT_DEVICE_COUNT = 25;
     static final String DEFAULT_REST_URL = "http://localhost:8080";
     static final String DEFAULT_MQTT_URLS = "tcp://localhost:1883";
     static final String DEFAULT_USERNAME = "tenant@thingsboard.org";
