@@ -25,6 +25,7 @@
         </encoder>
     </appender>
 
+    <logger name="io.gatling.core.action.Pause" level="WARN"/>
     <logger name="org.thingsboard" level="INFO" />
 
     <root level="INFO">

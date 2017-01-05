@@ -45,18 +45,18 @@ class MqttSimulation extends Simulation {
   val connect = exec(mqtt("connect")
       .connect())
 
-  val publish = repeat(400) {
+  val publish = repeat(600) {
     exec(mqtt("publish")
-      .publish("v1/devices/me/telemetry", "{\"key1\":\"value1\", \"key2\":\"value2\"}", QoS.AT_LEAST_ONCE, retain = false))
+      .publish("v1/devices/me/telemetry", "{\"temperature\":\"42\"}", QoS.AT_LEAST_ONCE, retain = false)).pause(100 milliseconds)
   }
 
   val scn = scenario("Scenario Name")
-    .feed(csv("/tmp/mqtt.csv").circular)
+    .feed(csv("/tmp/mqtt.csv"))
     .exec(connect, publish)
 
   setUp(
       scn
-        .inject(constantUsersPerSec(25) during (1 seconds))
+        .inject(constantUsersPerSec(1500) during (1 seconds))
   ).protocols(mqttConf)
 
 }

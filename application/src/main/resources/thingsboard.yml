@@ -167,7 +167,7 @@ actors:
 # Cache parameters
 cache:
   # Enable/disable cache functionality.
-  enabled: "${CACHE_ENABLED:true}"
+  enabled: "${CACHE_ENABLED:false}"
   device_credentials:
     # Default time to store device credentials in cache, in seconds
     time_to_live: "${CACHE_DEVICE_CREDENTIAL_TTL:3600}"
