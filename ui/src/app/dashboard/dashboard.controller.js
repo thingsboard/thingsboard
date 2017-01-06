@@ -23,7 +23,7 @@ import addWidgetTemplate from './add-widget.tpl.html';
 
 /*@ngInject*/
 export default function DashboardController(types, widgetService, userService,
-                                            dashboardService, itembuffer, hotkeys, $window, $rootScope,
+                                            dashboardService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $state, $stateParams, $mdDialog, $timeout, $document, $q, $translate, $filter) {
 
     var user = userService.getCurrentUser();
@@ -53,6 +53,8 @@ export default function DashboardController(types, widgetService, userService,
     vm.prepareDashboardContextMenu = prepareDashboardContextMenu;
     vm.prepareWidgetContextMenu = prepareWidgetContextMenu;
     vm.editWidget = editWidget;
+    vm.exportWidget = exportWidget;
+    vm.importWidget = importWidget;
     vm.isTenantAdmin = isTenantAdmin;
     vm.loadDashboard = loadDashboard;
     vm.noData = noData;
@@ -210,44 +212,17 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function openDeviceAliases($event) {
-        var aliasToWidgetsMap = {};
-        var widgetsTitleList;
-        for (var w in vm.widgets) {
-            var widget = vm.widgets[w];
-            if (widget.type === types.widgetType.rpc.value) {
-                if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
-                    var targetDeviceAliasId = widget.config.targetDeviceAliasIds[0];
-                    widgetsTitleList = aliasToWidgetsMap[targetDeviceAliasId];
-                    if (!widgetsTitleList) {
-                        widgetsTitleList = [];
-                        aliasToWidgetsMap[targetDeviceAliasId] = widgetsTitleList;
-                    }
-                    widgetsTitleList.push(widget.config.title);
-                }
-            } else {
-                for (var i in widget.config.datasources) {
-                    var datasource = widget.config.datasources[i];
-                    if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
-                        widgetsTitleList = aliasToWidgetsMap[datasource.deviceAliasId];
-                        if (!widgetsTitleList) {
-                            widgetsTitleList = [];
-                            aliasToWidgetsMap[datasource.deviceAliasId] = widgetsTitleList;
-                        }
-                        widgetsTitleList.push(widget.config.title);
-                    }
-                }
-            }
-        }
-
         $mdDialog.show({
             controller: 'DeviceAliasesController',
             controllerAs: 'vm',
             templateUrl: deviceAliasesTemplate,
             locals: {
-                deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
-                aliasToWidgetsMap: aliasToWidgetsMap,
-                isSingleDevice: false,
-                singleDeviceAlias: null
+                config: {
+                    deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
+                    widgets: vm.widgets,
+                    isSingleDevice: false,
+                    singleDeviceAlias: null
+                }
             },
             parent: angular.element($document[0].body),
             skipHide: true,
@@ -298,6 +273,16 @@ export default function DashboardController(types, widgetService, userService,
                 }, delayOffset, false);
             }
         }
+    }
+
+    function exportWidget($event, widget) {
+        $event.stopPropagation();
+        importExport.exportWidget(vm.dashboard, widget);
+    }
+
+    function importWidget($event) {
+        $event.stopPropagation();
+        importExport.importWidget($event, vm.dashboard);
     }
 
     function widgetMouseDown($event, widget) {
@@ -438,48 +423,7 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function copyWidget($event, widget) {
-        var aliasesInfo = {
-            datasourceAliases: {},
-            targetDeviceAliases: {}
-        };
-        var originalColumns = 24;
-        if (vm.dashboard.configuration.gridSettings &&
-            vm.dashboard.configuration.gridSettings.columns) {
-            originalColumns = vm.dashboard.configuration.gridSettings.columns;
-        }
-        if (widget.config && vm.dashboard.configuration
-            && vm.dashboard.configuration.deviceAliases) {
-            var deviceAlias;
-            if (widget.config.datasources) {
-                for (var i=0;i<widget.config.datasources.length;i++) {
-                    var datasource = widget.config.datasources[i];
-                    if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
-                        deviceAlias = vm.dashboard.configuration.deviceAliases[datasource.deviceAliasId];
-                        if (deviceAlias) {
-                            aliasesInfo.datasourceAliases[i] = {
-                                aliasName: deviceAlias.alias,
-                                deviceId: deviceAlias.deviceId
-                            }
-                        }
-                    }
-                }
-            }
-            if (widget.config.targetDeviceAliasIds) {
-                for (i=0;i<widget.config.targetDeviceAliasIds.length;i++) {
-                    var targetDeviceAliasId = widget.config.targetDeviceAliasIds[i];
-                    if (targetDeviceAliasId) {
-                        deviceAlias = vm.dashboard.configuration.deviceAliases[targetDeviceAliasId];
-                        if (deviceAlias) {
-                            aliasesInfo.targetDeviceAliases[i] = {
-                                aliasName: deviceAlias.alias,
-                                deviceId: deviceAlias.deviceId
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        itembuffer.copyWidget(widget, aliasesInfo, originalColumns);
+        itembuffer.copyWidget(vm.dashboard, widget);
     }
 
     function helpLinkIdForWidgetType() {

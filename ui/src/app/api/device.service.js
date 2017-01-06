@@ -88,10 +88,10 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         return deferred.promise;
     }
 
-    function getDevice(deviceId) {
+    function getDevice(deviceId, ignoreErrors) {
         var deferred = $q.defer();
         var url = '/api/device/' + deviceId;
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, { ignoreErrors: ignoreErrors }).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);

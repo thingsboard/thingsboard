@@ -23,7 +23,7 @@ import addDashboardsToCustomerTemplate from './add-dashboards-to-customer.tpl.ht
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DashboardsController(userService, dashboardService, customerService, $scope, $controller, $state, $stateParams, $mdDialog, $document, $q, $translate) {
+export default function DashboardsController(userService, dashboardService, customerService, importExport, $scope, $controller, $state, $stateParams, $mdDialog, $document, $q, $translate) {
 
     var customerId = $stateParams.customerId;
 
@@ -86,6 +86,7 @@ export default function DashboardsController(userService, dashboardService, cust
 
     vm.assignToCustomer = assignToCustomer;
     vm.unassignFromCustomer = unassignFromCustomer;
+    vm.exportDashboard = exportDashboard;
 
     initController();
 
@@ -113,6 +114,14 @@ export default function DashboardsController(userService, dashboardService, cust
             };
 
             dashboardActionsList.push(
+                {
+                    onAction: function ($event, item) {
+                        exportDashboard($event, item);
+                    },
+                    name: function() { $translate.instant('action.export') },
+                    details: function() { return $translate.instant('dashboard.export') },
+                    icon: "file_download"
+                },
                 {
                     onAction: function ($event, item) {
                         assignToCustomer($event, [ item.id.id ]);
@@ -158,7 +167,27 @@ export default function DashboardsController(userService, dashboardService, cust
                 }
             );
 
-
+            vm.dashboardGridConfig.addItemActions = [];
+            vm.dashboardGridConfig.addItemActions.push({
+                onAction: function ($event) {
+                    vm.grid.addItem($event);
+                },
+                name: function() { return $translate.instant('action.create') },
+                details: function() { return $translate.instant('dashboard.create-new-dashboard') },
+                icon: "insert_drive_file"
+            });
+            vm.dashboardGridConfig.addItemActions.push({
+                onAction: function ($event) {
+                    importExport.importDashboard($event).then(
+                        function() {
+                            vm.grid.refreshList();
+                        }
+                    );
+                },
+                name: function() { return $translate.instant('action.import') },
+                details: function() { return $translate.instant('dashboard.import') },
+                icon: "file_upload"
+            });
         } else if (vm.dashboardsScope === 'customer' || vm.dashboardsScope === 'customer_user') {
             fetchDashboardsFunction = function (pageLink) {
                 return dashboardService.getCustomerDashboards(customerId, pageLink);
@@ -342,6 +371,11 @@ export default function DashboardsController(userService, dashboardService, cust
                 vm.grid.refreshList();
             });
         });
+    }
+
+    function exportDashboard($event, dashboard) {
+        $event.stopPropagation();
+        importExport.exportDashboard(dashboard.id.id);
     }
 
     function unassignDashboardsFromCustomer($event, items) {

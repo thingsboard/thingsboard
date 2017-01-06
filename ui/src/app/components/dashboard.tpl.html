@@ -62,6 +62,18 @@
 											edit
 										</md-icon>
 									</md-button>
+									<md-button ng-show="vm.isExportActionEnabled && !vm.isWidgetExpanded"
+											   ng-disabled="vm.loading()"
+											   class="md-icon-button md-primary"
+											   ng-click="vm.exportWidget($event, widget)"
+											   aria-label="{{ 'widget.export' | translate }}">
+										<md-tooltip md-direction="top">
+											{{ 'widget.export' | translate }}
+										</md-tooltip>
+										<md-icon class="material-icons">
+											file_download
+										</md-icon>
+									</md-button>
 									<md-button ng-show="vm.isRemoveActionEnabled && !vm.isWidgetExpanded"
 										ng-disabled="vm.loading()"
 										class="md-icon-button md-primary"
