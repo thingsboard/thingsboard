@@ -76,7 +76,6 @@ public class MqttTransportService {
 
     @PostConstruct
     public void init() throws Exception {
-        ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.ADVANCED);
         log.info("Starting MQTT transport...");
         log.info("Lookup MQTT transport adaptor {}", adaptorName);
         this.adaptor = (MqttTransportAdaptor) appContext.getBean(adaptorName);
