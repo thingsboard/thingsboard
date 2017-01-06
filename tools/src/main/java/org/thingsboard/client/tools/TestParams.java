@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -36,8 +37,9 @@ public class TestParams {
     private Properties params = new Properties();
 
     public TestParams() throws IOException {
+        URL location = TestParams.class.getProtectionDomain().getCodeSource().getLocation();
         try {
-            params.load(new FileInputStream(TEST_PROPERTIES));
+            params.load(new FileInputStream(location.getFile() + TEST_PROPERTIES));
         } catch (Exception e) {
             log.warn("Failed to read " + TEST_PROPERTIES);
         }

@@ -22,16 +22,15 @@ import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -40,10 +39,14 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class MqttStressTestTool {
 
+    private static byte[] data = "{\"longKey\":73}".getBytes(StandardCharsets.UTF_8);
+    private static ResultAccumulator results = new ResultAccumulator();
+    private static List<MqttStressTestClient> clients = new ArrayList<>();
+    private static List<IMqttToken> connectTokens = new ArrayList<>();
+
     public static void main(String[] args) throws Exception {
         TestParams params = new TestParams();
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
-
 
         if (params.getDuration() % params.getIterationInterval() != 0) {
             throw new IllegalArgumentException("Test Duration % Iteration Interval != 0");
@@ -53,41 +56,7 @@ public class MqttStressTestTool {
             throw new IllegalArgumentException("Iteration Interval % Device Count != 0");
         }
 
-        ResultAccumulator results = new ResultAccumulator();
-
-        AtomicLong value = new AtomicLong(Long.MAX_VALUE);
-        log.info("value: {} ", value.incrementAndGet());
-
-        RestClient restClient = new RestClient(params.getRestApiUrl());
-        restClient.login(params.getUsername(), params.getPassword());
-
-        List<MqttStressTestClient> clients = new ArrayList<>();
-        List<IMqttToken> connectTokens = new ArrayList<>();
-        List<String> deviceCredentialsIds = new ArrayList<>();
-        for (int i = 0; i < params.getDeviceCount(); i++) {
-            Device device = restClient.createDevice("Device " + UUID.randomUUID());
-            DeviceCredentials credentials = restClient.getCredentials(device.getId());
-            String[] mqttUrls = params.getMqttUrls();
-            String mqttURL = mqttUrls[i % mqttUrls.length];
-            MqttStressTestClient client = new MqttStressTestClient(results, mqttURL, credentials.getCredentialsId());
-            deviceCredentialsIds.add(credentials.getCredentialsId());
-            connectTokens.add(client.connect());
-            clients.add(client);
-        }
-
-        dumpDeviceCredentialsIdsToTmpFile(deviceCredentialsIds);
-
-        for (IMqttToken tokens : connectTokens) {
-            tokens.waitForCompletion();
-        }
-
-        byte[] data = "{\"longKey\":73}".getBytes(StandardCharsets.UTF_8);
-
-        for (MqttStressTestClient client : clients) {
-            client.warmUp(data);
-        }
-
-        Thread.sleep(1000);
+        createDevices(params);
 
         long startTime = System.currentTimeMillis();
         int iterationsCount = (int) (params.getDuration() / params.getIterationInterval());
@@ -123,20 +92,44 @@ public class MqttStressTestTool {
         scheduler.shutdownNow();
     }
 
-    private static void dumpDeviceCredentialsIdsToTmpFile(List<String> deviceCredentialsIds) throws IOException {
-        Path path = Paths.get("/tmp/mqtt.csv");
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-            writer.write("deviceCredentialsId");
-            writer.write('\n');
-            deviceCredentialsIds.forEach((deviceCredentialsId) -> {
-                try {
-                    writer.write(deviceCredentialsId);
-                    writer.write('\n');
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-    }
+  /**
+   * Returns list of device credential IDs
+   *
+   * @param params
+   * @return
+   * @throws Exception
+   */
+    public static List<String> createDevices(TestParams params) throws Exception {
+        AtomicLong value = new AtomicLong(Long.MAX_VALUE);
+        log.info("value: {} ", value.incrementAndGet());
 
+        RestClient restClient = new RestClient(params.getRestApiUrl());
+        restClient.login(params.getUsername(), params.getPassword());
+
+        List<String> deviceCredentialsIds = new ArrayList<>();
+        for (int i = 0; i < params.getDeviceCount(); i++) {
+            Device device = restClient.createDevice("Device " + UUID.randomUUID());
+            DeviceCredentials credentials = restClient.getCredentials(device.getId());
+            String[] mqttUrls = params.getMqttUrls();
+            String mqttURL = mqttUrls[i % mqttUrls.length];
+            MqttStressTestClient client = new MqttStressTestClient(results, mqttURL, credentials.getCredentialsId());
+
+            deviceCredentialsIds.add(credentials.getCredentialsId());
+
+            connectTokens.add(client.connect());
+            clients.add(client);
+        }
+
+        for (IMqttToken tokens : connectTokens) {
+            tokens.waitForCompletion();
+        }
+
+        for (MqttStressTestClient client : clients) {
+            client.warmUp(data);
+        }
+
+        Thread.sleep(1000);
+
+        return deviceCredentialsIds;
+    }
 }
