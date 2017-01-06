@@ -37,9 +37,8 @@ public class TestParams {
     private Properties params = new Properties();
 
     public TestParams() throws IOException {
-        URL location = TestParams.class.getProtectionDomain().getCodeSource().getLocation();
         try {
-            params.load(new FileInputStream(location.getFile() + TEST_PROPERTIES));
+            params.load(TestParams.class.getClassLoader().getResourceAsStream(TEST_PROPERTIES));
         } catch (Exception e) {
             log.warn("Failed to read " + TEST_PROPERTIES);
         }
