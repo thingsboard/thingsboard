@@ -58,8 +58,10 @@ function Dashboard() {
             isMobile: '=',
             isMobileDisabled: '=?',
             isEditActionEnabled: '=',
+            isExportActionEnabled: '=',
             isRemoveActionEnabled: '=',
             onEditWidget: '&?',
+            onExportWidget: '&?',
             onRemoveWidget: '&?',
             onWidgetMouseDown: '&?',
             onWidgetClicked: '&?',
@@ -139,6 +141,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     vm.showWidgetTitle = showWidgetTitle;
     vm.hasTimewindow = hasTimewindow;
     vm.editWidget = editWidget;
+    vm.exportWidget = exportWidget;
     vm.removeWidget = removeWidget;
     vm.loading = loading;
 
@@ -410,6 +413,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
         }
         if (vm.isEditActionEnabled && vm.onEditWidget) {
             vm.onEditWidget({event: $event, widget: widget});
+        }
+    }
+
+    function exportWidget ($event, widget) {
+        resetWidgetClick();
+        if ($event) {
+            $event.stopPropagation();
+        }
+        if (vm.isExportActionEnabled && vm.onExportWidget) {
+            vm.onExportWidget({event: $event, widget: widget});
         }
     }
 

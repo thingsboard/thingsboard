@@ -36,6 +36,7 @@ export default function DashboardDirective($compile, $templateCache) {
             theForm: '=',
             onAssignToCustomer: '&',
             onUnassignFromCustomer: '&',
+            onExportDashboard: '&',
             onDeleteDashboard: '&'
         }
     };

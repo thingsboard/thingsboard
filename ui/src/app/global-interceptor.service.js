@@ -148,6 +148,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             $rootScope.loading = false;
         }
         var unhandled = false;
+        var ignoreErrors = rejection.config.ignoreErrors;
         if (rejection.refreshTokenPending || rejection.status === 401) {
             var errorCode = rejectionErrorCode(rejection);
             if (rejection.refreshTokenPending || (errorCode && errorCode === getTypes().serverErrorCode.jwtTokenExpired)) {
@@ -156,13 +157,17 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
                 unhandled = true;
             }
         } else if (rejection.status === 403) {
-            $rootScope.$broadcast('forbidden');
+            if (!ignoreErrors) {
+                $rootScope.$broadcast('forbidden');
+            }
         } else if (rejection.status === 0 || rejection.status === -1) {
             getToast().showError(getTranslate().instant('error.unable-to-connect'));
         } else if (!rejection.config.url.startsWith('/api/plugins/rpc')) {
             if (rejection.status === 404) {
-                getToast().showError(rejection.config.method + ": " + rejection.config.url + "<br/>" +
-                    rejection.status + ": " + rejection.statusText);
+                if (!ignoreErrors) {
+                    getToast().showError(rejection.config.method + ": " + rejection.config.url + "<br/>" +
+                        rejection.status + ": " + rejection.statusText);
+                }
             } else {
                 unhandled = true;
             }

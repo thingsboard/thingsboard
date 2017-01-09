@@ -25,5 +25,6 @@
 						  the-form="vm.grid.detailsForm"
 						  on-assign-to-customer="vm.assignToCustomer(event, [ vm.grid.detailsConfig.currentItem.id.id ])"
 						  on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem)"
+						  on-export-dashboard="vm.exportDashboard(event, vm.grid.detailsConfig.currentItem)"
 						  on-delete-dashboard="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-dashboard-details>
 </tb-grid>

@@ -76,10 +76,12 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
                 controllerAs: 'vm',
                 templateUrl: deviceAliasesTemplate,
                 locals: {
-                    deviceAliases: angular.copy(scope.dashboard.configuration.deviceAliases),
-                    aliasToWidgetsMap: null,
-                    isSingleDevice: true,
-                    singleDeviceAlias: singleDeviceAlias
+                    config: {
+                        deviceAliases: angular.copy(scope.dashboard.configuration.deviceAliases),
+                        widgets: null,
+                        isSingleDevice: true,
+                        singleDeviceAlias: singleDeviceAlias
+                    }
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,

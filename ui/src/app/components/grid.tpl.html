@@ -79,7 +79,7 @@
     </tb-details-sidenav>
 </section>
 
-<section layout="row" layout-wrap class="tb-footer-buttons md-fab ">
+<section layout="row" layout-wrap class="tb-footer-buttons md-fab " layout-align="start end">
     <md-button ng-disabled="loading" ng-show="vm.items.selectedCount > 0" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-repeat="groupAction in vm.groupActionsList"
                ng-click="groupAction.onAction($event, vm.items)" aria-label="{{ groupAction.name() }}">
         <md-tooltip md-direction="top">
@@ -93,10 +93,29 @@
         </md-tooltip>
         <ng-md-icon icon="arrow_drop_up"></ng-md-icon>
     </md-button>
-    <md-button ng-disabled="loading" ng-if="vm.addItemAction.name()" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-click="vm.addItemAction.onAction($event)" aria-label="{{ vm.addItemAction.name() }}" >
+    <md-button ng-disabled="loading" ng-if="vm.addItemAction.name() && vm.addItemActions.length == 0" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-click="vm.addItemAction.onAction($event)" aria-label="{{ vm.addItemAction.name() }}" >
         <md-tooltip md-direction="top">
             {{ vm.addItemAction.details() }}
         </md-tooltip>
         <ng-md-icon icon="{{ vm.addItemAction.icon }}"></ng-md-icon>
     </md-button>
+    <md-fab-speed-dial ng-disabled="loading" ng-if="vm.addItemAction.name() && vm.addItemActions.length > 0" md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up" ng-if="vm.addItemAction.name()">
+        <md-fab-trigger>
+            <md-button ng-disabled="loading" class="tb-btn-footer md-accent md-hue-2 md-fab" aria-label="{{ vm.addItemAction.name() }}" >
+                <md-tooltip md-direction="top">
+                    {{ vm.addItemAction.details() }}
+                </md-tooltip>
+                <ng-md-icon icon="{{ vm.addItemAction.icon }}"></ng-md-icon>
+            </md-button>
+        </md-fab-trigger>
+        <md-fab-actions>
+            <md-button ng-disabled="loading" class="md-accent md-hue-2 md-fab" ng-repeat="addItemAction in vm.addItemActions"
+                       ng-click="addItemAction.onAction($event)" aria-label="{{ addItemAction.name() }}" >
+                <md-tooltip md-direction="top">
+                    {{ addItemAction.details() }}
+                </md-tooltip>
+                <ng-md-icon icon="{{addItemAction.icon}}"></ng-md-icon>
+            </md-button>
+        </md-fab-actions>
+    </md-fab-speed-dial>
 </section>

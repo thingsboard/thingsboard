@@ -102,10 +102,12 @@ export default function AddWidgetController($scope, widgetService, deviceService
             controllerAs: 'vm',
             templateUrl: deviceAliasesTemplate,
             locals: {
-                deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
-                aliasToWidgetsMap: null,
-                isSingleDevice: true,
-                singleDeviceAlias: singleDeviceAlias
+                config: {
+                    deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
+                    widgets: null,
+                    isSingleDevice: true,
+                    singleDeviceAlias: singleDeviceAlias
+                }
             },
             parent: angular.element($document[0].body),
             fullscreen: true,

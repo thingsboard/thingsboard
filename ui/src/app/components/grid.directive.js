@@ -327,6 +327,10 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
                 icon: "add"
             };
 
+        vm.addItemActionsOpen = false;
+
+        vm.addItemActions = vm.config.addItemActions || [];
+
         vm.onGridInited = vm.config.onGridInited || function () {
             };
 
