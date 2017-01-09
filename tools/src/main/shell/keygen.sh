@@ -45,6 +45,7 @@ read -p  "Do you want to copy $SERVER_FILE_PREFIX.jks to server directory? " yn
              else
                 DESTINATION=$SERVER_KEYSTORE_DIR
              fi;
+             mkdir -p $SERVER_KEYSTORE_DIR
              cp $SERVER_FILE_PREFIX.jks $DESTINATION
              if [ $? -ne 0 ]; then
                 echo "Failed to copy keystore file."

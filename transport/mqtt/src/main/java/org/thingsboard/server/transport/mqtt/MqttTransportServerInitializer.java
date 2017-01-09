@@ -55,13 +55,15 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
     @Override
     public void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
+        SslHandler sslHandler = null;
         if (sslHandlerProvider != null) {
-            pipeline.addLast(sslHandlerProvider.getSslHandler());
+            sslHandler = sslHandlerProvider.getSslHandler();
+            pipeline.addLast(sslHandler);
         }
         pipeline.addLast("decoder", new MqttDecoder());
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
-        MqttTransportHandler handler = new MqttTransportHandler(processor, authService, adaptor);
+        MqttTransportHandler handler = new MqttTransportHandler(processor, authService, adaptor, sslHandler);
         pipeline.addLast(handler);
         ch.closeFuture().addListener(handler);
     }

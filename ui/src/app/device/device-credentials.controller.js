@@ -24,7 +24,7 @@ export default function ManageDeviceCredentialsController(deviceService, $scope,
             value: 'ACCESS_TOKEN'
         },
         {
-            name: 'X.509 Certificate (Coming soon)',
+            name: 'X.509 Certificate',
             value: 'X509_CERTIFICATE'
         }
     ];
@@ -35,6 +35,7 @@ export default function ManageDeviceCredentialsController(deviceService, $scope,
     vm.valid = valid;
     vm.cancel = cancel;
     vm.save = save;
+    vm.clear = clear;
 
     loadDeviceCredentials();
 
@@ -50,8 +51,14 @@ export default function ManageDeviceCredentialsController(deviceService, $scope,
 
     function valid() {
         return vm.deviceCredentials &&
-               vm.deviceCredentials.credentialsType === 'ACCESS_TOKEN' &&
+               (vm.deviceCredentials.credentialsType === 'ACCESS_TOKEN'
+                  || vm.deviceCredentials.credentialsType === 'X509_CERTIFICATE')
+               &&
                vm.deviceCredentials.credentialsId && vm.deviceCredentials.credentialsId.length > 0;
+    }
+
+    function clear() {
+        vm.deviceCredentials.credentialsId = null;
     }
 
     function save() {

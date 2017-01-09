@@ -18,9 +18,7 @@ package org.thingsboard.server.dao;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import org.thingsboard.server.common.data.id.UUIDBased;
