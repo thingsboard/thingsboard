@@ -40,7 +40,9 @@
     "refresh": "Refresh",
     "undo": "Undo",
     "copy": "Copy",
-    "paste": "Paste"
+    "paste": "Paste",
+    "import": "Import",
+    "export": "Export"
   },
   "admin": {
     "general": "General",
@@ -214,7 +216,19 @@
     "vertical-margin-required": "Vertical margin value is required.",
     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
-    "display-title": "Display dashboard title"
+    "display-title": "Display dashboard title",
+    "import": "Import dashboard",
+    "export": "Export dashboard",
+    "export-failed-error": "Unable to export dashboard: {error}",
+    "create-new-dashboard": "Create new dashboard",
+    "dashboard-file": "Dashboard file",
+    "invalid-dashboard-file-error": "Unable to import dashboard: Invalid dashboard data structure.",
+    "dashboard-import-missing-aliases-title": "Select missing devices for dashboard aliases",
+    "create-new-widget": "Create new widget",
+    "import-widget": "Import widget",
+    "widget-file": "Widget file",
+    "invalid-widget-file-error": "Unable to import widget: Invalid widget data structure.",
+    "widget-import-missing-aliases-title": "Select missing devices used by widget"
   },
   "datakey": {
     "settings": "Settings",
@@ -369,6 +383,10 @@
     "menu": "Menu",
     "avatar": "Avatar",
     "open-user-menu": "Open user menu"
+  },
+  "import": {
+    "no-file": "No file selected",
+    "drop-file": "Drop a JSON file or click to select a file to upload."
   },
   "item": {
     "selected": "Selected"
@@ -612,7 +630,8 @@
     "widget-type-load-failed-error": "Failed to load widget type!",
     "widget-template-load-failed-error": "Failed to load widget template!",
     "add": "Add Widget",
-    "undo": "Undo widget changes"
+    "undo": "Undo widget changes",
+    "export": "Export widget"
   },
   "widgets-bundle": {
     "current": "Current bundle",

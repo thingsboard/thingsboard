@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 The Thingsboard Authors
+ * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,10 +76,12 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
                 controllerAs: 'vm',
                 templateUrl: deviceAliasesTemplate,
                 locals: {
-                    deviceAliases: angular.copy(scope.dashboard.configuration.deviceAliases),
-                    aliasToWidgetsMap: null,
-                    isSingleDevice: true,
-                    singleDeviceAlias: singleDeviceAlias
+                    config: {
+                        deviceAliases: angular.copy(scope.dashboard.configuration.deviceAliases),
+                        widgets: null,
+                        isSingleDevice: true,
+                        singleDeviceAlias: singleDeviceAlias
+                    }
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,

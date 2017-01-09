@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 The Thingsboard Authors
+ * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 import React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component.jsx';
-import TextField from 'material-ui/TextField';
+import NumberInput from 'material-ui-number-input';
 
 class ThingsboardNumber extends React.Component {
 
@@ -63,16 +63,18 @@ class ThingsboardNumber extends React.Component {
         if (this.state.focused) {
             fieldClass += " tb-focused";
         }
+        var value = this.state.lastSuccessfulValue;
+        value = Number(value);
 
         return (
-            <TextField
+            <NumberInput
                 className={fieldClass}
-                type={this.props.form.type}
+                strategy="allow"
                 floatingLabelText={this.props.form.title}
                 hintText={this.props.form.placeholder}
                 errorText={this.props.error}
                 onChange={this.preValidationCheck}
-                defaultValue={this.state.lastSuccessfulValue}
+                defaultValue={value}
                 ref="numberField"
                 disabled={this.props.form.readonly}
                 onFocus={this.onFocus}

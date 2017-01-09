@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 The Thingsboard Authors
+ * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,18 @@ import './device-aliases.scss';
 
 /*@ngInject*/
 export default function DeviceAliasesController(deviceService, toast, $scope, $mdDialog, $document, $q, $translate,
-                                                deviceAliases, aliasToWidgetsMap, isSingleDevice, singleDeviceAlias) {
+                                                types, config) {
 
     var vm = this;
 
-    vm.isSingleDevice = isSingleDevice;
-    vm.singleDeviceAlias = singleDeviceAlias;
+    vm.isSingleDevice = config.isSingleDevice;
+    vm.singleDeviceAlias = config.singleDeviceAlias;
     vm.deviceAliases = [];
-    vm.aliasToWidgetsMap = aliasToWidgetsMap;
     vm.singleDevice = null;
     vm.singleDeviceSearchText = '';
+    vm.title = config.customTitle ? config.customTitle : 'device.aliases';
+    vm.disableAdd = config.disableAdd;
+    vm.aliasToWidgetsMap = {};
 
     vm.addAlias = addAlias;
     vm.cancel = cancel;
@@ -39,9 +41,48 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
     initController();
 
     function initController() {
-        for (var aliasId in deviceAliases) {
-            var alias = deviceAliases[aliasId].alias;
-            var deviceId = deviceAliases[aliasId].deviceId;
+        var aliasId;
+        if (config.widgets) {
+            var widgetsTitleList, widget;
+            if (config.isSingleWidget && config.widgets.length == 1) {
+                widget = config.widgets[0];
+                widgetsTitleList = [widget.config.title];
+                for (aliasId in config.deviceAliases) {
+                    vm.aliasToWidgetsMap[aliasId] = widgetsTitleList;
+                }
+            } else {
+                for (var w in config.widgets) {
+                    widget = config.widgets[w];
+                    if (widget.type === types.widgetType.rpc.value) {
+                        if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
+                            var targetDeviceAliasId = widget.config.targetDeviceAliasIds[0];
+                            widgetsTitleList = vm.aliasToWidgetsMap[targetDeviceAliasId];
+                            if (!widgetsTitleList) {
+                                widgetsTitleList = [];
+                                vm.aliasToWidgetsMap[targetDeviceAliasId] = widgetsTitleList;
+                            }
+                            widgetsTitleList.push(widget.config.title);
+                        }
+                    } else {
+                        for (var i in widget.config.datasources) {
+                            var datasource = widget.config.datasources[i];
+                            if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
+                                widgetsTitleList = vm.aliasToWidgetsMap[datasource.deviceAliasId];
+                                if (!widgetsTitleList) {
+                                    widgetsTitleList = [];
+                                    vm.aliasToWidgetsMap[datasource.deviceAliasId] = widgetsTitleList;
+                                }
+                                widgetsTitleList.push(widget.config.title);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (aliasId in config.deviceAliases) {
+            var alias = config.deviceAliases[aliasId].alias;
+            var deviceId = config.deviceAliases[aliasId].deviceId;
             var deviceAlias = {id: aliasId, alias: alias, device: null, changed: false, searchText: ''};
             if (deviceId) {
                 fetchAliasDevice(deviceAlias, deviceId);

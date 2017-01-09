@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 The Thingsboard Authors
+ * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import angularStorage from 'angular-storage';
 
 export default angular.module('thingsboard.itembuffer', [angularStorage])
@@ -25,11 +24,12 @@ export default angular.module('thingsboard.itembuffer', [angularStorage])
     .name;
 
 /*@ngInject*/
-function ItemBuffer(bufferStore) {
+function ItemBuffer(bufferStore, types) {
 
     const WIDGET_ITEM = "widget_item";
 
     var service = {
+        prepareWidgetItem: prepareWidgetItem,
         copyWidget: copyWidget,
         hasWidget: hasWidget,
         pasteWidget: pasteWidget,
@@ -56,12 +56,57 @@ function ItemBuffer(bufferStore) {
      }
     **/
 
-    function copyWidget(widget, aliasesInfo, originalColumns) {
-        var widgetItem = {
+    function prepareWidgetItem(dashboard, widget) {
+        var aliasesInfo = {
+            datasourceAliases: {},
+            targetDeviceAliases: {}
+        };
+        var originalColumns = 24;
+        if (dashboard.configuration.gridSettings &&
+            dashboard.configuration.gridSettings.columns) {
+            originalColumns = dashboard.configuration.gridSettings.columns;
+        }
+        if (widget.config && dashboard.configuration
+            && dashboard.configuration.deviceAliases) {
+            var deviceAlias;
+            if (widget.config.datasources) {
+                for (var i=0;i<widget.config.datasources.length;i++) {
+                    var datasource = widget.config.datasources[i];
+                    if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
+                        deviceAlias = dashboard.configuration.deviceAliases[datasource.deviceAliasId];
+                        if (deviceAlias) {
+                            aliasesInfo.datasourceAliases[i] = {
+                                aliasName: deviceAlias.alias,
+                                deviceId: deviceAlias.deviceId
+                            }
+                        }
+                    }
+                }
+            }
+            if (widget.config.targetDeviceAliasIds) {
+                for (i=0;i<widget.config.targetDeviceAliasIds.length;i++) {
+                    var targetDeviceAliasId = widget.config.targetDeviceAliasIds[i];
+                    if (targetDeviceAliasId) {
+                        deviceAlias = dashboard.configuration.deviceAliases[targetDeviceAliasId];
+                        if (deviceAlias) {
+                            aliasesInfo.targetDeviceAliases[i] = {
+                                aliasName: deviceAlias.alias,
+                                deviceId: deviceAlias.deviceId
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return {
             widget: widget,
             aliasesInfo: aliasesInfo,
             originalColumns: originalColumns
         }
+    }
+
+    function copyWidget(dashboard, widget) {
+        var widgetItem = prepareWidgetItem(dashboard, widget);
         bufferStore.set(WIDGET_ITEM, angular.toJson(widgetItem));
     }
 
@@ -69,7 +114,7 @@ function ItemBuffer(bufferStore) {
         return bufferStore.get(WIDGET_ITEM);
     }
 
-    function pasteWidget(targetDasgboard, position) {
+    function pasteWidget(targetDashboard, position) {
         var widgetItemJson = bufferStore.get(WIDGET_ITEM);
         if (widgetItemJson) {
             var widgetItem = angular.fromJson(widgetItemJson);
@@ -82,7 +127,7 @@ function ItemBuffer(bufferStore) {
                 targetRow = position.row;
                 targetColumn = position.column;
             }
-            addWidgetToDashboard(targetDasgboard, widget, aliasesInfo, originalColumns, targetRow, targetColumn);
+            addWidgetToDashboard(targetDashboard, widget, aliasesInfo, originalColumns, targetRow, targetColumn);
         }
     }
 

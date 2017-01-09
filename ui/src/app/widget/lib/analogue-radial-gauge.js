@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 The Thingsboard Authors
+ * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,13 @@ export default class TbAnalogueRadialGauge {
         var majorTicksCount = settings.majorTicksCount || 10;
         var total = maxValue-minValue;
         var step = (total/majorTicksCount);
-        step = parseFloat(parseFloat(step).toPrecision(12));
+
+        var valueInt = settings.valueInt || 3;
+
+        var valueDec = (angular.isDefined(settings.valueDec) && settings.valueDec !== null)
+            ? settings.valueDec : 2;
+
+        step = parseFloat(parseFloat(step).toFixed(valueDec));
 
         var majorTicks = [];
         var highlights = [];
@@ -44,7 +50,7 @@ export default class TbAnalogueRadialGauge {
         while(tick<=maxValue) {
             majorTicks.push(tick);
             var nextTick = tick+step;
-            nextTick = parseFloat(parseFloat(nextTick).toPrecision(12));
+            nextTick = parseFloat(parseFloat(nextTick).toFixed(valueDec));
             if (tick<maxValue) {
                 var highlightColor = tinycolor(keyColor);
                 var percent = (tick-minValue)/total;
@@ -86,9 +92,8 @@ export default class TbAnalogueRadialGauge {
             //borderShadowWidth: (settings.showBorder !== false) ? 3 : 0,
 
             // number formats
-            valueInt: settings.valueInt || 3,
-            valueDec: (angular.isDefined(settings.valueDec) && settings.valueDec !== null)
-                ? settings.valueDec : 2,
+            valueInt: valueInt,
+            valueDec: valueDec,
             majorTicksInt: 1,
             majorTicksDec: 0,
 
