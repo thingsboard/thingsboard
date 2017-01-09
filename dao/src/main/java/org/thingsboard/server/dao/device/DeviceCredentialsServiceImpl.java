@@ -23,6 +23,8 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.EncryptionUtil;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.DeviceCredentialsEntity;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -70,9 +72,17 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     }
 
     private DeviceCredentials saveOrUpdare(DeviceCredentials deviceCredentials) {
+        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
+            encryptDeviceId(deviceCredentials);
+        }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials);
         return getData(deviceCredentialsDao.save(deviceCredentials));
+    }
+
+    private void encryptDeviceId(DeviceCredentials deviceCredentials) {
+        String sha3Hash = EncryptionUtil.getSha3Hash(deviceCredentials.getCredentialsId());
+        deviceCredentials.setCredentialsId(sha3Hash);
     }
 
     @Override
@@ -121,6 +131,10 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
                                 throw new DataValidationException("Incorrect access token length [" + deviceCredentials.getCredentialsId().length() + "]!");
                             }
                             break;
+                        case X509_CERTIFICATE:
+                            if (deviceCredentials.getCredentialsId().length() == 0) {
+                                throw new DataValidationException("X509 Certificate Cannot be empty!");
+                            }
                         default:
                             break;
                     }

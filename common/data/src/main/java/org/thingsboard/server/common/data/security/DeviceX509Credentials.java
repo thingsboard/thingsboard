@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,25 @@
  */
 package org.thingsboard.server.common.data.security;
 
-public class DeviceTokenCredentials implements DeviceCredentialsFilter {
+/**
+ * @author Valerii Sosliuk
+ */
+public class DeviceX509Credentials implements DeviceCredentialsFilter {
 
-    private final String token;
+    private final String sha3Hash;
 
-    public DeviceTokenCredentials(String token) {
-        this.token = token;
+    public DeviceX509Credentials(String sha3Hash) {
+        this.sha3Hash = sha3Hash;
     }
 
     @Override
-    public DeviceCredentialsType getCredentialsType() {
-        return DeviceCredentialsType.ACCESS_TOKEN;
-    }
+    public String getCredentialsId() { return sha3Hash; }
 
     @Override
-    public String getCredentialsId() {
-        return token;
-    }
+    public DeviceCredentialsType getCredentialsType() { return DeviceCredentialsType.X509_CERTIFICATE; }
 
     @Override
     public String toString() {
-        return "DeviceTokenCredentials [token=" + token + "]";
+        return "DeviceX509Credentials [SHA3=" + sha3Hash + "]";
     }
-
 }

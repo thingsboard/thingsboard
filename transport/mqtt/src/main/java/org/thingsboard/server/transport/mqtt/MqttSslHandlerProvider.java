@@ -18,15 +18,23 @@ package org.thingsboard.server.transport.mqtt;
 import com.google.common.io.Resources;
 import io.netty.handler.ssl.SslHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.EncryptionUtil;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.transport.mqtt.util.SslUtil;
 
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 /**
  * Created by valerii.sosliuk on 11/6/16.
@@ -51,6 +59,9 @@ public class MqttSslHandlerProvider {
     @Value("${mqtt.ssl.trustStoreType}")
     private String trustStoreType;
 
+    @Autowired
+    private DeviceCredentialsService deviceCredentialsService;
+
 
     public SslHandler getSslHandler() {
         try {
@@ -71,13 +82,14 @@ public class MqttSslHandlerProvider {
             kmf.init(ks, keyStorePassword.toCharArray());
 
             KeyManager[] km = kmf.getKeyManagers();
-            TrustManager[] tm = tmFactory.getTrustManagers();
+            TrustManager x509wrapped = getX509TrustManager(tmFactory);
+            TrustManager[] tm = {x509wrapped};
             SSLContext sslContext = SSLContext.getInstance(TLS);
             sslContext.init(km, tm, null);
             SSLEngine sslEngine = sslContext.createSSLEngine();
             sslEngine.setUseClientMode(false);
             sslEngine.setNeedClientAuth(false);
-            sslEngine.setWantClientAuth(false);
+            sslEngine.setWantClientAuth(true);
             sslEngine.setEnabledProtocols(sslEngine.getSupportedProtocols());
             sslEngine.setEnabledCipherSuites(sslEngine.getSupportedCipherSuites());
             sslEngine.setEnableSessionCreation(true);
@@ -88,4 +100,54 @@ public class MqttSslHandlerProvider {
         }
     }
 
+    private TrustManager getX509TrustManager(TrustManagerFactory tmf) throws Exception {
+        X509TrustManager x509Tm = null;
+        for (TrustManager tm : tmf.getTrustManagers()) {
+            if (tm instanceof X509TrustManager) {
+                x509Tm = (X509TrustManager) tm;
+                break;
+            }
+        }
+        X509TrustManager x509TmWrapper = new ThingsboardMqttX509TrustManager(x509Tm, deviceCredentialsService);
+        return x509TmWrapper;
+    }
+
+    static class ThingsboardMqttX509TrustManager implements X509TrustManager {
+
+        private final X509TrustManager trustManager;
+        private DeviceCredentialsService deviceCredentialsService;
+
+        ThingsboardMqttX509TrustManager(X509TrustManager trustManager, DeviceCredentialsService deviceCredentialsService) {
+            this.trustManager = trustManager;
+            this.deviceCredentialsService = deviceCredentialsService;
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return trustManager.getAcceptedIssuers();
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain,
+                                       String authType) throws CertificateException {
+            trustManager.checkServerTrusted(chain, authType);
+        }
+
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain,
+                                       String authType) throws CertificateException {
+            for (X509Certificate cert : chain) {
+                try {
+                    String strCert = SslUtil.getX509CertificateString(cert);
+                    String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
+                    DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(sha3Hash);
+                    if (deviceCredentials == null) {
+                        throw new CertificateException("Invalid Device Certificate");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }
