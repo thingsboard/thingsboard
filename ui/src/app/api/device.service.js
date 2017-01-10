@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 The Thingsboard Authors
+ * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,10 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         return deferred.promise;
     }
 
-    function getDevice(deviceId) {
+    function getDevice(deviceId, ignoreErrors) {
         var deferred = $q.defer();
         var url = '/api/device/' + deviceId;
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, { ignoreErrors: ignoreErrors }).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);

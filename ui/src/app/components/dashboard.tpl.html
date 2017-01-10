@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016 The Thingsboard Authors
+    Copyright © 2016-2017 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -60,6 +60,18 @@
 										</md-tooltip>
 										<md-icon class="material-icons">
 											edit
+										</md-icon>
+									</md-button>
+									<md-button ng-show="vm.isExportActionEnabled && !vm.isWidgetExpanded"
+											   ng-disabled="vm.loading()"
+											   class="md-icon-button md-primary"
+											   ng-click="vm.exportWidget($event, widget)"
+											   aria-label="{{ 'widget.export' | translate }}">
+										<md-tooltip md-direction="top">
+											{{ 'widget.export' | translate }}
+										</md-tooltip>
+										<md-icon class="material-icons">
+											file_download
 										</md-icon>
 									</md-button>
 									<md-button ng-show="vm.isRemoveActionEnabled && !vm.isWidgetExpanded"

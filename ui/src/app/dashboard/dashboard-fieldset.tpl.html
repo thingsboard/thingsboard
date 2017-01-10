@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016 The Thingsboard Authors
+    Copyright © 2016-2017 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 -->
 <md-button ng-click="onAssignToCustomer({event: $event})" ng-show="!isEdit && dashboardScope === 'tenant'" class="md-raised md-primary">{{ 'dashboard.assign-to-customer' | translate }}</md-button>
 <md-button ng-click="onUnassignFromCustomer({event: $event})" ng-show="!isEdit && dashboardScope === 'customer'" class="md-raised md-primary">{{ 'dashboard.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onExportDashboard({event: $event})" ng-show="!isEdit && dashboardScope === 'tenant'" class="md-raised md-primary">{{ 'dashboard.export' | translate }}</md-button>
 <md-button ng-click="onDeleteDashboard({event: $event})" ng-show="!isEdit && dashboardScope === 'tenant'" class="md-raised md-primary">{{ 'dashboard.delete' | translate }}</md-button>
 
 <md-content class="md-padding" layout="column">

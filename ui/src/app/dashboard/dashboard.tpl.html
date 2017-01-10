@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016 The Thingsboard Authors
+    Copyright © 2016-2017 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -80,8 +80,10 @@
                 is-mobile="vm.forceDashboardMobileMode"
                 is-mobile-disabled="vm.widgetEditMode"
                 is-edit-action-enabled="vm.isEdit || vm.widgetEditMode"
+                is-export-action-enabled="vm.isEdit && !vm.widgetEditMode"
                 is-remove-action-enabled="vm.isEdit && !vm.widgetEditMode"
                 on-edit-widget="vm.editWidget(event, widget)"
+                on-export-widget="vm.exportWidget(event, widget)"
                 on-widget-mouse-down="vm.widgetMouseDown(event, widget)"
                 on-widget-clicked="vm.widgetClicked(event, widget)"
                 on-widget-context-menu="vm.widgetContextMenu(event, widget)"
@@ -180,15 +182,38 @@
         </div>
     </tb-details-sidenav>
     <!-- </section> -->
-    <section layout="row" layout-wrap class="tb-footer-buttons md-fab">
-        <md-button ng-disabled="loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
-                   class="tb-btn-footer md-accent md-hue-2 md-fab" ng-click="vm.addWidget($event)"
-                   aria-label="{{ 'dashboard.add-widget' | translate }}">
-            <md-tooltip md-direction="top">
-                {{ 'dashboard.add-widget' | translate }}
-            </md-tooltip>
-            <ng-md-icon icon="add"></ng-md-icon>
-        </md-button>
+    <section layout="row" layout-wrap class="tb-footer-buttons md-fab" layout-align="start end">
+        <md-fab-speed-dial ng-disabled="loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
+                           md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up">
+            <md-fab-trigger>
+                <md-button ng-disabled="loading"
+                           class="tb-btn-footer md-accent md-hue-2 md-fab"
+                           aria-label="{{ 'dashboard.add-widget' | translate }}">
+                    <md-tooltip md-direction="top">
+                        {{ 'dashboard.add-widget' | translate }}
+                    </md-tooltip>
+                    <ng-md-icon icon="add"></ng-md-icon>
+                </md-button>
+            </md-fab-trigger>
+            <md-fab-actions>
+                <md-button ng-disabled="loading"
+                           class="tmd-accent md-hue-2 md-fab" ng-click="vm.addWidget($event)"
+                           aria-label="{{ 'action.create' | translate }}">
+                    <md-tooltip md-direction="top">
+                        {{ 'dashboard.create-new-widget' | translate }}
+                    </md-tooltip>
+                    <ng-md-icon icon="insert_drive_file"></ng-md-icon>
+                </md-button>
+                <md-button ng-disabled="loading"
+                           class="tmd-accent md-hue-2 md-fab" ng-click="vm.importWidget($event)"
+                           aria-label="{{ 'action.import' | translate }}">
+                    <md-tooltip md-direction="top">
+                        {{ 'dashboard.import-widget' | translate }}
+                    </md-tooltip>
+                    <ng-md-icon icon="file_upload"></ng-md-icon>
+                </md-button>
+            </md-fab-actions>
+        </md-fab-speed-dial>
         <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit && !vm.isAddingWidget && !loading && !vm.widgetEditMode" ng-disabled="loading"
                    class="tb-btn-footer md-accent md-hue-2 md-fab"
                    aria-label="{{ 'action.apply' | translate }}"
