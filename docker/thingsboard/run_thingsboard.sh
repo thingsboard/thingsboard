@@ -32,7 +32,7 @@ do
 done
 
 # Copying env variables into conf files
-printenv | while read x; do echo export $x; done >> /usr/share/thingsboard/conf/thingsboard.conf
+printenv | awk -F "=" '{print "export " $1 "='\''" $2 "'\''"}' >> /usr/share/thingsboard/conf/thingsboard.conf
 
 cat /usr/share/thingsboard/conf/thingsboard.conf
 
