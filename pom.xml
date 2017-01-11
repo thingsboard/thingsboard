@@ -69,10 +69,6 @@
         <surfire.version>2.19.1</surfire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
-        <gatling.version>2.2.3</gatling.version>
-        <gatling-mqtt.version>1.0.0</gatling-mqtt.version>
-        <gatling-plugin.version>2.2.1</gatling-plugin.version>
-        <scala-maven-plugin.version>3.2.2</scala-maven-plugin.version>
     </properties>
 
     <modules>
@@ -284,16 +280,6 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
-                <plugin>
-                    <groupId>net.alchim31.maven</groupId>
-                    <artifactId>scala-maven-plugin</artifactId>
-                    <version>${scala-maven-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>io.gatling</groupId>
-                    <artifactId>gatling-maven-plugin</artifactId>
-                    <version>${gatling-plugin.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -702,18 +688,6 @@
                 <groupId>io.springfox</groupId>
                 <artifactId>springfox-swagger2</artifactId>
                 <version>${springfox-swagger.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.gatling.highcharts</groupId>
-                <artifactId>gatling-charts-highcharts</artifactId>
-                <version>${gatling.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.mnogu</groupId>
-                <artifactId>gatling-mqtt</artifactId>
-                <version>${gatling-mqtt.version}</version>
-                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
