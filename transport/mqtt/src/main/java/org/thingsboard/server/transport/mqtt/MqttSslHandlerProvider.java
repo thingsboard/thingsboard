@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,18 +45,18 @@ import java.security.cert.X509Certificate;
 public class MqttSslHandlerProvider {
 
     public static final String TLS = "TLS";
-    @Value("${mqtt.ssl.key-store}")
+    @Value("${mqtt.ssl.key_store}")
     private String keyStoreFile;
-    @Value("${mqtt.ssl.key-store-password}")
+    @Value("${mqtt.ssl.key_store_password}")
     private String keyStorePassword;
-    @Value("${mqtt.ssl.keyStoreType}")
+    @Value("${mqtt.ssl.key_store_type}")
     private String keyStoreType;
 
-    @Value("${mqtt.ssl.trust-store}")
+    @Value("${mqtt.ssl.trust_store}")
     private String trustStoreFile;
-    @Value("${mqtt.ssl.trust-store-password}")
+    @Value("${mqtt.ssl.trust_store_password}")
     private String trustStorePassword;
-    @Value("${mqtt.ssl.trustStoreType}")
+    @Value("${mqtt.ssl.trust_store_type}")
     private String trustStoreType;
 
     @Autowired
@@ -108,8 +108,7 @@ public class MqttSslHandlerProvider {
                 break;
             }
         }
-        X509TrustManager x509TmWrapper = new ThingsboardMqttX509TrustManager(x509Tm, deviceCredentialsService);
-        return x509TmWrapper;
+        return new ThingsboardMqttX509TrustManager(x509Tm, deviceCredentialsService);
     }
 
     static class ThingsboardMqttX509TrustManager implements X509TrustManager {
@@ -136,17 +135,21 @@ public class MqttSslHandlerProvider {
         @Override
         public void checkClientTrusted(X509Certificate[] chain,
                                        String authType) throws CertificateException {
+            DeviceCredentials deviceCredentials = null;
             for (X509Certificate cert : chain) {
                 try {
                     String strCert = SslUtil.getX509CertificateString(cert);
                     String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                    DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(sha3Hash);
-                    if (deviceCredentials == null) {
-                        throw new CertificateException("Invalid Device Certificate");
+                    deviceCredentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(sha3Hash);
+                    if (deviceCredentials != null && strCert.equals(deviceCredentials.getCredentialsValue())) {
+                        break;
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage(), e);
                 }
+            }
+            if (deviceCredentials == null) {
+                throw new CertificateException("Invalid Device Certificate");
             }
         }
     }

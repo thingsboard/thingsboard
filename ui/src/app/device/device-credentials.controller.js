@@ -52,13 +52,16 @@ export default function ManageDeviceCredentialsController(deviceService, $scope,
     function valid() {
         return vm.deviceCredentials &&
                (vm.deviceCredentials.credentialsType === 'ACCESS_TOKEN'
-                  || vm.deviceCredentials.credentialsType === 'X509_CERTIFICATE')
-               &&
-               vm.deviceCredentials.credentialsId && vm.deviceCredentials.credentialsId.length > 0;
+                   && vm.deviceCredentials.credentialsId
+                   && vm.deviceCredentials.credentialsId.length > 0
+                   || vm.deviceCredentials.credentialsType === 'X509_CERTIFICATE'
+                   && vm.deviceCredentials.credentialsValue
+                   && vm.deviceCredentials.credentialsValue.length > 0);
     }
 
     function clear() {
         vm.deviceCredentials.credentialsId = null;
+        vm.deviceCredentials.credentialsValue = null;
     }
 
     function save() {

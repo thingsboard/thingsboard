@@ -27,8 +27,12 @@ public class EncryptionUtil {
     private EncryptionUtil() {
     }
 
+    public static String trimNewLines(String input) {
+        return input.replaceAll("\n","").replaceAll("\r","");
+    }
+
     public static String getSha3Hash(String data) {
-        String trimmedData = data.replaceAll("\n","").replaceAll("\r","");
+        String trimmedData = trimNewLines(data);
         byte[] dataBytes = trimmedData.getBytes();
         SHA3Digest md = new SHA3Digest(256);
         md.reset();

@@ -29,8 +29,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.DeviceCredentialsEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 
-import java.util.Optional;
-
 import static org.thingsboard.server.dao.DaoUtil.getData;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -73,16 +71,18 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
 
     private DeviceCredentials saveOrUpdare(DeviceCredentials deviceCredentials) {
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.X509_CERTIFICATE) {
-            encryptDeviceId(deviceCredentials);
+            formatCertData(deviceCredentials);
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials);
         return getData(deviceCredentialsDao.save(deviceCredentials));
     }
 
-    private void encryptDeviceId(DeviceCredentials deviceCredentials) {
-        String sha3Hash = EncryptionUtil.getSha3Hash(deviceCredentials.getCredentialsId());
+    private void formatCertData(DeviceCredentials deviceCredentials) {
+        String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
+        String sha3Hash = EncryptionUtil.getSha3Hash(cert);
         deviceCredentials.setCredentialsId(sha3Hash);
+        deviceCredentials.setCredentialsValue(cert);
     }
 
     @Override

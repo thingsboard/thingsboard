@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.dao.EncryptionUtil;
 import sun.misc.BASE64Encoder;
 
 import java.io.ByteArrayOutputStream;
@@ -32,11 +33,12 @@ public class SslUtil {
     private SslUtil() {
     }
 
-    public static String getX509CertificateString(X509Certificate cert) throws CertificateEncodingException, IOException {
+    public static String getX509CertificateString(X509Certificate cert)
+            throws CertificateEncodingException, IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         BASE64Encoder encoder = new BASE64Encoder();
         encoder.encodeBuffer(cert.getEncoded(), out);
-        return new String(out.toByteArray(), "UTF-8").trim();
+        return EncryptionUtil.trimNewLines(new String(out.toByteArray(), "UTF-8"));
     }
 
     public static String getX509CertificateString(javax.security.cert.X509Certificate cert)
@@ -44,6 +46,6 @@ public class SslUtil {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         BASE64Encoder encoder = new BASE64Encoder();
         encoder.encodeBuffer(cert.getEncoded(), out);
-        return new String(out.toByteArray(), "UTF-8").trim();
+        return EncryptionUtil.trimNewLines(new String(out.toByteArray(), "UTF-8"));
     }
 }
