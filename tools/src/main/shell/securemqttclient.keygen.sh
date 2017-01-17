@@ -15,8 +15,34 @@
 # limitations under the License.
 #
 
+usage() {
+    echo "This script generates client public/private rey pair, extracts them to a no-password RSA pem file,"
+    echo "and also imports server public key to client trust store"
+    echo "usage: ./securemqttclient.keygen.sh [-p file]"
+    echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
+	echo "    -h | --help  | ?                  Show this message"
+}
 
-. keygen.properties
+PROPERTIES_FILE=keygen.properties
+
+while true; do
+  case "$1" in
+    -p | --props | --properties) PROPERTIES_FILE=$2 ;
+                                shift
+                                ;;
+    -h | --help | ?)            usage
+                                exit 0
+                                ;;
+    -- ) shift;
+         break
+         ;;
+    * )  break
+         ;;
+  esac
+  shift
+done
+
+. $PROPERTIES_FILE
 
 echo "Generating SSL Key Pair..."
 
