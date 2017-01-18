@@ -8,7 +8,7 @@ Thingsboard is an open-source IoT platform for data collection, processing, visu
 
 ## Documentation
 
-Thingsboard documentation is hosted on [thingsboard.io](http://thingsboard.io/docs).
+Thingsboard documentation is hosted on [thingsboard.io](https://thingsboard.io/docs).
 
 ## Sample Dashboard
 
@@ -16,7 +16,7 @@ Thingsboard documentation is hosted on [thingsboard.io](http://thingsboard.io/do
 
 ## Getting Started
 
-Collect and Visualize your IoT data in minutes by following this [guide](http://thingsboard.io/docs/getting-started-guides/helloworld/).
+Collect and Visualize your IoT data in minutes by following this [guide](https://thingsboard.io/docs/getting-started-guides/helloworld/).
 
 ## Support
 
