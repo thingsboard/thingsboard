@@ -51,6 +51,8 @@ public class DefaultDeviceAuthService implements DeviceAuthService {
                         // Credentials ID matches Credentials value in this
                         // primitive case;
                         return DeviceAuthResult.of(credentials.getDeviceId());
+                    case X509_CERTIFICATE:
+                        return DeviceAuthResult.of(credentials.getDeviceId());
                     default:
                         return DeviceAuthResult.of("Credentials Type is not supported yet!");
                 }

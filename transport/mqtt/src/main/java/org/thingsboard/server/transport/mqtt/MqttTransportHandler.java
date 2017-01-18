@@ -18,11 +18,13 @@ package org.thingsboard.server.transport.mqtt;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.*;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
+import org.thingsboard.server.common.data.security.DeviceX509Credentials;
 import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.BasicToDeviceActorSessionMsg;
 import org.thingsboard.server.common.msg.session.MsgType;
@@ -30,9 +32,13 @@ import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.dao.EncryptionUtil;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.MqttSessionCtx;
+import org.thingsboard.server.transport.mqtt.util.SslUtil;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,12 +63,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final String sessionId;
     private final MqttTransportAdaptor adaptor;
     private final SessionMsgProcessor processor;
+    private final SslHandler sslHandler;
 
-    public MqttTransportHandler(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor) {
+    public MqttTransportHandler(SessionMsgProcessor processor, DeviceAuthService authService,
+                                MqttTransportAdaptor adaptor, SslHandler sslHandler) {
         this.processor = processor;
         this.adaptor = adaptor;
         this.sessionCtx = new MqttSessionCtx(processor, authService, adaptor);
         this.sessionId = sessionCtx.getSessionId().toUidStr();
+        this.sslHandler = sslHandler;
     }
 
     @Override
@@ -197,6 +206,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
         log.info("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
+        X509Certificate cert;
+        if (sslHandler != null && (cert = getX509Certificate()) != null) {
+            processX509CertConnect(ctx, cert);
+        } else {
+            processAuthTokenConnect(ctx, msg);
+        }
+    }
+
+    private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
         String userName = msg.payload().userName();
         if (StringUtils.isEmpty(userName)) {
             ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD));
@@ -207,6 +225,35 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED));
             ctx.close();
         }
+    }
+
+    private void processX509CertConnect(ChannelHandlerContext ctx, X509Certificate cert) {
+        try {
+            String strCert = SslUtil.getX509CertificateString(cert);
+            String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
+            if (sessionCtx.login(new DeviceX509Credentials(sha3Hash))) {
+                ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_ACCEPTED));
+            } else {
+                ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED));
+                ctx.close();
+            }
+        } catch (Exception e) {
+            ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED));
+            ctx.close();
+        }
+    }
+
+    private X509Certificate getX509Certificate() {
+        try {
+            X509Certificate[] certChain = sslHandler.engine().getSession().getPeerCertificateChain();
+            if (certChain.length > 0) {
+                return certChain[0];
+            }
+        } catch (SSLPeerUnverifiedException e) {
+            log.warn(e.getMessage());
+            return null;
+        }
+        return null;
     }
 
     private void processDisconnect(ChannelHandlerContext ctx) {

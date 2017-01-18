@@ -16,6 +16,7 @@
 #
 
 import paho.mqtt.client as mqtt
+import ssl, socket
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, rc):
@@ -41,8 +42,12 @@ client.on_connect = on_connect
 client.on_message = on_message
 client.publish('v1/devices/me/attributes/request/1', "{\"clientKeys\":\"model\"}", 1)
 
-client.username_pw_set("TEST_TOKEN")
-client.connect('127.0.0.1', 1883, 1)
+client.tls_set(ca_certs="client_truststore.pem", certfile="mqttclient.nopass.pem", keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
+                       tls_version=ssl.PROTOCOL_TLSv1, ciphers=None);
+
+client.tls_insecure_set(False)
+client.connect(socket.gethostname(), 1883, 1)
+
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.

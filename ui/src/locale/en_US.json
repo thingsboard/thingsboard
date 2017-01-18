@@ -308,6 +308,8 @@
     "access-token": "Access token",
     "access-token-required": "Access token is required.",
     "access-token-invalid": "Access token length must be from 1 to 20 characters.",
+    "rsa-key": "RSA public key",
+    "access-token-required": "RSA public key is required.",
     "secret": "Secret",
     "secret-required": "Secret is required.",
     "name": "Name",
