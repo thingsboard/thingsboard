@@ -27,7 +27,7 @@ usage() {
 }
 
 COPY=true;
-COPY_DIR="d"
+COPY_DIR=
 PROPERTIES_FILE=keygen.properties
 
 while true; do
@@ -65,7 +65,7 @@ echo "Generating SSL Key Pair..."
 
 keytool -genkeypair -v \
   -alias $SERVER_KEY_ALIAS \
-  -dname "CN=$HOSTNAME, OU=Thingsboard, O=Thingsboard, L=Piscataway, ST=NJ, C=US" \
+  -dname "CN=$DOMAIN_SUFFIX, OU=Thingsboard, O=Thingsboard, L=Piscataway, ST=NJ, C=US" \
   -keystore $SERVER_FILE_PREFIX.jks \
   -keypass $PASSWORD \
   -storepass $PASSWORD \
@@ -95,7 +95,7 @@ if [[ $COPY = true ]]; then
         read -p  "Do you want to copy $SERVER_FILE_PREFIX.jks to server directory? " yn
             case $yn in
                 [Yy]) echo "Please, specify destination dir: "
-                     read -p "(Default: copy_dir): " dir
+                     read -p "(Default: $SERVER_KEYSTORE_DIR): " dir
                      if [[ !  -z  $dir  ]]; then
                         DESTINATION=$dir;
                      else

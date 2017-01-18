@@ -48,7 +48,7 @@ echo "Generating SSL Key Pair..."
 
 keytool -genkeypair -v \
   -alias $CLIENT_KEY_ALIAS \
-  -dname "CN=$HOSTNAME, OU=Thingsboard, O=Thingsboard, L=Piscataway, ST=NJ, C=US" \
+  -dname "CN=$DOMAIN_SUFFIX, OU=Thingsboard, O=Thingsboard, L=Piscataway, ST=NJ, C=US" \
   -keystore $CLIENT_FILE_PREFIX.jks \
   -keypass $PASSWORD \
   -storepass $PASSWORD \

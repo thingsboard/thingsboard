@@ -52,13 +52,6 @@ public class MqttSslHandlerProvider {
     @Value("${mqtt.ssl.key_store_type}")
     private String keyStoreType;
 
-    @Value("${mqtt.ssl.trust_store}")
-    private String trustStoreFile;
-    @Value("${mqtt.ssl.trust_store_password}")
-    private String trustStorePassword;
-    @Value("${mqtt.ssl.trust_store_type}")
-    private String trustStoreType;
-
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
 
@@ -67,12 +60,12 @@ public class MqttSslHandlerProvider {
         try {
             URL ksUrl = Resources.getResource(keyStoreFile);
             File ksFile = new File(ksUrl.toURI());
-            URL tsUrl = Resources.getResource(trustStoreFile);
+            URL tsUrl = Resources.getResource(keyStoreFile);
             File tsFile = new File(tsUrl.toURI());
 
             TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            KeyStore trustStore = KeyStore.getInstance(trustStoreType);
-            trustStore.load(new FileInputStream(tsFile), trustStorePassword.toCharArray());
+            KeyStore trustStore = KeyStore.getInstance(keyStoreType);
+            trustStore.load(new FileInputStream(tsFile), keyStorePassword.toCharArray());
             tmFactory.init(trustStore);
 
             KeyStore ks = KeyStore.getInstance(keyStoreType);

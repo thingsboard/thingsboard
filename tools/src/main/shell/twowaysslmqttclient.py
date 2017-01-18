@@ -45,7 +45,6 @@ client.publish('v1/devices/me/attributes/request/1', "{\"clientKeys\":\"model\"}
 client.tls_set(ca_certs="client_truststore.pem", certfile="mqttclient.nopass.pem", keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
                        tls_version=ssl.PROTOCOL_TLSv1, ciphers=None);
 
-client.username_pw_set("TEST_TOKEN")
 client.tls_insecure_set(False)
 client.connect(socket.gethostname(), 1883, 1)
 

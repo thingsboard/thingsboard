@@ -76,14 +76,10 @@ mqtt:
   adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
   timeout: "${MQTT_TIMEOUT:10000}"
 # Uncomment the following lines to enable ssl for MQTT
-#  ssl:
-#    key_store: keystore/mqttserver.jks
-#    key_store_password: password
-#    key_store_type: JKS
-# TrustStore can be the same as KeyStore
-#    trust_store: keystore/mqttserver.jks
-#    trust_store_password: password
-#    trust_store_type: JKS
+  ssl:
+    key_store: keystore/mqttserver.jks
+    key_store_password: password
+    key_store_type: JKS
 
 # CoAP server parameters
 coap:
