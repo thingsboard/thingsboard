@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.dao.DaoUtil.convertDataList;
 import static org.thingsboard.server.dao.DaoUtil.getData;
@@ -67,6 +68,18 @@ public class DeviceServiceImpl implements DeviceService {
         validateId(deviceId, "Incorrect deviceId " + deviceId);
         DeviceEntity deviceEntity = deviceDao.findById(deviceId.getId());
         return getData(deviceEntity);
+    }
+
+    @Override
+    public Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name) {
+        log.trace("Executing findDeviceByTenantIdAndName [{}][{}]", tenantId, name);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Optional<DeviceEntity> deviceEntityOpt = deviceDao.findDevicesByTenantIdAndName(tenantId.getId(), name);
+        if (deviceEntityOpt.isPresent()) {
+            return Optional.of(getData(deviceEntityOpt.get()));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

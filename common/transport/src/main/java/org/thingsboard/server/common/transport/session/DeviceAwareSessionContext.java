@@ -42,6 +42,12 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
         this.authService = authService;
     }
 
+    public DeviceAwareSessionContext(SessionMsgProcessor processor, DeviceAuthService authService, Device device) {
+        this(processor, authService);
+        this.device = device;
+    }
+
+
     public boolean login(DeviceCredentialsFilter credentials) {
         DeviceAuthResult result = authService.process(credentials);
         if (result.isSuccess()) {
@@ -54,6 +60,14 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
             log.debug("Can't find device using credentials [{}] due to {}", credentials, result.getErrorMsg());
             return false;
         }
+    }
+
+    public DeviceAuthService getAuthService() {
+        return authService;
+    }
+
+    public SessionMsgProcessor getProcessor() {
+        return processor;
     }
 
     public Device getDevice() {

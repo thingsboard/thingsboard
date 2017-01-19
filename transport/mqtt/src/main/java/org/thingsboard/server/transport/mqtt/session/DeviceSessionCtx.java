@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrew Shvayka
  */
 @Slf4j
-public class MqttSessionCtx extends DeviceAwareSessionContext {
+public class DeviceSessionCtx extends DeviceAwareSessionContext {
 
     private final MqttTransportAdaptor adaptor;
     private final MqttSessionId sessionId;
@@ -44,7 +44,7 @@ public class MqttSessionCtx extends DeviceAwareSessionContext {
     private volatile boolean allowAttributeResponses;
     private AtomicInteger msgIdSeq = new AtomicInteger(0);
 
-    public MqttSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor) {
+    public DeviceSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor) {
         super(processor, authService);
         this.adaptor = adaptor;
         this.sessionId = new MqttSessionId();

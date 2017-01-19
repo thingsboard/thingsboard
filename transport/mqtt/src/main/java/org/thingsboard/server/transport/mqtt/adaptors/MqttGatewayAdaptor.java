@@ -16,11 +16,21 @@
 package org.thingsboard.server.transport.mqtt.adaptors;
 
 import io.netty.handler.codec.mqtt.MqttMessage;
-import org.thingsboard.server.common.transport.TransportAdaptor;
-import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
+import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
+import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
+import org.thingsboard.server.common.transport.adaptor.AdaptorException;
+import org.thingsboard.server.transport.mqtt.session.GatewaySessionCtx;
+
+import java.util.Optional;
 
 /**
- * @author Andrew Shvayka
+ * Created by ashvayka on 19.01.17.
  */
-public interface MqttTransportAdaptor extends TransportAdaptor<DeviceSessionCtx, MqttMessage, MqttMessage> {
+public interface MqttGatewayAdaptor  {
+
+    AdaptorToSessionActorMsg convertToActorMsg(GatewaySessionCtx ctx, MsgType type, MqttMessage inbound) throws AdaptorException;
+
+    Optional<MqttMessage> convertToAdaptorMsg(GatewaySessionCtx ctx, SessionActorToAdaptorMsg msg) throws AdaptorException;
+
 }
