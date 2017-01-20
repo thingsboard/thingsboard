@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.gson.JsonElement;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.*;
@@ -38,7 +37,6 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.EncryptionUtil;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionCtx;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
@@ -129,13 +127,17 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Processing publish msg [{}][{}]!", sessionId, topicName, msgId);
 
         if (topicName.startsWith(BASE_GATEWAY_API_TOPIC)) {
-            AdaptorToSessionActorMsg msg = null;
             if (gatewaySessionCtx != null) {
+                gatewaySessionCtx.setChannel(ctx);
                 try {
-                    if (topicName.equals(GATEWAY_CONNECT_TOPIC)) {
-                        gatewaySessionCtx.connect(getDeviceName(mqttMsg));
+                    if (topicName.equals(GATEWAY_TELEMETRY_TOPIC)) {
+                        gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
+                    } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
+                        gatewaySessionCtx.onDeviceAttributes(mqttMsg);
+                    } else if (topicName.equals(GATEWAY_CONNECT_TOPIC)) {
+                        gatewaySessionCtx.onDeviceConnect(mqttMsg);
                     } else if (topicName.equals(GATEWAY_DISCONNECT_TOPIC)) {
-                        gatewaySessionCtx.disconnect(getDeviceName(mqttMsg));
+                        gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
                     }
                 } catch (RuntimeException | AdaptorException e) {
                     log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -144,11 +146,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } else {
             processDevicePublish(ctx, mqttMsg, topicName, msgId);
         }
-    }
-
-    private String getDeviceName(MqttPublishMessage mqttMsg) throws AdaptorException {
-        JsonElement json = JsonMqttAdaptor.validateJsonPayload(deviceSessionCtx.getSessionId(), mqttMsg.payload());
-        return json.getAsJsonObject().get("device").getAsString();
     }
 
     private void processDevicePublish(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg, String topicName, int msgId) {
@@ -309,6 +306,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processDisconnect(ChannelHandlerContext ctx) {
         ctx.close();
+        processor.process(SessionCloseMsg.onDisconnect(deviceSessionCtx.getSessionId()));
+        if (gatewaySessionCtx != null) {
+            gatewaySessionCtx.onGatewayDisconnect();
+        }
     }
 
     private MqttConnAckMessage createMqttConnAckMsg(MqttConnectReturnCode returnCode) {
@@ -362,9 +363,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void checkGatewaySession() {
         Device device = deviceSessionCtx.getDevice();
-        JsonNode gatewayNode = device.getAdditionalInfo().get("gateway");
-        if (gatewayNode != null && gatewayNode.asBoolean()) {
-            gatewaySessionCtx = new GatewaySessionCtx(processor, deviceService, authService, device);
+        JsonNode infoNode = device.getAdditionalInfo();
+        if (infoNode != null) {
+            JsonNode gatewayNode = infoNode.get("gateway");
+            if (gatewayNode != null && gatewayNode.asBoolean()) {
+                gatewaySessionCtx = new GatewaySessionCtx(processor, deviceService, authService, deviceSessionCtx);
+            }
         }
     }
 

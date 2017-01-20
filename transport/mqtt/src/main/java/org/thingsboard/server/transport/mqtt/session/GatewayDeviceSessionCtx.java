@@ -15,26 +15,29 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+import io.netty.handler.codec.mqtt.MqttMessage;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.SessionId;
-import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
-import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
-import org.thingsboard.server.common.msg.session.SessionType;
+import org.thingsboard.server.common.msg.core.ResponseMsg;
+import org.thingsboard.server.common.msg.session.*;
 import org.thingsboard.server.common.msg.session.ex.SessionException;
-import org.thingsboard.server.common.transport.SessionMsgProcessor;
-import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
+
+import java.util.Optional;
 
 /**
  * Created by ashvayka on 19.01.17.
  */
 public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
 
+    private GatewaySessionCtx parent;
     private final MqttSessionId sessionId;
     private volatile boolean closed;
 
-    public GatewayDeviceSessionCtx(SessionMsgProcessor processor, DeviceAuthService authService, Device device) {
-        super(processor, authService, device);
+    public GatewayDeviceSessionCtx(GatewaySessionCtx parent, Device device) {
+        super(parent.getProcessor(), parent.getAuthService(), device);
+        this.parent = parent;
         this.sessionId = new MqttSessionId();
     }
 
@@ -49,17 +52,30 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
     }
 
     @Override
-    public void onMsg(SessionActorToAdaptorMsg msg) throws SessionException {
+    public void onMsg(SessionActorToAdaptorMsg sessionMsg) throws SessionException {
+        Optional<MqttMessage> message = getToDeviceMsg(sessionMsg);
+        message.ifPresent(parent::writeAndFlush);
+    }
 
+    private Optional<MqttMessage> getToDeviceMsg(SessionActorToAdaptorMsg sessionMsg) {
+        ToDeviceMsg msg = sessionMsg.getMsg();
+        switch (msg.getMsgType()) {
+            case STATUS_CODE_RESPONSE:
+                ResponseMsg<?> responseMsg = (ResponseMsg) msg;
+                if (responseMsg.isSuccess()) {
+                    MsgType requestMsgType = responseMsg.getRequestMsgType();
+                    Integer requestId = responseMsg.getRequestId();
+                    if (requestMsgType == MsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == MsgType.POST_TELEMETRY_REQUEST) {
+                        return Optional.of(MqttTransportHandler.createMqttPubAckMsg(requestId));
+                    }
+                }
+                break;
+        }
+        return Optional.empty();
     }
 
     @Override
     public void onMsg(SessionCtrlMsg msg) throws SessionException {
-
-    }
-
-    @Override
-    public void onError(SessionException e) {
 
     }
 

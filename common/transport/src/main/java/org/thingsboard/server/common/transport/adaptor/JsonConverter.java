@@ -74,7 +74,7 @@ public class JsonConverter {
         }
     }
 
-    private static void parseWithTs(BasicTelemetryUploadRequest request, JsonObject jo) {
+    public static void parseWithTs(BasicTelemetryUploadRequest request, JsonObject jo) {
         long ts = jo.get("ts").getAsLong();
         JsonObject valuesObject = jo.get("values").getAsJsonObject();
         for (KvEntry entry : parseValues(valuesObject)) {
@@ -82,7 +82,7 @@ public class JsonConverter {
         }
     }
 
-    private static List<KvEntry> parseValues(JsonObject valuesObject) {
+    public static List<KvEntry> parseValues(JsonObject valuesObject) {
         List<KvEntry> result = new ArrayList<>();
         for (Entry<String, JsonElement> valueEntry : valuesObject.entrySet()) {
             JsonElement element = valueEntry.getValue();

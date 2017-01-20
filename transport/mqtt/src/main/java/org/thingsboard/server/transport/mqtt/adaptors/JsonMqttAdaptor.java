@@ -248,7 +248,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         try {
             String payload = payloadData.toString(UTF8);
             if (payload == null) {
-                log.warn("[{}] Payload is empty!", sessionId);
+                log.warn("[{}] Payload is empty!", sessionId.toUidStr());
                 throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
             }
             return payload;

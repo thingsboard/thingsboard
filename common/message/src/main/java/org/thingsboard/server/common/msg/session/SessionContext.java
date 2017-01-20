@@ -27,8 +27,6 @@ public interface SessionContext extends SessionAwareMsg {
 
     void onMsg(SessionCtrlMsg msg) throws SessionException;
 
-    void onError(SessionException e);
-
     boolean isClosed();
 
     long getTimeout();

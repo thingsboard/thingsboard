@@ -141,11 +141,6 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
     }
 
     @Override
-    public void onError(SessionException e) {
-
-    }
-
-    @Override
     public boolean isClosed() {
         return false;
     }
