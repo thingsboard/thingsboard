@@ -77,7 +77,7 @@ public class MqttSslClient {
             client.connect(options);
             Thread.sleep(3000);
             MqttMessage message = new MqttMessage();
-            message.setPayload("{\"key1\":\"zaloopa\", \"key2\":true, \"key3\": 3.0, \"key4\": 4}".getBytes());
+            message.setPayload("{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4}".getBytes());
             client.publish("v1/devices/me/telemetry", message);
             client.disconnect();
             System.out.println("Disconnected");
