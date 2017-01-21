@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#
 # Copyright © 2016-2017 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
