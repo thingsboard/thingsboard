@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -44,7 +43,7 @@ client.publish('v1/devices/me/attributes/request/1', "{\"clientKeys\":\"model\"}
 
 #client.tls_set(ca_certs="client_truststore.pem", certfile="mqttclient.nopass.pem", keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
 #               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None);
-client.tls_set(ca_certs="client_truststore.pem", certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
+client.tls_set(ca_certs="mqttserver.pub.pem", certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
                        tls_version=ssl.PROTOCOL_TLSv1, ciphers=None);
 
 client.username_pw_set("B1_TEST_TOKEN")

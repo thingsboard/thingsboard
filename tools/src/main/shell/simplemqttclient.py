@@ -41,7 +41,7 @@ client.on_connect = on_connect
 client.on_message = on_message
 client.publish('v1/devices/me/attributes/request/1', "{\"clientKeys\":\"model\"}", 1)
 
-client.username_pw_set("TEST_TOKEN")
+client.username_pw_set("B1_TEST_TOKEN")
 client.connect('127.0.0.1', 1883, 1)
 
 # Blocking call that processes network traffic, dispatches callbacks and
