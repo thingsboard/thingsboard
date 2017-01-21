@@ -82,6 +82,7 @@ mqtt:
 #    key_password: server_key_password
 #    key_store_type: JKS
 
+
 # CoAP server parameters
 coap:
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"

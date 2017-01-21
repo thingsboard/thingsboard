@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Base64Utils;
 import org.thingsboard.server.dao.EncryptionUtil;
 import sun.misc.BASE64Encoder;
 
@@ -35,17 +36,13 @@ public class SslUtil {
 
     public static String getX509CertificateString(X509Certificate cert)
             throws CertificateEncodingException, IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        BASE64Encoder encoder = new BASE64Encoder();
-        encoder.encodeBuffer(cert.getEncoded(), out);
-        return EncryptionUtil.trimNewLines(new String(out.toByteArray(), "UTF-8"));
+        Base64Utils.encodeToString(cert.getEncoded());
+        return EncryptionUtil.trimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
     }
 
     public static String getX509CertificateString(javax.security.cert.X509Certificate cert)
             throws javax.security.cert.CertificateEncodingException, IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        BASE64Encoder encoder = new BASE64Encoder();
-        encoder.encodeBuffer(cert.getEncoded(), out);
-        return EncryptionUtil.trimNewLines(new String(out.toByteArray(), "UTF-8"));
+        Base64Utils.encodeToString(cert.getEncoded());
+        return EncryptionUtil.trimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
     }
 }
