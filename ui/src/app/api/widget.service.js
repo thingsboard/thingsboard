@@ -22,6 +22,7 @@ import thinsboardLedLight from '../components/led-light.directive';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
 import TbAnalogueRadialGauge from '../widget/lib/analogue-radial-gauge';
 import TbDigitalGauge from '../widget/lib/digital-gauge';
+import TbMapWidget from '../widget/lib/map-widget';
 
 import 'oclazyload';
 import cssjs from '../../vendor/css.js/css';
@@ -44,6 +45,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
     $window.TbAnalogueLinearGauge = TbAnalogueLinearGauge;
     $window.TbAnalogueRadialGauge = TbAnalogueRadialGauge;
     $window.TbDigitalGauge = TbDigitalGauge;
+    $window.TbMapWidget = TbMapWidget;
 
     var cssParser = new cssjs();
     cssParser.testMode = false;

@@ -64,8 +64,11 @@ class ThingsboardNumber extends React.Component {
             fieldClass += " tb-focused";
         }
         var value = this.state.lastSuccessfulValue;
-        value = Number(value);
-
+        if (typeof value !== 'undefined') {
+            value = Number(value);
+        } else {
+            value = null;
+        }
         return (
             <NumberInput
                 className={fieldClass}

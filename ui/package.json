@@ -53,6 +53,7 @@
     "js-beautify": "^1.6.4",
     "json-schema-defaults": "^0.2.0",
     "justgage": "^1.2.2",
+    "leaflet": "^1.0.3",
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",
     "md-color-picker": "^0.2.6",
