@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao;
 
+import com.google.common.base.CharMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.digests.SHA3Digest;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;
@@ -28,7 +29,10 @@ public class EncryptionUtil {
     }
 
     public static String trimNewLines(String input) {
-        return input.replaceAll("\n","").replaceAll("\r","");
+        return input.replaceAll("-----BEGIN CERTIFICATE-----", "")
+                .replaceAll("-----END CERTIFICATE-----", "")
+                .replaceAll("\n","")
+                .replaceAll("\r","");
     }
 
     public static String getSha3Hash(String data) {

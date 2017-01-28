@@ -49,9 +49,11 @@ public class MqttSslHandlerProvider {
     private String keyStoreFile;
     @Value("${mqtt.ssl.key_store_password}")
     private String keyStorePassword;
+    @Value("${mqtt.ssl.key_password}")
+    private String keyPassword;
     @Value("${mqtt.ssl.key_store_type}")
     private String keyStoreType;
-
+    
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
 
@@ -72,7 +74,7 @@ public class MqttSslHandlerProvider {
 
             ks.load(new FileInputStream(ksFile), keyStorePassword.toCharArray());
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, keyStorePassword.toCharArray());
+            kmf.init(ks, keyPassword.toCharArray());
 
             KeyManager[] km = kmf.getKeyManagers();
             TrustManager x509wrapped = getX509TrustManager(tmFactory);

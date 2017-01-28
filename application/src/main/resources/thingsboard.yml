@@ -82,7 +82,8 @@ mqtt:
 # Uncomment the following lines to enable ssl for MQTT
 #  ssl:
 #    key_store: keystore/mqttserver.jks
-#    key_store_password: password
+#    key_store_password: server_ks_password
+#    key_password: server_key_password
 #    key_store_type: JKS
 
 # CoAP server parameters
