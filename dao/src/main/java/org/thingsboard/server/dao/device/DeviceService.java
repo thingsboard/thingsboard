@@ -22,9 +22,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 
+import java.util.Optional;
+
 public interface DeviceService {
     
     Device findDeviceById(DeviceId deviceId);
+
+    Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
     Device saveDevice(Device device);
 

@@ -29,6 +29,7 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
 import javax.net.ssl.SSLException;
@@ -40,13 +41,15 @@ import java.security.cert.CertificateException;
 public class MqttTransportServerInitializer extends ChannelInitializer<SocketChannel> {
 
     private final SessionMsgProcessor processor;
+    private final DeviceService deviceService;
     private final DeviceAuthService authService;
     private final MqttTransportAdaptor adaptor;
     private final MqttSslHandlerProvider sslHandlerProvider;
 
-    public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceAuthService authService, MqttTransportAdaptor adaptor,
+    public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, MqttTransportAdaptor adaptor,
                                           MqttSslHandlerProvider sslHandlerProvider) {
         this.processor = processor;
+        this.deviceService = deviceService;
         this.authService = authService;
         this.adaptor = adaptor;
         this.sslHandlerProvider = sslHandlerProvider;
@@ -63,7 +66,7 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast("decoder", new MqttDecoder());
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
-        MqttTransportHandler handler = new MqttTransportHandler(processor, authService, adaptor, sslHandler);
+        MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, adaptor, sslHandler);
         pipeline.addLast(handler);
         ch.closeFuture().addListener(handler);
     }

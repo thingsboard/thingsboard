@@ -96,17 +96,6 @@ public class CoapSessionCtx extends DeviceAwareSessionContext {
     }
 
     @Override
-    public void onError(SessionException e) {
-        if (e instanceof SessionAuthException) {
-            log.warn("[{}] onError: {}", sessionId, e.getMessage());
-            exchange.respond(ResponseCode.UNAUTHORIZED);
-        } else {
-            log.warn("[{}] onError: {}", sessionId, e.getMessage(), e);
-            exchange.respond(ResponseCode.BAD_REQUEST);
-        }
-    }
-
-    @Override
     public SessionId getSessionId() {
         return sessionId;
     }

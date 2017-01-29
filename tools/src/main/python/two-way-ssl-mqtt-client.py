@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -41,14 +42,11 @@ client.on_connect = on_connect
 client.on_message = on_message
 client.publish('v1/devices/me/attributes/request/1', "{\"clientKeys\":\"model\"}", 1)
 
-#client.tls_set(ca_certs="client_truststore.pem", certfile="mqttclient.nopass.pem", keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
-#               tls_version=ssl.PROTOCOL_TLSv1, ciphers=None);
-client.tls_set(ca_certs="mqttserver.pub.pem", certfile=None, keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
+client.tls_set(ca_certs="mqttserver.pub.pem", certfile="mqttclient.nopass.pem", keyfile=None, cert_reqs=ssl.CERT_REQUIRED,
                        tls_version=ssl.PROTOCOL_TLSv1, ciphers=None);
 
-client.username_pw_set("B1_TEST_TOKEN")
 client.tls_insecure_set(False)
-client.connect(socket.gethostname(), 1883, 1)
+client.connect(socket.gethostname(), 8883, 1)
 
 
 # Blocking call that processes network traffic, dispatches callbacks and

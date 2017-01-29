@@ -24,6 +24,10 @@ public class SessionCloseMsg implements SessionCtrlMsg {
     private final boolean revoked;
     private final boolean timeout;
 
+    public static SessionCloseMsg onDisconnect(SessionId sessionId) {
+        return new SessionCloseMsg(sessionId, false, false);
+    }
+
     public static SessionCloseMsg onError(SessionId sessionId) {
         return new SessionCloseMsg(sessionId, false, false);
     }
