@@ -18,7 +18,7 @@ import $ from 'jquery';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, types, visibleRect,
+export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, types, visibleRect,
                                          datasourceService, deviceService, isPreview, widget, deviceAliasList, fns) {
 
     var vm = this;
@@ -67,6 +67,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     $scope.$timeout = $timeout;
     $scope.$q = $q;
+    $scope.$injector = $injector;
 
     $scope.rpcRejection = null;
     $scope.rpcErrorText = null;
