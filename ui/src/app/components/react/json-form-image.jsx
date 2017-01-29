@@ -58,7 +58,7 @@ class ThingsboardImage extends React.Component {
         if (event) {
             event.stopPropagation();
         }
-        this.onValueChanged(null);
+        this.onValueChanged("");
     }
 
     render() {
