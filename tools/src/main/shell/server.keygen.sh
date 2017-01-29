@@ -122,25 +122,25 @@ fi
 
 if [[ $COPY = true ]]; then
     if [[ -z "$COPY_DIR" ]]; then
-        read -p  "Do you want to copy $SERVER_FILE_PREFIX.jks to server directory?[yes]" yn
-            while :
-            do
-                case $yn in
-                    [nN]|[nN][oO])
-                        break
-                        ;;
-                    [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
-                        read -p "(Default: $SERVER_KEYSTORE_DIR): " dir
-                         if [[ !  -z  $dir  ]]; then
-                            DESTINATION=$dir;
-                         else
-                            DESTINATION=$SERVER_KEYSTORE_DIR
-                         fi;
-                         break;;
-                    *)  echo "Please reply 'yes' or 'no'"
-                        ;;
-                 esac
-             done
+        while :
+        do
+            read -p  "Do you want to copy $SERVER_FILE_PREFIX.jks to server directory? [Y/N]: " yn
+            case $yn in
+                [nN]|[nN][oO])
+                    break
+                    ;;
+                [yY]|[yY][eE]|[yY][eE]|[sS]|[yY]|"")
+                    read -p "(Default: $SERVER_KEYSTORE_DIR): " dir
+                     if [[ !  -z  $dir  ]]; then
+                        DESTINATION=$dir;
+                     else
+                        DESTINATION=$SERVER_KEYSTORE_DIR
+                     fi;
+                     break;;
+                *)  echo "Please reply 'yes' or 'no'"
+                    ;;
+             esac
+         done
     else
         DESTINATION=$COPY_DIR
     fi

@@ -18,7 +18,7 @@
 usage() {
     echo "This script generates client public/private rey pair, extracts them to a no-password RSA pem file,"
     echo "and imports server public key to client keystore"
-    echo "usage: ./securemqttclient.keygen.sh [-p file]"
+    echo "usage: ./client.keygen.sh [-p file]"
     echo "    -p | --props | --properties file  Properties file. default value is ./keygen.properties"
 	echo "    -h | --help  | ?                  Show this message"
 }
@@ -48,7 +48,7 @@ if [ -f $CLIENT_FILE_PREFIX.jks ] || [ -f $CLIENT_FILE_PREFIX.pub.pem ] || [ -f 
 then
 while :
    do
-       read -p "Output files from previous server.keygen.sh script run found. Overwrite?[yes]" response
+       read -p "Output files from previous server.keygen.sh script run found. Overwrite? [Y/N]: " response
        case $response in
         [nN]|[nN][oO])
             echo "Skipping"
@@ -74,7 +74,7 @@ echo "Generating SSL Key Pair..."
 
 keytool -genkeypair -v \
   -alias $CLIENT_KEY_ALIAS \
-  -dname "CN=$DOMAIN_SUFFIX, OU=Thingsboard, O=Thingsboard, L=Piscataway, ST=NJ, C=US" \
+  -dname "CN=$DOMAIN_SUFFIX, OU=Thingsboard, O=Thingsboard, L=San Francisco, ST=CA, C=US" \
   -keystore $CLIENT_FILE_PREFIX.jks \
   -keypass $CLIENT_KEY_PASSWORD \
   -storepass $CLIENT_KEYSTORE_PASSWORD \

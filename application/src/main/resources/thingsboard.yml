@@ -81,7 +81,7 @@ mqtt:
     worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
 # Uncomment the following lines to enable ssl for MQTT
 #  ssl:
-#    key_store: keystore/mqttserver.jks
+#    key_store: mqttserver.jks
 #    key_store_password: server_ks_password
 #    key_password: server_key_password
 #    key_store_type: JKS
