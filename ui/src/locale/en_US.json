@@ -323,7 +323,8 @@
     "accessTokenCopiedMessage": "Device access token has been copied to clipboard",
     "assignedToCustomer": "Assigned to customer",
     "unable-delete-device-alias-title": "Unable to delete device alias",
-    "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}"
+    "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
+    "is-gateway": "Is gateway"
   },
   "dialog": {
     "close": "Close dialog"

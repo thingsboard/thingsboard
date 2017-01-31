@@ -256,6 +256,9 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         type: types.dataKeyType.timeseries,
                         onData: function (data) {
                             onData(data, types.dataKeyType.timeseries);
+                        },
+                        onReconnected: function() {
+                            onReconnected();
                         }
                     };
 
@@ -278,6 +281,9 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         type: types.dataKeyType.timeseries,
                         onData: function (data) {
                             onData(data, types.dataKeyType.timeseries);
+                        },
+                        onReconnected: function() {
+                            onReconnected();
                         }
                     };
 
@@ -299,6 +305,9 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     type: types.dataKeyType.attribute,
                     onData: function (data) {
                         onData(data, types.dataKeyType.attribute);
+                    },
+                    onReconnected: function() {
+                        onReconnected();
                     }
                 };
 
@@ -425,6 +434,25 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
         if (!history) {
             timer = $timeout(onTick, frequency / 2, false);
+        }
+    }
+
+    function onReconnected() {
+        if (datasourceType === types.datasourceType.device) {
+            for (var key in dataKeys) {
+                var dataKeysList = dataKeys[key];
+                for (var i = 0; i < dataKeysList.length; i++) {
+                    var dataKey = dataKeysList[i];
+                    var datasourceKey = key + '_' + i;
+                    datasourceData[datasourceKey] = [];
+                    for (var l in listeners) {
+                        var listener = listeners[l];
+                        listener.dataUpdated(datasourceData[datasourceKey],
+                            listener.datasourceIndex,
+                            dataKey.index);
+                    }
+                }
+            }
         }
     }
 

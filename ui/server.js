@@ -52,6 +52,11 @@ const apiProxy = httpProxy.createProxyServer({
     }
 });
 
+apiProxy.on('error', function (err, req, res) {
+    console.warn('API proxy error: ' + err);
+    res.end('Error.');
+});
+
 console.info(`Forwarding API requests to http://${forwardHost}:${forwardPort}`);
 
 app.all('/api/*', (req, res) => {
