@@ -307,12 +307,12 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
                     onSubscriptionData(data, subscriptionId);
                 }
             };
-            telemetryWebsocketService.subscribe(subscriber);
             deviceAttributesSubscription = {
                 subscriber: subscriber,
                 attributes: null
             }
             deviceAttributesSubscriptionMap[subscriptionId] = deviceAttributesSubscription;
+            telemetryWebsocketService.subscribe(subscriber);
         }
         return subscriptionId;
     }

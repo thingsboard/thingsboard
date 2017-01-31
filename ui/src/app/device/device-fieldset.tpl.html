@@ -60,6 +60,11 @@
 	    	</div>				
 		</md-input-container>
         <md-input-container class="md-block">
+            <md-checkbox ng-disabled="loading || !isEdit" flex aria-label="{{ 'device.is-gateway' | translate }}"
+                         ng-model="device.additionalInfo.gateway">{{ 'device.is-gateway' | translate }}
+            </md-checkbox>
+        </md-input-container>
+        <md-input-container class="md-block">
             <label translate>device.description</label>
             <textarea ng-model="device.additionalInfo.description" rows="2"></textarea>
         </md-input-container>

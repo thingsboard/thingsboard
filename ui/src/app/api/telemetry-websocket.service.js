@@ -20,11 +20,17 @@ export default angular.module('thingsboard.api.telemetryWebsocket', [thingsboard
     .factory('telemetryWebsocketService', TelemetryWebsocketService)
     .name;
 
+const RECONNECT_INTERVAL = 5000;
+const WS_IDLE_TIMEOUT = 90000;
+
 /*@ngInject*/
-function TelemetryWebsocketService($websocket, $timeout, $window, types, userService) {
+function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, types, userService) {
 
     var isOpening = false,
         isOpened = false,
+        isActive = false,
+        isReconnect = false,
+        reconnectSubscribers = [],
         lastCmdId = 0,
         subscribers = {},
         subscribersCount = 0,
@@ -36,7 +42,8 @@ function TelemetryWebsocketService($websocket, $timeout, $window, types, userSer
         telemetryUri,
         dataStream,
         location = $window.location,
-        socketCloseTimer;
+        socketCloseTimer,
+        reconnectTimer;
 
     if (location.protocol === "https:") {
         telemetryUri = "wss:";
@@ -46,10 +53,17 @@ function TelemetryWebsocketService($websocket, $timeout, $window, types, userSer
     telemetryUri += "//" + location.hostname + ":" + location.port;
     telemetryUri += "/api/ws/plugins/telemetry";
 
+
     var service = {
         subscribe: subscribe,
         unsubscribe: unsubscribe
     }
+
+    $rootScope.telemetryWsLogoutHandle = $rootScope.$on('unauthenticated', function (event, doLogout) {
+        if (doLogout) {
+            reset(true);
+        }
+    });
 
     return service;
 
@@ -74,12 +88,42 @@ function TelemetryWebsocketService($websocket, $timeout, $window, types, userSer
     function onOpen () {
         isOpening = false;
         isOpened = true;
-        publishCommands();
+        if (reconnectTimer) {
+            $timeout.cancel(reconnectTimer);
+            reconnectTimer = null;
+        }
+        if (isReconnect) {
+            isReconnect = false;
+            for (var r in reconnectSubscribers) {
+                var reconnectSubscriber = reconnectSubscribers[r];
+                if (reconnectSubscriber.onReconnected) {
+                    reconnectSubscriber.onReconnected();
+                }
+                subscribe(reconnectSubscriber);
+            }
+            reconnectSubscribers = [];
+        } else {
+            publishCommands();
+        }
     }
 
     function onClose () {
         isOpening = false;
         isOpened = false;
+        if (isActive) {
+            if (!isReconnect) {
+                reconnectSubscribers = [];
+                for (var id in subscribers) {
+                    reconnectSubscribers.push(subscribers[id]);
+                }
+                reset(false);
+                isReconnect = true;
+            }
+            if (reconnectTimer) {
+                $timeout.cancel(reconnectTimer);
+            }
+            reconnectTimer = $timeout(tryOpenSocket, RECONNECT_INTERVAL, false);
+        }
     }
 
     function onMessage (message) {
@@ -137,28 +181,60 @@ function TelemetryWebsocketService($websocket, $timeout, $window, types, userSer
     function checkToClose () {
         if (subscribersCount === 0 && isOpened) {
             if (!socketCloseTimer) {
-                socketCloseTimer = $timeout(closeSocket, 90000, false);
+                socketCloseTimer = $timeout(closeSocket, WS_IDLE_TIMEOUT, false);
             }
         }
     }
 
     function tryOpenSocket () {
+        isActive = true;
         if (!isOpened && !isOpening) {
             isOpening = true;
-            dataStream = $websocket(telemetryUri + '?token=' + userService.getJwtToken());
-            dataStream.onError(onError);
-            dataStream.onOpen(onOpen);
-            dataStream.onClose(onClose);
-            dataStream.onMessage(onMessage);
+            if (userService.isJwtTokenValid()) {
+                openSocket(userService.getJwtToken());
+            } else {
+                userService.refreshJwtToken().then(function success() {
+                    openSocket(userService.getJwtToken());
+                }, function fail() {
+                    isOpening = false;
+                    $rootScope.$broadcast('unauthenticated');
+                });
+            }
         }
         if (socketCloseTimer) {
             $timeout.cancel(socketCloseTimer);
+            socketCloseTimer = null;
         }
     }
 
+    function openSocket(token) {
+        dataStream = $websocket(telemetryUri + '?token=' + token);
+        dataStream.onError(onError);
+        dataStream.onOpen(onOpen);
+        dataStream.onClose(onClose);
+        dataStream.onMessage(onMessage);
+    }
+
     function closeSocket() {
+        isActive = false;
         if (isOpened) {
             dataStream.close();
+        }
+    }
+
+    function reset(closeSocket) {
+        if (socketCloseTimer) {
+            $timeout.cancel(socketCloseTimer);
+            socketCloseTimer = null;
+        }
+        lastCmdId = 0;
+        subscribers = {};
+        subscribersCount = 0;
+        cmdsWrapper.tsSubCmds = [];
+        cmdsWrapper.historyCmds = [];
+        cmdsWrapper.attrSubCmds = [];
+        if (closeSocket) {
+            closeSocket();
         }
     }
 }

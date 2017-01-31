@@ -32,11 +32,13 @@ export default function DeviceDirective($compile, $templateCache, toast, $transl
 
         scope.$watch('device', function(newVal) {
             if (newVal) {
-                deviceService.getDeviceCredentials(scope.device.id.id).then(
-                    function success(credentials) {
-                        scope.deviceCredentials = credentials;
-                    }
-                );
+                if (scope.device.id) {
+                    deviceService.getDeviceCredentials(scope.device.id.id).then(
+                        function success(credentials) {
+                            scope.deviceCredentials = credentials;
+                        }
+                    );
+                }
                 if (scope.device.customerId && scope.device.customerId.id !== types.id.nullUid) {
                     scope.isAssignedToCustomer = true;
                     customerService.getCustomer(scope.device.customerId.id).then(

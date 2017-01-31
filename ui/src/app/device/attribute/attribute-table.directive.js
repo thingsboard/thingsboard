@@ -147,6 +147,12 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.subscriptionId = newSubscriptionId;
         }
 
+        scope.$on('$destroy', function() {
+            if (scope.subscriptionId) {
+                deviceService.unsubscribeForDeviceAttributes(scope.subscriptionId);
+            }
+        });
+
         scope.editAttribute = function($event, attribute) {
             if (!scope.attributeScope.clientSide) {
                 $event.stopPropagation();
