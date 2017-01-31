@@ -27,7 +27,7 @@
     "angular-gridster": "^0.13.14",
     "angular-hotkeys": "^1.7.0",
     "angular-jwt": "^0.1.6",
-    "angular-material": "^1.1.1",
+    "angular-material": "1.1.1",
     "angular-material-data-table": "^0.10.9",
     "angular-material-icons": "^0.7.1",
     "angular-messages": "1.5.8",
