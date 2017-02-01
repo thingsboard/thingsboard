@@ -24,12 +24,12 @@
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
-    <url>http://thingsboard.io</url>
+    <url>https://thingsboard.io</url>
     <inceptionYear>2016</inceptionYear>
 
     <properties>
         <main.dir>${basedir}</main.dir>
-        <spring-boot.version>1.4.2.RELEASE</spring-boot.version>
+        <spring-boot.version>1.4.3.RELEASE</spring-boot.version>
         <spring.version>4.3.4.RELEASE</spring.version>
         <spring-security.version>4.2.0.RELEASE</spring-security.version>
         <jjwt.version>0.7.0</jjwt.version>
@@ -70,6 +70,7 @@
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
         <bouncycastle.version>1.56</bouncycastle.version>
+        <winsw.version>2.0.1</winsw.version>
     </properties>
 
     <modules>
@@ -126,6 +127,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.0.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
@@ -264,6 +270,7 @@
                             <exclude>src/font/**</exclude>
                             <exclude>src/sh/**</exclude>
                             <exclude>src/main/scripts/control/**</exclude>
+                            <exclude>src/main/scripts/windows/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -699,6 +706,14 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk15on</artifactId>
                 <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.winsw</groupId>
+                <artifactId>winsw</artifactId>
+                <version>${winsw.version}</version>
+                <classifier>bin</classifier>
+                <type>exe</type>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
