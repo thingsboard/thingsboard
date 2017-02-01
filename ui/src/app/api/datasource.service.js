@@ -357,23 +357,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         return data;
     }
 
-    function generateSeries(dataKey) {
-
+    function generateSeries(dataKey, startTime, endTime) {
         var data = [];
-        var startTime;
-        var endTime;
-
-        if (realtime) {
-            endTime = (new Date).getTime();
-            if (dataKey.lastUpdateTime) {
-                startTime = dataKey.lastUpdateTime + frequency;
-            } else {
-                startTime = endTime - datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
-            }
-        } else {
-            startTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs;
-            endTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.endTimeMs;
-        }
         var prevSeries;
         var datasourceKeyData = datasourceData[dataKey.key];
         if (datasourceKeyData.length > 0) {
@@ -429,9 +414,33 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
     }
 
     function onTick() {
-        for (var key in dataKeys) {
-            dataGenFunction(dataKeys[key]);
+        var key;
+        if (datasourceSubscription.type === types.widgetType.timeseries.value) {
+            var startTime;
+            var endTime;
+            for (key in dataKeys) {
+                var dataKey = dataKeys[key];
+                if (!startTime) {
+                    if (realtime) {
+                        endTime = (new Date).getTime();
+                        if (dataKey.lastUpdateTime) {
+                            startTime = dataKey.lastUpdateTime + frequency;
+                        } else {
+                            startTime = endTime - datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
+                        }
+                    } else {
+                        startTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs;
+                        endTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.endTimeMs;
+                    }
+                }
+                generateSeries(dataKey, startTime, endTime);
+            }
+        } else if (datasourceSubscription.type === types.widgetType.latest.value) {
+            for (key in dataKeys) {
+                generateLatest(dataKeys[key]);
+            }
         }
+
         if (!history) {
             timer = $timeout(onTick, frequency / 2, false);
         }

@@ -26,7 +26,7 @@
 	class=" pull-right fa fa-chevron-down md-toggle-icon"
 	ng-class="{'tb-toggled' : sectionActive()}"></span>
 </md-button>
-<ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" style="height: {{sectionHeight()}};">
+<ul id="docs-menu-{{section.name | nospace}}" class="tb-menu-toggle-list" ng-style="{height: sectionHeight()}">
 	<li ng-repeat="page in section.pages">
      	<tb-menu-link section="page"></tb-menu-link>
 	</li>
