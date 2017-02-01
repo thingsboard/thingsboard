@@ -1,0 +1,12 @@
+<service>
+    <id>${pkg.name}</id>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
+    <workingdirectory>%BASE%\conf</workingdirectory>
+    <logpath>${pkg.winWrapperLogFolder}</logpath>
+    <logmode>rotate</logmode>
+    <env name="LOADER_PATH" value="%BASE%\conf,%BASE%\extensions" />
+    <executable>java</executable>
+    <startargument>-jar</startargument>
+    <startargument>%BASE%\lib\${pkg.name}.jar</startargument>
+</service>
