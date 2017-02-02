@@ -156,6 +156,19 @@ public class DeviceController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
+    @ResponseBody
+    public Device getTenantDevice(
+            @RequestParam String deviceName) throws ThingsboardException {
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/devices", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
