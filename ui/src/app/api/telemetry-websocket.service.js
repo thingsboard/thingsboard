@@ -20,7 +20,7 @@ export default angular.module('thingsboard.api.telemetryWebsocket', [thingsboard
     .factory('telemetryWebsocketService', TelemetryWebsocketService)
     .name;
 
-const RECONNECT_INTERVAL = 5000;
+const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
 
 /*@ngInject*/
@@ -145,6 +145,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     }
 
     function subscribe (subscriber) {
+        isActive = true;
         var cmdId = nextCmdId();
         subscribers[cmdId] = subscriber;
         subscribersCount++;
@@ -163,19 +164,25 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     }
 
     function unsubscribe (subscriber) {
-        if (subscriber.subscriptionCommand) {
-            subscriber.subscriptionCommand.unsubscribe = true;
-            if (subscriber.type === types.dataKeyType.timeseries) {
-                cmdsWrapper.tsSubCmds.push(subscriber.subscriptionCommand);
-            } else if (subscriber.type === types.dataKeyType.attribute) {
-                cmdsWrapper.attrSubCmds.push(subscriber.subscriptionCommand);
+        if (isActive) {
+            var cmdId = null;
+            if (subscriber.subscriptionCommand) {
+                subscriber.subscriptionCommand.unsubscribe = true;
+                if (subscriber.type === types.dataKeyType.timeseries) {
+                    cmdsWrapper.tsSubCmds.push(subscriber.subscriptionCommand);
+                } else if (subscriber.type === types.dataKeyType.attribute) {
+                    cmdsWrapper.attrSubCmds.push(subscriber.subscriptionCommand);
+                }
+                cmdId = subscriber.subscriptionCommand.cmdId;
+            } else if (subscriber.historyCommand) {
+                cmdId = subscriber.historyCommand.cmdId;
             }
-            delete subscribers[subscriber.subscriptionCommand.cmdId];
-        } else if (subscriber.historyCommand) {
-            delete subscribers[subscriber.historyCommand.cmdId];
+            if (cmdId && subscribers[cmdId]) {
+                delete subscribers[cmdId];
+                subscribersCount--;
+            }
+            publishCommands();
         }
-        subscribersCount--;
-        publishCommands();
     }
 
     function checkToClose () {
@@ -187,23 +194,24 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     }
 
     function tryOpenSocket () {
-        isActive = true;
-        if (!isOpened && !isOpening) {
-            isOpening = true;
-            if (userService.isJwtTokenValid()) {
-                openSocket(userService.getJwtToken());
-            } else {
-                userService.refreshJwtToken().then(function success() {
+        if (isActive) {
+            if (!isOpened && !isOpening) {
+                isOpening = true;
+                if (userService.isJwtTokenValid()) {
                     openSocket(userService.getJwtToken());
-                }, function fail() {
-                    isOpening = false;
-                    $rootScope.$broadcast('unauthenticated');
-                });
+                } else {
+                    userService.refreshJwtToken().then(function success() {
+                        openSocket(userService.getJwtToken());
+                    }, function fail() {
+                        isOpening = false;
+                        $rootScope.$broadcast('unauthenticated');
+                    });
+                }
             }
-        }
-        if (socketCloseTimer) {
-            $timeout.cancel(socketCloseTimer);
-            socketCloseTimer = null;
+            if (socketCloseTimer) {
+                $timeout.cancel(socketCloseTimer);
+                socketCloseTimer = null;
+            }
         }
     }
 
@@ -222,7 +230,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         }
     }
 
-    function reset(closeSocket) {
+    function reset(close) {
         if (socketCloseTimer) {
             $timeout.cancel(socketCloseTimer);
             socketCloseTimer = null;
@@ -233,7 +241,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         cmdsWrapper.tsSubCmds = [];
         cmdsWrapper.historyCmds = [];
         cmdsWrapper.attrSubCmds = [];
-        if (closeSocket) {
+        if (close) {
             closeSocket();
         }
     }

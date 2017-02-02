@@ -119,6 +119,10 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 scope.attributesDeferred.resolve();
             }
             if (scope.deviceId && scope.attributeScope) {
+                scope.attributes = {
+                    count: 0,
+                    data: []
+                };
                 scope.checkSubscription();
                 scope.attributesDeferred = deviceService.getDeviceAttributes(scope.deviceId, scope.attributeScope.value,
                     scope.query, function(attributes, update) {

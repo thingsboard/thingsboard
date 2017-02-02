@@ -28,14 +28,17 @@
     <packaging>jar</packaging>
 
     <name>Thingsboard Server Application</name>
-    <url>http://thingsboard.org</url>
+    <url>https://thingsboard.io</url>
+    <description>Open-source IoT Platform - Device management, data collection, processing and visualization
+    </description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/..</main.dir>
         <pkg.name>thingsboard</pkg.name>
-        <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
+        <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <pkg.win.dist>${project.build.directory}/windows</pkg.win.dist>
     </properties>
 
     <dependencies>
@@ -197,6 +200,13 @@
             <artifactId>springfox-swagger2</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.sun.winsw</groupId>
+            <artifactId>winsw</artifactId>
+            <classifier>bin</classifier>
+            <type>exe</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard</groupId>
             <artifactId>tools</artifactId>
             <scope>test</scope>
@@ -291,6 +301,38 @@
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
+                            <filters>
+                                <filter>src/main/filters/unix.properties</filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-win-conf</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${pkg.win.dist}/conf</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/resources</directory>
+                                    <excludes>
+                                        <exclude>logback.xml</exclude>
+                                    </excludes>
+                                    <filtering>false</filtering>
+                                </resource>
+                                <resource>
+                                    <directory>src/main/conf</directory>
+                                    <excludes>
+                                        <exclude>thingsboard.conf</exclude>
+                                    </excludes>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                            <filters>
+                                <filter>src/main/filters/windows.properties</filter>
+                            </filters>
                         </configuration>
                     </execution>
                     <execution>
@@ -307,6 +349,28 @@
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
+                            <filters>
+                                <filter>src/main/filters/unix.properties</filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-windows-control</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${pkg.win.dist}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/scripts/windows</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                            <filters>
+                                <filter>src/main/filters/windows.properties</filter>
+                            </filters>
                         </configuration>
                     </execution>
                     <execution>
@@ -361,6 +425,25 @@
                             </artifactItems>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>copy-winsw-service</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.sun.winsw</groupId>
+                                    <artifactId>winsw</artifactId>
+                                    <classifier>bin</classifier>
+                                    <type>exe</type>
+                                    <destFileName>service.exe</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${pkg.win.dist}</outputDirectory>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -385,7 +468,7 @@
                     <excludeDevtools>true</excludeDevtools>
                     <embeddedLaunchScriptProperties>
                         <confFolder>${pkg.installFolder}/conf</confFolder>
-                        <logFolder>${pkg.logFolder}</logFolder>
+                        <logFolder>${pkg.unixLogFolder}</logFolder>
                         <logFilename>${pkg.name}.out</logFilename>
                     </embeddedLaunchScriptProperties>
                 </configuration>
@@ -412,7 +495,7 @@
                         <arg>-PmainJar=${project.build.directory}/${project.build.finalName}-boot.${project.packaging}</arg>
                         <arg>-PpkgName=${pkg.name}</arg>
                         <arg>-PpkgInstallFolder=${pkg.installFolder}</arg>
-                        <arg>-PpkgLogFolder=${pkg.logFolder}</arg>
+                        <arg>-PpkgLogFolder=${pkg.unixLogFolder}</arg>
                     </args>
                 </configuration>
                 <executions>
@@ -420,6 +503,25 @@
                         <phase>package</phase>
                         <goals>
                             <goal>invoke</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <finalName>${pkg.name}</finalName>
+                    <descriptors>
+                        <descriptor>src/main/assembly/windows.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -434,4 +536,14 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>jenkins</id>
+            <name>Jenkins Repository</name>
+            <url>http://repo.jenkins-ci.org/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
