@@ -53,7 +53,7 @@
 		<br/>
 		<tb-js-func ng-model="model.funcBody"
 				 function-args="{{ ['time', 'prevValue'] }}"
-				 validation-args="{{ [1, 1] }}"
+				 validation-args="{{ [[1, 1],[1, '1']] }}"
 				 result-type="any">
 		</tb-js-func>
 	</section>	
@@ -64,7 +64,7 @@
 		<tb-js-func ng-if="model.usePostProcessing"
 		         ng-model="model.postFuncBody"
 				 function-args="{{ ['time', 'value', 'prevValue'] }}"
-				 validation-args="{{ [1, 1, 1] }}"
+				 validation-args="{{ [[1, 1, 1],[1, '1', '1']] }}"
 				 result-type="any">
 		</tb-js-func>
 	</section>
