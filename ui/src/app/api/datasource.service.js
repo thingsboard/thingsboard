@@ -465,6 +465,18 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
     }
 
+    function isNumeric(val) {
+        return (val - parseFloat( val ) + 1) >= 0;
+    }
+
+    function convertValue(val) {
+        if (val && isNumeric(val)) {
+            return Number(val);
+        } else {
+            return val;
+        }
+    }
+
     function onData(sourceData, type) {
         for (var keyName in sourceData) {
             var keyData = sourceData[keyName];
@@ -487,7 +499,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         for (var i in keyData) {
                             series = keyData[i];
                             time = series[0];
-                            value = Number(series[1]);
+                            value = convertValue(series[1]);
                             if (dataKey.postFunc) {
                                 value = dataKey.postFunc(time, value, prevSeries[1]);
                             }
