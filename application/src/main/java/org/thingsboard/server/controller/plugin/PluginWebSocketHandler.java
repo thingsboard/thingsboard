@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,10 +58,12 @@ public class PluginWebSocketHandler extends TextWebSocketHandler implements Plug
     private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private ActorService actorService;
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private PluginService pluginService;
 
     @Override
@@ -105,7 +108,7 @@ public class PluginWebSocketHandler extends TextWebSocketHandler implements Plug
         super.handleTransportError(session, tError);
         SessionMetaData sessionMd = internalSessionMap.get(session.getId());
         if (sessionMd != null) {
-            actorService.process(new SessionEventPluginWebSocketMsg(sessionMd.sessionRef, SessionEvent.onError(tError)));
+            processInActorService(new SessionEventPluginWebSocketMsg(sessionMd.sessionRef, SessionEvent.onError(tError)));
         } else {
             log.warn("[{}] Failed to find session", session.getId());
         }
@@ -118,9 +121,17 @@ public class PluginWebSocketHandler extends TextWebSocketHandler implements Plug
         SessionMetaData sessionMd = internalSessionMap.remove(session.getId());
         if (sessionMd != null) {
             externalSessionMap.remove(sessionMd.sessionRef.getSessionId());
-            actorService.process(new SessionEventPluginWebSocketMsg(sessionMd.sessionRef, SessionEvent.onClosed()));
+            processInActorService(new SessionEventPluginWebSocketMsg(sessionMd.sessionRef, SessionEvent.onClosed()));
         }
         log.info("[{}] Session is closed", session.getId());
+    }
+
+    private void processInActorService(SessionEventPluginWebSocketMsg msg) {
+        try {
+            actorService.process(msg);
+        } catch (BeanCreationNotAllowedException e) {
+            log.warn("[{}] Failed to close session due to possible shutdown state", msg.getSessionRef().getSessionId());
+        }
     }
 
     private PluginWebsocketSessionRef toRef(WebSocketSession session) throws IOException {
