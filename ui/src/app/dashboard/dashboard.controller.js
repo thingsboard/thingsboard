@@ -43,6 +43,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.rpcWidgetTypes = [];
     vm.staticWidgetTypes = [];
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
+    vm.iframeMode = $rootScope.iframeMode;
     vm.widgets = [];
 
     vm.addWidget = addWidget;

@@ -317,6 +317,13 @@ public abstract class BaseController {
     private void checkDashboard(Dashboard dashboard) throws ThingsboardException {
         checkNotNull(dashboard);
         checkTenantId(dashboard.getTenantId());
+        SecurityUser authUser = getCurrentUser();
+        if (authUser.getAuthority() == Authority.CUSTOMER_USER) {
+            if (dashboard.getCustomerId() == null || dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                throw new ThingsboardException("You don't have permission to perform this operation!",
+                        ThingsboardErrorCode.PERMISSION_DENIED);
+            }
+        }
         if (dashboard.getCustomerId() != null && !dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
             checkCustomerId(dashboard.getCustomerId());
         }

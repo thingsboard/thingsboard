@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-content flex tb-expand-fullscreen="vm.widgetEditMode" hide-expand-button="vm.widgetEditMode">
+<md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode" hide-expand-button="vm.widgetEditMode || vm.iframeMode">
     <!--section ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode" layout="row" layout-wrap
              class="tb-header-buttons tb-top-header-buttons md-fab" ng-style="{'right': '50px'}">
         <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit" ng-disabled="loading"
