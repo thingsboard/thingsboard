@@ -74,11 +74,12 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 scope.selectedTab = 0;
                 scope.title = ngModelCtrl.$viewValue.title;
                 scope.showTitle = ngModelCtrl.$viewValue.showTitle;
+                scope.dropShadow = angular.isDefined(ngModelCtrl.$viewValue.dropShadow) ? ngModelCtrl.$viewValue.dropShadow : true;
                 scope.backgroundColor = ngModelCtrl.$viewValue.backgroundColor;
                 scope.color = ngModelCtrl.$viewValue.color;
                 scope.padding = ngModelCtrl.$viewValue.padding;
                 scope.timewindow = ngModelCtrl.$viewValue.timewindow;
-                if (scope.widgetType !== types.widgetType.rpc.value) {
+                if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value) {
                     if (scope.datasources) {
                         scope.datasources.splice(0, scope.datasources.length);
                     } else {
@@ -89,7 +90,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                             scope.datasources.push({value: ngModelCtrl.$viewValue.datasources[i]});
                         }
                     }
-                } else {
+                } else if (scope.widgetType === types.widgetType.rpc.value) {
                     if (ngModelCtrl.$viewValue.targetDeviceAliasIds && ngModelCtrl.$viewValue.targetDeviceAliasIds.length > 0) {
                         var aliasId = ngModelCtrl.$viewValue.targetDeviceAliasIds[0];
                         if (scope.deviceAliases[aliasId]) {
@@ -140,18 +141,19 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 if (scope.widgetType === types.widgetType.rpc.value) {
                     valid = value && value.targetDeviceAliasIds && value.targetDeviceAliasIds.length > 0;
                     ngModelCtrl.$setValidity('targetDeviceAliasIds', valid);
-                } else {
+                } else if (scope.widgetType !== types.widgetType.static.value) {
                     valid = value && value.datasources && value.datasources.length > 0;
                     ngModelCtrl.$setValidity('datasources', valid);
                 }
             }
         };
 
-        scope.$watch('title + showTitle + backgroundColor + color + padding + intervalSec', function () {
+        scope.$watch('title + showTitle + dropShadow + backgroundColor + color + padding + intervalSec', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 value.title = scope.title;
                 value.showTitle = scope.showTitle;
+                value.dropShadow = scope.dropShadow;
                 value.backgroundColor = scope.backgroundColor;
                 value.color = scope.color;
                 value.padding = scope.padding;
@@ -177,7 +179,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
         }, true);
 
         scope.$watch('datasources', function () {
-            if (ngModelCtrl.$viewValue && scope.widgetType !== types.widgetType.rpc.value) {
+            if (ngModelCtrl.$viewValue && scope.widgetType !== types.widgetType.rpc.value
+                && scope.widgetType !== types.widgetType.static.value) {
                 var value = ngModelCtrl.$viewValue;
                 if (value.datasources) {
                     value.datasources.splice(0, value.datasources.length);
@@ -235,7 +238,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
         };
 
         scope.updateDatasourcesAccordionState = function () {
-            if (scope.widgetType !== types.widgetType.rpc.value) {
+            if (scope.widgetType !== types.widgetType.rpc.value &&
+                scope.widgetType !== types.widgetType.static.value) {
                 if (scope.datasourcesAccordion) {
                     scope.updateDatasourcesAccordionStatePending = false;
                     var expand = scope.datasources && scope.datasources.length < 4;

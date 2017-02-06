@@ -46,6 +46,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
     $window.TbAnalogueRadialGauge = TbAnalogueRadialGauge;
     $window.TbDigitalGauge = TbDigitalGauge;
     $window.TbMapWidget = TbMapWidget;
+    $window.cssjs = cssjs;
 
     var cssParser = new cssjs();
     cssParser.testMode = false;

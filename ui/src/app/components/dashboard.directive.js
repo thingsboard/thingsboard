@@ -139,6 +139,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     vm.widgetBackgroundColor = widgetBackgroundColor;
     vm.widgetPadding = widgetPadding;
     vm.showWidgetTitle = showWidgetTitle;
+    vm.dropWidgetShadow = dropWidgetShadow;
     vm.hasTimewindow = hasTimewindow;
     vm.editWidget = editWidget;
     vm.exportWidget = exportWidget;
@@ -516,6 +517,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     function showWidgetTitle(widget) {
         if (angular.isDefined(widget.config.showTitle)) {
             return widget.config.showTitle;
+        } else {
+            return true;
+        }
+    }
+
+    function dropWidgetShadow(widget) {
+        if (angular.isDefined(widget.config.dropShadow)) {
+            return widget.config.dropShadow;
         } else {
             return true;
         }

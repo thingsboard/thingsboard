@@ -45,7 +45,7 @@ var pluginActionsClazzHelpLinkMap = {
     'org.thingsboard.server.extensions.rest.action.RestApiCallPluginAction': 'pluginActionRestApiCall'
 };
 
-var helpBaseUrl = "http://thingsboard.io";
+var helpBaseUrl = "https://thingsboard.io";
 
 export default angular.module('thingsboard.help', [])
     .constant('helpLinks',
@@ -86,6 +86,7 @@ export default angular.module('thingsboard.help', [])
                 widgetsConfigTimeseries:  helpBaseUrl + "/docs/user-guide/ui/dashboards#timeseries",
                 widgetsConfigLatest: helpBaseUrl +  "/docs/user-guide/ui/dashboards#latest",
                 widgetsConfigRpc: helpBaseUrl +  "/docs/user-guide/ui/dashboards#rpc",
+                widgetsConfigStatic: helpBaseUrl +  "/docs/user-guide/ui/dashboards#static",
             },
             getPluginLink: function(plugin) {
                 var link = 'plugins';
