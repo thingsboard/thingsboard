@@ -53,6 +53,13 @@
                             </md-icon>
                             <span translate>{{vm.types.widgetType.rpc.name}}</span>
                         </md-button>
+                        <md-button class="tb-card-button md-raised md-primary" layout="column"
+                                   ng-click="vm.typeSelected(vm.types.widgetType.static.value)">
+                            <md-icon class="material-icons tb-md-96"
+                                     aria-label="{{ vm.types.widgetType.static.name | translate }}">font_download
+                            </md-icon>
+                            <span translate>{{vm.types.widgetType.static.name}}</span>
+                        </md-button>
                     </div>
                 </fieldset>
             </div>

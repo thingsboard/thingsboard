@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-content flex tb-expand-fullscreen="vm.widgetEditMode" hide-expand-button="vm.widgetEditMode">
+<md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode" hide-expand-button="vm.widgetEditMode || vm.iframeMode">
     <!--section ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode" layout="row" layout-wrap
              class="tb-header-buttons tb-top-header-buttons md-fab" ng-style="{'right': '50px'}">
         <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit" ng-disabled="loading"
@@ -136,7 +136,7 @@
         </header-pane>
         <div>
             <md-tabs ng-if="vm.timeseriesWidgetTypes.length > 0 || vm.latestWidgetTypes.length > 0 ||
-                            vm.rpcWidgetTypes.length > 0"
+                            vm.rpcWidgetTypes.length > 0 || vm.staticWidgetTypes.length > 0"
                      flex
                      class="tb-absolute-fill" md-border-bottom>
                 <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.timeseries' | translate }}">
@@ -169,9 +169,19 @@
                             on-widget-clicked="vm.addWidgetFromType(event, widget)">
                     </tb-dashboard>
                 </md-tab>
+                <md-tab ng-if="vm.staticWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.static' | translate }}">
+                    <tb-dashboard
+                            widgets="vm.staticWidgetTypes"
+                            is-edit="false"
+                            is-mobile="true"
+                            is-edit-action-enabled="false"
+                            is-remove-action-enabled="false"
+                            on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                    </tb-dashboard>
+                </md-tab>
             </md-tabs>
             <span translate ng-if="vm.timeseriesWidgetTypes.length === 0 && vm.latestWidgetTypes.length === 0 &&
-                                   vm.rpcWidgetTypes.length === 0 && vm.widgetsBundle"
+                                   vm.rpcWidgetTypes.length === 0 && vm.staticWidgetTypes.length === 0 && vm.widgetsBundle"
                   layout-align="center center"
                   style="text-transform: uppercase; display: flex;"
                   class="md-headline tb-absolute-fill">widgets-bundle.empty</span>

@@ -19,6 +19,8 @@ import { utils } from 'react-schema-form';
 import ThingsboardArray from './json-form-array.jsx';
 import ThingsboardJavaScript from './json-form-javascript.jsx';
 import ThingsboardJson from './json-form-json.jsx';
+import ThingsboardHtml from './json-form-html.jsx';
+import ThingsboardCss from './json-form-css.jsx';
 import ThingsboardColor from './json-form-color.jsx'
 import ThingsboardRcSelect from './json-form-rc-select.jsx';
 import ThingsboardNumber from './json-form-number.jsx';
@@ -52,6 +54,8 @@ class ThingsboardSchemaForm extends React.Component {
             'array': ThingsboardArray,
             'javascript': ThingsboardJavaScript,
             'json': ThingsboardJson,
+            'html': ThingsboardHtml,
+            'css': ThingsboardCss,
             'color': ThingsboardColor,
             'rc-select': ThingsboardRcSelect,
             'fieldset': ThingsboardFieldSet

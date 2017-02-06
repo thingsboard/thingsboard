@@ -28,8 +28,10 @@
 					<li gridster-item="widget" ng-repeat="widget in vm.widgets">
 						<md-menu md-position-mode="target target" tb-mousepoint-menu>
 							<div tb-expand-fullscreen
-								        expand-button-id="expand-button" on-fullscreen-changed="vm.onWidgetFullscreenChanged(expanded, widget)" layout="column" class="tb-widget md-whiteframe-4dp"
-										ng-class="{'tb-highlighted': vm.isHighlighted(widget), 'tb-not-highlighted': vm.isNotHighlighted(widget)}"
+								        expand-button-id="expand-button" on-fullscreen-changed="vm.onWidgetFullscreenChanged(expanded, widget)" layout="column" class="tb-widget"
+										ng-class="{'tb-highlighted': vm.isHighlighted(widget),
+										           'tb-not-highlighted': vm.isNotHighlighted(widget),
+										           'md-whiteframe-4dp': vm.dropWidgetShadow(widget)}"
 										tb-mousedown="vm.widgetMouseDown($event, widget)"
 										tb-mousemove="vm.widgetMouseMove($event, widget)"
 										tb-mouseup="vm.widgetMouseUp($event, widget)"

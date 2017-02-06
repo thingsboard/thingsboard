@@ -305,31 +305,33 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                                 for (var i = 0; i < widgetTypes.length; i++) {
                                     var widgetType = widgetTypes[i];
                                     var widgetInfo = widgetService.toWidgetInfo(widgetType);
-                                    var sizeX = widgetInfo.sizeX*2;
-                                    var sizeY = widgetInfo.sizeY*2;
-                                    var col = Math.floor(Math.max(0, (20 - sizeX)/2));
-                                    var widget = {
-                                        isSystemType: isSystem,
-                                        bundleAlias: bundleAlias,
-                                        typeAlias: widgetInfo.alias,
-                                        type: widgetInfo.type,
-                                        title: widgetInfo.widgetName,
-                                        sizeX: sizeX,
-                                        sizeY: sizeY,
-                                        row: 0,
-                                        col: col,
-                                        config: angular.fromJson(widgetInfo.defaultConfig)
-                                    };
+                                    if (widgetInfo.type !== types.widgetType.static.value) {
+                                        var sizeX = widgetInfo.sizeX * 2;
+                                        var sizeY = widgetInfo.sizeY * 2;
+                                        var col = Math.floor(Math.max(0, (20 - sizeX) / 2));
+                                        var widget = {
+                                            isSystemType: isSystem,
+                                            bundleAlias: bundleAlias,
+                                            typeAlias: widgetInfo.alias,
+                                            type: widgetInfo.type,
+                                            title: widgetInfo.widgetName,
+                                            sizeX: sizeX,
+                                            sizeY: sizeY,
+                                            row: 0,
+                                            col: col,
+                                            config: angular.fromJson(widgetInfo.defaultConfig)
+                                        };
 
-                                    widget.config.title = widgetInfo.widgetName;
-                                    widget.config.datasources = [datasource];
-                                    var length;
-                                    if (scope.attributeScope === types.latestTelemetry && widgetInfo.type !== types.widgetType.rpc.value) {
-                                        length = scope.widgetsListCache.push([widget]);
-                                        scope.widgetsList.push(length === 1 ? [widget] : []);
-                                    } else if (widgetInfo.type === types.widgetType.latest.value) {
-                                        length = scope.widgetsListCache.push([widget]);
-                                        scope.widgetsList.push(length === 1 ? [widget] : []);
+                                        widget.config.title = widgetInfo.widgetName;
+                                        widget.config.datasources = [datasource];
+                                        var length;
+                                        if (scope.attributeScope === types.latestTelemetry && widgetInfo.type !== types.widgetType.rpc.value) {
+                                            length = scope.widgetsListCache.push([widget]);
+                                            scope.widgetsList.push(length === 1 ? [widget] : []);
+                                        } else if (widgetInfo.type === types.widgetType.latest.value) {
+                                            length = scope.widgetsListCache.push([widget]);
+                                            scope.widgetsList.push(length === 1 ? [widget] : []);
+                                        }
                                     }
                                 }
                                 scope.widgetsLoaded = true;

@@ -41,7 +41,9 @@ export default function DashboardController(types, widgetService, userService,
     vm.latestWidgetTypes = [];
     vm.timeseriesWidgetTypes = [];
     vm.rpcWidgetTypes = [];
+    vm.staticWidgetTypes = [];
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
+    vm.iframeMode = $rootScope.iframeMode;
     vm.widgets = [];
 
     vm.addWidget = addWidget;
@@ -82,6 +84,7 @@ export default function DashboardController(types, widgetService, userService,
         vm.latestWidgetTypes = [];
         vm.timeseriesWidgetTypes = [];
         vm.rpcWidgetTypes = [];
+        vm.staticWidgetTypes = [];
         if (vm.widgetsBundle) {
             var bundleAlias = vm.widgetsBundle.alias;
             var isSystem = vm.widgetsBundle.tenantId.id === types.id.nullUid;
@@ -127,6 +130,8 @@ export default function DashboardController(types, widgetService, userService,
                             vm.latestWidgetTypes.push(widget);
                         } else if (widgetTypeInfo.type === types.widgetType.rpc.value) {
                             vm.rpcWidgetTypes.push(widget);
+                        } else if (widgetTypeInfo.type === types.widgetType.static.value) {
+                            vm.staticWidgetTypes.push(widget);
                         }
                         top += sizeY;
                         loadNextOrComplete(i);
@@ -442,6 +447,10 @@ export default function DashboardController(types, widgetService, userService,
                     link = 'widgetsConfigRpc';
                     break;
                 }
+                case types.widgetType.static.value: {
+                    link = 'widgetsConfigStatic';
+                    break;
+                }
             }
         }
         return link;
@@ -490,6 +499,7 @@ export default function DashboardController(types, widgetService, userService,
         vm.timeseriesWidgetTypes = [];
         vm.latestWidgetTypes = [];
         vm.rpcWidgetTypes = [];
+        vm.staticWidgetTypes = [];
     }
 
     function addWidgetFromType(event, widget) {

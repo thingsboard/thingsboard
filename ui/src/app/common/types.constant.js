@@ -141,6 +141,14 @@ export default angular.module('thingsboard.types', [])
                         bundleAlias: "gpio_widgets",
                         alias: "basic_gpio_control"
                     }
+                },
+                static: {
+                    value: "static",
+                    name: "widget.static",
+                    template: {
+                        bundleAlias: "cards",
+                        alias: "html_card"
+                    }
                 }
             },
             systemBundleAlias: {

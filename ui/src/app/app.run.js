@@ -23,7 +23,10 @@ export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $fi
     var unauthorizedDialog = null;
     var forbiddenDialog = null;
 
+    $rootScope.iframeMode = false;
+
     if (frame) {
+        $rootScope.iframeMode = true;
         var dataWidgetAttr = angular.element(frame).attr('data-widget');
         if (dataWidgetAttr) {
             $rootScope.editWidgetInfo = angular.fromJson(dataWidgetAttr);

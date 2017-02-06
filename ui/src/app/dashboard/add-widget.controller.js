@@ -66,6 +66,10 @@ export default function AddWidgetController($scope, widgetService, deviceService
                     link = 'widgetsConfigRpc';
                     break;
                 }
+                case types.widgetType.static.value: {
+                    link = 'widgetsConfigStatic';
+                    break;
+                }
             }
         }
         return link;

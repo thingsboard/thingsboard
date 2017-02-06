@@ -31,6 +31,11 @@
                                      ng-model="showTitle">{{ 'widget-config.display-title' | translate }}
                         </md-checkbox>
                     </div>
+                    <div layout="row" layout-padding>
+                        <md-checkbox flex aria-label="{{ 'widget-config.drop-shadow' | translate }}"
+                                     ng-model="dropShadow">{{ 'widget-config.drop-shadow' | translate }}
+                        </md-checkbox>
+                    </div>
                     <div flex
                          md-color-picker
                          ng-model="backgroundColor"
@@ -64,7 +69,7 @@
                     <tb-timewindow as-button="true" flex ng-model="timewindow"></tb-timewindow>
                 </div>
                 <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
-                             ng-show="widgetType !== types.widgetType.rpc.value">
+                             ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value">
                     <v-pane id="datasources-pane" expanded="forceExpandDatasources">
                         <v-pane-header>
                             {{ 'widget-config.datasources' | translate }}

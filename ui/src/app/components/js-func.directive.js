@@ -128,7 +128,20 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
         scope.validate = function () {
             try {
                 var toValidate = new Function(scope.functionArgsString, scope.functionBody);
-                var res = toValidate.apply(this, scope.validationArgs);
+                var res;
+                var validationError;
+                for (var i=0;i<scope.validationArgs.length;i++) {
+                    try {
+                        res = toValidate.apply(this, scope.validationArgs[i]);
+                        validationError = null;
+                        break;
+                    } catch (e) {
+                        validationError = e;
+                    }
+                }
+                if (validationError) {
+                    throw validationError;
+                }
                 if (scope.resultType != 'nocheck') {
                     if (scope.resultType === 'any') {
                         if (angular.isUndefined(res)) {
