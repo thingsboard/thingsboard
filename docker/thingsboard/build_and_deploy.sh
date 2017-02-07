@@ -18,8 +18,9 @@
 
 cp ../../application/target/thingsboard.deb thingsboard.deb
 
-docker build -t thingsboard/application:1.1.0 .
+docker build -t thingsboard/application:1.1.0 -t thingsboard/application:latest .
 
 docker login
 
 docker push thingsboard/application:1.1.0
+docker push thingsboard/application:latest
