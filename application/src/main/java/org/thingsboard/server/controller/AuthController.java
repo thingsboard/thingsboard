@@ -124,14 +124,7 @@ public class AuthController extends BaseController {
             HttpServletRequest request) throws ThingsboardException {
         try {
             UserCredentials userCredentials = userService.requestPasswordReset(email);
-            String scheme = request.getScheme();
-            if (request.getHeader("x-forwarded-proto") != null) {
-                scheme = request.getHeader("x-forwarded-proto");
-            }
-            String baseUrl = String.format("%s://%s:%d",
-                    scheme,
-                    request.getServerName(), 
-                    request.getServerPort());             
+            String baseUrl = constructBaseUrl(request);
             String resetPasswordUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
             
@@ -175,14 +168,7 @@ public class AuthController extends BaseController {
             UserCredentials credentials = userService.activateUserCredentials(activateToken, encodedPassword);
             User user = userService.findUserById(credentials.getUserId());
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled());
-            String scheme = request.getScheme();
-            if (request.getHeader("x-forwarded-proto") != null) {
-                scheme = request.getHeader("x-forwarded-proto");
-            }
-            String baseUrl = String.format("%s://%s:%d",
-                    scheme,
-                    request.getServerName(), 
-                    request.getServerPort());             
+            String baseUrl = constructBaseUrl(request);
             String loginUrl = String.format("%s/login", baseUrl);
             String email = user.getEmail();
             mailService.sendAccountActivatedEmail(loginUrl, email);
@@ -216,14 +202,7 @@ public class AuthController extends BaseController {
                 userCredentials = userService.saveUserCredentials(userCredentials);
                 User user = userService.findUserById(userCredentials.getUserId());
                 SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled());
-                String scheme = request.getScheme();
-                if (request.getHeader("x-forwarded-proto") != null) {
-                    scheme = request.getHeader("x-forwarded-proto");
-                }
-                String baseUrl = String.format("%s://%s:%d",
-                        scheme,
-                        request.getServerName(), 
-                        request.getServerPort());             
+                String baseUrl = constructBaseUrl(request);
                 String loginUrl = String.format("%s/login", baseUrl);
                 String email = user.getEmail();
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
