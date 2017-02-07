@@ -77,8 +77,12 @@ public class UserController extends BaseController {
             User savedUser = checkNotNull(userService.saveUser(user));
             if (sendEmail) {
                 UserCredentials userCredentials = userService.findUserCredentialsByUserId(savedUser.getId());
+                String scheme = request.getScheme();
+                if (request.getHeader("x-forwarded-proto") != null) {
+                    scheme = request.getHeader("x-forwarded-proto");
+                }
                 String baseUrl = String.format("%s://%s:%d",
-                        request.getScheme(),  
+                        scheme,
                         request.getServerName(), 
                         request.getServerPort());             
                 String activateUrl = String.format("%s/api/noauth/activate?activateToken=%s", baseUrl,
@@ -107,8 +111,12 @@ public class UserController extends BaseController {
             User user = checkNotNull(userService.findUserByEmail(email));
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
             if (!userCredentials.isEnabled()) {
+                String scheme = request.getScheme();
+                if (request.getHeader("x-forwarded-proto") != null) {
+                    scheme = request.getHeader("x-forwarded-proto");
+                }
                 String baseUrl = String.format("%s://%s:%d",
-                        request.getScheme(),  
+                        scheme,
                         request.getServerName(), 
                         request.getServerPort());             
                 String activateUrl = String.format("%s/api/noauth/activate?activateToken=%s", baseUrl,
