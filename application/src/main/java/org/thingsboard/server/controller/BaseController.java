@@ -57,6 +57,7 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.mail.MessagingException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Optional;
@@ -380,5 +381,24 @@ public abstract class BaseController {
         checkNotNull(rule);
         checkTenantId(rule.getTenantId());
         return rule;
+    }
+
+    protected String constructBaseUrl(HttpServletRequest request) {
+        String scheme = request.getScheme();
+        if (request.getHeader("x-forwarded-proto") != null) {
+            scheme = request.getHeader("x-forwarded-proto");
+        }
+        int serverPort = request.getServerPort();
+        if (request.getHeader("x-forwarded-port") != null) {
+            try {
+                serverPort = request.getIntHeader("x-forwarded-port");
+            } catch (NumberFormatException e) {}
+        }
+
+        String baseUrl = String.format("%s://%s:%d",
+                scheme,
+                request.getServerName(),
+                serverPort);
+        return baseUrl;
     }
 }
