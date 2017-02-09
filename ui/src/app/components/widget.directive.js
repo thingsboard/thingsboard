@@ -29,17 +29,19 @@ function Widget($controller, $compile, widgetService) {
         scope: true,
         link: function (scope, elem, attrs) {
 
-            var widgetController;
             var locals = scope.$eval(attrs.locals);
             var widget = locals.widget;
+
+            var widgetController;
             var gridsterItem;
 
-            scope.$on('visibleRectChanged', function (event, newVisibleRect) {
+            //TODO: widgets visibility
+            /*scope.$on('visibleRectChanged', function (event, newVisibleRect) {
                 locals.visibleRect = newVisibleRect;
                 if (widgetController) {
                     widgetController.visibleRectChanged(newVisibleRect);
                 }
-            });
+            });*/
 
             scope.$on('gridster-item-initialized', function (event, item) {
                 gridsterItem = item;
@@ -125,6 +127,7 @@ function Widget($controller, $compile, widgetService) {
                     "deviceAliasList"];
 
                 widgetController = $controller(controllerFunction, locals);
+
                 if (gridsterItem) {
                     widgetController.gridsterItemInitialized(gridsterItem);
                 }

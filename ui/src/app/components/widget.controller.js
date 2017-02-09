@@ -44,16 +44,18 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var targetDeviceAliasId = null;
     var targetDeviceId = null;
 
-    var visible = false;
 
-    var bounds = {top: 0, left: 0, bottom: 0, right: 0};
+    //var bounds = {top: 0, left: 0, bottom: 0, right: 0};
+    //TODO: widgets visibility
+    /*var visible = false;*/
+
     var lastWidth, lastHeight;
     var containerParent = $($element);
     var container = $('#container', $element);
     var containerElement = container[0];
     var inited = false;
 
-    var gridsterItemElement;
+   // var gridsterItemElement;
     var timer;
 
     var init = fns.init || function () {
@@ -160,18 +162,20 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     };
 
     vm.gridsterItemInitialized = gridsterItemInitialized;
-    vm.visibleRectChanged = visibleRectChanged;
-
-    function gridsterItemInitialized(item) {
-        if (item) {
-            gridsterItemElement = $(item.$element);
-            updateVisibility();
-        }
-    }
+    //TODO: widgets visibility
+    /*vm.visibleRectChanged = visibleRectChanged;
 
     function visibleRectChanged(newVisibleRect) {
         visibleRect = newVisibleRect;
         updateVisibility();
+    }*/
+
+    function gridsterItemInitialized(item) {
+        if (item) {
+           // gridsterItemElement = $(item.$element);
+            //updateVisibility();
+            onRedraw();
+        }
     }
 
     initWidget();
@@ -282,7 +286,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
-    function updateVisibility(forceRedraw) {
+    //TODO: widgets visibility
+    /*function updateVisibility(forceRedraw) {
         if (visibleRect) {
             forceRedraw = forceRedraw || visibleRect.containerResized;
             var newVisible = false;
@@ -306,21 +311,49 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 onRedraw(50);
             }
         }
-    }
+    }*/
 
     function updateBounds() {
-        bounds = {
+        /*bounds = {
             top: widget.row,
             left: widget.col,
             bottom: widget.row + widget.sizeY,
             right: widget.col + widget.sizeX
         };
-        updateVisibility(true);
+        updateVisibility(true);*/
+        onRedraw();
     }
 
+    var originalTimewindow;
 
-    function onRedraw(delay, dataUpdate) {
-        //TODO:
+    var timewindowFunctions = {
+        onUpdateTimewindow: onUpdateTimewindow,
+        onResetTimewindow: onResetTimewindow
+    };
+
+    function onResetTimewindow() {
+        if (originalTimewindow) {
+            widget.config.timewindow = angular.copy(originalTimewindow);
+            originalTimewindow = null;
+        }
+    }
+
+    function onUpdateTimewindow(startTimeMs, endTimeMs) {
+        if (!originalTimewindow) {
+            originalTimewindow = angular.copy(widget.config.timewindow);
+        }
+        widget.config.timewindow = {
+            history: {
+                fixedTimewindow: {
+                    startTimeMs: startTimeMs,
+                    endTimeMs: endTimeMs
+                }
+            }
+        };
+    }
+
+    function onRedraw(delay, dataUpdate, tickUpdate) {
+        //TODO: widgets visibility
         /*if (!visible) {
             return;
         }*/
@@ -344,7 +377,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
             if (width > 20 && height > 20) {
                 if (!inited) {
-                    init(containerElement, widget.config.settings, widget.config.datasources, data, $scope, controlApi);
+                    init(containerElement, widget.config.settings, widget.config.datasources, data, $scope, controlApi, timewindowFunctions);
                     inited = true;
                 }
                 if (widget.type === types.widgetType.timeseries.value) {
@@ -360,7 +393,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                         timeWindow.minTime = subscriptionTimewindow.fixedWindow.startTimeMs;
                     }
                 }
-                redraw(containerElement, width, height, data, timeWindow, sizeChanged, $scope);
+                redraw(containerElement, width, height, data, timeWindow, sizeChanged, $scope, dataUpdate, tickUpdate);
             }
         }, delay, false);
     }
@@ -406,11 +439,12 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 var listener = datasourceListeners[i];
                 datasourceService.unsubscribeFromDatasource(listener);
             }
+            datasourceListeners = [];
         }
     }
 
     function onTick() {
-        onRedraw();
+        onRedraw(0, false, true);
         timer = $timeout(onTick, 1000, false);
     }
 

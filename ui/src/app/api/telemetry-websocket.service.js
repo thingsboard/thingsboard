@@ -220,7 +220,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         dataStream.onError(onError);
         dataStream.onOpen(onOpen);
         dataStream.onClose(onClose);
-        dataStream.onMessage(onMessage);
+        dataStream.onMessage(onMessage, {autoApply: false});
     }
 
     function closeSocket() {

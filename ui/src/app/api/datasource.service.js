@@ -61,7 +61,7 @@ function DatasourceService($timeout, $log, telemetryWebsocketService, types, uti
         };
 
         if (listener.widget.type === types.widgetType.timeseries.value) {
-            datasourceSubscription.subscriptionTimewindow = listener.subscriptionTimewindow;
+            datasourceSubscription.subscriptionTimewindow = angular.copy(listener.subscriptionTimewindow);
         }
         if (datasourceSubscription.datasourceType === types.datasourceType.device) {
             datasourceSubscription.deviceId = listener.deviceId;

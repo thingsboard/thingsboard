@@ -31,6 +31,7 @@ export default class TbMapWidget {
         }
         this.locationsSettings = [];
         this.varsRegex = /\$\{([^\}]*)\}/g;
+        this.tooltipsUpdated = false;
 
         if (settings.defaultZoomLevel) {
             if (settings.defaultZoomLevel > 0 && settings.defaultZoomLevel < 21) {
@@ -169,7 +170,7 @@ export default class TbMapWidget {
 
     }
 
-    redraw(data, sizeChanged) {
+    redraw(data, sizeChanged, dataUpdate) {
 
         var tbMap = this;
 
@@ -406,7 +407,7 @@ export default class TbMapWidget {
             if (data) {
                 if (!this.locations) {
                     loadLocations(data);
-                } else {
+                } else if (dataUpdate) {
                     updateLocations(data);
                 }
             }
@@ -426,29 +427,31 @@ export default class TbMapWidget {
                 }
             }
 
-            var tooltips = this.map.getTooltips();
-
-            for (var t in tooltips) {
-                var tooltip = tooltips[t];
-                var text = tooltip.pattern;
-                var replaceInfo = tooltip.replaceInfo;
-                for (var v in replaceInfo.variables) {
-                    var variableInfo = replaceInfo.variables[v];
-                    var txtVal = '';
-                    if (variableInfo.dataKeyIndex > -1) {
-                        var varData = data[variableInfo.dataKeyIndex].data;
-                        if (varData.length > 0) {
-                            var val = varData[varData.length-1][1];
-                            if (isNumber(val)) {
-                                txtVal = padValue(val, variableInfo.valDec, 0);
-                            } else {
-                                txtVal = val;
+            if (!this.tooltipsUpdated || dataUpdate) {
+                this.tooltipsUpdated = true;
+                var tooltips = this.map.getTooltips();
+                for (var t in tooltips) {
+                    var tooltip = tooltips[t];
+                    var text = tooltip.pattern;
+                    var replaceInfo = tooltip.replaceInfo;
+                    for (var v in replaceInfo.variables) {
+                        var variableInfo = replaceInfo.variables[v];
+                        var txtVal = '';
+                        if (variableInfo.dataKeyIndex > -1) {
+                            var varData = data[variableInfo.dataKeyIndex].data;
+                            if (varData.length > 0) {
+                                var val = varData[varData.length - 1][1];
+                                if (isNumber(val)) {
+                                    txtVal = padValue(val, variableInfo.valDec, 0);
+                                } else {
+                                    txtVal = val;
+                                }
                             }
                         }
+                        text = text.split(variableInfo.variable).join(txtVal);
                     }
-                    text = text.split(variableInfo.variable).join(txtVal);
+                    tooltip.popup.setContent(text);
                 }
-                tooltip.popup.setContent(text);
             }
 
         }

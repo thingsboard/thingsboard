@@ -164,13 +164,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     gridsterParent = $('#gridster-parent', $element);
     gridsterElement = angular.element($('#gridster-child', gridsterParent));
 
-    gridsterParent.scroll(function () {
+    //TODO: widgets visibility
+    /*gridsterParent.scroll(function () {
         updateVisibleRect();
     });
 
     gridsterParent.resize(function () {
         updateVisibleRect();
-    });
+    });*/
 
     $scope.$watch('vm.isMobile', function () {
         vm.gridsterOpts.isMobile = vm.isMobileDisabled ? false : vm.isMobile;
@@ -188,7 +189,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
             gridster.columns = vm.columns;
             updateGridsterParams();
         }
-        updateVisibleRect();
+        //TODO: widgets visibility
+        //updateVisibleRect();
     });
 
     $scope.$watch('vm.margins', function () {
@@ -197,7 +199,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
             gridster.margins = vm.margins;
             updateGridsterParams();
         }
-        updateVisibleRect();
+        //TODO: widgets visibility
+        //updateVisibleRect();
     });
 
     $scope.$watch('vm.isEdit', function () {
@@ -213,7 +216,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {
         if (checkIsLocalGridsterElement(theGridster)) {
             gridster = theGridster;
-            updateVisibleRect(false, true);
+            //TODO: widgets visibility
+            //updateVisibleRect(false, true);
         }
     });
 
@@ -225,9 +229,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
             } else {
                 vm.gridsterOpts.rowHeight = 'match';
             }
-            $timeout(function () {
+            //TODO: widgets visibility
+            /*$timeout(function () {
                 updateVisibleRect(true);
-            }, 500, false);
+            }, 500, false);*/
         }
     });
 
@@ -283,7 +288,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
         }
     }
 
-    function updateVisibleRect (force, containerResized) {
+    //TODO: widgets visibility
+    /*function updateVisibleRect (force, containerResized) {
         if (gridster) {
             var position = $(gridster.$element).position()
             if (position) {
@@ -321,7 +327,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $log, toast
                 }
             }
         }
-    }
+    }*/
 
     function checkIsLocalGridsterElement (gridster) {
         return gridsterElement[0] == gridster.$element[0];
