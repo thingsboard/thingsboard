@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.cassandra;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions.Compression;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -95,7 +97,10 @@ public class CassandraCluster {
                 Cluster.Builder builder = Cluster.builder()
                         .addContactPointsWithPorts(getContactPoints(url))
                         .withClusterName(clusterName)
-                        .withSocketOptions(socketOpts.getOpts());
+                        .withSocketOptions(socketOpts.getOpts())
+                        .withPoolingOptions(new PoolingOptions()
+                                .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
+                                .setMaxRequestsPerConnection(HostDistance.REMOTE, 32768));
                 builder.withQueryOptions(queryOpts.getOpts());
                 builder.withCompression(StringUtils.isEmpty(compression) ? Compression.NONE : Compression.valueOf(compression.toUpperCase()));
                 if (ssl) {
