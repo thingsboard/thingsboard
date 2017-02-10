@@ -12,7 +12,8 @@ Thingsboard documentation is hosted on [thingsboard.io](https://thingsboard.io/d
 
 ## Sample Dashboard
 
-![Dashboard](./img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
+[**Smart bus tracking demo dashboard**](https://demo.thingsboard.io/demo?dashboardId=3d0bf910-ee09-11e6-b619-bb0136cc33d0&source=github)
+[![Smart bus tracking demo](https://cloud.githubusercontent.com/assets/8308069/22839004/424b0308-efd0-11e6-8e90-7c7ca002495c.png "Smart bus tracking demo")](https://demo.thingsboard.io/demo?dashboardId=3d0bf910-ee09-11e6-b619-bb0136cc33d0&source=github)
 
 ## Getting Started
 
