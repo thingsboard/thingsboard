@@ -25,10 +25,13 @@
 			<div id="gridster-child" gridster="vm.gridsterOpts">
 				<ul>
 		<!-- 			    			ng-click="widgetClicked($event, widget)"  -->
-					<li gridster-item="widget" ng-repeat="widget in vm.widgets">
+					<li gridster-item="vm.currentWidgetItemMap" ng-repeat="widget in vm.widgets">
 						<md-menu md-position-mode="target target" tb-mousepoint-menu>
 							<div tb-expand-fullscreen
-								        expand-button-id="expand-button" on-fullscreen-changed="vm.onWidgetFullscreenChanged(expanded, widget)" layout="column" class="tb-widget"
+								        expand-button-id="expand-button"
+								 		on-fullscreen-changed="vm.onWidgetFullscreenChanged(expanded, widget)"
+								 		layout="column"
+								 		class="tb-widget"
 										ng-class="{'tb-highlighted': vm.isHighlighted(widget),
 										           'tb-not-highlighted': vm.isNotHighlighted(widget),
 										           'md-whiteframe-4dp': vm.dropWidgetShadow(widget)}"
@@ -42,12 +45,12 @@
             									   backgroundColor: vm.widgetBackgroundColor(widget),
             									   padding: vm.widgetPadding(widget)}">
 								<div class="tb-widget-title" layout="column" ng-show="vm.showWidgetTitle(widget) || vm.hasTimewindow(widget)">
-									<span ng-show="vm.showWidgetTitle(widget)" class="md-subhead">{{widget.config.title}}</span>
+									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{widget.config.title}}</span>
 									<tb-timewindow ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 								</div>
 								<div class="tb-widget-actions" layout="row" layout-align="start center">
 									<md-button id="expand-button"
-											   ng-show="!vm.isEdit"
+											   ng-show="!vm.isEdit && vm.enableWidgetFullscreen(widget)"
 											   aria-label="{{ 'fullscreen.fullscreen' | translate }}"
 											   class="md-icon-button md-primary"></md-button>
 									<md-button ng-show="vm.isEditActionEnabled && !vm.isWidgetExpanded"

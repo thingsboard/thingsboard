@@ -577,7 +577,9 @@ export default class TbDigitalGauge {
                 var tvPair = cellData.data[cellData.data.length -
                 1];
                 var value = tvPair[1];
-                this.gauge.refresh(value);
+                if (this.gauge.config.value !== value) {
+                    this.gauge.refresh(value);
+                }
             }
         }
     }

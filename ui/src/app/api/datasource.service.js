@@ -162,7 +162,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     window = datasourceSubscription.subscriptionTimewindow.fixedWindow.endTimeMs -
                         datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs;
                 }
-                frequency = window / 1000 * 5;
+                frequency = window / 1000 * 20;
             } else if (datasourceSubscription.type === types.widgetType.latest.value) {
                 dataGenFunction = generateLatest;
                 frequency = 1000;

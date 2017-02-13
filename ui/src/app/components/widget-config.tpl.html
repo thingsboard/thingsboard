@@ -20,10 +20,17 @@
     <md-tab label="{{ 'widget-config.settings' | translate }}">
         <div id="settings-tab">
             <md-content class="md-padding" layout="column">
-                <md-input-container class="md-block">
-                    <label translate>widget-config.title</label>
-                    <input name="title" ng-model="title">
-                </md-input-container>
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <md-input-container flex class="md-block">
+                        <label translate>widget-config.title</label>
+                        <input name="title" ng-model="title">
+                    </md-input-container>
+                    <div flex ng-show="showTitle">
+                        <label translate>widget-config.title-style</label>
+                        <div ui-ace="titleStyleEditorOptions" ng-model="titleStyle" ng-style="{ minHeight: '100px' }">
+                        </div>
+                    </div>
+                </div>
                 <span translate>widget-config.general-settings</span>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <div layout="row" layout-padding>
@@ -36,6 +43,13 @@
                                      ng-model="dropShadow">{{ 'widget-config.drop-shadow' | translate }}
                         </md-checkbox>
                     </div>
+                    <div layout="row" layout-padding>
+                        <md-checkbox flex aria-label="{{ 'widget-config.enable-fullscreen' | translate }}"
+                                     ng-model="enableFullscreen">{{ 'widget-config.enable-fullscreen' | translate }}
+                        </md-checkbox>
+                    </div>
+                </div>
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <div flex
                          md-color-picker
                          ng-model="backgroundColor"
@@ -61,6 +75,17 @@
                     <md-input-container flex>
                         <label translate>widget-config.padding</label>
                         <input ng-model="padding">
+                    </md-input-container>
+                </div>
+                <span translate>widget-config.mobile-mode-settings</span>
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <md-input-container flex>
+                        <label translate>widget-config.order</label>
+                        <input ng-model="mobileOrder" type="number" step="1" ng-pattern="/^-?[0-9]+$/">
+                    </md-input-container>
+                    <md-input-container flex>
+                        <label translate>widget-config.height</label>
+                        <input ng-model="mobileHeight" type="number">
                     </md-input-container>
                 </div>
                 <div ng-show="widgetType === types.widgetType.timeseries.value" layout="row"

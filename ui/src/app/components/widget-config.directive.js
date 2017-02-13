@@ -20,6 +20,7 @@ import thingsboardDeviceAliasSelect from './device-alias-select.directive';
 import thingsboardDatasource from './datasource.directive';
 import thingsboardTimewindow from './timewindow.directive';
 import thingsboardJsonForm from "./json-form.directive";
+import 'angular-ui-ace';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -34,7 +35,8 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     thingsboardJsonForm,
     thingsboardDeviceAliasSelect,
     thingsboardDatasource,
-    thingsboardTimewindow])
+    thingsboardTimewindow,
+    'ui.ace'])
     .directive('tbWidgetConfig', WidgetConfig)
     .name;
 
@@ -58,6 +60,16 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
             '*'
         ];
 
+        scope.titleStyleEditorOptions = {
+            useWrapMode: true,
+            mode: 'json',
+            advanced: {
+                enableSnippets: true,
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true
+            }
+        };
+
         if (angular.isUndefined(scope.forceExpandDatasources)) {
             scope.forceExpandDatasources = false;
         }
@@ -75,9 +87,17 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 scope.title = ngModelCtrl.$viewValue.title;
                 scope.showTitle = ngModelCtrl.$viewValue.showTitle;
                 scope.dropShadow = angular.isDefined(ngModelCtrl.$viewValue.dropShadow) ? ngModelCtrl.$viewValue.dropShadow : true;
+                scope.enableFullscreen = angular.isDefined(ngModelCtrl.$viewValue.enableFullscreen) ? ngModelCtrl.$viewValue.enableFullscreen : true;
                 scope.backgroundColor = ngModelCtrl.$viewValue.backgroundColor;
                 scope.color = ngModelCtrl.$viewValue.color;
                 scope.padding = ngModelCtrl.$viewValue.padding;
+                scope.titleStyle =
+                    angular.toJson(angular.isDefined(ngModelCtrl.$viewValue.titleStyle) ? ngModelCtrl.$viewValue.titleStyle : {
+                        fontSize: '16px',
+                        fontWeight: 400
+                    }, true);
+                scope.mobileOrder = ngModelCtrl.$viewValue.mobileOrder;
+                scope.mobileHeight = ngModelCtrl.$viewValue.mobileHeight;
                 scope.timewindow = ngModelCtrl.$viewValue.timewindow;
                 if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value) {
                     if (scope.datasources) {
@@ -145,20 +165,35 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                     valid = value && value.datasources && value.datasources.length > 0;
                     ngModelCtrl.$setValidity('datasources', valid);
                 }
+                try {
+                    angular.fromJson(scope.titleStyle);
+                    ngModelCtrl.$setValidity('titleStyle', true);
+                } catch (e) {
+                    ngModelCtrl.$setValidity('titleStyle', false);
+                }
             }
         };
 
-        scope.$watch('title + showTitle + dropShadow + backgroundColor + color + padding + intervalSec', function () {
+        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + padding + titleStyle + mobileOrder + mobileHeight + intervalSec', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 value.title = scope.title;
                 value.showTitle = scope.showTitle;
                 value.dropShadow = scope.dropShadow;
+                value.enableFullscreen = scope.enableFullscreen;
                 value.backgroundColor = scope.backgroundColor;
                 value.color = scope.color;
                 value.padding = scope.padding;
+                try {
+                    value.titleStyle = angular.fromJson(scope.titleStyle);
+                } catch (e) {
+                    value.titleStyle = {};
+                }
+                value.mobileOrder = angular.isNumber(scope.mobileOrder) ? scope.mobileOrder : undefined;
+                value.mobileHeight = scope.mobileHeight;
                 value.intervalSec = scope.intervalSec;
                 ngModelCtrl.$setViewValue(value);
+                scope.updateValidity();
             }
         });
 

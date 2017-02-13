@@ -56,6 +56,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var inited = false;
 
    // var gridsterItemElement;
+
+    var gridsterItem;
     var timer;
 
     var init = fns.init || function () {
@@ -172,6 +174,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function gridsterItemInitialized(item) {
         if (item) {
+            gridsterItem = item;
            // gridsterItemElement = $(item.$element);
             //updateVisibility();
             onRedraw();
@@ -226,7 +229,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         });
 
         $scope.$watch(function () {
-            return widget.row + ',' + widget.col;
+            return widget.row + ',' + widget.col + ',' + widget.config.mobileOrder;
         }, function () {
             updateBounds();
             $scope.$emit("widgetPositionChanged", widget);
@@ -377,7 +380,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
             if (width > 20 && height > 20) {
                 if (!inited) {
-                    init(containerElement, widget.config.settings, widget.config.datasources, data, $scope, controlApi, timewindowFunctions);
+                    init(containerElement, widget.config.settings, widget.config.datasources, data, $scope, controlApi, timewindowFunctions, gridsterItem);
                     inited = true;
                 }
                 if (widget.type === types.widgetType.timeseries.value) {
@@ -393,7 +396,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                         timeWindow.minTime = subscriptionTimewindow.fixedWindow.startTimeMs;
                     }
                 }
-                redraw(containerElement, width, height, data, timeWindow, sizeChanged, $scope, dataUpdate, tickUpdate);
+                redraw(containerElement, width, height, data, timeWindow, sizeChanged, $scope, dataUpdate, tickUpdate, gridsterItem);
             }
         }, delay, false);
     }
