@@ -22,7 +22,7 @@ services:
     ports:
       - "8080:8080"
       - "1883:1883"
-      - "5683:5683"
+      - "5683:5683/udp"
     env_file:
       - thingsboard.env
     entrypoint: ./run_thingsboard.sh
