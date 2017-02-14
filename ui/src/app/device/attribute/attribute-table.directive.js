@@ -112,6 +112,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             if (!update) {
                 scope.selectedAttributes = [];
             }
+            scope.$digest();
         }
 
         scope.getDeviceAttributes = function(forceUpdate) {

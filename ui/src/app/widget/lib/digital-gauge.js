@@ -314,8 +314,11 @@ export default class TbDigitalGauge {
             gParams.maxY = gParams.barTop;
             this.gauge.txtMin.attr({"text-anchor": "start", "x": gParams.minX, "y": gParams.minY });
             this.gauge.txtMax.attr({"text-anchor": "start", "x": gParams.maxX, "y": gParams.maxY });
-            maxW = Math.max(this.gauge.txtMin.node.getComputedTextLength(), this.gauge.txtMax.node.getComputedTextLength());
-            gParams.prefWidth = gParams.strokeWidth + (maxW + this.localSettings.minMaxFont.size ) * 2;
+            gParams.prefWidth = gParams.strokeWidth;
+            if (!this.localSettings.hideMinMax) {
+                maxW = Math.max(this.gauge.txtMin.node.getComputedTextLength(), this.gauge.txtMax.node.getComputedTextLength());
+                gParams.prefWidth += (maxW + this.localSettings.minMaxFont.size ) * 2;
+            }
             gParams.viewport.x = (gParams.canvasW - gParams.prefWidth)/2;
             gParams.viewport.width = gParams.prefWidth;
         }
