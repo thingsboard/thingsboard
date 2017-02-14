@@ -50,6 +50,7 @@ function ExpandFullscreen($compile, $document) {
         scope.elementParent = null;
         scope.expanded = false;
         scope.fullscreenZindex = scope.fullscreenZindex();
+
         if (!scope.fullscreenZindex) {
             scope.fullscreenZindex = '70';
         }
@@ -59,6 +60,10 @@ function ExpandFullscreen($compile, $document) {
                 if (scope.expanded) {
                     scope.elementParent = element.parent();
                     element.detach();
+                    if (scope.backgroundStyle) {
+                        scope.fullscreenParent.attr("ng-style","backgroundStyle");
+                        $compile(scope.fullscreenParent)(scope);
+                    }
                     scope.fullscreenParent.append(element);
                     scope.fullscreenParent.css('display', '');
                     scope.fullscreenParent.css('z-index', scope.fullscreenZindex);
@@ -132,7 +137,8 @@ function ExpandFullscreen($compile, $document) {
             expand: "&tbExpandFullscreen",
             hideExpandButton: "&hideExpandButton",
             onFullscreenChanged: "&onFullscreenChanged",
-            fullscreenZindex: "&fullscreenZindex"
+            fullscreenZindex: "&fullscreenZindex",
+            backgroundStyle: "=?fullscreenBackgroundStyle"
         }
     };
 }

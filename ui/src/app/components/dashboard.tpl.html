@@ -28,6 +28,7 @@
 					<li gridster-item="vm.currentWidgetItemMap" ng-repeat="widget in vm.widgets">
 						<md-menu md-position-mode="target target" tb-mousepoint-menu>
 							<div tb-expand-fullscreen
+								 		fullscreen-background-style="vm.dashboardStyle"
 								        expand-button-id="expand-button"
 								 		on-fullscreen-changed="vm.onWidgetFullscreenChanged(expanded, widget)"
 								 		layout="column"
