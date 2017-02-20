@@ -18,35 +18,7 @@
       },
       "messageProperties": {
         "title": "Message properties",
-        "type": "array",
-        "minItems" : 1,
-        "items": [
-          {
-            "value": "BASIC",
-            "label": "BASIC"
-          },
-          {
-            "value": "MINIMAL_BASIC",
-            "label": "MINIMAL_BASIC"
-          },
-          {
-            "value": "MINIMAL_PERSISTENT_BASIC",
-            "label": "MINIMAL_PERSISTENT_BASIC"
-          },
-          {
-            "value": "PERSISTENT_BASIC",
-            "label": "PERSISTENT_BASIC"
-          },
-          {
-            "value": "PERSISTENT_TEXT_PLAIN",
-            "label": "PERSISTENT_TEXT_PLAIN"
-          },
-          {
-            "value": "TEXT_PLAIN",
-            "label": "TEXT_PLAIN"
-          }
-        ],
-        "uniqueItems": true
+        "type": "string"
       },
       "template": {
         "title": "Body Template",
@@ -67,8 +39,35 @@
     {
       "key": "messageProperties",
       "type": "rc-select",
-      "multiple": false
+      "multiple": false,
+      "items": [
+        {
+          "value": "BASIC",
+          "label": "BASIC"
+        },
+        {
+          "value": "MINIMAL_BASIC",
+          "label": "MINIMAL_BASIC"
+        },
+        {
+          "value": "MINIMAL_PERSISTENT_BASIC",
+          "label": "MINIMAL_PERSISTENT_BASIC"
+        },
+        {
+          "value": "PERSISTENT_BASIC",
+          "label": "PERSISTENT_BASIC"
+        },
+        {
+          "value": "PERSISTENT_TEXT_PLAIN",
+          "label": "PERSISTENT_TEXT_PLAIN"
+        },
+        {
+          "value": "TEXT_PLAIN",
+          "label": "TEXT_PLAIN"
+        }
+      ]
     },
+
     {
       "key": "template",
       "type": "textarea",

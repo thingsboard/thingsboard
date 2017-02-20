@@ -21,19 +21,7 @@
       },
       "authMethod": {
         "title": "Authentication method",
-        "type": "array",
-        "minItems" : 1,
-        "items": [
-          {
-            "value": "NO_AUTH",
-            "label": "No authentication"
-          },
-          {
-            "value": "BASIC_AUTH",
-            "label": "Basic authentication"
-          }
-        ],
-        "uniqueItems": true
+        "type": "string"
       },
       "userName": {
         "title": "Username",
@@ -58,7 +46,17 @@
     {
       "key": "authMethod",
       "type": "rc-select",
-      "multiple": false
+      "multiple": false,
+      "items": [
+        {
+          "value": "NO_AUTH",
+          "label": "No authentication"
+        },
+        {
+          "value": "BASIC_AUTH",
+          "label": "Basic authentication"
+        }
+      ]
     },
     "userName",
     {
