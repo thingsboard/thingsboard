@@ -95,8 +95,9 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     Optional<Integer> limit = request.getIntParamValue("limit");
                     Map<String, List<TsData>> data = new LinkedHashMap<>();
                     for (String key : keys.split(",")) {
-                        List<TsKvEntry> entries = ctx.loadTimeseries(deviceId, new BaseTsKvQuery(key, startTs, endTs, limit));
-                        data.put(key, entries.stream().map(v -> new TsData(v.getTs(), v.getValueAsString())).collect(Collectors.toList()));
+                        //TODO: refactoring
+//                        List<TsKvEntry> entries = ctx.loadTimeseries(deviceId, new BaseTsKvQuery(key, startTs, endTs, limit));
+//                        data.put(key, entries.stream().map(v -> new TsData(v.getTs(), v.getValueAsString())).collect(Collectors.toList()));
                     }
                     msg.getResponseHolder().setResult(new ResponseEntity<>(data, HttpStatus.OK));
                 } else if ("attributes".equals(entity)) {

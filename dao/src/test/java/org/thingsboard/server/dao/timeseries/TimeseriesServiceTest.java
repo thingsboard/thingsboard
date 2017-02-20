@@ -116,13 +116,35 @@ public class TimeseriesServiceTest extends AbstractServiceTest {
             entries.add(tsKvEntry);
         }
         log.debug("Saved all records {}", localDateTime);
-        List<TsKvEntry> list = tsService.find(DataConstants.DEVICE, deviceId, new BaseTsKvQuery(STRING_KEY, entries.get(599).getTs(),
-                LocalDateTime.now(ZoneOffset.UTC).toInstant(ZoneOffset.UTC).toEpochMilli()));
+        List<TsKvEntry> list = tsService.findAll(DataConstants.DEVICE, deviceId, new BaseTsKvQuery(STRING_KEY, entries.get(599).getTs(),
+                LocalDateTime.now(ZoneOffset.UTC).toInstant(ZoneOffset.UTC).toEpochMilli(), PARTITION_MINUTES - 599, Aggregation.MIN)).get();
         log.debug("Fetched records {}", localDateTime);
         List<TsKvEntry> expected = entries.subList(600, PARTITION_MINUTES);
         assertEquals(expected.size(), list.size());
         assertEquals(expected, list);
     }
+
+//    @Test
+//    public void testFindDeviceTsDataByQuery() throws Exception {
+//        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+//        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).minusMinutes(PARTITION_MINUTES);
+//        log.debug("Start event time is {}", localDateTime);
+//        List<TsKvEntry> entries = new ArrayList<>(PARTITION_MINUTES);
+//
+//        for (int i = 0; i < PARTITION_MINUTES; i++) {
+//            long time = localDateTime.plusMinutes(i).toInstant(ZoneOffset.UTC).toEpochMilli();
+//            BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(time, stringKvEntry);
+//            tsService.save(DataConstants.DEVICE, deviceId, tsKvEntry).get();
+//            entries.add(tsKvEntry);
+//        }
+//        log.debug("Saved all records {}", localDateTime);
+//        List<TsKvEntry> list = tsService.findAll(DataConstants.DEVICE, deviceId, new BaseTsKvQuery(STRING_KEY, entries.get(599).getTs(),
+//                LocalDateTime.now(ZoneOffset.UTC).toInstant(ZoneOffset.UTC).toEpochMilli(), PARTITION_MINUTES - 599, Aggregation.MIN)).get();
+//        log.debug("Fetched records {}", localDateTime);
+//        List<TsKvEntry> expected = entries.subList(600, PARTITION_MINUTES);
+//        assertEquals(expected.size(), list.size());
+//        assertEquals(expected, list);
+//    }
 
 
     private void saveEntries(DeviceId deviceId, long ts) throws ExecutionException, InterruptedException {

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.timeseries;
 
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 
@@ -30,7 +31,11 @@ import java.util.UUID;
  */
 public interface TimeseriesDao {
 
-    List<TsKvEntry> find(String entityType, UUID entityId, TsKvQuery query, Optional<Long> minPartition, Optional<Long> maxPartition);
+    long toPartitionTs(long ts);
+
+    ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, TsKvQuery query, long minPartition, long maxPartition);
+
+//    List<TsKvEntry> find(String entityType, UUID entityId, TsKvQuery query, Optional<Long> minPartition, Optional<Long> maxPartition);
 
     ResultSetFuture findLatest(String entityType, UUID entityId, String key);
 

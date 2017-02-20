@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.plugin;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -152,7 +153,19 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public List<TsKvEntry> loadTimeseries(DeviceId deviceId, TsKvQuery query) {
         validate(deviceId);
-        return pluginCtx.tsService.find(DataConstants.DEVICE, deviceId, query);
+        try {
+            return pluginCtx.tsService.findAll(DataConstants.DEVICE, deviceId, query).get();
+        } catch (Exception e) {
+            log.error("TODO", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void loadTimeseries(DeviceId deviceId, TsKvQuery query, PluginCallback<List<TsKvEntry>> callback) {
+        validate(deviceId);
+        ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAll(DataConstants.DEVICE, deviceId, query);
+        Futures.addCallback(future, getCallback(callback, v -> v), executor);
     }
 
     @Override
@@ -235,10 +248,10 @@ public final class PluginProcessingContext implements PluginContext {
         };
     }
 
-    private <T> FutureCallback<ResultSet> getCallback(final PluginCallback<T> callback, Function<ResultSet, T> transformer) {
-        return new FutureCallback<ResultSet>() {
+    private <T, R> FutureCallback<R> getCallback(final PluginCallback<T> callback, Function<R, T> transformer) {
+        return new FutureCallback<R>() {
             @Override
-            public void onSuccess(@Nullable ResultSet result) {
+            public void onSuccess(@Nullable R result) {
                 pluginCtx.self().tell(PluginCallbackMessage.onSuccess(callback, transformer.apply(result)), ActorRef.noSender());
             }
 
