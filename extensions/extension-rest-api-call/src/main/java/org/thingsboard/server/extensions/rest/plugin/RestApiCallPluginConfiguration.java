@@ -23,7 +23,7 @@ public class RestApiCallPluginConfiguration {
     private int port;
     private String basePath;
 
-    private String[] authMethod;
+    private String authMethod;
 
     private String userName;
     private String password;

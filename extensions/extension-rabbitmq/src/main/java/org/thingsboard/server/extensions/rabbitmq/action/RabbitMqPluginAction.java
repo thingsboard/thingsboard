@@ -37,7 +37,7 @@ public class RabbitMqPluginAction extends AbstractTemplatePluginAction<RabbitMqP
         builder.sync(configuration.isSync());
         builder.exchange(configuration.getExchange());
         builder.queueName(configuration.getQueueName());
-        builder.messageProperties(configuration.getMessageProperties()[0]);
+        builder.messageProperties(configuration.getMessageProperties());
         builder.msgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.payload(getMsgBody(ctx, msg));
