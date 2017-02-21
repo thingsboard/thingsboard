@@ -15,9 +15,16 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * @author Andrew Shvayka
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class GetHistoryCmd implements TelemetryPluginCmd {
 
     private int cmdId;
@@ -25,46 +32,7 @@ public class GetHistoryCmd implements TelemetryPluginCmd {
     private String keys;
     private long startTs;
     private long endTs;
+    private int limit;
+    private String agg;
 
-    @Override
-    public int getCmdId() {
-        return cmdId;
-    }
-
-    @Override
-    public void setCmdId(int cmdId) {
-        this.cmdId = cmdId;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getKeys() {
-        return keys;
-    }
-
-    public void setKeys(String keys) {
-        this.keys = keys;
-    }
-
-    public long getStartTs() {
-        return startTs;
-    }
-
-    public void setStartTs(long startTs) {
-        this.startTs = startTs;
-    }
-
-    public long getEndTs() {
-        return endTs;
-    }
-
-    public void setEndTs(long endTs) {
-        this.endTs = endTs;
-    }
 }

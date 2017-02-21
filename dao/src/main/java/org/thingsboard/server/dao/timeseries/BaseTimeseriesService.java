@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.timeseries;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,6 +33,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.Instant;
@@ -40,6 +42,7 @@ import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -56,10 +59,10 @@ public class BaseTimeseriesService implements TimeseriesService {
     private TimeseriesDao timeseriesDao;
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAll(String entityType, UUIDBased entityId, TsKvQuery query) {
+    public ListenableFuture<List<TsKvEntry>> findAll(String entityType, UUIDBased entityId, List<TsKvQuery> queries) {
         validate(entityType, entityId);
-        validate(query);
-        return timeseriesDao.findAllAsync(entityType, entityId.getId(), query);
+        queries.forEach(query -> validate(query));
+        return timeseriesDao.findAllAsync(entityType, entityId.getId(), queries);
     }
 
     @Override
@@ -132,7 +135,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("TsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Key can't be empty");
-        } else  if (query.getAggregation() == null){
+        } else if (query.getAggregation() == null) {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Aggregation can't be empty");
         }
     }

@@ -82,9 +82,7 @@ public interface PluginContext {
 
     void saveTsData(DeviceId deviceId, List<TsKvEntry> entry, PluginCallback<Void> callback);
 
-    List<TsKvEntry> loadTimeseries(DeviceId deviceId, TsKvQuery query);
-
-    void loadTimeseries(DeviceId deviceId, TsKvQuery query, PluginCallback<List<TsKvEntry>> callback);
+    void loadTimeseries(DeviceId deviceId, List<TsKvQuery> queries, PluginCallback<List<TsKvEntry>> callback);
 
     void loadLatestTimeseries(DeviceId deviceId, Collection<String> keys, PluginCallback<List<TsKvEntry>> callback);
 

@@ -151,20 +151,9 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
-    public List<TsKvEntry> loadTimeseries(DeviceId deviceId, TsKvQuery query) {
+    public void loadTimeseries(DeviceId deviceId, List<TsKvQuery> queries, PluginCallback<List<TsKvEntry>> callback) {
         validate(deviceId);
-        try {
-            return pluginCtx.tsService.findAll(DataConstants.DEVICE, deviceId, query).get();
-        } catch (Exception e) {
-            log.error("TODO", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void loadTimeseries(DeviceId deviceId, TsKvQuery query, PluginCallback<List<TsKvEntry>> callback) {
-        validate(deviceId);
-        ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAll(DataConstants.DEVICE, deviceId, query);
+        ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAll(DataConstants.DEVICE, deviceId, queries);
         Futures.addCallback(future, getCallback(callback, v -> v), executor);
     }
 

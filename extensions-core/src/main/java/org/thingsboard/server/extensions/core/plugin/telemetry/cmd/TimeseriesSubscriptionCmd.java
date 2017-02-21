@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
 
@@ -22,17 +24,13 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionT
  * @author Andrew Shvayka
  */
 @NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class TimeseriesSubscriptionCmd extends SubscriptionCmd {
 
     private long timeWindow;
-
-    public long getTimeWindow() {
-        return timeWindow;
-    }
-
-    public void setTimeWindow(long timeWindow) {
-        this.timeWindow = timeWindow;
-    }
+    private int limit;
+    private String agg;
 
     @Override
     public SubscriptionType getType() {

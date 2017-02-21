@@ -96,7 +96,21 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, TsKvQuery query) {
+    public ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, List<TsKvQuery> queries) {
+        List<ListenableFuture<List<TsKvEntry>>> futures = queries.stream().map(query -> findAllAsync(entityType, entityId, query)).collect(Collectors.toList());
+        return Futures.transform(Futures.allAsList(futures), new Function<List<List<TsKvEntry>>, List<TsKvEntry>>() {
+            @Nullable
+            @Override
+            public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {
+                List<TsKvEntry> result = new ArrayList<TsKvEntry>();
+                results.forEach(r -> result.addAll(r));
+                return result;
+            }
+        }, readResultsProcessingExecutor);
+    }
+
+
+    private ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, TsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(entityType, entityId, query);
         } else {

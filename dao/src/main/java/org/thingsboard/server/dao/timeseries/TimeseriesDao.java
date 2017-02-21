@@ -33,9 +33,7 @@ public interface TimeseriesDao {
 
     long toPartitionTs(long ts);
 
-    ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, TsKvQuery query);
-
-//    List<TsKvEntry> find(String entityType, UUID entityId, TsKvQuery query, Optional<Long> minPartition, Optional<Long> maxPartition);
+    ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, List<TsKvQuery> queries);
 
     ResultSetFuture findLatest(String entityType, UUID entityId, String key);
 
