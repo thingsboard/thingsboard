@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.dao.timeseries;
+
+import com.google.common.util.concurrent.AbstractFuture;
 
 /**
- * Created by ashvayka on 20.02.17.
+ * Created by ashvayka on 21.02.17.
  */
-public enum Aggregation {
+public class SimpleListenableFuture<V> extends AbstractFuture<V> {
 
-    MIN, MAX, AVG, SUM, COUNT, NONE;
+    public SimpleListenableFuture() {
+
+    }
+
+    public boolean set(V value) {
+        return super.set(value);
+    }
 
 }

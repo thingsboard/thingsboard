@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public class BaseTimeseriesService implements TimeseriesService {
     public ListenableFuture<List<TsKvEntry>> findAll(String entityType, UUIDBased entityId, TsKvQuery query) {
         validate(entityType, entityId);
         validate(query);
-        return timeseriesDao.findAllAsync(entityType, entityId.getId(), query, timeseriesDao.toPartitionTs(query.getStartTs()), timeseriesDao.toPartitionTs(query.getEndTs()));
+        return timeseriesDao.findAllAsync(entityType, entityId.getId(), query);
     }
 
     @Override
@@ -132,7 +132,8 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("TsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Key can't be empty");
+        } else  if (query.getAggregation() == null){
+            throw new IncorrectParameterException("Incorrect TsKvQuery. Aggregation can't be empty");
         }
-        //TODO: add validation of all params
     }
 }

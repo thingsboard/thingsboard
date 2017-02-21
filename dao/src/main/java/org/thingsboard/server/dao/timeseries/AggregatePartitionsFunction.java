@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2017 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.dao.timeseries;
 
 import com.datastax.driver.core.ResultSet;
@@ -84,8 +99,11 @@ public class AggregatePartitionsFunction implements com.google.common.base.Funct
                     count += curCount;
                 } else if (aggregation == Aggregation.AVG || aggregation == Aggregation.SUM) {
                     count += curCount;
-                    dValue = dValue == null ? curDValue : dValue + curDValue;
-                    lValue = lValue == null ? curLValue : lValue + curLValue;
+                    if (curDValue != null) {
+                        dValue = dValue == null ? curDValue : dValue + curDValue;
+                    } else if (curLValue != null) {
+                        lValue = lValue == null ? curLValue : lValue + curLValue;
+                    }
                 } else if (aggregation == Aggregation.MIN) {
                     if (curDValue != null) {
                         dValue = dValue == null ? curDValue : Math.min(dValue, curDValue);

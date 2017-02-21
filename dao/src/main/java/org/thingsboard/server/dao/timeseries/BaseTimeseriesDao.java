@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -51,14 +52,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 @Slf4j
 public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
 
-    @Value("${cassandra.query.max_limit_per_request}")
-    protected Integer maxLimitPerRequest;
-
-    @Value("${cassandra.query.read_result_processing_threads}")
-    private int readResultsProcessingThreads;
-
-    @Value("${cassandra.query.min_read_step}")
-    private int minReadStep;
+    @Value("${cassandra.query.min_aggregation_step_ms}")
+    private int minAggregationStepMs;
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
@@ -77,7 +72,7 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
     @PostConstruct
     public void init() {
         getFetchStmt(Aggregation.NONE);
-        readResultsProcessingExecutor = Executors.newFixedThreadPool(readResultsProcessingThreads);
+        readResultsProcessingExecutor = Executors.newCachedThreadPool();
         Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
@@ -100,33 +95,12 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
         return tsFormat.truncatedTo(time).toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
-
-    private static String[] getFetchColumnNames(Aggregation aggregation) {
-        switch (aggregation) {
-            case NONE:
-                return ModelConstants.NONE_AGGREGATION_COLUMNS;
-            case MIN:
-                return ModelConstants.MIN_AGGREGATION_COLUMNS;
-            case MAX:
-                return ModelConstants.MAX_AGGREGATION_COLUMNS;
-            case SUM:
-                return ModelConstants.SUM_AGGREGATION_COLUMNS;
-            case COUNT:
-                return ModelConstants.COUNT_AGGREGATION_COLUMNS;
-            case AVG:
-                return ModelConstants.AVG_AGGREGATION_COLUMNS;
-            default:
-                throw new RuntimeException("Aggregation type: " + aggregation + " is not supported!");
-        }
-    }
-
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, TsKvQuery query, long minPartition, long maxPartition) {
+    public ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, TsKvQuery query) {
         if (query.getAggregation() == Aggregation.NONE) {
-            //TODO:
-            return null;
+            return findAllAsyncWithLimit(entityType, entityId, query);
         } else {
-            long step = Math.max((query.getEndTs() - query.getStartTs()) / query.getLimit(), minReadStep);
+            long step = Math.max((query.getEndTs() - query.getStartTs()) / query.getLimit(), minAggregationStepMs);
             long stepTs = query.getStartTs();
             List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
             while (stepTs < query.getEndTs()) {
@@ -143,23 +117,88 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
                 public List<TsKvEntry> apply(@Nullable List<Optional<TsKvEntry>> input) {
                     return input.stream().filter(v -> v.isPresent()).map(v -> v.get()).collect(Collectors.toList());
                 }
-            });
+            }, readResultsProcessingExecutor);
+        }
+    }
+
+    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(String entityType, UUID entityId, TsKvQuery query) {
+        long minPartition = query.getStartTs();
+        long maxPartition = query.getEndTs();
+
+        ResultSetFuture partitionsFuture = fetchPartitions(entityType, entityId, query.getKey(), minPartition, maxPartition);
+
+        final SimpleListenableFuture<List<TsKvEntry>> resultFuture = new SimpleListenableFuture<>();
+        final ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+
+        Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
+            @Override
+            public void onSuccess(@Nullable List<Long> partitions) {
+                TsKvQueryCursor cursor = new TsKvQueryCursor(entityType, entityId, query, partitions);
+                findAllAsyncSequentiallyWithLimit(cursor, resultFuture);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityType, entityId, minPartition, maxPartition, t);
+            }
+        }, readResultsProcessingExecutor);
+
+        return resultFuture;
+    }
+
+    private void findAllAsyncSequentiallyWithLimit(final TsKvQueryCursor cursor, final SimpleListenableFuture<List<TsKvEntry>> resultFuture) {
+        if (cursor.isFull() || !cursor.hasNextPartition()) {
+            resultFuture.set(cursor.getData());
+        } else {
+            PreparedStatement proto = getFetchStmt(Aggregation.NONE);
+            BoundStatement stmt = proto.bind();
+            stmt.setString(0, cursor.getEntityType());
+            stmt.setUUID(1, cursor.getEntityId());
+            stmt.setString(2, cursor.getKey());
+            stmt.setLong(3, cursor.getNextPartition());
+            stmt.setLong(4, cursor.getStartTs());
+            stmt.setLong(5, cursor.getEndTs());
+            stmt.setInt(6, cursor.getCurrentLimit());
+
+            Futures.addCallback(executeAsyncRead(stmt), new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(@Nullable ResultSet result) {
+                    cursor.addData(convertResultToTsKvEntryList(result.all()));
+                    findAllAsyncSequentiallyWithLimit(cursor, resultFuture);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("[{}][{}] Failed to fetch data for query {}-{}", stmt, t);
+                }
+            }, readResultsProcessingExecutor);
         }
     }
 
     private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(String entityType, UUID entityId, TsKvQuery query, long minPartition, long maxPartition) {
         final Aggregation aggregation = query.getAggregation();
+        final String key = query.getKey();
         final long startTs = query.getStartTs();
         final long endTs = query.getEndTs();
         final long ts = startTs + (endTs - startTs) / 2;
 
-        ResultSetFuture partitionsFuture = fetchPartitions(entityType, entityId, query.getKey(), minPartition, maxPartition);
-        com.google.common.base.Function<ResultSet, List<Long>> toArrayFunction = rows -> rows.all().stream()
+        ResultSetFuture partitionsFuture = fetchPartitions(entityType, entityId, key, minPartition, maxPartition);
+
+        ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+
+        ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transform(partitionsListFuture,
+                getFetchChunksAsyncFunction(entityType, entityId, key, aggregation, startTs, endTs), readResultsProcessingExecutor);
+
+        return Futures.transform(aggregationChunks, new AggregatePartitionsFunction(aggregation, key, ts), readResultsProcessingExecutor);
+    }
+
+    private Function<ResultSet, List<Long>> getPartitionsArrayFunction() {
+        return rows -> rows.all().stream()
                 .map(row -> row.getLong(ModelConstants.PARTITION_COLUMN)).collect(Collectors.toList());
+    }
 
-        ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, toArrayFunction, readResultsProcessingExecutor);
-
-        AsyncFunction<List<Long>, List<ResultSet>> fetchChunksFunction = partitions -> {
+    private AsyncFunction<List<Long>, List<ResultSet>> getFetchChunksAsyncFunction(String entityType, UUID entityId, String key, Aggregation aggregation, long startTs, long endTs) {
+        return partitions -> {
             try {
                 PreparedStatement proto = getFetchStmt(aggregation);
                 List<ResultSetFuture> futures = new ArrayList<>(partitions.size());
@@ -167,7 +206,7 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
                     BoundStatement stmt = proto.bind();
                     stmt.setString(0, entityType);
                     stmt.setUUID(1, entityId);
-                    stmt.setString(2, query.getKey());
+                    stmt.setString(2, key);
                     stmt.setLong(3, partition);
                     stmt.setLong(4, startTs);
                     stmt.setLong(5, endTs);
@@ -180,10 +219,6 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
                 throw e;
             }
         };
-
-        ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transform(partitionsListFuture, fetchChunksFunction, readResultsProcessingExecutor);
-
-        return Futures.transform(aggregationChunks, new AggregatePartitionsFunction(aggregation, query.getKey(), ts), readResultsProcessingExecutor);
     }
 
     @Override
@@ -320,14 +355,21 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
         if (fetchStmts == null) {
             fetchStmts = new PreparedStatement[Aggregation.values().length];
             for (Aggregation type : Aggregation.values()) {
-                fetchStmts[type.ordinal()] = getSession().prepare("SELECT " +
-                        String.join(", ", getFetchColumnNames(type)) + " FROM " + ModelConstants.TS_KV_CF
-                        + " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + " = ? "
-                        + "AND " + ModelConstants.ENTITY_ID_COLUMN + " = ? "
-                        + "AND " + ModelConstants.KEY_COLUMN + " = ? "
-                        + "AND " + ModelConstants.PARTITION_COLUMN + " = ? "
-                        + "AND " + ModelConstants.TS_COLUMN + " > ? "
-                        + "AND " + ModelConstants.TS_COLUMN + " <= ?");
+                if (type == Aggregation.SUM && fetchStmts[Aggregation.AVG.ordinal()] != null) {
+                    fetchStmts[type.ordinal()] = fetchStmts[Aggregation.AVG.ordinal()];
+                } else if (type == Aggregation.AVG && fetchStmts[Aggregation.SUM.ordinal()] != null) {
+                    fetchStmts[type.ordinal()] = fetchStmts[Aggregation.SUM.ordinal()];
+                } else {
+                    fetchStmts[type.ordinal()] = getSession().prepare("SELECT " +
+                            String.join(", ", ModelConstants.getFetchColumnNames(type)) + " FROM " + ModelConstants.TS_KV_CF
+                            + " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + " = ? "
+                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + " = ? "
+                            + "AND " + ModelConstants.KEY_COLUMN + " = ? "
+                            + "AND " + ModelConstants.PARTITION_COLUMN + " = ? "
+                            + "AND " + ModelConstants.TS_COLUMN + " > ? "
+                            + "AND " + ModelConstants.TS_COLUMN + " <= ?"
+                            + (type == Aggregation.NONE ? " ORDER BY " + ModelConstants.TS_COLUMN + " DESC LIMIT ?" : ""));
+                }
             }
         }
         return fetchStmts[aggType.ordinal()];
