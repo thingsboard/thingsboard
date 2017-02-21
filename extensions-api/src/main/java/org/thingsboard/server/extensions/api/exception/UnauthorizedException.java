@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.extensions.api.exception;
 
-import com.datastax.driver.core.ResultSet;
-import com.google.common.util.concurrent.ListenableFuture;
-
-import java.util.List;
-import java.util.UUID;
-
-public interface Dao<T> {
-
-    List<T> find();
-
-    T findById(UUID id);
-
-    ListenableFuture<T> findByIdAsync(UUID id);
-
-    T save(T t);
-
-    ResultSet removeById(UUID id);
-
+/**
+ * Created by ashvayka on 21.02.17.
+ */
+public class UnauthorizedException extends Exception {
 }

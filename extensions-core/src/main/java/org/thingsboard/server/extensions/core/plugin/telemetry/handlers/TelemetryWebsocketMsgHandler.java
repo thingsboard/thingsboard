@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.extensions.api.exception.UnauthorizedException;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.DefaultWebsocketMsgHandler;
@@ -122,8 +123,14 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                         @Override
                         public void onFailure(PluginContext ctx, Exception e) {
                             log.error("Failed to fetch attributes!", e);
-                            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
-                                    "Failed to fetch attributes!");
+                            SubscriptionUpdate update;
+                            if (UnauthorizedException.class.isInstance(e)) {
+                                update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                                        SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+                            } else {
+                                update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                                        "Failed to fetch attributes!");
+                            }
                             sendWsMsg(ctx, sessionRef, update);
                         }
                     };
@@ -207,8 +214,14 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
 
                         @Override
                         public void onFailure(PluginContext ctx, Exception e) {
-                            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
-                                    "Failed to fetch data!");
+                            SubscriptionUpdate update;
+                            if (UnauthorizedException.class.isInstance(e)) {
+                                update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                                        SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+                            } else {
+                                update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                                        "Failed to fetch data!");
+                            }
                             sendWsMsg(ctx, sessionRef, update);
                         }
                     });
@@ -263,12 +276,6 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             return;
         }
         DeviceId deviceId = DeviceId.fromString(cmd.getDeviceId());
-        if (!ctx.checkAccess(deviceId)) {
-            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
-                    SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
-            sendWsMsg(ctx, sessionRef, update);
-            return;
-        }
         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
         List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.getLimit(), Aggregation.valueOf(cmd.getAgg()))).collect(Collectors.toList());
         ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
@@ -279,8 +286,15 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
 
             @Override
             public void onFailure(PluginContext ctx, Exception e) {
-                sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
-                        "Failed to fetch data!"));
+                SubscriptionUpdate update;
+                if (UnauthorizedException.class.isInstance(e)) {
+                    update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+                } else {
+                    update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                            "Failed to fetch data!");
+                }
+                sendWsMsg(ctx, sessionRef, update);
             }
         });
     }
@@ -310,13 +324,6 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         if (cmd.getDeviceId() == null || cmd.getDeviceId().isEmpty()) {
             SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
                     "Device id is empty!");
-            sendWsMsg(ctx, sessionRef, update);
-            return false;
-        }
-        DeviceId deviceId = DeviceId.fromString(cmd.getDeviceId());
-        if (!ctx.checkAccess(deviceId)) {
-            SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
-                    SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
             sendWsMsg(ctx, sessionRef, update);
             return false;
         }

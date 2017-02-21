@@ -42,7 +42,7 @@ public interface PluginContext {
 
     void reply(PluginToRuleMsg<?> msg);
 
-    boolean checkAccess(DeviceId deviceId);
+    void checkAccess(DeviceId deviceId, PluginCallback<Void> callback);
 
     Optional<PluginApiCallSecurityContext> getSecurityCtx();
 
@@ -92,13 +92,9 @@ public interface PluginContext {
         Attributes API
      */
 
-    void saveAttributes(DeviceId deviceId, String attributeType, List<AttributeKvEntry> attributes, PluginCallback<Void> callback);
+    void saveAttributes(TenantId tenantId, DeviceId deviceId, String attributeType, List<AttributeKvEntry> attributes, PluginCallback<Void> callback);
 
-    void removeAttributes(DeviceId deviceId, String scope, List<String> attributeKeys, PluginCallback<Void> callback);
-
-    void saveAttributesByDevice(TenantId tenantId, DeviceId deviceId, String attributeType, List<AttributeKvEntry> attributes, PluginCallback<Void> callback);
-
-    void removeAttributesByDevice(TenantId tenantId, DeviceId deviceId, String scope, List<String> attributeKeys, PluginCallback<Void> callback);
+    void removeAttributes(TenantId tenantId, DeviceId deviceId, String scope, List<String> attributeKeys, PluginCallback<Void> callback);
 
     void loadAttribute(DeviceId deviceId, String attributeType, String attributeKey, PluginCallback<Optional<AttributeKvEntry>> callback);
 

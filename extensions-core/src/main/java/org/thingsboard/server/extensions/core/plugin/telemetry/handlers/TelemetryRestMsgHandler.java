@@ -164,7 +164,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                             }
                         });
                         if (attributes.size() > 0) {
-                            ctx.saveAttributes(deviceId, scope, attributes, new PluginCallback<Void>() {
+                            ctx.saveAttributes(ctx.getSecurityCtx().orElseThrow(() -> new IllegalArgumentException()).getTenantId(), deviceId, scope, attributes, new PluginCallback<Void>() {
                                 @Override
                                 public void onSuccess(PluginContext ctx, Void value) {
                                     msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
@@ -182,8 +182,8 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     }
                 }
             }
-        } catch (IOException e) {
-            log.debug("Failed to process POST request due to IO exception", e);
+        } catch (IOException | RuntimeException e) {
+            log.debug("Failed to process POST request due to exception", e);
         }
         msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
@@ -202,7 +202,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     String keysParam = request.getParameter("keys");
                     if (!StringUtils.isEmpty(keysParam)) {
                         String[] keys = keysParam.split(",");
-                        ctx.removeAttributes(deviceId, scope, Arrays.asList(keys), new PluginCallback<Void>() {
+                        ctx.removeAttributes(ctx.getSecurityCtx().orElseThrow(() -> new IllegalArgumentException()).getTenantId(), deviceId, scope, Arrays.asList(keys), new PluginCallback<Void>() {
                             @Override
                             public void onSuccess(PluginContext ctx, Void value) {
                                 msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
