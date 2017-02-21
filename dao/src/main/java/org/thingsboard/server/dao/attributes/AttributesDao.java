@@ -15,23 +15,28 @@
  */
 package org.thingsboard.server.dao.attributes;
 
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 /**
  * @author Andrew Shvayka
  */
 public interface AttributesDao {
 
-    AttributeKvEntry find(EntityId entityId, String attributeType, String attributeKey);
+    ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey);
 
-    List<AttributeKvEntry> findAll(EntityId entityId, String attributeType);
+    ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKey);
+
+    ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType);
 
     ResultSetFuture save(EntityId entityId, String attributeType, AttributeKvEntry attribute);
 
-    void removeAll(EntityId entityId, String scope, List<String> keys);
+    ListenableFuture<List<ResultSet>> removeAll(EntityId entityId, String scope, List<String> keys);
 }

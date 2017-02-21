@@ -195,9 +195,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
-        //TODO: improve this procedure to fetch only changed attributes.
+        //TODO: improve this procedure to fetch only changed attributes and support attributes deletion
         refreshAttributes();
-        //TODO: support attributes deletion
         Set<AttributeKey> keys = msg.getKeys();
         if (attributeSubscriptions.size() > 0) {
             ToDeviceMsg notification = null;

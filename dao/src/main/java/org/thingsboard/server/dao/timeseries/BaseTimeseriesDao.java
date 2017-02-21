@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.dao.AbstractAsyncDao;
 import org.thingsboard.server.dao.AbstractDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 
@@ -50,7 +51,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
  */
 @Component
 @Slf4j
-public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
+public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao {
 
     @Value("${cassandra.query.min_aggregation_step_ms}")
     private int minAggregationStepMs;
@@ -59,8 +60,6 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
     private String partitioning;
 
     private TsPartitionDate tsFormat;
-
-    private ExecutorService readResultsProcessingExecutor;
 
     private PreparedStatement partitionInsertStmt;
     private PreparedStatement[] latestInsertStmts;
@@ -71,8 +70,8 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
 
     @PostConstruct
     public void init() {
+        super.startExecutor();
         getFetchStmt(Aggregation.NONE);
-        readResultsProcessingExecutor = Executors.newCachedThreadPool();
         Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
         if (partition.isPresent()) {
             tsFormat = partition.get();
@@ -84,9 +83,7 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
 
     @PreDestroy
     public void stop() {
-        if (readResultsProcessingExecutor != null) {
-            readResultsProcessingExecutor.shutdownNow();
-        }
+        super.stopExecutor();
     }
 
     @Override

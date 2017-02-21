@@ -27,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Andrew Shvayka
@@ -39,14 +41,21 @@ public class BaseAttributesService implements AttributesService {
     private AttributesDao attributesDao;
 
     @Override
-    public AttributeKvEntry find(EntityId entityId, String scope, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String scope, String attributeKey) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
         return attributesDao.find(entityId, scope, attributeKey);
     }
 
     @Override
-    public List<AttributeKvEntry> findAll(EntityId entityId, String scope) {
+    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String scope, Collection<String> attributeKeys) {
+        validate(entityId, scope);
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        return attributesDao.find(entityId, scope, attributeKeys);
+    }
+
+    @Override
+    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String scope) {
         validate(entityId, scope);
         return attributesDao.findAll(entityId, scope);
     }
@@ -56,16 +65,16 @@ public class BaseAttributesService implements AttributesService {
         validate(entityId, scope);
         attributes.forEach(attribute -> validate(attribute));
         List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(attributes.size());
-        for(AttributeKvEntry attribute : attributes) {
+        for (AttributeKvEntry attribute : attributes) {
             futures.add(attributesDao.save(entityId, scope, attribute));
         }
         return Futures.allAsList(futures);
     }
 
     @Override
-    public void removeAll(EntityId entityId, String scope, List<String> keys) {
+    public ListenableFuture<List<ResultSet>> removeAll(EntityId entityId, String scope, List<String> keys) {
         validate(entityId, scope);
-        attributesDao.removeAll(entityId, scope, keys);
+        return attributesDao.removeAll(entityId, scope, keys);
     }
 
     private static void validate(EntityId id, String scope) {

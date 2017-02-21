@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -27,6 +28,8 @@ import java.util.Optional;
 public interface DeviceService {
     
     Device findDeviceById(DeviceId deviceId);
+
+    ListenableFuture<Device> findDeviceByIdAsync(DeviceId deviceId);
 
     Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name);
 

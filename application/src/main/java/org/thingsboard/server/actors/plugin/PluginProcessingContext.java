@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,6 +56,7 @@ import org.thingsboard.server.extensions.api.plugins.ws.PluginWebsocketSessionRe
 import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
 
 import akka.actor.ActorRef;
+import org.w3c.dom.Attr;
 
 import javax.annotation.Nullable;
 
@@ -91,49 +92,86 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveAttributes(DeviceId deviceId, String scope, List<AttributeKvEntry> attributes, PluginCallback<Void> callback) {
         validate(deviceId);
-        Set<AttributeKey> keys = new HashSet<>();
-        for (AttributeKvEntry attribute : attributes) {
-            keys.add(new AttributeKey(scope, attribute.getKey()));
-        }
 
         ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.attributesService.save(deviceId, scope, attributes);
         Futures.addCallback(rsListFuture, getListCallback(callback, v -> {
-            onDeviceAttributesChanged(deviceId, keys);
+            onDeviceAttributesChanged(deviceId, scope, attributes);
             return null;
         }), executor);
     }
 
     @Override
-    public Optional<AttributeKvEntry> loadAttribute(DeviceId deviceId, String attributeType, String attributeKey) {
+    public void removeAttributes(DeviceId deviceId, String scope, List<String> keys, PluginCallback<Void> callback) {
         validate(deviceId);
-        AttributeKvEntry attribute = pluginCtx.attributesService.find(deviceId, attributeType, attributeKey);
-        return Optional.ofNullable(attribute);
+        ListenableFuture<List<ResultSet>> future = pluginCtx.attributesService.removeAll(deviceId, scope, keys);
+        Futures.addCallback(future, getCallback(callback, v -> null), executor);
+        onDeviceAttributesDeleted(tenantId, deviceId, keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
     }
 
     @Override
-    public List<AttributeKvEntry> loadAttributes(DeviceId deviceId, String attributeType, List<String> attributeKeys) {
+    public void saveAttributesByDevice(TenantId tenantId, DeviceId deviceId, String scope, List<AttributeKvEntry> attributes, PluginCallback<Void> callback) {
         validate(deviceId);
-        List<AttributeKvEntry> result = new ArrayList<>(attributeKeys.size());
-        for (String attributeKey : attributeKeys) {
-            AttributeKvEntry attribute = pluginCtx.attributesService.find(deviceId, attributeType, attributeKey);
-            if (attribute != null) {
-                result.add(attribute);
-            }
-        }
-        return result;
+
+        ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.attributesService.save(deviceId, scope, attributes);
+        Futures.addCallback(rsListFuture, getListCallback(callback, v -> {
+            onDeviceAttributesChanged(tenantId, deviceId, scope, attributes);
+            return null;
+        }), executor);
     }
 
     @Override
-    public List<AttributeKvEntry> loadAttributes(DeviceId deviceId, String attributeType) {
+    public void removeAttributesByDevice(TenantId tenantId, DeviceId deviceId, String scope, List<String> keys, PluginCallback<Void> callback) {
         validate(deviceId);
-        return pluginCtx.attributesService.findAll(deviceId, attributeType);
+        ListenableFuture<List<ResultSet>> future = pluginCtx.attributesService.removeAll(deviceId, scope, keys);
+        Futures.addCallback(future, getCallback(callback, v -> null), executor);
+        onDeviceAttributesDeleted(tenantId, deviceId, keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
     }
 
     @Override
-    public void removeAttributes(DeviceId deviceId, String scope, List<String> keys) {
+    public void loadAttribute(DeviceId deviceId, String attributeType, String attributeKey, PluginCallback<Optional<AttributeKvEntry>> callback) {
         validate(deviceId);
-        pluginCtx.attributesService.removeAll(deviceId, scope, keys);
-        onDeviceAttributesDeleted(deviceId, keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
+        ListenableFuture<Optional<AttributeKvEntry>> future = pluginCtx.attributesService.find(deviceId, attributeType, attributeKey);
+        Futures.addCallback(future, getCallback(callback, v -> v), executor);
+    }
+
+    @Override
+    public void loadAttributes(DeviceId deviceId, String attributeType, Collection<String> attributeKeys, PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(deviceId);
+        ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.find(deviceId, attributeType, attributeKeys);
+        Futures.addCallback(future, getCallback(callback, v -> v), executor);
+    }
+
+    @Override
+    public void loadAttributes(DeviceId deviceId, String attributeType, PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(deviceId);
+        ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.findAll(deviceId, attributeType);
+        Futures.addCallback(future, getCallback(callback, v -> v), executor);
+    }
+
+    @Override
+    public void loadAttributes(DeviceId deviceId, Collection<String> attributeTypes, PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(deviceId);
+        List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+        attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.findAll(deviceId, attributeType)));
+        convertFuturesAndAddCallback(callback, futures);
+    }
+
+    @Override
+    public void loadAttributes(DeviceId deviceId, Collection<String> attributeTypes, Collection<String> attributeKeys, PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(deviceId);
+        List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+        attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.find(deviceId, attributeType, attributeKeys)));
+        convertFuturesAndAddCallback(callback, futures);
+    }
+
+    private void convertFuturesAndAddCallback(PluginCallback<List<AttributeKvEntry>> callback, List<ListenableFuture<List<AttributeKvEntry>>> futures) {
+        ListenableFuture<List<AttributeKvEntry>> future = Futures.transform(Futures.successfulAsList(futures),
+                (Function<? super List<List<AttributeKvEntry>>, ? extends List<AttributeKvEntry>>) input -> {
+                    List<AttributeKvEntry> result = new ArrayList<>();
+                    input.forEach(r -> result.addAll(r));
+                    return result;
+                }, executor);
+        Futures.addCallback(future, getCallback(callback, v -> v), executor);
     }
 
     @Override
@@ -205,18 +243,12 @@ public final class PluginProcessingContext implements PluginContext {
         return securityCtx;
     }
 
-    private void onDeviceAttributesChanged(DeviceId deviceId, AttributeKey key) {
-        onDeviceAttributesChanged(deviceId, Collections.singleton(key));
+    private void onDeviceAttributesDeleted(TenantId tenantId, DeviceId deviceId, Set<AttributeKey> keys) {
+        pluginCtx.toDeviceActor(DeviceAttributesEventNotificationMsg.onDelete(tenantId, deviceId, keys));
     }
 
-    private void onDeviceAttributesDeleted(DeviceId deviceId, Set<AttributeKey> keys) {
-        Device device = pluginCtx.deviceService.findDeviceById(deviceId);
-        pluginCtx.toDeviceActor(DeviceAttributesEventNotificationMsg.onDelete(device.getTenantId(), deviceId, keys));
-    }
-
-    private void onDeviceAttributesChanged(DeviceId deviceId, Set<AttributeKey> keys) {
-        Device device = pluginCtx.deviceService.findDeviceById(deviceId);
-        pluginCtx.toDeviceActor(DeviceAttributesEventNotificationMsg.onUpdate(device.getTenantId(), deviceId, keys));
+    private void onDeviceAttributesChanged(TenantId tenantId, DeviceId deviceId, String scope, List<AttributeKvEntry> values) {
+        pluginCtx.toDeviceActor(DeviceAttributesEventNotificationMsg.onUpdate(tenantId, deviceId, scope, values));
     }
 
     private <T> FutureCallback<List<ResultSet>> getListCallback(final PluginCallback<T> callback, Function<List<ResultSet>, T> transformer) {
@@ -256,11 +288,12 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     // TODO: replace with our own exceptions
-    private boolean validate(DeviceId deviceId) {
+    private boolean validate(DeviceId deviceId, PluginCallback<Device> callback) {
         if (securityCtx.isPresent()) {
-            PluginApiCallSecurityContext ctx = securityCtx.get();
+            final PluginApiCallSecurityContext ctx = securityCtx.get();
             if (ctx.isTenantAdmin() || ctx.isCustomerUser()) {
-                Device device = pluginCtx.deviceService.findDeviceById(deviceId);
+                ListenableFuture<Device> device = pluginCtx.deviceService.findDeviceById(deviceId);
+                Futures.addCallback(device, );
                 if (device == null) {
                     throw new IllegalStateException("Device not found!");
                 } else {

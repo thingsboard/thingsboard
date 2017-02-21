@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry.handlers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleId;
@@ -38,6 +39,7 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionT
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
     private final SubscriptionManager subscriptionManager;
 
@@ -49,27 +51,36 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
     public void handleGetAttributesRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, GetAttributesRequestRuleToPluginMsg msg) {
         GetAttributesRequest request = msg.getPayload();
 
-        List<AttributeKvEntry> clientAttributes = getAttributeKvEntries(ctx, msg.getDeviceId(), DataConstants.CLIENT_SCOPE, request.getClientAttributeNames());
-        List<AttributeKvEntry> sharedAttributes = getAttributeKvEntries(ctx, msg.getDeviceId(), DataConstants.SHARED_SCOPE, request.getSharedAttributeNames());
+        BiPluginCallBack<List<AttributeKvEntry>, List<AttributeKvEntry>> callback = new BiPluginCallBack<List<AttributeKvEntry>, List<AttributeKvEntry>>() {
 
-        BasicGetAttributesResponse response = BasicGetAttributesResponse.onSuccess(request.getMsgType(),
-                request.getRequestId(), BasicAttributeKVMsg.from(clientAttributes, sharedAttributes));
+            @Override
+            public void onSuccess(PluginContext ctx, List<AttributeKvEntry> clientAttributes, List<AttributeKvEntry> sharedAttributes) {
+                BasicGetAttributesResponse response = BasicGetAttributesResponse.onSuccess(request.getMsgType(),
+                        request.getRequestId(), BasicAttributeKVMsg.from(clientAttributes, sharedAttributes));
+                ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, response));
+            }
 
-        ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, response));
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to process get attributes request", e);
+                ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
+            }
+        };
+
+        getAttributeKvEntries(ctx, msg.getDeviceId(), DataConstants.CLIENT_SCOPE, request.getClientAttributeNames(), callback.getV1Callback());
+        getAttributeKvEntries(ctx, msg.getDeviceId(), DataConstants.SHARED_SCOPE, request.getSharedAttributeNames(), callback.getV2Callback());
     }
 
-    private List<AttributeKvEntry> getAttributeKvEntries(PluginContext ctx, DeviceId deviceId, String scope, Optional<Set<String>> names) {
-        List<AttributeKvEntry> attributes;
+    private void getAttributeKvEntries(PluginContext ctx, DeviceId deviceId, String scope, Optional<Set<String>> names, PluginCallback<List<AttributeKvEntry>> callback) {
         if (names.isPresent()) {
             if (!names.get().isEmpty()) {
-                attributes = ctx.loadAttributes(deviceId, scope, new ArrayList<>(names.get()));
+                ctx.loadAttributes(deviceId, scope, new ArrayList<>(names.get()), callback);
             } else {
-                attributes = ctx.loadAttributes(deviceId, scope);
+                ctx.loadAttributes(deviceId, scope, callback);
             }
         } else {
-            attributes = Collections.emptyList();
+            callback.onSuccess(ctx, Collections.emptyList());
         }
-        return attributes;
     }
 
     @Override
@@ -100,6 +111,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
 
             @Override
             public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to process telemetry upload request", e);
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
             }
         });
@@ -127,6 +139,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
 
                     @Override
                     public void onFailure(PluginContext ctx, Exception e) {
+                        log.error("Failed to process attributes update request", e);
                         ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
                     }
                 });

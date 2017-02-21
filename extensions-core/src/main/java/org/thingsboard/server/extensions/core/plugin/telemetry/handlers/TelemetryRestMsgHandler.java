@@ -77,41 +77,58 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                         }
                     });
                 } else if (entity.equals("attributes")) {
-                    List<AttributeKvEntry> attributes;
+                    PluginCallback<List<AttributeKvEntry>> callback = getAttributeKeysPluginCallback(msg);
                     if (!StringUtils.isEmpty(scope)) {
-                        attributes = ctx.loadAttributes(deviceId, scope);
+                        ctx.loadAttributes(deviceId, scope, callback);
                     } else {
-                        attributes = new ArrayList<>();
-                        Arrays.stream(DataConstants.ALL_SCOPES).forEach(s -> attributes.addAll(ctx.loadAttributes(deviceId, s)));
+                        ctx.loadAttributes(deviceId, Arrays.asList(DataConstants.ALL_SCOPES), callback);
                     }
-                    List<String> keys = attributes.stream().map(attrKv -> attrKv.getKey()).collect(Collectors.toList());
-                    msg.getResponseHolder().setResult(new ResponseEntity<>(keys, HttpStatus.OK));
                 }
             } else if (method.equals("values")) {
                 if ("timeseries".equals(entity)) {
-                    String keys = request.getParameter("keys");
+                    String keysStr = request.getParameter("keys");
                     Optional<Long> startTs = request.getLongParamValue("startTs");
                     Optional<Long> endTs = request.getLongParamValue("endTs");
                     Optional<Integer> limit = request.getIntParamValue("limit");
-                    Map<String, List<TsData>> data = new LinkedHashMap<>();
-                    for (String key : keys.split(",")) {
-                        //TODO: refactoring
-//                        List<TsKvEntry> entries = ctx.loadTimeseries(deviceId, new BaseTsKvQuery(key, startTs, endTs, limit));
-//                        data.put(key, entries.stream().map(v -> new TsData(v.getTs(), v.getValueAsString())).collect(Collectors.toList()));
-                    }
-                    msg.getResponseHolder().setResult(new ResponseEntity<>(data, HttpStatus.OK));
+                    Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
+
+                    List<String> keys = Arrays.asList(keysStr.split(","));
+                    List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), limit.get(), agg)).collect(Collectors.toList());
+                    ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
+                        @Override
+                        public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
+                            Map<String, List<TsData>> result = new LinkedHashMap<>();
+                            for (TsKvEntry entry : data) {
+                                result.put(entry.getKey(), data.stream().map(v -> new TsData(v.getTs(), v.getValueAsString())).collect(Collectors.toList()));
+                            }
+                            msg.getResponseHolder().setResult(new ResponseEntity<>(data, HttpStatus.OK));
+                        }
+
+                        @Override
+                        public void onFailure(PluginContext ctx, Exception e) {
+                            log.error("Failed to fetch historical data", e);
+                            msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                        }
+                    });
                 } else if ("attributes".equals(entity)) {
                     String keys = request.getParameter("keys", "");
-                    List<AttributeKvEntry> attributes;
+
+                    PluginCallback<List<AttributeKvEntry>> callback = getAttributeValuesPluginCallback(msg);
                     if (!StringUtils.isEmpty(scope)) {
-                        attributes = getAttributeKvEntries(ctx, scope, deviceId, keys);
+                        if (!StringUtils.isEmpty(keys)) {
+                            List<String> keyList = Arrays.asList(keys.split(","));
+                            ctx.loadAttributes(deviceId, scope, keyList, callback);
+                        } else {
+                            ctx.loadAttributes(deviceId, scope, callback);
+                        }
                     } else {
-                        attributes = new ArrayList<>();
-                        Arrays.stream(DataConstants.ALL_SCOPES).forEach(s -> attributes.addAll(getAttributeKvEntries(ctx, s, deviceId, keys)));
+                        if (!StringUtils.isEmpty(keys)) {
+                            List<String> keyList = Arrays.asList(keys.split(","));
+                            ctx.loadAttributes(deviceId, Arrays.asList(DataConstants.ALL_SCOPES), keyList, callback);
+                        } else {
+                            ctx.loadAttributes(deviceId, Arrays.asList(DataConstants.ALL_SCOPES), callback);
+                        }
                     }
-                    List<AttributeData> values = attributes.stream().map(attribute -> new AttributeData(attribute.getLastUpdateTs(),
-                            attribute.getKey(), attribute.getValue())).collect(Collectors.toList());
-                    msg.getResponseHolder().setResult(new ResponseEntity<>(values, HttpStatus.OK));
                 }
             }
         } else {
@@ -156,6 +173,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
 
                                 @Override
                                 public void onFailure(PluginContext ctx, Exception e) {
+                                    log.error("Failed to save attributes", e);
                                     msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                                 }
                             });
@@ -184,8 +202,18 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     String keysParam = request.getParameter("keys");
                     if (!StringUtils.isEmpty(keysParam)) {
                         String[] keys = keysParam.split(",");
-                        ctx.removeAttributes(deviceId, scope, Arrays.asList(keys));
-                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
+                        ctx.removeAttributes(deviceId, scope, Arrays.asList(keys), new PluginCallback<Void>() {
+                            @Override
+                            public void onSuccess(PluginContext ctx, Void value) {
+                                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
+                            }
+
+                            @Override
+                            public void onFailure(PluginContext ctx, Exception e) {
+                                log.error("Failed to remove attributes", e);
+                                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                            }
+                        });
                         return;
                     }
                 }
@@ -196,14 +224,37 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
         msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
 
-    private List<AttributeKvEntry> getAttributeKvEntries(PluginContext ctx, String scope, DeviceId deviceId, String keysParam) {
-        List<AttributeKvEntry> attributes;
-        if (!StringUtils.isEmpty(keysParam)) {
-            String[] keys = keysParam.split(",");
-            attributes = ctx.loadAttributes(deviceId, scope, Arrays.asList(keys));
-        } else {
-            attributes = ctx.loadAttributes(deviceId, scope);
-        }
-        return attributes;
+
+    private PluginCallback<List<AttributeKvEntry>> getAttributeKeysPluginCallback(final PluginRestMsg msg) {
+        return new PluginCallback<List<AttributeKvEntry>>() {
+            @Override
+            public void onSuccess(PluginContext ctx, List<AttributeKvEntry> attributes) {
+                List<String> keys = attributes.stream().map(attrKv -> attrKv.getKey()).collect(Collectors.toList());
+                msg.getResponseHolder().setResult(new ResponseEntity<>(keys, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to fetch attributes", e);
+                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            }
+        };
+    }
+
+    private PluginCallback<List<AttributeKvEntry>> getAttributeValuesPluginCallback(final PluginRestMsg msg) {
+        return new PluginCallback<List<AttributeKvEntry>>() {
+            @Override
+            public void onSuccess(PluginContext ctx, List<AttributeKvEntry> attributes) {
+                List<AttributeData> values = attributes.stream().map(attribute -> new AttributeData(attribute.getLastUpdateTs(),
+                        attribute.getKey(), attribute.getValue())).collect(Collectors.toList());
+                msg.getResponseHolder().setResult(new ResponseEntity<>(values, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to fetch attributes", e);
+                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            }
+        };
     }
 }
