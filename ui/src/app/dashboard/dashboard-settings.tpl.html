@@ -106,6 +106,16 @@
                             </div>
                         </div>
                     </div>
+                    <md-input-container class="md-block">
+                        <label translate>dashboard.background-size-mode</label>
+                        <md-select ng-model="vm.gridSettings.backgroundSizeMode" placeholder="{{ 'dashboard.background-size-mode' | translate }}">
+                            <md-option value="100%">Fit width</md-option>
+                            <md-option value="auto 100%">Fit height</md-option>
+                            <md-option value="cover">Cover</md-option>
+                            <md-option value="contain">Contain</md-option>
+                            <md-option value="auto">Original size</md-option>
+                        </md-select>
+                    </md-input-container>
                 </fieldset>
             </div>
         </md-dialog-content>

@@ -16,20 +16,14 @@
 @import "~compass-sass-mixins/lib/compass";
 @import "constants";
 @import "animations";
-
-@font-face {
-  font-family: 'Segment7Standard';
-  src: url('../font/Segment7Standard.otf') format('opentype');
-  font-weight: normal;
-  font-style: italic;
-}
+@import "fonts";
 
 /***************
  * TYPE DEFAULTS
  ***************/
 
 button, html, input, select, textarea {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .mdi-set {
@@ -124,11 +118,11 @@ form {
 }
 
 md-bottom-sheet .md-subheader {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .md-chips {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 md-content.md-default-theme, md-content {
@@ -329,6 +323,7 @@ section.tb-footer-buttons {
   right: 20px;
   bottom: 20px;
   z-index: 2;
+  pointer-events: none;
 }
 
 .tb-footer-buttons .tb-btn-footer {

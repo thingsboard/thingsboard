@@ -37,8 +37,10 @@ export default function AddWidgetController($scope, widgetService, deviceService
     vm.createDeviceAlias = createDeviceAlias;
 
     vm.widgetConfig = vm.widget.config;
-    var settingsSchema = vm.widgetInfo.settingsSchema;
-    var dataKeySettingsSchema = vm.widgetInfo.dataKeySettingsSchema;
+
+    var settingsSchema = vm.widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
+    var dataKeySettingsSchema = vm.widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
+
     if (!settingsSchema || settingsSchema === '') {
         vm.settingsSchema = {};
     } else {

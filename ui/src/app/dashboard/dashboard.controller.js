@@ -45,6 +45,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
     vm.iframeMode = $rootScope.iframeMode;
     vm.widgets = [];
+    vm.dashboardInitComplete = false;
 
     vm.addWidget = addWidget;
     vm.addWidgetFromType = addWidgetFromType;
@@ -58,6 +59,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.exportWidget = exportWidget;
     vm.importWidget = importWidget;
     vm.isTenantAdmin = isTenantAdmin;
+    vm.isSystemAdmin = isSystemAdmin;
     vm.loadDashboard = loadDashboard;
     vm.noData = noData;
     vm.onAddWidgetClosed = onAddWidgetClosed;
@@ -165,13 +167,6 @@ export default function DashboardController(types, widgetService, userService,
                 var parentScope = $window.parent.angular.element($window.frameElement).scope();
                 parentScope.$root.$broadcast('widgetEditModeInited');
                 parentScope.$root.$apply();
-
-                $scope.$watch('vm.widgets', function () {
-                    var widget = vm.widgets[0];
-                    parentScope.$root.$broadcast('widgetEditUpdated', widget);
-                    parentScope.$root.$apply();
-                }, true);
-
             });
         } else {
 
@@ -187,7 +182,9 @@ export default function DashboardController(types, widgetService, userService,
                     if (angular.isUndefined(vm.dashboard.configuration.deviceAliases)) {
                         vm.dashboard.configuration.deviceAliases = {};
                     }
-                    vm.widgets = vm.dashboard.configuration.widgets;
+                    //$timeout(function () {
+                        vm.widgets = vm.dashboard.configuration.widgets;
+                    //});
                     deferred.resolve();
                 }, function fail(e) {
                     deferred.reject(e);
@@ -201,19 +198,25 @@ export default function DashboardController(types, widgetService, userService,
         var parentScope = $window.parent.angular.element($window.frameElement).scope();
         parentScope.$emit('widgetEditModeInited');
         parentScope.$apply();
+        vm.dashboardInitComplete = true;
     }
 
     function dashboardInited(dashboard) {
         vm.dashboardContainer = dashboard;
         initHotKeys();
+        vm.dashboardInitComplete = true;
     }
 
     function isTenantAdmin() {
         return user.authority === 'TENANT_ADMIN';
     }
 
+    function isSystemAdmin() {
+        return user.authority === 'SYS_ADMIN';
+    }
+
     function noData() {
-        return vm.widgets.length == 0;
+        return vm.dashboardInitComplete && vm.widgets.length == 0;
     }
 
     function openDeviceAliases($event) {
@@ -252,7 +255,20 @@ export default function DashboardController(types, widgetService, userService,
             fullscreen: true,
             targetEvent: $event
         }).then(function (gridSettings) {
+            var prevColumns = vm.dashboard.configuration.gridSettings.columns;
+            var ratio = gridSettings.columns / prevColumns;
+            var currentWidgets = angular.copy(vm.widgets);
+            vm.widgets = [];
             vm.dashboard.configuration.gridSettings = gridSettings;
+            for (var w in currentWidgets) {
+                var widget = currentWidgets[w];
+                widget.sizeX = Math.round(widget.sizeX * ratio);
+                widget.sizeY = Math.round(widget.sizeY * ratio);
+                widget.col = Math.round(widget.col * ratio);
+                widget.row = Math.round(widget.row * ratio);
+            }
+            vm.dashboard.configuration.widgets = currentWidgets;
+            vm.widgets = vm.dashboard.configuration.widgets;
         }, function () {
         });
     }
@@ -577,7 +593,9 @@ export default function DashboardController(types, widgetService, userService,
             }
         } else {
             if (vm.widgetEditMode) {
-                vm.widgets = vm.prevWidgets;
+                if (revert) {
+                    vm.widgets = vm.prevWidgets;
+                }
             } else {
                 if (vm.dashboardContainer) {
                     vm.dashboardContainer.resetHighlight();
@@ -600,7 +618,12 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function notifyDashboardUpdated() {
-        if (!vm.widgetEditMode) {
+        if (vm.widgetEditMode) {
+            var parentScope = $window.parent.angular.element($window.frameElement).scope();
+            var widget = vm.widgets[0];
+            parentScope.$root.$broadcast('widgetEditUpdated', widget);
+            parentScope.$root.$apply();
+        } else {
             dashboardService.saveDashboard(vm.dashboard);
         }
     }

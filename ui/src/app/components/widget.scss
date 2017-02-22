@@ -13,31 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "~compass-sass-mixins/lib/animate";
-
-.tb-uppercase {
-  text-transform: uppercase;
-}
-
-.tb-card-item {
-  @include transition(all .2s ease-in-out);
-  md-card-content {
-    max-height: 53px;
+.tb-widget {
+  .tb-widget-error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255,255,255,0.5);
+    span {
+       color: red;
+    }
   }
-  md-card-title-text {
-    max-height: 32px;
-  }
-}
-
-.tb-current-item {
-  opacity: 0.5;
-  @include transform(scale(1.05));
-}
-
-#tb-vertical-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
 }

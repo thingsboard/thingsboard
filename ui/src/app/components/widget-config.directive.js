@@ -41,7 +41,7 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     .name;
 
 /*@ngInject*/
-function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
+function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, utils) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -279,7 +279,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                     scope.updateDatasourcesAccordionStatePending = false;
                     var expand = scope.datasources && scope.datasources.length < 4;
                     if (expand) {
-                        scope.datasourcesAccordion.expand('datasources-pane');
+                        $timeout(function() {
+                                scope.datasourcesAccordion.expand('datasources-pane');
+                        });
+
                     } else {
                         scope.datasourcesAccordion.collapse('datasources-pane');
                     }

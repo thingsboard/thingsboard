@@ -19,9 +19,10 @@ import tinycolor from 'tinycolor2';
 
 import thinsboardLedLight from '../components/led-light.directive';
 
+import TbFlot from '../widget/lib/flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
 import TbAnalogueRadialGauge from '../widget/lib/analogue-radial-gauge';
-import TbDigitalGauge from '../widget/lib/digital-gauge';
+import TbCanvasDigitalGauge from '../widget/lib/canvas-digital-gauge';
 import TbMapWidget from '../widget/lib/map-widget';
 
 import 'oclazyload';
@@ -38,13 +39,15 @@ export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thinsboa
 function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, types, utils) {
 
     $window.$ = $;
+    $window.jQuery = $;
     $window.moment = moment;
     $window.tinycolor = tinycolor;
     $window.lazyLoad = $ocLazyLoad;
 
+    $window.TbFlot = TbFlot;
     $window.TbAnalogueLinearGauge = TbAnalogueLinearGauge;
     $window.TbAnalogueRadialGauge = TbAnalogueRadialGauge;
-    $window.TbDigitalGauge = TbDigitalGauge;
+    $window.TbCanvasDigitalGauge = TbCanvasDigitalGauge;
     $window.TbMapWidget = TbMapWidget;
     $window.cssjs = cssjs;
 
@@ -57,6 +60,8 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
     var editingWidgetType;
 
     var widgetsInfoInMemoryCache = {};
+    var widgetsTypeFunctionsInMemoryCache = {};
+    var widgetsInfoFetchQueue = {};
 
     var allWidgetsBundles = undefined;
     var systemWidgetsBundles = undefined;
@@ -83,6 +88,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
         deleteWidgetsBundle: deleteWidgetsBundle,
         getBundleWidgetTypes: getBundleWidgetTypes,
         getWidgetInfo: getWidgetInfo,
+        getWidgetTypeFunction: getWidgetTypeFunction,
         getInstantWidgetInfo: getInstantWidgetInfo,
         deleteWidgetType: deleteWidgetType,
         saveWidgetType: saveWidgetType,
@@ -228,19 +234,34 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
 
     /** Cache functions **/
 
+    function createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem) {
+        return (isSystem ? 'sys_' : '') + bundleAlias + '_' + widgetTypeAlias;
+    }
+
     function getWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem) {
-        var key = (isSystem ? 'sys_' : '') + bundleAlias + '_' + widgetTypeAlias;
+        var key = createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
         return widgetsInfoInMemoryCache[key];
     }
 
+    function getWidgetTypeFunctionFromCache(bundleAlias, widgetTypeAlias, isSystem) {
+        var key = createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
+        return widgetsTypeFunctionsInMemoryCache[key];
+    }
+
     function putWidgetInfoToCache(widgetInfo, bundleAlias, widgetTypeAlias, isSystem) {
-        var key = (isSystem ? 'sys_' : '') + bundleAlias + '_' + widgetTypeAlias;
+        var key = createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
         widgetsInfoInMemoryCache[key] = widgetInfo;
     }
 
+    function putWidgetTypeFunctionToCache(widgetTypeFunction, bundleAlias, widgetTypeAlias, isSystem) {
+        var key = createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
+        widgetsTypeFunctionsInMemoryCache[key] = widgetTypeFunction;
+    }
+
     function deleteWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem) {
-        var key = (isSystem ? 'sys_' : '') + bundleAlias + '_' + widgetTypeAlias;
+        var key = createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
         delete widgetsInfoInMemoryCache[key];
+        delete widgetsTypeFunctionsInMemoryCache[key];
     }
 
     function deleteWidgetsBundleFromCache(bundleAlias, isSystem) {
@@ -248,6 +269,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
         for (var cacheKey in widgetsInfoInMemoryCache) {
             if (cacheKey.startsWith(key)) {
                 delete widgetsInfoInMemoryCache[cacheKey];
+                delete widgetsTypeFunctionsInMemoryCache[cacheKey];
             }
         }
     }
@@ -456,6 +478,16 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
         }
     }
 
+    function resolveWidgetsInfoFetchQueue(key, widgetInfo) {
+        var fetchQueue = widgetsInfoFetchQueue[key];
+        if (fetchQueue) {
+            for (var q in fetchQueue) {
+                fetchQueue[q].resolve(widgetInfo);
+            }
+            delete widgetsInfoFetchQueue[key];
+        }
+    }
+
     function getWidgetInfo(bundleAlias, widgetTypeAlias, isSystem) {
         var deferred = $q.defer();
         var widgetInfo = getWidgetInfoFromCache(bundleAlias, widgetTypeAlias, isSystem);
@@ -465,32 +497,130 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
             if ($rootScope.widgetEditMode) {
                 loadWidget(editingWidgetType, bundleAlias, isSystem, deferred);
             } else {
-                getWidgetType(bundleAlias, widgetTypeAlias, isSystem).then(
-                    function success(widgetType) {
-                        loadWidget(widgetType, bundleAlias, isSystem, deferred);
-                    }, function fail() {
-                        deferred.resolve(missingWidgetType);
-                    }
-                );
+                var key = createWidgetInfoCacheKey(bundleAlias, widgetTypeAlias, isSystem);
+                var fetchQueue = widgetsInfoFetchQueue[key];
+                if (fetchQueue) {
+                    fetchQueue.push(deferred);
+                } else {
+                    fetchQueue = [];
+                    widgetsInfoFetchQueue[key] = fetchQueue;
+                    getWidgetType(bundleAlias, widgetTypeAlias, isSystem).then(
+                        function success(widgetType) {
+                            loadWidget(widgetType, bundleAlias, isSystem, deferred);
+                        }, function fail() {
+                            deferred.resolve(missingWidgetType);
+                            resolveWidgetsInfoFetchQueue(key, missingWidgetType);
+                        }
+                    );
+                }
             }
         }
         return deferred.promise;
     }
 
+    function getWidgetTypeFunction(bundleAlias, widgetTypeAlias, isSystem) {
+        var widgetType = getWidgetTypeFunctionFromCache(bundleAlias, widgetTypeAlias, isSystem);
+        return widgetType;
+    }
+
+    function createWidgetTypeFunction(widgetInfo, name) {
+        var widgetTypeFunctionBody = 'return function '+ name +' (ctx) {\n' +
+            '    var self = this;\n' +
+            '    self.ctx = ctx;\n\n'; /*+
+
+         '    self.onInit = function() {\n\n' +
+
+         '    }\n\n' +
+
+         '    self.onDataUpdated = function() {\n\n' +
+
+         '    }\n\n' +
+
+         '    self.onResize = function() {\n\n' +
+
+         '    }\n\n' +
+
+         '    self.onEditModeChanged = function() {\n\n' +
+
+         '    }\n\n' +
+
+         '    self.onMobileModeChanged = function() {\n\n' +
+
+         '    }\n\n' +
+
+         '    self.getSettingsSchema = function() {\n\n' +
+
+         '    }\n\n' +
+
+         '    self.getDataKeySettingsSchema = function() {\n\n' +
+
+         '    }\n\n' +
+
+         '    self.onDestroy = function() {\n\n' +
+
+         '    }\n\n' +
+         '}';*/
+
+        widgetTypeFunctionBody += widgetInfo.controllerScript;
+        widgetTypeFunctionBody += '\n};\n';
+        try {
+            var widgetTypeFunction = new Function(widgetTypeFunctionBody);
+            var widgetType = widgetTypeFunction.apply(this);
+            var widgetTypeInstance = new widgetType();
+            var result = {
+                widgetTypeFunction: widgetType
+            };
+            if (angular.isFunction(widgetTypeInstance.getSettingsSchema)) {
+                result.settingsSchema = widgetTypeInstance.getSettingsSchema();
+            }
+            if (angular.isFunction(widgetTypeInstance.getDataKeySettingsSchema)) {
+                result.dataKeySettingsSchema = widgetTypeInstance.getDataKeySettingsSchema();
+            }
+            return result;
+        } catch (e) {
+            utils.processWidgetException(e);
+            throw e;
+        }
+    }
+
+    function processWidgetLoadError(errorMessages, cacheKey, deferred) {
+        var widgetInfo = angular.copy(errorWidgetType);
+        for (var e in errorMessages) {
+            var error = errorMessages[e];
+            widgetInfo.templateHtml += '<div class="tb-widget-error-msg">' + error + '</div>';
+        }
+        widgetInfo.templateHtml += '</div>';
+        deferred.resolve(widgetInfo);
+        resolveWidgetsInfoFetchQueue(cacheKey, widgetInfo);
+    }
+
     function loadWidget(widgetType, bundleAlias, isSystem, deferred) {
         var widgetInfo = toWidgetInfo(widgetType);
+        var key = createWidgetInfoCacheKey(bundleAlias, widgetInfo.alias, isSystem);
         loadWidgetResources(widgetInfo, bundleAlias, isSystem).then(
             function success() {
-                putWidgetInfoToCache(widgetInfo, bundleAlias, widgetInfo.alias, isSystem);
-                deferred.resolve(widgetInfo);
-            }, function fail(errorMessages) {
-                widgetInfo = angular.copy(errorWidgetType);
-                for (var e in errorMessages) {
-                    var error = errorMessages[e];
-                    widgetInfo.templateHtml += '<div class="tb-widget-error-msg">' + error + '</div>';
+                var widgetType = null;
+                try {
+                    widgetType = createWidgetTypeFunction(widgetInfo, key);
+                } catch (e) {
+                    var details = utils.parseException(e);
+                    var errorMessage = 'Failed to compile widget script. \n Error: ' + details.message;
+                    processWidgetLoadError([errorMessage], key, deferred);
                 }
-                widgetInfo.templateHtml += '</div>';
-                deferred.resolve(widgetInfo);
+                if (widgetType) {
+                    if (widgetType.settingsSchema) {
+                        widgetInfo.typeSettingsSchema = widgetType.settingsSchema;
+                    }
+                    if (widgetType.dataKeySettingsSchema) {
+                        widgetInfo.typeDataKeySettingsSchema = widgetType.dataKeySettingsSchema;
+                    }
+                    putWidgetInfoToCache(widgetInfo, bundleAlias, widgetInfo.alias, isSystem);
+                    putWidgetTypeFunctionToCache(widgetType.widgetTypeFunction, bundleAlias, widgetInfo.alias, isSystem);
+                    deferred.resolve(widgetInfo);
+                    resolveWidgetsInfoFetchQueue(key, widgetInfo);
+                }
+            }, function fail(errorMessages) {
+                processWidgetLoadError(errorMessages, key, deferred);
             }
         );
     }

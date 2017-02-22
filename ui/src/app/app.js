@@ -44,9 +44,11 @@ import 'react-schema-form';
 import react from 'ngreact';
 import '@flowjs/ng-flow/dist/ng-flow-standalone.min';
 
+import thingsboardLocales from './locale/locale.constant';
 import thingsboardLogin from './login';
 import thingsboardDialogs from './components/datakey-config-dialog.controller';
 import thingsboardMenu from './services/menu.service';
+import thingsboardRaf from './common/raf.provider';
 import thingsboardUtils from './common/utils.service';
 import thingsboardTypes from './common/types.constant';
 import thingsboardKeyboardShortcut from './components/keyboard-shortcut.filter';
@@ -57,6 +59,7 @@ import thingsboardApiLogin from './api/login.service';
 import thingsboardApiDevice from './api/device.service';
 import thingsboardApiUser from './api/user.service';
 
+import 'typeface-roboto';
 import 'font-awesome/css/font-awesome.min.css';
 import 'angular-material/angular-material.min.css';
 import 'angular-material-icons/angular-material-icons.css';
@@ -91,9 +94,11 @@ angular.module('thingsboard', [
     'ngclipboard',
     react.name,
     'flow',
+    thingsboardLocales,
     thingsboardLogin,
     thingsboardDialogs,
     thingsboardMenu,
+    thingsboardRaf,
     thingsboardUtils,
     thingsboardTypes,
     thingsboardKeyboardShortcut,

@@ -35,8 +35,8 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
                     function(widgetInfo) {
                         scope.$applyAsync(function(scope) {
                             scope.widgetConfig = scope.widget.config;
-                            var settingsSchema = widgetInfo.settingsSchema;
-                            var dataKeySettingsSchema = widgetInfo.dataKeySettingsSchema;
+                            var settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
+                            var dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
                             if (!settingsSchema || settingsSchema === '') {
                                 scope.settingsSchema = {};
                             } else {
