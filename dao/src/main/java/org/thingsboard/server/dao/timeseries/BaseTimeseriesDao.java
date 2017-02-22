@@ -133,8 +133,8 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
     }
 
     private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(String entityType, UUID entityId, TsKvQuery query) {
-        long minPartition = query.getStartTs();
-        long maxPartition = query.getEndTs();
+        long minPartition = toPartitionTs(query.getStartTs());
+        long maxPartition = toPartitionTs(query.getEndTs());
 
         ResultSetFuture partitionsFuture = fetchPartitions(entityType, entityId, query.getKey(), minPartition, maxPartition);
 

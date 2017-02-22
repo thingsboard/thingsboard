@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.*;
 
+import com.google.common.util.concurrent.Futures;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -226,7 +227,9 @@ public class DefaultActorServiceTest {
         when(pluginMock.getConfiguration()).thenReturn(pluginAdditionalInfo);
         when(pluginMock.getClazz()).thenReturn(TelemetryStoragePlugin.class.getName());
 
-        when(attributesService.findAll(deviceId, DataConstants.CLIENT_SCOPE)).thenReturn(Collections.emptyList());
+        when(attributesService.findAll(deviceId, DataConstants.CLIENT_SCOPE)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        when(attributesService.findAll(deviceId, DataConstants.SHARED_SCOPE)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        when(attributesService.findAll(deviceId, DataConstants.SERVER_SCOPE)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
 
         initActorSystem();
         Thread.sleep(1000);

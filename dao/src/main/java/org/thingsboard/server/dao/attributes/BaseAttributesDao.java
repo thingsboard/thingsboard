@@ -68,7 +68,7 @@ public class BaseAttributesDao extends AbstractAsyncDao implements AttributesDao
                 .and(eq(ATTRIBUTE_KEY_COLUMN, attributeKey));
         log.trace("Generated query [{}] for entityId {} and key {}", select, entityId, attributeKey);
         return Futures.transform(executeAsyncRead(select), (Function<? super ResultSet, ? extends Optional<AttributeKvEntry>>) input ->
-                        Optional.of(convertResultToAttributesKvEntry(attributeKey, input.one()))
+                        Optional.ofNullable(convertResultToAttributesKvEntry(attributeKey, input.one()))
                 , readResultsProcessingExecutor);
     }
 

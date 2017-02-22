@@ -48,6 +48,8 @@ import java.util.stream.Collectors;
 public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
 
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
+    public static final int DEFAULT_LIMIT = 100;
+    public static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
 
     private final SubscriptionManager subscriptionManager;
 
@@ -187,13 +189,11 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 if (keysOptional.isPresent()) {
                     long startTs;
                     if (cmd.getTimeWindow() > 0) {
-                        List<TsKvEntry> data = new ArrayList<>();
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
                         log.debug("[{}] fetching timeseries data for last {} ms for keys: ({}) for device : {}", sessionId, cmd.getTimeWindow(), cmd.getKeys(), cmd.getDeviceId());
                         long endTs = System.currentTimeMillis();
                         startTs = endTs - cmd.getTimeWindow();
-
-                        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs, endTs, cmd.getLimit(), Aggregation.valueOf(cmd.getAgg()))).collect(Collectors.toList());
+                        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs, endTs, getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
                         ctx.loadTimeseries(deviceId, queries, getSubscriptionCallback(sessionRef, cmd, sessionId, deviceId, startTs, keys));
                     } else {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
@@ -277,7 +277,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         }
         DeviceId deviceId = DeviceId.fromString(cmd.getDeviceId());
         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
-        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.getLimit(), Aggregation.valueOf(cmd.getAgg()))).collect(Collectors.toList());
+        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
         ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
@@ -297,6 +297,14 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 sendWsMsg(ctx, sessionRef, update);
             }
         });
+    }
+
+    private static Aggregation getAggregation(String agg) {
+        return StringUtils.isEmpty(agg) ? DEFAULT_AGGREGATION : Aggregation.valueOf(agg);
+    }
+
+    private int getLimit(int limit) {
+        return limit == 0 ? DEFAULT_LIMIT : limit;
     }
 
     private boolean validateSessionMetadata(PluginContext ctx, PluginWebsocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {

@@ -302,9 +302,8 @@ public final class PluginProcessingContext implements PluginContext {
 
     @Override
     public void getDevice(DeviceId deviceId, PluginCallback<Device> callback) {
-        //TODO: add caching here with async api.
-        Device device = pluginCtx.deviceService.findDeviceById(deviceId);
-        pluginCtx.self().tell(PluginCallbackMessage.onSuccess(callback, device), ActorRef.noSender());
+        ListenableFuture<Device> deviceFuture = pluginCtx.deviceService.findDeviceByIdAsync(deviceId);
+        Futures.addCallback(deviceFuture, getCallback(callback, v -> v));
     }
 
     @Override
