@@ -19,18 +19,22 @@ import L from 'leaflet/dist/leaflet';
 
 export default class TbOpenStreetMap {
 
-    constructor(containerElement, defaultZoomLevel, dontFitMapBounds, minZoomLevel) {
+    constructor($containerElement, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel) {
 
         this.defaultZoomLevel = defaultZoomLevel;
         this.dontFitMapBounds = dontFitMapBounds;
         this.minZoomLevel = minZoomLevel;
         this.tooltips = [];
 
-        this.map = L.map(containerElement).setView([0, 0], this.defaultZoomLevel || 8);
+        this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
         L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(this.map);
+
+        if (initCallback) {
+            setTimeout(initCallback, 0); //eslint-disable-line
+        }
 
     }
 

@@ -70,16 +70,16 @@
                                   'background-image': 'url('+vm.dashboard.configuration.gridSettings.backgroundImageUrl+')',
                                   'background-repeat': 'no-repeat',
                                   'background-attachment': 'scroll',
-                                  'background-size': '100%',
+                                  'background-size': vm.dashboard.configuration.gridSettings.backgroundSizeMode || '100%',
                                   'background-position': '0% 0%'}"
                 widgets="vm.widgets"
                 columns="vm.dashboard.configuration.gridSettings.columns"
                 margins="vm.dashboard.configuration.gridSettings.margins"
                 device-alias-list="vm.dashboard.configuration.deviceAliases"
-                is-edit="vm.isEdit || vm.widgetEditMode"
+                is-edit="vm.isEdit"
                 is-mobile="vm.forceDashboardMobileMode"
                 is-mobile-disabled="vm.widgetEditMode"
-                is-edit-action-enabled="vm.isEdit || vm.widgetEditMode"
+                is-edit-action-enabled="vm.isEdit"
                 is-export-action-enabled="vm.isEdit && !vm.widgetEditMode"
                 is-remove-action-enabled="vm.isEdit && !vm.widgetEditMode"
                 on-edit-widget="vm.editWidget(event, widget)"
@@ -108,7 +108,7 @@
         <details-buttons tb-help="vm.helpLinkIdForWidgetType()" help-container-id="help-container">
             <div id="help-container"></div>
         </details-buttons>
-        <form name="vm.widgetForm">
+        <form name="vm.widgetForm" ng-if="vm.isEditingWidget">
             <tb-edit-widget
                     dashboard="vm.dashboard"
                     widget="vm.editingWidget"
@@ -123,7 +123,7 @@
                         is-open="vm.isAddingWidget"
                         is-edit="false"
                         on-close-details="vm.onAddWidgetClosed()">
-        <header-pane>
+        <header-pane ng-if="vm.isAddingWidget">
             <div layout="row">
                 <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
                 <tb-widgets-bundle-select flex-offset="5"
@@ -134,7 +134,7 @@
                 </tb-widgets-bundle-select>
             </div>
         </header-pane>
-        <div>
+        <div ng-if="vm.isAddingWidget">
             <md-tabs ng-if="vm.timeseriesWidgetTypes.length > 0 || vm.latestWidgetTypes.length > 0 ||
                             vm.rpcWidgetTypes.length > 0 || vm.staticWidgetTypes.length > 0"
                      flex
@@ -224,7 +224,7 @@
                 </md-button>
             </md-fab-actions>
         </md-fab-speed-dial>
-        <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit && !vm.isAddingWidget && !loading && !vm.widgetEditMode" ng-disabled="loading"
+        <md-button ng-if="vm.isTenantAdmin() || vm.isSystemAdmin()" ng-show="vm.isEdit && !vm.isAddingWidget && !loading" ng-disabled="loading"
                    class="tb-btn-footer md-accent md-hue-2 md-fab"
                    aria-label="{{ 'action.apply' | translate }}"
                    ng-click="vm.saveDashboard()">
@@ -233,8 +233,8 @@
             </md-tooltip>
             <ng-md-icon icon="done"></ng-md-icon>
         </md-button>
-        <md-button ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode"
-                   ng-if="vm.isTenantAdmin()" ng-disabled="loading"
+        <md-button ng-show="!vm.isAddingWidget && !loading"
+                   ng-if="vm.isTenantAdmin() || vm.isSystemAdmin()" ng-disabled="loading"
                    class="tb-btn-footer md-accent md-hue-2 md-fab"
                    aria-label="{{ 'action.edit-mode' | translate }}"
                    ng-click="vm.toggleDashboardEditMode()">

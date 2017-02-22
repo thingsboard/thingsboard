@@ -117,7 +117,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
     vm.toggleItemSelection = toggleItemSelection;
 
     $scope.$watch(function () {
-        return $mdMedia('sm');
+        return $mdMedia('xs') || $mdMedia('sm');
     }, function (sm) {
         if (sm) {
             columnsUpdated(1);

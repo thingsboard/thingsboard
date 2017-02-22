@@ -203,7 +203,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $tra
         restrict: "E",
         require: "^ngModel",
         scope: {
-            asButton: '=asButton'
+            asButton: '=asButton',
+            buttonColor: '=?'
         },
         link: linker
     };

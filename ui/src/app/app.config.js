@@ -33,17 +33,13 @@ export default function AppConfig($provide,
                                   $mdThemingProvider,
                                   $httpProvider,
                                   $translateProvider,
-                                  storeProvider) {
+                                  storeProvider,
+                                  locales) {
 
     injectTapEventPlugin();
     $locationProvider.html5Mode(true);
     $urlRouterProvider.otherwise('/home');
     storeProvider.setCaching(false);
-
-    $translateProvider.useStaticFilesLoader({
-        prefix: 'static/locale/',// path to translations files
-        suffix: '.json'// suffix, currently- extension of the translations
-    });
 
     $translateProvider.useSanitizeValueStrategy('sanitize');
     $translateProvider.preferredLanguage('en_US');
@@ -51,11 +47,16 @@ export default function AppConfig($provide,
     $translateProvider.useMissingTranslationHandlerLog();
     $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
 
+    for (var langKey in locales) {
+        var translationTable = locales[langKey];
+        $translateProvider.translations(langKey, translationTable);
+    }
+
     $httpProvider.interceptors.push('globalInterceptor');
 
-    $provide.decorator("$exceptionHandler", ['$delegate', '$injector', function ($delegate, $injector) {
+    $provide.decorator("$exceptionHandler", ['$delegate', '$injector', function ($delegate/*, $injector*/) {
         return function (exception, cause) {
-            var rootScope = $injector.get("$rootScope");
+/*            var rootScope = $injector.get("$rootScope");
             var $window = $injector.get("$window");
             var utils = $injector.get("utils");
             if (rootScope.widgetEditMode) {
@@ -63,7 +64,7 @@ export default function AppConfig($provide,
                 var data = utils.parseException(exception);
                 parentScope.$emit('widgetException', data);
                 parentScope.$apply();
-            }
+            }*/
             $delegate(exception, cause);
         };
     }]);
