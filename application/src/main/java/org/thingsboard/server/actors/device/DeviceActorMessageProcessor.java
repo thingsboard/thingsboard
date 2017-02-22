@@ -95,12 +95,10 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private void refreshAttributes(DeviceAttributesEventNotificationMsg msg) {
-        if (this.deviceAttributes != null) {
-            if (msg.isDeleted()) {
-                msg.getDeletedKeys().forEach(key -> deviceAttributes.remove(key));
-            } else {
-                deviceAttributes.update(msg.getScope(), msg.getValues());
-            }
+        if (msg.isDeleted()) {
+            msg.getDeletedKeys().forEach(key -> deviceAttributes.remove(key));
+        } else {
+            deviceAttributes.update(msg.getScope(), msg.getValues());
         }
     }
 
@@ -206,7 +204,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
-        //TODO: improve this procedure to fetch only changed attributes and support attributes deletion
         refreshAttributes(msg);
         Set<AttributeKey> keys = msg.getDeletedKeys();
         if (attributeSubscriptions.size() > 0) {
