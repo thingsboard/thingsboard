@@ -18,19 +18,7 @@
       },
       "requestMethod": {
         "title": "Request method",
-        "type": "array",
-        "minItems" : 1,
-        "items": [
-          {
-            "value": "POST",
-            "label": "POST"
-          },
-          {
-            "value": "PUT",
-            "label": "PUT"
-          }
-        ],
-        "uniqueItems": true
+        "type": "string"
       },
       "expectedResultCode": {
         "title": "Expected Result Code",
@@ -56,7 +44,17 @@
     {
       "key": "requestMethod",
       "type": "rc-select",
-      "multiple": false
+      "multiple": false,
+      "items": [
+        {
+          "value": "POST",
+          "label": "POST"
+        },
+        {
+          "value": "PUT",
+          "label": "PUT"
+        }
+      ]
     },
     "expectedResultCode"
   ]

@@ -24,5 +24,5 @@ public class RestApiCallPluginActionConfiguration implements TemplateActionConfi
     private String template;
     private String actionPath;
     private int expectedResultCode;
-    private String[] requestMethod;
+    private String requestMethod;
 }

@@ -47,7 +47,7 @@ public class RestApiCallPlugin extends AbstractPlugin<RestApiCallPluginConfigura
                 configuration.getPort(),
                 configuration.getBasePath());
 
-        if (configuration.getAuthMethod()[0].equals(BASIC_AUTH_METHOD)) {
+        if (configuration.getAuthMethod().equals(BASIC_AUTH_METHOD)) {
             String userName = configuration.getUserName();
             String password = configuration.getPassword();
             String credentials = String.format(CREDENTIALS_TEMPLATE, userName, password);

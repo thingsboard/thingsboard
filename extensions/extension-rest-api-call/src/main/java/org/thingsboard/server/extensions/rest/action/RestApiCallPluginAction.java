@@ -16,23 +16,14 @@
 package org.thingsboard.server.extensions.rest.action;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.runtime.parser.ParseException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
-import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Action;
-import org.thingsboard.server.extensions.api.plugins.PluginAction;
-import org.thingsboard.server.extensions.api.plugins.msg.PluginToRuleMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ResponsePluginToRuleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
-import org.thingsboard.server.extensions.api.rules.RuleProcessingMetaData;
 import org.thingsboard.server.extensions.core.action.template.AbstractTemplatePluginAction;
-import org.thingsboard.server.extensions.core.utils.VelocityUtils;
 
 import java.util.Optional;
 
@@ -48,7 +39,7 @@ public class RestApiCallPluginAction extends AbstractTemplatePluginAction<RestAp
         builder.requestId(payload.getRequestId());
         builder.sync(configuration.isSync());
         builder.actionPath(configuration.getActionPath());
-        builder.httpMethod(HttpMethod.valueOf(configuration.getRequestMethod()[0]));
+        builder.httpMethod(HttpMethod.valueOf(configuration.getRequestMethod()));
         builder.expectedResultCode(HttpStatus.valueOf(configuration.getExpectedResultCode()));
         builder.msgBody(getMsgBody(ctx, msg));
         return Optional.of(new RestApiCallActionMsg(msg.getTenantId(),

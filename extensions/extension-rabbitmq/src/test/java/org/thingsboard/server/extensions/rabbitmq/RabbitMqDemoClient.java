@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * @author Andrew Shvayka
  */
-public class DemoClient {
+public class RabbitMqDemoClient {
 
     private static final String HOST = "localhost";
     private static final String USERNAME = "guest";

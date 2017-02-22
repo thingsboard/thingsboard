@@ -27,6 +27,6 @@ public class RabbitMqPluginActionConfiguration implements TemplateActionConfigur
     private boolean sync;
     private String exchange;
     private String queueName;
-    private String[] messageProperties;
+    private String messageProperties;
     private String template;
 }
