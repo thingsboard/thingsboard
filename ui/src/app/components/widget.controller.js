@@ -43,9 +43,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var originalTimewindow = null;
     var subscriptionTimewindow = {
         fixedWindow: null,
-        realtimeWindowMs: null
+        realtimeWindowMs: null,
+        aggregation: null
     };
-    var timer = null;
     var dataUpdateTimer = null;
     var dataUpdateCaf = null;
 
@@ -154,10 +154,10 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
-    function updateTimewindow() {
+    function updateTimewindow(startTs, endTs) {
         if (subscriptionTimewindow.realtimeWindowMs) {
-            widgetContext.timeWindow.maxTime = (new Date).getTime();
-            widgetContext.timeWindow.minTime = widgetContext.timeWindow.maxTime - subscriptionTimewindow.realtimeWindowMs;
+            widgetContext.timeWindow.maxTime = endTs || (new Date).getTime();
+            widgetContext.timeWindow.minTime = startTs || (widgetContext.timeWindow.maxTime - subscriptionTimewindow.realtimeWindowMs);
         } else if (subscriptionTimewindow.fixedWindow) {
             widgetContext.timeWindow.maxTime = subscriptionTimewindow.fixedWindow.endTimeMs;
             widgetContext.timeWindow.minTime = subscriptionTimewindow.fixedWindow.startTimeMs;
@@ -170,13 +170,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             dataUpdateTimer = null;
         }
         if (widgetContext.inited) {
-            if (widget.type === types.widgetType.timeseries.value) {
-                if (!widgetContext.tickUpdate && timer) {
-                    $timeout.cancel(timer);
-                    timer = $timeout(onTick, 1500, false);
-                }
-                updateTimewindow();
-            }
             if (dataUpdateCaf) {
                 dataUpdateCaf();
                 dataUpdateCaf = null;
@@ -188,7 +181,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                         handleWidgetException(e);
                     }
                 });
-            widgetContext.tickUpdate = false;
         } else {
             widgetContext.dataUpdatePending = true;
         }
@@ -512,17 +504,20 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         var update = true;
         if (widget.type === types.widgetType.latest.value) {
             var prevData = widgetContext.data[datasourceIndex + dataKeyIndex].data;
-            if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.length > 0) {
+            if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
                 var prevValue = prevData[0][1];
-                if (prevValue === sourceData[0][1]) {
+                if (prevValue === sourceData.data[0][1]) {
                     update = false;
                 }
             }
         }
         if (update) {
-            widgetContext.data[datasourceIndex + dataKeyIndex].data = sourceData;
+            if (subscriptionTimewindow.realtimeWindowMs) {
+                updateTimewindow(sourceData.startTs, sourceData.endTs);
+            }
+            widgetContext.data[datasourceIndex + dataKeyIndex].data = sourceData.data;
             if (widgetContext.data.length > 1 && !dataUpdateTimer) {
-                dataUpdateTimer = $timeout(onDataUpdated, 100, false);
+                dataUpdateTimer = $timeout(onDataUpdated, 300, false);
             } else {
                 onDataUpdated();
             }
@@ -557,10 +552,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function unsubscribe() {
         if (widget.type !== types.widgetType.rpc.value) {
-            if (timer) {
-                $timeout.cancel(timer);
-                timer = null;
-            }
             if (dataUpdateTimer) {
                 $timeout.cancel(dataUpdateTimer);
                 dataUpdateTimer = null;
@@ -573,19 +564,25 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
-    function onTick() {
-        widgetContext.tickUpdate = true;
-        onDataUpdated();
-        timer = $timeout(onTick, 1000, false);
-    }
-
     function subscribe() {
         if (widget.type !== types.widgetType.rpc.value) {
             var index = 0;
             subscriptionTimewindow.fixedWindow = null;
             subscriptionTimewindow.realtimeWindowMs = null;
+            subscriptionTimewindow.aggregation = {
+                limit: 200,
+                type: types.aggregation.avg.value
+            };
             if (widget.type === types.widgetType.timeseries.value &&
                 angular.isDefined(widget.config.timewindow)) {
+
+                if (angular.isDefined(widget.config.timewindow.aggregation)) {
+                    subscriptionTimewindow.aggregation = {
+                        limit: widget.config.timewindow.aggregation.limit || 200,
+                        type: widget.config.timewindow.aggregation.type || types.aggregation.avg.value
+                    };
+                }
+
                 if (angular.isDefined(widget.config.timewindow.realtime)) {
                     subscriptionTimewindow.realtimeWindowMs = widget.config.timewindow.realtime.timewindowMs;
                 } else if (angular.isDefined(widget.config.timewindow.history)) {
@@ -634,10 +631,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
                 datasourceListeners.push(listener);
                 datasourceService.subscribeToDatasource(listener);
-            }
-
-            if (subscriptionTimewindow.realtimeWindowMs) {
-                timer = $timeout(onTick, 0, false);
             }
         }
     }

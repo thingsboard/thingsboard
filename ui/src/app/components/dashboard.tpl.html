@@ -47,7 +47,7 @@
             									   padding: vm.widgetPadding(widget)}">
 								<div class="tb-widget-title" layout="column" ng-show="vm.showWidgetTitle(widget) || vm.hasTimewindow(widget)">
 									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{widget.config.title}}</span>
-									<tb-timewindow button-color="vm.widgetColor(widget)" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
+									<tb-timewindow button-color="vm.widgetColor(widget)" aggregation ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 								</div>
 								<div class="tb-widget-actions" layout="row" layout-align="start center">
 									<md-button id="expand-button"

@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+.md-panel {
+  &.tb-timewindow-panel {
+    position: absolute;
+  }
+}
+
 .tb-timewindow-panel {
-  position: absolute;
+  min-height: 375px;
   background: white;
   border-radius: 4px;
   box-shadow: 0 7px 8px -4px rgba(0, 0, 0, 0.2),

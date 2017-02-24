@@ -17,7 +17,7 @@
 -->
 <form name="theForm" ng-submit="vm.update()">
 	<fieldset ng-disabled="loading">
-		<section layout="column">
+		<md-content layout="column">
 			<md-tabs ng-class="{'tb-headless': vm.historyOnly}" flex md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom>
 				<md-tab label="{{ 'timewindow.realtime' | translate }}">
 					<md-content class="md-padding" layout="column">
@@ -52,6 +52,24 @@
 					</md-content>
 				</md-tab>
 			</md-tabs>
+			<md-content ng-if="vm.aggregation" class="md-padding" layout="column">
+				<md-input-container>
+					<label translate>aggregation.function</label>
+					<md-select ng-model="vm.timewindow.aggregation.type" style="min-width: 150px;">
+						<md-option ng-repeat="type in vm.aggregationTypes" ng-value="type.value">
+							{{type.name | translate}}
+						</md-option>
+					</md-select>
+				</md-input-container>
+				<md-slider-container>
+					<span translate>aggregation.limit</span>
+					<md-slider flex min="10" max="500" ng-model="vm.timewindow.aggregation.limit" aria-label="limit" id="limit-slider">
+					</md-slider>
+					<md-input-container>
+						<input flex type="number" ng-model="vm.timewindow.aggregation.limit" aria-label="limit" aria-controls="limit-slider">
+					</md-input-container>
+				</md-slider-container>
+			</md-content>
 			<section layout="row" layout-alignment="start center">
 			      <span flex></span>
 				  <md-button ng-disabled="loading || theForm.$invalid || !theForm.$dirty" type="submit" class="md-raised md-primary">

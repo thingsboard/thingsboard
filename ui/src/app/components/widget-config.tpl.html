@@ -91,7 +91,7 @@
                 <div ng-show="widgetType === types.widgetType.timeseries.value" layout="row"
                      layout-align="center center">
                     <span translate style="padding-right: 8px;">widget-config.timewindow</span>
-                    <tb-timewindow as-button="true" flex ng-model="timewindow"></tb-timewindow>
+                    <tb-timewindow as-button="true" aggregation flex ng-model="timewindow"></tb-timewindow>
                 </div>
                 <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
                              ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value">

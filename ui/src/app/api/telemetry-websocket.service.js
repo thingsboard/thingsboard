@@ -131,8 +131,8 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
             var data = angular.fromJson(message.data);
             if (data.subscriptionId) {
                 var subscriber = subscribers[data.subscriptionId];
-                if (subscriber && data.data) {
-                    subscriber.onData(data.data);
+                if (subscriber && data) {
+                    subscriber.onData(data);
                 }
             }
         }

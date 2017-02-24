@@ -53,8 +53,9 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 @Slf4j
 public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao {
 
-    @Value("${cassandra.query.min_aggregation_step_ms}")
-    private int minAggregationStepMs;
+    //@Value("${cassandra.query.min_aggregation_step_ms}")
+    //TODO:
+    private int minAggregationStepMs = 1000;
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;

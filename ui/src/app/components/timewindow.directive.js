@@ -15,6 +15,7 @@
  */
 import './timewindow.scss';
 
+import $ from 'jquery';
 import thingsboardTimeinterval from './timeinterval.directive';
 import thingsboardDatetimePeriod from './datetime-period.directive';
 
@@ -34,8 +35,9 @@ export default angular.module('thingsboard.directives.timewindow', [thingsboardT
     .filter('milliSecondsToTimeString', MillisecondsToTimeString)
     .name;
 
+/* eslint-disable angular/angularelement */
 /*@ngInject*/
-function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $translate) {
+function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdMedia, $translate, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -50,11 +52,17 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $tra
          * 				startTimeMs: 0,
          * 				endTimeMs: 0
          * 			}
+         * 	  },
+         * 	  aggregation: {
+         * 	        limit: 200,
+         * 	        type: types.aggregation.avg.value
          * 	  }
          * }
          */
 
         scope.historyOnly = angular.isDefined(attrs.historyOnly);
+
+        scope.aggregation = angular.isDefined(attrs.aggregation);
 
         var translationPending = false;
 
@@ -84,9 +92,27 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $tra
         }
 
         scope.openEditMode = function (event) {
-            var position = $mdPanel.newPanelPosition()
-                .relativeTo(element)
-                .addPanelPosition($mdPanel.xPosition.ALIGN_START, $mdPanel.yPosition.BELOW);
+            var position;
+            var isGtSm = $mdMedia('gt-sm');
+            if (isGtSm) {
+                var panelHeight = 375;
+                var offset = element[0].getBoundingClientRect();
+                var bottomY = offset.bottom - $(window).scrollTop(); //eslint-disable-line
+                var yPosition;
+                if (bottomY + panelHeight > $( window ).height()) { //eslint-disable-line
+                    yPosition = $mdPanel.yPosition.ABOVE;
+                } else {
+                    yPosition = $mdPanel.yPosition.BELOW;
+                }
+                position = $mdPanel.newPanelPosition()
+                    .relativeTo(element)
+                    .addPanelPosition($mdPanel.xPosition.ALIGN_START, yPosition);
+            } else {
+                position = $mdPanel.newPanelPosition()
+                    .absolute()
+                    .top('0%')
+                    .left('0%');
+            }
             var config = {
                 attachTo: angular.element($document[0].body),
                 controller: 'TimewindowPanelController',
@@ -94,9 +120,11 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $tra
                 templateUrl: timewindowPanelTemplate,
                 panelClass: 'tb-timewindow-panel',
                 position: position,
+                fullscreen: !isGtSm,
                 locals: {
                     'timewindow': angular.copy(scope.model),
                     'historyOnly': scope.historyOnly,
+                    'aggregation': scope.aggregation,
                     'onTimewindowUpdate': function (timewindow) {
                         scope.model = timewindow;
                         scope.updateView();
@@ -131,7 +159,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $tra
                     };
                 }
             }
-
+            value.aggregation = {
+                limit: model.aggregation.limit,
+                type: model.aggregation.type
+            };
             ngModelCtrl.$setViewValue(value);
             scope.updateDisplayValue();
         }
@@ -173,6 +204,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $tra
                         startTimeMs: currentTime - 24 * 60 * 60 * 1000, // 1 day by default
                         endTimeMs: currentTime
                     }
+                },
+                aggregation: {
+                    limit: 200,
+                    type: types.aggregation.avg.value
                 }
             };
             if (ngModelCtrl.$viewValue) {
@@ -190,6 +225,12 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $tra
                         model.history.historyType = 1;
                         model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
                         model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
+                    }
+                }
+                if (angular.isDefined(value.aggregation)) {
+                    model.aggregation.limit = value.aggregation.limit || 200;
+                    if (angular.isDefined(value.aggregation.type) && value.aggregation.type.length > 0) {
+                        model.aggregation.type = value.aggregation.type;
                     }
                 }
             }
@@ -241,3 +282,4 @@ function MillisecondsToTimeString($translate) {
         return timeString;
     }
 }
+/* eslint-enable angular/angularelement */

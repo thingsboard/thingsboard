@@ -63,6 +63,17 @@ export default angular.module('thingsboard.locale', [])
                     "import": "Import",
                     "export": "Export"
                 },
+                "aggregation": {
+                    "aggregation": "Aggregation",
+                    "function": "Data aggregation function",
+                    "limit": "Max values",
+                    "min": "Min",
+                    "max": "Max",
+                    "avg": "Average",
+                    "sum": "Sum",
+                    "count": "Count",
+                    "none": "None"
+                },
                 "admin": {
                     "general": "General",
                     "general-settings": "General Settings",

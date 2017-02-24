@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function TimewindowPanelController(mdPanelRef, $scope, timewindow, historyOnly, onTimewindowUpdate) {
+export default function TimewindowPanelController(mdPanelRef, $scope, types, timewindow, historyOnly, aggregation, onTimewindowUpdate) {
 
     var vm = this;
 
     vm._mdPanelRef = mdPanelRef;
     vm.timewindow = timewindow;
     vm.historyOnly = historyOnly;
+    vm.aggregation = aggregation;
     vm.onTimewindowUpdate = onTimewindowUpdate;
+    vm.aggregationTypes = types.aggregation;
 
     if (vm.historyOnly) {
         vm.timewindow.selectedTab = 1;

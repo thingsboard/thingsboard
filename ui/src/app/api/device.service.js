@@ -304,7 +304,9 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
                 subscriptionCommand: subscriptionCommand,
                 type: type,
                 onData: function (data) {
-                    onSubscriptionData(data, subscriptionId);
+                    if (data.data) {
+                        onSubscriptionData(data.data, subscriptionId);
+                    }
                 }
             };
             deviceAttributesSubscription = {
