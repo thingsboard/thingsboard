@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import $ from 'jquery';
-
 var gmGlobals = {
     loadingGmId: null,
     gmApiKeys: {}
 }
 
 export default class TbGoogleMap {
-    constructor(containerElement, defaultZoomLevel, dontFitMapBounds, minZoomLevel, gmApiKey) {
+    constructor($containerElement, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, gmApiKey) {
 
         var tbMap = this;
         this.defaultZoomLevel = defaultZoomLevel;
@@ -37,17 +35,21 @@ export default class TbGoogleMap {
         }
 
         function displayError(message) {
-            $(containerElement).html( // eslint-disable-line angular/angularelement
+            $containerElement.html( // eslint-disable-line angular/angularelement
                 "<div class='error'>"+ message + "</div>"
             );
         }
 
         function initGoogleMap() {
 
-            tbMap.map = new google.maps.Map(containerElement, { // eslint-disable-line no-undef
+            tbMap.map = new google.maps.Map($containerElement[0], { // eslint-disable-line no-undef
                 scrollwheel: false,
                 zoom: tbMap.defaultZoomLevel || 8
             });
+
+            if (initCallback) {
+                initCallback();
+            }
 
         }
 

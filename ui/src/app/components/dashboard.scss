@@ -93,6 +93,9 @@ md-content.tb-dashboard-content {
   right: 0;
   bottom: 0;
   outline: none;
+  .gridster-item {
+      @include transition(none);
+  }
 }
 
 .tb-widget-error-container {

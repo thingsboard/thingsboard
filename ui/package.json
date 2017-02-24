@@ -48,11 +48,12 @@
     "canvas-gauges": "^2.0.9",
     "clipboard": "^1.5.15",
     "compass-sass-mixins": "^0.12.7",
+    "flot": "git://github.com/flot/flot.git#0.9-work",
     "font-awesome": "^4.6.3",
+    "javascript-detect-element-resize": "^0.5.3",
     "jquery": "^3.1.0",
     "js-beautify": "^1.6.4",
     "json-schema-defaults": "^0.2.0",
-    "justgage": "^1.2.2",
     "leaflet": "^1.0.3",
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",
@@ -63,7 +64,6 @@
     "ngreact": "^0.3.0",
     "objectpath": "^1.2.1",
     "oclazyload": "^1.0.9",
-    "raphael": "^2.2.7",
     "rc-select": "^6.6.1",
     "react": "^15.4.1",
     "react-ace": "^4.1.0",
@@ -76,6 +76,7 @@
     "schema-inspector": "^1.6.6",
     "split.js": "^1.0.7",
     "tinycolor2": "^1.4.1",
+    "typeface-roboto": "0.0.22",
     "v-accordion": "^1.6.0"
   },
   "devDependencies": {
@@ -113,7 +114,8 @@
     "webpack": "^1.13.2",
     "webpack-dev-middleware": "^1.6.1",
     "webpack-dev-server": "^1.15.1",
-    "webpack-hot-middleware": "^2.12.2"
+    "webpack-hot-middleware": "^2.12.2",
+    "webpack-material-design-icons": "^0.1.0"
   },
   "engine": "node >= 5.9.0",
   "nyc": {

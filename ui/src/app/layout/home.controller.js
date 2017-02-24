@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import $ from 'jquery';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import logoSvg from '../../svg/logo_title_white.svg';
 
 /* eslint-enable import/no-unresolved, import/default */
 
-/*@ngInject*/
-export default function HomeController(loginService, userService, deviceService, Fullscreen, $scope, $rootScope, $document, $state,
-                                       $log, $mdMedia, $translate) {
+/* eslint-disable angular/angularelement */
 
-    var isShowSidenav = false,
-        dashboardUser = userService.getCurrentUser();
+/*@ngInject*/
+export default function HomeController(loginService, userService, deviceService, Fullscreen, $scope, $element, $rootScope, $document, $state,
+                                       $log, $mdMedia, $animate, $timeout, $translate) {
+
+    var dashboardUser = userService.getCurrentUser();
+
+    var siteSideNav = $('.tb-site-sidenav', $element);
 
     var vm = this;
 
@@ -39,13 +45,14 @@ export default function HomeController(loginService, userService, deviceService,
         };
     }
 
+    vm.isShowSidenav = false;
+    vm.isLockSidenav = false;
+
     vm.authorityName = authorityName;
     vm.displaySearchMode = displaySearchMode;
-    vm.lockSidenav = lockSidenav;
     vm.logout = logout;
     vm.openProfile = openProfile;
     vm.openSidenav = openSidenav;
-    vm.showSidenav = showSidenav;
     vm.searchTextUpdated = searchTextUpdated;
     vm.sidenavClicked = sidenavClicked;
     vm.toggleFullscreen = toggleFullscreen;
@@ -62,6 +69,23 @@ export default function HomeController(loginService, userService, deviceService,
             $scope.searchConfig.searchEnabled = false;
             $scope.searchConfig.showSearch = false;
             $scope.searchConfig.searchText = "";
+        }
+    });
+
+    if ($mdMedia('gt-sm')) {
+        vm.isLockSidenav = true;
+        $animate.enabled(siteSideNav, false);
+    }
+
+    $scope.$watch(function() { return $mdMedia('gt-sm'); }, function(isGtSm) {
+        vm.isLockSidenav = isGtSm;
+        vm.isShowSidenav = isGtSm;
+        if (!isGtSm) {
+            $timeout(function() {
+                $animate.enabled(siteSideNav, true);
+            }, 0, false);
+        } else {
+            $animate.enabled(siteSideNav, false);
         }
     });
 
@@ -127,25 +151,19 @@ export default function HomeController(loginService, userService, deviceService,
     }
 
     function openSidenav() {
-        isShowSidenav = true;
+        vm.isShowSidenav = true;
     }
 
     function closeSidenav() {
-        isShowSidenav = false;
-    }
-
-    function lockSidenav() {
-        return $mdMedia('gt-sm');
+        vm.isShowSidenav = false;
     }
 
     function sidenavClicked() {
-        if (!$mdMedia('gt-sm')) {
+        if (!vm.isLockSidenav) {
             closeSidenav();
         }
     }
 
-    function showSidenav() {
-        return isShowSidenav || $mdMedia('gt-sm');
-    }
-
 }
+
+/* eslint-enable angular/angularelement */

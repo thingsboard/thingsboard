@@ -37,6 +37,8 @@ export default function DashboardSettingsController($scope, $mdDialog, gridSetti
     vm.hMargin = vm.gridSettings.margins[0];
     vm.vMargin = vm.gridSettings.margins[1];
 
+    vm.gridSettings.backgroundSizeMode = vm.gridSettings.backgroundSizeMode || '100%';
+
     function cancel() {
         $mdDialog.cancel();
     }

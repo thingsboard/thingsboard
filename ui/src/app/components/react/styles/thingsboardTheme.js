@@ -58,6 +58,6 @@ var indigoPalette = {
 
 export default {
     spacing: spacing,
-    fontFamily: 'RobotoDraft, Roboto, \'Helvetica Neue\', sans-serif',
+    fontFamily: 'Roboto, \'Helvetica Neue\', sans-serif',
     palette: indigoPalette,
 };

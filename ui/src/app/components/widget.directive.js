@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import './widget.scss';
+
 import thingsboardTypes from '../common/types.constant';
 import thingsboardApiDatasource from '../api/datasource.service';
 
@@ -70,63 +73,18 @@ function Widget($controller, $compile, widgetService) {
                     + widget.typeAlias;
 
                 elem.addClass(widgetNamespace);
-                elem.html('<div id="container">' + widgetInfo.templateHtml + '</div>');
+                elem.html('<div class="tb-absolute-fill tb-widget-error"" ng-if="widgetErrorData">' +
+                                '<span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>' +
+                          '</div>' +
+                          '<div id="container">' + widgetInfo.templateHtml + '</div>');
 
                 $compile(elem.contents())(scope);
 
-                angular.extend(locals, {$scope: scope, $element: elem});
+                var widgetType = widgetService.getWidgetTypeFunction(widget.bundleAlias, widget.typeAlias, widget.isSystemType);
 
-                var controllerFunctionBody = 'var fns = { init: null, redraw: null, destroy: null };';
-                controllerFunctionBody += widgetInfo.controllerScript;
-                controllerFunctionBody += '' +
-                    'angular.extend(this, $controller(\'WidgetController\',' +
-                    '{' +
-                    '$scope: $scope,' +
-                    '$timeout: $timeout,' +
-                    '$window: $window,' +
-                    '$element: $element,' +
-                    '$log: $log,' +
-                    'types: types,' +
-                    'visibleRect: visibleRect,' +
-                    'datasourceService: datasourceService,' +
-                    'deviceService: deviceService,' +
-                    'isPreview: isPreview,' +
-                    'widget: widget,' +
-                    'deviceAliasList: deviceAliasList,' +
-                    'fns: fns' +
-                    '}));' +
-                    '';
+                angular.extend(locals, {$scope: scope, $element: elem, widgetType: widgetType});
 
-                var controllerFunction = new Function("$scope",
-                    "$timeout",
-                    "$window",
-                    "$element",
-                    "$log",
-                    'types',
-                    "visibleRect",
-                    "datasourceService",
-                    "deviceService",
-                    "$controller",
-                    "isPreview",
-                    "widget",
-                    "deviceAliasList",
-                    controllerFunctionBody);
-
-                controllerFunction.$inject = ["$scope",
-                    "$timeout",
-                    "$window",
-                    "$element",
-                    "$log",
-                    'types',
-                    "visibleRect",
-                    "datasourceService",
-                    "deviceService",
-                    "$controller",
-                    "isPreview",
-                    "widget",
-                    "deviceAliasList"];
-
-                widgetController = $controller(controllerFunction, locals);
+                widgetController = $controller('WidgetController', locals);
 
                 if (gridsterItem) {
                     widgetController.gridsterItemInitialized(gridsterItem);

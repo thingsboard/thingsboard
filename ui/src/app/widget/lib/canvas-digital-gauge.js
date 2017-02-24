@@ -13,66 +13,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import $ from 'jquery';
-import canvasGauges from 'canvas-gauges';
 import tinycolor from 'tinycolor2';
+import canvasGauges from 'canvas-gauges';
+import CanvasDigitalGauge from './CanvasDigitalGauge';
 
 /* eslint-disable angular/angularelement */
-export default class TbAnalogueLinearGauge {
-    constructor(ctx, canvasId) {
+export default class TbCanvasDigitalGauge {
 
+    constructor(ctx, canvasId) {
         this.ctx = ctx;
 
         canvasGauges.performance = window.performance; // eslint-disable-line no-undef, angular/window-service
 
         var gaugeElement = $('#'+canvasId, ctx.$container);
-
         var settings = ctx.settings;
 
-        var minValue = settings.minValue || 0;
-        var maxValue = settings.maxValue || 100;
+        this.localSettings = {};
+        this.localSettings.minValue = settings.minValue || 0;
+        this.localSettings.maxValue = settings.maxValue || 100;
+        this.localSettings.gaugeType = settings.gaugeType || 'arc';
+        this.localSettings.neonGlowBrightness = settings.neonGlowBrightness || 0;
+        this.localSettings.dashThickness = settings.dashThickness || 0;
+        this.localSettings.roundedLineCap = settings.roundedLineCap === true;
 
         var dataKey = ctx.data[0].dataKey;
         var keyColor = settings.defaultColor || dataKey.color;
 
-        var majorTicksCount = settings.majorTicksCount || 10;
-        var total = maxValue-minValue;
-        var step = (total/majorTicksCount);
+        this.localSettings.unitTitle = ((settings.showUnitTitle === true) ?
+            (settings.unitTitle && settings.unitTitle.length > 0 ?
+                settings.unitTitle : dataKey.label) : '');
 
-        var valueInt = settings.valueInt || 3;
+        this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
+        this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
 
-        var valueDec = (angular.isDefined(settings.valueDec) && settings.valueDec !== null)
-            ? settings.valueDec : 2;
-
-        step = parseFloat(parseFloat(step).toFixed(valueDec));
-
-        var majorTicks = [];
-        var highlights = [];
-        var tick = minValue;
-
-        while(tick<=maxValue) {
-            majorTicks.push(tick);
-            var nextTick = tick+step;
-            nextTick = parseFloat(parseFloat(nextTick).toFixed(valueDec));
-            if (tick<maxValue) {
-                var highlightColor = tinycolor(keyColor);
-                var percent = (tick-minValue)/total;
-                highlightColor.setAlpha(percent);
-                var highlight = {
-                    from: tick,
-                    to: nextTick,
-                    color: highlightColor.toRgbString()
-                }
-                highlights.push(highlight);
-            }
-            tick = nextTick;
+        if (!settings.levelColors || settings.levelColors.length <= 0) {
+            this.localSettings.levelColors = [keyColor];
+        } else {
+            this.localSettings.levelColors = settings.levelColors.slice();
         }
 
-        var colorNumbers = tinycolor(keyColor).darken(20).toRgbString();
-        var barStrokeColor = tinycolor(keyColor).darken().setAlpha(0.6).toRgbString();
+        this.localSettings.decimals = (angular.isDefined(settings.decimals) && settings.decimals !== null)
+            ? settings.decimals : 0;
+        this.localSettings.units = settings.units || '';
+        this.localSettings.hideValue = settings.showValue !== true;
+        this.localSettings.hideMinMax = settings.showMinMax !== true;
 
-        var progressColorStart = tinycolor(keyColor).setAlpha(0.05).toRgbString();
-        var progressColorEnd = tinycolor(keyColor).darken().toRgbString();
+        this.localSettings.title = ((settings.showTitle === true) ?
+            (settings.title && settings.title.length > 0 ?
+                settings.title : dataKey.label) : '');
+
+        this.localSettings.titleFont = {};
+        var settingsTitleFont = settings.titleFont;
+        if (!settingsTitleFont) {
+            settingsTitleFont = {};
+        }
 
         function getFontFamily(fontSettings) {
             var family = fontSettings && fontSettings.family ? fontSettings.family : 'Roboto';
@@ -80,104 +76,111 @@ export default class TbAnalogueLinearGauge {
                 family = 'Roboto';
             }
             return family;
-         }
+        }
+
+        this.localSettings.titleFont.family = getFontFamily(settingsTitleFont);
+        this.localSettings.titleFont.size = settingsTitleFont.size ? settingsTitleFont.size : 12;
+        this.localSettings.titleFont.style = settingsTitleFont.style ? settingsTitleFont.style : 'normal';
+        this.localSettings.titleFont.weight = settingsTitleFont.weight ? settingsTitleFont.weight : '500';
+        this.localSettings.titleFont.color = settingsTitleFont.color ? settingsTitleFont.color : keyColor;
+
+        this.localSettings.valueFont = {};
+        var settingsValueFont = settings.valueFont;
+        if (!settingsValueFont) {
+            settingsValueFont = {};
+        }
+
+        this.localSettings.valueFont.family = getFontFamily(settingsValueFont);
+        this.localSettings.valueFont.size = settingsValueFont.size ? settingsValueFont.size : 18;
+        this.localSettings.valueFont.style = settingsValueFont.style ? settingsValueFont.style : 'normal';
+        this.localSettings.valueFont.weight = settingsValueFont.weight ? settingsValueFont.weight : '500';
+        this.localSettings.valueFont.color = settingsValueFont.color ? settingsValueFont.color : keyColor;
+
+        this.localSettings.minMaxFont = {};
+        var settingsMinMaxFont = settings.minMaxFont;
+        if (!settingsMinMaxFont) {
+            settingsMinMaxFont = {};
+        }
+
+        this.localSettings.minMaxFont.family = getFontFamily(settingsMinMaxFont);
+        this.localSettings.minMaxFont.size = settingsMinMaxFont.size ? settingsMinMaxFont.size : 10;
+        this.localSettings.minMaxFont.style = settingsMinMaxFont.style ? settingsMinMaxFont.style : 'normal';
+        this.localSettings.minMaxFont.weight = settingsMinMaxFont.weight ? settingsMinMaxFont.weight : '500';
+        this.localSettings.minMaxFont.color = settingsMinMaxFont.color ? settingsMinMaxFont.color : keyColor;
+
+        this.localSettings.labelFont = {};
+        var settingsLabelFont = settings.labelFont;
+        if (!settingsLabelFont) {
+            settingsLabelFont = {};
+        }
+
+        this.localSettings.labelFont.family = getFontFamily(settingsLabelFont);
+        this.localSettings.labelFont.size = settingsLabelFont.size ? settingsLabelFont.size : 8;
+        this.localSettings.labelFont.style = settingsLabelFont.style ? settingsLabelFont.style : 'normal';
+        this.localSettings.labelFont.weight = settingsLabelFont.weight ? settingsLabelFont.weight : '500';
+        this.localSettings.labelFont.color = settingsLabelFont.color ? settingsLabelFont.color : keyColor;
+
 
         var gaugeData = {
 
             renderTo: gaugeElement[0],
 
-            /* Generic options */
+            gaugeWidthScale: this.localSettings.gaugeWidthScale,
+            gaugeColor: this.localSettings.gaugeColor,
+            levelColors: this.localSettings.levelColors,
 
-            minValue: minValue,
-            maxValue: maxValue,
-            majorTicks: majorTicks,
-            minorTicks: settings.minorTicks || 2,
-            units: settings.units,
-            title: ((settings.showUnitTitle !== false) ?
-                (settings.unitTitle && settings.unitTitle.length > 0 ?
-                    settings.unitTitle : dataKey.label) : ''),
+            title: this.localSettings.title,
 
-            borders: settings.showBorder === true,
-            borderShadowWidth: (settings.showBorder === true) ? 3 : 0,
-            borderOuterWidth: (settings.showBorder === true) ? 3 : 0,
-            borderMiddleWidth: (settings.showBorder === true) ? 3 : 0,
-            borderInnerWidth: (settings.showBorder === true) ? 3 : 0,
+            fontTitleSize: this.localSettings.titleFont.size,
+            fontTitleStyle: this.localSettings.titleFont.style,
+            fontTitleWeight: this.localSettings.titleFont.weight,
+            colorTitle: this.localSettings.titleFont.color,
+            fontTitle: this.localSettings.titleFont.family,
 
-            // borders
+            fontValueSize:  this.localSettings.valueFont.size,
+            fontValueStyle: this.localSettings.valueFont.style,
+            fontValueWeight: this.localSettings.valueFont.weight,
+            colorValue: this.localSettings.valueFont.color,
+            fontValue: this.localSettings.valueFont.family,
 
-            // number formats
-            valueInt: valueInt,
-            valueDec: valueDec,
-            majorTicksInt: 1,
-            majorTicksDec: 0,
+            fontMinMaxSize: this.localSettings.minMaxFont.size,
+            fontMinMaxStyle: this.localSettings.minMaxFont.style,
+            fontMinMaxWeight: this.localSettings.minMaxFont.weight,
+            colorMinMax: this.localSettings.minMaxFont.color,
+            fontMinMax: this.localSettings.minMaxFont.family,
 
-            valueBox: settings.valueBox !== false,
-            valueBoxStroke: 5,
-            valueBoxWidth: 0,
-            valueText: '',
-            valueTextShadow: true,
-            valueBoxBorderRadius: 2.5,
+            fontLabelSize: this.localSettings.labelFont.size,
+            fontLabelStyle: this.localSettings.labelFont.style,
+            fontLabelWeight: this.localSettings.labelFont.weight,
+            colorLabel: this.localSettings.labelFont.color,
+            fontLabel: this.localSettings.labelFont.family,
 
-            //highlights
-            highlights: (settings.highlights && settings.highlights.length > 0) ? settings.highlights : highlights,
-            highlightsWidth: (angular.isDefined(settings.highlightsWidth) && settings.highlightsWidth !== null) ? settings.highlightsWidth : 10,
+            minValue: this.localSettings.minValue,
+            maxValue: this.localSettings.maxValue,
+            gaugeType: this.localSettings.gaugeType,
+            dashThickness: this.localSettings.dashThickness,
+            roundedLineCap: this.localSettings.roundedLineCap,
 
-            //fonts
-            fontNumbers: getFontFamily(settings.numbersFont),
-            fontTitle: getFontFamily(settings.titleFont),
-            fontUnits: getFontFamily(settings.unitsFont),
-            fontValue: getFontFamily(settings.valueFont),
+            symbol: this.localSettings.units,
+            label: this.localSettings.unitTitle,
+            hideValue: this.localSettings.hideValue,
+            hideMinMax: this.localSettings.hideMinMax,
 
-            fontNumbersSize: settings.numbersFont && settings.numbersFont.size ? settings.numbersFont.size : 18,
-            fontTitleSize: settings.titleFont && settings.titleFont.size ? settings.titleFont.size : 24,
-            fontUnitsSize: settings.unitsFont && settings.unitsFont.size ? settings.unitsFont.size : 22,
-            fontValueSize: settings.valueFont && settings.valueFont.size ? settings.valueFont.size : 40,
+            valueDec: this.localSettings.decimals,
 
-            fontNumbersStyle: settings.numbersFont && settings.numbersFont.style ? settings.numbersFont.style : 'normal',
-            fontTitleStyle: settings.titleFont && settings.titleFont.style ? settings.titleFont.style : 'normal',
-            fontUnitsStyle: settings.unitsFont && settings.unitsFont.style ? settings.unitsFont.style : 'normal',
-            fontValueStyle: settings.valueFont && settings.valueFont.style ? settings.valueFont.style : 'normal',
-
-            fontNumbersWeight: settings.numbersFont && settings.numbersFont.weight ? settings.numbersFont.weight : '500',
-            fontTitleWeight: settings.titleFont && settings.titleFont.weight ? settings.titleFont.weight : '500',
-            fontUnitsWeight: settings.unitsFont && settings.unitsFont.weight ? settings.unitsFont.weight : '500',
-            fontValueWeight: settings.valueFont && settings.valueFont.weight ? settings.valueFont.weight : '500',
-
-            colorNumbers: settings.numbersFont && settings.numbersFont.color ? settings.numbersFont.color : colorNumbers,
-            colorTitle: settings.titleFont && settings.titleFont.color ? settings.titleFont.color : '#888',
-            colorUnits: settings.unitsFont && settings.unitsFont.color ? settings.unitsFont.color : '#888',
-            colorValueText: settings.valueFont && settings.valueFont.color ? settings.valueFont.color : '#444',
-            colorValueTextShadow: settings.valueFont && settings.valueFont.shadowColor ? settings.valueFont.shadowColor : 'rgba(0,0,0,0.3)',
-
-            //colors
-            colorPlate: settings.colorPlate || '#fff',
-            colorMajorTicks: settings.colorMajorTicks || '#444',
-            colorMinorTicks: settings.colorMinorTicks || '#666',
-            colorNeedle: settings.colorNeedle || keyColor,
-            colorNeedleEnd: settings.colorNeedleEnd || keyColor,
-
-            colorValueBoxRect: settings.colorValueBoxRect || '#888',
-            colorValueBoxRectEnd: settings.colorValueBoxRectEnd || '#666',
-            colorValueBoxBackground: settings.colorValueBoxBackground || '#babab2',
-            colorValueBoxShadow: settings.colorValueBoxShadow || 'rgba(0,0,0,1)',
-            colorNeedleShadowUp: settings.colorNeedleShadowUp || 'rgba(2,255,255,0.2)',
-            colorNeedleShadowDown: settings.colorNeedleShadowDown || 'rgba(188,143,143,0.45)',
+            neonGlowBrightness: this.localSettings.neonGlowBrightness,
 
             // animations
             animation: settings.animation !== false && !ctx.isMobile,
             animationDuration: (angular.isDefined(settings.animationDuration) && settings.animationDuration !== null) ? settings.animationDuration : 500,
-            animationRule: settings.animationRule || 'cycle',
+            animationRule: settings.animationRule || 'linear',
 
-            /* Linear gauge specific */
+            isMobile: ctx.isMobile
 
-            barStrokeWidth: (angular.isDefined(settings.barStrokeWidth) && settings.barStrokeWidth !== null) ? settings.barStrokeWidth : 2.5,
-            colorBarStroke: settings.colorBarStroke || barStrokeColor,
-            colorBar: settings.colorBar || "#fff",
-            colorBarEnd: settings.colorBarEnd || "#ddd",
-            colorBarProgress: settings.colorBarProgress || progressColorStart,
-            colorBarProgressEnd: settings.colorBarProgressEnd || progressColorEnd
         };
-        this.gauge = new canvasGauges.LinearGauge(gaugeData).draw();
+
+        this.gauge = new CanvasDigitalGauge(gaugeData).draw();
+
     }
 
     update() {
@@ -194,7 +197,7 @@ export default class TbAnalogueLinearGauge {
 
     mobileModeChanged() {
         var animation = this.ctx.settings.animation !== false && !this.ctx.isMobile;
-        this.gauge.update({animation: animation});
+        this.gauge.update({animation: animation, isMobile: this.ctx.isMobile});
     }
 
     resize() {
@@ -217,6 +220,41 @@ export default class TbAnalogueLinearGauge {
                         "type": "number",
                         "default": 100
                     },
+                    "gaugeType": {
+                        "title": "Gauge type",
+                        "type": "string",
+                        "default": "arc"
+                    },
+                    "donutStartAngle": {
+                        "title": "Angle to start from when in donut mode",
+                        "type": "number",
+                        "default": 90
+                    },
+                    "neonGlowBrightness": {
+                        "title": "Neon glow effect brightness, (0-100), 0 - disable effect",
+                        "type": "number",
+                        "default": 0
+                    },
+                    "dashThickness": {
+                        "title": "Thickness of the stripes, 0 - no stripes",
+                        "type": "number",
+                        "default": 0
+                    },
+                    "roundedLineCap": {
+                        "title": "Display rounded line cap",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "title": {
+                        "title": "Gauge title",
+                        "type": "string",
+                        "default": null
+                    },
+                    "showTitle": {
+                        "title": "Show gauge title",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "unitTitle": {
                         "title": "Unit title",
                         "type": "string",
@@ -225,132 +263,130 @@ export default class TbAnalogueLinearGauge {
                     "showUnitTitle": {
                         "title": "Show unit title",
                         "type": "boolean",
-                        "default": true
+                        "default": false
                     },
-                    "units": {
-                        "title": "Units",
-                        "type": "string",
-                        "default": ""
-                    },
-                    "majorTicksCount": {
-                        "title": "Major ticks count",
-                        "type": "number",
-                        "default": null
-                    },
-                    "minorTicks": {
-                        "title": "Minor ticks count",
-                        "type": "number",
-                        "default": 2
-                    },
-                    "valueBox": {
-                        "title": "Show value box",
+                    "showValue": {
+                        "title": "Show value text",
                         "type": "boolean",
                         "default": true
                     },
-                    "valueInt": {
-                        "title": "Digits count for integer part of value",
-                        "type": "number",
-                        "default": 3
+                    "showMinMax": {
+                        "title": "Show min and max values",
+                        "type": "boolean",
+                        "default": true
                     },
-                    "valueDec": {
-                        "title": "Digits count for decimal part of value",
+                    "gaugeWidthScale": {
+                        "title": "Width of the gauge element",
                         "type": "number",
-                        "default": 2
+                        "default": 0.75
                     },
                     "defaultColor": {
                         "title": "Default color",
                         "type": "string",
                         "default": null
                     },
-                    "colorPlate": {
-                        "title": "Plate color",
-                        "type": "string",
-                        "default": "#fff"
-                    },
-                    "colorMajorTicks": {
-                        "title": "Major ticks color",
-                        "type": "string",
-                        "default": "#444"
-                    },
-                    "colorMinorTicks": {
-                        "title": "Minor ticks color",
-                        "type": "string",
-                        "default": "#666"
-                    },
-                    "colorNeedle": {
-                        "title": "Needle color",
+                    "gaugeColor": {
+                        "title": "Background color of the gauge element",
                         "type": "string",
                         "default": null
                     },
-                    "colorNeedleEnd": {
-                        "title": "Needle color - end gradient",
-                        "type": "string",
-                        "default": null
-                    },
-                    "colorNeedleShadowUp": {
-                        "title": "Upper half of the needle shadow color",
-                        "type": "string",
-                        "default": "rgba(2,255,255,0.2)"
-                    },
-                    "colorNeedleShadowDown": {
-                        "title": "Drop shadow needle color.",
-                        "type": "string",
-                        "default": "rgba(188,143,143,0.45)"
-                    },
-                    "colorValueBoxRect": {
-                        "title": "Value box rectangle stroke color",
-                        "type": "string",
-                        "default": "#888"
-                    },
-                    "colorValueBoxRectEnd": {
-                        "title": "Value box rectangle stroke color - end gradient",
-                        "type": "string",
-                        "default": "#666"
-                    },
-                    "colorValueBoxBackground": {
-                        "title": "Value box background color",
-                        "type": "string",
-                        "default": "#babab2"
-                    },
-                    "colorValueBoxShadow": {
-                        "title": "Value box shadow color",
-                        "type": "string",
-                        "default": "rgba(0,0,0,1)"
-                    },
-                    "highlights": {
-                        "title": "Highlights",
+                    "levelColors": {
+                        "title": "Colors of indicator, from lower to upper",
                         "type": "array",
                         "items": {
-                            "title": "Highlight",
-                            "type": "object",
-                            "properties": {
-                                "from": {
-                                    "title": "From",
-                                    "type": "number"
-                                },
-                                "to": {
-                                    "title": "To",
-                                    "type": "number"
-                                },
-                                "color": {
-                                    "title": "Color",
-                                    "type": "string"
-                                }
-                            }
+                            "title": "Color",
+                            "type": "string"
                         }
                     },
-                    "highlightsWidth": {
-                        "title": "Highlights width",
-                        "type": "number",
-                        "default": 15
-                    },
-                    "showBorder": {
-                        "title": "Show border",
+                    "animation": {
+                        "title": "Enable animation",
                         "type": "boolean",
                         "default": true
                     },
-                    "numbersFont": {
-                        "title": "Tick numbers font",
+                    "animationDuration": {
+                        "title": "Animation duration",
+                        "type": "number",
+                        "default": 500
+                    },
+                    "animationRule": {
+                        "title": "Animation rule",
+                        "type": "string",
+                        "default": "linear"
+                    },
+                    "decimals": {
+                        "title": "Number of digits after floating point",
+                        "type": "number",
+                        "default": 0
+                    },
+                    "units": {
+                        "title": "Special symbol to show next to value",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "titleFont": {
+                        "title": "Gauge title font",
+                        "type": "object",
+                        "properties": {
+                            "family": {
+                                "title": "Font family",
+                                "type": "string",
+                                "default": "Roboto"
+                            },
+                            "size": {
+                                "title": "Size",
+                                "type": "number",
+                                "default": 12
+                            },
+                            "style": {
+                                "title": "Style",
+                                "type": "string",
+                                "default": "normal"
+                            },
+                            "weight": {
+                                "title": "Weight",
+                                "type": "string",
+                                "default": "500"
+                            },
+                            "color": {
+                                "title": "color",
+                                "type": "string",
+                                "default": null
+                            }
+                        }
+                    },
+                    "labelFont": {
+                        "title": "Font of label showing under value",
+                        "type": "object",
+                        "properties": {
+                            "family": {
+                                "title": "Font family",
+                                "type": "string",
+                                "default": "Roboto"
+                            },
+                            "size": {
+                                "title": "Size",
+                                "type": "number",
+                                "default": 8
+                            },
+                            "style": {
+                                "title": "Style",
+                                "type": "string",
+                                "default": "normal"
+                            },
+                            "weight": {
+                                "title": "Weight",
+                                "type": "string",
+                                "default": "500"
+                            },
+                            "color": {
+                                "title": "color",
+                                "type": "string",
+                                "default": null
+                            }
+                        }
+                    },
+                    "valueFont": {
+                        "title": "Font of label showing current value",
                         "type": "object",
                         "properties": {
                             "family": {
@@ -380,8 +416,8 @@ export default class TbAnalogueLinearGauge {
                             }
                         }
                     },
-                    "titleFont": {
-                        "title": "Title text font",
+                    "minMaxFont": {
+                        "title": "Font of minimum and maximum labels",
                         "type": "object",
                         "properties": {
                             "family": {
@@ -392,7 +428,7 @@ export default class TbAnalogueLinearGauge {
                             "size": {
                                 "title": "Size",
                                 "type": "number",
-                                "default": 24
+                                "default": 10
                             },
                             "style": {
                                 "title": "Style",
@@ -407,308 +443,121 @@ export default class TbAnalogueLinearGauge {
                             "color": {
                                 "title": "color",
                                 "type": "string",
-                                "default": "#888"
+                                "default": null
                             }
                         }
-                    },
-                    "unitsFont": {
-                        "title": "Units text font",
-                        "type": "object",
-                        "properties": {
-                            "family": {
-                                "title": "Font family",
-                                "type": "string",
-                                "default": "Roboto"
-                            },
-                            "size": {
-                                "title": "Size",
-                                "type": "number",
-                                "default": 22
-                            },
-                            "style": {
-                                "title": "Style",
-                                "type": "string",
-                                "default": "normal"
-                            },
-                            "weight": {
-                                "title": "Weight",
-                                "type": "string",
-                                "default": "500"
-                            },
-                            "color": {
-                                "title": "color",
-                                "type": "string",
-                                "default": "#888"
-                            }
-                        }
-                    },
-                    "valueFont": {
-                        "title": "Value text font",
-                        "type": "object",
-                        "properties": {
-                            "family": {
-                                "title": "Font family",
-                                "type": "string",
-                                "default": "Roboto"
-                            },
-                            "size": {
-                                "title": "Size",
-                                "type": "number",
-                                "default": 40
-                            },
-                            "style": {
-                                "title": "Style",
-                                "type": "string",
-                                "default": "normal"
-                            },
-                            "weight": {
-                                "title": "Weight",
-                                "type": "string",
-                                "default": "500"
-                            },
-                            "color": {
-                                "title": "color",
-                                "type": "string",
-                                "default": "#444"
-                            },
-                            "shadowColor": {
-                                "title": "Shadow color",
-                                "type": "string",
-                                "default": "rgba(0,0,0,0.3)"
-                            }
-                        }
-                    },
-                    "animation": {
-                        "title": "Enable animation",
-                        "type": "boolean",
-                        "default": true
-                    },
-                    "animationDuration": {
-                        "title": "Animation duration",
-                        "type": "number",
-                        "default": 500
-                    },
-                    "animationRule": {
-                        "title": "Animation rule",
-                        "type": "string",
-                        "default": "cycle"
-                    },
-                    "barStrokeWidth": {
-                        "title": "Bar stroke width",
-                        "type": "number",
-                        "default": 2.5
-                    },
-                    "colorBarStroke": {
-                        "title": "Bar stroke color",
-                        "type": "string",
-                        "default": null
-                    },
-                    "colorBar": {
-                        "title": "Bar background color",
-                        "type": "string",
-                        "default": "#fff"
-                    },
-                    "colorBarEnd": {
-                        "title": "Bar background color - end gradient",
-                        "type": "string",
-                        "default": "#ddd"
-                    },
-                    "colorBarProgress": {
-                        "title": "Progress bar color",
-                        "type": "string",
-                        "default": null
-                    },
-                    "colorBarProgressEnd": {
-                        "title": "Progress bar color - end gradient",
-                        "type": "string",
-                        "default": null
                     }
-
-                },
-                "required": []
+                }
             },
             "form": [
-                "barStrokeWidth",
-                {
-                    "key": "colorBarStroke",
-                    "type": "color"
-                },
-                {
-                    "key": "colorBar",
-                    "type": "color"
-                },
-                {
-                    "key": "colorBarEnd",
-                    "type": "color"
-                },
-                {
-                    "key": "colorBarProgress",
-                    "type": "color"
-                },
-                {
-                    "key": "colorBarProgressEnd",
-                    "type": "color"
-                },
                 "minValue",
                 "maxValue",
+                {
+                    "key": "gaugeType",
+                    "type": "rc-select",
+                    "multiple": false,
+                    "items": [
+                        {
+                            "value": "arc",
+                            "label": "Arc"
+                        },
+                        {
+                            "value": "donut",
+                            "label": "Donut"
+                        },
+                        {
+                            "value": "horizontalBar",
+                            "label": "Horizontal bar"
+                        },
+                        {
+                            "value": "verticalBar",
+                            "label": "Vertical bar"
+                        }
+                    ]
+                },
+                "donutStartAngle",
+                "neonGlowBrightness",
+                "dashThickness",
+                "roundedLineCap",
+                "title",
+                "showTitle",
                 "unitTitle",
                 "showUnitTitle",
-                "units",
-                "majorTicksCount",
-                "minorTicks",
-                "valueBox",
-                "valueInt",
-                "valueDec",
+                "showValue",
+                "showMinMax",
+                "gaugeWidthScale",
                 {
                     "key": "defaultColor",
                     "type": "color"
                 },
                 {
-                    "key": "colorPlate",
+                    "key": "gaugeColor",
                     "type": "color"
                 },
                 {
-                    "key": "colorMajorTicks",
-                    "type": "color"
-                },
-                {
-                    "key": "colorMinorTicks",
-                    "type": "color"
-                },
-                {
-                    "key": "colorNeedle",
-                    "type": "color"
-                },
-                {
-                    "key": "colorNeedleEnd",
-                    "type": "color"
-                },
-                {
-                    "key": "colorNeedleShadowUp",
-                    "type": "color"
-                },
-                {
-                    "key": "colorNeedleShadowDown",
-                    "type": "color"
-                },
-                {
-                    "key": "colorValueBoxRect",
-                    "type": "color"
-                },
-                {
-                    "key": "colorValueBoxRectEnd",
-                    "type": "color"
-                },
-                {
-                    "key": "colorValueBoxBackground",
-                    "type": "color"
-                },
-                {
-                    "key": "colorValueBoxShadow",
-                    "type": "color"
-                },
-                {
-                    "key": "highlights",
+                    "key": "levelColors",
                     "items": [
-                        "highlights[].from",
-                        "highlights[].to",
                         {
-                            "key": "highlights[].color",
+                            "key": "levelColors[]",
                             "type": "color"
                         }
                     ]
                 },
-                "highlightsWidth",
-                "showBorder",
+                "animation",
+                "animationDuration",
                 {
-                    "key": "numbersFont",
+                    "key": "animationRule",
+                    "type": "rc-select",
+                    "multiple": false,
                     "items": [
-                        "numbersFont.family",
-                        "numbersFont.size",
                         {
-                            "key": "numbersFont.style",
-                            "type": "rc-select",
-                            "multiple": false,
-                            "items": [
-                                {
-                                    "value": "normal",
-                                    "label": "Normal"
-                                },
-                                {
-                                    "value": "italic",
-                                    "label": "Italic"
-                                },
-                                {
-                                    "value": "oblique",
-                                    "label": "Oblique"
-                                }
-                            ]
+                            "value": "linear",
+                            "label": "Linear"
                         },
                         {
-                            "key": "numbersFont.weight",
-                            "type": "rc-select",
-                            "multiple": false,
-                            "items": [
-                                {
-                                    "value": "normal",
-                                    "label": "Normal"
-                                },
-                                {
-                                    "value": "bold",
-                                    "label": "Bold"
-                                },
-                                {
-                                    "value": "bolder",
-                                    "label": "Bolder"
-                                },
-                                {
-                                    "value": "lighter",
-                                    "label": "Lighter"
-                                },
-                                {
-                                    "value": "100",
-                                    "label": "100"
-                                },
-                                {
-                                    "value": "200",
-                                    "label": "200"
-                                },
-                                {
-                                    "value": "300",
-                                    "label": "300"
-                                },
-                                {
-                                    "value": "400",
-                                    "label": "400"
-                                },
-                                {
-                                    "value": "500",
-                                    "label": "500"
-                                },
-                                {
-                                    "value": "600",
-                                    "label": "600"
-                                },
-                                {
-                                    "value": "700",
-                                    "label": "800"
-                                },
-                                {
-                                    "value": "800",
-                                    "label": "800"
-                                },
-                                {
-                                    "value": "900",
-                                    "label": "900"
-                                }
-                            ]
+                            "value": "quad",
+                            "label": "Quad"
                         },
                         {
-                            "key": "numbersFont.color",
-                            "type": "color"
+                            "value": "quint",
+                            "label": "Quint"
+                        },
+                        {
+                            "value": "cycle",
+                            "label": "Cycle"
+                        },
+                        {
+                            "value": "bounce",
+                            "label": "Bounce"
+                        },
+                        {
+                            "value": "elastic",
+                            "label": "Elastic"
+                        },
+                        {
+                            "value": "dequad",
+                            "label": "Dequad"
+                        },
+                        {
+                            "value": "dequint",
+                            "label": "Dequint"
+                        },
+                        {
+                            "value": "decycle",
+                            "label": "Decycle"
+                        },
+                        {
+                            "value": "debounce",
+                            "label": "Debounce"
+                        },
+                        {
+                            "value": "delastic",
+                            "label": "Delastic"
                         }
                     ]
                 },
+                "decimals",
+                "units",
                 {
                     "key": "titleFont",
                     "items": [
@@ -799,12 +648,12 @@ export default class TbAnalogueLinearGauge {
                     ]
                 },
                 {
-                    "key": "unitsFont",
+                    "key": "labelFont",
                     "items": [
-                        "unitsFont.family",
-                        "unitsFont.size",
+                        "labelFont.family",
+                        "labelFont.size",
                         {
-                            "key": "unitsFont.style",
+                            "key": "labelFont.style",
                             "type": "rc-select",
                             "multiple": false,
                             "items": [
@@ -823,7 +672,7 @@ export default class TbAnalogueLinearGauge {
                             ]
                         },
                         {
-                            "key": "unitsFont.weight",
+                            "key": "labelFont.weight",
                             "type": "rc-select",
                             "multiple": false,
                             "items": [
@@ -882,7 +731,7 @@ export default class TbAnalogueLinearGauge {
                             ]
                         },
                         {
-                            "key": "unitsFont.color",
+                            "key": "labelFont.color",
                             "type": "color"
                         }
                     ]
@@ -973,70 +822,100 @@ export default class TbAnalogueLinearGauge {
                         {
                             "key": "valueFont.color",
                             "type": "color"
-                        },
-                        {
-                            "key": "valueFont.shadowColor",
-                            "type": "color"
                         }
                     ]
                 },
-                "animation",
-                "animationDuration",
                 {
-                    "key": "animationRule",
-                    "type": "rc-select",
-                    "multiple": false,
+                    "key": "minMaxFont",
                     "items": [
+                        "minMaxFont.family",
+                        "minMaxFont.size",
                         {
-                            "value": "linear",
-                            "label": "Linear"
+                            "key": "minMaxFont.style",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "italic",
+                                    "label": "Italic"
+                                },
+                                {
+                                    "value": "oblique",
+                                    "label": "Oblique"
+                                }
+                            ]
                         },
                         {
-                            "value": "quad",
-                            "label": "Quad"
+                            "key": "minMaxFont.weight",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "bold",
+                                    "label": "Bold"
+                                },
+                                {
+                                    "value": "bolder",
+                                    "label": "Bolder"
+                                },
+                                {
+                                    "value": "lighter",
+                                    "label": "Lighter"
+                                },
+                                {
+                                    "value": "100",
+                                    "label": "100"
+                                },
+                                {
+                                    "value": "200",
+                                    "label": "200"
+                                },
+                                {
+                                    "value": "300",
+                                    "label": "300"
+                                },
+                                {
+                                    "value": "400",
+                                    "label": "400"
+                                },
+                                {
+                                    "value": "500",
+                                    "label": "500"
+                                },
+                                {
+                                    "value": "600",
+                                    "label": "600"
+                                },
+                                {
+                                    "value": "700",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "800",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "900",
+                                    "label": "900"
+                                }
+                            ]
                         },
                         {
-                            "value": "quint",
-                            "label": "Quint"
-                        },
-                        {
-                            "value": "cycle",
-                            "label": "Cycle"
-                        },
-                        {
-                            "value": "bounce",
-                            "label": "Bounce"
-                        },
-                        {
-                            "value": "elastic",
-                            "label": "Elastic"
-                        },
-                        {
-                            "value": "dequad",
-                            "label": "Dequad"
-                        },
-                        {
-                            "value": "dequint",
-                            "label": "Dequint"
-                        },
-                        {
-                            "value": "decycle",
-                            "label": "Decycle"
-                        },
-                        {
-                            "value": "debounce",
-                            "label": "Debounce"
-                        },
-                        {
-                            "value": "delastic",
-                            "label": "Delastic"
+                            "key": "minMaxFont.color",
+                            "type": "color"
                         }
                     ]
                 }
             ]
         };
     }
-
 }
-
 /* eslint-enable angular/angularelement */
