@@ -29,14 +29,17 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.msg.core.BasicTelemetryUploadRequest;
 import org.thingsboard.server.common.msg.core.BasicUpdateAttributesRequest;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
+import org.thingsboard.server.common.msg.core.ToDeviceRpcResponseMsg;
 import org.thingsboard.server.common.msg.session.BasicAdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.BasicToDeviceActorSessionMsg;
+import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.transport.mqtt.MqttTopics;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 
@@ -53,10 +56,6 @@ import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.val
  */
 @Slf4j
 public class GatewaySessionCtx {
-
-    private static final Gson GSON = new Gson();
-    private static final Charset UTF8 = Charset.forName("UTF-8");
-    private static final ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
 
     private final Device gateway;
     private final SessionId gatewaySessionId;
@@ -125,6 +124,21 @@ public class GatewaySessionCtx {
         }
     }
 
+    public void onDeviceRpcResponse(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            String deviceName = checkDeviceConnected(jsonObj.get("device").getAsString());
+            Integer requestId = jsonObj.get("requestId").getAsInt();
+            String data = jsonObj.get("data").getAsString();
+            GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
+            processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+                    new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
+        } else {
+            throw new JsonSyntaxException("Can't parse value: " + json);
+        }
+    }
+
     public void onDeviceAttributes(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
         int requestId = mqttMsg.variableHeader().messageId();
@@ -188,4 +202,5 @@ public class GatewaySessionCtx {
     protected void writeAndFlush(MqttMessage mqttMessage) {
         channel.writeAndFlush(mqttMessage);
     }
+
 }
