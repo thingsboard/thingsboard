@@ -29,7 +29,7 @@ import EditAttributeValueController from './edit-attribute-value.controller';
 
 /*@ngInject*/
 export default function AttributeTableDirective($compile, $templateCache, $rootScope, $q, $mdEditDialog, $mdDialog,
-                                                $document, $translate, utils, types, deviceService, widgetService) {
+                                                $document, $translate, utils, types, dashboardService, deviceService, widgetService) {
 
     var linker = function (scope, element, attrs) {
 
@@ -355,6 +355,10 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.selectedWidgetsBundleAlias = null;
             scope.mode = 'default';
             scope.getDeviceAttributes(true);
+        }
+
+        scope.getServerTimeDiff = function() {
+            return dashboardService.getServerTimeDiff();
         }
 
         scope.addWidgetToDashboard = function($event) {

@@ -26,16 +26,10 @@ public class SubscriptionUpdate {
     private int errorCode;
     private String errorMsg;
     private Map<String, List<Object>> data;
-    private long serverStartTs;
 
     public SubscriptionUpdate(int subscriptionId, List<TsKvEntry> data) {
-        this(subscriptionId, 0L, data);
-    }
-
-    public SubscriptionUpdate(int subscriptionId, long serverStartTs, List<TsKvEntry> data) {
         super();
         this.subscriptionId = subscriptionId;
-        this.serverStartTs = serverStartTs;
         this.data = new TreeMap<>();
         for (TsKvEntry tsEntry : data) {
             List<Object> values = this.data.get(tsEntry.getKey());
@@ -95,13 +89,9 @@ public class SubscriptionUpdate {
         return errorMsg;
     }
 
-    public long getServerStartTs() {
-        return serverStartTs;
-    }
-
     @Override
     public String toString() {
         return "SubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
-                + data + ", serverStartTs=" + serverStartTs+ "]";
+                + data + "]";
     }
 }

@@ -28,6 +28,7 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionT
 @Data
 public class TimeseriesSubscriptionCmd extends SubscriptionCmd {
 
+    private long startTs;
     private long timeWindow;
     private int limit;
     private String agg;

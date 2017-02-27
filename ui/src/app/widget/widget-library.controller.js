@@ -54,7 +54,7 @@ export default function WidgetLibraryController($scope, $rootScope, $q, widgetSe
                     widgetService.getBundleWidgetTypes(bundleAlias, isSystem).then(
                         function (widgetTypes) {
 
-                            widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type','name']);
+                            widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type','-createdTime']);
 
                             var top = 0;
                             var lastTop = [0, 0, 0];

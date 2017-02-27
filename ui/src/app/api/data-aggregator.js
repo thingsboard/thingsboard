@@ -16,31 +16,26 @@
 
 export default class DataAggregator {
 
-    constructor(onDataCb, limit, aggregationType, timeWindow, types, $timeout, $filter) {
+    constructor(onDataCb, tsKeyNames, startTs, limit, aggregationType, timeWindow, interval, types, $timeout, $filter) {
         this.onDataCb = onDataCb;
+        this.tsKeyNames = tsKeyNames;
+        this.startTs = startTs;
         this.aggregationType = aggregationType;
         this.types = types;
         this.$timeout = $timeout;
         this.$filter = $filter;
         this.dataReceived = false;
         this.noAggregation = aggregationType === types.aggregation.none.value;
-        var interval = Math.floor(timeWindow / limit);
-        if (!this.noAggregation) {
-            this.interval = Math.max(interval, 1000);
-            this.limit = Math.ceil(interval/this.interval * limit);
-            this.timeWindow = this.interval * this.limit;
-        } else {
-            this.limit = limit;
-            this.timeWindow = interval * this.limit;
-            this.interval = 1000;
-        }
+        this.limit = limit;
+        this.timeWindow = timeWindow;
+        this.interval = interval;
         this.aggregationTimeout = this.interval;
         switch (aggregationType) {
             case types.aggregation.min.value:
                 this.aggFunction = min;
                 break;
             case types.aggregation.max.value:
-                this.aggFunction = max
+                this.aggFunction = max;
                 break;
             case types.aggregation.avg.value:
                 this.aggFunction = avg;
@@ -59,42 +54,56 @@ export default class DataAggregator {
         }
     }
 
-    onData(data) {
+    onData(data, update, history) {
         if (!this.dataReceived) {
             this.elapsed = 0;
             this.dataReceived = true;
-            this.startTs = data.serverStartTs;
             this.endTs = this.startTs + this.timeWindow;
-            this.aggregationMap = processAggregatedData(data.data, this.aggregationType === this.types.aggregation.count.value, this.noAggregation);
-            this.onInterval(currentTime());
+            if (update) {
+                this.aggregationMap = {};
+                updateAggregatedData(this.aggregationMap, this.aggregationType === this.types.aggregation.count.value,
+                    this.noAggregation, this.aggFunction, data.data, this.interval, this.startTs);
+            } else {
+                this.aggregationMap = processAggregatedData(data.data, this.aggregationType === this.types.aggregation.count.value, this.noAggregation);
+            }
+            this.onInterval(currentTime(), history);
         } else {
             updateAggregatedData(this.aggregationMap, this.aggregationType === this.types.aggregation.count.value,
                 this.noAggregation, this.aggFunction, data.data, this.interval, this.startTs);
+            if (history) {
+                this.onInterval(currentTime(), history);
+            }
         }
     }
 
-    onInterval(startedTime) {
+    onInterval(startedTime, history) {
         var now = currentTime();
         this.elapsed += now - startedTime;
         if (this.intervalTimeoutHandle) {
             this.$timeout.cancel(this.intervalTimeoutHandle);
             this.intervalTimeoutHandle = null;
         }
-        var delta = Math.floor(this.elapsed / this.interval);
-        if (delta || !this.data) {
-            this.startTs += delta * this.interval;
-            this.endTs += delta * this.interval;
-            this.data = toData(this.aggregationMap, this.startTs, this.endTs, this.$filter, this.limit);
-            this.elapsed = this.elapsed - delta * this.interval;
+        if (!history) {
+            var delta = Math.floor(this.elapsed / this.interval);
+            if (delta || !this.data) {
+                this.startTs += delta * this.interval;
+                this.endTs += delta * this.interval;
+                this.data = toData(this.tsKeyNames, this.aggregationMap, this.startTs, this.endTs, this.$filter, this.limit);
+                this.elapsed = this.elapsed - delta * this.interval;
+            }
+        } else {
+            this.data = toData(this.tsKeyNames, this.aggregationMap, this.startTs, this.endTs, this.$filter, this.limit);
         }
         if (this.onDataCb) {
             this.onDataCb(this.data, this.startTs, this.endTs);
         }
 
         var self = this;
-        this.intervalTimeoutHandle = this.$timeout(function() {
-            self.onInterval(now);
-        }, this.aggregationTimeout, false);
+        if (!history) {
+            this.intervalTimeoutHandle = this.$timeout(function() {
+                self.onInterval(now);
+            }, this.aggregationTimeout, false);
+        }
     }
 
     reset() {
@@ -172,12 +181,12 @@ function updateAggregatedData(aggregationMap, isCount, noAggregation, aggFunctio
     }
 }
 
-function toData(aggregationMap, startTs, endTs, $filter, limit) {
+function toData(tsKeyNames, aggregationMap, startTs, endTs, $filter, limit) {
     var data = {};
+    for (var k in tsKeyNames) {
+        data[tsKeyNames[k]] = [];
+    }
     for (var key in aggregationMap) {
-        if (!data[key]) {
-            data[key] = [];
-        }
         var aggKeyData = aggregationMap[key];
         var keyData = data[key];
         for (var aggTimestamp in aggKeyData) {
@@ -185,7 +194,7 @@ function toData(aggregationMap, startTs, endTs, $filter, limit) {
                 delete aggKeyData[aggTimestamp];
             } else if (aggTimestamp <= endTs) {
                 var aggData = aggKeyData[aggTimestamp];
-                var kvPair = [aggTimestamp, aggData.aggValue];
+                var kvPair = [Number(aggTimestamp), aggData.aggValue];
                 keyData.push(kvPair);
             }
         }

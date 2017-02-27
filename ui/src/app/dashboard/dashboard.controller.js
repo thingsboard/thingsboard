@@ -61,6 +61,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.isTenantAdmin = isTenantAdmin;
     vm.isSystemAdmin = isSystemAdmin;
     vm.loadDashboard = loadDashboard;
+    vm.getServerTimeDiff = getServerTimeDiff;
     vm.noData = noData;
     vm.onAddWidgetClosed = onAddWidgetClosed;
     vm.onEditWidgetClosed = onEditWidgetClosed;
@@ -94,10 +95,9 @@ export default function DashboardController(types, widgetService, userService,
             widgetService.getBundleWidgetTypes(bundleAlias, isSystem).then(
                 function (widgetTypes) {
 
-                    widgetTypes = $filter('orderBy')(widgetTypes, ['-name']);
+                    widgetTypes = $filter('orderBy')(widgetTypes, ['-createdTime']);
 
                     var top = 0;
-                    var sizeY = 0;
 
                     if (widgetTypes.length > 0) {
                         loadNext(0);
@@ -135,13 +135,17 @@ export default function DashboardController(types, widgetService, userService,
                         } else if (widgetTypeInfo.type === types.widgetType.static.value) {
                             vm.staticWidgetTypes.push(widget);
                         }
-                        top += sizeY;
+                        top += widget.sizeY;
                         loadNextOrComplete(i);
 
                     }
                 }
             );
         }
+    }
+
+    function getServerTimeDiff() {
+        return dashboardService.getServerTimeDiff();
     }
 
     function loadDashboard() {

@@ -191,8 +191,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     if (cmd.getTimeWindow() > 0) {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
                         log.debug("[{}] fetching timeseries data for last {} ms for keys: ({}) for device : {}", sessionId, cmd.getTimeWindow(), cmd.getKeys(), cmd.getDeviceId());
-                        long endTs = System.currentTimeMillis();
-                        startTs = endTs - cmd.getTimeWindow();
+                        startTs = cmd.getStartTs();
+                        long endTs = cmd.getStartTs() + cmd.getTimeWindow();
                         List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs, endTs, getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
                         ctx.loadTimeseries(deviceId, queries, getSubscriptionCallback(sessionRef, cmd, sessionId, deviceId, startTs, keys));
                     } else {
@@ -234,7 +234,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         return new PluginCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
-                sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), startTs, data));
+                sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
 
                 Map<String, Long> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startTs));

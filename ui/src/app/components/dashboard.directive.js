@@ -68,6 +68,7 @@ function Dashboard() {
             prepareDashboardContextMenu: '&?',
             prepareWidgetContextMenu: '&?',
             loadWidgets: '&?',
+            getStDiff: '&?',
             onInit: '&?',
             onInitFailed: '&?',
             dashboardStyle: '=?'
@@ -93,6 +94,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     var vm = this;
 
     vm.gridster = null;
+
+    vm.stDiff = 0;
 
     vm.isMobileDisabled = angular.isDefined(vm.isMobileDisabled) ? vm.isMobileDisabled : false;
 
@@ -302,7 +305,28 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         });
     });
 
-    loadDashboard();
+    loadStDiff();
+
+    function loadStDiff() {
+        if (vm.getStDiff) {
+            var promise = vm.getStDiff();
+            if (promise) {
+                promise.then(function (stDiff) {
+                    vm.stDiff = stDiff;
+                    loadDashboard();
+                }, function () {
+                    vm.stDiff = 0;
+                    loadDashboard();
+                });
+            } else {
+                vm.stDiff = 0;
+                loadDashboard();
+            }
+        } else {
+            vm.stDiff = 0;
+            loadDashboard();
+        }
+    }
 
     function loadDashboard() {
         resetWidgetClick();
