@@ -51,6 +51,7 @@ import thingsboardMenu from './services/menu.service';
 import thingsboardRaf from './common/raf.provider';
 import thingsboardUtils from './common/utils.service';
 import thingsboardTypes from './common/types.constant';
+import thingsboardApiTime from './api/time.service';
 import thingsboardKeyboardShortcut from './components/keyboard-shortcut.filter';
 import thingsboardHelp from './help/help.directive';
 import thingsboardToast from './services/toast';
@@ -101,6 +102,7 @@ angular.module('thingsboard', [
     thingsboardRaf,
     thingsboardUtils,
     thingsboardTypes,
+    thingsboardApiTime,
     thingsboardKeyboardShortcut,
     thingsboardHelp,
     thingsboardToast,

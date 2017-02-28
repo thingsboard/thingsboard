@@ -89,11 +89,12 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     String keysStr = request.getParameter("keys");
                     Optional<Long> startTs = request.getLongParamValue("startTs");
                     Optional<Long> endTs = request.getLongParamValue("endTs");
+                    Optional<Long> interval = request.getLongParamValue("interval");
                     Optional<Integer> limit = request.getIntParamValue("limit");
                     Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
 
                     List<String> keys = Arrays.asList(keysStr.split(","));
-                    List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg)).collect(Collectors.toList());
+                    List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg)).collect(Collectors.toList());
                     ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
                         @Override
                         public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {

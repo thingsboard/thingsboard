@@ -30,6 +30,7 @@ public class TimeseriesSubscriptionCmd extends SubscriptionCmd {
 
     private long startTs;
     private long timeWindow;
+    private long interval;
     private int limit;
     private String agg;
 

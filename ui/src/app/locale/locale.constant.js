@@ -67,6 +67,7 @@ export default angular.module('thingsboard.locale', [])
                     "aggregation": "Aggregation",
                     "function": "Data aggregation function",
                     "limit": "Max values",
+                    "group-interval": "Grouping interval",
                     "min": "Min",
                     "max": "Max",
                     "avg": "Average",
@@ -558,7 +559,8 @@ export default angular.module('thingsboard.locale', [])
                     "days": "Days",
                     "hours": "Hours",
                     "minutes": "Minutes",
-                    "seconds": "Seconds"
+                    "seconds": "Seconds",
+                    "advanced": "Advanced"
                 },
                 "timewindow": {
                     "days": "{ days, select, 1 { day } other {# days } }",

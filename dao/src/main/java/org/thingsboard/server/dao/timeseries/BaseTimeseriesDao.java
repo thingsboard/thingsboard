@@ -112,13 +112,13 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(entityType, entityId, query);
         } else {
-            long step = Math.max((query.getEndTs() - query.getStartTs()) / query.getLimit(), minAggregationStepMs);
+            long step = Math.max(query.getInterval(), minAggregationStepMs);
             long stepTs = query.getStartTs();
             List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
             while (stepTs < query.getEndTs()) {
                 long startTs = stepTs;
                 long endTs = stepTs + step;
-                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, 1, query.getAggregation());
+                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation());
                 futures.add(findAndAggregateAsync(entityType, entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
                 stepTs = endTs;
             }

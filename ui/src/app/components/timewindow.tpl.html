@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<section ng-mouseover="onHoverIn()" ng-mouseleave="onHoverOut()" layout='row' layout-align="start center" style="min-height: 32px;">
+<section layout='row' layout-align="start center" style="min-height: 32px;">
 	<span ng-click="openEditMode($event)">{{model.displayValue}}</span>
-    <md-button class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-show="isHovered" ng-click="openEditMode($event)">
+    <md-button class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
      	  <md-icon ng-style="{ color: buttonColor }" aria-label="{{ 'timewindow.date-range' | translate }}" class="material-icons">date_range</md-icon>
     </md-button>	
 </section>

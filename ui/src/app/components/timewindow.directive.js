@@ -37,16 +37,18 @@ export default angular.module('thingsboard.directives.timewindow', [thingsboardT
 
 /* eslint-disable angular/angularelement */
 /*@ngInject*/
-function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdMedia, $translate, types) {
+function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdMedia, $translate, timeService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
         /* tbTimewindow (ng-model)
          * {
          * 	  realtime: {
+         * 	        interval: 0,
          * 			timewindowMs: 0
          * 	  },
          * 	  history: {
+         * 	        interval: 0,
          * 			timewindowMs: 0,
          * 			fixedTimewindow: {
          * 				startTimeMs: 0,
@@ -54,8 +56,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
          * 			}
          * 	  },
          * 	  aggregation: {
-         * 	        limit: 200,
-         * 	        type: types.aggregation.avg.value
+         * 	        type: types.aggregation.avg.value,
+         * 	        limit: 200
          * 	  }
          * }
          */
@@ -80,16 +82,6 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             template = $templateCache.get(timewindowTemplate);
         }
         element.html(template);
-
-        scope.isHovered = false;
-
-        scope.onHoverIn = function () {
-            scope.isHovered = true;
-        }
-
-        scope.onHoverOut = function () {
-            scope.isHovered = false;
-        }
 
         scope.openEditMode = function (event) {
             var position;
@@ -143,15 +135,18 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
             var model = scope.model;
             if (model.selectedTab === 0) {
                 value.realtime = {
+                    interval: model.realtime.interval,
                     timewindowMs: model.realtime.timewindowMs
                 };
             } else {
                 if (model.history.historyType === 0) {
                     value.history = {
+                        interval: model.history.interval,
                         timewindowMs: model.history.timewindowMs
                     };
                 } else {
                     value.history = {
+                        interval: model.history.interval,
                         fixedTimewindow: {
                             startTimeMs: model.history.fixedTimewindow.startTimeMs,
                             endTimeMs: model.history.fixedTimewindow.endTimeMs
@@ -160,8 +155,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                 }
             }
             value.aggregation = {
-                limit: model.aggregation.limit,
-                type: model.aggregation.type
+                type: model.aggregation.type,
+                limit: model.aggregation.limit
             };
             ngModelCtrl.$setViewValue(value);
             scope.updateDisplayValue();
@@ -190,34 +185,17 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         }
 
         ngModelCtrl.$render = function () {
-            var currentTime = (new Date).getTime();
-            scope.model = {
-                displayValue: "",
-                selectedTab: 0,
-                realtime: {
-                    timewindowMs: 60000 // 1 min by default
-                },
-                history: {
-                    historyType: 0,
-                    timewindowMs: 60000, // 1 min by default
-                    fixedTimewindow: {
-                        startTimeMs: currentTime - 24 * 60 * 60 * 1000, // 1 day by default
-                        endTimeMs: currentTime
-                    }
-                },
-                aggregation: {
-                    limit: 200,
-                    type: types.aggregation.avg.value
-                }
-            };
+            scope.model = timeService.defaultTimewindow();
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 var model = scope.model;
                 if (angular.isDefined(value.realtime)) {
                     model.selectedTab = 0;
+                    model.realtime.interval = value.realtime.interval;
                     model.realtime.timewindowMs = value.realtime.timewindowMs;
                 } else {
                     model.selectedTab = 1;
+                    model.history.interval = value.history.interval;
                     if (angular.isDefined(value.history.timewindowMs)) {
                         model.history.historyType = 0;
                         model.history.timewindowMs = value.history.timewindowMs;
@@ -228,10 +206,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                     }
                 }
                 if (angular.isDefined(value.aggregation)) {
-                    model.aggregation.limit = value.aggregation.limit || 200;
                     if (angular.isDefined(value.aggregation.type) && value.aggregation.type.length > 0) {
                         model.aggregation.type = value.aggregation.type;
                     }
+                    model.aggregation.limit = value.aggregation.limit || timeService.avgAggregationLimit();
                 }
             }
             scope.updateDisplayValue();

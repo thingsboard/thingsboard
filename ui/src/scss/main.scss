@@ -201,6 +201,14 @@ md-sidenav {
   color: rgba(0,0,0,0.54);
 }
 
+label {
+  &.tb-small {
+    pointer-events: none;
+    color: rgba(0,0,0,0.54);
+    font-size: 12px;
+  }
+}
+
 /***********************
  * Prompt
  ***********************/

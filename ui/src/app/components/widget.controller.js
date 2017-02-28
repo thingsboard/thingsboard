@@ -19,7 +19,7 @@ import 'javascript-detect-element-resize/detect-element-resize';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, tbRaf, types, utils,
+export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, tbRaf, types, utils, timeService,
                                          datasourceService, deviceService, visibleRect, isEdit, stDiff, widget, deviceAliasList, widgetType) {
 
     var vm = this;
@@ -41,11 +41,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var targetDeviceAliasId = null;
     var targetDeviceId = null;
     var originalTimewindow = null;
-    var subscriptionTimewindow = {
-        fixedWindow: null,
-        realtimeWindowMs: null,
-        aggregation: null
-    };
+    var subscriptionTimewindow = null;
     var dataUpdateCaf = null;
 
     /*
@@ -488,15 +484,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         if (!originalTimewindow) {
             originalTimewindow = angular.copy(widget.config.timewindow);
         }
-        widget.config.timewindow = {
-            history: {
-                fixedTimewindow: {
-                    startTimeMs: startTimeMs,
-                    endTimeMs: endTimeMs
-                }
-            },
-            aggregation: angular.copy(widget.config.timewindow.aggregation)
-        };
+        widget.config.timewindow = timeService.toHistoryTimewindow(widget.config.timewindow, startTimeMs, endTimeMs);
     }
 
     function dataUpdated(sourceData, datasourceIndex, dataKeyIndex) {
@@ -511,7 +499,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             }
         }
         if (update) {
-            if (subscriptionTimewindow.realtimeWindowMs) {
+            if (subscriptionTimewindow && subscriptionTimewindow.realtimeWindowMs) {
                 updateTimewindow();
             }
             widgetContext.data[datasourceIndex + dataKeyIndex].data = sourceData.data;
@@ -555,62 +543,26 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
+    function updateRealtimeSubscription(_subscriptionTimewindow) {
+        if (_subscriptionTimewindow) {
+            subscriptionTimewindow = _subscriptionTimewindow;
+        } else {
+            subscriptionTimewindow = timeService.createSubscriptionTimewindow(widget.config.timewindow, widgetContext.timeWindow.stDiff);
+        }
+        updateTimewindow();
+        return subscriptionTimewindow;
+    }
+
     function subscribe() {
         if (widget.type !== types.widgetType.rpc.value) {
-            var index = 0;
-            subscriptionTimewindow.fixedWindow = null;
-            subscriptionTimewindow.realtimeWindowMs = null;
-            subscriptionTimewindow.aggregation = {
-                limit: 200,
-                type: types.aggregation.avg.value
-            };
             if (widget.type === types.widgetType.timeseries.value &&
                 angular.isDefined(widget.config.timewindow)) {
-                var timeWindow = 0;
-                if (angular.isDefined(widget.config.timewindow.aggregation)) {
-                    subscriptionTimewindow.aggregation = {
-                        limit: widget.config.timewindow.aggregation.limit || 200,
-                        type: widget.config.timewindow.aggregation.type || types.aggregation.avg.value
-                    };
-                }
-
-                if (angular.isDefined(widget.config.timewindow.realtime)) {
-                    subscriptionTimewindow.realtimeWindowMs = widget.config.timewindow.realtime.timewindowMs;
-                    subscriptionTimewindow.startTs = (new Date).getTime() + widgetContext.timeWindow.stDiff - subscriptionTimewindow.realtimeWindowMs;
-                    timeWindow = subscriptionTimewindow.realtimeWindowMs;
-                } else if (angular.isDefined(widget.config.timewindow.history)) {
-                    if (angular.isDefined(widget.config.timewindow.history.timewindowMs)) {
-                        var currentTime = (new Date).getTime();
-                        subscriptionTimewindow.fixedWindow = {
-                            startTimeMs: currentTime - widget.config.timewindow.history.timewindowMs,
-                            endTimeMs: currentTime
-                        }
-                        timeWindow = widget.config.timewindow.history.timewindowMs;
-                    } else {
-                        subscriptionTimewindow.fixedWindow = {
-                            startTimeMs: widget.config.timewindow.history.fixedTimewindow.startTimeMs,
-                            endTimeMs: widget.config.timewindow.history.fixedTimewindow.endTimeMs
-                        }
-                        timeWindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
-                    }
-                    subscriptionTimewindow.startTs = subscriptionTimewindow.fixedWindow.startTimeMs;
-                }
-                var aggregation = subscriptionTimewindow.aggregation;
-                var noAggregation = aggregation.type === types.aggregation.none.value;
-                var interval = Math.floor(timeWindow / aggregation.limit);
-                if (!noAggregation) {
-                    aggregation.interval = Math.max(interval, 1000);
-                    aggregation.limit = Math.ceil(interval/aggregation.interval * aggregation.limit);
-                    aggregation.timeWindow = aggregation.interval * aggregation.limit;
-                } else {
-                    aggregation.timeWindow = interval * aggregation.limit;
-                    aggregation.interval = 1000;
-                }
-                updateTimewindow();
+                updateRealtimeSubscription();
                 if (subscriptionTimewindow.fixedWindow) {
                     onDataUpdated();
                 }
             }
+            var index = 0;
             for (var i in widget.config.datasources) {
                 var datasource = widget.config.datasources[i];
                 var deviceId = null;
@@ -629,6 +581,13 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     deviceId: deviceId,
                     dataUpdated: function (data, datasourceIndex, dataKeyIndex) {
                         dataUpdated(data, datasourceIndex, dataKeyIndex);
+                    },
+                    updateRealtimeSubscription: function() {
+                        this.subscriptionTimewindow = updateRealtimeSubscription();
+                        return this.subscriptionTimewindow;
+                    },
+                    setRealtimeSubscription: function(subscriptionTimewindow) {
+                        updateRealtimeSubscription(angular.copy(subscriptionTimewindow));
                     },
                     datasourceIndex: index
                 };

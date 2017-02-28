@@ -29,7 +29,7 @@ import EditAttributeValueController from './edit-attribute-value.controller';
 
 /*@ngInject*/
 export default function AttributeTableDirective($compile, $templateCache, $rootScope, $q, $mdEditDialog, $mdDialog,
-                                                $document, $translate, utils, types, dashboardService, deviceService, widgetService) {
+                                                $document, $translate, $filter, utils, types, dashboardService, deviceService, widgetService) {
 
     var linker = function (scope, element, attrs) {
 
@@ -303,6 +303,9 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                         var isSystem = scope.widgetsBundle.tenantId.id === types.id.nullUid;
                         widgetService.getBundleWidgetTypes(scope.widgetsBundle.alias, isSystem).then(
                             function success(widgetTypes) {
+
+                                widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type','-createdTime']);
+
                                 for (var i = 0; i < widgetTypes.length; i++) {
                                     var widgetType = widgetTypes[i];
                                     var widgetInfo = widgetService.toWidgetInfo(widgetType);

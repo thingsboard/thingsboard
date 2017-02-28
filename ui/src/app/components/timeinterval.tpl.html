@@ -15,33 +15,41 @@
     limitations under the License.
 
 -->
-<section layout="row" layout-align="start start">
-	<md-input-container>
-		 <label translate>timeinterval.days</label>
-	     <input type="number" ng-model="days" step="1" aria-label="{{ 'timeinterval.days' | translate }}">
-	</md-input-container>
-	<md-input-container>
-		 <label translate>timeinterval.hours</label>
-	     <input type="number" ng-model="hours" step="1" aria-label="{{ 'timeinterval.hours' | translate }}">
-	</md-input-container>
-	<md-input-container>
-		 <label translate>timeinterval.minutes</label>
-	     <input type="number" ng-model="mins" step="1" aria-label="{{ 'timeinterval.minutes' | translate }}">
-	</md-input-container>
-	<md-input-container>
-		 <label translate>timeinterval.seconds</label>
-	     <input type="number" ng-model="secs" step="1" aria-label="{{ 'timeinterval.seconds' | translate }}">
-	</md-input-container>
-     <md-menu md-position-mode="target-right target">
-      <md-button class="md-icon-button"  aria-label="Open intervals" ng-click="$mdOpenMenu($event)">
-      	<md-icon md-menu-origin aria-label="arrow_drop_down" class="material-icons">arrow_drop_down</md-icon>	
-      </md-button>
-      <md-menu-content width="4">
-        <md-menu-item ng-repeat="interval in predefIntervals" >
-          <md-button ng-click="setIntervalMs(interval.value)">
-			<span>{{interval.name}}</span>
-          </md-button>
-        </md-menu-item>
-      </md-menu-content>
-     </md-menu>		
+<section layout="row">
+	<section layout="column" flex ng-show="advanced">
+		<label class="tb-small" translate>{{ predefinedName }}</label>
+		<section layout="row" layout-align="start start" flex>
+			<md-input-container>
+				 <label translate>timeinterval.days</label>
+				 <input type="number" ng-model="days" step="1" aria-label="{{ 'timeinterval.days' | translate }}">
+			</md-input-container>
+			<md-input-container>
+				 <label translate>timeinterval.hours</label>
+				 <input type="number" ng-model="hours" step="1" aria-label="{{ 'timeinterval.hours' | translate }}">
+			</md-input-container>
+			<md-input-container>
+				 <label translate>timeinterval.minutes</label>
+				 <input type="number" ng-model="mins" step="1" aria-label="{{ 'timeinterval.minutes' | translate }}">
+			</md-input-container>
+			<md-input-container>
+				 <label translate>timeinterval.seconds</label>
+				 <input type="number" ng-model="secs" step="1" aria-label="{{ 'timeinterval.seconds' | translate }}">
+			</md-input-container>
+		</section>
+	</section>
+	<section layout="row" flex ng-show="!advanced">
+		<md-input-container flex>
+			<label translate>{{ predefinedName }}</label>
+			<md-select ng-model="intervalMs" style="min-width: 150px;" aria-label="predefined-interval">
+				<md-option ng-repeat="interval in intervals" ng-value="interval.value">
+					{{interval.name}}
+				</md-option>
+			</md-select>
+		</md-input-container>
+	</section>
+	<section layout="column" layout-align="center center">
+		<label class="tb-small advanced-label" translate>timeinterval.advanced</label>
+		<md-switch class="advanced-switch" ng-model="advanced" aria-label="predefined-switcher">
+		</md-switch>
+	</section>
 </section>

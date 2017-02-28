@@ -25,11 +25,12 @@ export default class DataAggregator {
         this.$timeout = $timeout;
         this.$filter = $filter;
         this.dataReceived = false;
+        this.resetPending = false;
         this.noAggregation = aggregationType === types.aggregation.none.value;
         this.limit = limit;
         this.timeWindow = timeWindow;
         this.interval = interval;
-        this.aggregationTimeout = this.interval;
+        this.aggregationTimeout = Math.max(this.interval, 1000);
         switch (aggregationType) {
             case types.aggregation.min.value:
                 this.aggFunction = min;
@@ -54,11 +55,37 @@ export default class DataAggregator {
         }
     }
 
+    reset(startTs, timeWindow, interval) {
+        if (this.intervalTimeoutHandle) {
+            this.$timeout.cancel(this.intervalTimeoutHandle);
+            this.intervalTimeoutHandle = null;
+        }
+        this.intervalScheduledTime = currentTime();
+        this.startTs = startTs;
+        this.timeWindow = timeWindow;
+        this.interval = interval;
+        this.endTs = this.startTs + this.timeWindow;
+        this.elapsed = 0;
+        this.aggregationTimeout = Math.max(this.interval, 1000);
+        this.resetPending = true;
+        var self = this;
+        this.intervalTimeoutHandle = this.$timeout(function() {
+            self.onInterval();
+        }, this.aggregationTimeout, false);
+    }
+
     onData(data, update, history) {
-        if (!this.dataReceived) {
-            this.elapsed = 0;
-            this.dataReceived = true;
-            this.endTs = this.startTs + this.timeWindow;
+        if (!this.dataReceived || this.resetPending) {
+            var updateIntervalScheduledTime = true;
+            if (!this.dataReceived) {
+                this.elapsed = 0;
+                this.dataReceived = true;
+                this.endTs = this.startTs + this.timeWindow;
+            }
+            if (this.resetPending) {
+                this.resetPending = false;
+                updateIntervalScheduledTime = false;
+            }
             if (update) {
                 this.aggregationMap = {};
                 updateAggregatedData(this.aggregationMap, this.aggregationType === this.types.aggregation.count.value,
@@ -66,19 +93,24 @@ export default class DataAggregator {
             } else {
                 this.aggregationMap = processAggregatedData(data.data, this.aggregationType === this.types.aggregation.count.value, this.noAggregation);
             }
-            this.onInterval(currentTime(), history);
+            if (updateIntervalScheduledTime) {
+                this.intervalScheduledTime = currentTime();
+            }
+            this.onInterval(history);
         } else {
             updateAggregatedData(this.aggregationMap, this.aggregationType === this.types.aggregation.count.value,
                 this.noAggregation, this.aggFunction, data.data, this.interval, this.startTs);
             if (history) {
-                this.onInterval(currentTime(), history);
+                this.intervalScheduledTime = currentTime();
+                this.onInterval(history);
             }
         }
     }
 
-    onInterval(startedTime, history) {
+    onInterval(history) {
         var now = currentTime();
-        this.elapsed += now - startedTime;
+        this.elapsed += now - this.intervalScheduledTime;
+        this.intervalScheduledTime = now;
         if (this.intervalTimeoutHandle) {
             this.$timeout.cancel(this.intervalTimeoutHandle);
             this.intervalTimeoutHandle = null;
@@ -101,14 +133,9 @@ export default class DataAggregator {
         var self = this;
         if (!history) {
             this.intervalTimeoutHandle = this.$timeout(function() {
-                self.onInterval(now);
+                self.onInterval();
             }, this.aggregationTimeout, false);
         }
-    }
-
-    reset() {
-        this.destroy();
-        this.dataReceived = false;
     }
 
     destroy() {

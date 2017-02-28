@@ -32,6 +32,7 @@ public class GetHistoryCmd implements TelemetryPluginCmd {
     private String keys;
     private long startTs;
     private long endTs;
+    private long interval;
     private int limit;
     private String agg;
 

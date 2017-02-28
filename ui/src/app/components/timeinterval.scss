@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 tb-timeinterval {
+  min-width: 355px;
   md-input-container {
     margin-bottom: 0px;
     .md-errors-spacer {
@@ -25,10 +26,13 @@ tb-timeinterval {
       width: 150px;
     }
   }
-}
-
-tb-timeinterval {
   .md-input {
     width: 70px !important;
+  }
+  .advanced-switch {
+    margin-top: 0;
+  }
+  .advanced-label {
+    margin: 5px 0;
   }
 }
