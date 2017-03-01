@@ -247,6 +247,7 @@ export default angular.module('thingsboard.locale', [])
                     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
                     "display-title": "Display dashboard title",
+                    "title-color": "Title color",
                     "import": "Import dashboard",
                     "export": "Export dashboard",
                     "export-failed-error": "Unable to export dashboard: {error}",
@@ -258,7 +259,9 @@ export default angular.module('thingsboard.locale', [])
                     "import-widget": "Import widget",
                     "widget-file": "Widget file",
                     "invalid-widget-file-error": "Unable to import widget: Invalid widget data structure.",
-                    "widget-import-missing-aliases-title": "Select missing devices used by widget"
+                    "widget-import-missing-aliases-title": "Select missing devices used by widget",
+                    "open-toolbar": "Open dashboard toolbar",
+                    "close-toolbar": "Close toolbar"
                 },
                 "datakey": {
                     "settings": "Settings",
@@ -702,6 +705,7 @@ export default angular.module('thingsboard.locale', [])
                     "order": "Order",
                     "height": "Height",
                     "timewindow": "Timewindow",
+                    "use-dashboard-timewindow": "Use dashboard timewindow",
                     "datasources": "Datasources",
                     "datasource-type": "Type",
                     "datasource-parameters": "Parameters",

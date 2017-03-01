@@ -51,7 +51,7 @@ div.tb-widget {
       height: 32px;
       min-width: 32px;
       min-height: 32px;
-      md-icon {
+      md-icon, ng-md-icon {
         width: 20px;
         height: 20px;
         min-width: 20px;
@@ -93,6 +93,7 @@ md-content.tb-dashboard-content {
   right: 0;
   bottom: 0;
   outline: none;
+  background: none;
   .gridster-item {
       @include transition(none);
   }

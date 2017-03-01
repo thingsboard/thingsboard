@@ -98,6 +98,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                     }, true);
                 scope.mobileOrder = ngModelCtrl.$viewValue.mobileOrder;
                 scope.mobileHeight = ngModelCtrl.$viewValue.mobileHeight;
+                scope.useDashboardTimewindow = angular.isDefined(ngModelCtrl.$viewValue.useDashboardTimewindow) ?
+                    ngModelCtrl.$viewValue.useDashboardTimewindow : true;
                 scope.timewindow = ngModelCtrl.$viewValue.timewindow;
                 if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value) {
                     if (scope.datasources) {
@@ -174,7 +176,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             }
         };
 
-        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + padding + titleStyle + mobileOrder + mobileHeight + intervalSec', function () {
+        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
+            'padding + titleStyle + mobileOrder + mobileHeight + useDashboardTimewindow', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 value.title = scope.title;
@@ -191,7 +194,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                 }
                 value.mobileOrder = angular.isNumber(scope.mobileOrder) ? scope.mobileOrder : undefined;
                 value.mobileHeight = scope.mobileHeight;
-                value.intervalSec = scope.intervalSec;
+                value.useDashboardTimewindow = scope.useDashboardTimewindow;
                 ngModelCtrl.$setViewValue(value);
                 scope.updateValidity();
             }

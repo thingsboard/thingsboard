@@ -52,6 +52,7 @@ function Dashboard() {
         bindToController: {
             widgets: '=',
             deviceAliasList: '=',
+            dashboardTimewindow: '=?',
             columns: '=',
             margins: '=',
             isEdit: '=',
@@ -71,7 +72,8 @@ function Dashboard() {
             getStDiff: '&?',
             onInit: '&?',
             onInitFailed: '&?',
-            dashboardStyle: '=?'
+            dashboardStyle: '=?',
+            dashboardClass: '=?'
         },
         controller: DashboardController,
         controllerAs: 'vm',
@@ -80,7 +82,7 @@ function Dashboard() {
 }
 
 /*@ngInject*/
-function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $log, toast, types) {
+function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, timeService, types) {
 
     var highlightedMode = false;
     var highlightedWidget = null;
@@ -98,6 +100,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.stDiff = 0;
 
     vm.isMobileDisabled = angular.isDefined(vm.isMobileDisabled) ? vm.isMobileDisabled : false;
+
+    if (!('dashboardTimewindow' in vm)) {
+        vm.dashboardTimewindow = timeService.defaultTimewindow();
+    }
 
     vm.dashboardLoading = true;
     vm.visibleRect = {
@@ -175,6 +181,21 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     vm.widgetContextMenuItems = [];
     vm.widgetContextMenuEvent = null;
+
+    vm.dashboardTimewindowApi = {
+        onResetTimewindow: function() {
+            if (vm.originalDashboardTimewindow) {
+                vm.dashboardTimewindow = angular.copy(vm.originalDashboardTimewindow);
+                vm.originalDashboardTimewindow = null;
+            }
+        },
+        onUpdateTimewindow: function(startTimeMs, endTimeMs) {
+            if (!vm.originalDashboardTimewindow) {
+                vm.originalDashboardTimewindow = angular.copy(vm.dashboardTimewindow);
+            }
+            vm.dashboardTimewindow = timeService.toHistoryTimewindow(vm.dashboardTimewindow, startTimeMs, endTimeMs);
+        }
+    };
 
     //$element[0].onmousemove=function(){
     //    widgetMouseMove();
@@ -656,7 +677,12 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function hasTimewindow(widget) {
-        return widget.type === types.widgetType.timeseries.value;
+        if (widget.type === types.widgetType.timeseries.value) {
+            return angular.isDefined(widget.config.useDashboardTimewindow) ?
+                !widget.config.useDashboardTimewindow : false;
+        } else {
+            return false;
+        }
     }
 
     function adoptMaxRows() {
@@ -673,6 +699,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     function dashboardLoaded() {
         $timeout(function () {
+            $scope.$watch('vm.dashboardTimewindow', function () {
+                $scope.$broadcast('dashboardTimewindowChanged', vm.dashboardTimewindow);
+            }, true);
             adoptMaxRows();
             vm.dashboardLoading = false;
             $timeout(function () {

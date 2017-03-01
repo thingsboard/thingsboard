@@ -197,7 +197,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     var datasourceKey = key + '_' + i;
                     listener.dataUpdated(datasourceData[datasourceKey],
                         listener.datasourceIndex,
-                        dataKey.index);
+                        dataKey.index, false);
                 }
             }
         } else {
@@ -205,7 +205,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                 dataKey = dataKeys[key];
                 listener.dataUpdated(datasourceData[key],
                     listener.datasourceIndex,
-                    dataKey.index);
+                    dataKey.index, false);
             }
         }
     }
@@ -264,7 +264,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         type: types.dataKeyType.timeseries,
                         onData: function (data) {
                             if (data.data) {
-                                onData(data.data, types.dataKeyType.timeseries);
+                                onData(data.data, types.dataKeyType.timeseries, null, null, true);
                             }
                         },
                         onReconnected: function() {}
@@ -287,9 +287,9 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
                     if (datasourceSubscription.type === types.widgetType.timeseries.value) {
                         updateRealtimeSubscriptionCommand(subscriptionCommand, subsTw);
-                        dataAggregator = createRealtimeDataAggregator(subsTw, tsKeyNames);
+                        dataAggregator = createRealtimeDataAggregator(subsTw, tsKeyNames, types.dataKeyType.timeseries);
                         subscriber.onData = function(data) {
-                            dataAggregator.onData(data);
+                            dataAggregator.onData(data, false, false, true);
                         }
                         subscriber.onReconnected = function() {
                             var newSubsTw = null;
@@ -308,7 +308,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         subscriber.onReconnected = function() {}
                         subscriber.onData = function(data) {
                             if (data.data) {
-                                onData(data.data, types.dataKeyType.timeseries);
+                                onData(data.data, types.dataKeyType.timeseries, null, null, true);
                             }
                         }
                     }
@@ -331,7 +331,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     type: types.dataKeyType.attribute,
                     onData: function (data) {
                         if (data.data) {
-                            onData(data.data, types.dataKeyType.attribute);
+                            onData(data.data, types.dataKeyType.attribute, null, null, true);
                         }
                     },
                     onReconnected: function() {}
@@ -351,33 +351,24 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         tsKeyNames.push(dataKey.name+'_'+dataKey.index);
                     }
                 }
-                dataAggregator = new DataAggregator(
-                    function (data, startTs, endTs) {
-                        onData(data, types.dataKeyType.function, startTs, endTs);
-                    },
-                    tsKeyNames,
-                    subsTw.startTs,
-                    subsTw.aggregation.limit,
-                    subsTw.aggregation.type,
-                    subsTw.aggregation.timeWindow,
-                    subsTw.aggregation.interval,
-                    types,
-                    $timeout,
-                    $filter
-                );
+                dataAggregator = createRealtimeDataAggregator(subsTw, tsKeyNames, types.dataKeyType.function);
             }
             if (history) {
-                onTick();
+                onTick(false);
             } else {
-                timer = $timeout(onTick, 0, false);
+                timer = $timeout(
+                    function() {onTick(true)},
+                    0,
+                    false
+                );
             }
         }
     }
 
-    function createRealtimeDataAggregator(subsTw, tsKeyNames) {
+    function createRealtimeDataAggregator(subsTw, tsKeyNames, dataKeyType) {
         return new DataAggregator(
-            function(data, startTs, endTs) {
-                onData(data, types.dataKeyType.timeseries, startTs, endTs);
+            function(data, startTs, endTs, apply) {
+                onData(data, dataKeyType, startTs, endTs, apply);
             },
             tsKeyNames,
             subsTw.startTs,
@@ -443,7 +434,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         return data;
     }
 
-    function generateLatest(dataKey) {
+    function generateLatest(dataKey, apply) {
         var prevSeries;
         var datasourceKeyData = datasourceData[dataKey.key].data;
         if (datasourceKeyData.length > 0) {
@@ -461,11 +452,11 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
             var listener = listeners[i];
             listener.dataUpdated(datasourceData[dataKey.key],
                 listener.datasourceIndex,
-                dataKey.index);
+                dataKey.index, apply);
         }
     }
 
-    function onTick() {
+    function onTick(apply) {
         var key;
         if (datasourceSubscription.type === types.widgetType.timeseries.value) {
             var startTime;
@@ -495,15 +486,15 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     generatedData.data[dataKey.name+'_'+dataKey.index] = data;
                 }
             }
-            dataAggregator.onData(generatedData, true, history);
+            dataAggregator.onData(generatedData, true, history, apply);
         } else if (datasourceSubscription.type === types.widgetType.latest.value) {
             for (key in dataKeys) {
-                generateLatest(dataKeys[key]);
+                generateLatest(dataKeys[key], apply);
             }
         }
 
         if (!history) {
-            timer = $timeout(onTick, frequency / 2, false);
+            timer = $timeout(function() {onTick(true)}, frequency / 2, false);
         }
     }
 
@@ -519,7 +510,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
     }
 
-    function onData(sourceData, type, startTs, endTs) {
+    function onData(sourceData, type, startTs, endTs, apply) {
         for (var keyName in sourceData) {
             var keyData = sourceData[keyName];
             var key = keyName + '_' + type;
@@ -572,7 +563,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                             var listener = listeners[i2];
                             listener.dataUpdated(datasourceData[datasourceKey],
                                 listener.datasourceIndex,
-                                dataKey.index);
+                                dataKey.index, apply);
                         }
                     }
                 }

@@ -74,7 +74,7 @@ export default class DataAggregator {
         }, this.aggregationTimeout, false);
     }
 
-    onData(data, update, history) {
+    onData(data, update, history, apply) {
         if (!this.dataReceived || this.resetPending) {
             var updateIntervalScheduledTime = true;
             if (!this.dataReceived) {
@@ -96,18 +96,18 @@ export default class DataAggregator {
             if (updateIntervalScheduledTime) {
                 this.intervalScheduledTime = currentTime();
             }
-            this.onInterval(history);
+            this.onInterval(history, apply);
         } else {
             updateAggregatedData(this.aggregationMap, this.aggregationType === this.types.aggregation.count.value,
                 this.noAggregation, this.aggFunction, data.data, this.interval, this.startTs);
             if (history) {
                 this.intervalScheduledTime = currentTime();
-                this.onInterval(history);
+                this.onInterval(history, apply);
             }
         }
     }
 
-    onInterval(history) {
+    onInterval(history, apply) {
         var now = currentTime();
         this.elapsed += now - this.intervalScheduledTime;
         this.intervalScheduledTime = now;
@@ -127,7 +127,7 @@ export default class DataAggregator {
             this.data = toData(this.tsKeyNames, this.aggregationMap, this.startTs, this.endTs, this.$filter, this.limit);
         }
         if (this.onDataCb) {
-            this.onDataCb(this.data, this.startTs, this.endTs);
+            this.onDataCb(this.data, this.startTs, this.endTs, apply);
         }
 
         var self = this;

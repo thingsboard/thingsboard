@@ -193,12 +193,22 @@ md-sidenav {
   pointer-events: all;
 }
 
+.md-color-picker-input-container {
+  md-input-container {
+    margin-bottom: 0px;
+  }
+}
+
 /***********************
  * THINGSBOARD SPECIFIC
  ***********************/
 
 .tb-readonly-label {
   color: rgba(0,0,0,0.54);
+}
+
+.tb-disabled-label {
+  color: rgba(0,0,0,0.44);
 }
 
 label {

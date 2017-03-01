@@ -360,9 +360,12 @@ export default class TbFlot {
     update() {
         if (!this.isMouseInteraction) {
             if (this.chartType === 'line' || this.chartType === 'bar') {
+                this.options.xaxis.min = this.ctx.timeWindow.minTime;
+                this.options.xaxis.max = this.ctx.timeWindow.maxTime;
                 this.ctx.plot.getOptions().xaxes[0].min = this.ctx.timeWindow.minTime;
                 this.ctx.plot.getOptions().xaxes[0].max = this.ctx.timeWindow.maxTime;
                 if (this.chartType === 'bar') {
+                    this.options.series.bars.barWidth = this.ctx.timeWindow.interval * 0.6;
                     this.ctx.plot.getOptions().series.bars.barWidth = this.ctx.timeWindow.interval * 0.6;
                 }
                 this.ctx.plot.setData(this.ctx.data);
@@ -879,6 +882,7 @@ export default class TbFlot {
     destroy() {
         if (this.ctx.plot) {
             this.ctx.plot.destroy();
+            this.ctx.plot = null;
         }
     }
 

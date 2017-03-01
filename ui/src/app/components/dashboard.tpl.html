@@ -21,7 +21,7 @@
 </md-content>
 <md-menu md-position-mode="target target" tb-mousepoint-menu>
 	<md-content id="gridster-parent" class="tb-dashboard-content" flex layout-wrap ng-click="" tb-contextmenu="vm.openDashboardContextMenu($event, $mdOpenMousepointMenu)">
-		<div ng-style="vm.dashboardStyle" id="gridster-background" style="height: auto; min-height: 100%;">
+		<div ng-class="vm.dashboardClass" id="gridster-background" style="height: auto; min-height: 100%;">
 			<div id="gridster-child" gridster="vm.gridsterOpts">
 				<ul>
 		<!-- 			    			ng-click="widgetClicked($event, widget)"  -->
@@ -30,6 +30,7 @@
 							<div tb-expand-fullscreen
 								 		fullscreen-background-style="vm.dashboardStyle"
 								        expand-button-id="expand-button"
+								 		expand-button-size="20"
 								 		on-fullscreen-changed="vm.onWidgetFullscreenChanged(expanded, widget)"
 								 		layout="column"
 								 		class="tb-widget"
@@ -45,55 +46,55 @@
             									   color: vm.widgetColor(widget),
             									   backgroundColor: vm.widgetBackgroundColor(widget),
             									   padding: vm.widgetPadding(widget)}">
-								<div class="tb-widget-title" layout="column" ng-show="vm.showWidgetTitle(widget) || vm.hasTimewindow(widget)">
+								<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitle(widget) || vm.hasTimewindow(widget)">
 									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{widget.config.title}}</span>
-									<tb-timewindow button-color="vm.widgetColor(widget)" aggregation ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
+									<tb-timewindow aggregation ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 								</div>
 								<div class="tb-widget-actions" layout="row" layout-align="start center">
 									<md-button id="expand-button"
 											   ng-show="!vm.isEdit && vm.enableWidgetFullscreen(widget)"
 											   aria-label="{{ 'fullscreen.fullscreen' | translate }}"
-											   class="md-icon-button md-primary"></md-button>
+											   class="md-icon-button"></md-button>
 									<md-button ng-show="vm.isEditActionEnabled && !vm.isWidgetExpanded"
 											   ng-disabled="vm.loading()"
-											   class="md-icon-button md-primary"
+											   class="md-icon-button"
 											   ng-click="vm.editWidget($event, widget)"
 											   aria-label="{{ 'widget.edit' | translate }}">
 										<md-tooltip md-direction="top">
 											{{ 'widget.edit' | translate }}
 										</md-tooltip>
-										<md-icon class="material-icons">
-											edit
-										</md-icon>
+										<ng-md-icon size="20" icon="edit"></ng-md-icon>
 									</md-button>
 									<md-button ng-show="vm.isExportActionEnabled && !vm.isWidgetExpanded"
 											   ng-disabled="vm.loading()"
-											   class="md-icon-button md-primary"
+											   class="md-icon-button"
 											   ng-click="vm.exportWidget($event, widget)"
 											   aria-label="{{ 'widget.export' | translate }}">
 										<md-tooltip md-direction="top">
 											{{ 'widget.export' | translate }}
 										</md-tooltip>
-										<md-icon class="material-icons">
-											file_download
-										</md-icon>
+										<ng-md-icon size="20" icon="file_download"></ng-md-icon>
 									</md-button>
 									<md-button ng-show="vm.isRemoveActionEnabled && !vm.isWidgetExpanded"
 										ng-disabled="vm.loading()"
-										class="md-icon-button md-primary"
+										class="md-icon-button"
 										ng-click="vm.removeWidget($event, widget)"
 										aria-label="{{ 'widget.remove' | translate }}">
 										<md-tooltip md-direction="top">
 											{{ 'widget.remove' | translate }}
 										</md-tooltip>
-										<md-icon class="material-icons">
-										  close
-										</md-icon>
+										<ng-md-icon size="20" icon="close"></ng-md-icon>
 									</md-button>
 								</div>
 								<div flex layout="column" class="tb-widget-content">
 									<div flex tb-widget
-										 locals="{ visibleRect: vm.visibleRect, widget: widget, deviceAliasList: vm.deviceAliasList, isEdit: vm.isEdit, stDiff: vm.stDiff }">
+										 locals="{ visibleRect: vm.visibleRect,
+										 widget: widget,
+										 deviceAliasList: vm.deviceAliasList,
+										 isEdit: vm.isEdit,
+										 stDiff: vm.stDiff,
+										 dashboardTimewindow: vm.dashboardTimewindow,
+										 dashboardTimewindowApi: vm.dashboardTimewindowApi }">
 									</div>
 								</div>
 							</div>

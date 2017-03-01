@@ -23,4 +23,8 @@
        color: red;
     }
   }
+  .tb-widget-loading {
+    background: rgba(255,255,255,0.15);
+    z-index: 3;
+  }
 }

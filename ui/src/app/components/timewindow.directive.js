@@ -79,26 +79,38 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         if (scope.asButton) {
             template = $templateCache.get(timewindowButtonTemplate);
         } else {
+            scope.direction = scope.direction || 'left';
             template = $templateCache.get(timewindowTemplate);
         }
         element.html(template);
 
         scope.openEditMode = function (event) {
+            if (scope.disabled) {
+                return;
+            }
             var position;
             var isGtSm = $mdMedia('gt-sm');
             if (isGtSm) {
                 var panelHeight = 375;
+                var panelWidth = 417;
                 var offset = element[0].getBoundingClientRect();
                 var bottomY = offset.bottom - $(window).scrollTop(); //eslint-disable-line
+                var leftX = offset.left - $(window).scrollLeft(); //eslint-disable-line
                 var yPosition;
+                var xPosition;
                 if (bottomY + panelHeight > $( window ).height()) { //eslint-disable-line
                     yPosition = $mdPanel.yPosition.ABOVE;
                 } else {
                     yPosition = $mdPanel.yPosition.BELOW;
                 }
+                if (leftX + panelWidth > $( window ).width()) { //eslint-disable-line
+                    xPosition = $mdPanel.xPosition.ALIGN_END;
+                } else {
+                    xPosition = $mdPanel.xPosition.ALIGN_START;
+                }
                 position = $mdPanel.newPanelPosition()
                     .relativeTo(element)
-                    .addPanelPosition($mdPanel.xPosition.ALIGN_START, yPosition);
+                    .addPanelPosition(xPosition, yPosition);
             } else {
                 position = $mdPanel.newPanelPosition()
                     .absolute()
@@ -223,7 +235,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         require: "^ngModel",
         scope: {
             asButton: '=asButton',
-            buttonColor: '=?'
+            direction: '=?',
+            disabled:'=ngDisabled'
         },
         link: linker
     };

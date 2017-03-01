@@ -23,7 +23,7 @@ import addWidgetTemplate from './add-widget.tpl.html';
 
 /*@ngInject*/
 export default function DashboardController(types, widgetService, userService,
-                                            dashboardService, itembuffer, importExport, hotkeys, $window, $rootScope,
+                                            dashboardService, timeService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $state, $stateParams, $mdDialog, $timeout, $document, $q, $translate, $filter) {
 
     var user = userService.getCurrentUser();
@@ -46,6 +46,25 @@ export default function DashboardController(types, widgetService, userService,
     vm.iframeMode = $rootScope.iframeMode;
     vm.widgets = [];
     vm.dashboardInitComplete = false;
+
+    vm.isToolbarOpened = false;
+
+    Object.defineProperty(vm, 'toolbarOpened', {
+        get: function() { return vm.isToolbarOpened || vm.isEdit; },
+        set: function() { }
+    });
+
+    vm.openToolbar = function() {
+        $timeout(function() {
+            vm.isToolbarOpened = true;
+        });
+    }
+
+    vm.closeToolbar = function() {
+        $timeout(function() {
+            vm.isToolbarOpened = false;
+        });
+    }
 
     vm.addWidget = addWidget;
     vm.addWidgetFromType = addWidgetFromType;
@@ -154,6 +173,9 @@ export default function DashboardController(types, widgetService, userService,
 
         if (vm.widgetEditMode) {
             $timeout(function () {
+                vm.dashboardConfiguration = {
+                    timewindow: timeService.defaultTimewindow()
+                };
                 vm.widgets = [{
                     isSystemType: true,
                     bundleAlias: 'customWidgetBundle',
@@ -186,9 +208,12 @@ export default function DashboardController(types, widgetService, userService,
                     if (angular.isUndefined(vm.dashboard.configuration.deviceAliases)) {
                         vm.dashboard.configuration.deviceAliases = {};
                     }
-                    //$timeout(function () {
-                        vm.widgets = vm.dashboard.configuration.widgets;
-                    //});
+
+                    if (angular.isUndefined(vm.dashboard.configuration.timewindow)) {
+                        vm.dashboard.configuration.timewindow = timeService.defaultTimewindow();
+                    }
+                    vm.dashboardConfiguration = vm.dashboard.configuration;
+                    vm.widgets = vm.dashboard.configuration.widgets;
                     deferred.resolve();
                 }, function fail(e) {
                     deferred.reject(e);
@@ -607,6 +632,7 @@ export default function DashboardController(types, widgetService, userService,
                 if (revert) {
                     vm.dashboard = vm.prevDashboard;
                     vm.widgets = vm.dashboard.configuration.widgets;
+                    vm.dashboardConfiguration = vm.dashboard.configuration;
                 }
             }
         }

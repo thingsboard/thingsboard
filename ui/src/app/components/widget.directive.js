@@ -66,6 +66,8 @@ function Widget($controller, $compile, widgetService) {
 
             function loadFromWidgetInfo(widgetInfo) {
 
+                scope.loadingData = true;
+
                 elem.addClass("tb-widget");
 
                 var widgetNamespace = "widget-type-" + (widget.isSystemType ? 'sys-' : '')
@@ -73,8 +75,11 @@ function Widget($controller, $compile, widgetService) {
                     + widget.typeAlias;
 
                 elem.addClass(widgetNamespace);
-                elem.html('<div class="tb-absolute-fill tb-widget-error"" ng-if="widgetErrorData">' +
+                elem.html('<div class="tb-absolute-fill tb-widget-error" ng-if="widgetErrorData">' +
                                 '<span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>' +
+                          '</div>' +
+                          '<div class="tb-absolute-fill tb-widget-loading" ng-show="loadingData" layout="column" layout-align="center center">' +
+                                '<md-progress-circular md-mode="indeterminate" class="md-accent" md-diameter="40"></md-progress-circular>' +
                           '</div>' +
                           '<div id="container">' + widgetInfo.templateHtml + '</div>');
 

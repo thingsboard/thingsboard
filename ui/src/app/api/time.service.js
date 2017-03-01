@@ -206,9 +206,9 @@ function TimeService($translate, types) {
     function defaultTimewindow() {
         var currentTime = (new Date).getTime();
         var timewindow = {
-                displayValue: "",
-                selectedTab: 0,
-                realtime: {
+            displayValue: "",
+            selectedTab: 0,
+            realtime: {
                 interval: SECOND,
                 timewindowMs: MINUTE // 1 min by default
             },
