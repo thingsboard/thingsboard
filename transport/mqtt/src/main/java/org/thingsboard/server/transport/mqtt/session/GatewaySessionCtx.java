@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,8 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.msg.core.BasicTelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.BasicUpdateAttributesRequest;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.ToDeviceRpcResponseMsg;
+import org.thingsboard.server.common.msg.core.*;
+import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.BasicAdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.BasicToDeviceActorSessionMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
@@ -38,6 +36,7 @@ import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.transport.mqtt.MqttTopics;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
@@ -49,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.msg.session.MsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
 import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.validateJsonPayload;
 
 /**
@@ -83,7 +83,10 @@ public class GatewaySessionCtx {
             newDevice.setName(deviceName);
             return deviceService.saveDevice(newDevice);
         });
-        devices.put(deviceName, new GatewayDeviceSessionCtx(this, device));
+        GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
+        devices.put(deviceName, ctx);
+        processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
+        processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
         ack(msg);
     }
 
