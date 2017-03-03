@@ -79,7 +79,8 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         if (scope.asButton) {
             template = $templateCache.get(timewindowButtonTemplate);
         } else {
-            scope.direction = scope.direction || 'left';
+            scope.direction = angular.isDefined(attrs.direction) ? attrs.direction : 'left';
+            scope.tooltipDirection = angular.isDefined(attrs.tooltipDirection) ? attrs.tooltipDirection : 'top';
             template = $templateCache.get(timewindowTemplate);
         }
         element.html(template);
@@ -235,7 +236,6 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         require: "^ngModel",
         scope: {
             asButton: '=asButton',
-            direction: '=?',
             disabled:'=ngDisabled'
         },
         link: linker

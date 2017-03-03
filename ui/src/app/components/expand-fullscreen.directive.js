@@ -106,7 +106,9 @@ function ExpandFullscreen($compile, $document) {
             buttonSize = attrs.expandButtonSize;
         }
 
-        var html = '<md-tooltip md-direction="{{expanded ? \'bottom\' : \'top\'}}">' +
+        var tooltipDirection = angular.isDefined(attrs.expandTooltipDirection) ? attrs.expandTooltipDirection : 'top';
+
+        var html = '<md-tooltip md-direction="{{expanded ? \'bottom\' : \'' + tooltipDirection + '\'}}">' +
             '{{(expanded ? \'fullscreen.exit\' : \'fullscreen.expand\') | translate}}' +
             '</md-tooltip>' +
             '<ng-md-icon ' + (buttonSize ? 'size="'+ buttonSize +'" ' : '') + 'icon="{{expanded ? \'fullscreen_exit\' : \'fullscreen\'}}" ' +
@@ -115,13 +117,16 @@ function ExpandFullscreen($compile, $document) {
 
         if (expandButton) {
             expandButton = angular.element(expandButton);
-            expandButton.attr('md-ink-ripple', 'false');
-            expandButton.append(html);
+            if (scope.hideExpandButton()) {
+                expandButton.remove();
+            } else {
+                expandButton.attr('md-ink-ripple', 'false');
+                expandButton.append(html);
 
-            $compile(expandButton.contents())(scope);
+                $compile(expandButton.contents())(scope);
 
-            expandButton.on("click", scope.toggleExpand);
-
+                expandButton.on("click", scope.toggleExpand);
+            }
         } else if (!scope.hideExpandButton()) {
             var button = angular.element('<md-button class="tb-fullscreen-button-style tb-fullscreen-button-pos md-icon-button" ' +
                 'md-ink-ripple="false" ng-click="toggleExpand($event)">' +

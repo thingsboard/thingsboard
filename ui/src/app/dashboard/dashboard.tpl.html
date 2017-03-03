@@ -16,8 +16,8 @@
 
 -->
 <md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode" expand-button-id="dashboard-expand-button"
-            hide-expand-button="vm.widgetEditMode || vm.iframeMode"
-        ng-style="{'background-color': vm.dashboard.configuration.gridSettings.backgroundColor,
+            hide-expand-button="vm.widgetEditMode || vm.iframeMode" expand-tooltip-direction="bottom"
+            ng-style="{'background-color': vm.dashboard.configuration.gridSettings.backgroundColor,
                     'background-image': 'url('+vm.dashboard.configuration.gridSettings.backgroundImageUrl+')',
                     'background-repeat': 'no-repeat',
                     'background-attachment': 'scroll',
@@ -29,7 +29,7 @@
                         md-direction="left">
             <md-fab-trigger class="align-with-text">
                 <md-button aria-label="menu" class="md-fab md-primary" ng-click="vm.openToolbar()">
-                    <md-tooltip ng-show="!vm.toolbarOpened" md-direction="top">
+                    <md-tooltip ng-show="!vm.toolbarOpened" md-direction="bottom">
                         {{ 'dashboard.open-toolbar' | translate }}
                     </md-tooltip>
                     <md-icon aria-label="dashboard-toolbar" class="material-icons">more_horiz</md-icon>
@@ -38,7 +38,7 @@
             <md-toolbar>
                 <md-fab-actions class="md-toolbar-tools">
                     <md-button ng-show="!vm.isEdit" aria-label="close-toolbar" class="md-icon-button close-action" ng-click="vm.closeToolbar()">
-                        <md-tooltip md-direction="top">
+                        <md-tooltip md-direction="bottom">
                             {{ 'dashboard.close-toolbar' | translate }}
                         </md-tooltip>
                         <md-icon aria-label="close-toolbar" class="material-icons">arrow_forward</md-icon>
@@ -47,18 +47,18 @@
                                aria-label="{{ 'fullscreen.fullscreen' | translate }}"
                                class="md-icon-button">
                     </md-button>
-                    <tb-timewindow direction="left" aggregation ng-model="vm.dashboardConfiguration.timewindow">
+                    <tb-timewindow direction="left" tooltip-direction="bottom" aggregation ng-model="vm.dashboardConfiguration.timewindow">
                     </tb-timewindow>
                     <md-button ng-show="vm.isEdit" aria-label="{{ 'device.aliases' | translate }}" class="md-icon-button"
                                ng-click="vm.openDeviceAliases($event)">
-                        <md-tooltip md-direction="top">
+                        <md-tooltip md-direction="bottom">
                             {{ 'device.aliases' | translate }}
                         </md-tooltip>
                         <md-icon aria-label="{{ 'device.aliases' | translate }}" class="material-icons">devices_other</md-icon>
                     </md-button>
                     <md-button ng-show="vm.isEdit" aria-label="{{ 'dashboard.settings' | translate }}" class="md-icon-button"
                                ng-click="vm.openDashboardSettings($event)">
-                        <md-tooltip md-direction="top">
+                        <md-tooltip md-direction="bottom">
                             {{ 'dashboard.settings' | translate }}
                         </md-tooltip>
                         <md-icon aria-label="{{ 'dashboard.settings' | translate }}" class="material-icons">settings</md-icon>
