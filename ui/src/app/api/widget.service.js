@@ -129,7 +129,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
             resources: [],
             templateHtml: '<div class="tb-widget-error-container"><div translate class="tb-widget-error-msg">widget.widget-type-not-found</div></div>',
             templateCss: '',
-            controllerScript: 'fns.init = function(containerElement, settings, datasources,\n    data) {}\n\n\nfns.redraw = function(containerElement, width, height, data) {};',
+            controllerScript: 'self.onInit = function() {}',
             settingsSchema: '{}\n',
             dataKeySettingsSchema: '{}\n',
             defaultConfig: '{\n' +
@@ -147,7 +147,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
             resources: [],
             templateHtml: '<div class="tb-widget-error-container"><div translate class="tb-widget-error-msg">widget.widget-type-load-error</div>',
             templateCss: '',
-            controllerScript: 'fns.init = function(containerElement, settings, datasources,\n    data) {}\n\n\nfns.redraw = function(containerElement, width, height, data) {};',
+            controllerScript: 'self.onInit = function() {}',
             settingsSchema: '{}\n',
             dataKeySettingsSchema: '{}\n',
             defaultConfig: '{\n' +

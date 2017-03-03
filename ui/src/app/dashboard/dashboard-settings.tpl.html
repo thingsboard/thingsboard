@@ -26,15 +26,27 @@
                 </md-button>
             </div>
         </md-toolbar>
-        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-show="loading"></md-progress-linear>
+        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
         <span style="min-height: 5px;" flex="" ng-show="!loading"></span>
         <md-dialog-content>
             <div class="md-dialog-content">
                 <fieldset ng-disabled="loading">
-                    <div layout="row" layout-padding>
+                    <div layout="row" layout-align="start center">
                         <md-checkbox flex aria-label="{{ 'dashboard.display-title' | translate }}"
                                      ng-model="vm.gridSettings.showTitle">{{ 'dashboard.display-title' | translate }}
                         </md-checkbox>
+                        <div flex
+                             ng-required="false"
+                             md-color-picker
+                             ng-model="vm.gridSettings.titleColor"
+                             label="{{ 'dashboard.title-color' | translate }}"
+                             icon="format_color_fill"
+                             default="rgba(0, 0, 0, 0.870588)"
+                             md-color-clear-button="false"
+                             open-on-input="true"
+                             md-color-generic-palette="false"
+                             md-color-history="false"
+                        ></div>
                     </div>
                     <md-input-container class="md-block">
                         <label translate>dashboard.columns-count</label>

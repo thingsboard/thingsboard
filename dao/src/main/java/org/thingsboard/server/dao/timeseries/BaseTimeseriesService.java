@@ -18,26 +18,31 @@ package org.thingsboard.server.dao.timeseries;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -50,38 +55,14 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     public static final int INSERTS_PER_ENTRY = 3;
 
-    @Value("${cassandra.query.ts_key_value_partitioning}")
-    private String partitioning;
-
     @Autowired
     private TimeseriesDao timeseriesDao;
 
-    private TsPartitionDate tsFormat;
-
-    @PostConstruct
-    public void init() {
-        Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
-        if (partition.isPresent()) {
-            tsFormat = partition.get();
-        } else {
-            log.warn("Incorrect configuration of partitioning {}", partitioning);
-            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
-        }
-    }
-
     @Override
-    public List<TsKvEntry> find(String entityType, UUIDBased entityId, TsKvQuery query) {
+    public ListenableFuture<List<TsKvEntry>> findAll(String entityType, UUIDBased entityId, List<TsKvQuery> queries) {
         validate(entityType, entityId);
-        validate(query);
-        return timeseriesDao.find(entityType, entityId.getId(), query, toPartitionTs(query.getStartTs()), toPartitionTs(query.getEndTs()));
-    }
-
-    private Optional<Long> toPartitionTs(Optional<Long> ts) {
-        if (ts.isPresent()) {
-            return Optional.of(toPartitionTs(ts.get()));
-        } else {
-            return Optional.empty();
-        }
+        queries.forEach(query -> validate(query));
+        return timeseriesDao.findAllAsync(entityType, entityId.getId(), queries);
     }
 
     @Override
@@ -106,7 +87,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("Key value entry can't be null");
         }
         UUID uid = entityId.getId();
-        long partitionTs = toPartitionTs(tsKvEntry.getTs());
+        long partitionTs = timeseriesDao.toPartitionTs(tsKvEntry.getTs());
 
         List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
         saveAndRegisterFutures(futures, entityType, tsKvEntry, uid, partitionTs);
@@ -122,7 +103,7 @@ public class BaseTimeseriesService implements TimeseriesService {
                 throw new IncorrectParameterException("Key value entry can't be null");
             }
             UUID uid = entityId.getId();
-            long partitionTs = toPartitionTs(tsKvEntry.getTs());
+            long partitionTs = timeseriesDao.toPartitionTs(tsKvEntry.getTs());
             saveAndRegisterFutures(futures, entityType, tsKvEntry, uid, partitionTs);
         }
         return Futures.allAsList(futures);
@@ -144,14 +125,6 @@ public class BaseTimeseriesService implements TimeseriesService {
         futures.add(timeseriesDao.save(entityType, uid, partitionTs, tsKvEntry));
     }
 
-    private long toPartitionTs(long ts) {
-        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
-
-        LocalDateTime parititonTime = tsFormat.truncatedTo(time);
-
-        return parititonTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-    }
-
     private static void validate(String entityType, UUIDBased entityId) {
         Validator.validateString(entityType, "Incorrect entityType " + entityType);
         Validator.validateId(entityId, "Incorrect entityId " + entityId);
@@ -162,6 +135,8 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("TsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Key can't be empty");
+        } else if (query.getAggregation() == null) {
+            throw new IncorrectParameterException("Incorrect TsKvQuery. Aggregation can't be empty");
         }
     }
 }

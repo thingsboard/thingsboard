@@ -43,7 +43,7 @@ export default class TbAnalogueRadialGauge {
         var valueInt = settings.valueInt || 3;
 
         var valueDec = (angular.isDefined(settings.valueDec) && settings.valueDec !== null)
-            ? settings.valueDec : 2;
+            ? settings.valueDec : ctx.decimals;
 
         step = parseFloat(parseFloat(step).toFixed(valueDec));
 
@@ -89,7 +89,7 @@ export default class TbAnalogueRadialGauge {
             maxValue: maxValue,
             majorTicks: majorTicks,
             minorTicks: settings.minorTicks || 2,
-            units: settings.units,
+            units: angular.isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units,
             title: ((settings.showUnitTitle !== false) ?
                 (settings.unitTitle && settings.unitTitle.length > 0 ?
                     settings.unitTitle : dataKey.label) : ''),
@@ -238,11 +238,6 @@ export default class TbAnalogueRadialGauge {
                         "type": "boolean",
                         "default": true
                     },
-                    "units": {
-                        "title": "Units",
-                        "type": "string",
-                        "default": ""
-                    },
                     "majorTicksCount": {
                         "title": "Major ticks count",
                         "type": "number",
@@ -262,11 +257,6 @@ export default class TbAnalogueRadialGauge {
                         "title": "Digits count for integer part of value",
                         "type": "number",
                         "default": 3
-                    },
-                    "valueDec": {
-                        "title": "Digits count for decimal part of value",
-                        "type": "number",
-                        "default": 2
                     },
                     "defaultColor": {
                         "title": "Default color",
@@ -530,12 +520,10 @@ export default class TbAnalogueRadialGauge {
                 "maxValue",
                 "unitTitle",
                 "showUnitTitle",
-                "units",
                 "majorTicksCount",
                 "minorTicks",
                 "valueBox",
                 "valueInt",
-                "valueDec",
                 {
                     "key": "defaultColor",
                     "type": "color"

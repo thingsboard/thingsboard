@@ -18,15 +18,30 @@ package org.thingsboard.server.dao.timeseries;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.dao.AbstractAsyncDao;
 import org.thingsboard.server.dao.AbstractDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
@@ -36,53 +51,186 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
  */
 @Component
 @Slf4j
-public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
+public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao {
 
-    @Value("${cassandra.query.max_limit_per_request}")
-    protected Integer maxLimitPerRequest;
+    //@Value("${cassandra.query.min_aggregation_step_ms}")
+    //TODO:
+    private int minAggregationStepMs = 1000;
+
+    @Value("${cassandra.query.ts_key_value_partitioning}")
+    private String partitioning;
+
+    private TsPartitionDate tsFormat;
 
     private PreparedStatement partitionInsertStmt;
     private PreparedStatement[] latestInsertStmts;
     private PreparedStatement[] saveStmts;
+    private PreparedStatement[] fetchStmts;
     private PreparedStatement findLatestStmt;
     private PreparedStatement findAllLatestStmt;
 
+    @PostConstruct
+    public void init() {
+        super.startExecutor();
+        getFetchStmt(Aggregation.NONE);
+        Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
+        if (partition.isPresent()) {
+            tsFormat = partition.get();
+        } else {
+            log.warn("Incorrect configuration of partitioning {}", partitioning);
+            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+        }
+    }
+
+    @PreDestroy
+    public void stop() {
+        super.stopExecutor();
+    }
+
     @Override
-    public List<TsKvEntry> find(String entityType, UUID entityId, TsKvQuery query, Optional<Long> minPartition, Optional<Long> maxPartition) {
-        List<Row> rows = Collections.emptyList();
-        Long[] parts = fetchPartitions(entityType, entityId, query.getKey(), minPartition, maxPartition);
-        int partsLength = parts.length;
-        if (parts != null && partsLength > 0) {
-            int limit = maxLimitPerRequest;
-            Optional<Integer> lim = query.getLimit();
-            if (lim.isPresent() && lim.get() < maxLimitPerRequest) {
-                limit = lim.get();
+    public long toPartitionTs(long ts) {
+        LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneOffset.UTC);
+        return tsFormat.truncatedTo(time).toInstant(ZoneOffset.UTC).toEpochMilli();
+    }
+
+    @Override
+    public ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, List<TsKvQuery> queries) {
+        List<ListenableFuture<List<TsKvEntry>>> futures = queries.stream().map(query -> findAllAsync(entityType, entityId, query)).collect(Collectors.toList());
+        return Futures.transform(Futures.allAsList(futures), new Function<List<List<TsKvEntry>>, List<TsKvEntry>>() {
+            @Nullable
+            @Override
+            public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {
+                List<TsKvEntry> result = new ArrayList<TsKvEntry>();
+                results.forEach(r -> result.addAll(r));
+                return result;
+            }
+        }, readResultsProcessingExecutor);
+    }
+
+
+    private ListenableFuture<List<TsKvEntry>> findAllAsync(String entityType, UUID entityId, TsKvQuery query) {
+        if (query.getAggregation() == Aggregation.NONE) {
+            return findAllAsyncWithLimit(entityType, entityId, query);
+        } else {
+            long step = Math.max(query.getInterval(), minAggregationStepMs);
+            long stepTs = query.getStartTs();
+            List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
+            while (stepTs < query.getEndTs()) {
+                long startTs = stepTs;
+                long endTs = stepTs + step;
+                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation());
+                futures.add(findAndAggregateAsync(entityType, entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
+                stepTs = endTs;
+            }
+            ListenableFuture<List<Optional<TsKvEntry>>> future = Futures.allAsList(futures);
+            return Futures.transform(future, new Function<List<Optional<TsKvEntry>>, List<TsKvEntry>>() {
+                @Nullable
+                @Override
+                public List<TsKvEntry> apply(@Nullable List<Optional<TsKvEntry>> input) {
+                    return input.stream().filter(v -> v.isPresent()).map(v -> v.get()).collect(Collectors.toList());
+                }
+            }, readResultsProcessingExecutor);
+        }
+    }
+
+    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(String entityType, UUID entityId, TsKvQuery query) {
+        long minPartition = toPartitionTs(query.getStartTs());
+        long maxPartition = toPartitionTs(query.getEndTs());
+
+        ResultSetFuture partitionsFuture = fetchPartitions(entityType, entityId, query.getKey(), minPartition, maxPartition);
+
+        final SimpleListenableFuture<List<TsKvEntry>> resultFuture = new SimpleListenableFuture<>();
+        final ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+
+        Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
+            @Override
+            public void onSuccess(@Nullable List<Long> partitions) {
+                TsKvQueryCursor cursor = new TsKvQueryCursor(entityType, entityId, query, partitions);
+                findAllAsyncSequentiallyWithLimit(cursor, resultFuture);
             }
 
-            rows = new ArrayList<>(limit);
-            int lastIdx = partsLength - 1;
-            for (int i = 0; i < partsLength; i++) {
-                int currentLimit;
-                if (rows.size() >= limit) {
-                    break;
-                } else {
-                    currentLimit = limit - rows.size();
-                }
-                Long partition = parts[i];
-                Select.Where where = select().from(ModelConstants.TS_KV_CF).where(eq(ModelConstants.ENTITY_TYPE_COLUMN, entityType))
-                        .and(eq(ModelConstants.ENTITY_ID_COLUMN, entityId))
-                        .and(eq(ModelConstants.KEY_COLUMN, query.getKey()))
-                        .and(eq(ModelConstants.PARTITION_COLUMN, partition));
-                if (i == 0 && query.getStartTs().isPresent()) {
-                    where.and(QueryBuilder.gt(ModelConstants.TS_COLUMN, query.getStartTs().get()));
-                } else if (i == lastIdx && query.getEndTs().isPresent()) {
-                    where.and(QueryBuilder.lte(ModelConstants.TS_COLUMN, query.getEndTs().get()));
-                }
-                where.limit(currentLimit);
-                rows.addAll(executeRead(where).all());
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityType, entityId, minPartition, maxPartition, t);
             }
+        }, readResultsProcessingExecutor);
+
+        return resultFuture;
+    }
+
+    private void findAllAsyncSequentiallyWithLimit(final TsKvQueryCursor cursor, final SimpleListenableFuture<List<TsKvEntry>> resultFuture) {
+        if (cursor.isFull() || !cursor.hasNextPartition()) {
+            resultFuture.set(cursor.getData());
+        } else {
+            PreparedStatement proto = getFetchStmt(Aggregation.NONE);
+            BoundStatement stmt = proto.bind();
+            stmt.setString(0, cursor.getEntityType());
+            stmt.setUUID(1, cursor.getEntityId());
+            stmt.setString(2, cursor.getKey());
+            stmt.setLong(3, cursor.getNextPartition());
+            stmt.setLong(4, cursor.getStartTs());
+            stmt.setLong(5, cursor.getEndTs());
+            stmt.setInt(6, cursor.getCurrentLimit());
+
+            Futures.addCallback(executeAsyncRead(stmt), new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(@Nullable ResultSet result) {
+                    cursor.addData(convertResultToTsKvEntryList(result.all()));
+                    findAllAsyncSequentiallyWithLimit(cursor, resultFuture);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("[{}][{}] Failed to fetch data for query {}-{}", stmt, t);
+                }
+            }, readResultsProcessingExecutor);
         }
-        return convertResultToTsKvEntryList(rows);
+    }
+
+    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(String entityType, UUID entityId, TsKvQuery query, long minPartition, long maxPartition) {
+        final Aggregation aggregation = query.getAggregation();
+        final String key = query.getKey();
+        final long startTs = query.getStartTs();
+        final long endTs = query.getEndTs();
+        final long ts = startTs + (endTs - startTs) / 2;
+
+        ResultSetFuture partitionsFuture = fetchPartitions(entityType, entityId, key, minPartition, maxPartition);
+
+        ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+
+        ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transform(partitionsListFuture,
+                getFetchChunksAsyncFunction(entityType, entityId, key, aggregation, startTs, endTs), readResultsProcessingExecutor);
+
+        return Futures.transform(aggregationChunks, new AggregatePartitionsFunction(aggregation, key, ts), readResultsProcessingExecutor);
+    }
+
+    private Function<ResultSet, List<Long>> getPartitionsArrayFunction() {
+        return rows -> rows.all().stream()
+                .map(row -> row.getLong(ModelConstants.PARTITION_COLUMN)).collect(Collectors.toList());
+    }
+
+    private AsyncFunction<List<Long>, List<ResultSet>> getFetchChunksAsyncFunction(String entityType, UUID entityId, String key, Aggregation aggregation, long startTs, long endTs) {
+        return partitions -> {
+            try {
+                PreparedStatement proto = getFetchStmt(aggregation);
+                List<ResultSetFuture> futures = new ArrayList<>(partitions.size());
+                for (Long partition : partitions) {
+                    BoundStatement stmt = proto.bind();
+                    stmt.setString(0, entityType);
+                    stmt.setUUID(1, entityId);
+                    stmt.setString(2, key);
+                    stmt.setLong(3, partition);
+                    stmt.setLong(4, startTs);
+                    stmt.setLong(5, endTs);
+                    log.debug("Generated query [{}] for entityType {} and entityId {}", stmt, entityType, entityId);
+                    futures.add(executeAsyncRead(stmt));
+                }
+                return Futures.allAsList(futures);
+            } catch (Throwable e) {
+                log.error("Failed to fetch data", e);
+                throw e;
+            }
+        };
     }
 
     @Override
@@ -190,13 +338,12 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
      * Select existing partitions from the table
      * <code>{@link ModelConstants#TS_KV_PARTITIONS_CF}</code> for the given entity
      */
-    private Long[] fetchPartitions(String entityType, UUID entityId, String key, Optional<Long> minPartition, Optional<Long> maxPartition) {
+    private ResultSetFuture fetchPartitions(String entityType, UUID entityId, String key, long minPartition, long maxPartition) {
         Select.Where select = QueryBuilder.select(ModelConstants.PARTITION_COLUMN).from(ModelConstants.TS_KV_PARTITIONS_CF).where(eq(ModelConstants.ENTITY_TYPE_COLUMN, entityType))
                 .and(eq(ModelConstants.ENTITY_ID_COLUMN, entityId)).and(eq(ModelConstants.KEY_COLUMN, key));
-        minPartition.ifPresent(startTs -> select.and(QueryBuilder.gte(ModelConstants.PARTITION_COLUMN, minPartition.get())));
-        maxPartition.ifPresent(endTs -> select.and(QueryBuilder.lte(ModelConstants.PARTITION_COLUMN, maxPartition.get())));
-        ResultSet resultSet = executeRead(select);
-        return resultSet.all().stream().map(row -> row.getLong(ModelConstants.PARTITION_COLUMN)).toArray(Long[]::new);
+        select.and(QueryBuilder.gte(ModelConstants.PARTITION_COLUMN, minPartition));
+        select.and(QueryBuilder.lte(ModelConstants.PARTITION_COLUMN, maxPartition));
+        return executeAsyncRead(select);
     }
 
     private PreparedStatement getSaveStmt(DataType dataType) {
@@ -214,6 +361,30 @@ public class BaseTimeseriesDao extends AbstractDao implements TimeseriesDao {
             }
         }
         return saveStmts[dataType.ordinal()];
+    }
+
+    private PreparedStatement getFetchStmt(Aggregation aggType) {
+        if (fetchStmts == null) {
+            fetchStmts = new PreparedStatement[Aggregation.values().length];
+            for (Aggregation type : Aggregation.values()) {
+                if (type == Aggregation.SUM && fetchStmts[Aggregation.AVG.ordinal()] != null) {
+                    fetchStmts[type.ordinal()] = fetchStmts[Aggregation.AVG.ordinal()];
+                } else if (type == Aggregation.AVG && fetchStmts[Aggregation.SUM.ordinal()] != null) {
+                    fetchStmts[type.ordinal()] = fetchStmts[Aggregation.SUM.ordinal()];
+                } else {
+                    fetchStmts[type.ordinal()] = getSession().prepare("SELECT " +
+                            String.join(", ", ModelConstants.getFetchColumnNames(type)) + " FROM " + ModelConstants.TS_KV_CF
+                            + " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + " = ? "
+                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + " = ? "
+                            + "AND " + ModelConstants.KEY_COLUMN + " = ? "
+                            + "AND " + ModelConstants.PARTITION_COLUMN + " = ? "
+                            + "AND " + ModelConstants.TS_COLUMN + " > ? "
+                            + "AND " + ModelConstants.TS_COLUMN + " <= ?"
+                            + (type == Aggregation.NONE ? " ORDER BY " + ModelConstants.TS_COLUMN + " DESC LIMIT ?" : ""));
+                }
+            }
+        }
+        return fetchStmts[aggType.ordinal()];
     }
 
     private PreparedStatement getLatestStmt(DataType dataType) {

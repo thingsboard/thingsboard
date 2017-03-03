@@ -15,11 +15,108 @@
     limitations under the License.
 
 -->
-<md-tabs ng-class="{'tb-headless': !displayAdvanced()}" id="tabs" md-border-bottom flex class="tb-absolute-fill"
+<md-tabs ng-class="{'tb-headless': (widgetType === types.widgetType.static.value && !displayAdvanced())}" id="tabs" md-border-bottom flex class="tb-absolute-fill"
          md-selected="selectedTab">
+    <md-tab label="{{ 'widget-config.data' | translate }}"
+            ng-if="widgetType !== types.widgetType.static.value">
+        <md-content class="md-padding" layout="column">
+            <div ng-show="widgetType === types.widgetType.timeseries.value" layout='column' layout-align="center"
+                 layout-gt-sm='row' layout-align-gt-sm="start center">
+                <md-checkbox flex aria-label="{{ 'widget-config.use-dashboard-timewindow' | translate }}"
+                             ng-model="useDashboardTimewindow">{{ 'widget-config.use-dashboard-timewindow' | translate }}
+                </md-checkbox>
+                <section flex layout="row" layout-align="start center" style="margin-bottom: 16px;">
+                    <span ng-class="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
+                    <tb-timewindow ng-disabled="useDashboardTimewindow" as-button="true" aggregation flex ng-model="timewindow"></tb-timewindow>
+                </section>
+            </div>
+            <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
+                         ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value">
+                <v-pane id="datasources-pane" expanded="true">
+                    <v-pane-header>
+                        {{ 'widget-config.datasources' | translate }}
+                    </v-pane-header>
+                    <v-pane-content>
+                        <div ng-if="datasources.length === 0">
+                                <span translate layout-align="center center"
+                                      class="tb-prompt">datasource.add-datasource-prompt</span>
+                        </div>
+                        <div ng-if="datasources.length > 0">
+                            <div flex layout="row" layout-align="start center">
+                                <span flex="5"></span>
+                                <div flex layout="row" layout-align="start center"
+                                     style="padding: 0 0 0 10px; margin: 5px;">
+                                    <span translate style="min-width: 110px;">widget-config.datasource-type</span>
+                                    <span hide show-gt-sm translate flex
+                                          style="padding-left: 10px;">widget-config.datasource-parameters</span>
+                                    <span style="min-width: 40px;"></span>
+                                </div>
+                            </div>
+                            <div style="overflow: auto; padding-bottom: 15px;">
+                                <div flex layout="row" layout-align="start center"
+                                     ng-repeat="datasource in datasources">
+                                    <span flex="5">{{$index + 1}}.</span>
+                                    <div class="md-whiteframe-4dp" flex layout="row" layout-align="start center"
+                                         style="padding: 0 0 0 10px; margin: 5px;">
+                                        <tb-datasource flex ng-model="datasource.value"
+                                                       widget-type="widgetType"
+                                                       device-aliases="deviceAliases"
+                                                       functions-only="functionsOnly"
+                                                       datakey-settings-schema="datakeySettingsSchema"
+                                                       generate-data-key="generateDataKey(chip,type)"
+                                                       fetch-device-keys="fetchDeviceKeys({deviceAliasId: deviceAliasId, query: query, type: type})"
+                                                       on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})"></tb-datasource>
+                                        <md-button ng-disabled="loading" class="md-icon-button md-primary"
+                                                   style="min-width: 40px;"
+                                                   ng-click="removeDatasource($event, datasource)"
+                                                   aria-label="{{ 'action.remove' | translate }}">
+                                            <md-tooltip md-direction="top">
+                                                {{ 'widget-config.remove-datasource' | translate }}
+                                            </md-tooltip>
+                                            <md-icon aria-label="{{ 'action.delete' | translate }}"
+                                                     class="material-icons">
+                                                close
+                                            </md-icon>
+                                        </md-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div flex layout="row" layout-align="start center">
+                            <md-button ng-disabled="loading" class="md-primary md-raised"
+                                       ng-click="addDatasource($event)" aria-label="{{ 'action.add' | translate }}">
+                                <md-tooltip md-direction="top">
+                                    {{ 'widget-config.add-datasource' | translate }}
+                                </md-tooltip>
+                                <md-icon class="material-icons">add</md-icon>
+                                <span translate>action.add</span>
+                            </md-button>
+                        </div>
+                    </v-pane-content>
+                </v-pane>
+            </v-accordion>
+            <v-accordion id="target-devices-accordion" control="targetDevicesAccordion" class="vAccordion--default"
+                         ng-show="widgetType === types.widgetType.rpc.value">
+                <v-pane id="target-devices-pane" expanded="true">
+                    <v-pane-header>
+                        {{ 'widget-config.target-device' | translate }}
+                    </v-pane-header>
+                    <v-pane-content style="padding: 0 5px;">
+                        <tb-device-alias-select flex
+                                                tb-required="widgetType === types.widgetType.rpc.value && !widgetEditMode"
+                                                device-aliases="deviceAliases"
+                                                ng-model="targetDeviceAlias.value"
+                                                on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})">
+                        </tb-device-alias-select>
+                    </v-pane-content>
+                </v-pane>
+            </v-accordion>
+        </md-content>
+    </md-tab>
     <md-tab label="{{ 'widget-config.settings' | translate }}">
         <div id="settings-tab">
             <md-content class="md-padding" layout="column">
+                <span translate>widget-config.general-settings</span>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <md-input-container flex class="md-block">
                         <label translate>widget-config.title</label>
@@ -31,7 +128,6 @@
                         </div>
                     </div>
                 </div>
-                <span translate>widget-config.general-settings</span>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <div layout="row" layout-padding>
                         <md-checkbox flex aria-label="{{ 'widget-config.display-title' | translate }}"
@@ -77,6 +173,26 @@
                         <input ng-model="padding">
                     </md-input-container>
                 </div>
+                <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <md-input-container flex>
+                        <label translate>widget-config.units</label>
+                        <input name="units" ng-model="units">
+                    </md-input-container>
+                    <md-input-container flex>
+                        <label translate>widget-config.decimals</label>
+                        <input ng-model="decimals" type="number" min="0" max="15" step="1" ng-pattern="/^\d*$/">
+                    </md-input-container>
+                </div>
+                <div ng-show="widgetType === types.widgetType.timeseries.value ||
+                              widgetType === types.widgetType.latest.value" layout='column' layout-align="center"
+                     layout-gt-sm='row' layout-align-gt-sm="start center">
+                    <md-checkbox flex aria-label="{{ 'widget-config.display-legend' | translate }}"
+                                 ng-model="showLegend">{{ 'widget-config.display-legend' | translate }}
+                    </md-checkbox>
+                    <section flex layout="row" layout-align="start center" style="margin-bottom: 16px;">
+                        <tb-legend-config ng-disabled="!showLegend" flex ng-model="legendConfig"></tb-legend-config>
+                    </section>
+                </div>
                 <span translate>widget-config.mobile-mode-settings</span>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
                     <md-input-container flex>
@@ -85,104 +201,18 @@
                     </md-input-container>
                     <md-input-container flex>
                         <label translate>widget-config.height</label>
-                        <input ng-model="mobileHeight" type="number">
+                        <input ng-model="mobileHeight" min="1" max="10" type="number" step="1" ng-pattern="/^\d*$/">
                     </md-input-container>
                 </div>
-                <div ng-show="widgetType === types.widgetType.timeseries.value" layout="row"
-                     layout-align="center center">
-                    <span translate style="padding-right: 8px;">widget-config.timewindow</span>
-                    <tb-timewindow as-button="true" flex ng-model="timewindow"></tb-timewindow>
-                </div>
-                <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
-                             ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value">
-                    <v-pane id="datasources-pane" expanded="forceExpandDatasources">
-                        <v-pane-header>
-                            {{ 'widget-config.datasources' | translate }}
-                        </v-pane-header>
-                        <v-pane-content>
-                            <div ng-if="datasources.length === 0">
-                                <span translate layout-align="center center"
-                                      class="tb-prompt">datasource.add-datasource-prompt</span>
-                            </div>
-                            <div ng-if="datasources.length > 0">
-                                <div flex layout="row" layout-align="start center">
-                                    <span flex="5"></span>
-                                    <div flex layout="row" layout-align="start center"
-                                         style="padding: 0 0 0 10px; margin: 5px;">
-                                        <span translate style="min-width: 110px;">widget-config.datasource-type</span>
-                                        <span hide show-gt-sm translate flex
-                                              style="padding-left: 10px;">widget-config.datasource-parameters</span>
-                                        <span style="min-width: 40px;"></span>
-                                    </div>
-                                </div>
-                                <div style="max-height: 300px; overflow: auto; padding-bottom: 15px;">
-                                    <div flex layout="row" layout-align="start center"
-                                         ng-repeat="datasource in datasources">
-                                        <span flex="5">{{$index + 1}}.</span>
-                                        <div class="md-whiteframe-4dp" flex layout="row" layout-align="start center"
-                                             style="padding: 0 0 0 10px; margin: 5px;">
-                                            <tb-datasource flex ng-model="datasource.value"
-                                                           widget-type="widgetType"
-                                                           device-aliases="deviceAliases"
-                                                           functions-only="functionsOnly"
-                                                           datakey-settings-schema="datakeySettingsSchema"
-                                                           generate-data-key="generateDataKey(chip,type)"
-                                                           fetch-device-keys="fetchDeviceKeys({deviceAliasId: deviceAliasId, query: query, type: type})"
-                                                           on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})"></tb-datasource>
-                                            <md-button ng-disabled="loading" class="md-icon-button md-primary"
-                                                       style="min-width: 40px;"
-                                                       ng-click="removeDatasource($event, datasource)"
-                                                       aria-label="{{ 'action.remove' | translate }}">
-                                                <md-tooltip md-direction="top">
-                                                    {{ 'widget-config.remove-datasource' | translate }}
-                                                </md-tooltip>
-                                                <md-icon aria-label="{{ 'action.delete' | translate }}"
-                                                         class="material-icons">
-                                                    close
-                                                </md-icon>
-                                            </md-button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div flex layout="row" layout-align="start center">
-                                <md-button ng-disabled="loading" class="md-primary md-raised"
-                                           ng-click="addDatasource($event)" aria-label="{{ 'action.add' | translate }}">
-                                    <md-tooltip md-direction="top">
-                                        {{ 'widget-config.add-datasource' | translate }}
-                                    </md-tooltip>
-                                    <md-icon class="material-icons">add</md-icon>
-                                    <span translate>action.add</span>
-                                </md-button>
-                            </div>
-                        </v-pane-content>
-                    </v-pane>
-                </v-accordion>
-                <v-accordion id="target-devices-accordion" control="targetDevicesAccordion" class="vAccordion--default"
-                             ng-show="widgetType === types.widgetType.rpc.value">
-                    <v-pane id="target-devices-pane" expanded="true">
-                        <v-pane-header>
-                            {{ 'widget-config.target-device' | translate }}
-                        </v-pane-header>
-                        <v-pane-content style="padding: 0 5px;">
-                            <tb-device-alias-select flex
-                                                    tb-required="widgetType === types.widgetType.rpc.value && !widgetEditMode"
-                                                    device-aliases="deviceAliases"
-                                                    ng-model="targetDeviceAlias.value"
-                                                    on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})">
-                            </tb-device-alias-select>
-                        </v-pane-content>
-                    </v-pane>
-                </v-accordion>
             </md-content>
         </div>
     </md-tab>
     <md-tab ng-if="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
         <md-content class="md-padding" layout="column">
-            <ng-form name="ngform"
+            <ng-form flex name="ngform"
                      layout="column"
                      layout-padding>
-                <tb-json-form schema="currentSettingsSchema"
+                <tb-json-form flex schema="currentSettingsSchema"
                               form="currentSettingsForm"
                               model="currentSettings"
                               form-control="ngform">

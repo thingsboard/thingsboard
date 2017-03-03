@@ -29,7 +29,7 @@ import EditAttributeValueController from './edit-attribute-value.controller';
 
 /*@ngInject*/
 export default function AttributeTableDirective($compile, $templateCache, $rootScope, $q, $mdEditDialog, $mdDialog,
-                                                $document, $translate, utils, types, deviceService, widgetService) {
+                                                $document, $translate, $filter, utils, types, dashboardService, deviceService, widgetService) {
 
     var linker = function (scope, element, attrs) {
 
@@ -107,12 +107,14 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             }
         });
 
-        function success(attributes, update) {
+        function success(attributes, update, apply) {
             scope.attributes = attributes;
             if (!update) {
                 scope.selectedAttributes = [];
             }
-            scope.$digest();
+            if (apply) {
+                scope.$digest();
+            }
         }
 
         scope.getDeviceAttributes = function(forceUpdate) {
@@ -126,8 +128,8 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 };
                 scope.checkSubscription();
                 scope.attributesDeferred = deviceService.getDeviceAttributes(scope.deviceId, scope.attributeScope.value,
-                    scope.query, function(attributes, update) {
-                        success(attributes, update || forceUpdate);
+                    scope.query, function(attributes, update, apply) {
+                        success(attributes, update || forceUpdate, apply);
                     }
                 );
             } else {
@@ -303,6 +305,9 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                         var isSystem = scope.widgetsBundle.tenantId.id === types.id.nullUid;
                         widgetService.getBundleWidgetTypes(scope.widgetsBundle.alias, isSystem).then(
                             function success(widgetTypes) {
+
+                                widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type','-createdTime']);
+
                                 for (var i = 0; i < widgetTypes.length; i++) {
                                     var widgetType = widgetTypes[i];
                                     var widgetInfo = widgetService.toWidgetInfo(widgetType);
@@ -355,6 +360,10 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.selectedWidgetsBundleAlias = null;
             scope.mode = 'default';
             scope.getDeviceAttributes(true);
+        }
+
+        scope.getServerTimeDiff = function() {
+            return dashboardService.getServerTimeDiff();
         }
 
         scope.addWidgetToDashboard = function($event) {

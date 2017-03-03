@@ -19,8 +19,9 @@ import 'javascript-detect-element-resize/detect-element-resize';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, tbRaf, types, utils,
-                                         datasourceService, deviceService, visibleRect, isEdit, widget, deviceAliasList, widgetType) {
+export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
+                                         datasourceService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
+                                         dashboardTimewindowApi, widget, deviceAliasList, widgetType) {
 
     var vm = this;
 
@@ -41,12 +42,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var targetDeviceAliasId = null;
     var targetDeviceId = null;
     var originalTimewindow = null;
-    var subscriptionTimewindow = {
-        fixedWindow: null,
-        realtimeWindowMs: null
-    };
-    var timer = null;
-    var dataUpdateTimer = null;
+    var subscriptionTimewindow = null;
     var dataUpdateCaf = null;
 
     /*
@@ -70,9 +66,14 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         isEdit: isEdit,
         isMobile: false,
         settings: widget.config.settings,
+        units: widget.config.units || '',
+        decimals: angular.isDefined(widget.config.decimals) ? widget.config.decimals : 2,
         datasources: widget.config.datasources,
         data: [],
-        timeWindow: {},
+        hiddenData: [],
+        timeWindow: {
+            stDiff: stDiff
+        },
         timewindowFunctions: {
             onUpdateTimewindow: onUpdateTimewindow,
             onResetTimewindow: onResetTimewindow
@@ -84,6 +85,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             sendTwoWayCommand: function(method, params, timeout) {
                 return sendCommand(false, method, params, timeout);
             }
+        },
+        utils: {
+            formatValue: formatValue
         }
     };
 
@@ -139,6 +143,18 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         $scope.widgetErrorData = utils.processWidgetException(e);
     }
 
+    function notifyDataLoaded() {
+        if ($scope.loadingData === true) {
+            $scope.loadingData = false;
+        }
+    }
+
+    function notifyDataLoading() {
+        if ($scope.loadingData === false) {
+            $scope.loadingData = true;
+        }
+    }
+
     function onInit() {
         if (!widgetContext.inited) {
             widgetContext.inited = true;
@@ -155,8 +171,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     }
 
     function updateTimewindow() {
+        widgetContext.timeWindow.interval = subscriptionTimewindow.aggregation.interval || 1000;
         if (subscriptionTimewindow.realtimeWindowMs) {
-            widgetContext.timeWindow.maxTime = (new Date).getTime();
+            widgetContext.timeWindow.maxTime = (new Date).getTime() + widgetContext.timeWindow.stDiff;
             widgetContext.timeWindow.minTime = widgetContext.timeWindow.maxTime - subscriptionTimewindow.realtimeWindowMs;
         } else if (subscriptionTimewindow.fixedWindow) {
             widgetContext.timeWindow.maxTime = subscriptionTimewindow.fixedWindow.endTimeMs;
@@ -165,18 +182,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     }
 
     function onDataUpdated() {
-        if (dataUpdateTimer) {
-            $timeout.cancel(dataUpdateTimer);
-            dataUpdateTimer = null;
-        }
         if (widgetContext.inited) {
-            if (widget.type === types.widgetType.timeseries.value) {
-                if (!widgetContext.tickUpdate && timer) {
-                    $timeout.cancel(timer);
-                    timer = $timeout(onTick, 1500, false);
-                }
-                updateTimewindow();
-            }
             if (dataUpdateCaf) {
                 dataUpdateCaf();
                 dataUpdateCaf = null;
@@ -188,7 +194,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                         handleWidgetException(e);
                     }
                 });
-            widgetContext.tickUpdate = false;
         } else {
             widgetContext.dataUpdatePending = true;
         }
@@ -287,8 +292,34 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         onInit();
     }
 
+/*    scope.legendData = {
+        keys: [],
+        data: []
+
+        key: {
+             label: '',
+             color: ''
+             dataIndex: 0
+        }
+        data: {
+             min: null,
+             max: null,
+             avg: null,
+             total: null
+        }
+    };*/
+
+
     function initialize() {
-        if (widget.type !== types.widgetType.rpc.value) {
+
+        $scope.caulculateLegendData = $scope.displayLegend &&
+            widget.type === types.widgetType.timeseries.value &&
+            ($scope.legendConfig.showMin === true ||
+             $scope.legendConfig.showMax === true ||
+             $scope.legendConfig.showAvg === true ||
+             $scope.legendConfig.showTotal === true);
+
+        if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             for (var i in widget.config.datasources) {
                 var datasource = angular.copy(widget.config.datasources[i]);
                 for (var a in datasource.dataKeys) {
@@ -299,9 +330,41 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                         data: []
                     };
                     widgetContext.data.push(datasourceData);
+                    widgetContext.hiddenData.push({data: []});
+                    if ($scope.displayLegend) {
+                        var legendKey = {
+                            label: dataKey.label,
+                            color: dataKey.color,
+                            dataIndex: Number(i) + Number(a)
+                        };
+                        $scope.legendData.keys.push(legendKey);
+                        var legendKeyData = {
+                            min: null,
+                            max: null,
+                            avg: null,
+                            total: null,
+                            hidden: false
+                        };
+                        $scope.legendData.data.push(legendKeyData);
+                    }
                 }
             }
-        } else {
+            if ($scope.displayLegend) {
+                $scope.legendData.keys = $filter('orderBy')($scope.legendData.keys, '+label');
+                $scope.$on('legendDataHiddenChanged', function (event, index) {
+                    event.stopPropagation();
+                    var hidden = $scope.legendData.data[index].hidden;
+                    if (hidden) {
+                        widgetContext.hiddenData[index].data = widgetContext.data[index].data;
+                        widgetContext.data[index].data = [];
+                    } else {
+                        widgetContext.data[index].data = widgetContext.hiddenData[index].data;
+                        widgetContext.hiddenData[index].data = [];
+                    }
+                    onDataUpdated();
+                });
+            }
+        } else if (widget.type === types.widgetType.rpc.value) {
             if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
                 targetDeviceAliasId = widget.config.targetDeviceAliasIds[0];
                 if (deviceAliasList[targetDeviceAliasId]) {
@@ -368,14 +431,26 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         });
 
         if (widget.type === types.widgetType.timeseries.value) {
-            $scope.$watch(function () {
-                return widget.config.timewindow;
-            }, function (newTimewindow, prevTimewindow) {
-                if (!angular.equals(newTimewindow, prevTimewindow)) {
-                    unsubscribe();
-                    subscribe();
-                }
-            });
+            widgetContext.useDashboardTimewindow = angular.isDefined(widget.config.useDashboardTimewindow)
+                    ? widget.config.useDashboardTimewindow : true;
+            if (widgetContext.useDashboardTimewindow) {
+                $scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
+                    if (!angular.equals(dashboardTimewindow, newDashboardTimewindow)) {
+                        dashboardTimewindow = newDashboardTimewindow;
+                        unsubscribe();
+                        subscribe();
+                    }
+                });
+            } else {
+                $scope.$watch(function () {
+                    return widgetContext.useDashboardTimewindow ? dashboardTimewindow : widget.config.timewindow;
+                }, function (newTimewindow, prevTimewindow) {
+                    if (!angular.equals(newTimewindow, prevTimewindow)) {
+                        unsubscribe();
+                        subscribe();
+                    }
+                });
+            }
         }
         subscribe();
     }
@@ -488,44 +563,139 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     }*/
 
     function onResetTimewindow() {
-        if (originalTimewindow) {
-            widget.config.timewindow = angular.copy(originalTimewindow);
-            originalTimewindow = null;
+        if (widgetContext.useDashboardTimewindow) {
+            dashboardTimewindowApi.onResetTimewindow();
+        } else {
+            if (originalTimewindow) {
+                widget.config.timewindow = angular.copy(originalTimewindow);
+                originalTimewindow = null;
+            }
         }
     }
 
     function onUpdateTimewindow(startTimeMs, endTimeMs) {
-        if (!originalTimewindow) {
-            originalTimewindow = angular.copy(widget.config.timewindow);
-        }
-        widget.config.timewindow = {
-            history: {
-                fixedTimewindow: {
-                    startTimeMs: startTimeMs,
-                    endTimeMs: endTimeMs
-                }
+        if (widgetContext.useDashboardTimewindow) {
+            dashboardTimewindowApi.onUpdateTimewindow(startTimeMs, endTimeMs);
+        } else {
+            if (!originalTimewindow) {
+                originalTimewindow = angular.copy(widget.config.timewindow);
             }
-        };
+            widget.config.timewindow = timeService.toHistoryTimewindow(widget.config.timewindow, startTimeMs, endTimeMs);
+        }
     }
 
-    function dataUpdated(sourceData, datasourceIndex, dataKeyIndex) {
+    function dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
+        notifyDataLoaded();
         var update = true;
+        var currentData;
+        if ($scope.displayLegend && $scope.legendData.data[datasourceIndex + dataKeyIndex].hidden) {
+            currentData = widgetContext.hiddenData[datasourceIndex + dataKeyIndex];
+        } else {
+            currentData = widgetContext.data[datasourceIndex + dataKeyIndex];
+        }
         if (widget.type === types.widgetType.latest.value) {
-            var prevData = widgetContext.data[datasourceIndex + dataKeyIndex].data;
-            if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.length > 0) {
+            var prevData = currentData.data;
+            if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
                 var prevValue = prevData[0][1];
-                if (prevValue === sourceData[0][1]) {
+                if (prevValue === sourceData.data[0][1]) {
                     update = false;
                 }
             }
         }
         if (update) {
-            widgetContext.data[datasourceIndex + dataKeyIndex].data = sourceData;
-            if (widgetContext.data.length > 1 && !dataUpdateTimer) {
-                dataUpdateTimer = $timeout(onDataUpdated, 100, false);
-            } else {
-                onDataUpdated();
+            if (subscriptionTimewindow && subscriptionTimewindow.realtimeWindowMs) {
+                updateTimewindow();
             }
+            currentData.data = sourceData.data;
+            onDataUpdated();
+            if ($scope.caulculateLegendData) {
+                updateLegend(datasourceIndex + dataKeyIndex, sourceData.data);
+            }
+        }
+        if (apply) {
+            $scope.$digest();
+        }
+    }
+
+    function updateLegend(dataIndex, data) {
+        var legendKeyData = $scope.legendData.data[dataIndex];
+        if ($scope.legendConfig.showMin) {
+            legendKeyData.min = formatValue(calculateMin(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showMax) {
+            legendKeyData.max = formatValue(calculateMax(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showAvg) {
+            legendKeyData.avg = formatValue(calculateAvg(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showTotal) {
+            legendKeyData.total = formatValue(calculateTotal(data), widgetContext.decimals, widgetContext.units);
+        }
+        $scope.$broadcast('legendDataUpdated');
+    }
+
+    function isNumeric(val) {
+        return (val - parseFloat( val ) + 1) >= 0;
+    }
+
+    function formatValue(value, dec, units) {
+        if (angular.isDefined(value) &&
+            value !== null && isNumeric(value)) {
+            var formatted = value;
+            if (angular.isDefined(dec)) {
+                formatted = formatted.toFixed(dec);
+            }
+            formatted = (formatted * 1).toString();
+            if (angular.isDefined(units) && units.length > 0) {
+                formatted += ' ' + units;
+            }
+            return formatted;
+        } else {
+            return '';
+        }
+    }
+
+    function calculateMin(data) {
+        if (data.length > 0) {
+            var result = Number(data[0][1]);
+            for (var i=1;i<data.length;i++) {
+                result = Math.min(result, Number(data[i][1]));
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateMax(data) {
+        if (data.length > 0) {
+            var result = Number(data[0][1]);
+            for (var i=1;i<data.length;i++) {
+                result = Math.max(result, Number(data[i][1]));
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateAvg(data) {
+        if (data.length > 0) {
+            return calculateTotal(data)/data.length;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateTotal(data) {
+        if (data.length > 0) {
+            var result = 0;
+            for (var i = 0; i < data.length; i++) {
+                result += Number(data[i][1]);
+            }
+            return result;
+        } else {
+            return null;
         }
     }
 
@@ -557,14 +727,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function unsubscribe() {
         if (widget.type !== types.widgetType.rpc.value) {
-            if (timer) {
-                $timeout.cancel(timer);
-                timer = null;
-            }
-            if (dataUpdateTimer) {
-                $timeout.cancel(dataUpdateTimer);
-                dataUpdateTimer = null;
-            }
             for (var i in datasourceListeners) {
                 var listener = datasourceListeners[i];
                 datasourceService.unsubscribeFromDatasource(listener);
@@ -573,37 +735,38 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
-    function onTick() {
-        widgetContext.tickUpdate = true;
-        onDataUpdated();
-        timer = $timeout(onTick, 1000, false);
+    function updateRealtimeSubscription(_subscriptionTimewindow) {
+        if (_subscriptionTimewindow) {
+            subscriptionTimewindow = _subscriptionTimewindow;
+        } else {
+            subscriptionTimewindow =
+                timeService.createSubscriptionTimewindow(
+                    widgetContext.useDashboardTimewindow ? dashboardTimewindow : widget.config.timewindow,
+                    widgetContext.timeWindow.stDiff);
+        }
+        updateTimewindow();
+        return subscriptionTimewindow;
+    }
+
+    function hasTimewindow() {
+        if (widgetContext.useDashboardTimewindow) {
+            return angular.isDefined(dashboardTimewindow);
+        } else {
+            return angular.isDefined(widget.config.timewindow);
+        }
     }
 
     function subscribe() {
-        if (widget.type !== types.widgetType.rpc.value) {
-            var index = 0;
-            subscriptionTimewindow.fixedWindow = null;
-            subscriptionTimewindow.realtimeWindowMs = null;
+        if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
+            notifyDataLoading();
             if (widget.type === types.widgetType.timeseries.value &&
-                angular.isDefined(widget.config.timewindow)) {
-                if (angular.isDefined(widget.config.timewindow.realtime)) {
-                    subscriptionTimewindow.realtimeWindowMs = widget.config.timewindow.realtime.timewindowMs;
-                } else if (angular.isDefined(widget.config.timewindow.history)) {
-                    if (angular.isDefined(widget.config.timewindow.history.timewindowMs)) {
-                        var currentTime = (new Date).getTime();
-                        subscriptionTimewindow.fixedWindow = {
-                            startTimeMs: currentTime - widget.config.timewindow.history.timewindowMs,
-                            endTimeMs: currentTime
-                        }
-                    } else {
-                        subscriptionTimewindow.fixedWindow = {
-                            startTimeMs: widget.config.timewindow.history.fixedTimewindow.startTimeMs,
-                            endTimeMs: widget.config.timewindow.history.fixedTimewindow.endTimeMs
-                        }
-                    }
+                hasTimewindow()) {
+                updateRealtimeSubscription();
+                if (subscriptionTimewindow.fixedWindow) {
+                    onDataUpdated();
                 }
-                updateTimewindow();
             }
+            var index = 0;
             for (var i in widget.config.datasources) {
                 var datasource = widget.config.datasources[i];
                 var deviceId = null;
@@ -620,8 +783,15 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     subscriptionTimewindow: subscriptionTimewindow,
                     datasource: datasource,
                     deviceId: deviceId,
-                    dataUpdated: function (data, datasourceIndex, dataKeyIndex) {
-                        dataUpdated(data, datasourceIndex, dataKeyIndex);
+                    dataUpdated: function (data, datasourceIndex, dataKeyIndex, apply) {
+                        dataUpdated(data, datasourceIndex, dataKeyIndex, apply);
+                    },
+                    updateRealtimeSubscription: function() {
+                        this.subscriptionTimewindow = updateRealtimeSubscription();
+                        return this.subscriptionTimewindow;
+                    },
+                    setRealtimeSubscription: function(subscriptionTimewindow) {
+                        updateRealtimeSubscription(angular.copy(subscriptionTimewindow));
                     },
                     datasourceIndex: index
                 };
@@ -635,10 +805,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 datasourceListeners.push(listener);
                 datasourceService.subscribeToDatasource(listener);
             }
-
-            if (subscriptionTimewindow.realtimeWindowMs) {
-                timer = $timeout(onTick, 0, false);
-            }
+        } else {
+            notifyDataLoaded();
         }
     }
 

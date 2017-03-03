@@ -18,14 +18,16 @@ package org.thingsboard.server.dao.model;
 import java.util.UUID;
 
 import com.datastax.driver.core.utils.UUIDs;
+import org.apache.commons.lang3.ArrayUtils;
+import org.thingsboard.server.common.data.kv.Aggregation;
 
 public class ModelConstants {
 
     private ModelConstants() {
     }
-    
+
     public static UUID NULL_UUID = UUIDs.startOf(0);
-    
+
     /**
      * Generic constants.
      */
@@ -38,7 +40,7 @@ public class ModelConstants {
     public static final String ALIAS_PROPERTY = "alias";
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
-    
+
     /**
      * Cassandra user constants.
      */
@@ -50,11 +52,11 @@ public class ModelConstants {
     public static final String USER_FIRST_NAME_PROPERTY = "first_name";
     public static final String USER_LAST_NAME_PROPERTY = "last_name";
     public static final String USER_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    
+
     public static final String USER_BY_EMAIL_COLUMN_FAMILY_NAME = "user_by_email";
     public static final String USER_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "user_by_tenant_and_search_text";
     public static final String USER_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "user_by_customer_and_search_text";
-    
+
     /**
      * Cassandra user_credentials constants.
      */
@@ -64,20 +66,20 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_PASSWORD_PROPERTY = "password";
     public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY = "activate_token";
     public static final String USER_CREDENTIALS_RESET_TOKEN_PROPERTY = "reset_token";
-    
+
     public static final String USER_CREDENTIALS_BY_USER_COLUMN_FAMILY_NAME = "user_credentials_by_user";
     public static final String USER_CREDENTIALS_BY_ACTIVATE_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_activate_token";
     public static final String USER_CREDENTIALS_BY_RESET_TOKEN_COLUMN_FAMILY_NAME = "user_credentials_by_reset_token";
-    
+
     /**
      * Cassandra admin_settings constants.
      */
     public static final String ADMIN_SETTINGS_COLUMN_FAMILY_NAME = "admin_settings";
     public static final String ADMIN_SETTINGS_KEY_PROPERTY = "key";
     public static final String ADMIN_SETTINGS_JSON_VALUE_PROPERTY = "json_value";
-    
+
     public static final String ADMIN_SETTINGS_BY_KEY_COLUMN_FAMILY_NAME = "admin_settings_by_key";
-    
+
     /**
      * Cassandra contact constants.
      */
@@ -97,9 +99,9 @@ public class ModelConstants {
     public static final String TENANT_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String TENANT_REGION_PROPERTY = "region";
     public static final String TENANT_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    
+
     public static final String TENANT_BY_REGION_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "tenant_by_region_and_search_text";
-    
+
     /**
      * Cassandra customer constants.
      */
@@ -107,9 +109,9 @@ public class ModelConstants {
     public static final String CUSTOMER_TENANT_ID_PROPERTY = TENTANT_ID_PROPERTY;
     public static final String CUSTOMER_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String CUSTOMER_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    
+
     public static final String CUSTOMER_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "customer_by_tenant_and_search_text";
-    
+
     /**
      * Cassandra device constants.
      */
@@ -118,12 +120,12 @@ public class ModelConstants {
     public static final String DEVICE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String DEVICE_NAME_PROPERTY = "name";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-    
+
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_and_search_text";
     public static final String DEVICE_BY_TENANT_AND_NAME_VIEW_NAME = "device_by_tenant_and_name";
 
-    
+
     /**
      * Cassandra device_credentials constants.
      */
@@ -132,7 +134,7 @@ public class ModelConstants {
     public static final String DEVICE_CREDENTIALS_CREDENTIALS_TYPE_PROPERTY = "credentials_type";
     public static final String DEVICE_CREDENTIALS_CREDENTIALS_ID_PROPERTY = "credentials_id";
     public static final String DEVICE_CREDENTIALS_CREDENTIALS_VALUE_PROPERTY = "credentials_value";
-    
+
     public static final String DEVICE_CREDENTIALS_BY_DEVICE_COLUMN_FAMILY_NAME = "device_credentials_by_device";
     public static final String DEVICE_CREDENTIALS_BY_CREDENTIALS_ID_COLUMN_FAMILY_NAME = "device_credentials_by_credentials_id";
 
@@ -203,9 +205,9 @@ public class ModelConstants {
     public static final String COMPONENT_DESCRIPTOR_BY_SCOPE_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "component_desc_by_scope_type_search_text";
     public static final String COMPONENT_DESCRIPTOR_BY_ID = "component_desc_by_id";
 
-  /**
-   * Cassandra rule metadata constants.
-   */
+    /**
+     * Cassandra rule metadata constants.
+     */
     public static final String RULE_COLUMN_FAMILY_NAME = "rule";
     public static final String RULE_TENANT_ID_PROPERTY = TENTANT_ID_PROPERTY;
     public static final String RULE_NAME_PROPERTY = "name";
@@ -259,4 +261,51 @@ public class ModelConstants {
     public static final String STRING_VALUE_COLUMN = "str_v";
     public static final String LONG_VALUE_COLUMN = "long_v";
     public static final String DOUBLE_VALUE_COLUMN = "dbl_v";
+
+    public static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
+
+    public static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN)};
+
+    public static final String[] MIN_AGGREGATION_COLUMNS = ArrayUtils.addAll(COUNT_AGGREGATION_COLUMNS,
+            new String[]{min(LONG_VALUE_COLUMN), min(DOUBLE_VALUE_COLUMN), min(BOOLEAN_VALUE_COLUMN), min(STRING_VALUE_COLUMN)});
+    public static final String[] MAX_AGGREGATION_COLUMNS = ArrayUtils.addAll(COUNT_AGGREGATION_COLUMNS,
+            new String[]{max(LONG_VALUE_COLUMN), max(DOUBLE_VALUE_COLUMN), max(BOOLEAN_VALUE_COLUMN), max(STRING_VALUE_COLUMN)});
+    public static final String[] SUM_AGGREGATION_COLUMNS = ArrayUtils.addAll(COUNT_AGGREGATION_COLUMNS,
+            new String[]{sum(LONG_VALUE_COLUMN), sum(DOUBLE_VALUE_COLUMN)});
+    public static final String[] AVG_AGGREGATION_COLUMNS = SUM_AGGREGATION_COLUMNS;
+
+    public static String min(String s) {
+        return "min(" + s + ")";
+    }
+
+    public static String max(String s) {
+        return "max(" + s + ")";
+    }
+
+    public static String sum(String s) {
+        return "sum(" + s + ")";
+    }
+
+    public static String count(String s) {
+        return "count(" + s + ")";
+    }
+
+    public static String[] getFetchColumnNames(Aggregation aggregation) {
+        switch (aggregation) {
+            case NONE:
+                return NONE_AGGREGATION_COLUMNS;
+            case MIN:
+                return MIN_AGGREGATION_COLUMNS;
+            case MAX:
+                return MAX_AGGREGATION_COLUMNS;
+            case SUM:
+                return SUM_AGGREGATION_COLUMNS;
+            case COUNT:
+                return COUNT_AGGREGATION_COLUMNS;
+            case AVG:
+                return AVG_AGGREGATION_COLUMNS;
+            default:
+                throw new RuntimeException("Aggregation type: " + aggregation + " is not supported!");
+        }
+    }
 }

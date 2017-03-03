@@ -24,7 +24,7 @@
 			  <div id="help-container"></div>
           </md-card-title-text>
         </md-card-title>	
-   	    <md-progress-linear md-mode="indeterminate" ng-show="loading"></md-progress-linear>
+   	    <md-progress-linear md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
   	    <span style="min-height: 5px;" flex="" ng-show="!loading"></span>
         <md-card-content>	        		
 			<form name="vm.settingsForm" ng-submit="vm.save()" tb-confirm-on-exit confirm-form="vm.settingsForm">

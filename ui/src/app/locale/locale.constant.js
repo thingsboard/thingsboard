@@ -63,6 +63,18 @@ export default angular.module('thingsboard.locale', [])
                     "import": "Import",
                     "export": "Export"
                 },
+                "aggregation": {
+                    "aggregation": "Aggregation",
+                    "function": "Data aggregation function",
+                    "limit": "Max values",
+                    "group-interval": "Grouping interval",
+                    "min": "Min",
+                    "max": "Max",
+                    "avg": "Average",
+                    "sum": "Sum",
+                    "count": "Count",
+                    "none": "None"
+                },
                 "admin": {
                     "general": "General",
                     "general-settings": "General Settings",
@@ -235,6 +247,7 @@ export default angular.module('thingsboard.locale', [])
                     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
                     "display-title": "Display dashboard title",
+                    "title-color": "Title color",
                     "import": "Import dashboard",
                     "export": "Export dashboard",
                     "export-failed-error": "Unable to export dashboard: {error}",
@@ -246,7 +259,9 @@ export default angular.module('thingsboard.locale', [])
                     "import-widget": "Import widget",
                     "widget-file": "Widget file",
                     "invalid-widget-file-error": "Unable to import widget: Invalid widget data structure.",
-                    "widget-import-missing-aliases-title": "Select missing devices used by widget"
+                    "widget-import-missing-aliases-title": "Select missing devices used by widget",
+                    "open-toolbar": "Open dashboard toolbar",
+                    "close-toolbar": "Close toolbar"
                 },
                 "datakey": {
                     "settings": "Settings",
@@ -416,6 +431,18 @@ export default angular.module('thingsboard.locale', [])
                     "no-return-error": "Function must return value!",
                     "return-type-mismatch": "Function must return value of '{{type}}' type!"
                 },
+                "legend": {
+                    "position": "Legend position",
+                    "show-max": "Show max value",
+                    "show-min": "Show min value",
+                    "show-avg": "Show average value",
+                    "show-total": "Show total value",
+                    "settings": "Legend settings",
+                    "min": "min",
+                    "max": "max",
+                    "avg": "avg",
+                    "total": "total"
+                },
                 "login": {
                     "login": "Login",
                     "request-password-reset": "Request Password Reset",
@@ -465,6 +492,12 @@ export default angular.module('thingsboard.locale', [])
                     "plugin-require-match": "Please select an existing plugin.",
                     "events": "Events",
                     "details": "Details"
+                },
+                "position": {
+                    "top": "Top",
+                    "bottom": "Bottom",
+                    "left": "Left",
+                    "right": "Right"
                 },
                 "profile": {
                     "profile": "Profile",
@@ -547,7 +580,8 @@ export default angular.module('thingsboard.locale', [])
                     "days": "Days",
                     "hours": "Hours",
                     "minutes": "Minutes",
-                    "seconds": "Seconds"
+                    "seconds": "Seconds",
+                    "advanced": "Advanced"
                 },
                 "timewindow": {
                     "days": "{ days, select, 1 { day } other {# days } }",
@@ -674,6 +708,7 @@ export default angular.module('thingsboard.locale', [])
                     "system": "System"
                 },
                 "widget-config": {
+                    "data": "Data",
                     "settings": "Settings",
                     "advanced": "Advanced",
                     "title": "Title",
@@ -688,7 +723,11 @@ export default angular.module('thingsboard.locale', [])
                     "mobile-mode-settings": "Mobile mode settings",
                     "order": "Order",
                     "height": "Height",
+                    "units": "Special symbol to show next to value",
+                    "decimals": "Number of digits after floating point",
                     "timewindow": "Timewindow",
+                    "use-dashboard-timewindow": "Use dashboard timewindow",
+                    "display-legend": "Display legend",
                     "datasources": "Datasources",
                     "datasource-type": "Type",
                     "datasource-parameters": "Parameters",

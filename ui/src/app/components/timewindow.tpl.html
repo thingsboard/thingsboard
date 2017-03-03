@@ -15,9 +15,23 @@
     limitations under the License.
 
 -->
-<section ng-mouseover="onHoverIn()" ng-mouseleave="onHoverOut()" layout='row' layout-align="start center" style="min-height: 32px;">
-	<span ng-click="openEditMode($event)">{{model.displayValue}}</span>
-    <md-button class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-show="isHovered" ng-click="openEditMode($event)">
-     	  <md-icon ng-style="{ color: buttonColor }" aria-label="{{ 'timewindow.date-range' | translate }}" class="material-icons">date_range</md-icon>
+<section layout='row' layout-align="start center" ng-style="{minHeight: '32px', padding: '0 6px'}">
+    <md-button ng-if="direction === 'left'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
+        <md-tooltip md-direction="top">
+            {{ 'timewindow.edit' | translate }}
+        </md-tooltip>
+        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
+    </md-button>
+    <span ng-click="openEditMode($event)">
+        <md-tooltip md-direction="top">
+            {{ 'timewindow.edit' | translate }}
+        </md-tooltip>
+        {{model.displayValue}}
+    </span>
+    <md-button ng-if="direction === 'right'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
+        <md-tooltip md-direction="top">
+            {{ 'timewindow.edit' | translate }}
+        </md-tooltip>
+        <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
     </md-button>	
 </section>

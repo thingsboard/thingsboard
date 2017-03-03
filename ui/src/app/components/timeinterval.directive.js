@@ -26,7 +26,7 @@ export default angular.module('thingsboard.directives.timeinterval', [])
     .name;
 
 /*@ngInject*/
-function Timeinterval($compile, $templateCache, $translate) {
+function Timeinterval($compile, $templateCache, timeService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -39,62 +39,33 @@ function Timeinterval($compile, $templateCache, $translate) {
         scope.mins = 1;
         scope.secs = 0;
 
-        scope.predefIntervals = [
-            {
-                name: $translate.instant('timeinterval.seconds-interval', {seconds: 10}, 'messageformat'),
-                value: 10 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.seconds-interval', {seconds: 30}, 'messageformat'),
-                value: 30 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.minutes-interval', {minutes: 1}, 'messageformat'),
-                value: 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.minutes-interval', {minutes: 2}, 'messageformat'),
-                value: 2 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.minutes-interval', {minutes: 5}, 'messageformat'),
-                value: 5 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.minutes-interval', {minutes: 10}, 'messageformat'),
-                value: 10 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.minutes-interval', {minutes: 30}, 'messageformat'),
-                value: 30 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.hours-interval', {hours: 1}, 'messageformat'),
-                value: 60 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.hours-interval', {hours: 2}, 'messageformat'),
-                value: 2 * 60 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.hours-interval', {hours: 10}, 'messageformat'),
-                value: 10 * 60 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.days-interval', {days: 1}, 'messageformat'),
-                value: 24 * 60 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.days-interval', {days: 7}, 'messageformat'),
-                value: 7 * 24 * 60 * 60 * 1000
-            },
-            {
-                name: $translate.instant('timeinterval.days-interval', {days: 30}, 'messageformat'),
-                value: 30 * 24 * 60 * 60 * 1000
+        scope.advanced = false;
+
+        scope.boundInterval = function() {
+            var min = timeService.boundMinInterval(scope.min);
+            var max = timeService.boundMaxInterval(scope.max);
+            scope.intervals = timeService.getIntervals(scope.min, scope.max);
+            if (scope.rendered) {
+                var newIntervalMs = ngModelCtrl.$viewValue;
+                if (newIntervalMs < min) {
+                    newIntervalMs = min;
+                } else if (newIntervalMs > max) {
+                    newIntervalMs = max;
+                }
+                if (!scope.advanced) {
+                    newIntervalMs = timeService.boundToPredefinedInterval(min, max, newIntervalMs);
+                }
+                if (newIntervalMs !== ngModelCtrl.$viewValue) {
+                    scope.setIntervalMs(newIntervalMs);
+                    scope.updateView();
+                }
             }
-        ];
+        }
 
         scope.setIntervalMs = function (intervalMs) {
+            if (!scope.advanced) {
+                scope.intervalMs = intervalMs;
+            }
             var intervalSeconds = Math.floor(intervalMs / 1000);
             scope.days = Math.floor(intervalSeconds / 86400);
             scope.hours = Math.floor((intervalSeconds % 86400) / 3600);
@@ -105,6 +76,9 @@ function Timeinterval($compile, $templateCache, $translate) {
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 var intervalMs = ngModelCtrl.$viewValue;
+                if (!scope.rendered) {
+                    scope.advanced = !timeService.matchesExistingInterval(scope.min, scope.max, intervalMs);
+                }
                 scope.setIntervalMs(intervalMs);
             }
             scope.rendered = true;
@@ -115,10 +89,15 @@ function Timeinterval($compile, $templateCache, $translate) {
                 return;
             }
             var value = null;
-            var intervalMs = (scope.days * 86400 +
+            var intervalMs;
+            if (!scope.advanced) {
+                intervalMs = scope.intervalMs;
+            } else {
+                intervalMs = (scope.days * 86400 +
                 scope.hours * 3600 +
                 scope.mins * 60 +
                 scope.secs) * 1000;
+            }
             if (!isNaN(intervalMs) && intervalMs > 0) {
                 value = intervalMs;
                 ngModelCtrl.$setValidity('tb-timeinterval', true);
@@ -126,10 +105,43 @@ function Timeinterval($compile, $templateCache, $translate) {
                 ngModelCtrl.$setValidity('tb-timeinterval', !scope.required);
             }
             ngModelCtrl.$setViewValue(value);
+            scope.boundInterval();
         }
 
         scope.$watch('required', function (newRequired, prevRequired) {
             if (angular.isDefined(newRequired) && newRequired !== prevRequired) {
+                scope.updateView();
+            }
+        });
+
+        scope.$watch('min', function (newMin, prevMin) {
+            if (angular.isDefined(newMin) && newMin !== prevMin) {
+                scope.updateView();
+            }
+        });
+
+        scope.$watch('max', function (newMax, prevMax) {
+            if (angular.isDefined(newMax) && newMax !== prevMax) {
+                scope.updateView();
+            }
+        });
+
+        scope.$watch('intervalMs', function (newIntervalMs, prevIntervalMs) {
+            if (angular.isDefined(newIntervalMs) && newIntervalMs !== prevIntervalMs) {
+                scope.updateView();
+            }
+        });
+
+        scope.$watch('advanced', function (newAdvanced, prevAdvanced) {
+            if (angular.isDefined(newAdvanced) && newAdvanced !== prevAdvanced) {
+                if (!scope.advanced) {
+                    scope.intervalMs = (scope.days * 86400 +
+                        scope.hours * 3600 +
+                        scope.mins * 60 +
+                        scope.secs) * 1000;
+                } else {
+                    scope.setIntervalMs(scope.intervalMs);
+                }
                 scope.updateView();
             }
         });
@@ -198,6 +210,8 @@ function Timeinterval($compile, $templateCache, $translate) {
             scope.updateView();
         });
 
+        scope.boundInterval();
+
         $compile(element.contents())(scope);
 
     }
@@ -206,7 +220,10 @@ function Timeinterval($compile, $templateCache, $translate) {
         restrict: "E",
         require: "^ngModel",
         scope: {
-            required: '=ngRequired'
+            required: '=ngRequired',
+            min: '=?',
+            max: '=?',
+            predefinedName: '=?'
         },
         link: linker
     };

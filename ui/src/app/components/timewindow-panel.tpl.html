@@ -17,43 +17,70 @@
 -->
 <form name="theForm" ng-submit="vm.update()">
 	<fieldset ng-disabled="loading">
-		<section layout="column">
-			<md-tabs ng-class="{'tb-headless': vm.historyOnly}" flex md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom>
-				<md-tab label="{{ 'timewindow.realtime' | translate }}">
-					<md-content class="md-padding" layout="column">
-						<span translate>timewindow.last</span>
-						<tb-timeinterval
-							ng-required="vm.timewindow.selectedTab === 0"
-							ng-model="vm.timewindow.realtime.timewindowMs" style="padding-top: 8px;"></tb-timeinterval>
-					</md-content>
-				</md-tab>
-				<md-tab label="{{ 'timewindow.history' | translate }}">
-					<md-content class="md-padding" layout="column">
-						<md-radio-group ng-model="vm.timewindow.history.historyType" class="md-primary">
-							<md-radio-button ng-value=0 class="md-primary md-align-top-left md-radio-interactive">
-								<section layout="column">
-									<span translate>timewindow.last</span>
-									<tb-timeinterval
-										ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 0"
-										ng-show="vm.timewindow.history.historyType === 0"
-										ng-model="vm.timewindow.history.timewindowMs" style="padding-top: 8px;"></tb-timeinterval>
-								</section>	
-							</md-radio-button>
-							<md-radio-button ng-value=1 class="md-primary md-align-top-left md-radio-interactive">
-								<section layout="column">
-									<span translate>timewindow.time-period</span>
-									<tb-datetime-period
-											ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 1"
-											ng-show="vm.timewindow.history.historyType === 1"
-											ng-model="vm.timewindow.history.fixedTimewindow" style="padding-top: 8px;"></tb-datetime-period>
-								</section>	
-							</md-radio-button>
-						</md-radio-group>
-					</md-content>
-				</md-tab>
-			</md-tabs>
+		<md-content style="height: 100%" flex layout="column">
+			<section layout="column">
+				<md-tabs ng-class="{'tb-headless': vm.historyOnly}" flex md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom>
+					<md-tab label="{{ 'timewindow.realtime' | translate }}">
+						<md-content class="md-padding" layout="column">
+							<tb-timeinterval predefined-name="'timewindow.last'"
+								ng-required="vm.timewindow.selectedTab === 0"
+								ng-model="vm.timewindow.realtime.timewindowMs" style="padding-top: 8px;"></tb-timeinterval>
+						</md-content>
+					</md-tab>
+					<md-tab label="{{ 'timewindow.history' | translate }}">
+						<md-content class="md-padding" layout="column" style="padding-top: 8px;">
+							<md-radio-group ng-model="vm.timewindow.history.historyType" class="md-primary">
+								<md-radio-button ng-value=0 aria-label="{{ 'timewindow.last' | translate }}" class="md-primary md-align-top-left md-radio-interactive">
+									<section layout="column">
+										<tb-timeinterval predefined-name="'timewindow.last'"
+											ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 0"
+											ng-show="vm.timewindow.history.historyType === 0"
+											ng-model="vm.timewindow.history.timewindowMs" style="padding-top: 8px;"></tb-timeinterval>
+									</section>
+								</md-radio-button>
+								<md-radio-button ng-value=1 aria-label="{{ 'timewindow.time-period' | translate }}" class="md-primary md-align-top-left md-radio-interactive">
+									<section layout="column">
+										<span translate>timewindow.time-period</span>
+										<tb-datetime-period
+												ng-required="vm.timewindow.selectedTab === 1 && vm.timewindow.history.historyType === 1"
+												ng-show="vm.timewindow.history.historyType === 1"
+												ng-model="vm.timewindow.history.fixedTimewindow" style="padding-top: 8px;"></tb-datetime-period>
+									</section>
+								</md-radio-button>
+							</md-radio-group>
+						</md-content>
+					</md-tab>
+				</md-tabs>
+				<md-content ng-if="vm.aggregation" class="md-padding" layout="column">
+					<md-input-container>
+						<label translate>aggregation.function</label>
+						<md-select ng-model="vm.timewindow.aggregation.type" style="min-width: 150px;">
+							<md-option ng-repeat="type in vm.aggregationTypes" ng-value="type.value">
+								{{type.name | translate}}
+							</md-option>
+						</md-select>
+					</md-input-container>
+					<md-slider-container ng-show="vm.showLimit()">
+						<span translate>aggregation.limit</span>
+						<md-slider flex min="10" max="500" ng-model="vm.timewindow.aggregation.limit" aria-label="limit" id="limit-slider">
+						</md-slider>
+						<md-input-container>
+							<input flex type="number" ng-model="vm.timewindow.aggregation.limit" aria-label="limit" aria-controls="limit-slider">
+						</md-input-container>
+					</md-slider-container>
+					<tb-timeinterval ng-show="vm.showRealtimeAggInterval()" min="vm.minRealtimeAggInterval()" max="vm.maxRealtimeAggInterval()"
+									 predefined-name="'aggregation.group-interval'"
+									 ng-model="vm.timewindow.realtime.interval">
+					</tb-timeinterval>
+					<tb-timeinterval ng-show="vm.showHistoryAggInterval()" min="vm.minHistoryAggInterval()" max="vm.maxHistoryAggInterval()"
+									 predefined-name="'aggregation.group-interval'"
+									 ng-model="vm.timewindow.history.interval">
+					</tb-timeinterval>
+				</md-content>
+			</section>
+			<span flex></span>
 			<section layout="row" layout-alignment="start center">
-			      <span flex></span>
+				  <span flex></span>
 				  <md-button ng-disabled="loading || theForm.$invalid || !theForm.$dirty" type="submit" class="md-raised md-primary">
 				  		{{ 'action.update' | translate }}
 				  </md-button>
@@ -61,6 +88,6 @@
 					  {{ 'action.cancel' | translate }}
 			      </md-button>
 			</section> 
-		</section>
+		</md-content>
 	</fieldset>
 </form>

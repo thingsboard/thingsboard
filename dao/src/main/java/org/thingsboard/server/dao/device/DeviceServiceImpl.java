@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +71,14 @@ public class DeviceServiceImpl implements DeviceService {
         validateId(deviceId, "Incorrect deviceId " + deviceId);
         DeviceEntity deviceEntity = deviceDao.findById(deviceId.getId());
         return getData(deviceEntity);
+    }
+
+    @Override
+    public ListenableFuture<Device> findDeviceByIdAsync(DeviceId deviceId) {
+        log.trace("Executing findDeviceById [{}]", deviceId);
+        validateId(deviceId, "Incorrect deviceId " + deviceId);
+        ListenableFuture<DeviceEntity> deviceEntity = deviceDao.findByIdAsync(deviceId.getId());
+        return Futures.transform(deviceEntity, (Function<? super DeviceEntity, ? extends Device>) input -> getData(input));
     }
 
     @Override

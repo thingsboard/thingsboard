@@ -58,6 +58,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -85,12 +86,20 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.rpcPendingMap = new HashMap<>();
-        refreshAttributes();
+        initAttributes();
     }
 
-    private void refreshAttributes() {
+    private void initAttributes() {
         this.deviceAttributes = new DeviceAttributes(fetchAttributes(DataConstants.CLIENT_SCOPE),
                 fetchAttributes(DataConstants.SERVER_SCOPE), fetchAttributes(DataConstants.SHARED_SCOPE));
+    }
+
+    private void refreshAttributes(DeviceAttributesEventNotificationMsg msg) {
+        if (msg.isDeleted()) {
+            msg.getDeletedKeys().forEach(key -> deviceAttributes.remove(key));
+        } else {
+            deviceAttributes.update(msg.getScope(), msg.getValues());
+        }
     }
 
     void processRpcRequest(ActorContext context, ToDeviceRpcRequestPluginMsg msg) {
@@ -195,10 +204,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
-        //TODO: improve this procedure to fetch only changed attributes.
-        refreshAttributes();
-        //TODO: support attributes deletion
-        Set<AttributeKey> keys = msg.getKeys();
+        refreshAttributes(msg);
+        Set<AttributeKey> keys = msg.getDeletedKeys();
         if (attributeSubscriptions.size() > 0) {
             ToDeviceMsg notification = null;
             if (msg.isDeleted()) {
@@ -360,8 +367,14 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private List<AttributeKvEntry> fetchAttributes(String attributeType) {
-        return systemContext.getAttributesService().findAll(this.deviceId, attributeType);
+    private List<AttributeKvEntry> fetchAttributes(String scope) {
+        try {
+            //TODO: replace this with async operation. Happens only during actor creation, but is still criticla for performance,
+            return systemContext.getAttributesService().findAll(this.deviceId, scope).get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.warning("[{}] Failed to fetch attributes for scope: {}", deviceId, scope);
+            throw new RuntimeException(e);
+        }
     }
 
     public void processCredentialsUpdate(ActorContext context, DeviceCredentialsUpdateNotificationMsg msg) {

@@ -101,11 +101,15 @@ function ExpandFullscreen($compile, $document) {
         if (attrs.expandButtonId) {
             expandButton = $('#' + attrs.expandButtonId, element)[0];
         }
+        var buttonSize;
+        if (attrs.expandButtonSize) {
+            buttonSize = attrs.expandButtonSize;
+        }
 
         var html = '<md-tooltip md-direction="{{expanded ? \'bottom\' : \'top\'}}">' +
             '{{(expanded ? \'fullscreen.exit\' : \'fullscreen.expand\') | translate}}' +
             '</md-tooltip>' +
-            '<ng-md-icon icon="{{expanded ? \'fullscreen_exit\' : \'fullscreen\'}}" ' +
+            '<ng-md-icon ' + (buttonSize ? 'size="'+ buttonSize +'" ' : '') + 'icon="{{expanded ? \'fullscreen_exit\' : \'fullscreen\'}}" ' +
             'options=\'{"easing": "circ-in-out", "duration": 375, "rotation": "none"}\'>' +
             '</ng-md-icon>';
 

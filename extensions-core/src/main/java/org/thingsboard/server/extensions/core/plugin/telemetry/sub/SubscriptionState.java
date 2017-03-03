@@ -17,6 +17,7 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
 import org.thingsboard.server.common.data.id.DeviceId;
 
 import java.util.Map;
@@ -24,16 +25,37 @@ import java.util.Map;
 /**
  * @author Andrew Shvayka
  */
-@Data
 @AllArgsConstructor
 public class SubscriptionState {
 
-    private final String wsSessionId;
-    private final int subscriptionId;
-    private final DeviceId deviceId;
-    private final SubscriptionType type;
-    private final boolean allKeys;
-    private final Map<String, Long> keyStates;
+    @Getter private final String wsSessionId;
+    @Getter private final int subscriptionId;
+    @Getter private final DeviceId deviceId;
+    @Getter private final SubscriptionType type;
+    @Getter private final boolean allKeys;
+    @Getter private final Map<String, Long> keyStates;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SubscriptionState that = (SubscriptionState) o;
+
+        if (subscriptionId != that.subscriptionId) return false;
+        if (wsSessionId != null ? !wsSessionId.equals(that.wsSessionId) : that.wsSessionId != null) return false;
+        if (deviceId != null ? !deviceId.equals(that.deviceId) : that.deviceId != null) return false;
+        return type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = wsSessionId != null ? wsSessionId.hashCode() : 0;
+        result = 31 * result + subscriptionId;
+        result = 31 * result + (deviceId != null ? deviceId.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        return result;
+    }
 
     @Override
     public String toString() {

@@ -140,7 +140,7 @@ cassandra:
     # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
     # Specify max data points per request
-    max_limit_per_request: "${TS_KV_MAX_LIMIT_PER_REQUEST:86400}"
+    min_aggregation_step_ms: "${TS_KV_MIN_AGGREGATION_STEP_MS:100}"
 
 # Actor system parameters
 actors:

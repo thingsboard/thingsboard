@@ -237,7 +237,7 @@
                     <div id="frame_panel" class="tb-split tb-content" style="overflow-y: hidden; position: relative;">
                         <md-content flex layout="column" class="tb-progress-cover" layout-align="center center"
                                     ng-show="!vm.iframeWidgetEditModeInited">
-                            <md-progress-circular md-mode="indeterminate" class="md-warn"
+                            <md-progress-circular ng-disabled="vm.iframeWidgetEditModeInited" md-mode="indeterminate" class="md-warn"
                                                   md-diameter="100"></md-progress-circular>
                         </md-content>
                         <div tb-expand-fullscreen expand-button-id="expand-button" style="width: 100%; height: 100%;">
@@ -253,6 +253,6 @@
         </div>
     </div>
     <md-content flex layout="column" class="tb-progress-cover" layout-align="center center" ng-show="!vm.layoutInited">
-        <md-progress-circular md-mode="indeterminate" class="md-warn" md-diameter="100"></md-progress-circular>
+        <md-progress-circular md-mode="indeterminate" ng-disabled="vm.layoutInited" class="md-warn" md-diameter="100"></md-progress-circular>
     </md-content>
 </div>

@@ -55,8 +55,9 @@ export default class TbCanvasDigitalGauge {
         }
 
         this.localSettings.decimals = (angular.isDefined(settings.decimals) && settings.decimals !== null)
-            ? settings.decimals : 0;
-        this.localSettings.units = settings.units || '';
+            ? settings.decimals : ctx.decimals;
+
+        this.localSettings.units = angular.isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units;
         this.localSettings.hideValue = settings.showValue !== true;
         this.localSettings.hideMinMax = settings.showMinMax !== true;
 
@@ -313,16 +314,6 @@ export default class TbCanvasDigitalGauge {
                         "type": "string",
                         "default": "linear"
                     },
-                    "decimals": {
-                        "title": "Number of digits after floating point",
-                        "type": "number",
-                        "default": 0
-                    },
-                    "units": {
-                        "title": "Special symbol to show next to value",
-                        "type": "string",
-                        "default": ""
-                    },
                     "titleFont": {
                         "title": "Gauge title font",
                         "type": "object",
@@ -556,8 +547,6 @@ export default class TbCanvasDigitalGauge {
                         }
                     ]
                 },
-                "decimals",
-                "units",
                 {
                     "key": "titleFont",
                     "items": [
