@@ -24,7 +24,9 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.handler.codec.mqtt.*;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.SessionId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.core.AttributesUpdateNotification;
+import org.thingsboard.server.common.msg.core.GetAttributesResponse;
 import org.thingsboard.server.common.msg.core.ResponseMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
@@ -88,6 +90,14 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
                     }
                 }
                 break;
+            case GET_ATTRIBUTES_RESPONSE:
+                GetAttributesResponse response = (GetAttributesResponse) msg;
+                if (response.isSuccess()) {
+                    return Optional.of(createMqttPublishMsg(MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, response));
+                } else {
+                    //TODO: push error handling to the gateway
+                }
+                break;
             case ATTRIBUTES_UPDATE_NOTIFICATION:
                 AttributesUpdateNotification notification = (AttributesUpdateNotification) msg;
                 return Optional.of(createMqttPublishMsg(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, notification.getData()));
@@ -115,6 +125,39 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
     @Override
     public long getTimeout() {
         return 0;
+    }
+
+    private MqttMessage createMqttPublishMsg(String topic, GetAttributesResponse response) {
+        JsonObject result = new JsonObject();
+        result.addProperty("id", response.getRequestId());
+        result.addProperty("device", device.getName());
+        if (response.getData().isPresent()) {
+            AttributesKVMsg msg = response.getData().get();
+            if (msg.getClientAttributes() != null) {
+                msg.getClientAttributes().forEach(v -> addValueToJson(result, "value", v));
+            }
+            if (msg.getSharedAttributes() != null) {
+                msg.getSharedAttributes().forEach(v -> addValueToJson(result, "value", v));
+            }
+        }
+        return createMqttPublishMsg(topic, result);
+    }
+
+    private void addValueToJson(JsonObject json, String name, KvEntry entry) {
+        switch (entry.getDataType()) {
+            case BOOLEAN:
+                json.addProperty(name, entry.getBooleanValue().get());
+                break;
+            case STRING:
+                json.addProperty(name, entry.getStrValue().get());
+                break;
+            case DOUBLE:
+                json.addProperty(name, entry.getDoubleValue().get());
+                break;
+            case LONG:
+                json.addProperty(name, entry.getLongValue().get());
+                break;
+        }
     }
 
     private MqttMessage createMqttPublishMsg(String topic, AttributesKVMsg data) {

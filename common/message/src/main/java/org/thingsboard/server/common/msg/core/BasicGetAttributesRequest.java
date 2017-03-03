@@ -47,7 +47,7 @@ public class BasicGetAttributesRequest extends BasicRequest implements GetAttrib
 
     @Override
     public Optional<Set<String>> getClientAttributeNames() {
-        return Optional.of(clientKeys);
+        return Optional.ofNullable(clientKeys);
     }
 
     @Override
