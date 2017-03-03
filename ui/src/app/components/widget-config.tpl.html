@@ -18,7 +18,7 @@
 <md-tabs ng-class="{'tb-headless': (widgetType === types.widgetType.static.value && !displayAdvanced())}" id="tabs" md-border-bottom flex class="tb-absolute-fill"
          md-selected="selectedTab">
     <md-tab label="{{ 'widget-config.data' | translate }}"
-            ng-if="widgetType !== types.widgetType.static.value">
+            ng-show="widgetType !== types.widgetType.static.value">
         <md-content class="md-padding" layout="column">
             <div ng-show="widgetType === types.widgetType.timeseries.value" layout='column' layout-align="center"
                  layout-gt-sm='row' layout-align-gt-sm="start center">
