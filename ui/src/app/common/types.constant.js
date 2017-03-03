@@ -59,6 +59,24 @@ export default angular.module('thingsboard.types', [])
                     name: "aggregation.none"
                 }
             },
+            position: {
+                top: {
+                    value: "top",
+                    name: "position.top"
+                },
+                bottom: {
+                    value: "bottom",
+                    name: "position.bottom"
+                },
+                left: {
+                    value: "left",
+                    name: "position.left"
+                },
+                right: {
+                    value: "right",
+                    name: "position.right"
+                }
+            },
             datasourceType: {
                 function: "function",
                 device: "device"

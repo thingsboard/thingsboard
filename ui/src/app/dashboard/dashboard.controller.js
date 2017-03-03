@@ -32,7 +32,7 @@ export default function DashboardController(types, widgetService, userService,
 
     vm.dashboard = null;
     vm.editingWidget = null;
-    vm.editingWidgetIndex = null;
+    vm.editingWidgetOriginal = null;
     vm.editingWidgetSubtitle = null;
     vm.forceDashboardMobileMode = false;
     vm.isAddingWidget = false;
@@ -304,13 +304,12 @@ export default function DashboardController(types, widgetService, userService,
 
     function editWidget($event, widget) {
         $event.stopPropagation();
-        var newEditingIndex = vm.widgets.indexOf(widget);
-        if (vm.editingWidgetIndex === newEditingIndex) {
+        if (vm.editingWidgetOriginal === widget) {
             $timeout(onEditWidgetClosed());
         } else {
             var transition = !vm.forceDashboardMobileMode;
-            vm.editingWidgetIndex = vm.widgets.indexOf(widget);
-            vm.editingWidget = angular.copy(widget);
+            vm.editingWidgetOriginal = widget;
+            vm.editingWidget = angular.copy(vm.editingWidgetOriginal);
             vm.editingWidgetSubtitle = widgetService.getInstantWidgetInfo(vm.editingWidget).widgetName;
             vm.forceDashboardMobileMode = true;
             vm.isEditingWidget = true;
@@ -319,7 +318,7 @@ export default function DashboardController(types, widgetService, userService,
                 var delayOffset = transition ? 350 : 0;
                 var delay = transition ? 400 : 300;
                 $timeout(function () {
-                    vm.dashboardContainer.highlightWidget(widget, delay);
+                    vm.dashboardContainer.highlightWidget(vm.editingWidgetOriginal, delay);
                 }, delayOffset, false);
             }
         }
@@ -513,19 +512,21 @@ export default function DashboardController(types, widgetService, userService,
     function onRevertWidgetEdit(widgetForm) {
         if (widgetForm.$dirty) {
             widgetForm.$setPristine();
-            vm.editingWidget = angular.copy(vm.widgets[vm.editingWidgetIndex]);
+            vm.editingWidget = angular.copy(vm.editingWidgetOriginal);
         }
     }
 
     function saveWidget(widgetForm) {
         widgetForm.$setPristine();
         var widget = angular.copy(vm.editingWidget);
-        vm.widgets[vm.editingWidgetIndex] = widget;
-        vm.dashboardContainer.highlightWidget(widget, 0);
+        var index = vm.widgets.indexOf(vm.editingWidgetOriginal);
+        vm.widgets[index] = widget;
+        vm.editingWidgetOriginal = widget;
+        vm.dashboardContainer.highlightWidget(vm.editingWidgetOriginal, 0);
     }
 
     function onEditWidgetClosed() {
-        vm.editingWidgetIndex = null;
+        vm.editingWidgetOriginal = null;
         vm.editingWidget = null;
         vm.editingWidgetSubtitle = null;
         vm.isEditingWidget = false;

@@ -212,7 +212,7 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         return deferred.promise;
     }
 
-    function processDeviceAttributes(attributes, query, deferred, successCallback, update) {
+    function processDeviceAttributes(attributes, query, deferred, successCallback, update, apply) {
         attributes = $filter('orderBy')(attributes, query.order);
         if (query.search != null) {
             attributes = $filter('filter')(attributes, {key: query.search});
@@ -222,7 +222,7 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         }
         var startIndex = query.limit * (query.page - 1);
         responseData.data = attributes.slice(startIndex, startIndex + query.limit);
-        successCallback(responseData, update);
+        successCallback(responseData, update, apply);
         if (deferred) {
             deferred.resolve();
         }
@@ -236,13 +236,13 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
             if (das.attributes) {
                 processDeviceAttributes(das.attributes, query, deferred, successCallback);
                 das.subscriptionCallback = function(attributes) {
-                    processDeviceAttributes(attributes, query, null, successCallback, true);
+                    processDeviceAttributes(attributes, query, null, successCallback, true, true);
                 }
             } else {
                 das.subscriptionCallback = function(attributes) {
-                    processDeviceAttributes(attributes, query, deferred, successCallback);
+                    processDeviceAttributes(attributes, query, deferred, successCallback, false, true);
                     das.subscriptionCallback = function(attributes) {
-                        processDeviceAttributes(attributes, query, null, successCallback, true);
+                        processDeviceAttributes(attributes, query, null, successCallback, true, true);
                     }
                 }
             }

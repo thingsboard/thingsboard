@@ -17,7 +17,7 @@
 -->
 <md-content flex layout="column" class="tb-progress-cover" layout-align="center center"
    ng-show="(vm.loading() || vm.dashboardLoading) && !vm.isEdit">
-	<md-progress-circular md-mode="indeterminate" class="md-warn" md-diameter="100"></md-progress-circular>
+	<md-progress-circular md-mode="indeterminate" ng-disabled="!vm.loading() && !vm.dashboardLoading || vm.isEdit" class="md-warn" md-diameter="100"></md-progress-circular>
 </md-content>
 <md-menu md-position-mode="target target" tb-mousepoint-menu>
 	<md-content id="gridster-parent" class="tb-dashboard-content" flex layout-wrap ng-click="" tb-contextmenu="vm.openDashboardContextMenu($event, $mdOpenMousepointMenu)">
@@ -25,7 +25,7 @@
 			<div id="gridster-child" gridster="vm.gridsterOpts">
 				<ul>
 		<!-- 			    			ng-click="widgetClicked($event, widget)"  -->
-					<li gridster-item="vm.widgetItemMap" ng-repeat="widget in vm.widgets">
+					<li gridster-item="vm.widgetItemMap" class="tb-noselect" ng-repeat="widget in vm.widgets">
 						<md-menu md-position-mode="target target" tb-mousepoint-menu>
 							<div tb-expand-fullscreen
 								 		fullscreen-background-style="vm.dashboardStyle"

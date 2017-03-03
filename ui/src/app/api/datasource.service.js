@@ -557,7 +557,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                             data.push(series);
                         }
                     }
-                    if (data.length > 0 || (startTs && endTs)) {
+                    if (data || (startTs && endTs)) {
                         datasourceData[datasourceKey].data = data;
                         for (var i2 in listeners) {
                             var listener = listeners[i2];

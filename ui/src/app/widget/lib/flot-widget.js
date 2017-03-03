@@ -109,10 +109,7 @@ export default class TbFlot {
                 });
             }
             divElement.append(labelSpan);
-            var valueContent = value.toFixed(trackDecimals);
-            if (units) {
-                valueContent += ' ' + units;
-            }
+            var valueContent = tbFlot.ctx.utils.formatValue(value, trackDecimals, units);
             if (angular.isNumber(percent)) {
                 valueContent += ' (' + Math.round(percent) + ' %)';
             }
@@ -134,7 +131,7 @@ export default class TbFlot {
         if (this.chartType === 'pie') {
             ctx.tooltipFormatter = function(item) {
                 var divElement = seriesInfoDiv(item.series.label, item.series.color,
-                    item.datapoint[1][0][1], tbFlot.ctx.settings.units, tbFlot.ctx.trackDecimals, true, item.series.percent);
+                    item.datapoint[1][0][1], tbFlot.ctx.trackUnits, tbFlot.ctx.trackDecimals, true, item.series.percent);
                 return divElement.prop('outerHTML');
             };
         } else {
@@ -157,7 +154,7 @@ export default class TbFlot {
                         continue;
                     }
                     var divElement = seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
-                        seriesHoverInfo.value, tbFlot.ctx.settings.units, tbFlot.ctx.trackDecimals, seriesHoverInfo.index === seriesIndex);
+                        seriesHoverInfo.value, tbFlot.ctx.trackUnits, tbFlot.ctx.trackDecimals, seriesHoverInfo.index === seriesIndex);
                     content += divElement.prop('outerHTML');
                 }
                 return content;
@@ -165,7 +162,11 @@ export default class TbFlot {
         }
 
         var settings = ctx.settings;
-        ctx.trackDecimals = angular.isDefined(settings.decimals) ? settings.decimals : 1;
+        ctx.trackDecimals = angular.isDefined(settings.decimals) ?
+            settings.decimals : ctx.decimals;
+
+        ctx.trackUnits = angular.isDefined(settings.units) ? settings.units : ctx.units;
+
         ctx.tooltipIndividual = this.chartType === 'pie' || (angular.isDefined(settings.tooltipIndividual) ? settings.tooltipIndividual : false);
         ctx.tooltipCumulative = angular.isDefined(settings.tooltipCumulative) ? settings.tooltipCumulative : false;
 
@@ -188,22 +189,9 @@ export default class TbFlot {
             },
             selection : { mode : ctx.isMobile ? null : 'x' },
             legend : {
-                show: true,
-                position : 'nw',
-                labelBoxBorderColor: '#CCCCCC',
-                backgroundColor : '#F0F0F0',
-                backgroundOpacity: 0.85,
-                font: angular.copy(font)
+                show: false
             }
         };
-        if (settings.legend) {
-            options.legend.show = settings.legend.show !== false;
-            options.legend.position = settings.legend.position || 'nw';
-            options.legend.labelBoxBorderColor = settings.legend.labelBoxBorderColor || null;
-            options.legend.backgroundColor = settings.legend.backgroundColor || null;
-            options.legend.backgroundOpacity = angular.isDefined(settings.legend.backgroundOpacity) ?
-                settings.legend.backgroundOpacity : 0.85;
-        }
 
         if (this.chartType === 'line' || this.chartType === 'bar') {
             options.xaxis = {
@@ -233,7 +221,7 @@ export default class TbFlot {
                     options.yaxis.tickFormatter = function() {
                         return '';
                     };
-                } else if (settings.units && settings.units.length > 0) {
+                } else if (ctx.trackUnits && ctx.trackUnits.length > 0) {
                     options.yaxis.tickFormatter = function(value, axis) {
                         var factor = axis.tickDecimals ? Math.pow(10, axis.tickDecimals) : 1,
                             formatted = "" + Math.round(value * factor) / factor;
@@ -245,7 +233,7 @@ export default class TbFlot {
                                 formatted = (precision ? formatted : formatted + ".") + ("" + factor).substr(1, axis.tickDecimals - precision);
                             }
                         }
-                        formatted += ' ' + tbFlot.ctx.settings.units;
+                        formatted += ' ' + tbFlot.ctx.trackUnits;
                         return formatted;
                     };
                 }
@@ -446,47 +434,6 @@ export default class TbFlot {
                         "title": "Font size",
                         "type": "number",
                         "default": 10
-                    },
-                    "decimals": {
-                        "title": "Number of digits after floating point",
-                        "type": "number",
-                        "default": 1
-                    },
-                    "units": {
-                        "title": "Special symbol to show next to value",
-                        "type": "string",
-                        "default": ""
-                    },
-                    "legend": {
-                        "title": "Legend settings",
-                        "type": "object",
-                        "properties": {
-                            "show": {
-                                "title": "Show legend",
-                                "type": "boolean",
-                                "default": true
-                            },
-                            "position": {
-                                "title": "Position",
-                                "type": "string",
-                                "default": "nw"
-                            },
-                            "labelBoxBorderColor": {
-                                "title": "Label box border color",
-                                "type": "string",
-                                "default": "#CCCCCC"
-                            },
-                            "backgroundColor": {
-                                "title": "Background color",
-                                "type": "string",
-                                "default": "#F0F0F0"
-                            },
-                            "backgroundOpacity": {
-                                "title": "Background opacity",
-                                "type": "number",
-                                "default": 0.85
-                            }
-                        }
                     }
                 },
                 "required": []
@@ -511,47 +458,7 @@ export default class TbFlot {
                     "key": "fontColor",
                     "type": "color"
                 },
-                "fontSize",
-                "decimals",
-                "units",
-                {
-                    "key": "legend",
-                    "items": [
-                        "legend.show",
-                        {
-                            "key": "legend.position",
-                            "type": "rc-select",
-                            "multiple": false,
-                            "items": [
-                                {
-                                    "value": "nw",
-                                    "label": "North-west"
-                                },
-                                {
-                                    "value": "ne",
-                                    "label": "North-east"
-                                },
-                                {
-                                    "value": "sw",
-                                    "label": "South-west"
-                                },
-                                {
-                                    "value": "se",
-                                    "label": "Soth-east"
-                                }
-                            ]
-                        },
-                        {
-                            "key": "legend.labelBoxBorderColor",
-                            "type": "color"
-                        },
-                        {
-                            "key": "legend.backgroundColor",
-                            "type": "color"
-                        },
-                        "legend.backgroundOpacity"
-                    ]
-                }
+                "fontSize"
             ]
         }
     }
@@ -581,16 +488,6 @@ export default class TbFlot {
                         "title": "Font size",
                         "type": "number",
                         "default": 10
-                    },
-                    "decimals": {
-                        "title": "Number of digits after floating point",
-                        "type": "number",
-                        "default": 1
-                    },
-                    "units": {
-                        "title": "Special symbol to show next to value",
-                        "type": "string",
-                        "default": ""
                     },
                     "tooltipIndividual": {
                         "title": "Hover individual points",
@@ -635,37 +532,6 @@ export default class TbFlot {
                                 "title": "Show horizontal lines",
                                 "type": "boolean",
                                 "default": true
-                            }
-                        }
-                    },
-                    "legend": {
-                        "title": "Legend settings",
-                        "type": "object",
-                        "properties": {
-                            "show": {
-                                "title": "Show legend",
-                                "type": "boolean",
-                                "default": true
-                            },
-                            "position": {
-                                "title": "Position",
-                                "type": "string",
-                                "default": "nw"
-                            },
-                            "labelBoxBorderColor": {
-                                "title": "Label box border color",
-                                "type": "string",
-                                "default": "#CCCCCC"
-                            },
-                            "backgroundColor": {
-                                "title": "Background color",
-                                "type": "string",
-                                "default": "#F0F0F0"
-                            },
-                            "backgroundOpacity": {
-                                "title": "Background opacity",
-                                "type": "number",
-                                "default": 0.85
                             }
                         }
                     },
@@ -732,8 +598,6 @@ export default class TbFlot {
                     "type": "color"
                 },
                 "fontSize",
-                "decimals",
-                "units",
                 "tooltipIndividual",
                 "tooltipCumulative",
                 {
@@ -754,44 +618,6 @@ export default class TbFlot {
                         "grid.outlineWidth",
                         "grid.verticalLines",
                         "grid.horizontalLines"
-                    ]
-                },
-                {
-                    "key": "legend",
-                    "items": [
-                        "legend.show",
-                        {
-                            "key": "legend.position",
-                            "type": "rc-select",
-                            "multiple": false,
-                            "items": [
-                                {
-                                    "value": "nw",
-                                    "label": "North-west"
-                                },
-                                {
-                                    "value": "ne",
-                                    "label": "North-east"
-                                },
-                                {
-                                    "value": "sw",
-                                    "label": "South-west"
-                                },
-                                {
-                                    "value": "se",
-                                    "label": "Soth-east"
-                                }
-                            ]
-                        },
-                        {
-                            "key": "legend.labelBoxBorderColor",
-                            "type": "color"
-                        },
-                        {
-                            "key": "legend.backgroundColor",
-                            "type": "color"
-                        },
-                        "legend.backgroundOpacity"
                     ]
                 },
                 {

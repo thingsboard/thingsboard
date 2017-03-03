@@ -203,6 +203,16 @@ md-sidenav {
  * THINGSBOARD SPECIFIC
  ***********************/
 
+.tb-noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
 .tb-readonly-label {
   color: rgba(0,0,0,0.54);
 }
@@ -217,6 +227,35 @@ label {
     color: rgba(0,0,0,0.54);
     font-size: 12px;
   }
+}
+
+/***********************
+ * Flow
+ ***********************/
+$previewSize: 100px;
+
+.file-input {
+  display: none;
+}
+
+.tb-flow-drop {
+  position: relative;
+  border: dashed 2px;
+  height: $previewSize;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  label {
+    width: 100%;
+    font-size: 24px;
+    text-align: center;
+  }
+}
+
+.tb-container {
+  position: relative;
+  margin-top: 32px;
+  padding: 10px 0;
 }
 
 /***********************

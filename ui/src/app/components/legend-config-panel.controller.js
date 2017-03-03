@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$previewSize: 100px;
 
-.tb-file-select-container {
-  position: relative;
-  height: $previewSize;
-  width: 100%;
-}
+/*@ngInject*/
+export default function LegendConfigPanelController(mdPanelRef, $scope, types, legendConfig, onLegendConfigUpdate) {
 
-.tb-file-preview {
-  max-width: $previewSize;
-  max-height: $previewSize;
-  width: auto;
-  height: auto;
-}
+    var vm = this;
+    vm._mdPanelRef = mdPanelRef;
+    vm.legendConfig = legendConfig;
+    vm.onLegendConfigUpdate = onLegendConfigUpdate;
+    vm.positions = types.position;
 
-.tb-file-clear-container {
-  width: 48px;
-  height: $previewSize;
-  position: relative;
-  float: right;
-}
-.tb-file-clear-btn {
-  position: absolute !important;
-  top: 50%;
-  transform: translate(0%,-50%) !important;
+    vm._mdPanelRef.config.onOpenComplete = function () {
+        $scope.theForm.$setPristine();
+    }
+
+    $scope.$watch('vm.legendConfig', function () {
+        if (onLegendConfigUpdate) {
+            onLegendConfigUpdate(vm.legendConfig);
+        }
+    }, true);
 }

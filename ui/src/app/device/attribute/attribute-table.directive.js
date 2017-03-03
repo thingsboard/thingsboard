@@ -107,12 +107,14 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             }
         });
 
-        function success(attributes, update) {
+        function success(attributes, update, apply) {
             scope.attributes = attributes;
             if (!update) {
                 scope.selectedAttributes = [];
             }
-            scope.$digest();
+            if (apply) {
+                scope.$digest();
+            }
         }
 
         scope.getDeviceAttributes = function(forceUpdate) {
@@ -126,8 +128,8 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 };
                 scope.checkSubscription();
                 scope.attributesDeferred = deviceService.getDeviceAttributes(scope.deviceId, scope.attributeScope.value,
-                    scope.query, function(attributes, update) {
-                        success(attributes, update || forceUpdate);
+                    scope.query, function(attributes, update, apply) {
+                        success(attributes, update || forceUpdate, apply);
                     }
                 );
             } else {

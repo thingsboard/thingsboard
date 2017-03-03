@@ -142,7 +142,7 @@ export default function AppConfig($provide,
             .backgroundPalette('tb-primary');
 
         $mdThemingProvider.setDefaultTheme('default');
-        $mdThemingProvider.alwaysWatchTheme(true);
+        //$mdThemingProvider.alwaysWatchTheme(true);
     }
 
 }

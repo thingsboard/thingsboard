@@ -19,7 +19,7 @@ import 'javascript-detect-element-resize/detect-element-resize';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, tbRaf, types, utils, timeService,
+export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
                                          datasourceService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
                                          dashboardTimewindowApi, widget, deviceAliasList, widgetType) {
 
@@ -66,8 +66,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         isEdit: isEdit,
         isMobile: false,
         settings: widget.config.settings,
+        units: widget.config.units || '',
+        decimals: angular.isDefined(widget.config.decimals) ? widget.config.decimals : 2,
         datasources: widget.config.datasources,
         data: [],
+        hiddenData: [],
         timeWindow: {
             stDiff: stDiff
         },
@@ -82,6 +85,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             sendTwoWayCommand: function(method, params, timeout) {
                 return sendCommand(false, method, params, timeout);
             }
+        },
+        utils: {
+            formatValue: formatValue
         }
     };
 
@@ -137,21 +143,15 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         $scope.widgetErrorData = utils.processWidgetException(e);
     }
 
-    function notifyDataLoaded(apply) {
+    function notifyDataLoaded() {
         if ($scope.loadingData === true) {
             $scope.loadingData = false;
-            if (apply) {
-                $scope.$digest();
-            }
         }
     }
 
-    function notifyDataLoading(apply) {
+    function notifyDataLoading() {
         if ($scope.loadingData === false) {
             $scope.loadingData = true;
-            if (apply) {
-                $scope.$digest();
-            }
         }
     }
 
@@ -292,7 +292,33 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         onInit();
     }
 
+/*    scope.legendData = {
+        keys: [],
+        data: []
+
+        key: {
+             label: '',
+             color: ''
+             dataIndex: 0
+        }
+        data: {
+             min: null,
+             max: null,
+             avg: null,
+             total: null
+        }
+    };*/
+
+
     function initialize() {
+
+        $scope.caulculateLegendData = $scope.displayLegend &&
+            widget.type === types.widgetType.timeseries.value &&
+            ($scope.legendConfig.showMin === true ||
+             $scope.legendConfig.showMax === true ||
+             $scope.legendConfig.showAvg === true ||
+             $scope.legendConfig.showTotal === true);
+
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             for (var i in widget.config.datasources) {
                 var datasource = angular.copy(widget.config.datasources[i]);
@@ -304,7 +330,39 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                         data: []
                     };
                     widgetContext.data.push(datasourceData);
+                    widgetContext.hiddenData.push({data: []});
+                    if ($scope.displayLegend) {
+                        var legendKey = {
+                            label: dataKey.label,
+                            color: dataKey.color,
+                            dataIndex: Number(i) + Number(a)
+                        };
+                        $scope.legendData.keys.push(legendKey);
+                        var legendKeyData = {
+                            min: null,
+                            max: null,
+                            avg: null,
+                            total: null,
+                            hidden: false
+                        };
+                        $scope.legendData.data.push(legendKeyData);
+                    }
                 }
+            }
+            if ($scope.displayLegend) {
+                $scope.legendData.keys = $filter('orderBy')($scope.legendData.keys, '+label');
+                $scope.$on('legendDataHiddenChanged', function (event, index) {
+                    event.stopPropagation();
+                    var hidden = $scope.legendData.data[index].hidden;
+                    if (hidden) {
+                        widgetContext.hiddenData[index].data = widgetContext.data[index].data;
+                        widgetContext.data[index].data = [];
+                    } else {
+                        widgetContext.data[index].data = widgetContext.hiddenData[index].data;
+                        widgetContext.hiddenData[index].data = [];
+                    }
+                    onDataUpdated();
+                });
             }
         } else if (widget.type === types.widgetType.rpc.value) {
             if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
@@ -527,10 +585,16 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     }
 
     function dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
-        notifyDataLoaded(apply);
+        notifyDataLoaded();
         var update = true;
+        var currentData;
+        if ($scope.displayLegend && $scope.legendData.data[datasourceIndex + dataKeyIndex].hidden) {
+            currentData = widgetContext.hiddenData[datasourceIndex + dataKeyIndex];
+        } else {
+            currentData = widgetContext.data[datasourceIndex + dataKeyIndex];
+        }
         if (widget.type === types.widgetType.latest.value) {
-            var prevData = widgetContext.data[datasourceIndex + dataKeyIndex].data;
+            var prevData = currentData.data;
             if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
                 var prevValue = prevData[0][1];
                 if (prevValue === sourceData.data[0][1]) {
@@ -542,8 +606,96 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             if (subscriptionTimewindow && subscriptionTimewindow.realtimeWindowMs) {
                 updateTimewindow();
             }
-            widgetContext.data[datasourceIndex + dataKeyIndex].data = sourceData.data;
+            currentData.data = sourceData.data;
             onDataUpdated();
+            if ($scope.caulculateLegendData) {
+                updateLegend(datasourceIndex + dataKeyIndex, sourceData.data);
+            }
+        }
+        if (apply) {
+            $scope.$digest();
+        }
+    }
+
+    function updateLegend(dataIndex, data) {
+        var legendKeyData = $scope.legendData.data[dataIndex];
+        if ($scope.legendConfig.showMin) {
+            legendKeyData.min = formatValue(calculateMin(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showMax) {
+            legendKeyData.max = formatValue(calculateMax(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showAvg) {
+            legendKeyData.avg = formatValue(calculateAvg(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showTotal) {
+            legendKeyData.total = formatValue(calculateTotal(data), widgetContext.decimals, widgetContext.units);
+        }
+        $scope.$broadcast('legendDataUpdated');
+    }
+
+    function isNumeric(val) {
+        return (val - parseFloat( val ) + 1) >= 0;
+    }
+
+    function formatValue(value, dec, units) {
+        if (angular.isDefined(value) &&
+            value !== null && isNumeric(value)) {
+            var formatted = value;
+            if (angular.isDefined(dec)) {
+                formatted = formatted.toFixed(dec);
+            }
+            formatted = (formatted * 1).toString();
+            if (angular.isDefined(units) && units.length > 0) {
+                formatted += ' ' + units;
+            }
+            return formatted;
+        } else {
+            return '';
+        }
+    }
+
+    function calculateMin(data) {
+        if (data.length > 0) {
+            var result = Number(data[0][1]);
+            for (var i=1;i<data.length;i++) {
+                result = Math.min(result, Number(data[i][1]));
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateMax(data) {
+        if (data.length > 0) {
+            var result = Number(data[0][1]);
+            for (var i=1;i<data.length;i++) {
+                result = Math.max(result, Number(data[i][1]));
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateAvg(data) {
+        if (data.length > 0) {
+            return calculateTotal(data)/data.length;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateTotal(data) {
+        if (data.length > 0) {
+            var result = 0;
+            for (var i = 0; i < data.length; i++) {
+                result += Number(data[i][1]);
+            }
+            return result;
+        } else {
+            return null;
         }
     }
 

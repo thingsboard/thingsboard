@@ -431,6 +431,18 @@ export default angular.module('thingsboard.locale', [])
                     "no-return-error": "Function must return value!",
                     "return-type-mismatch": "Function must return value of '{{type}}' type!"
                 },
+                "legend": {
+                    "position": "Legend position",
+                    "show-max": "Show max value",
+                    "show-min": "Show min value",
+                    "show-avg": "Show average value",
+                    "show-total": "Show total value",
+                    "settings": "Legend settings",
+                    "min": "min",
+                    "max": "max",
+                    "avg": "avg",
+                    "total": "total"
+                },
                 "login": {
                     "login": "Login",
                     "request-password-reset": "Request Password Reset",
@@ -480,6 +492,12 @@ export default angular.module('thingsboard.locale', [])
                     "plugin-require-match": "Please select an existing plugin.",
                     "events": "Events",
                     "details": "Details"
+                },
+                "position": {
+                    "top": "Top",
+                    "bottom": "Bottom",
+                    "left": "Left",
+                    "right": "Right"
                 },
                 "profile": {
                     "profile": "Profile",
@@ -690,6 +708,7 @@ export default angular.module('thingsboard.locale', [])
                     "system": "System"
                 },
                 "widget-config": {
+                    "data": "Data",
                     "settings": "Settings",
                     "advanced": "Advanced",
                     "title": "Title",
@@ -704,8 +723,11 @@ export default angular.module('thingsboard.locale', [])
                     "mobile-mode-settings": "Mobile mode settings",
                     "order": "Order",
                     "height": "Height",
+                    "units": "Special symbol to show next to value",
+                    "decimals": "Number of digits after floating point",
                     "timewindow": "Timewindow",
                     "use-dashboard-timewindow": "Use dashboard timewindow",
+                    "display-legend": "Display legend",
                     "datasources": "Datasources",
                     "datasource-type": "Type",
                     "datasource-parameters": "Parameters",

@@ -95,6 +95,8 @@ section.tb-dashboard-toolbar {
           opacity: 0.5;
           @include transition(opacity .3s cubic-bezier(.55,0,.55,.2) .2s);
           md-icon {
+            position: absolute;
+            top: 25%;
             margin: 0;
             line-height: 18px;
             height: 18px;
@@ -111,6 +113,7 @@ section.tb-dashboard-toolbar {
         min-height: 36px;
         height: 36px;
         md-fab-actions {
+          margin-top: 0px;
           .close-action {
             margin-right: -18px;
           }
