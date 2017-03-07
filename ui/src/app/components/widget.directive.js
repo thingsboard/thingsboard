@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import './widget.scss';
+
+import thingsboardLegend from './legend.directive';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardApiDatasource from '../api/datasource.service';
 
 import WidgetController from './widget.controller';
 
-export default angular.module('thingsboard.directives.widget', [thingsboardTypes, thingsboardApiDatasource])
+export default angular.module('thingsboard.directives.widget', [thingsboardLegend, thingsboardTypes, thingsboardApiDatasource])
     .controller('WidgetController', WidgetController)
     .directive('tbWidget', Widget)
     .name;
 
 /*@ngInject*/
-function Widget($controller, $compile, widgetService) {
+function Widget($controller, $compile, types, widgetService) {
     return {
         scope: true,
         link: function (scope, elem, attrs) {
@@ -50,10 +54,14 @@ function Widget($controller, $compile, widgetService) {
                 }
             });
 
-            elem.html('<div flex layout="column" layout-align="center center" style="height: 100%;">' +
-                      '     <md-progress-circular md-mode="indeterminate" class="md-accent md-hue-2" md-diameter="120"></md-progress-circular>' +
-                      '</div>');
-            $compile(elem.contents())(scope);
+            //TODO:
+            //elem.html('<div id="progress-cover" flex layout="column" layout-align="center center" style="height: 100%;">' +
+            //          '     <md-progress-circular md-mode="indeterminate" class="md-accent md-hue-2" md-diameter="120"></md-progress-circular>' +
+            //          '</div>');
+
+            //var progressElement = angular.element(elem[0].querySelector('#progress-cover'));
+            //var progressScope = scope.$new();
+            //$compile(elem.contents())(progressScope);
 
             widgetService.getWidgetInfo(widget.bundleAlias, widget.typeAlias, widget.isSystemType).then(
                 function(widgetInfo) {
@@ -63,6 +71,8 @@ function Widget($controller, $compile, widgetService) {
 
             function loadFromWidgetInfo(widgetInfo) {
 
+                scope.loadingData = true;
+
                 elem.addClass("tb-widget");
 
                 var widgetNamespace = "widget-type-" + (widget.isSystemType ? 'sys-' : '')
@@ -70,63 +80,93 @@ function Widget($controller, $compile, widgetService) {
                     + widget.typeAlias;
 
                 elem.addClass(widgetNamespace);
-                elem.html('<div id="container">' + widgetInfo.templateHtml + '</div>');
+
+                var html = '<div class="tb-absolute-fill tb-widget-error" ng-if="widgetErrorData">' +
+                    '<span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>' +
+                    '</div>' +
+                    '<div class="tb-absolute-fill tb-widget-loading" ng-show="loadingData" layout="column" layout-align="center center">' +
+                    '<md-progress-circular md-mode="indeterminate" ng-disabled="!loadingData" class="md-accent" md-diameter="40"></md-progress-circular>' +
+                    '</div>';
+
+                scope.displayLegend = angular.isDefined(widget.config.showLegend) ?
+                    widget.config.showLegend : widget.type === types.widgetType.timeseries.value;
+
+
+                var containerHtml = '<div id="container">' + widgetInfo.templateHtml + '</div>';
+                if (scope.displayLegend) {
+                    scope.legendConfig = widget.config.legendConfig ||
+                        {
+                            position: types.position.bottom.value,
+                            showMin: false,
+                            showMax: false,
+                            showAvg: widget.type === types.widgetType.timeseries.value,
+                            showTotal: false
+                        };
+                    scope.legendData = {
+                        keys: [],
+                        data: []
+                    };
+
+                    var layoutType;
+                    if (scope.legendConfig.position === types.position.top.value ||
+                        scope.legendConfig.position === types.position.bottom.value) {
+                        layoutType = 'column';
+                    } else {
+                        layoutType = 'row';
+                    }
+
+                    var legendStyle;
+                    switch(scope.legendConfig.position) {
+                        case types.position.top.value:
+                            legendStyle = 'padding-bottom: 8px;';
+                            break;
+                        case types.position.bottom.value:
+                            legendStyle = 'padding-top: 8px;';
+                            break;
+                        case types.position.left.value:
+                            legendStyle = 'padding-right: 0px;';
+                            break;
+                        case types.position.right.value:
+                            legendStyle = 'padding-left: 0px;';
+                            break;
+                    }
+
+                    var legendHtml = '<tb-legend style="'+legendStyle+'" legend-config="legendConfig" legend-data="legendData"></tb-legend>';
+                    containerHtml = '<div flex id="widget-container">' + containerHtml + '</div>';
+                    html += '<div class="tb-absolute-fill" layout="'+layoutType+'">';
+                    if (scope.legendConfig.position === types.position.top.value ||
+                        scope.legendConfig.position === types.position.left.value) {
+                        html += legendHtml;
+                        html += containerHtml;
+                    } else {
+                        html += containerHtml;
+                        html += legendHtml;
+                    }
+                    html += '</div>';
+                } else {
+                    html += containerHtml;
+                }
+
+                //TODO:
+                /*if (progressElement) {
+                    progressScope.$destroy();
+                    progressScope = null;
+
+                    progressElement.remove();
+                    progressElement = null;
+                }*/
+
+                elem.html(html);
+
+                var containerElement = scope.displayLegend ? angular.element(elem[0].querySelector('#widget-container')) : elem;
 
                 $compile(elem.contents())(scope);
 
-                angular.extend(locals, {$scope: scope, $element: elem});
+                var widgetType = widgetService.getWidgetTypeFunction(widget.bundleAlias, widget.typeAlias, widget.isSystemType);
 
-                var controllerFunctionBody = 'var fns = { init: null, redraw: null, destroy: null };';
-                controllerFunctionBody += widgetInfo.controllerScript;
-                controllerFunctionBody += '' +
-                    'angular.extend(this, $controller(\'WidgetController\',' +
-                    '{' +
-                    '$scope: $scope,' +
-                    '$timeout: $timeout,' +
-                    '$window: $window,' +
-                    '$element: $element,' +
-                    '$log: $log,' +
-                    'types: types,' +
-                    'visibleRect: visibleRect,' +
-                    'datasourceService: datasourceService,' +
-                    'deviceService: deviceService,' +
-                    'isPreview: isPreview,' +
-                    'widget: widget,' +
-                    'deviceAliasList: deviceAliasList,' +
-                    'fns: fns' +
-                    '}));' +
-                    '';
+                angular.extend(locals, {$scope: scope, $element: containerElement, widgetType: widgetType});
 
-                var controllerFunction = new Function("$scope",
-                    "$timeout",
-                    "$window",
-                    "$element",
-                    "$log",
-                    'types',
-                    "visibleRect",
-                    "datasourceService",
-                    "deviceService",
-                    "$controller",
-                    "isPreview",
-                    "widget",
-                    "deviceAliasList",
-                    controllerFunctionBody);
-
-                controllerFunction.$inject = ["$scope",
-                    "$timeout",
-                    "$window",
-                    "$element",
-                    "$log",
-                    'types',
-                    "visibleRect",
-                    "datasourceService",
-                    "deviceService",
-                    "$controller",
-                    "isPreview",
-                    "widget",
-                    "deviceAliasList"];
-
-                widgetController = $controller(controllerFunction, locals);
+                widgetController = $controller('WidgetController', locals);
 
                 if (gridsterItem) {
                     widgetController.gridsterItemInitialized(gridsterItem);

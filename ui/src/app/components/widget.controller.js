@@ -14,20 +14,38 @@
  * limitations under the License.
  */
 import $ from 'jquery';
+import 'javascript-detect-element-resize/detect-element-resize';
 
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, types, visibleRect,
-                                         datasourceService, deviceService, isPreview, widget, deviceAliasList, fns) {
+export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
+                                         datasourceService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
+                                         dashboardTimewindowApi, widget, aliasesInfo, widgetType) {
 
     var vm = this;
 
-    var timeWindow = {};
-    var subscriptionTimewindow = {
-        fixedWindow: null,
-        realtimeWindowMs: null
-    };
+    $scope.$timeout = $timeout;
+    $scope.$q = $q;
+    $scope.$injector = $injector;
+    $scope.tbRaf = tbRaf;
+
+    $scope.rpcRejection = null;
+    $scope.rpcErrorText = null;
+    $scope.rpcEnabled = false;
+    $scope.executingRpcRequest = false;
+    $scope.executingPromises = [];
+
+    var gridsterItemInited = false;
+
+    var datasourceListeners = [];
+    var targetDeviceAliasId = null;
+    var targetDeviceId = null;
+    var originalTimewindow = null;
+    var subscriptionTimewindow = null;
+    var dataUpdateCaf = null;
+
+    var varsRegex = /\$\{([^\}]*)\}/g;
 
     /*
      *   data = array of datasourceData
@@ -39,45 +57,405 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
      *
      *
      */
-    var data = [];
-    var datasourceListeners = [];
-    var targetDeviceAliasId = null;
-    var targetDeviceId = null;
 
+    var widgetContext = {
+        inited: false,
+        $scope: $scope,
+        $container: $('#container', $element),
+        $containerParent: $($element),
+        width: 0,
+        height: 0,
+        isEdit: isEdit,
+        isMobile: false,
+        settings: widget.config.settings,
+        units: widget.config.units || '',
+        decimals: angular.isDefined(widget.config.decimals) ? widget.config.decimals : 2,
+        datasources: angular.copy(widget.config.datasources),
+        data: [],
+        hiddenData: [],
+        timeWindow: {
+            stDiff: stDiff
+        },
+        timewindowFunctions: {
+            onUpdateTimewindow: onUpdateTimewindow,
+            onResetTimewindow: onResetTimewindow
+        },
+        controlApi: {
+            sendOneWayCommand: function(method, params, timeout) {
+                return sendCommand(true, method, params, timeout);
+            },
+            sendTwoWayCommand: function(method, params, timeout) {
+                return sendCommand(false, method, params, timeout);
+            }
+        },
+        utils: {
+            formatValue: formatValue
+        }
+    };
+
+    var widgetTypeInstance;
+    try {
+        widgetTypeInstance = new widgetType(widgetContext);
+    } catch (e) {
+        handleWidgetException(e);
+        widgetTypeInstance = {};
+    }
+    if (!widgetTypeInstance.onInit) {
+        widgetTypeInstance.onInit = function() {};
+    }
+    if (!widgetTypeInstance.onDataUpdated) {
+        widgetTypeInstance.onDataUpdated = function() {};
+    }
+    if (!widgetTypeInstance.onResize) {
+        widgetTypeInstance.onResize = function() {};
+    }
+    if (!widgetTypeInstance.onEditModeChanged) {
+        widgetTypeInstance.onEditModeChanged = function() {};
+    }
+    if (!widgetTypeInstance.onMobileModeChanged) {
+        widgetTypeInstance.onMobileModeChanged = function() {};
+    }
+    if (!widgetTypeInstance.onDestroy) {
+        widgetTypeInstance.onDestroy = function() {};
+    }
 
     //var bounds = {top: 0, left: 0, bottom: 0, right: 0};
     //TODO: widgets visibility
     /*var visible = false;*/
 
-    var lastWidth, lastHeight;
-    var containerParent = $($element);
-    var container = $('#container', $element);
-    var containerElement = container[0];
-    var inited = false;
+    $scope.clearRpcError = function() {
+        $scope.rpcRejection = null;
+        $scope.rpcErrorText = null;
+    }
 
-   // var gridsterItemElement;
+    vm.gridsterItemInitialized = gridsterItemInitialized;
 
-    var gridsterItem;
-    var timer;
+    //TODO: widgets visibility
+    /*vm.visibleRectChanged = visibleRectChanged;
 
-    var init = fns.init || function () {
-        };
+    function visibleRectChanged(newVisibleRect) {
+        visibleRect = newVisibleRect;
+        updateVisibility();
+    }*/
 
-    var redraw = fns.redraw || function () {
-        };
+    initialize();
 
-    var destroy = fns.destroy || function () {
-        };
+    function handleWidgetException(e) {
+        $log.error(e);
+        $scope.widgetErrorData = utils.processWidgetException(e);
+    }
 
-    $scope.$timeout = $timeout;
-    $scope.$q = $q;
-    $scope.$injector = $injector;
+    function notifyDataLoaded() {
+        if ($scope.loadingData === true) {
+            $scope.loadingData = false;
+        }
+    }
 
-    $scope.rpcRejection = null;
-    $scope.rpcErrorText = null;
-    $scope.rpcEnabled = false;
-    $scope.executingRpcRequest = false;
-    $scope.executingPromises = [];
+    function notifyDataLoading() {
+        if ($scope.loadingData === false) {
+            $scope.loadingData = true;
+        }
+    }
+
+    function onInit() {
+        if (!widgetContext.inited) {
+            widgetContext.inited = true;
+            try {
+                widgetTypeInstance.onInit();
+            } catch (e) {
+                handleWidgetException(e);
+            }
+            if (widgetContext.dataUpdatePending) {
+                widgetContext.dataUpdatePending = false;
+                onDataUpdated();
+            }
+        }
+    }
+
+    function updateTimewindow() {
+        widgetContext.timeWindow.interval = subscriptionTimewindow.aggregation.interval || 1000;
+        if (subscriptionTimewindow.realtimeWindowMs) {
+            widgetContext.timeWindow.maxTime = (new Date).getTime() + widgetContext.timeWindow.stDiff;
+            widgetContext.timeWindow.minTime = widgetContext.timeWindow.maxTime - subscriptionTimewindow.realtimeWindowMs;
+        } else if (subscriptionTimewindow.fixedWindow) {
+            widgetContext.timeWindow.maxTime = subscriptionTimewindow.fixedWindow.endTimeMs;
+            widgetContext.timeWindow.minTime = subscriptionTimewindow.fixedWindow.startTimeMs;
+        }
+    }
+
+    function onDataUpdated() {
+        if (widgetContext.inited) {
+            if (dataUpdateCaf) {
+                dataUpdateCaf();
+                dataUpdateCaf = null;
+            }
+            dataUpdateCaf = tbRaf(function() {
+                    try {
+                        widgetTypeInstance.onDataUpdated();
+                    } catch (e) {
+                        handleWidgetException(e);
+                    }
+                });
+        } else {
+            widgetContext.dataUpdatePending = true;
+        }
+    }
+
+    function checkSize() {
+        var width = widgetContext.$containerParent.width();
+        var height = widgetContext.$containerParent.height();
+        var sizeChanged = false;
+
+        if (!widgetContext.width || widgetContext.width != width || !widgetContext.height || widgetContext.height != height) {
+            if (width > 0 && height > 0) {
+                widgetContext.$container.css('height', height + 'px');
+                widgetContext.$container.css('width', width + 'px');
+                widgetContext.width = width;
+                widgetContext.height = height;
+                sizeChanged = true;
+            }
+        }
+        return sizeChanged;
+    }
+
+    function onResize() {
+        if (checkSize()) {
+            if (widgetContext.inited) {
+                tbRaf(function() {
+                    try {
+                        widgetTypeInstance.onResize();
+                    } catch (e) {
+                        handleWidgetException(e);
+                    }
+                });
+            } else if (gridsterItemInited) {
+                onInit();
+            }
+        }
+    }
+
+    function gridsterItemInitialized(item) {
+        if (item && item.gridster) {
+            widgetContext.isMobile = item.gridster.isMobile;
+            gridsterItemInited = true;
+            if (checkSize()) {
+                onInit();
+            }
+            // gridsterItemElement = $(item.$element);
+            //updateVisibility();
+        }
+    }
+
+    function onEditModeChanged(isEdit) {
+        if (widgetContext.isEdit != isEdit) {
+            widgetContext.isEdit = isEdit;
+            if (widgetContext.inited) {
+                tbRaf(function() {
+                    try {
+                        widgetTypeInstance.onEditModeChanged();
+                    } catch (e) {
+                        handleWidgetException(e);
+                    }
+                });
+            }
+        }
+    }
+
+    function onMobileModeChanged(isMobile) {
+        if (widgetContext.isMobile != isMobile) {
+            widgetContext.isMobile = isMobile;
+            if (widgetContext.inited) {
+                tbRaf(function() {
+                    try {
+                        widgetTypeInstance.onMobileModeChanged();
+                    } catch (e) {
+                        handleWidgetException(e);
+                    }
+                });
+            }
+        }
+    }
+
+    function onDestroy() {
+        unsubscribe();
+        if (widgetContext.inited) {
+            widgetContext.inited = false;
+            widgetContext.dataUpdatePending = false;
+            try {
+                widgetTypeInstance.onDestroy();
+            } catch (e) {
+                handleWidgetException(e);
+            }
+        }
+    }
+
+    function onRestart() {
+        onDestroy();
+        onInit();
+    }
+
+/*    scope.legendData = {
+        keys: [],
+        data: []
+
+        key: {
+             label: '',
+             color: ''
+             dataIndex: 0
+        }
+        data: {
+             min: null,
+             max: null,
+             avg: null,
+             total: null
+        }
+    };*/
+
+
+    function initialize() {
+
+        $scope.caulculateLegendData = $scope.displayLegend &&
+            widget.type === types.widgetType.timeseries.value &&
+            ($scope.legendConfig.showMin === true ||
+             $scope.legendConfig.showMax === true ||
+             $scope.legendConfig.showAvg === true ||
+             $scope.legendConfig.showTotal === true);
+
+        if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
+            for (var i in widgetContext.datasources) {
+                var datasource = widgetContext.datasources[i];
+                for (var a in datasource.dataKeys) {
+                    var dataKey = datasource.dataKeys[a];
+                    dataKey.pattern = angular.copy(dataKey.label);
+                    var datasourceData = {
+                        datasource: datasource,
+                        dataKey: dataKey,
+                        data: []
+                    };
+                    widgetContext.data.push(datasourceData);
+                    widgetContext.hiddenData.push({data: []});
+                    if ($scope.displayLegend) {
+                        var legendKey = {
+                            dataKey: dataKey,
+                            dataIndex: Number(i) + Number(a)
+                        };
+                        $scope.legendData.keys.push(legendKey);
+                        var legendKeyData = {
+                            min: null,
+                            max: null,
+                            avg: null,
+                            total: null,
+                            hidden: false
+                        };
+                        $scope.legendData.data.push(legendKeyData);
+                    }
+                }
+            }
+            if ($scope.displayLegend) {
+                $scope.legendData.keys = $filter('orderBy')($scope.legendData.keys, '+label');
+                $scope.$on('legendDataHiddenChanged', function (event, index) {
+                    event.stopPropagation();
+                    var hidden = $scope.legendData.data[index].hidden;
+                    if (hidden) {
+                        widgetContext.hiddenData[index].data = widgetContext.data[index].data;
+                        widgetContext.data[index].data = [];
+                    } else {
+                        widgetContext.data[index].data = widgetContext.hiddenData[index].data;
+                        widgetContext.hiddenData[index].data = [];
+                    }
+                    onDataUpdated();
+                });
+            }
+        } else if (widget.type === types.widgetType.rpc.value) {
+            if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
+                targetDeviceAliasId = widget.config.targetDeviceAliasIds[0];
+                if (aliasesInfo.deviceAliases[targetDeviceAliasId]) {
+                    targetDeviceId = aliasesInfo.deviceAliases[targetDeviceAliasId].deviceId;
+                }
+            }
+            if (targetDeviceId) {
+                $scope.rpcEnabled = true;
+            } else {
+                $scope.rpcEnabled = $scope.widgetEditMode ? true : false;
+            }
+        }
+
+        $scope.$on('toggleDashboardEditMode', function (event, isEdit) {
+            onEditModeChanged(isEdit);
+        });
+
+        addResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
+
+        $scope.$watch(function () {
+            return widget.row + ',' + widget.col + ',' + widget.config.mobileOrder;
+        }, function () {
+            //updateBounds();
+            $scope.$emit("widgetPositionChanged", widget);
+        });
+
+        $scope.$on('gridster-item-resized', function (event, item) {
+            if (!widgetContext.isMobile) {
+                widget.sizeX = item.sizeX;
+                widget.sizeY = item.sizeY;
+            }
+        });
+
+        $scope.$on('mobileModeChanged', function (event, newIsMobile) {
+            onMobileModeChanged(newIsMobile);
+        });
+
+        $scope.$on('deviceAliasListChanged', function (event, newAliasesInfo) {
+            aliasesInfo = newAliasesInfo;
+            if (widget.type === types.widgetType.rpc.value) {
+                if (targetDeviceAliasId) {
+                    var deviceId = null;
+                    if (aliasesInfo.deviceAliases[targetDeviceAliasId]) {
+                        deviceId = aliasesInfo.deviceAliases[targetDeviceAliasId].deviceId;
+                    }
+                    if (!angular.equals(deviceId, targetDeviceId)) {
+                        targetDeviceId = deviceId;
+                        if (targetDeviceId) {
+                            $scope.rpcEnabled = true;
+                        } else {
+                            $scope.rpcEnabled = $scope.widgetEditMode ? true : false;
+                        }
+                        onRestart();
+                    }
+                }
+            } else {
+                checkSubscriptions();
+            }
+        });
+
+        $scope.$on("$destroy", function () {
+            removeResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
+            onDestroy();
+        });
+
+        if (widget.type === types.widgetType.timeseries.value) {
+            widgetContext.useDashboardTimewindow = angular.isDefined(widget.config.useDashboardTimewindow)
+                    ? widget.config.useDashboardTimewindow : true;
+            if (widgetContext.useDashboardTimewindow) {
+                $scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
+                    if (!angular.equals(dashboardTimewindow, newDashboardTimewindow)) {
+                        dashboardTimewindow = newDashboardTimewindow;
+                        unsubscribe();
+                        subscribe();
+                    }
+                });
+            } else {
+                $scope.$watch(function () {
+                    return widgetContext.useDashboardTimewindow ? dashboardTimewindow : widget.config.timewindow;
+                }, function (newTimewindow, prevTimewindow) {
+                    if (!angular.equals(newTimewindow, prevTimewindow)) {
+                        unsubscribe();
+                        subscribe();
+                    }
+                });
+            }
+        }
+        subscribe();
+    }
 
     function sendCommand(oneWayElseTwoWay, method, params, timeout) {
         if (!$scope.rpcEnabled) {
@@ -148,147 +526,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         return deferred.promise;
     }
 
-    $scope.clearRpcError = function() {
-        $scope.rpcRejection = null;
-        $scope.rpcErrorText = null;
-    }
-
-    var controlApi = {};
-
-    controlApi.sendOneWayCommand = function(method, params, timeout) {
-        return sendCommand(true, method, params, timeout);
-    };
-
-    controlApi.sendTwoWayCommand = function(method, params, timeout) {
-        return sendCommand(false, method, params, timeout);
-    };
-
-    vm.gridsterItemInitialized = gridsterItemInitialized;
-    //TODO: widgets visibility
-    /*vm.visibleRectChanged = visibleRectChanged;
-
-    function visibleRectChanged(newVisibleRect) {
-        visibleRect = newVisibleRect;
-        updateVisibility();
-    }*/
-
-    function gridsterItemInitialized(item) {
-        if (item) {
-            gridsterItem = item;
-           // gridsterItemElement = $(item.$element);
-            //updateVisibility();
-            onRedraw();
-        }
-    }
-
-    initWidget();
-
-    function initWidget() {
-        if (widget.type !== types.widgetType.rpc.value) {
-            for (var i in widget.config.datasources) {
-                var datasource = angular.copy(widget.config.datasources[i]);
-                for (var a in datasource.dataKeys) {
-                    var dataKey = datasource.dataKeys[a];
-                    var datasourceData = {
-                        datasource: datasource,
-                        dataKey: dataKey,
-                        data: []
-                    };
-                    data.push(datasourceData);
-                }
-            }
-        } else {
-            if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
-                targetDeviceAliasId = widget.config.targetDeviceAliasIds[0];
-                if (deviceAliasList[targetDeviceAliasId]) {
-                    targetDeviceId = deviceAliasList[targetDeviceAliasId].deviceId;
-                }
-            }
-            if (targetDeviceId) {
-                $scope.rpcEnabled = true;
-            } else {
-                $scope.rpcEnabled = $scope.widgetEditMode ? true : false;
-            }
-        }
-
-        $scope.$on('toggleDashboardEditMode', function (event, isEdit) {
-            isPreview = isEdit;
-            onRedraw();
-        });
-
-        $scope.$on('gridster-item-resized', function (event, item) {
-            if (item) {
-                updateBounds();
-            }
-        });
-
-        $scope.$on('gridster-item-transition-end', function (event, item) {
-            if (item) {
-                updateBounds();
-            }
-        });
-
-        $scope.$watch(function () {
-            return widget.row + ',' + widget.col + ',' + widget.config.mobileOrder;
-        }, function () {
-            updateBounds();
-            $scope.$emit("widgetPositionChanged", widget);
-        });
-
-        $scope.$on('onWidgetFullscreenChanged', function(event, isWidgetExpanded, fullscreenWidget) {
-            if (widget === fullscreenWidget) {
-                onRedraw(0);
-            }
-        });
-
-        $scope.$on('deviceAliasListChanged', function (event, newDeviceAliasList) {
-            deviceAliasList = newDeviceAliasList;
-            if (widget.type === types.widgetType.rpc.value) {
-                if (targetDeviceAliasId) {
-                    var deviceId = null;
-                    if (deviceAliasList[targetDeviceAliasId]) {
-                        deviceId = deviceAliasList[targetDeviceAliasId].deviceId;
-                    }
-                    if (!angular.equals(deviceId, targetDeviceId)) {
-                        targetDeviceId = deviceId;
-                        if (targetDeviceId) {
-                            $scope.rpcEnabled = true;
-                        } else {
-                            $scope.rpcEnabled = $scope.widgetEditMode ? true : false;
-                        }
-                        inited = false;
-                        onRedraw();
-                    }
-                }
-            } else {
-                checkSubscriptions();
-            }
-        });
-
-        $scope.$on("$destroy", function () {
-            unsubscribe();
-            destroy();
-        });
-
-        subscribe();
-
-        if (widget.type === types.widgetType.timeseries.value) {
-            $scope.$watch(function () {
-                return widget.config.timewindow;
-            }, function (newTimewindow, prevTimewindow) {
-                if (!angular.equals(newTimewindow, prevTimewindow)) {
-                    unsubscribe();
-                    subscribe();
-                }
-            });
-        } else if (widget.type === types.widgetType.rpc.value) {
-            if (!inited) {
-                init(containerElement, widget.config.settings, widget.config.datasources, data, $scope, controlApi);
-                inited = true;
-            }
-        }
-    }
-
     //TODO: widgets visibility
     /*function updateVisibility(forceRedraw) {
         if (visibleRect) {
@@ -316,94 +553,152 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }*/
 
-    function updateBounds() {
-        /*bounds = {
+/*    function updateBounds() {
+        bounds = {
             top: widget.row,
             left: widget.col,
             bottom: widget.row + widget.sizeY,
             right: widget.col + widget.sizeX
         };
-        updateVisibility(true);*/
+        updateVisibility(true);
         onRedraw();
-    }
-
-    var originalTimewindow;
-
-    var timewindowFunctions = {
-        onUpdateTimewindow: onUpdateTimewindow,
-        onResetTimewindow: onResetTimewindow
-    };
+    }*/
 
     function onResetTimewindow() {
-        if (originalTimewindow) {
-            widget.config.timewindow = angular.copy(originalTimewindow);
-            originalTimewindow = null;
+        if (widgetContext.useDashboardTimewindow) {
+            dashboardTimewindowApi.onResetTimewindow();
+        } else {
+            if (originalTimewindow) {
+                widget.config.timewindow = angular.copy(originalTimewindow);
+                originalTimewindow = null;
+            }
         }
     }
 
     function onUpdateTimewindow(startTimeMs, endTimeMs) {
-        if (!originalTimewindow) {
-            originalTimewindow = angular.copy(widget.config.timewindow);
-        }
-        widget.config.timewindow = {
-            history: {
-                fixedTimewindow: {
-                    startTimeMs: startTimeMs,
-                    endTimeMs: endTimeMs
-                }
+        if (widgetContext.useDashboardTimewindow) {
+            dashboardTimewindowApi.onUpdateTimewindow(startTimeMs, endTimeMs);
+        } else {
+            if (!originalTimewindow) {
+                originalTimewindow = angular.copy(widget.config.timewindow);
             }
-        };
+            widget.config.timewindow = timeService.toHistoryTimewindow(widget.config.timewindow, startTimeMs, endTimeMs);
+        }
     }
 
-    function onRedraw(delay, dataUpdate, tickUpdate) {
-        //TODO: widgets visibility
-        /*if (!visible) {
-            return;
-        }*/
-        if (angular.isUndefined(delay)) {
-            delay = 0;
+    function dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
+        notifyDataLoaded();
+        var update = true;
+        var currentData;
+        if ($scope.displayLegend && $scope.legendData.data[datasourceIndex + dataKeyIndex].hidden) {
+            currentData = widgetContext.hiddenData[datasourceIndex + dataKeyIndex];
+        } else {
+            currentData = widgetContext.data[datasourceIndex + dataKeyIndex];
         }
-        $timeout(function () {
-            var width = containerParent.width();
-            var height = containerParent.height();
-            var sizeChanged = false;
-
-            if (!lastWidth || lastWidth != width || !lastHeight || lastHeight != height) {
-                if (width > 0 && height > 0) {
-                    container.css('height', height + 'px');
-                    container.css('width', width + 'px');
-                    lastWidth = width;
-                    lastHeight = height;
-                    sizeChanged = true;
+        if (widget.type === types.widgetType.latest.value) {
+            var prevData = currentData.data;
+            if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
+                var prevValue = prevData[0][1];
+                if (prevValue === sourceData.data[0][1]) {
+                    update = false;
                 }
             }
-
-            if (width > 20 && height > 20) {
-                if (!inited) {
-                    init(containerElement, widget.config.settings, widget.config.datasources, data, $scope, controlApi, timewindowFunctions, gridsterItem);
-                    inited = true;
-                }
-                if (widget.type === types.widgetType.timeseries.value) {
-                    if (dataUpdate && timer) {
-                        $timeout.cancel(timer);
-                        timer = $timeout(onTick, 1500, false);
-                    }
-                    if (subscriptionTimewindow.realtimeWindowMs) {
-                        timeWindow.maxTime = (new Date).getTime();
-                        timeWindow.minTime = timeWindow.maxTime - subscriptionTimewindow.realtimeWindowMs;
-                    } else if (subscriptionTimewindow.fixedWindow) {
-                        timeWindow.maxTime = subscriptionTimewindow.fixedWindow.endTimeMs;
-                        timeWindow.minTime = subscriptionTimewindow.fixedWindow.startTimeMs;
-                    }
-                }
-                redraw(containerElement, width, height, data, timeWindow, sizeChanged, $scope, dataUpdate, tickUpdate, gridsterItem);
+        }
+        if (update) {
+            if (subscriptionTimewindow && subscriptionTimewindow.realtimeWindowMs) {
+                updateTimewindow();
             }
-        }, delay, false);
+            currentData.data = sourceData.data;
+            onDataUpdated();
+            if ($scope.caulculateLegendData) {
+                updateLegend(datasourceIndex + dataKeyIndex, sourceData.data, apply);
+            }
+        }
+        if (apply) {
+            $scope.$digest();
+        }
     }
 
-    function onDataUpdated(sourceData, datasourceIndex, dataKeyIndex) {
-        data[datasourceIndex + dataKeyIndex].data = sourceData;
-        onRedraw(0, true);
+    function updateLegend(dataIndex, data, apply) {
+        var legendKeyData = $scope.legendData.data[dataIndex];
+        if ($scope.legendConfig.showMin) {
+            legendKeyData.min = formatValue(calculateMin(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showMax) {
+            legendKeyData.max = formatValue(calculateMax(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showAvg) {
+            legendKeyData.avg = formatValue(calculateAvg(data), widgetContext.decimals, widgetContext.units);
+        }
+        if ($scope.legendConfig.showTotal) {
+            legendKeyData.total = formatValue(calculateTotal(data), widgetContext.decimals, widgetContext.units);
+        }
+        $scope.$broadcast('legendDataUpdated', apply !== false);
+    }
+
+    function isNumeric(val) {
+        return (val - parseFloat( val ) + 1) >= 0;
+    }
+
+    function formatValue(value, dec, units) {
+        if (angular.isDefined(value) &&
+            value !== null && isNumeric(value)) {
+            var formatted = value;
+            if (angular.isDefined(dec)) {
+                formatted = formatted.toFixed(dec);
+            }
+            formatted = (formatted * 1).toString();
+            if (angular.isDefined(units) && units.length > 0) {
+                formatted += ' ' + units;
+            }
+            return formatted;
+        } else {
+            return '';
+        }
+    }
+
+    function calculateMin(data) {
+        if (data.length > 0) {
+            var result = Number(data[0][1]);
+            for (var i=1;i<data.length;i++) {
+                result = Math.min(result, Number(data[i][1]));
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateMax(data) {
+        if (data.length > 0) {
+            var result = Number(data[0][1]);
+            for (var i=1;i<data.length;i++) {
+                result = Math.max(result, Number(data[i][1]));
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateAvg(data) {
+        if (data.length > 0) {
+            return calculateTotal(data)/data.length;
+        } else {
+            return null;
+        }
+    }
+
+    function calculateTotal(data) {
+        if (data.length > 0) {
+            var result = 0;
+            for (var i = 0; i < data.length; i++) {
+                result += Number(data[i][1]);
+            }
+            return result;
+        } else {
+            return null;
+        }
     }
 
     function checkSubscriptions() {
@@ -414,9 +709,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 var deviceId = null;
                 var aliasName = null;
                 if (listener.datasource.type === types.datasourceType.device) {
-                    if (deviceAliasList[listener.datasource.deviceAliasId]) {
-                        deviceId = deviceAliasList[listener.datasource.deviceAliasId].deviceId;
-                        aliasName = deviceAliasList[listener.datasource.deviceAliasId].alias;
+                    if (aliasesInfo.deviceAliases[listener.datasource.deviceAliasId]) {
+                        deviceId = aliasesInfo.deviceAliases[listener.datasource.deviceAliasId].deviceId;
+                        aliasName = aliasesInfo.deviceAliases[listener.datasource.deviceAliasId].alias;
                     }
                     if (!angular.equals(deviceId, listener.deviceId) ||
                         !angular.equals(aliasName, listener.datasource.name)) {
@@ -434,10 +729,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function unsubscribe() {
         if (widget.type !== types.widgetType.rpc.value) {
-            if (timer) {
-                $timeout.cancel(timer);
-                timer = null;
-            }
             for (var i in datasourceListeners) {
                 var listener = datasourceListeners[i];
                 datasourceService.unsubscribeFromDatasource(listener);
@@ -446,42 +737,74 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
-    function onTick() {
-        onRedraw(0, false, true);
-        timer = $timeout(onTick, 1000, false);
+    function updateRealtimeSubscription(_subscriptionTimewindow) {
+        if (_subscriptionTimewindow) {
+            subscriptionTimewindow = _subscriptionTimewindow;
+        } else {
+            subscriptionTimewindow =
+                timeService.createSubscriptionTimewindow(
+                    widgetContext.useDashboardTimewindow ? dashboardTimewindow : widget.config.timewindow,
+                    widgetContext.timeWindow.stDiff);
+        }
+        updateTimewindow();
+        return subscriptionTimewindow;
+    }
+
+    function hasTimewindow() {
+        if (widgetContext.useDashboardTimewindow) {
+            return angular.isDefined(dashboardTimewindow);
+        } else {
+            return angular.isDefined(widget.config.timewindow);
+        }
+    }
+
+    function updateDataKeyLabel(dataKey, deviceName, aliasName) {
+        var pattern = dataKey.pattern;
+        var label = dataKey.pattern;
+        var match = varsRegex.exec(pattern);
+        while (match !== null) {
+            var variable = match[0];
+            var variableName = match[1];
+            if (variableName === 'deviceName') {
+                label = label.split(variable).join(deviceName);
+            } else if (variableName === 'aliasName') {
+                label = label.split(variable).join(aliasName);
+            }
+            match = varsRegex.exec(pattern);
+        }
+        dataKey.label = label;
     }
 
     function subscribe() {
-        if (widget.type !== types.widgetType.rpc.value) {
-            var index = 0;
-            subscriptionTimewindow.fixedWindow = null;
-            subscriptionTimewindow.realtimeWindowMs = null;
+        if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
+            notifyDataLoading();
             if (widget.type === types.widgetType.timeseries.value &&
-                angular.isDefined(widget.config.timewindow)) {
-                if (angular.isDefined(widget.config.timewindow.realtime)) {
-                    subscriptionTimewindow.realtimeWindowMs = widget.config.timewindow.realtime.timewindowMs;
-                } else if (angular.isDefined(widget.config.timewindow.history)) {
-                    if (angular.isDefined(widget.config.timewindow.history.timewindowMs)) {
-                        var currentTime = (new Date).getTime();
-                        subscriptionTimewindow.fixedWindow = {
-                            startTimeMs: currentTime - widget.config.timewindow.history.timewindowMs,
-                            endTimeMs: currentTime
-                        }
-                    } else {
-                        subscriptionTimewindow.fixedWindow = {
-                            startTimeMs: widget.config.timewindow.history.fixedTimewindow.startTimeMs,
-                            endTimeMs: widget.config.timewindow.history.fixedTimewindow.endTimeMs
-                        }
-                    }
+                hasTimewindow()) {
+                updateRealtimeSubscription();
+                if (subscriptionTimewindow.fixedWindow) {
+                    onDataUpdated();
                 }
             }
-            for (var i in widget.config.datasources) {
-                var datasource = widget.config.datasources[i];
+            var index = 0;
+            for (var i in widgetContext.datasources) {
+                var datasource = widgetContext.datasources[i];
                 var deviceId = null;
                 if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
-                    if (deviceAliasList[datasource.deviceAliasId]) {
-                        deviceId = deviceAliasList[datasource.deviceAliasId].deviceId;
-                        datasource.name = deviceAliasList[datasource.deviceAliasId].alias;
+                    if (aliasesInfo.deviceAliases[datasource.deviceAliasId]) {
+                        deviceId = aliasesInfo.deviceAliases[datasource.deviceAliasId].deviceId;
+                        datasource.name = aliasesInfo.deviceAliases[datasource.deviceAliasId].alias;
+                        var aliasName = aliasesInfo.deviceAliases[datasource.deviceAliasId].alias;
+                        var deviceName = '';
+                        var devicesInfo = aliasesInfo.deviceAliasesInfo[datasource.deviceAliasId];
+                        for (var d=0;d<devicesInfo.length;d++) {
+                            if (devicesInfo[d].id === deviceId) {
+                                deviceName = devicesInfo[d].name;
+                                break;
+                            }
+                        }
+                        for (var dk = 0; dk < datasource.dataKeys.length; dk++) {
+                            updateDataKeyLabel(datasource.dataKeys[dk], deviceName, aliasName);
+                        }
                     }
                 } else {
                     datasource.name = types.datasourceType.function;
@@ -491,14 +814,21 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     subscriptionTimewindow: subscriptionTimewindow,
                     datasource: datasource,
                     deviceId: deviceId,
-                    dataUpdated: function (data, datasourceIndex, dataKeyIndex) {
-                        onDataUpdated(data, datasourceIndex, dataKeyIndex);
+                    dataUpdated: function (data, datasourceIndex, dataKeyIndex, apply) {
+                        dataUpdated(data, datasourceIndex, dataKeyIndex, apply);
+                    },
+                    updateRealtimeSubscription: function() {
+                        this.subscriptionTimewindow = updateRealtimeSubscription();
+                        return this.subscriptionTimewindow;
+                    },
+                    setRealtimeSubscription: function(subscriptionTimewindow) {
+                        updateRealtimeSubscription(angular.copy(subscriptionTimewindow));
                     },
                     datasourceIndex: index
                 };
 
                 for (var a = 0; a < datasource.dataKeys.length; a++) {
-                    data[index + a].data = [];
+                    widgetContext.data[index + a].data = [];
                 }
 
                 index += datasource.dataKeys.length;
@@ -506,10 +836,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 datasourceListeners.push(listener);
                 datasourceService.subscribeToDatasource(listener);
             }
-
-            if (subscriptionTimewindow.realtimeWindowMs) {
-                timer = $timeout(onTick, 0, false);
-            }
+        } else {
+            notifyDataLoaded();
         }
     }
 

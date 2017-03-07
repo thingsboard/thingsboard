@@ -33,6 +33,50 @@ export default angular.module('thingsboard.types', [])
             id: {
                 nullUid: "13814000-1dd2-11b2-8080-808080808080",
             },
+            aggregation: {
+                min: {
+                    value: "MIN",
+                    name: "aggregation.min"
+                },
+                max: {
+                    value: "MAX",
+                    name: "aggregation.max"
+                },
+                avg: {
+                    value: "AVG",
+                    name: "aggregation.avg"
+                },
+                sum: {
+                    value: "SUM",
+                    name: "aggregation.sum"
+                },
+                count: {
+                    value: "COUNT",
+                    name: "aggregation.count"
+                },
+                none: {
+                    value: "NONE",
+                    name: "aggregation.none"
+                }
+            },
+            position: {
+                top: {
+                    value: "top",
+                    name: "position.top"
+                },
+                bottom: {
+                    value: "bottom",
+                    name: "position.bottom"
+                },
+                left: {
+                    value: "left",
+                    name: "position.left"
+                },
+                right: {
+                    value: "right",
+                    name: "position.right"
+                }
+            },
             datasourceType: {
                 function: "function",
                 device: "device"

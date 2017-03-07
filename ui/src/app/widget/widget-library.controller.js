@@ -20,7 +20,7 @@ import selectWidgetTypeTemplate from './select-widget-type.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function WidgetLibraryController($scope, $rootScope, widgetService, userService,
+export default function WidgetLibraryController($scope, $rootScope, $q, widgetService, userService,
                                                 $state, $stateParams, $document, $mdDialog, $translate, $filter, types) {
 
     var vm = this;
@@ -29,8 +29,11 @@ export default function WidgetLibraryController($scope, $rootScope, widgetServic
 
     vm.widgetsBundle;
     vm.widgetTypes = [];
+    vm.dashboardInitComplete = false;
 
     vm.noData = noData;
+    vm.dashboardInited = dashboardInited;
+    vm.dashboardInitFailed = dashboardInitFailed;
     vm.addWidgetType = addWidgetType;
     vm.openWidgetType = openWidgetType;
     vm.removeWidgetType = removeWidgetType;
@@ -39,6 +42,7 @@ export default function WidgetLibraryController($scope, $rootScope, widgetServic
     vm.isReadOnly = isReadOnly;
 
     function loadWidgetLibrary() {
+        var deferred = $q.defer();
         $rootScope.loading = true;
         widgetService.getWidgetsBundle(widgetsBundleId).then(
             function success(widgetsBundle) {
@@ -50,7 +54,7 @@ export default function WidgetLibraryController($scope, $rootScope, widgetServic
                     widgetService.getBundleWidgetTypes(bundleAlias, isSystem).then(
                         function (widgetTypes) {
 
-                            widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type','name']);
+                            widgetTypes = $filter('orderBy')(widgetTypes, ['-descriptor.type','-createdTime']);
 
                             var top = 0;
                             var lastTop = [0, 0, 0];
@@ -61,6 +65,7 @@ export default function WidgetLibraryController($scope, $rootScope, widgetServic
                                 loadNext(0);
                             } else {
                                 $rootScope.loading = false;
+                                deferred.resolve();
                             }
 
                             function loadNextOrComplete(i) {
@@ -69,6 +74,7 @@ export default function WidgetLibraryController($scope, $rootScope, widgetServic
                                     loadNext(i);
                                 } else {
                                     $rootScope.loading = false;
+                                    deferred.resolve();
                                 }
                             }
 
@@ -110,15 +116,26 @@ export default function WidgetLibraryController($scope, $rootScope, widgetServic
                     );
                 } else {
                     $rootScope.loading = false;
+                    deferred.resolve();
                 }
             }, function fail() {
                 $rootScope.loading = false;
+                deferred.reject();
             }
         );
+        return deferred.promise;
     }
 
     function noData() {
-        return vm.widgetTypes.length == 0;
+        return vm.dashboardInitComplete && vm.widgetTypes.length == 0;
+    }
+
+    function dashboardInitFailed() {
+        vm.dashboardInitComplete = true;
+    }
+
+    function dashboardInited() {
+        vm.dashboardInitComplete = true;
     }
 
     function addWidgetType($event) {

@@ -21,6 +21,12 @@
 
 .tb-card-item {
   @include transition(all .2s ease-in-out);
+  md-card-content {
+    max-height: 53px;
+  }
+  md-card-title-text {
+    max-height: 32px;
+  }
 }
 
 .tb-current-item {

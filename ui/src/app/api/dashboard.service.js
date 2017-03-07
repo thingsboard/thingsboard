@@ -22,6 +22,7 @@ function DashboardService($http, $q) {
     var service = {
         assignDashboardToCustomer: assignDashboardToCustomer,
         getCustomerDashboards: getCustomerDashboards,
+        getServerTimeDiff: getServerTimeDiff,
         getDashboard: getDashboard,
         getTenantDashboards: getTenantDashboards,
         deleteDashboard: deleteDashboard,
@@ -65,6 +66,21 @@ function DashboardService($http, $q) {
         }
         $http.get(url, null).then(function success(response) {
             deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getServerTimeDiff() {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/serverTime';
+        var ct1 = Date.now();
+        $http.get(url, null).then(function success(response) {
+            var ct2 = Date.now();
+            var st = response.data;
+            var stDiff = Math.ceil(st - (ct1+ct2)/2);
+            deferred.resolve(stDiff);
         }, function fail() {
             deferred.reject();
         });

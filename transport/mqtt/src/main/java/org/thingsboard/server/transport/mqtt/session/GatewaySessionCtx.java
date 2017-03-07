@@ -89,7 +89,9 @@ public class GatewaySessionCtx {
     public void onDeviceDisconnect(MqttPublishMessage msg) throws AdaptorException {
         String deviceName = checkDeviceName(getDeviceName(msg));
         GatewayDeviceSessionCtx deviceSessionCtx = devices.remove(deviceName);
-        deviceSessionCtx.setClosed(true);
+        if (deviceSessionCtx != null) {
+            deviceSessionCtx.setClosed(true);
+        }
         ack(msg);
     }
 

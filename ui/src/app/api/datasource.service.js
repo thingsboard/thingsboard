@@ -17,13 +17,14 @@ import thingsboardApiDevice from './device.service';
 import thingsboardApiTelemetryWebsocket from './telemetry-websocket.service';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
+import DataAggregator from './data-aggregator';
 
 export default angular.module('thingsboard.api.datasource', [thingsboardApiDevice, thingsboardApiTelemetryWebsocket, thingsboardTypes, thingsboardUtils])
     .factory('datasourceService', DatasourceService)
     .name;
 
 /*@ngInject*/
-function DatasourceService($timeout, $log, telemetryWebsocketService, types, utils) {
+function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, types, utils) {
 
     var subscriptions = {};
 
@@ -73,7 +74,7 @@ function DatasourceService($timeout, $log, telemetryWebsocketService, types, uti
             subscription = subscriptions[listener.datasourceSubscriptionKey];
             subscription.syncListener(listener);
         } else {
-            subscription = new DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $log, types, utils);
+            subscription = new DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $filter, $log, types, utils);
             subscriptions[listener.datasourceSubscriptionKey] = subscription;
             subscription.start();
         }
@@ -96,7 +97,7 @@ function DatasourceService($timeout, $log, telemetryWebsocketService, types, uti
 
 }
 
-function DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $log, types, utils) {
+function DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $filter, $log, types, utils) {
 
     var listeners = [];
     var datasourceType = datasourceSubscription.datasourceType;
@@ -107,9 +108,9 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         datasourceSubscription.subscriptionTimewindow.fixedWindow;
     var realtime = datasourceSubscription.subscriptionTimewindow &&
         datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
-    var dataGenFunction = null;
     var timer;
     var frequency;
+    var dataAggregator;
 
     var subscription = {
         addListener: addListener,
@@ -130,16 +131,19 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
             dataKey.index = i;
             var key;
             if (datasourceType === types.datasourceType.function) {
-                key = utils.objectHashCode(dataKey);
                 if (!dataKey.func) {
                     dataKey.func = new Function("time", "prevValue", dataKey.funcBody);
                 }
-                datasourceData[key] = [];
-                dataKeys[key] = dataKey;
-            } else if (datasourceType === types.datasourceType.device) {
-                key = dataKey.name + '_' + dataKey.type;
+            } else {
                 if (dataKey.postFuncBody && !dataKey.postFunc) {
                     dataKey.postFunc = new Function("time", "value", "prevValue", dataKey.postFuncBody);
+                }
+            }
+            if (datasourceType === types.datasourceType.device || datasourceSubscription.type === types.widgetType.timeseries.value) {
+                if (datasourceType === types.datasourceType.function) {
+                    key = dataKey.name + '_' + dataKey.index + '_' + dataKey.type;
+                } else {
+                    key = dataKey.name + '_' + dataKey.type;
                 }
                 var dataKeysList = dataKeys[key];
                 if (!dataKeysList) {
@@ -147,25 +151,22 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     dataKeys[key] = dataKeysList;
                 }
                 var index = dataKeysList.push(dataKey) - 1;
-                datasourceData[key + '_' + index] = [];
+                datasourceData[key + '_' + index] = {
+                    data: []
+                };
+            } else {
+                key = utils.objectHashCode(dataKey);
+                datasourceData[key] = {
+                    data: []
+                };
+                dataKeys[key] = dataKey;
             }
             dataKey.key = key;
         }
         if (datasourceType === types.datasourceType.function) {
             frequency = 1000;
             if (datasourceSubscription.type === types.widgetType.timeseries.value) {
-                dataGenFunction = generateSeries;
-                var window;
-                if (realtime) {
-                    window = datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
-                } else {
-                    window = datasourceSubscription.subscriptionTimewindow.fixedWindow.endTimeMs -
-                        datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs;
-                }
-                frequency = window / 1000 * 20;
-            } else if (datasourceSubscription.type === types.widgetType.latest.value) {
-                dataGenFunction = generateLatest;
-                frequency = 1000;
+                frequency = Math.min(datasourceSubscription.subscriptionTimewindow.aggregation.interval, 5000);
             }
         }
     }
@@ -188,14 +189,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
     function syncListener(listener) {
         var key;
         var dataKey;
-        if (datasourceType === types.datasourceType.function) {
-            for (key in dataKeys) {
-                dataKey = dataKeys[key];
-                listener.dataUpdated(datasourceData[key],
-                    listener.datasourceIndex,
-                    dataKey.index);
-            }
-        } else if (datasourceType === types.datasourceType.device) {
+        if (datasourceType === types.datasourceType.device || datasourceSubscription.type === types.widgetType.timeseries.value) {
             for (key in dataKeys) {
                 var dataKeysList = dataKeys[key];
                 for (var i = 0; i < dataKeysList.length; i++) {
@@ -203,8 +197,15 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     var datasourceKey = key + '_' + i;
                     listener.dataUpdated(datasourceData[datasourceKey],
                         listener.datasourceIndex,
-                        dataKey.index);
+                        dataKey.index, false);
                 }
+            }
+        } else {
+            for (key in dataKeys) {
+                dataKey = dataKeys[key];
+                listener.dataUpdated(datasourceData[key],
+                    listener.datasourceIndex,
+                    dataKey.index, false);
             }
         }
     }
@@ -213,7 +214,10 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         if (history && !hasListeners()) {
             return;
         }
-        //$log.debug("started!");
+        var subsTw = datasourceSubscription.subscriptionTimewindow;
+        var tsKeyNames = [];
+        var dataKey;
+
         if (datasourceType === types.datasourceType.device) {
 
             //send subscribe command
@@ -223,12 +227,13 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
             for (var key in dataKeys) {
                 var dataKeysList = dataKeys[key];
-                var dataKey = dataKeysList[0];
+                dataKey = dataKeysList[0];
                 if (dataKey.type === types.dataKeyType.timeseries) {
                     if (tsKeys.length > 0) {
                         tsKeys += ',';
                     }
                     tsKeys += dataKey.name;
+                    tsKeyNames.push(dataKey.name);
                 } else if (dataKey.type === types.dataKeyType.attribute) {
                     if (attrKeys.length > 0) {
                         attrKeys += ',';
@@ -247,19 +252,22 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     var historyCommand = {
                         deviceId: datasourceSubscription.deviceId,
                         keys: tsKeys,
-                        startTs: datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs,
-                        endTs: datasourceSubscription.subscriptionTimewindow.fixedWindow.endTimeMs
+                        startTs: subsTw.fixedWindow.startTimeMs,
+                        endTs: subsTw.fixedWindow.endTimeMs,
+                        interval: subsTw.aggregation.interval,
+                        limit: subsTw.aggregation.limit,
+                        agg: subsTw.aggregation.type
                     };
 
                     subscriber = {
                         historyCommand: historyCommand,
                         type: types.dataKeyType.timeseries,
                         onData: function (data) {
-                            onData(data, types.dataKeyType.timeseries);
+                            if (data.data) {
+                                onData(data.data, types.dataKeyType.timeseries, null, null, true);
+                            }
                         },
-                        onReconnected: function() {
-                            onReconnected();
-                        }
+                        onReconnected: function() {}
                     };
 
                     telemetryWebsocketService.subscribe(subscriber);
@@ -272,20 +280,38 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         keys: tsKeys
                     };
 
-                    if (datasourceSubscription.type === types.widgetType.timeseries.value) {
-                        subscriptionCommand.timeWindow = datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
-                    }
-
                     subscriber = {
                         subscriptionCommand: subscriptionCommand,
-                        type: types.dataKeyType.timeseries,
-                        onData: function (data) {
-                            onData(data, types.dataKeyType.timeseries);
-                        },
-                        onReconnected: function() {
-                            onReconnected();
-                        }
+                        type: types.dataKeyType.timeseries
                     };
+
+                    if (datasourceSubscription.type === types.widgetType.timeseries.value) {
+                        updateRealtimeSubscriptionCommand(subscriptionCommand, subsTw);
+                        dataAggregator = createRealtimeDataAggregator(subsTw, tsKeyNames, types.dataKeyType.timeseries);
+                        subscriber.onData = function(data) {
+                            dataAggregator.onData(data, false, false, true);
+                        }
+                        subscriber.onReconnected = function() {
+                            var newSubsTw = null;
+                            for (var i2 in listeners) {
+                                var listener = listeners[i2];
+                                if (!newSubsTw) {
+                                    newSubsTw = listener.updateRealtimeSubscription();
+                                } else {
+                                    listener.setRealtimeSubscription(newSubsTw);
+                                }
+                            }
+                            updateRealtimeSubscriptionCommand(this.subscriptionCommand, newSubsTw);
+                            dataAggregator.reset(newSubsTw.startTs,  newSubsTw.aggregation.timeWindow, newSubsTw.aggregation.interval);
+                        }
+                    } else {
+                        subscriber.onReconnected = function() {}
+                        subscriber.onData = function(data) {
+                            if (data.data) {
+                                onData(data.data, types.dataKeyType.timeseries, null, null, true);
+                            }
+                        }
+                    }
 
                     telemetryWebsocketService.subscribe(subscriber);
                     subscribers[subscriber.subscriptionCommand.cmdId] = subscriber;
@@ -304,11 +330,11 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     subscriptionCommand: subscriptionCommand,
                     type: types.dataKeyType.attribute,
                     onData: function (data) {
-                        onData(data, types.dataKeyType.attribute);
+                        if (data.data) {
+                            onData(data.data, types.dataKeyType.attribute, null, null, true);
+                        }
                     },
-                    onReconnected: function() {
-                        onReconnected();
-                    }
+                    onReconnected: function() {}
                 };
 
                 telemetryWebsocketService.subscribe(subscriber);
@@ -316,14 +342,52 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
             }
 
-        } else if (dataGenFunction) {
+        } else if (datasourceType === types.datasourceType.function) {
+            if (datasourceSubscription.type === types.widgetType.timeseries.value) {
+                for (key in dataKeys) {
+                    var dataKeyList = dataKeys[key];
+                    for (var index = 0; index < dataKeyList.length; index++) {
+                        dataKey = dataKeyList[index];
+                        tsKeyNames.push(dataKey.name+'_'+dataKey.index);
+                    }
+                }
+                dataAggregator = createRealtimeDataAggregator(subsTw, tsKeyNames, types.dataKeyType.function);
+            }
             if (history) {
-                onTick();
+                onTick(false);
             } else {
-                timer = $timeout(onTick, 0, false);
+                timer = $timeout(
+                    function() {onTick(true)},
+                    0,
+                    false
+                );
             }
         }
+    }
 
+    function createRealtimeDataAggregator(subsTw, tsKeyNames, dataKeyType) {
+        return new DataAggregator(
+            function(data, startTs, endTs, apply) {
+                onData(data, dataKeyType, startTs, endTs, apply);
+            },
+            tsKeyNames,
+            subsTw.startTs,
+            subsTw.aggregation.limit,
+            subsTw.aggregation.type,
+            subsTw.aggregation.timeWindow,
+            subsTw.aggregation.interval,
+            types,
+            $timeout,
+            $filter
+        );
+    }
+
+    function updateRealtimeSubscriptionCommand(subscriptionCommand, subsTw) {
+        subscriptionCommand.startTs = subsTw.startTs;
+        subscriptionCommand.timeWindow = subsTw.aggregation.timeWindow;
+        subscriptionCommand.interval = subsTw.aggregation.interval;
+        subscriptionCommand.limit = subsTw.aggregation.limit;
+        subscriptionCommand.agg = subsTw.aggregation.type;
     }
 
     function unsubscribe() {
@@ -332,35 +396,25 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
         if (datasourceType === types.datasourceType.device) {
             for (var cmdId in subscribers) {
-                telemetryWebsocketService.unsubscribe(subscribers[cmdId]);
+                var subscriber = subscribers[cmdId];
+                telemetryWebsocketService.unsubscribe(subscriber);
+                if (subscriber.onDestroy) {
+                    subscriber.onDestroy();
+                }
             }
             subscribers = {};
         }
-        //$log.debug("unsibscribed!");
-    }
-
-    function boundToInterval(data, timewindowMs) {
-        if (data.length > 1) {
-            var start = data[0][0];
-            var end = data[data.length - 1][0];
-            var i = 0;
-            var currentInterval = end - start;
-            while (currentInterval > timewindowMs && i < data.length - 2) {
-                i++;
-                start = data[i][0];
-                currentInterval = end - start;
-            }
-            if (i > 1) {
-                data.splice(0, i - 1);
-            }
+        if (dataAggregator) {
+            dataAggregator.destroy();
+            dataAggregator = null;
         }
-        return data;
     }
 
-    function generateSeries(dataKey, startTime, endTime) {
+    function generateSeries(dataKey, index, startTime, endTime) {
         var data = [];
         var prevSeries;
-        var datasourceKeyData = datasourceData[dataKey.key];
+        var datasourceDataKey = dataKey.key + '_' + index;
+        var datasourceKeyData = datasourceData[datasourceDataKey].data;
         if (datasourceKeyData.length > 0) {
             prevSeries = datasourceKeyData[datasourceKeyData.length - 1];
         } else {
@@ -377,23 +431,12 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         if (data.length > 0) {
             dataKey.lastUpdateTime = data[data.length - 1][0];
         }
-        if (realtime) {
-            datasourceData[dataKey.key] = boundToInterval(datasourceKeyData.concat(data),
-                datasourceSubscription.subscriptionTimewindow.realtimeWindowMs);
-        } else {
-            datasourceData[dataKey.key] = data;
-        }
-        for (var i in listeners) {
-            var listener = listeners[i];
-            listener.dataUpdated(datasourceData[dataKey.key],
-                listener.datasourceIndex,
-                dataKey.index);
-        }
+        return data;
     }
 
-    function generateLatest(dataKey) {
+    function generateLatest(dataKey, apply) {
         var prevSeries;
-        var datasourceKeyData = datasourceData[dataKey.key];
+        var datasourceKeyData = datasourceData[dataKey.key].data;
         if (datasourceKeyData.length > 0) {
             prevSeries = datasourceKeyData[datasourceKeyData.length - 1];
         } else {
@@ -404,64 +447,54 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         series.push(time);
         var value = dataKey.func(time, prevSeries[1]);
         series.push(value);
-        datasourceData[dataKey.key] = [series];
+        datasourceData[dataKey.key].data = [series];
         for (var i in listeners) {
             var listener = listeners[i];
             listener.dataUpdated(datasourceData[dataKey.key],
                 listener.datasourceIndex,
-                dataKey.index);
+                dataKey.index, apply);
         }
     }
 
-    function onTick() {
+    function onTick(apply) {
         var key;
         if (datasourceSubscription.type === types.widgetType.timeseries.value) {
             var startTime;
             var endTime;
-            for (key in dataKeys) {
-                var dataKey = dataKeys[key];
-                if (!startTime) {
-                    if (realtime) {
-                        endTime = (new Date).getTime();
-                        if (dataKey.lastUpdateTime) {
-                            startTime = dataKey.lastUpdateTime + frequency;
-                        } else {
-                            startTime = endTime - datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
-                        }
-                    } else {
-                        startTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs;
-                        endTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.endTimeMs;
-                    }
+            var generatedData = {
+                data: {
                 }
-                generateSeries(dataKey, startTime, endTime);
+            };
+            for (key in dataKeys) {
+                var dataKeyList = dataKeys[key];
+                for (var index = 0; index < dataKeyList.length; index ++) {
+                    var dataKey = dataKeyList[index];
+                    if (!startTime) {
+                        if (realtime) {
+                            if (dataKey.lastUpdateTime) {
+                                startTime = dataKey.lastUpdateTime + frequency
+                            } else {
+                                startTime = datasourceSubscription.subscriptionTimewindow.startTs;
+                            }
+                            endTime = startTime + datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
+                        } else {
+                            startTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs;
+                            endTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.endTimeMs;
+                        }
+                    }
+                    var data = generateSeries(dataKey, index, startTime, endTime);
+                    generatedData.data[dataKey.name+'_'+dataKey.index] = data;
+                }
             }
+            dataAggregator.onData(generatedData, true, history, apply);
         } else if (datasourceSubscription.type === types.widgetType.latest.value) {
             for (key in dataKeys) {
-                generateLatest(dataKeys[key]);
+                generateLatest(dataKeys[key], apply);
             }
         }
 
         if (!history) {
-            timer = $timeout(onTick, frequency / 2, false);
-        }
-    }
-
-    function onReconnected() {
-        if (datasourceType === types.datasourceType.device) {
-            for (var key in dataKeys) {
-                var dataKeysList = dataKeys[key];
-                for (var i = 0; i < dataKeysList.length; i++) {
-                    var dataKey = dataKeysList[i];
-                    var datasourceKey = key + '_' + i;
-                    datasourceData[datasourceKey] = [];
-                    for (var l in listeners) {
-                        var listener = listeners[l];
-                        listener.dataUpdated(datasourceData[datasourceKey],
-                            listener.datasourceIndex,
-                            dataKey.index);
-                    }
-                }
-            }
+            timer = $timeout(function() {onTick(true)}, frequency / 2, false);
         }
     }
 
@@ -477,18 +510,23 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
     }
 
-    function onData(sourceData, type) {
+    function onData(sourceData, type, startTs, endTs, apply) {
         for (var keyName in sourceData) {
             var keyData = sourceData[keyName];
             var key = keyName + '_' + type;
             var dataKeyList = dataKeys[key];
             for (var keyIndex = 0; keyIndex < dataKeyList.length; keyIndex++) {
                 var datasourceKey = key + "_" + keyIndex;
-                if (datasourceData[datasourceKey]) {
+                if (datasourceData[datasourceKey].data) {
                     var dataKey = dataKeyList[keyIndex];
                     var data = [];
                     var prevSeries;
-                    var datasourceKeyData = datasourceData[datasourceKey];
+                    var datasourceKeyData;
+                    if (realtime) {
+                        datasourceKeyData = [];
+                    } else {
+                        datasourceKeyData = datasourceData[datasourceKey].data;
+                    }
                     if (datasourceKeyData.length > 0) {
                         prevSeries = datasourceKeyData[datasourceKeyData.length - 1];
                     } else {
@@ -519,17 +557,13 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                             data.push(series);
                         }
                     }
-                    if (data.length > 0) {
-                        if (realtime) {
-                            datasourceData[datasourceKey] = boundToInterval(datasourceKeyData.concat(data), datasourceSubscription.subscriptionTimewindow.realtimeWindowMs);
-                        } else {
-                            datasourceData[datasourceKey] = data;
-                        }
+                    if (data || (startTs && endTs)) {
+                        datasourceData[datasourceKey].data = data;
                         for (var i2 in listeners) {
                             var listener = listeners[i2];
                             listener.dataUpdated(datasourceData[datasourceKey],
                                 listener.datasourceIndex,
-                                dataKey.index);
+                                dataKey.index, apply);
                         }
                     }
                 }
@@ -537,3 +571,4 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
     }
 }
+

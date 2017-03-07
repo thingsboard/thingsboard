@@ -28,6 +28,7 @@ module.exports = {
     entry: [
         './src/app/app.js',
         'webpack-hot-middleware/client?reload=true',
+        'webpack-material-design-icons'
     ],
     output: {
         path: path.resolve(__dirname, 'target/generated-resources/public/static'),
@@ -44,7 +45,6 @@ module.exports = {
             moment: "moment"
         }),
         new CopyWebpackPlugin([
-            { from: './src/locale', to: 'locale' },
             { from: './src/thingsboard.ico', to: 'thingsboard.ico' }
         ]),
         new webpack.HotModuleReplacementPlugin(),

@@ -16,17 +16,22 @@
 package org.thingsboard.server.dao;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.Result;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.wrapper.EntityResultSet;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +64,27 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         return list;
     }
 
+    protected ListenableFuture<List<T>> findListByStatementAsync(Statement statement) {
+        if (statement != null) {
+            statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+            ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+            ListenableFuture<List<T>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<T>>() {
+                @Nullable
+                @Override
+                public List<T> apply(@Nullable ResultSet resultSet) {
+                    Result<T> result = getMapper().map(resultSet);
+                    if (result != null) {
+                        return result.all();
+                    } else {
+                        return Collections.emptyList();
+                    }
+                }
+            });
+            return result;
+        }
+        return Futures.immediateFuture(Collections.emptyList());
+    }
+
     protected T findOneByStatement(Statement statement) {
         T object = null;
         if (statement != null) {
@@ -70,6 +96,27 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
             }
         }
         return object;
+    }
+
+    protected ListenableFuture<T> findOneByStatementAsync(Statement statement) {
+        if (statement != null) {
+            statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+            ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+            ListenableFuture<T> result = Futures.transform(resultSetFuture, new Function<ResultSet, T>() {
+                @Nullable
+                @Override
+                public T apply(@Nullable ResultSet resultSet) {
+                    Result<T> result = getMapper().map(resultSet);
+                    if (result != null) {
+                        return result.one();
+                    } else {
+                        return null;
+                    }
+                }
+            });
+            return result;
+        }
+        return Futures.immediateFuture(null);
     }
 
     protected Statement getSaveQuery(T dto) {
@@ -99,6 +146,14 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         log.trace("Execute query {}", query);
         return findOneByStatement(query);
     }
+
+    public ListenableFuture<T> findByIdAsync(UUID key) {
+        log.debug("Get entity by key {}", key);
+        Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, key));
+        log.trace("Execute query {}", query);
+        return findOneByStatementAsync(query);
+    }
+
 
     public ResultSet removeById(UUID key) {
         Statement delete = QueryBuilder.delete().all().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, key));

@@ -34,7 +34,9 @@
 	is-remove-action-enabled="!vm.isReadOnly()"
 	on-edit-widget="vm.openWidgetType(event, widget)"
 	on-remove-widget="vm.removeWidgetType(event, widget)"
-	load-widgets="vm.loadWidgetLibrary()">
+	load-widgets="vm.loadWidgetLibrary()"
+	on-init="vm.dashboardInited(dashboard)"
+	on-init-failed="vm.dashboardInitFailed(e)">
 </tb-dashboard>
 <section layout="row" layout-wrap class="tb-footer-buttons md-fab ">
 	<md-button ng-if="!vm.isReadOnly()" ng-disabled="loading" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-click="vm.addWidgetType($event)" aria-label="{{ 'widget.add-widget-type' | translate }}" >

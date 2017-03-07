@@ -36,6 +36,8 @@ export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $fi
 
     initWatchers();
 
+    checkCurrentState();
+
     function initWatchers() {
         $rootScope.unauthenticatedHandle = $rootScope.$on('unauthenticated', function (event, doLogout) {
             if (doLogout) {
@@ -56,22 +58,27 @@ export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $fi
         $rootScope.stateChangeStartHandle = $rootScope.$on('$stateChangeStart', function (evt, to, params) {
             if (userService.isUserLoaded() === true) {
                 if (userService.isAuthenticated()) {
-                    var authority = userService.getAuthority();
-                    if (to.module === 'public') {
+                    if (userService.forceDefaultPlace(to, params)) {
                         evt.preventDefault();
-                        $state.go('home', params);
-                    } else if (angular.isDefined(to.auth) &&
-                        to.auth.indexOf(authority) === -1) {
-                        evt.preventDefault();
-                        showForbiddenDialog();
-                    } else if (to.redirectTo) {
-                        evt.preventDefault();
-                        $state.go(to.redirectTo, params)
+                        gotoDefaultPlace(params);
+                    } else {
+                        var authority = userService.getAuthority();
+                        if (to.module === 'public') {
+                            evt.preventDefault();
+                            gotoDefaultPlace(params);
+                        } else if (angular.isDefined(to.auth) &&
+                            to.auth.indexOf(authority) === -1) {
+                            evt.preventDefault();
+                            showForbiddenDialog();
+                        } else if (to.redirectTo) {
+                            evt.preventDefault();
+                            $state.go(to.redirectTo, params)
+                        }
                     }
                 } else {
                     if (to.module === 'private') {
                         evt.preventDefault();
-                        if (to.url === '/home') {
+                        if (to.url === '/home' || to.url === '/') {
                             $state.go('login', params);
                         } else {
                             showUnauthorizedDialog();
@@ -80,6 +87,9 @@ export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $fi
                 }
             } else {
                 evt.preventDefault();
+                if ($rootScope.userLoadedHandle) {
+                    $rootScope.userLoadedHandle();
+                }
                 $rootScope.userLoadedHandle = $rootScope.$on('userLoaded', function () {
                     $rootScope.userLoadedHandle();
                     $state.go(to.name, params);
@@ -102,21 +112,24 @@ export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $fi
 
     function checkCurrentState() {
         if (userService.isUserLoaded() === true) {
-            var module = $state.$current.module;
             if (userService.isAuthenticated()) {
-                if ($state.$current.module === 'public') {
-                    $state.go('home');
-                }
+                gotoDefaultPlace();
             } else {
-                if (angular.isUndefined(module) || !module) {
-                    //$state.go('login');
-                } else if ($state.$current.module === 'private') {
-                    showUnauthorizedDialog();
-                }
+                $state.go('login');
             }
         } else {
-            showUnauthorizedDialog();
+            if ($rootScope.userLoadedHandle) {
+                $rootScope.userLoadedHandle();
+            }
+            $rootScope.userLoadedHandle = $rootScope.$on('userLoaded', function () {
+                $rootScope.userLoadedHandle();
+                checkCurrentState();
+            });
         }
+    }
+
+    function gotoDefaultPlace(params) {
+        userService.gotoDefaultPlace(params);
     }
 
     function showUnauthorizedDialog() {

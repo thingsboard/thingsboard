@@ -32,10 +32,13 @@ export default function DashboardSettingsController($scope, $mdDialog, gridSetti
     }
 
     vm.gridSettings.backgroundColor = vm.gridSettings.backgroundColor || 'rgba(0,0,0,0)';
+    vm.gridSettings.titleColor = vm.gridSettings.titleColor || 'rgba(0,0,0,0.870588)';
     vm.gridSettings.columns = vm.gridSettings.columns || 24;
     vm.gridSettings.margins = vm.gridSettings.margins || [10, 10];
     vm.hMargin = vm.gridSettings.margins[0];
     vm.vMargin = vm.gridSettings.margins[1];
+
+    vm.gridSettings.backgroundSizeMode = vm.gridSettings.backgroundSizeMode || '100%';
 
     function cancel() {
         $mdDialog.cancel();

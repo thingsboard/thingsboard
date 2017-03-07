@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry;
 
+import com.sun.javafx.collections.MappingChange;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryRpcMsgHandler;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryWebsocketMsgHandler;
@@ -66,28 +68,49 @@ public class SubscriptionManager {
         DeviceId deviceId = subscription.getDeviceId();
         log.trace("[{}] Registering remote subscription [{}] for device [{}] to [{}]", sessionId, subscription.getSubscriptionId(), deviceId, address);
         registerSubscription(sessionId, deviceId, subscription);
-        List<TsKvEntry> missedUpdates = new ArrayList<>();
         if (subscription.getType() == SubscriptionType.ATTRIBUTES) {
-            subscription.getKeyStates().entrySet().forEach(e -> {
-                        Optional<AttributeKvEntry> latestOpt = ctx.loadAttribute(deviceId, DataConstants.CLIENT_SCOPE, e.getKey());
-                        if (latestOpt.isPresent()) {
-                            AttributeKvEntry latestEntry = latestOpt.get();
-                            if (latestEntry.getLastUpdateTs() > e.getValue()) {
-                                missedUpdates.add(new BasicTsKvEntry(latestEntry.getLastUpdateTs(), latestEntry));
-                            }
+            final Map<String, Long> keyStates = subscription.getKeyStates();
+            ctx.loadAttributes(deviceId, DataConstants.CLIENT_SCOPE, keyStates.keySet(), new PluginCallback<List<AttributeKvEntry>>() {
+                @Override
+                public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
+                    List<TsKvEntry> missedUpdates = new ArrayList<>();
+                    values.forEach(latestEntry -> {
+                        if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {
+                            missedUpdates.add(new BasicTsKvEntry(latestEntry.getLastUpdateTs(), latestEntry));
                         }
+                    });
+                    if (!missedUpdates.isEmpty()) {
+                        rpcHandler.onSubscriptionUpdate(ctx, address, sessionId, new SubscriptionUpdate(subscription.getSubscriptionId(), missedUpdates));
                     }
-            );
+                }
+
+                @Override
+                public void onFailure(PluginContext ctx, Exception e) {
+                    log.error("Failed to fetch missed updates.", e);
+                }
+            });
         } else if (subscription.getType() == SubscriptionType.TIMESERIES) {
             long curTs = System.currentTimeMillis();
+            List<TsKvQuery> queries = new ArrayList<>();
             subscription.getKeyStates().entrySet().forEach(e -> {
-                TsKvQuery query = new BaseTsKvQuery(e.getKey(), e.getValue() + 1L, curTs);
-                missedUpdates.addAll(ctx.loadTimeseries(deviceId, query));
+                queries.add(new BaseTsKvQuery(e.getKey(), e.getValue() + 1L, curTs));
+            });
+
+            ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
+                @Override
+                public void onSuccess(PluginContext ctx, List<TsKvEntry> missedUpdates) {
+                    if (!missedUpdates.isEmpty()) {
+                        rpcHandler.onSubscriptionUpdate(ctx, address, sessionId, new SubscriptionUpdate(subscription.getSubscriptionId(), missedUpdates));
+                    }
+                }
+
+                @Override
+                public void onFailure(PluginContext ctx, Exception e) {
+                    log.error("Failed to fetch missed updates.", e);
+                }
             });
         }
-        if (!missedUpdates.isEmpty()) {
-            rpcHandler.onSubscriptionUpdate(ctx, address, sessionId, new SubscriptionUpdate(subscription.getSubscriptionId(), missedUpdates));
-        }
+
     }
 
     private void registerSubscription(String sessionId, DeviceId deviceId, Subscription subscription) {

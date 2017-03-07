@@ -16,20 +16,14 @@
 @import "~compass-sass-mixins/lib/compass";
 @import "constants";
 @import "animations";
-
-@font-face {
-  font-family: 'Segment7Standard';
-  src: url('../font/Segment7Standard.otf') format('opentype');
-  font-weight: normal;
-  font-style: italic;
-}
+@import "fonts";
 
 /***************
  * TYPE DEFAULTS
  ***************/
 
 button, html, input, select, textarea {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .mdi-set {
@@ -124,11 +118,11 @@ form {
 }
 
 md-bottom-sheet .md-subheader {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 .md-chips {
-  font-family: RobotoDraft, Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
 md-content.md-default-theme, md-content {
@@ -199,12 +193,69 @@ md-sidenav {
   pointer-events: all;
 }
 
+.md-color-picker-input-container {
+  md-input-container {
+    margin-bottom: 0px;
+  }
+}
+
 /***********************
  * THINGSBOARD SPECIFIC
  ***********************/
 
+.tb-noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
 .tb-readonly-label {
   color: rgba(0,0,0,0.54);
+}
+
+.tb-disabled-label {
+  color: rgba(0,0,0,0.44);
+}
+
+label {
+  &.tb-small {
+    pointer-events: none;
+    color: rgba(0,0,0,0.54);
+    font-size: 12px;
+  }
+}
+
+/***********************
+ * Flow
+ ***********************/
+$previewSize: 100px;
+
+.file-input {
+  display: none;
+}
+
+.tb-flow-drop {
+  position: relative;
+  border: dashed 2px;
+  height: $previewSize;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  label {
+    width: 100%;
+    font-size: 24px;
+    text-align: center;
+  }
+}
+
+.tb-container {
+  position: relative;
+  margin-top: 32px;
+  padding: 10px 0;
 }
 
 /***********************
@@ -329,6 +380,7 @@ section.tb-footer-buttons {
   right: 20px;
   bottom: 20px;
   z-index: 2;
+  pointer-events: none;
 }
 
 .tb-footer-buttons .tb-btn-footer {

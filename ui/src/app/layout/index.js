@@ -28,6 +28,8 @@ import thingsboardApiUser from '../api/user.service';
 import thingsboardNoAnimate from '../components/no-animate.directive';
 import thingsboardSideMenu from '../components/side-menu.directive';
 
+import thingsboardUserMenu from './user-menu.directive';
+
 import thingsboardTenant from '../tenant';
 import thingsboardCustomer from '../customer';
 import thingsboardUser from '../user';
@@ -54,6 +56,7 @@ export default angular.module('thingsboard.home', [
     'ncy-angular-breadcrumb',
     thingsboardMenu,
     thingsboardHomeLinks,
+    thingsboardUserMenu,
     thingsboardTenant,
     thingsboardCustomer,
     thingsboardUser,

@@ -23,7 +23,7 @@
                 <span style='opacity: 0.7;'>{{ vm.profileUser.email }}</span>
             </md-card-title-text>
         </md-card-title>
-        <md-progress-linear md-mode="indeterminate" ng-show="loading"></md-progress-linear>
+        <md-progress-linear md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
         <span style="min-height: 5px;" flex="" ng-show="!loading"></span>
         <md-card-content>
             <form name="theForm" ng-submit="vm.save()" tb-confirm-on-exit confirm-form="theForm">

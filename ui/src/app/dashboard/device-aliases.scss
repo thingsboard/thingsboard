@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-alias {
-  padding: 10px 0 0 10px;
-  margin: 5px;
 
-  md-input-container {
-    margin: 0;
+.tb-aliases-dialog {
+  .md-dialog-content {
+    padding-bottom: 0px;
   }
-  md-autocomplete {
-    height: 30px;
-    md-autocomplete-wrap {
-      height: 30px;
-    }
-    input, input:not(.md-input) {
-      height: 30px;
-    }
+  .tb-alias {
+    padding: 10px 0 0 10px;
+    margin: 5px;
   }
 }

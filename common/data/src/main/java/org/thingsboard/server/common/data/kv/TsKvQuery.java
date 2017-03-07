@@ -21,10 +21,14 @@ public interface TsKvQuery {
 
     String getKey();
 
-    Optional<Long> getStartTs();
+    long getStartTs();
 
-    Optional<Long> getEndTs();
+    long getEndTs();
 
-    Optional<Integer> getLimit();
+    long getInterval();
+
+    int getLimit();
+
+    Aggregation getAggregation();
 
 }

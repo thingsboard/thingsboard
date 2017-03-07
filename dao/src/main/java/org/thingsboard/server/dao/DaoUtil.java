@@ -56,4 +56,12 @@ public abstract class DaoUtil {
         return id;
     }
 
+    public static List<UUID> toUUIDs(List<? extends UUIDBased> idBasedIds) {
+        List<UUID> ids = new ArrayList<>();
+        for (UUIDBased idBased : idBasedIds) {
+            ids.add(getId(idBased));
+        }
+        return ids;
+    }
+
 }

@@ -30,7 +30,7 @@
     <md-list flex layout="column" class="md-whiteframe-z1 tb-table">
            <md-list class="tb-row tb-header" layout="row" tb-event-header event-type="{{eventType}}">
            </md-list>
-        <md-progress-linear style="max-height: 0px;" md-mode="indeterminate"
+        <md-progress-linear style="max-height: 0px;" md-mode="indeterminate" ng-disabled="!loading()"
                             ng-show="loading()"></md-progress-linear>
         <md-divider></md-divider>
         <span translate layout-align="center center"

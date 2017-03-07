@@ -16,13 +16,14 @@
 
 -->
   <md-sidenav class="tb-site-sidenav md-sidenav-left md-whiteframe-z2"
-      hide-print=""      
-      md-component-id="left"
-      aria-label="Toggle Nav"
-      ng-click="vm.sidenavClicked()"
-      md-is-open="vm.showSidenav()"
-      md-is-locked-open="vm.lockSidenav()"
-      layout="column">
+			  ng-show="!forceFullscreen"
+			  hide-print=""
+      		  md-component-id="left"
+			  aria-label="Toggle Nav"
+			  ng-click="vm.sidenavClicked()"
+      		  md-is-open="vm.isShowSidenav"
+			  md-is-locked-open="vm.isLockSidenav"
+			  layout="column">
       <header class="tb-nav-header">
           <md-toolbar md-scroll-shrink class="tb-nav-header-toolbar">
           	 <div flex layout="row" layout-align="start center" class="md-toolbar-tools inset">
@@ -59,36 +60,13 @@
           	  </md-button>
 		      <md-button ng-show="!vm.displaySearchMode()" hide-xs hide-sm class="md-icon-button" ng-click="vm.toggleFullscreen()" aria-label="{{ 'fullscreen.toggle' | translate }}">
 	    			<ng-md-icon icon="{{vm.Fullscreen.isEnabled() ? 'fullscreen_exit' : 'fullscreen'}}" options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
-		      </md-button>          	  
-	      	  <div hide-xs hide-sm ng-show="!vm.displaySearchMode()" class="tb-user-info" layout="row">
-  		        <md-icon aria-label="{{ 'home.avatar' | translate }}" class="material-icons tb-mini-avatar">account_circle</md-icon>
-  		        <div layout="column">
-	             	<span class="tb-user-display-name">{{vm.userDisplayName()}}</span>
-	             	<span class="tb-user-authority">{{vm.authorityName()}}</span>
-             	</div>
-              </div>
- 		      <md-menu md-position-mode="target-right target">
-			      <md-button class="md-icon-button"  aria-label="{{ 'home.open-user-menu' | translate }}" ng-click="$mdOpenMenu($event)">
-			      	<md-icon md-menu-origin aria-label="{{ 'home.open-user-menu' | translate }}" class="material-icons">more_vert</md-icon>
-			      </md-button>
-			      <md-menu-content width="4">
-			        <md-menu-item>
-			          <md-button ng-click="vm.openProfile()">
-			          	<md-icon md-menu-align-target aria-label="{{ 'home.profile' | translate }}" class="material-icons">account_circle</md-icon>
-						<span translate>home.profile</span>
-			          </md-button>
-			        </md-menu-item>
-			        <md-menu-item>
-			          <md-button ng-click="vm.logout()">
-			          	<md-icon md-menu-align-target aria-label="{{ 'home.logout' | translate }}" class="material-icons">exit_to_app</md-icon>
-						<span translate>home.logout</span>
-			          </md-button>
-			        </md-menu-item>
-			      </md-menu-content>
-		      </md-menu>		      
+		      </md-button>
+			  <tb-user-menu
+					  display-user-info="!vm.displaySearchMode()">
+			  </tb-user-menu>
       	</div>
     </md-toolbar>
-   	<md-progress-linear class="md-warn" style="z-index: 10; max-height: 0px; width: 100%;" md-mode="indeterminate" ng-show="loading"></md-progress-linear>
+   	<md-progress-linear class="md-warn" style="z-index: 10; max-height: 0px; width: 100%;" md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
     
     <div flex layout="column" id="toast-parent" style="position: relative;">
     	<md-content ng-cloak flex layout="column" class="page-content" ui-view name="content"></md-content>

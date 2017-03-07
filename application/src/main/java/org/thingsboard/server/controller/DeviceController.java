@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -29,6 +31,11 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
@@ -185,6 +192,32 @@ public class DeviceController extends BaseController {
             checkCustomerId(customerId);
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
             return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/devices", params = {"deviceIds"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<Device> getDevicesByIds(
+            @RequestParam("deviceIds") String[] strDeviceIds) throws ThingsboardException {
+        checkArrayParameter("deviceIds", strDeviceIds);
+        try {
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            CustomerId customerId = user.getCustomerId();
+            List<DeviceId> deviceIds = new ArrayList<>();
+            for (String strDeviceId : strDeviceIds) {
+                deviceIds.add(new DeviceId(toUUID(strDeviceId)));
+            }
+            ListenableFuture<List<Device>> devices;
+            if (customerId == null || customerId.isNullUid()) {
+                devices = deviceService.findDevicesByTenantIdAndIdsAsync(tenantId, deviceIds);
+            } else {
+                devices = deviceService.findDevicesByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, deviceIds);
+            }
+            return checkNotNull(devices.get());
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -15,234 +15,284 @@
     limitations under the License.
 
 -->
-<md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode" hide-expand-button="vm.widgetEditMode || vm.iframeMode">
-    <!--section ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode" layout="row" layout-wrap
-             class="tb-header-buttons tb-top-header-buttons md-fab" ng-style="{'right': '50px'}">
-        <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit" ng-disabled="loading"
-                   class="tb-btn-header md-accent md-hue-2 md-fab md-fab-bottom-right"
-                   aria-label="{{ 'action.apply' | translate }}"
-                   ng-click="vm.saveDashboard()">
-            <md-tooltip md-direction="top">
-                {{ 'action.apply-changes' | translate }}
-            </md-tooltip>
-            <ng-md-icon icon="done"></ng-md-icon>
-        </md-button>
-        <md-button ng-if="vm.isTenantAdmin()" ng-disabled="loading"
-                   class="tb-btn-header md-accent md-hue-2 md-fab md-fab-bottom-right"
-                   aria-label="{{ 'action.edit-mode' | translate }}"
-                   ng-click="vm.toggleDashboardEditMode()">
-            <md-tooltip md-direction="top">
-                {{ (vm.isEdit ? 'action.decline-changes' : 'action.enter-edit-mode') | translate }}
-            </md-tooltip>
-            <ng-md-icon icon="{{vm.isEdit ? 'close' : 'edit'}}"
-                        options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
-        </md-button>
-    </section-->
-    <section ng-show="!loading && vm.noData()" layout-align="center center"
-             ng-class="{'tb-padded' : !vm.widgetEditMode}"
-             style="text-transform: uppercase; display: flex; z-index: 1;"
-             class="md-headline tb-absolute-fill">
-	 <span translate ng-if="!vm.isEdit">
-		 dashboard.no-widgets
-	 </span>
-        <md-button ng-if="vm.isEdit && !vm.widgetEditMode" class="tb-add-new-widget" ng-click="vm.addWidget($event)">
-            <md-icon aria-label="{{ 'action.add' | translate }}" class="material-icons tb-md-96">add</md-icon>
-            {{ 'dashboard.add-widget' | translate }}
-        </md-button>
-    </section>
-    <section ng-if="!vm.widgetEditMode" class="tb-dashboard-title" layout="row" layout-align="center center">
-        <h3 ng-show="!vm.isEdit && vm.displayTitle()">{{ vm.dashboard.title }}</h3>
-        <md-input-container ng-show="vm.isEdit" class="md-block" style="height: 30px;">
-            <label translate>dashboard.title</label>
-            <input class="tb-dashboard-title" required name="title" ng-model="vm.dashboard.title">
-        </md-input-container>
-        <md-button class="md-raised" flex="none" ng-show="vm.isEdit" ng-click="vm.openDeviceAliases($event)">
-            {{ 'device.aliases' | translate }}
-        </md-button>
-        <md-button class="md-raised" flex="none" ng-show="vm.isEdit" ng-click="vm.openDashboardSettings($event)">
-            {{ 'dashboard.settings' | translate }}
-        </md-button>
-    </section>
-    <div class="tb-absolute-fill"
-         ng-class="{ 'tb-padded' : !vm.widgetEditMode && (vm.isEdit || vm.displayTitle()), 'tb-shrinked' : vm.isEditingWidget }">
-        <tb-dashboard
-                dashboard-style="{'background-color': vm.dashboard.configuration.gridSettings.backgroundColor,
-                                  'background-image': 'url('+vm.dashboard.configuration.gridSettings.backgroundImageUrl+')',
-                                  'background-repeat': 'no-repeat',
-                                  'background-attachment': 'scroll',
-                                  'background-size': '100%',
-                                  'background-position': '0% 0%'}"
-                widgets="vm.widgets"
-                columns="vm.dashboard.configuration.gridSettings.columns"
-                margins="vm.dashboard.configuration.gridSettings.margins"
-                device-alias-list="vm.dashboard.configuration.deviceAliases"
-                is-edit="vm.isEdit || vm.widgetEditMode"
-                is-mobile="vm.forceDashboardMobileMode"
-                is-mobile-disabled="vm.widgetEditMode"
-                is-edit-action-enabled="vm.isEdit || vm.widgetEditMode"
-                is-export-action-enabled="vm.isEdit && !vm.widgetEditMode"
-                is-remove-action-enabled="vm.isEdit && !vm.widgetEditMode"
-                on-edit-widget="vm.editWidget(event, widget)"
-                on-export-widget="vm.exportWidget(event, widget)"
-                on-widget-mouse-down="vm.widgetMouseDown(event, widget)"
-                on-widget-clicked="vm.widgetClicked(event, widget)"
-                on-widget-context-menu="vm.widgetContextMenu(event, widget)"
-                prepare-dashboard-context-menu="vm.prepareDashboardContextMenu()"
-                prepare-widget-context-menu="vm.prepareWidgetContextMenu(widget)"
-                on-remove-widget="vm.removeWidget(event, widget)"
-                load-widgets="vm.loadDashboard()"
-                on-init="vm.dashboardInited(dashboard)"
-                on-init-failed="vm.dashboardInitFailed(e)">
-        </tb-dashboard>
-    </div>
-    <tb-details-sidenav class="tb-widget-details-sidenav"
-                        header-title="vm.editingWidget.config.title"
-                        header-subtitle="{{vm.editingWidgetSubtitle}}"
-                        is-read-only="false"
-                        is-open="vm.isEditingWidget"
-                        is-always-edit="true"
-                        on-close-details="vm.onEditWidgetClosed()"
-                        on-toggle-details-edit-mode="vm.onRevertWidgetEdit(vm.widgetForm)"
-                        on-apply-details="vm.saveWidget(vm.widgetForm)"
-                        the-form="vm.widgetForm">
-        <details-buttons tb-help="vm.helpLinkIdForWidgetType()" help-container-id="help-container">
-            <div id="help-container"></div>
-        </details-buttons>
-        <form name="vm.widgetForm">
-            <tb-edit-widget
-                    dashboard="vm.dashboard"
-                    widget="vm.editingWidget"
-                    the-form="vm.widgetForm">
-            </tb-edit-widget>
-        </form>
-    </tb-details-sidenav>
-    <tb-details-sidenav ng-if="!vm.widgetEditMode" class="tb-select-widget-sidenav"
-                        header-title="'dashboard.select-widget-title' | translate"
-                        header-height-px="120"
-                        is-read-only="true"
-                        is-open="vm.isAddingWidget"
-                        is-edit="false"
-                        on-close-details="vm.onAddWidgetClosed()">
-        <header-pane>
-            <div layout="row">
-                <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
-                <tb-widgets-bundle-select flex-offset="5"
-                                          flex
-                        ng-model="vm.widgetsBundle"
-                        tb-required="true"
-                        select-first-bundle="false">
-                </tb-widgets-bundle-select>
-            </div>
-        </header-pane>
-        <div>
-            <md-tabs ng-if="vm.timeseriesWidgetTypes.length > 0 || vm.latestWidgetTypes.length > 0 ||
-                            vm.rpcWidgetTypes.length > 0 || vm.staticWidgetTypes.length > 0"
-                     flex
-                     class="tb-absolute-fill" md-border-bottom>
-                <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.timeseries' | translate }}">
-                    <tb-dashboard
-                            widgets="vm.timeseriesWidgetTypes"
-                            is-edit="false"
-                            is-mobile="true"
-                            is-edit-action-enabled="false"
-                            is-remove-action-enabled="false"
-                            on-widget-clicked="vm.addWidgetFromType(event, widget)">
-                    </tb-dashboard>
-                </md-tab>
-                <md-tab ng-if="vm.latestWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.latest-values' | translate }}">
-                    <tb-dashboard
-                            widgets="vm.latestWidgetTypes"
-                            is-edit="false"
-                            is-mobile="true"
-                            is-edit-action-enabled="false"
-                            is-remove-action-enabled="false"
-                            on-widget-clicked="vm.addWidgetFromType(event, widget)">
-                    </tb-dashboard>
-                </md-tab>
-                <md-tab ng-if="vm.rpcWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.rpc' | translate }}">
-                    <tb-dashboard
-                            widgets="vm.rpcWidgetTypes"
-                            is-edit="false"
-                            is-mobile="true"
-                            is-edit-action-enabled="false"
-                            is-remove-action-enabled="false"
-                            on-widget-clicked="vm.addWidgetFromType(event, widget)">
-                    </tb-dashboard>
-                </md-tab>
-                <md-tab ng-if="vm.staticWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.static' | translate }}">
-                    <tb-dashboard
-                            widgets="vm.staticWidgetTypes"
-                            is-edit="false"
-                            is-mobile="true"
-                            is-edit-action-enabled="false"
-                            is-remove-action-enabled="false"
-                            on-widget-clicked="vm.addWidgetFromType(event, widget)">
-                    </tb-dashboard>
-                </md-tab>
-            </md-tabs>
-            <span translate ng-if="vm.timeseriesWidgetTypes.length === 0 && vm.latestWidgetTypes.length === 0 &&
-                                   vm.rpcWidgetTypes.length === 0 && vm.staticWidgetTypes.length === 0 && vm.widgetsBundle"
-                  layout-align="center center"
-                  style="text-transform: uppercase; display: flex;"
-                  class="md-headline tb-absolute-fill">widgets-bundle.empty</span>
-            <span translate ng-if="!vm.widgetsBundle"
-                  layout-align="center center"
-                  style="text-transform: uppercase; display: flex;"
-                  class="md-headline tb-absolute-fill">widget.select-widgets-bundle</span>
-        </div>
-    </tb-details-sidenav>
-    <!-- </section> -->
-    <section layout="row" layout-wrap class="tb-footer-buttons md-fab" layout-align="start end">
-        <md-fab-speed-dial ng-disabled="loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
-                           md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up">
-            <md-fab-trigger>
-                <md-button ng-disabled="loading"
-                           class="tb-btn-footer md-accent md-hue-2 md-fab"
-                           aria-label="{{ 'dashboard.add-widget' | translate }}">
-                    <md-tooltip md-direction="top">
-                        {{ 'dashboard.add-widget' | translate }}
+<md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode || forceFullscreen" expand-button-id="dashboard-expand-button"
+            hide-expand-button="vm.widgetEditMode || vm.iframeMode || forceFullscreen" expand-tooltip-direction="bottom"
+            ng-style="{'background-color': vm.dashboard.configuration.gridSettings.backgroundColor,
+                    'background-image': 'url('+vm.dashboard.configuration.gridSettings.backgroundImageUrl+')',
+                    'background-repeat': 'no-repeat',
+                    'background-attachment': 'scroll',
+                    'background-size': vm.dashboard.configuration.gridSettings.backgroundSizeMode || '100%',
+                    'background-position': '0% 0%'}">
+    <section class="tb-dashboard-toolbar" ng-show="vm.showDashboardToolbar()"
+             ng-class="{ 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">
+        <md-fab-toolbar md-open="vm.toolbarOpened"
+                        md-direction="left">
+            <md-fab-trigger class="align-with-text">
+                <md-button aria-label="menu" class="md-fab md-primary" ng-click="vm.openToolbar()">
+                    <md-tooltip ng-show="!vm.toolbarOpened" md-direction="bottom">
+                        {{ 'dashboard.open-toolbar' | translate }}
                     </md-tooltip>
-                    <ng-md-icon icon="add"></ng-md-icon>
+                    <md-icon aria-label="dashboard-toolbar" class="material-icons">more_horiz</md-icon>
                 </md-button>
             </md-fab-trigger>
-            <md-fab-actions>
-                <md-button ng-disabled="loading"
-                           class="tmd-accent md-hue-2 md-fab" ng-click="vm.addWidget($event)"
-                           aria-label="{{ 'action.create' | translate }}">
-                    <md-tooltip md-direction="top">
-                        {{ 'dashboard.create-new-widget' | translate }}
-                    </md-tooltip>
-                    <ng-md-icon icon="insert_drive_file"></ng-md-icon>
-                </md-button>
-                <md-button ng-disabled="loading"
-                           class="tmd-accent md-hue-2 md-fab" ng-click="vm.importWidget($event)"
-                           aria-label="{{ 'action.import' | translate }}">
-                    <md-tooltip md-direction="top">
-                        {{ 'dashboard.import-widget' | translate }}
-                    </md-tooltip>
-                    <ng-md-icon icon="file_upload"></ng-md-icon>
-                </md-button>
-            </md-fab-actions>
-        </md-fab-speed-dial>
-        <md-button ng-if="vm.isTenantAdmin()" ng-show="vm.isEdit && !vm.isAddingWidget && !loading && !vm.widgetEditMode" ng-disabled="loading"
-                   class="tb-btn-footer md-accent md-hue-2 md-fab"
-                   aria-label="{{ 'action.apply' | translate }}"
-                   ng-click="vm.saveDashboard()">
-            <md-tooltip md-direction="top">
-                {{ 'action.apply-changes' | translate }}
-            </md-tooltip>
-            <ng-md-icon icon="done"></ng-md-icon>
-        </md-button>
-        <md-button ng-show="!vm.isAddingWidget && !loading && !vm.widgetEditMode"
-                   ng-if="vm.isTenantAdmin()" ng-disabled="loading"
-                   class="tb-btn-footer md-accent md-hue-2 md-fab"
-                   aria-label="{{ 'action.edit-mode' | translate }}"
-                   ng-click="vm.toggleDashboardEditMode()">
-            <md-tooltip md-direction="top">
-                {{ (vm.isEdit ? 'action.decline-changes' : 'action.enter-edit-mode') | translate }}
-            </md-tooltip>
-            <ng-md-icon icon="{{vm.isEdit ? 'close' : 'edit'}}"
-                        options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
-        </md-button>
+            <md-toolbar>
+                <md-fab-actions class="md-toolbar-tools">
+                    <md-button ng-show="!vm.isEdit" aria-label="close-toolbar" class="md-icon-button close-action" ng-click="vm.closeToolbar()">
+                        <md-tooltip md-direction="bottom">
+                            {{ 'dashboard.close-toolbar' | translate }}
+                        </md-tooltip>
+                        <md-icon aria-label="close-toolbar" class="material-icons">arrow_forward</md-icon>
+                    </md-button>
+                    <md-button id="dashboard-expand-button"
+                               aria-label="{{ 'fullscreen.fullscreen' | translate }}"
+                               class="md-icon-button">
+                    </md-button>
+                    <tb-user-menu ng-show="forceFullscreen" display-user-info="true">
+                    </tb-user-menu>
+                    <tb-timewindow direction="left" tooltip-direction="bottom" aggregation ng-model="vm.dashboardConfiguration.timewindow">
+                    </tb-timewindow>
+                    <tb-aliases-device-select ng-show="!vm.isEdit"
+                                              tooltip-direction="bottom"
+                                              ng-model="vm.aliasesInfo.deviceAliases"
+                                              device-aliases-info="vm.aliasesInfo.deviceAliasesInfo">
+                    </tb-aliases-device-select>
+                    <md-button ng-show="vm.isEdit" aria-label="{{ 'device.aliases' | translate }}" class="md-icon-button"
+                               ng-click="vm.openDeviceAliases($event)">
+                        <md-tooltip md-direction="bottom">
+                            {{ 'device.aliases' | translate }}
+                        </md-tooltip>
+                        <md-icon aria-label="{{ 'device.aliases' | translate }}" class="material-icons">devices_other</md-icon>
+                    </md-button>
+                    <md-button ng-show="vm.isEdit" aria-label="{{ 'dashboard.settings' | translate }}" class="md-icon-button"
+                               ng-click="vm.openDashboardSettings($event)">
+                        <md-tooltip md-direction="bottom">
+                            {{ 'dashboard.settings' | translate }}
+                        </md-tooltip>
+                        <md-icon aria-label="{{ 'dashboard.settings' | translate }}" class="material-icons">settings</md-icon>
+                    </md-button>
+                </md-fab-actions>
+            </md-toolbar>
+        </md-fab-toolbar>
+    </section>
+    <section class="tb-dashboard-container tb-absolute-fill"
+             ng-class="{ 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">
+        <section ng-show="!loading && vm.noData()" layout-align="center center"
+                 ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}"
+                 ng-class="{'tb-padded' : !vm.widgetEditMode}"
+                 style="text-transform: uppercase; display: flex; z-index: 1;"
+                 class="md-headline tb-absolute-fill">
+            <span translate ng-if="!vm.isEdit">
+                dashboard.no-widgets
+            </span>
+            <md-button ng-if="vm.isEdit && !vm.widgetEditMode" class="tb-add-new-widget" ng-click="vm.addWidget($event)">
+                <md-icon aria-label="{{ 'action.add' | translate }}" class="material-icons tb-md-96">add</md-icon>
+                {{ 'dashboard.add-widget' | translate }}
+            </md-button>
+        </section>
+        <section ng-show="!loading && vm.dashboardConfigurationError()" layout-align="center center"
+                 ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}"
+                 ng-class="{'tb-padded' : !vm.widgetEditMode}"
+                 style="text-transform: uppercase; display: flex; z-index: 1;"
+                 class="md-headline tb-absolute-fill">
+            <span translate>
+                dashboard.configuration-error
+            </span>
+        </section>
+        <section ng-if="!vm.widgetEditMode" class="tb-dashboard-title" layout="row" layout-align="center center"
+                 ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}">
+            <h3 ng-show="!vm.isEdit && vm.displayTitle()">{{ vm.dashboard.title }}</h3>
+            <md-input-container ng-show="vm.isEdit" class="md-block" style="height: 30px;">
+                <label translate ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}">dashboard.title</label>
+                <input class="tb-dashboard-title" ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}" required name="title" ng-model="vm.dashboard.title">
+            </md-input-container>
+        </section>
+        <div class="tb-absolute-fill"
+             ng-class="{ 'tb-padded' : !vm.widgetEditMode && (vm.isEdit || vm.displayTitle()), 'tb-shrinked' : vm.isEditingWidget }">
+            <tb-dashboard
+                    dashboard-style="{'background-color': vm.dashboard.configuration.gridSettings.backgroundColor,
+                        'background-image': 'url('+vm.dashboard.configuration.gridSettings.backgroundImageUrl+')',
+                        'background-repeat': 'no-repeat',
+                        'background-attachment': 'scroll',
+                        'background-size': vm.dashboard.configuration.gridSettings.backgroundSizeMode || '100%',
+                        'background-position': '0% 0%'}"
+                    widgets="vm.widgets"
+                    columns="vm.dashboard.configuration.gridSettings.columns"
+                    margins="vm.dashboard.configuration.gridSettings.margins"
+                    aliases-info="vm.aliasesInfo"
+                    dashboard-timewindow="vm.dashboardConfiguration.timewindow"
+                    is-edit="vm.isEdit"
+                    is-mobile="vm.forceDashboardMobileMode"
+                    is-mobile-disabled="vm.widgetEditMode"
+                    is-edit-action-enabled="vm.isEdit"
+                    is-export-action-enabled="vm.isEdit && !vm.widgetEditMode"
+                    is-remove-action-enabled="vm.isEdit && !vm.widgetEditMode"
+                    on-edit-widget="vm.editWidget(event, widget)"
+                    on-export-widget="vm.exportWidget(event, widget)"
+                    on-widget-mouse-down="vm.widgetMouseDown(event, widget)"
+                    on-widget-clicked="vm.widgetClicked(event, widget)"
+                    on-widget-context-menu="vm.widgetContextMenu(event, widget)"
+                    prepare-dashboard-context-menu="vm.prepareDashboardContextMenu()"
+                    prepare-widget-context-menu="vm.prepareWidgetContextMenu(widget)"
+                    on-remove-widget="vm.removeWidget(event, widget)"
+                    load-widgets="vm.loadDashboard()"
+                    get-st-diff="vm.getServerTimeDiff()"
+                    on-init="vm.dashboardInited(dashboard)"
+                    on-init-failed="vm.dashboardInitFailed(e)">
+            </tb-dashboard>
+        </div>
+        <tb-details-sidenav class="tb-widget-details-sidenav"
+                            header-title="vm.editingWidget.config.title"
+                            header-subtitle="{{vm.editingWidgetSubtitle}}"
+                            is-read-only="false"
+                            is-open="vm.isEditingWidget"
+                            is-always-edit="true"
+                            on-close-details="vm.onEditWidgetClosed()"
+                            on-toggle-details-edit-mode="vm.onRevertWidgetEdit(vm.widgetForm)"
+                            on-apply-details="vm.saveWidget(vm.widgetForm)"
+                            the-form="vm.widgetForm">
+            <details-buttons tb-help="vm.helpLinkIdForWidgetType()" help-container-id="help-container">
+                <div id="help-container"></div>
+            </details-buttons>
+            <form name="vm.widgetForm" ng-if="vm.isEditingWidget">
+                <tb-edit-widget
+                        dashboard="vm.dashboard"
+                        aliases-info="vm.aliasesInfo"
+                        widget="vm.editingWidget"
+                        the-form="vm.widgetForm">
+                </tb-edit-widget>
+            </form>
+        </tb-details-sidenav>
+        <tb-details-sidenav ng-if="!vm.widgetEditMode" class="tb-select-widget-sidenav"
+                            header-title="'dashboard.select-widget-title' | translate"
+                            header-height-px="120"
+                            is-read-only="true"
+                            is-open="vm.isAddingWidget"
+                            is-edit="false"
+                            on-close-details="vm.onAddWidgetClosed()">
+            <header-pane ng-if="vm.isAddingWidget">
+                <div layout="row">
+                    <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
+                    <tb-widgets-bundle-select flex-offset="5"
+                                              flex
+                            ng-model="vm.widgetsBundle"
+                            tb-required="true"
+                            select-first-bundle="false">
+                    </tb-widgets-bundle-select>
+                </div>
+            </header-pane>
+            <div ng-if="vm.isAddingWidget">
+                <md-tabs ng-if="vm.timeseriesWidgetTypes.length > 0 || vm.latestWidgetTypes.length > 0 ||
+                                vm.rpcWidgetTypes.length > 0 || vm.staticWidgetTypes.length > 0"
+                         flex
+                         class="tb-absolute-fill" md-border-bottom>
+                    <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.timeseries' | translate }}">
+                        <tb-dashboard
+                                widgets="vm.timeseriesWidgetTypes"
+                                is-edit="false"
+                                is-mobile="true"
+                                is-edit-action-enabled="false"
+                                is-remove-action-enabled="false"
+                                on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                        </tb-dashboard>
+                    </md-tab>
+                    <md-tab ng-if="vm.latestWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.latest-values' | translate }}">
+                        <tb-dashboard
+                                widgets="vm.latestWidgetTypes"
+                                is-edit="false"
+                                is-mobile="true"
+                                is-edit-action-enabled="false"
+                                is-remove-action-enabled="false"
+                                on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                        </tb-dashboard>
+                    </md-tab>
+                    <md-tab ng-if="vm.rpcWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.rpc' | translate }}">
+                        <tb-dashboard
+                                widgets="vm.rpcWidgetTypes"
+                                is-edit="false"
+                                is-mobile="true"
+                                is-edit-action-enabled="false"
+                                is-remove-action-enabled="false"
+                                on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                        </tb-dashboard>
+                    </md-tab>
+                    <md-tab ng-if="vm.staticWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.static' | translate }}">
+                        <tb-dashboard
+                                widgets="vm.staticWidgetTypes"
+                                is-edit="false"
+                                is-mobile="true"
+                                is-edit-action-enabled="false"
+                                is-remove-action-enabled="false"
+                                on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                        </tb-dashboard>
+                    </md-tab>
+                </md-tabs>
+                <span translate ng-if="vm.timeseriesWidgetTypes.length === 0 && vm.latestWidgetTypes.length === 0 &&
+                                       vm.rpcWidgetTypes.length === 0 && vm.staticWidgetTypes.length === 0 && vm.widgetsBundle"
+                      layout-align="center center"
+                      style="text-transform: uppercase; display: flex;"
+                      class="md-headline tb-absolute-fill">widgets-bundle.empty</span>
+                <span translate ng-if="!vm.widgetsBundle"
+                      layout-align="center center"
+                      style="text-transform: uppercase; display: flex;"
+                      class="md-headline tb-absolute-fill">widget.select-widgets-bundle</span>
+            </div>
+        </tb-details-sidenav>
+        <!-- </section> -->
+        <section layout="row" layout-wrap class="tb-footer-buttons md-fab" layout-align="start end">
+            <md-fab-speed-dial ng-disabled="loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
+                               md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up">
+                <md-fab-trigger>
+                    <md-button ng-disabled="loading"
+                               class="tb-btn-footer md-accent md-hue-2 md-fab"
+                               aria-label="{{ 'dashboard.add-widget' | translate }}">
+                        <md-tooltip md-direction="top">
+                            {{ 'dashboard.add-widget' | translate }}
+                        </md-tooltip>
+                        <ng-md-icon icon="add"></ng-md-icon>
+                    </md-button>
+                </md-fab-trigger>
+                <md-fab-actions>
+                    <md-button ng-disabled="loading"
+                               class="tmd-accent md-hue-2 md-fab" ng-click="vm.addWidget($event)"
+                               aria-label="{{ 'action.create' | translate }}">
+                        <md-tooltip md-direction="top">
+                            {{ 'dashboard.create-new-widget' | translate }}
+                        </md-tooltip>
+                        <ng-md-icon icon="insert_drive_file"></ng-md-icon>
+                    </md-button>
+                    <md-button ng-disabled="loading"
+                               class="tmd-accent md-hue-2 md-fab" ng-click="vm.importWidget($event)"
+                               aria-label="{{ 'action.import' | translate }}">
+                        <md-tooltip md-direction="top">
+                            {{ 'dashboard.import-widget' | translate }}
+                        </md-tooltip>
+                        <ng-md-icon icon="file_upload"></ng-md-icon>
+                    </md-button>
+                </md-fab-actions>
+            </md-fab-speed-dial>
+            <md-button ng-if="vm.isTenantAdmin() || vm.isSystemAdmin()" ng-show="vm.isEdit && !vm.isAddingWidget && !loading" ng-disabled="loading"
+                       class="tb-btn-footer md-accent md-hue-2 md-fab"
+                       aria-label="{{ 'action.apply' | translate }}"
+                       ng-click="vm.saveDashboard()">
+                <md-tooltip md-direction="top">
+                    {{ 'action.apply-changes' | translate }}
+                </md-tooltip>
+                <ng-md-icon icon="done"></ng-md-icon>
+            </md-button>
+            <md-button ng-show="!vm.isAddingWidget && !loading"
+                       ng-if="vm.isTenantAdmin() || vm.isSystemAdmin()" ng-disabled="loading"
+                       class="tb-btn-footer md-accent md-hue-2 md-fab"
+                       aria-label="{{ 'action.edit-mode' | translate }}"
+                       ng-click="vm.toggleDashboardEditMode()">
+                <md-tooltip md-direction="top">
+                    {{ (vm.isEdit ? 'action.decline-changes' : 'action.enter-edit-mode') | translate }}
+                </md-tooltip>
+                <ng-md-icon icon="{{vm.isEdit ? 'close' : 'edit'}}"
+                            options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
+            </md-button>
+        </section>
+    </section>
+    <section class="tb-powered-by-footer" ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}">
+        <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard</a></span>
     </section>
 </md-content>

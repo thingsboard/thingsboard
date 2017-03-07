@@ -131,12 +131,36 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
             var data = angular.fromJson(message.data);
             if (data.subscriptionId) {
                 var subscriber = subscribers[data.subscriptionId];
-                if (subscriber && data.data) {
-                    subscriber.onData(data.data);
+                if (subscriber && data) {
+                    var keys = fetchKeys(subscriber);
+                    if (!data.data) {
+                        data.data = {};
+                    }
+                    for (var k in keys) {
+                        var key = keys[k];
+                        if (!data.data[key]) {
+                            data.data[key] = [];
+                        }
+                    }
+                    subscriber.onData(data);
                 }
             }
         }
         checkToClose();
+    }
+
+    function fetchKeys(subscriber) {
+        var command;
+        if (angular.isDefined(subscriber.subscriptionCommand)) {
+            command = subscriber.subscriptionCommand;
+        } else {
+            command = subscriber.historyCommand;
+        }
+        if (command && command.keys && command.keys.length > 0) {
+            return command.keys.split(",");
+        } else {
+            return [];
+        }
     }
 
     function nextCmdId () {

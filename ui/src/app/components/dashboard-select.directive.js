@@ -40,27 +40,19 @@ function DashboardSelect($compile, $templateCache, $q, dashboardService, userSer
         scope.dashboard = null;
         scope.dashboardSearchText = '';
 
-        scope.dashboardFetchFunction = dashboardService.getTenantDashboards;
-        if (angular.isDefined(scope.dashboardsScope)) {
-            if (scope.dashboardsScope === 'customer') {
-                scope.dashboardFetchFunction = dashboardService.getCustomerDashboards;
-            } else {
-                scope.dashboardFetchFunction = dashboardService.getTenantDashboards;
-            }
-        } else {
-            if (userService.getAuthority() === 'TENANT_ADMIN') {
-                scope.dashboardFetchFunction = dashboardService.getTenantDashboards;
-            } else if (userService.getAuthority() === 'CUSTOMER_USER') {
-                scope.dashboardFetchFunction = dashboardService.getCustomerDashboards;
-            }
-        }
-
         scope.fetchDashboards = function(searchText) {
             var pageLink = {limit: 10, textSearch: searchText};
 
             var deferred = $q.defer();
 
-            scope.dashboardFetchFunction(pageLink).then(function success(result) {
+            var promise;
+            if (scope.dashboardsScope === 'customer' || userService.getAuthority() === 'CUSTOMER_USER') {
+                promise = dashboardService.getCustomerDashboards(scope.customerId, pageLink);
+            } else {
+                promise = dashboardService.getTenantDashboards(pageLink);
+            }
+
+            promise.then(function success(result) {
                 deferred.resolve(result.data);
             }, function fail() {
                 deferred.reject();
@@ -79,6 +71,8 @@ function DashboardSelect($compile, $templateCache, $q, dashboardService, userSer
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 scope.dashboard = ngModelCtrl.$viewValue;
+            } else {
+                scope.dashboard = null;
             }
         }
 
@@ -106,6 +100,7 @@ function DashboardSelect($compile, $templateCache, $q, dashboardService, userSer
         link: linker,
         scope: {
             dashboardsScope: '@',
+            customerId: '=',
             theForm: '=?',
             tbRequired: '=?',
             selectFirstDashboard: '='

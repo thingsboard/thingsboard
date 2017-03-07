@@ -45,9 +45,13 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
         };
         aliasesInfo.datasourceAliases[0] = {
             aliasName: deviceName,
-            deviceId: deviceId
+            deviceFilter: {
+                useFilter: false,
+                deviceNameFilter: '',
+                deviceList: [deviceId]
+            }
         };
-        theDashboard = itembuffer.addWidgetToDashboard(theDashboard, widget, aliasesInfo, 48, -1, -1);
+        theDashboard = itembuffer.addWidgetToDashboard(theDashboard, widget, aliasesInfo, null, 48, -1, -1);
         dashboardService.saveDashboard(theDashboard).then(
             function success(dashboard) {
                 $mdDialog.hide();

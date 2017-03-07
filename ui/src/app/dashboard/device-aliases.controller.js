@@ -17,25 +17,23 @@ import './device-aliases.scss';
 
 /*@ngInject*/
 export default function DeviceAliasesController(deviceService, toast, $scope, $mdDialog, $document, $q, $translate,
-                                                types, config) {
+                                                  types, config) {
 
     var vm = this;
 
-    vm.isSingleDevice = config.isSingleDevice;
+    vm.isSingleDeviceAlias = config.isSingleDeviceAlias;
     vm.singleDeviceAlias = config.singleDeviceAlias;
     vm.deviceAliases = [];
-    vm.singleDevice = null;
-    vm.singleDeviceSearchText = '';
     vm.title = config.customTitle ? config.customTitle : 'device.aliases';
     vm.disableAdd = config.disableAdd;
     vm.aliasToWidgetsMap = {};
 
+
+    vm.onFilterDeviceChanged = onFilterDeviceChanged;
     vm.addAlias = addAlias;
-    vm.cancel = cancel;
-    vm.deviceSearchTextChanged = deviceSearchTextChanged;
-    vm.deviceChanged = deviceChanged;
-    vm.fetchDevices = fetchDevices;
     vm.removeAlias = removeAlias;
+
+    vm.cancel = cancel;
     vm.save = save;
 
     initController();
@@ -80,40 +78,46 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
             }
         }
 
-        for (aliasId in config.deviceAliases) {
-            var alias = config.deviceAliases[aliasId].alias;
-            var deviceId = config.deviceAliases[aliasId].deviceId;
-            var deviceAlias = {id: aliasId, alias: alias, device: null, changed: false, searchText: ''};
-            if (deviceId) {
-                fetchAliasDevice(deviceAlias, deviceId);
+        if (vm.isSingleDeviceAlias) {
+            if (!vm.singleDeviceAlias.deviceFilter || vm.singleDeviceAlias.deviceFilter == null) {
+                vm.singleDeviceAlias.deviceFilter = {
+                    useFilter: false,
+                    deviceNameFilter: '',
+                    deviceList: [],
+                };
             }
-            vm.deviceAliases.push(deviceAlias);
+        }
+
+        for (aliasId in config.deviceAliases) {
+            var deviceAlias = config.deviceAliases[aliasId];
+            var alias = deviceAlias.alias;
+            var deviceFilter;
+            if (!deviceAlias.deviceFilter) {
+                deviceFilter = {
+                    useFilter: false,
+                    deviceNameFilter: '',
+                    deviceList: [],
+                };
+                if (deviceAlias.deviceId) {
+                    deviceFilter.deviceList = [deviceAlias.deviceId];
+                } else {
+                    deviceFilter.deviceList = [];
+                }
+            } else {
+                deviceFilter = deviceAlias.deviceFilter;
+            }
+            var result = {id: aliasId, alias: alias, deviceFilter: deviceFilter, changed: true};
+            vm.deviceAliases.push(result);
         }
     }
 
-    function fetchDevices(searchText) {
-        var pageLink = {limit: 10, textSearch: searchText};
-
-        var deferred = $q.defer();
-
-        deviceService.getTenantDevices(pageLink).then(function success(result) {
-            deferred.resolve(result.data);
-        }, function fail() {
-            deferred.reject();
-        });
-
-        return deferred.promise;
-    }
-
-    function deviceSearchTextChanged() {
-    }
-
-    function deviceChanged(deviceAlias) {
-        if (deviceAlias && deviceAlias.device) {
-            if (angular.isDefined(deviceAlias.changed) && !deviceAlias.changed) {
-                deviceAlias.changed = true;
-            } else {
-                deviceAlias.alias = deviceAlias.device.name;
+    function onFilterDeviceChanged(device, deviceAlias) {
+        if (deviceAlias) {
+            if (!deviceAlias.alias || deviceAlias.alias.length == 0) {
+                deviceAlias.changed = false;
+            }
+            if (!deviceAlias.changed && device) {
+                deviceAlias.alias = device.name;
             }
         }
     }
@@ -124,7 +128,7 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
             aliasId = Math.max(vm.deviceAliases[a].id, aliasId);
         }
         aliasId++;
-        var deviceAlias = {id: aliasId, alias: '', device: null, searchText: ''};
+        var deviceAlias = {id: aliasId, alias: '', deviceFilter: {useFilter: false, deviceNameFilter: '', deviceList: []}, changed: false};
         vm.deviceAliases.push(deviceAlias);
     }
 
@@ -150,9 +154,6 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
 
                 $mdDialog.show(alert);
             } else {
-                for (var i = index + 1; i < vm.deviceAliases.length; i++) {
-                    vm.deviceAliases[i].changed = false;
-                }
                 vm.deviceAliases.splice(index, 1);
                 if ($scope.theForm) {
                     $scope.theForm.$setDirty();
@@ -165,6 +166,15 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
         $mdDialog.cancel();
     }
 
+    function cleanupDeviceFilter(deviceFilter) {
+        if (deviceFilter.useFilter) {
+            deviceFilter.deviceList = [];
+        } else {
+            deviceFilter.deviceNameFilter = '';
+        }
+        return deviceFilter;
+    }
+
     function save() {
 
         var deviceAliases = {};
@@ -175,9 +185,9 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
         var alias;
         var i;
 
-        if (vm.isSingleDevice) {
+        if (vm.isSingleDeviceAlias) {
             maxAliasId = 0;
-            vm.singleDeviceAlias.deviceId = vm.singleDevice.id.id;
+            vm.singleDeviceAlias.deviceFilter = cleanupDeviceFilter(vm.singleDeviceAlias.deviceFilter);
             for (i in vm.deviceAliases) {
                 aliasId = vm.deviceAliases[i].id;
                 alias = vm.deviceAliases[i].alias;
@@ -195,7 +205,7 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
                 alias = vm.deviceAliases[i].alias;
                 if (!uniqueAliasList[alias]) {
                     uniqueAliasList[alias] = alias;
-                    deviceAliases[aliasId] = {alias: alias, deviceId: vm.deviceAliases[i].device.id.id};
+                    deviceAliases[aliasId] = {alias: alias, deviceFilter: cleanupDeviceFilter(vm.deviceAliases[i].deviceFilter)};
                 } else {
                     valid = false;
                     break;
@@ -204,7 +214,7 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
         }
         if (valid) {
             $scope.theForm.$setPristine();
-            if (vm.isSingleDevice) {
+            if (vm.isSingleDeviceAlias) {
                 $mdDialog.hide(vm.singleDeviceAlias);
             } else {
                 $mdDialog.hide(deviceAliases);
@@ -212,13 +222,6 @@ export default function DeviceAliasesController(deviceService, toast, $scope, $m
         } else {
             toast.showError($translate.instant('device.duplicate-alias-error', {alias: alias}));
         }
-    }
-
-    function fetchAliasDevice(deviceAlias, deviceId) {
-        deviceService.getDevice(deviceId).then(function (device) {
-            deviceAlias.device = device;
-            deviceAlias.searchText = device.name;
-        });
     }
 
 }

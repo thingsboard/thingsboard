@@ -19,6 +19,7 @@ import thingsboardUtils from '../common/utils.service';
 import thingsboardDeviceAliasSelect from './device-alias-select.directive';
 import thingsboardDatasource from './datasource.directive';
 import thingsboardTimewindow from './timewindow.directive';
+import thingsboardLegendConfig from './legend-config.directive';
 import thingsboardJsonForm from "./json-form.directive";
 import 'angular-ui-ace';
 
@@ -36,12 +37,13 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     thingsboardDeviceAliasSelect,
     thingsboardDatasource,
     thingsboardTimewindow,
+    thingsboardLegendConfig,
     'ui.ace'])
     .directive('tbWidgetConfig', WidgetConfig)
     .name;
 
 /*@ngInject*/
-function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
+function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, utils) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -98,7 +100,14 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                     }, true);
                 scope.mobileOrder = ngModelCtrl.$viewValue.mobileOrder;
                 scope.mobileHeight = ngModelCtrl.$viewValue.mobileHeight;
+                scope.units = ngModelCtrl.$viewValue.units;
+                scope.decimals = ngModelCtrl.$viewValue.decimals;
+                scope.useDashboardTimewindow = angular.isDefined(ngModelCtrl.$viewValue.useDashboardTimewindow) ?
+                    ngModelCtrl.$viewValue.useDashboardTimewindow : true;
                 scope.timewindow = ngModelCtrl.$viewValue.timewindow;
+                scope.showLegend = angular.isDefined(ngModelCtrl.$viewValue.showLegend) ?
+                    ngModelCtrl.$viewValue.showLegend : scope.widgetType === types.widgetType.timeseries.value;
+                scope.legendConfig = ngModelCtrl.$viewValue.legendConfig;
                 if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value) {
                     if (scope.datasources) {
                         scope.datasources.splice(0, scope.datasources.length);
@@ -127,8 +136,6 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 scope.settings = ngModelCtrl.$viewValue.settings;
 
                 scope.updateSchemaForm();
-
-                scope.updateDatasourcesAccordionState();
             }
         };
 
@@ -147,12 +154,6 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 scope.currentSettings = {};
             }
         }
-
-        scope.$on('datasources-accordion:onReady', function () {
-            if (scope.updateDatasourcesAccordionStatePending) {
-                scope.updateDatasourcesAccordionState();
-            }
-        });
 
         scope.updateValidity = function () {
             if (ngModelCtrl.$viewValue) {
@@ -174,7 +175,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
             }
         };
 
-        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + padding + titleStyle + mobileOrder + mobileHeight + intervalSec', function () {
+        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
+            'padding + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 value.title = scope.title;
@@ -191,7 +193,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 }
                 value.mobileOrder = angular.isNumber(scope.mobileOrder) ? scope.mobileOrder : undefined;
                 value.mobileHeight = scope.mobileHeight;
-                value.intervalSec = scope.intervalSec;
+                value.units = scope.units;
+                value.decimals = scope.decimals;
+                value.useDashboardTimewindow = scope.useDashboardTimewindow;
+                value.showLegend = scope.showLegend;
                 ngModelCtrl.$setViewValue(value);
                 scope.updateValidity();
             }
@@ -209,6 +214,14 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 value.timewindow = scope.timewindow;
+                ngModelCtrl.$setViewValue(value);
+            }
+        }, true);
+
+        scope.$watch('legendConfig', function () {
+            if (ngModelCtrl.$viewValue) {
+                var value = ngModelCtrl.$viewValue;
+                value.legendConfig = scope.legendConfig;
                 ngModelCtrl.$setViewValue(value);
             }
         }, true);
@@ -271,23 +284,6 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 }
             }
         };
-
-        scope.updateDatasourcesAccordionState = function () {
-            if (scope.widgetType !== types.widgetType.rpc.value &&
-                scope.widgetType !== types.widgetType.static.value) {
-                if (scope.datasourcesAccordion) {
-                    scope.updateDatasourcesAccordionStatePending = false;
-                    var expand = scope.datasources && scope.datasources.length < 4;
-                    if (expand) {
-                        scope.datasourcesAccordion.expand('datasources-pane');
-                    } else {
-                        scope.datasourcesAccordion.collapse('datasources-pane');
-                    }
-                } else {
-                    scope.updateDatasourcesAccordionStatePending = true;
-                }
-            }
-        }
 
         scope.generateDataKey = function (chip, type) {
 
