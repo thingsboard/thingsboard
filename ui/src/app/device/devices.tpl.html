@@ -41,6 +41,7 @@
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'attribute.latest-telemetry' | translate }}">
             <tb-attribute-table flex
                                 device-id="vm.grid.operatingItem().id.id"
+                                device-name="vm.grid.operatingItem().name"
                                 default-attribute-scope="{{vm.types.latestTelemetry.value}}"
                                 disable-attribute-scope-selection="true">
             </tb-attribute-table>

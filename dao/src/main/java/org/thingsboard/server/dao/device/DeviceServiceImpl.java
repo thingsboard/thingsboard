@@ -45,8 +45,10 @@ import java.util.Optional;
 
 import static org.thingsboard.server.dao.DaoUtil.convertDataList;
 import static org.thingsboard.server.dao.DaoUtil.getData;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
@@ -144,6 +146,16 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
+    public ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds) {
+        log.trace("Executing findDevicesByTenantIdAndIdsAsync, tenantId [{}], deviceIds [{}]", tenantId, deviceIds);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
+        ListenableFuture<List<DeviceEntity>> deviceEntities = deviceDao.findDevicesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceIds));
+        return Futures.transform(deviceEntities, (Function<List<DeviceEntity>, List<Device>>) input -> convertDataList(input));
+    }
+
+
+    @Override
     public void deleteDevicesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
@@ -159,6 +171,17 @@ public class DeviceServiceImpl implements DeviceService {
         List<DeviceEntity> deviceEntities = deviceDao.findDevicesByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
         List<Device> devices = convertDataList(deviceEntities);
         return new TextPageData<Device>(devices, pageLink);
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds) {
+        log.trace("Executing findDevicesByTenantIdCustomerIdAndIdsAsync, tenantId [{}], customerId [{}], deviceIds [{}]", tenantId, customerId, deviceIds);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(customerId, "Incorrect customerId " + customerId);
+        validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
+        ListenableFuture<List<DeviceEntity>> deviceEntities = deviceDao.findDevicesByTenantIdCustomerIdAndIdsAsync(tenantId.getId(),
+                customerId.getId(), toUUIDs(deviceIds));
+        return Futures.transform(deviceEntities, (Function<List<DeviceEntity>, List<Device>>) input -> convertDataList(input));
     }
 
     @Override

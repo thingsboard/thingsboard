@@ -64,6 +64,27 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         return list;
     }
 
+    protected ListenableFuture<List<T>> findListByStatementAsync(Statement statement) {
+        if (statement != null) {
+            statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+            ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+            ListenableFuture<List<T>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<T>>() {
+                @Nullable
+                @Override
+                public List<T> apply(@Nullable ResultSet resultSet) {
+                    Result<T> result = getMapper().map(resultSet);
+                    if (result != null) {
+                        return result.all();
+                    } else {
+                        return Collections.emptyList();
+                    }
+                }
+            });
+            return result;
+        }
+        return Futures.immediateFuture(Collections.emptyList());
+    }
+
     protected T findOneByStatement(Statement statement) {
         T object = null;
         if (statement != null) {

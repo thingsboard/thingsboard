@@ -35,7 +35,6 @@ export default class TbFlot {
         var colors = [];
         for (var i in ctx.data) {
             var series = ctx.data[i];
-            series.label = series.dataKey.label;
             colors.push(series.dataKey.color);
             var keySettings = series.dataKey.settings;
 
@@ -130,7 +129,7 @@ export default class TbFlot {
 
         if (this.chartType === 'pie') {
             ctx.tooltipFormatter = function(item) {
-                var divElement = seriesInfoDiv(item.series.label, item.series.color,
+                var divElement = seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
                     item.datapoint[1][0][1], tbFlot.ctx.trackUnits, tbFlot.ctx.trackDecimals, true, item.series.percent);
                 return divElement.prop('outerHTML');
             };
@@ -313,7 +312,7 @@ export default class TbFlot {
 
             if (options.series.pie.label.show) {
                 options.series.pie.label.formatter = function (label, series) {
-                    return "<div class='pie-label'>" + label + "<br/>" + Math.round(series.percent) + "%</div>";
+                    return "<div class='pie-label'>" + series.dataKey.label + "<br/>" + Math.round(series.percent) + "%</div>";
                 }
                 options.series.pie.label.radius = 3/4;
                 options.series.pie.label.background = {
@@ -346,7 +345,7 @@ export default class TbFlot {
     }
 
     update() {
-        if (!this.isMouseInteraction) {
+        if (!this.isMouseInteraction && this.ctx.plot) {
             if (this.chartType === 'line' || this.chartType === 'bar') {
                 this.options.xaxis.min = this.ctx.timeWindow.minTime;
                 this.options.xaxis.max = this.ctx.timeWindow.maxTime;
@@ -918,7 +917,7 @@ export default class TbFlot {
                     value: value,
                     hoverIndex: hoverIndex,
                     color: series.dataKey.color,
-                    label: series.label,
+                    label: series.dataKey.label,
                     time: pointTime,
                     distance: hoverDistance,
                     index: i

@@ -13,13 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-.tb-aliases-dialog {
-  .md-dialog-content {
-    padding-bottom: 0px;
+.tb-device-filter {
+  #device_list_chips {
+    .md-chips {
+      padding-bottom: 1px;
+    }
   }
-  .tb-alias {
-    padding: 10px 0 0 10px;
-    margin: 5px;
+  .device-name-filter-input {
+    margin-top: 10px;
+    margin-bottom: 0px;
+    .md-errors-spacer {
+      min-height: 0px;
+    }
+  }
+  .tb-filter-switch {
+    padding-left: 10px;
+    .filter-switch {
+      margin: 0;
+    }
+    .filter-label {
+      margin: 5px 0;
+    }
+  }
+  .tb-error-messages {
+    margin-top: -11px;
+    height: 35px;
+    .tb-error-message {
+      padding-left: 1px;
+    }
   }
 }

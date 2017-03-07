@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-.tb-aliases-dialog {
-  .md-dialog-content {
-    padding-bottom: 0px;
-  }
-  .tb-alias {
-    padding: 10px 0 0 10px;
-    margin: 5px;
-  }
+/*@ngInject*/
+export default function AliasesDeviceSelectPanelController(mdPanelRef, $scope, types, deviceAliases, deviceAliasesInfo, onDeviceAliasesUpdate) {
+
+    var vm = this;
+    vm._mdPanelRef = mdPanelRef;
+    vm.deviceAliases = deviceAliases;
+    vm.deviceAliasesInfo = deviceAliasesInfo;
+    vm.onDeviceAliasesUpdate = onDeviceAliasesUpdate;
+
+    $scope.$watch('vm.deviceAliases', function () {
+        if (onDeviceAliasesUpdate) {
+            onDeviceAliasesUpdate(vm.deviceAliases);
+        }
+    }, true);
 }

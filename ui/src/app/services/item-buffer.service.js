@@ -43,18 +43,37 @@ function ItemBuffer(bufferStore, types) {
         datasourceAliases: {
             datasourceIndex: {
                 aliasName: "...",
-                deviceId: "..."
+                deviceFilter: "..."
             }
         }
         targetDeviceAliases: {
             targetDeviceAliasIndex: {
                 aliasName: "...",
-                deviceId: "..."
+                deviceFilter: "..."
             }
         }
         ....
      }
     **/
+
+    function getDeviceFilter(alias) {
+        if (alias.deviceId) {
+            return {
+                useFilter: false,
+                deviceNameFilter: '',
+                deviceList: [alias.deviceId]
+            };
+        } else {
+            return alias.deviceFilter;
+        }
+    }
+
+    function prepareAliasInfo(deviceAlias) {
+        return {
+            aliasName: deviceAlias.alias,
+            deviceFilter: getDeviceFilter(deviceAlias)
+        };
+    }
 
     function prepareWidgetItem(dashboard, widget) {
         var aliasesInfo = {
@@ -75,10 +94,7 @@ function ItemBuffer(bufferStore, types) {
                     if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
                         deviceAlias = dashboard.configuration.deviceAliases[datasource.deviceAliasId];
                         if (deviceAlias) {
-                            aliasesInfo.datasourceAliases[i] = {
-                                aliasName: deviceAlias.alias,
-                                deviceId: deviceAlias.deviceId
-                            }
+                            aliasesInfo.datasourceAliases[i] = prepareAliasInfo(deviceAlias);
                         }
                     }
                 }
@@ -89,10 +105,7 @@ function ItemBuffer(bufferStore, types) {
                     if (targetDeviceAliasId) {
                         deviceAlias = dashboard.configuration.deviceAliases[targetDeviceAliasId];
                         if (deviceAlias) {
-                            aliasesInfo.targetDeviceAliases[i] = {
-                                aliasName: deviceAlias.alias,
-                                deviceId: deviceAlias.deviceId
-                            }
+                            aliasesInfo.targetDeviceAliases[i] = prepareAliasInfo(deviceAlias);
                         }
                     }
                 }
@@ -114,7 +127,7 @@ function ItemBuffer(bufferStore, types) {
         return bufferStore.get(WIDGET_ITEM);
     }
 
-    function pasteWidget(targetDashboard, position) {
+    function pasteWidget(targetDashboard, position, onAliasesUpdate) {
         var widgetItemJson = bufferStore.get(WIDGET_ITEM);
         if (widgetItemJson) {
             var widgetItem = angular.fromJson(widgetItemJson);
@@ -127,11 +140,11 @@ function ItemBuffer(bufferStore, types) {
                 targetRow = position.row;
                 targetColumn = position.column;
             }
-            addWidgetToDashboard(targetDashboard, widget, aliasesInfo, originalColumns, targetRow, targetColumn);
+            addWidgetToDashboard(targetDashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns, targetRow, targetColumn);
         }
     }
 
-    function addWidgetToDashboard(dashboard, widget, aliasesInfo, originalColumns, row, column) {
+    function addWidgetToDashboard(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns, row, column) {
         var theDashboard;
         if (dashboard) {
             theDashboard = dashboard;
@@ -144,7 +157,7 @@ function ItemBuffer(bufferStore, types) {
         if (!theDashboard.configuration.deviceAliases) {
             theDashboard.configuration.deviceAliases = {};
         }
-        updateAliases(theDashboard, widget, aliasesInfo);
+        var newDeviceAliases = updateAliases(theDashboard, widget, aliasesInfo);
 
         if (!theDashboard.configuration.widgets) {
             theDashboard.configuration.widgets = [];
@@ -174,12 +187,19 @@ function ItemBuffer(bufferStore, types) {
             widget.row = row;
             widget.col = 0;
         }
+        var aliasesUpdated = !angular.equals(newDeviceAliases, theDashboard.configuration.deviceAliases);
+        if (aliasesUpdated) {
+            theDashboard.configuration.deviceAliases = newDeviceAliases;
+            if (onAliasesUpdate) {
+                onAliasesUpdate();
+            }
+        }
         theDashboard.configuration.widgets.push(widget);
         return theDashboard;
     }
 
     function updateAliases(dashboard, widget, aliasesInfo) {
-        var deviceAliases = dashboard.configuration.deviceAliases;
+        var deviceAliases = angular.copy(dashboard.configuration.deviceAliases);
         var aliasInfo;
         var newAliasId;
         for (var datasourceIndex in aliasesInfo.datasourceAliases) {
@@ -192,12 +212,19 @@ function ItemBuffer(bufferStore, types) {
             newAliasId = getDeviceAliasId(deviceAliases, aliasInfo);
             widget.config.targetDeviceAliasIds[targetDeviceAliasIndex] = newAliasId;
         }
+        return deviceAliases;
+    }
+
+    function isDeviceFiltersEqual(alias1, alias2) {
+        var filter1 = getDeviceFilter(alias1);
+        var filter2 = getDeviceFilter(alias2);
+        return angular.equals(filter1, filter2);
     }
 
     function getDeviceAliasId(deviceAliases, aliasInfo) {
         var newAliasId;
         for (var aliasId in deviceAliases) {
-            if (deviceAliases[aliasId].deviceId === aliasInfo.deviceId) {
+            if (isDeviceFiltersEqual(deviceAliases[aliasId], aliasInfo)) {
                 newAliasId = aliasId;
                 break;
             }
@@ -209,7 +236,7 @@ function ItemBuffer(bufferStore, types) {
                 newAliasId = Math.max(newAliasId, aliasId);
             }
             newAliasId++;
-            deviceAliases[newAliasId] = {alias: newAliasName, deviceId: aliasInfo.deviceId};
+            deviceAliases[newAliasId] = {alias: newAliasName, deviceFilter: aliasInfo.deviceFilter};
         }
         return newAliasId;
     }

@@ -16,12 +16,14 @@
 package org.thingsboard.server.dao.device;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import java.util.*;
 
 import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
@@ -62,6 +64,16 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
     }
 
     @Override
+    public ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds) {
+        log.debug("Try to find devices by tenantId [{}] and device Ids [{}]", tenantId, deviceIds);
+        Select select = select().from(getColumnFamilyName());
+        Select.Where query = select.where();
+        query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
+        query.and(in(ID_PROPERTY, deviceIds));
+        return findListByStatementAsync(query);
+    }
+
+    @Override
     public List<DeviceEntity> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
         List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
@@ -71,6 +83,17 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
 
         log.trace("Found devices [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, pageLink);
         return deviceEntities;
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
+        log.debug("Try to find devices by tenantId [{}], customerId [{}] and device Ids [{}]", tenantId, customerId, deviceIds);
+        Select select = select().from(getColumnFamilyName());
+        Select.Where query = select.where();
+        query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
+        query.and(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId));
+        query.and(in(ID_PROPERTY, deviceIds));
+        return findListByStatementAsync(query);
     }
 
     @Override

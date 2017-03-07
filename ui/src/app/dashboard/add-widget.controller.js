@@ -20,11 +20,12 @@ import deviceAliasesTemplate from './device-aliases.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function AddWidgetController($scope, widgetService, deviceService, $mdDialog, $q, $document, types, dashboard, widget, widgetInfo) {
+export default function AddWidgetController($scope, widgetService, deviceService, $mdDialog, $q, $document, types, dashboard, aliasesInfo, widget, widgetInfo) {
 
     var vm = this;
 
     vm.dashboard = dashboard;
+    vm.aliasesInfo = aliasesInfo;
     vm.widget = widget;
     vm.widgetInfo = widgetInfo;
 
@@ -78,19 +79,19 @@ export default function AddWidgetController($scope, widgetService, deviceService
     }
 
     function cancel () {
-        $mdDialog.cancel();
+        $mdDialog.cancel({aliasesInfo: vm.aliasesInfo});
     }
 
     function add () {
         if ($scope.theForm.$valid) {
             $scope.theForm.$setPristine();
             vm.widget.config = vm.widgetConfig;
-            $mdDialog.hide(vm.widget);
+            $mdDialog.hide({widget: vm.widget, aliasesInfo: vm.aliasesInfo});
         }
     }
 
     function fetchDeviceKeys (deviceAliasId, query, type) {
-        var deviceAlias = vm.dashboard.configuration.deviceAliases[deviceAliasId];
+        var deviceAlias = vm.aliasesInfo.deviceAliases[deviceAliasId];
         if (deviceAlias && deviceAlias.deviceId) {
             return deviceService.getDeviceKeys(deviceAlias.deviceId, query, type);
         } else {
@@ -101,7 +102,7 @@ export default function AddWidgetController($scope, widgetService, deviceService
     function createDeviceAlias (event, alias) {
 
         var deferred = $q.defer();
-        var singleDeviceAlias = {id: null, alias: alias, deviceId: null};
+        var singleDeviceAlias = {id: null, alias: alias, deviceFilter: null};
 
         $mdDialog.show({
             controller: 'DeviceAliasesController',
@@ -111,7 +112,7 @@ export default function AddWidgetController($scope, widgetService, deviceService
                 config: {
                     deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
                     widgets: null,
-                    isSingleDevice: true,
+                    isSingleDeviceAlias: true,
                     singleDeviceAlias: singleDeviceAlias
                 }
             },
@@ -121,8 +122,15 @@ export default function AddWidgetController($scope, widgetService, deviceService
             targetEvent: event
         }).then(function (singleDeviceAlias) {
             vm.dashboard.configuration.deviceAliases[singleDeviceAlias.id] =
-                { alias: singleDeviceAlias.alias, deviceId: singleDeviceAlias.deviceId };
-            deferred.resolve(singleDeviceAlias);
+                { alias: singleDeviceAlias.alias, deviceFilter: singleDeviceAlias.deviceFilter };
+            deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases).then(
+                function(resolution) {
+                    if (!resolution.error) {
+                        vm.aliasesInfo = resolution.aliasesInfo;
+                    }
+                    deferred.resolve(singleDeviceAlias);
+                }
+            );
         }, function () {
             deferred.reject();
         });

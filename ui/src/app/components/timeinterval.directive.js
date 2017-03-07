@@ -84,6 +84,13 @@ function Timeinterval($compile, $templateCache, timeService) {
             scope.rendered = true;
         }
 
+        function calculateIntervalMs() {
+            return (scope.days * 86400 +
+                scope.hours * 3600 +
+                scope.mins * 60 +
+                scope.secs) * 1000;
+        }
+
         scope.updateView = function () {
             if (!scope.rendered) {
                 return;
@@ -92,11 +99,11 @@ function Timeinterval($compile, $templateCache, timeService) {
             var intervalMs;
             if (!scope.advanced) {
                 intervalMs = scope.intervalMs;
+                if (!intervalMs || isNaN(intervalMs)) {
+                    intervalMs = calculateIntervalMs();
+                }
             } else {
-                intervalMs = (scope.days * 86400 +
-                scope.hours * 3600 +
-                scope.mins * 60 +
-                scope.secs) * 1000;
+                intervalMs = calculateIntervalMs();
             }
             if (!isNaN(intervalMs) && intervalMs > 0) {
                 value = intervalMs;
@@ -135,12 +142,13 @@ function Timeinterval($compile, $templateCache, timeService) {
         scope.$watch('advanced', function (newAdvanced, prevAdvanced) {
             if (angular.isDefined(newAdvanced) && newAdvanced !== prevAdvanced) {
                 if (!scope.advanced) {
-                    scope.intervalMs = (scope.days * 86400 +
-                        scope.hours * 3600 +
-                        scope.mins * 60 +
-                        scope.secs) * 1000;
+                    scope.intervalMs = calculateIntervalMs();
                 } else {
-                    scope.setIntervalMs(scope.intervalMs);
+                    var intervalMs = scope.intervalMs;
+                    if (!intervalMs || isNaN(intervalMs)) {
+                        intervalMs = calculateIntervalMs();
+                    }
+                    scope.setIntervalMs(intervalMs);
                 }
                 scope.updateView();
             }

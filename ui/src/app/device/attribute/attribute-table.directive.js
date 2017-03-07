@@ -255,8 +255,16 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.firstBundle = true;
             scope.selectedWidgetsBundleAlias = types.systemBundleAlias.cards;
 
-            scope.deviceAliases = {};
-            scope.deviceAliases['1'] = {alias: scope.deviceName, deviceId: scope.deviceId};
+            scope.aliasesInfo = {
+                deviceAliases: {
+                    '1': {alias: scope.deviceName, deviceId: scope.deviceId}
+                },
+                deviceAliasesInfo: {
+                    '1': [
+                        {name: scope.deviceName, id: scope.deviceId}
+                    ]
+                }
+            };
 
             var dataKeyType = scope.attributeScope === types.latestTelemetry ?
                 types.dataKeyType.timeseries : types.dataKeyType.attribute;

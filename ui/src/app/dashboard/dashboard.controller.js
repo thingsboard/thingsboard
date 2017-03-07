@@ -23,7 +23,7 @@ import addWidgetTemplate from './add-widget.tpl.html';
 
 /*@ngInject*/
 export default function DashboardController(types, widgetService, userService,
-                                            dashboardService, timeService, itembuffer, importExport, hotkeys, $window, $rootScope,
+                                            dashboardService, timeService, deviceService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $state, $stateParams, $mdDialog, $timeout, $document, $q, $translate, $filter) {
 
     var user = userService.getCurrentUser();
@@ -82,6 +82,8 @@ export default function DashboardController(types, widgetService, userService,
     vm.loadDashboard = loadDashboard;
     vm.getServerTimeDiff = getServerTimeDiff;
     vm.noData = noData;
+    vm.dashboardConfigurationError = dashboardConfigurationError;
+    vm.showDashboardToolbar = showDashboardToolbar;
     vm.onAddWidgetClosed = onAddWidgetClosed;
     vm.onEditWidgetClosed = onEditWidgetClosed;
     vm.openDeviceAliases = openDeviceAliases;
@@ -212,9 +214,21 @@ export default function DashboardController(types, widgetService, userService,
                     if (angular.isUndefined(vm.dashboard.configuration.timewindow)) {
                         vm.dashboard.configuration.timewindow = timeService.defaultTimewindow();
                     }
-                    vm.dashboardConfiguration = vm.dashboard.configuration;
-                    vm.widgets = vm.dashboard.configuration.widgets;
-                    deferred.resolve();
+                    deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases)
+                        .then(
+                            function(resolution) {
+                                if (resolution.error && !isTenantAdmin()) {
+                                    vm.configurationError = true;
+                                    showAliasesResolutionError(resolution.error);
+                                    deferred.reject();
+                                } else {
+                                    vm.aliasesInfo = resolution.aliasesInfo;
+                                    vm.dashboardConfiguration = vm.dashboard.configuration;
+                                    vm.widgets = vm.dashboard.configuration.widgets;
+                                    deferred.resolve();
+                                }
+                            }
+                        );
                 }, function fail(e) {
                     deferred.reject(e);
                 });
@@ -245,7 +259,15 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function noData() {
-        return vm.dashboardInitComplete && vm.widgets.length == 0;
+        return vm.dashboardInitComplete && !vm.configurationError && vm.widgets.length == 0;
+    }
+
+    function dashboardConfigurationError() {
+        return vm.dashboardInitComplete && vm.configurationError;
+    }
+
+    function showDashboardToolbar() {
+        return vm.dashboardInitComplete && !vm.configurationError;
     }
 
     function openDeviceAliases($event) {
@@ -257,7 +279,7 @@ export default function DashboardController(types, widgetService, userService,
                 config: {
                     deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
                     widgets: vm.widgets,
-                    isSingleDevice: false,
+                    isSingleDeviceAlias: false,
                     singleDeviceAlias: null
                 }
             },
@@ -267,6 +289,7 @@ export default function DashboardController(types, widgetService, userService,
             targetEvent: $event
         }).then(function (deviceAliases) {
             vm.dashboard.configuration.deviceAliases = deviceAliases;
+            deviceAliasesUpdated();
         }, function () {
         });
     }
@@ -331,7 +354,7 @@ export default function DashboardController(types, widgetService, userService,
 
     function importWidget($event) {
         $event.stopPropagation();
-        importExport.importWidget($event, vm.dashboard);
+        importExport.importWidget($event, vm.dashboard, deviceAliasesUpdated);
     }
 
     function widgetMouseDown($event, widget) {
@@ -433,7 +456,7 @@ export default function DashboardController(types, widgetService, userService,
 
     function pasteWidget($event) {
         var pos = vm.dashboardContainer.getEventGridPosition($event);
-        itembuffer.pasteWidget(vm.dashboard, pos);
+        itembuffer.pasteWidget(vm.dashboard, pos, deviceAliasesUpdated);
     }
 
     function prepareWidgetContextMenu() {
@@ -570,7 +593,7 @@ export default function DashboardController(types, widgetService, userService,
                     controller: 'AddWidgetController',
                     controllerAs: 'vm',
                     templateUrl: addWidgetTemplate,
-                    locals: {dashboard: vm.dashboard, widget: newWidget, widgetInfo: widgetTypeInfo},
+                    locals: {dashboard: vm.dashboard, aliasesInfo: vm.aliasesInfo, widget: newWidget, widgetInfo: widgetTypeInfo},
                     parent: angular.element($document[0].body),
                     fullscreen: true,
                     skipHide: true,
@@ -579,7 +602,9 @@ export default function DashboardController(types, widgetService, userService,
                         var w = angular.element($window);
                         w.triggerHandler('resize');
                     }
-                }).then(function (widget) {
+                }).then(function (result) {
+                    var widget = result.widget;
+                    vm.aliasesInfo = result.aliasesInfo;
                     var columns = 24;
                     if (vm.dashboard.configuration.gridSettings && vm.dashboard.configuration.gridSettings.columns) {
                         columns = vm.dashboard.configuration.gridSettings.columns;
@@ -590,7 +615,8 @@ export default function DashboardController(types, widgetService, userService,
                         widget.sizeY *= ratio;
                     }
                     vm.widgets.push(widget);
-                }, function () {
+                }, function (rejection) {
+                    vm.aliasesInfo = rejection.aliasesInfo;
                 });
             }
         );
@@ -634,6 +660,7 @@ export default function DashboardController(types, widgetService, userService,
                     vm.dashboard = vm.prevDashboard;
                     vm.widgets = vm.dashboard.configuration.widgets;
                     vm.dashboardConfiguration = vm.dashboard.configuration;
+                    deviceAliasesUpdated();
                 }
             }
         }
@@ -646,6 +673,31 @@ export default function DashboardController(types, widgetService, userService,
     function saveDashboard() {
         setEditMode(false, false);
         notifyDashboardUpdated();
+    }
+
+    function showAliasesResolutionError(error) {
+        var alert = $mdDialog.alert()
+            .parent(angular.element($document[0].body))
+            .clickOutsideToClose(true)
+            .title($translate.instant('dashboard.alias-resolution-error-title'))
+            .htmlContent($translate.instant(error))
+            .ariaLabel($translate.instant('dashboard.alias-resolution-error-title'))
+            .ok($translate.instant('action.close'))
+        alert._options.skipHide = true;
+        alert._options.fullscreen = true;
+
+        $mdDialog.show(alert);
+    }
+
+    function deviceAliasesUpdated() {
+        deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases)
+            .then(
+                function(resolution) {
+                    if (resolution.aliasesInfo) {
+                        vm.aliasesInfo = resolution.aliasesInfo;
+                    }
+                }
+            );
     }
 
     function notifyDashboardUpdated() {

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
@@ -46,7 +47,16 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @return the list of device objects
      */
     List<DeviceEntity> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink);
-    
+
+    /**
+     * Find devices by tenantId and devices Ids.
+     *
+     * @param tenantId the tenantId
+     * @param deviceIds the device Ids
+     * @return the list of device objects
+     */
+    ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds);
+
     /**
      * Find devices by tenantId, customerId and page link.
      *
@@ -56,6 +66,16 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @return the list of device objects
      */
     List<DeviceEntity> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
+
+    /**
+     * Find devices by tenantId, customerId and devices Ids.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param deviceIds the device Ids
+     * @return the list of device objects
+     */
+    ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds);
 
     /**
      * Find devices by tenantId and device name.

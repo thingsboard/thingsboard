@@ -23,7 +23,7 @@
                     'background-attachment': 'scroll',
                     'background-size': vm.dashboard.configuration.gridSettings.backgroundSizeMode || '100%',
                     'background-position': '0% 0%'}">
-    <section class="tb-dashboard-toolbar"
+    <section class="tb-dashboard-toolbar" ng-show="vm.showDashboardToolbar()"
              ng-class="{ 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">
         <md-fab-toolbar md-open="vm.toolbarOpened"
                         md-direction="left">
@@ -49,6 +49,11 @@
                     </md-button>
                     <tb-timewindow direction="left" tooltip-direction="bottom" aggregation ng-model="vm.dashboardConfiguration.timewindow">
                     </tb-timewindow>
+                    <tb-aliases-device-select ng-show="!vm.isEdit"
+                                              tooltip-direction="bottom"
+                                              ng-model="vm.aliasesInfo.deviceAliases"
+                                              device-aliases-info="vm.aliasesInfo.deviceAliasesInfo">
+                    </tb-aliases-device-select>
                     <md-button ng-show="vm.isEdit" aria-label="{{ 'device.aliases' | translate }}" class="md-icon-button"
                                ng-click="vm.openDeviceAliases($event)">
                         <md-tooltip md-direction="bottom">
@@ -70,16 +75,26 @@
     <section class="tb-dashboard-container tb-absolute-fill"
              ng-class="{ 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">
         <section ng-show="!loading && vm.noData()" layout-align="center center"
+                 ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}"
                  ng-class="{'tb-padded' : !vm.widgetEditMode}"
                  style="text-transform: uppercase; display: flex; z-index: 1;"
                  class="md-headline tb-absolute-fill">
-         <span translate ng-if="!vm.isEdit">
-             dashboard.no-widgets
-         </span>
+            <span translate ng-if="!vm.isEdit">
+                dashboard.no-widgets
+            </span>
             <md-button ng-if="vm.isEdit && !vm.widgetEditMode" class="tb-add-new-widget" ng-click="vm.addWidget($event)">
                 <md-icon aria-label="{{ 'action.add' | translate }}" class="material-icons tb-md-96">add</md-icon>
                 {{ 'dashboard.add-widget' | translate }}
             </md-button>
+        </section>
+        <section ng-show="!loading && vm.dashboardConfigurationError()" layout-align="center center"
+                 ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}"
+                 ng-class="{'tb-padded' : !vm.widgetEditMode}"
+                 style="text-transform: uppercase; display: flex; z-index: 1;"
+                 class="md-headline tb-absolute-fill">
+            <span translate>
+                dashboard.configuration-error
+            </span>
         </section>
         <section ng-if="!vm.widgetEditMode" class="tb-dashboard-title" layout="row" layout-align="center center"
                  ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}">
@@ -101,7 +116,7 @@
                     widgets="vm.widgets"
                     columns="vm.dashboard.configuration.gridSettings.columns"
                     margins="vm.dashboard.configuration.gridSettings.margins"
-                    device-alias-list="vm.dashboard.configuration.deviceAliases"
+                    aliases-info="vm.aliasesInfo"
                     dashboard-timewindow="vm.dashboardConfiguration.timewindow"
                     is-edit="vm.isEdit"
                     is-mobile="vm.forceDashboardMobileMode"
@@ -139,6 +154,7 @@
             <form name="vm.widgetForm" ng-if="vm.isEditingWidget">
                 <tb-edit-widget
                         dashboard="vm.dashboard"
+                        aliases-info="vm.aliasesInfo"
                         widget="vm.editingWidget"
                         the-form="vm.widgetForm">
                 </tb-edit-widget>

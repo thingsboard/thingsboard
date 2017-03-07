@@ -51,7 +51,7 @@ function Dashboard() {
         scope: true,
         bindToController: {
             widgets: '=',
-            deviceAliasList: '=',
+            aliasesInfo: '=',
             dashboardTimewindow: '=?',
             columns: '=',
             margins: '=',
@@ -274,8 +274,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
     });
 
-    $scope.$watch('vm.deviceAliasList', function () {
-        $scope.$broadcast('deviceAliasListChanged', vm.deviceAliasList);
+    $scope.$watch('vm.aliasesInfo.deviceAliases', function () {
+        $scope.$broadcast('deviceAliasListChanged', vm.aliasesInfo);
     }, true);
 
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {

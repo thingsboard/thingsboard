@@ -44,8 +44,10 @@ function Legend($compile, $templateCache, types) {
         scope.isHorizontal = scope.legendConfig.position === types.position.bottom.value ||
             scope.legendConfig.position === types.position.top.value;
 
-        scope.$on('legendDataUpdated', function () {
-            scope.$digest();
+        scope.$on('legendDataUpdated', function (event, apply) {
+            if (apply) {
+                scope.$digest();
+            }
         });
 
         scope.toggleHideData = function(index) {
@@ -62,15 +64,14 @@ function Legend($compile, $templateCache, types) {
      data: []
 
      key: {
-     label: '',
-     color: ''
-     dataIndex: 0
+       dataKey: dataKey,
+       dataIndex: 0
      }
      data: {
-     min: null,
-     max: null,
-     avg: null,
-     total: null
+       min: null,
+       max: null,
+       avg: null,
+       total: null
      }
      };*/
 

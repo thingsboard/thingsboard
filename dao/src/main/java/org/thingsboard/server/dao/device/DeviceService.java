@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface DeviceService {
@@ -43,9 +44,13 @@ public interface DeviceService {
 
     TextPageData<Device> findDevicesByTenantId(TenantId tenantId, TextPageLink pageLink);
 
+    ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds);
+
     void deleteDevicesByTenantId(TenantId tenantId);
 
     TextPageData<Device> findDevicesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds);
 
     void unassignCustomerDevices(TenantId tenantId, CustomerId customerId);
 }

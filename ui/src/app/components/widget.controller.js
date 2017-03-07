@@ -21,7 +21,7 @@ import 'javascript-detect-element-resize/detect-element-resize';
 /*@ngInject*/
 export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
                                          datasourceService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
-                                         dashboardTimewindowApi, widget, deviceAliasList, widgetType) {
+                                         dashboardTimewindowApi, widget, aliasesInfo, widgetType) {
 
     var vm = this;
 
@@ -44,6 +44,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var originalTimewindow = null;
     var subscriptionTimewindow = null;
     var dataUpdateCaf = null;
+
+    var varsRegex = /\$\{([^\}]*)\}/g;
 
     /*
      *   data = array of datasourceData
@@ -68,7 +70,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         settings: widget.config.settings,
         units: widget.config.units || '',
         decimals: angular.isDefined(widget.config.decimals) ? widget.config.decimals : 2,
-        datasources: widget.config.datasources,
+        datasources: angular.copy(widget.config.datasources),
         data: [],
         hiddenData: [],
         timeWindow: {
@@ -320,10 +322,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
              $scope.legendConfig.showTotal === true);
 
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
-            for (var i in widget.config.datasources) {
-                var datasource = angular.copy(widget.config.datasources[i]);
+            for (var i in widgetContext.datasources) {
+                var datasource = widgetContext.datasources[i];
                 for (var a in datasource.dataKeys) {
                     var dataKey = datasource.dataKeys[a];
+                    dataKey.pattern = angular.copy(dataKey.label);
                     var datasourceData = {
                         datasource: datasource,
                         dataKey: dataKey,
@@ -333,8 +336,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     widgetContext.hiddenData.push({data: []});
                     if ($scope.displayLegend) {
                         var legendKey = {
-                            label: dataKey.label,
-                            color: dataKey.color,
+                            dataKey: dataKey,
                             dataIndex: Number(i) + Number(a)
                         };
                         $scope.legendData.keys.push(legendKey);
@@ -367,8 +369,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         } else if (widget.type === types.widgetType.rpc.value) {
             if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
                 targetDeviceAliasId = widget.config.targetDeviceAliasIds[0];
-                if (deviceAliasList[targetDeviceAliasId]) {
-                    targetDeviceId = deviceAliasList[targetDeviceAliasId].deviceId;
+                if (aliasesInfo.deviceAliases[targetDeviceAliasId]) {
+                    targetDeviceId = aliasesInfo.deviceAliases[targetDeviceAliasId].deviceId;
                 }
             }
             if (targetDeviceId) {
@@ -402,13 +404,13 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             onMobileModeChanged(newIsMobile);
         });
 
-        $scope.$on('deviceAliasListChanged', function (event, newDeviceAliasList) {
-            deviceAliasList = newDeviceAliasList;
+        $scope.$on('deviceAliasListChanged', function (event, newAliasesInfo) {
+            aliasesInfo = newAliasesInfo;
             if (widget.type === types.widgetType.rpc.value) {
                 if (targetDeviceAliasId) {
                     var deviceId = null;
-                    if (deviceAliasList[targetDeviceAliasId]) {
-                        deviceId = deviceAliasList[targetDeviceAliasId].deviceId;
+                    if (aliasesInfo.deviceAliases[targetDeviceAliasId]) {
+                        deviceId = aliasesInfo.deviceAliases[targetDeviceAliasId].deviceId;
                     }
                     if (!angular.equals(deviceId, targetDeviceId)) {
                         targetDeviceId = deviceId;
@@ -609,7 +611,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             currentData.data = sourceData.data;
             onDataUpdated();
             if ($scope.caulculateLegendData) {
-                updateLegend(datasourceIndex + dataKeyIndex, sourceData.data);
+                updateLegend(datasourceIndex + dataKeyIndex, sourceData.data, apply);
             }
         }
         if (apply) {
@@ -617,7 +619,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
-    function updateLegend(dataIndex, data) {
+    function updateLegend(dataIndex, data, apply) {
         var legendKeyData = $scope.legendData.data[dataIndex];
         if ($scope.legendConfig.showMin) {
             legendKeyData.min = formatValue(calculateMin(data), widgetContext.decimals, widgetContext.units);
@@ -631,7 +633,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         if ($scope.legendConfig.showTotal) {
             legendKeyData.total = formatValue(calculateTotal(data), widgetContext.decimals, widgetContext.units);
         }
-        $scope.$broadcast('legendDataUpdated');
+        $scope.$broadcast('legendDataUpdated', apply !== false);
     }
 
     function isNumeric(val) {
@@ -707,9 +709,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 var deviceId = null;
                 var aliasName = null;
                 if (listener.datasource.type === types.datasourceType.device) {
-                    if (deviceAliasList[listener.datasource.deviceAliasId]) {
-                        deviceId = deviceAliasList[listener.datasource.deviceAliasId].deviceId;
-                        aliasName = deviceAliasList[listener.datasource.deviceAliasId].alias;
+                    if (aliasesInfo.deviceAliases[listener.datasource.deviceAliasId]) {
+                        deviceId = aliasesInfo.deviceAliases[listener.datasource.deviceAliasId].deviceId;
+                        aliasName = aliasesInfo.deviceAliases[listener.datasource.deviceAliasId].alias;
                     }
                     if (!angular.equals(deviceId, listener.deviceId) ||
                         !angular.equals(aliasName, listener.datasource.name)) {
@@ -756,6 +758,23 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
+    function updateDataKeyLabel(dataKey, deviceName, aliasName) {
+        var pattern = dataKey.pattern;
+        var label = dataKey.pattern;
+        var match = varsRegex.exec(pattern);
+        while (match !== null) {
+            var variable = match[0];
+            var variableName = match[1];
+            if (variableName === 'deviceName') {
+                label = label.split(variable).join(deviceName);
+            } else if (variableName === 'aliasName') {
+                label = label.split(variable).join(aliasName);
+            }
+            match = varsRegex.exec(pattern);
+        }
+        dataKey.label = label;
+    }
+
     function subscribe() {
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             notifyDataLoading();
@@ -767,13 +786,25 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 }
             }
             var index = 0;
-            for (var i in widget.config.datasources) {
-                var datasource = widget.config.datasources[i];
+            for (var i in widgetContext.datasources) {
+                var datasource = widgetContext.datasources[i];
                 var deviceId = null;
                 if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
-                    if (deviceAliasList[datasource.deviceAliasId]) {
-                        deviceId = deviceAliasList[datasource.deviceAliasId].deviceId;
-                        datasource.name = deviceAliasList[datasource.deviceAliasId].alias;
+                    if (aliasesInfo.deviceAliases[datasource.deviceAliasId]) {
+                        deviceId = aliasesInfo.deviceAliases[datasource.deviceAliasId].deviceId;
+                        datasource.name = aliasesInfo.deviceAliases[datasource.deviceAliasId].alias;
+                        var aliasName = aliasesInfo.deviceAliases[datasource.deviceAliasId].alias;
+                        var deviceName = '';
+                        var devicesInfo = aliasesInfo.deviceAliasesInfo[datasource.deviceAliasId];
+                        for (var d=0;d<devicesInfo.length;d++) {
+                            if (devicesInfo[d].id === deviceId) {
+                                deviceName = devicesInfo[d].name;
+                                break;
+                            }
+                        }
+                        for (var dk = 0; dk < datasource.dataKeys.length; dk++) {
+                            updateDataKeyLabel(datasource.dataKeys[dk], deviceName, aliasName);
+                        }
                     }
                 } else {
                     datasource.name = types.datasourceType.function;
