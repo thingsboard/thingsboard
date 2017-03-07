@@ -15,9 +15,10 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
-import com.google.gson.*;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.UnpooledByteBufAllocator;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
@@ -26,9 +27,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.msg.core.BasicTelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.BasicUpdateAttributesRequest;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
+import org.thingsboard.server.common.msg.core.*;
 import org.thingsboard.server.common.msg.session.BasicAdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.BasicToDeviceActorSessionMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
@@ -40,7 +39,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 
-import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -53,10 +52,6 @@ import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.val
  */
 @Slf4j
 public class GatewaySessionCtx {
-
-    private static final Gson GSON = new Gson();
-    private static final Charset UTF8 = Charset.forName("UTF-8");
-    private static final ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
 
     private final Device gateway;
     private final SessionId gatewaySessionId;
@@ -84,7 +79,10 @@ public class GatewaySessionCtx {
             newDevice.setName(deviceName);
             return deviceService.saveDevice(newDevice);
         });
-        devices.put(deviceName, new GatewayDeviceSessionCtx(this, device));
+        GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
+        devices.put(deviceName, ctx);
+        processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
+        processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
         ack(msg);
     }
 
@@ -127,6 +125,21 @@ public class GatewaySessionCtx {
         }
     }
 
+    public void onDeviceRpcResponse(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            String deviceName = checkDeviceConnected(jsonObj.get("device").getAsString());
+            Integer requestId = jsonObj.get("id").getAsInt();
+            String data = jsonObj.get("data").getAsString();
+            GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
+            processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+                    new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
+        } else {
+            throw new JsonSyntaxException("Can't parse value: " + json);
+        }
+    }
+
     public void onDeviceAttributes(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
         int requestId = mqttMsg.variableHeader().messageId();
@@ -145,6 +158,29 @@ public class GatewaySessionCtx {
                 processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
                         new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
             }
+        } else {
+            throw new JsonSyntaxException("Can't parse value: " + json);
+        }
+    }
+
+    public void onDeviceAttributesRequest(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            int requestId = jsonObj.get("id").getAsInt();
+            String deviceName = jsonObj.get("device").getAsString();
+            boolean clientScope = jsonObj.get("client").getAsBoolean();
+            String key = jsonObj.get("key").getAsString();
+
+            BasicGetAttributesRequest request;
+            if (clientScope) {
+                request = new BasicGetAttributesRequest(requestId, Collections.singleton(key), null);
+            } else {
+                request = new BasicGetAttributesRequest(requestId, null, Collections.singleton(key));
+            }
+            GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
+            processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+                    new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
         } else {
             throw new JsonSyntaxException("Can't parse value: " + json);
         }
@@ -190,4 +226,5 @@ public class GatewaySessionCtx {
     protected void writeAndFlush(MqttMessage mqttMessage) {
         channel.writeAndFlush(mqttMessage);
     }
+
 }
