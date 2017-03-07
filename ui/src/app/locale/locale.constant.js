@@ -632,7 +632,9 @@ export default angular.module('thingsboard.locale', [])
                     "email-required": "Email is required.",
                     "first-name": "First Name",
                     "last-name": "Last Name",
-                    "description": "Description"
+                    "description": "Description",
+                    "default-dashboard": "Default dashboard",
+                    "always-fullscreen": "Always fullscreen"
                 },
                 "value": {
                     "type": "Value type",

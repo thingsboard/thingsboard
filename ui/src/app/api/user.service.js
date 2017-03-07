@@ -22,8 +22,9 @@ export default angular.module('thingsboard.api.user', [thingsboardApiLogin,
     .name;
 
 /*@ngInject*/
-function UserService($http, $q, $rootScope, store, jwtHelper, $translate) {
+function UserService($http, $q, $rootScope, store, jwtHelper, $translate, $state) {
     var currentUser = null,
+        currentUserDetails = null,
         userLoaded = false;
 
     var refreshTokenQueue = [];
@@ -47,6 +48,8 @@ function UserService($http, $q, $rootScope, store, jwtHelper, $translate) {
         refreshJwtToken: refreshJwtToken,
         refreshTokenPending: refreshTokenPending,
         updateAuthorizationHeader: updateAuthorizationHeader,
+        gotoDefaultPlace: gotoDefaultPlace,
+        forceDefaultPlace: forceDefaultPlace,
         logout: logout
     }
 
@@ -86,6 +89,7 @@ function UserService($http, $q, $rootScope, store, jwtHelper, $translate) {
 
     function setUserFromJwtToken(jwtToken, refreshToken, notify, doLogout) {
         currentUser = null;
+        currentUserDetails = null;
         if (!jwtToken) {
             clearTokenData();
             if (notify) {
@@ -222,7 +226,25 @@ function UserService($http, $q, $rootScope, store, jwtHelper, $translate) {
                 } else if (currentUser) {
                     currentUser.authority = "ANONYMOUS";
                 }
-                deferred.resolve();
+                if (currentUser.userId) {
+                    getUser(currentUser.userId).then(
+                        function success(user) {
+                            currentUserDetails = user;
+                            if (currentUserDetails.additionalInfo &&
+                                currentUserDetails.additionalInfo.defaultDashboardFullscreen) {
+                                $rootScope.forceFullscreen = currentUserDetails.additionalInfo.defaultDashboardFullscreen === true;
+                            } else {
+                                $rootScope.forceFullscreen = false;
+                            }
+                            deferred.resolve();
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    )
+                } else {
+                    deferred.reject();
+                }
             }, function fail() {
                 deferred.reject();
             });
@@ -329,6 +351,42 @@ function UserService($http, $q, $rootScope, store, jwtHelper, $translate) {
             deferred.reject();
         });
         return deferred.promise;
+    }
+
+    function forceDefaultPlace(to, params) {
+        if (currentUser && isAuthenticated()) {
+            if (currentUser.authority === 'CUSTOMER_USER') {
+                if (currentUserDetails &&
+                    currentUserDetails.additionalInfo &&
+                    currentUserDetails.additionalInfo.defaultDashboardId) {
+                    if ($rootScope.forceFullscreen) {
+                        if (to.name === 'home.profile') {
+                            return false;
+                        } else if (to.name !== 'home.dashboards.dashboard' && params.dashboardId !== currentUserDetails.additionalInfo.defaultDashboardId) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    function gotoDefaultPlace(params) {
+        if (currentUser && isAuthenticated()) {
+            var place = 'home.links';
+            if (currentUser.authority === 'CUSTOMER_USER') {
+                if (currentUserDetails &&
+                    currentUserDetails.additionalInfo &&
+                    currentUserDetails.additionalInfo.defaultDashboardId) {
+                    place = 'home.dashboards.dashboard';
+                    params = {dashboardId: currentUserDetails.additionalInfo.defaultDashboardId};
+                }
+            }
+            $state.go(place, params);
+        } else {
+            $state.go('login', params);
+        }
     }
 
 }

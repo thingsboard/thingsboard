@@ -38,7 +38,7 @@ export default function AppConfig($provide,
 
     injectTapEventPlugin();
     $locationProvider.html5Mode(true);
-    $urlRouterProvider.otherwise('/home');
+    //$urlRouterProvider.otherwise('/home');
     storeProvider.setCaching(false);
 
     $translateProvider.useSanitizeValueStrategy('sanitize');

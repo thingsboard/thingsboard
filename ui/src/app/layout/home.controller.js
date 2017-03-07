@@ -26,9 +26,7 @@ import logoSvg from '../../svg/logo_title_white.svg';
 
 /*@ngInject*/
 export default function HomeController(loginService, userService, deviceService, Fullscreen, $scope, $element, $rootScope, $document, $state,
-                                       $log, $mdMedia, $animate, $timeout, $translate) {
-
-    var dashboardUser = userService.getCurrentUser();
+                                       $log, $mdMedia, $animate, $timeout) {
 
     var siteSideNav = $('.tb-site-sidenav', $element);
 
@@ -48,15 +46,11 @@ export default function HomeController(loginService, userService, deviceService,
     vm.isShowSidenav = false;
     vm.isLockSidenav = false;
 
-    vm.authorityName = authorityName;
     vm.displaySearchMode = displaySearchMode;
-    vm.logout = logout;
-    vm.openProfile = openProfile;
     vm.openSidenav = openSidenav;
     vm.searchTextUpdated = searchTextUpdated;
     vm.sidenavClicked = sidenavClicked;
     vm.toggleFullscreen = toggleFullscreen;
-    vm.userDisplayName = userDisplayName;
 
     $scope.$on('$stateChangeSuccess', function (evt, to, toParams, from) {
         if (angular.isDefined(to.data.searchEnabled)) {
@@ -104,50 +98,6 @@ export default function HomeController(loginService, userService, deviceService,
 
     function searchTextUpdated() {
         $scope.$broadcast('searchTextUpdated');
-    }
-
-    function authorityName() {
-        var name = "user.anonymous";
-        if (dashboardUser) {
-            var authority = dashboardUser.authority;
-            if (authority === 'SYS_ADMIN') {
-                name = 'user.sys-admin';
-            } else if (authority === 'TENANT_ADMIN') {
-                name = 'user.tenant-admin';
-            } else if (authority === 'CUSTOMER_USER') {
-                name = 'user.customer';
-            }
-        }
-        return $translate.instant(name);
-    }
-
-    function userDisplayName() {
-        var name = "";
-        if (dashboardUser) {
-            if ((dashboardUser.firstName && dashboardUser.firstName.length > 0) ||
-                (dashboardUser.lastName && dashboardUser.lastName.length > 0)) {
-                if (dashboardUser.firstName) {
-                    name += dashboardUser.firstName;
-                }
-                if (dashboardUser.lastName) {
-                    if (name.length > 0) {
-                        name += " ";
-                    }
-                    name += dashboardUser.lastName;
-                }
-            } else {
-                name = dashboardUser.email;
-            }
-        }
-        return name;
-    }
-
-    function openProfile() {
-        $state.go('home.profile');
-    }
-
-    function logout() {
-        userService.logout();
     }
 
     function openSidenav() {

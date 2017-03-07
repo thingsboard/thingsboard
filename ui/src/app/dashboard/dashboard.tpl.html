@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode" expand-button-id="dashboard-expand-button"
-            hide-expand-button="vm.widgetEditMode || vm.iframeMode" expand-tooltip-direction="bottom"
+<md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode || forceFullscreen" expand-button-id="dashboard-expand-button"
+            hide-expand-button="vm.widgetEditMode || vm.iframeMode || forceFullscreen" expand-tooltip-direction="bottom"
             ng-style="{'background-color': vm.dashboard.configuration.gridSettings.backgroundColor,
                     'background-image': 'url('+vm.dashboard.configuration.gridSettings.backgroundImageUrl+')',
                     'background-repeat': 'no-repeat',
@@ -47,6 +47,8 @@
                                aria-label="{{ 'fullscreen.fullscreen' | translate }}"
                                class="md-icon-button">
                     </md-button>
+                    <tb-user-menu ng-show="forceFullscreen" display-user-info="true">
+                    </tb-user-menu>
                     <tb-timewindow direction="left" tooltip-direction="bottom" aggregation ng-model="vm.dashboardConfiguration.timewindow">
                     </tb-timewindow>
                     <tb-aliases-device-select ng-show="!vm.isEdit"
