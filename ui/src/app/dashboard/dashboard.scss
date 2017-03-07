@@ -134,3 +134,24 @@ section.tb-dashboard-toolbar {
      @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2) .2s);
   }
 }
+
+/*****************************
+ * dashboard powered by footer
+ ****************************/
+
+section.tb-powered-by-footer {
+  position: absolute;
+  right: 25px;
+  bottom: 5px;
+  z-index: 3;
+  pointer-events: none;
+  span {
+    font-size: 12px;
+    a {
+      font-weight: bold;
+      text-decoration: none;
+      border: none;
+      pointer-events: all;
+    }
+  }
+}
