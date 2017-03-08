@@ -25,6 +25,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.DefaultRestMsgHandler;
@@ -40,6 +42,7 @@ import org.thingsboard.server.extensions.core.plugin.rpc.cmd.RpcRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -67,17 +70,19 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
 
                     RpcRequest cmd = new RpcRequest(rpcRequestBody.get("method").asText(),
                             jsonMapper.writeValueAsString(rpcRequestBody.get("params")));
+                    if (rpcRequestBody.has("timeout")) {
+                        cmd.setTimeout(rpcRequestBody.get("timeout").asLong());
+                    }
+
+                    final TenantId tenantId = ctx.getSecurityCtx().orElseThrow(() -> new IllegalStateException("Security context is empty!")).getTenantId();
 
                     ctx.checkAccess(deviceId, new PluginCallback<Void>() {
                         @Override
                         public void onSuccess(PluginContext ctx, Void value) {
-                            if (rpcRequestBody.has("timeout")) {
-                                cmd.setTimeout(rpcRequestBody.get("timeout").asLong());
-                            }
                             long timeout = cmd.getTimeout() != null ? cmd.getTimeout() : defaultTimeout;
                             ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
                             ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(UUID.randomUUID(),
-                                    ctx.getSecurityCtx().orElseThrow(() -> new IllegalStateException("Security context is empty!")).getTenantId(),
+                                    tenantId,
                                     deviceId,
                                     DataConstants.ONEWAY.equals(method),
                                     System.currentTimeMillis() + timeout,
