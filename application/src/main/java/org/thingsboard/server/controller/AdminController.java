@@ -72,4 +72,17 @@ public class AdminController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/updates", method = RequestMethod.GET)
+    @ResponseBody
+    public String checkUpdates() throws ThingsboardException {
+        try {
+            return "<div>New update Thingsboard version 1.2 is available.<br/>" +
+                    "<a href='https://github.com/thingsboard/thingsboard/releases/download/v1.1/thingsboard-1.1.deb'>Download package</a></div>";
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
 }

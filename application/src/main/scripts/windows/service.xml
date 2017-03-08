@@ -7,6 +7,7 @@
     <logmode>rotate</logmode>
     <env name="LOADER_PATH" value="%BASE%\conf,%BASE%\extensions" />
     <executable>java</executable>
+    <startargument>-Dplatform=windows</startargument>
     <startargument>-jar</startargument>
     <startargument>%BASE%\lib\${pkg.name}.jar</startargument>
 </service>

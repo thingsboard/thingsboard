@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
 buildscript {
     ext {
         osPackageVersion = "3.8.0"
@@ -56,6 +59,7 @@ ospackage {
 
     // Copy the config files
     from("target/conf") {
+        exclude "${pkgName}.conf"
         fileType CONFIG | NOREPLACE
         fileMode 0754
         into "conf"
@@ -99,6 +103,14 @@ buildRpm {
         into "/usr/lib/systemd/system"
     }
 
+    from("target/conf") {
+        include "${pkgName}.conf"
+        filter(ReplaceTokens, tokens: ['pkg.platform': 'rpm'])
+        fileType CONFIG | NOREPLACE
+        fileMode 0754
+        into "conf"
+    }
+
     directory(pkgLogFolder, 0755)
     link("${pkgInstallFolder}/bin/${pkgName}.yml", "${pkgInstallFolder}/conf/${pkgName}.yml")
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
@@ -125,6 +137,14 @@ buildDeb {
 
     user pkgName
     permissionGroup pkgName
+
+    from("target/conf") {
+        include "${pkgName}.conf"
+        filter(ReplaceTokens, tokens: ['pkg.platform': 'deb'])
+        fileType CONFIG | NOREPLACE
+        fileMode 0754
+        into "conf"
+    }
 
     directory(pkgLogFolder, 0755)
     link("/etc/init.d/${pkgName}", "${pkgInstallFolder}/bin/${pkgName}.jar")
