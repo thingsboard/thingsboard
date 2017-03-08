@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-md-toast.tb-info-toast .md-toast-content {
-  font-size: 18px;
-  padding: 18px;
-  height: 100%;
-}
+package org.thingsboard.server.service.update;
 
-md-toast.tb-success-toast .md-toast-content {
-  font-size: 18px !important;
-  background-color: green;
-  height: 100%;
-}
+import org.thingsboard.server.service.update.model.UpdateMessage;
 
-md-toast.tb-error-toast .md-toast-content {
-  font-size: 18px !important;
-  background-color: maroon;
-  height: 100%;
+public interface UpdateService {
+
+    UpdateMessage checkUpdates();
+
 }

@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.service.update.model;
 
-md-toast.tb-info-toast .md-toast-content {
-  font-size: 18px;
-  padding: 18px;
-  height: 100%;
-}
+import lombok.Data;
 
-md-toast.tb-success-toast .md-toast-content {
-  font-size: 18px !important;
-  background-color: green;
-  height: 100%;
-}
+@Data
+public class UpdateMessage {
 
-md-toast.tb-error-toast .md-toast-content {
-  font-size: 18px !important;
-  background-color: maroon;
-  height: 100%;
+    private final String message;
+    private final boolean isUpdateAvailable;
+
 }

@@ -184,3 +184,7 @@ cache:
       policy: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_POLICY:PER_NODE}"
       size: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_SIZE:1000000}"
 
+# Check new version updates parameters
+updates:
+  # Enable/disable updates checking.
+  enabled: "${UPDATES_ENABLED:true}"

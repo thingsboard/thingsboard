@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.mail.MailService;
+import org.thingsboard.server.service.update.UpdateService;
+import org.thingsboard.server.service.update.model.UpdateMessage;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -32,6 +34,9 @@ public class AdminController extends BaseController {
     
     @Autowired
     private AdminSettingsService adminSettingsService;
+
+    @Autowired
+    private UpdateService updateService;
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings/{key}", method = RequestMethod.GET)
@@ -76,10 +81,9 @@ public class AdminController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/updates", method = RequestMethod.GET)
     @ResponseBody
-    public String checkUpdates() throws ThingsboardException {
+    public UpdateMessage checkUpdates() throws ThingsboardException {
         try {
-            return "<div>New update Thingsboard version 1.2 is available.<br/>" +
-                    "<a href='https://github.com/thingsboard/thingsboard/releases/download/v1.1/thingsboard-1.1.deb'>Download package</a></div>";
+            return updateService.checkUpdates();
         } catch (Exception e) {
             throw handleException(e);
         }
