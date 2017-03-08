@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
 buildscript {
     ext {
         osPackageVersion = "3.8.0"
@@ -56,6 +59,7 @@ ospackage {
 
     // Copy the config files
     from("target/conf") {
+        exclude "${pkgName}.conf"
         fileType CONFIG | NOREPLACE
         fileMode 0754
         into "conf"
@@ -83,6 +87,14 @@ buildRpm {
     archiveName = "${pkgName}.rpm"
 
     requires("java-1.8.0")
+
+    from("target/conf") {
+        include "${pkgName}.conf"
+        filter(ReplaceTokens, tokens: ['pkg.platform': 'rpm'])
+        fileType CONFIG | NOREPLACE
+        fileMode 0754
+        into "${pkgInstallFolder}/conf"
+    }
 
     preInstall file("${buildDir}/control/rpm/preinst")
     postInstall file("${buildDir}/control/rpm/postinst")
@@ -112,6 +124,14 @@ buildDeb {
     archiveName = "${pkgName}.deb"
 
     requires("openjdk-8-jre").or("java8-runtime").or("oracle-java8-installer").or("openjdk-8-jre-headless")
+
+    from("target/conf") {
+        include "${pkgName}.conf"
+        filter(ReplaceTokens, tokens: ['pkg.platform': 'deb'])
+        fileType CONFIG | NOREPLACE
+        fileMode 0754
+        into "${pkgInstallFolder}/conf"
+    }
 
     configurationFile("${pkgInstallFolder}/conf/${pkgName}.conf")
     configurationFile("${pkgInstallFolder}/conf/${pkgName}.yml")

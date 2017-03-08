@@ -23,7 +23,8 @@ function AdminService($http, $q) {
     var service = {
         getAdminSettings: getAdminSettings,
         saveAdminSettings: saveAdminSettings,
-        sendTestMail: sendTestMail
+        sendTestMail: sendTestMail,
+        checkUpdates: checkUpdates
     }
 
     return service;
@@ -57,6 +58,17 @@ function AdminService($http, $q) {
             deferred.resolve();
         }, function fail(response) {
             deferred.reject(response.data);
+        });
+        return deferred.promise;
+    }
+
+    function checkUpdates() {
+        var deferred = $q.defer();
+        var url = '/api/admin/updates';
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }

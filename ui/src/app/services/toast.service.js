@@ -15,6 +15,7 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
+import infoToast from './info-toast.tpl.html';
 import successToast from './success-toast.tpl.html';
 import errorToast from './error-toast.tpl.html';
 
@@ -26,6 +27,7 @@ export default function Toast($mdToast, $document) {
     var showing = false;
 
     var service = {
+        showInfo: showInfo,
         showSuccess: showSuccess,
         showError: showError,
         hide: hide
@@ -33,7 +35,15 @@ export default function Toast($mdToast, $document) {
 
     return service;
 
+    function showInfo(infoMessage, delay, toastParent, position) {
+        showMessage(infoToast, infoMessage, delay, toastParent, position);
+    }
+
     function showSuccess(successMessage, delay, toastParent, position) {
+        showMessage(successToast, successMessage, delay, toastParent, position);
+    }
+
+    function showMessage(templateUrl, message, delay, toastParent, position) {
         if (!toastParent) {
             toastParent = angular.element($document[0].getElementById('toast-parent'));
         }
@@ -45,8 +55,8 @@ export default function Toast($mdToast, $document) {
             position: position,
             controller: 'ToastController',
             controllerAs: 'vm',
-            templateUrl: successToast,
-            locals: {message: successMessage},
+            templateUrl: templateUrl,
+            locals: {message: message},
             parent: toastParent
         });
     }

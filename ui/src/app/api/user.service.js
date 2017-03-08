@@ -22,7 +22,7 @@ export default angular.module('thingsboard.api.user', [thingsboardApiLogin,
     .name;
 
 /*@ngInject*/
-function UserService($http, $q, $rootScope, store, jwtHelper, $translate, $state) {
+function UserService($http, $q, $rootScope, adminService, toast, store, jwtHelper, $translate, $state) {
     var currentUser = null,
         currentUserDetails = null,
         userLoaded = false;
@@ -382,6 +382,14 @@ function UserService($http, $q, $rootScope, store, jwtHelper, $translate, $state
                     place = 'home.dashboards.dashboard';
                     params = {dashboardId: currentUserDetails.additionalInfo.defaultDashboardId};
                 }
+            } else if (currentUser.authority === 'SYS_ADMIN') {
+                adminService.checkUpdates().then(
+                    function (updateMessage) {
+                        if (updateMessage && updateMessage.updateAvailable) {
+                            toast.showInfo(updateMessage.message, 0, null, 'bottom right');
+                        }
+                    }
+                );
             }
             $state.go(place, params);
         } else {

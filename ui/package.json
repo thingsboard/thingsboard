@@ -64,6 +64,7 @@
     "ngreact": "^0.3.0",
     "objectpath": "^1.2.1",
     "oclazyload": "^1.0.9",
+    "raphael": "^2.2.7",
     "rc-select": "^6.6.1",
     "react": "^15.4.1",
     "react-ace": "^4.1.0",
