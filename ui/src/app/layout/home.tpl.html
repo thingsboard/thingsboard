@@ -41,7 +41,7 @@
   <div flex layout="column" tabIndex="-1" role="main">
     <md-toolbar class="md-whiteframe-z1 tb-primary-toolbar" ng-class="{'md-hue-1': vm.displaySearchMode()}">
     	<div layout="row" flex class="md-toolbar-tools">
-		      <md-button id="main" hide-gt-sm
+		      <md-button id="main" hide-gt-sm ng-show="!forceFullscreen"
 		      		class="md-icon-button" ng-click="vm.openSidenav()" aria-label="{{ 'home.menu' | translate }}" ng-class="{'tb-invisible': vm.displaySearchMode()}">
 		      		<md-icon aria-label="{{ 'home.menu' | translate }}" class="material-icons">menu</md-icon>
 		      </md-button>

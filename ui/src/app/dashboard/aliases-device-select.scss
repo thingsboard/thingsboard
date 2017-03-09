@@ -21,7 +21,10 @@
 }
 
 .tb-aliases-device-select-panel {
-  max-height: 250px;
+  max-height: 150px;
+  @media (min-height: 350px) {
+    max-height: 250px;
+  }
   min-width: 300px;
   background: white;
   border-radius: 4px;

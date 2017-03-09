@@ -27,7 +27,7 @@ import aliasesDeviceSelectPanelTemplate from './aliases-device-select-panel.tpl.
 
 /* eslint-disable angular/angularelement */
 /*@ngInject*/
-export default function AliasesDeviceSelectDirective($compile, $templateCache, types, $mdPanel, $document, $translate) {
+export default function AliasesDeviceSelectDirective($compile, $templateCache, $mdMedia, types, $mdPanel, $document, $translate) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -51,7 +51,7 @@ export default function AliasesDeviceSelectDirective($compile, $templateCache, t
                 return;
             }
             var position;
-            var panelHeight = 250;
+            var panelHeight = $mdMedia('min-height: 350px') ? 250 : 150;
             var panelWidth = 300;
             var offset = element[0].getBoundingClientRect();
             var bottomY = offset.bottom - $(window).scrollTop(); //eslint-disable-line
@@ -64,7 +64,7 @@ export default function AliasesDeviceSelectDirective($compile, $templateCache, t
                 yPosition = $mdPanel.yPosition.BELOW;
             }
             if (leftX + panelWidth > $( window ).width()) { //eslint-disable-line
-                xPosition = $mdPanel.xPosition.ALIGN_END;
+                xPosition = $mdPanel.xPosition.CENTER;
             } else {
                 xPosition = $mdPanel.xPosition.ALIGN_START;
             }

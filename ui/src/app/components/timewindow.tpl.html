@@ -22,7 +22,7 @@
         </md-tooltip>
         <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
     </md-button>
-    <span ng-click="openEditMode($event)">
+    <span ng-hide="hideLabel()" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'timewindow.edit' | translate }}
         </md-tooltip>
