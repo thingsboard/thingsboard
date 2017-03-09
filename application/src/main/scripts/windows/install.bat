@@ -73,7 +73,7 @@ IF "%JRE_PATH2%" == ""  GOTO JAVA_NOT_INSTALLED
 
 @ECHO Java 1.8 found!
 @ECHO Installing ${pkg.name} ...
-${pkg.name}.exe install
+%~dp0${pkg.name}.exe install
 
 @ECHO DONE.
 

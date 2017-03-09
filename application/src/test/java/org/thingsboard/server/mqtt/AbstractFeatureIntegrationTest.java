@@ -43,7 +43,7 @@ import static org.junit.Assert.assertNotNull;
 @ActiveProfiles("default")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes= MqttTelemetryIntergrationTest.class, loader=SpringApplicationContextLoader.class)
-@TestPropertySource("classpath:cassandra-test.properties")
+@TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:thingsboard-test.properties"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
 @EnableAutoConfiguration
