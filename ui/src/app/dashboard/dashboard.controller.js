@@ -307,7 +307,8 @@ export default function DashboardController(types, widgetService, userService,
             fullscreen: true,
             targetEvent: $event
         }).then(function (gridSettings) {
-            var prevColumns = vm.dashboard.configuration.gridSettings.columns;
+            var prevGridSettings = vm.dashboard.configuration.gridSettings;
+            var prevColumns = prevGridSettings ? prevGridSettings.columns : 24;
             var ratio = gridSettings.columns / prevColumns;
             var currentWidgets = angular.copy(vm.widgets);
             vm.widgets = [];

@@ -121,7 +121,7 @@ export default function AliasesDeviceSelectDirective($compile, $templateCache, $
                     break;
                 }
             }
-            if (singleValue) {
+            if (singleValue && currentAliasId) {
                 var deviceId = scope.model[currentAliasId].deviceId;
                 var devicesInfo = scope.deviceAliasesInfo[currentAliasId];
                 for (var i=0;i<devicesInfo.length;i++) {
