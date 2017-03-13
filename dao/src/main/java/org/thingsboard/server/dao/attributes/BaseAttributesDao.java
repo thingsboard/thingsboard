@@ -18,19 +18,24 @@ package org.thingsboard.server.dao.attributes;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.dao.AbstractDao;
+import org.thingsboard.server.dao.AbstractAsyncDao;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.timeseries.BaseTimeseriesDao;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -40,29 +45,55 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
  */
 @Component
 @Slf4j
-public class BaseAttributesDao extends AbstractDao implements AttributesDao {
-    
+public class BaseAttributesDao extends AbstractAsyncDao implements AttributesDao {
+
     private PreparedStatement saveStmt;
 
+    @PostConstruct
+    public void init() {
+        super.startExecutor();
+    }
+
+    @PreDestroy
+    public void stop() {
+        super.stopExecutor();
+    }
+
     @Override
-    public AttributeKvEntry find(EntityId entityId, String attributeType, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey) {
         Select.Where select = select().from(ATTRIBUTES_KV_CF)
                 .where(eq(ENTITY_TYPE_COLUMN, entityId.getEntityType()))
                 .and(eq(ENTITY_ID_COLUMN, entityId.getId()))
                 .and(eq(ATTRIBUTE_TYPE_COLUMN, attributeType))
                 .and(eq(ATTRIBUTE_KEY_COLUMN, attributeKey));
         log.trace("Generated query [{}] for entityId {} and key {}", select, entityId, attributeKey);
-        return convertResultToAttributesKvEntry(attributeKey, executeRead(select).one());
+        return Futures.transform(executeAsyncRead(select), (Function<? super ResultSet, ? extends Optional<AttributeKvEntry>>) input ->
+                        Optional.ofNullable(convertResultToAttributesKvEntry(attributeKey, input.one()))
+                , readResultsProcessingExecutor);
     }
 
     @Override
-    public List<AttributeKvEntry> findAll(EntityId entityId, String attributeType) {
+    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKeys) {
+        List<ListenableFuture<Optional<AttributeKvEntry>>> entries = new ArrayList<>();
+        attributeKeys.forEach(attributeKey -> entries.add(find(entityId, attributeType, attributeKey)));
+        return Futures.transform(Futures.allAsList(entries), (Function<List<Optional<AttributeKvEntry>>, ? extends List<AttributeKvEntry>>) input -> {
+            List<AttributeKvEntry> result = new ArrayList<>();
+            input.stream().filter(opt -> opt.isPresent()).forEach(opt -> result.add(opt.get()));
+            return result;
+        }, readResultsProcessingExecutor);
+    }
+
+
+    @Override
+    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType) {
         Select.Where select = select().from(ATTRIBUTES_KV_CF)
                 .where(eq(ENTITY_TYPE_COLUMN, entityId.getEntityType()))
                 .and(eq(ENTITY_ID_COLUMN, entityId.getId()))
                 .and(eq(ATTRIBUTE_TYPE_COLUMN, attributeType));
         log.trace("Generated query [{}] for entityId {} and attributeType {}", select, entityId, attributeType);
-        return convertResultToAttributesKvEntryList(executeRead(select));
+        return Futures.transform(executeAsyncRead(select), (Function<? super ResultSet, ? extends List<AttributeKvEntry>>) input ->
+                        convertResultToAttributesKvEntryList(input)
+                , readResultsProcessingExecutor);
     }
 
     @Override
@@ -93,20 +124,19 @@ public class BaseAttributesDao extends AbstractDao implements AttributesDao {
     }
 
     @Override
-    public void removeAll(EntityId entityId, String attributeType, List<String> keys) {
-        for (String key : keys) {
-            delete(entityId, attributeType, key);
-        }
+    public ListenableFuture<List<ResultSet>> removeAll(EntityId entityId, String attributeType, List<String> keys) {
+        List<ResultSetFuture> futures = keys.stream().map(key -> delete(entityId, attributeType, key)).collect(Collectors.toList());
+        return Futures.allAsList(futures);
     }
 
-    private void delete(EntityId entityId, String attributeType, String key) {
+    private ResultSetFuture delete(EntityId entityId, String attributeType, String key) {
         Statement delete = QueryBuilder.delete().all().from(ModelConstants.ATTRIBUTES_KV_CF)
                 .where(eq(ENTITY_TYPE_COLUMN, entityId.getEntityType()))
                 .and(eq(ENTITY_ID_COLUMN, entityId.getId()))
                 .and(eq(ATTRIBUTE_TYPE_COLUMN, attributeType))
                 .and(eq(ATTRIBUTE_KEY_COLUMN, key));
         log.debug("Remove request: {}", delete.toString());
-        getSession().execute(delete);
+        return getSession().executeAsync(delete);
     }
 
     private PreparedStatement getSaveStmt() {
@@ -150,5 +180,4 @@ public class BaseAttributesDao extends AbstractDao implements AttributesDao {
         }
         return entries;
     }
-
 }

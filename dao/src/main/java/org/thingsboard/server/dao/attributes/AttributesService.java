@@ -23,18 +23,22 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Andrew Shvayka
  */
 public interface AttributesService {
 
-    AttributeKvEntry find(EntityId entityId, String scope, String attributeKey);
+    ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String scope, String attributeKey);
 
-    List<AttributeKvEntry> findAll(EntityId entityId, String scope);
+    ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String scope, Collection<String> attributeKeys);
+
+    ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String scope);
 
     ListenableFuture<List<ResultSet>> save(EntityId entityId, String scope, List<AttributeKvEntry> attributes);
 
-    void removeAll(EntityId entityId, String scope, List<String> attributeKeys);
+    ListenableFuture<List<ResultSet>> removeAll(EntityId entityId, String scope, List<String> attributeKeys);
 }

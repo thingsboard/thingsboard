@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
+import java.util.List;
 import java.util.UUID;
 
 public class Validator {
@@ -74,6 +75,23 @@ public class Validator {
     public static void validateId(UUIDBased id, String errorMessage) {
         if (id == null || id.getId() == null) {
             throw new IncorrectParameterException(errorMessage);
+        }
+    }
+
+    /**
+     * This method validate list of <code>UUIDBased</code> ids. If at least one of the ids is null than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param ids          the list of ids
+     * @param errorMessage the error message for exception
+     */
+    public static void validateIds(List<? extends UUIDBased> ids, String errorMessage) {
+        if (ids == null || ids.isEmpty()) {
+            throw new IncorrectParameterException(errorMessage);
+        } else {
+            for (UUIDBased id : ids) {
+                validateId(id, errorMessage);
+            }
         }
     }
 

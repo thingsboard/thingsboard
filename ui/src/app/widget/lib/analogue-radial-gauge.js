@@ -20,16 +20,20 @@ import tinycolor from 'tinycolor2';
 /* eslint-disable angular/angularelement */
 
 export default class TbAnalogueRadialGauge {
-    constructor(containerElement, settings, data, canvasId) {
+    constructor(ctx, canvasId) {
+
+        this.ctx = ctx;
 
         canvasGauges.performance = window.performance; // eslint-disable-line no-undef, angular/window-service
 
-        var gaugeElement = $('#'+canvasId, containerElement);
+        var gaugeElement = $('#'+canvasId, ctx.$container);
+
+        var settings = ctx.settings;
 
         var minValue = settings.minValue || 0;
         var maxValue = settings.maxValue || 100;
 
-        var dataKey = data[0].dataKey;
+        var dataKey = ctx.data[0].dataKey;
         var keyColor = settings.defaultColor || dataKey.color;
 
         var majorTicksCount = settings.majorTicksCount || 10;
@@ -39,7 +43,7 @@ export default class TbAnalogueRadialGauge {
         var valueInt = settings.valueInt || 3;
 
         var valueDec = (angular.isDefined(settings.valueDec) && settings.valueDec !== null)
-            ? settings.valueDec : 2;
+            ? settings.valueDec : ctx.decimals;
 
         step = parseFloat(parseFloat(step).toFixed(valueDec));
 
@@ -67,6 +71,14 @@ export default class TbAnalogueRadialGauge {
 
         var colorNumbers = tinycolor(keyColor).darken(20).toRgbString();
 
+        function getFontFamily(fontSettings) {
+            var family = fontSettings && fontSettings.family ? fontSettings.family : 'Roboto';
+            if (family === 'RobotoDraft') {
+                family = 'Roboto';
+            }
+            return family;
+        }
+
         var gaugeData = {
 
             renderTo: gaugeElement[0],
@@ -77,7 +89,7 @@ export default class TbAnalogueRadialGauge {
             maxValue: maxValue,
             majorTicks: majorTicks,
             minorTicks: settings.minorTicks || 2,
-            units: settings.units,
+            units: angular.isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units,
             title: ((settings.showUnitTitle !== false) ?
                 (settings.unitTitle && settings.unitTitle.length > 0 ?
                     settings.unitTitle : dataKey.label) : ''),
@@ -109,10 +121,10 @@ export default class TbAnalogueRadialGauge {
             highlightsWidth: (angular.isDefined(settings.highlightsWidth) && settings.highlightsWidth !== null) ? settings.highlightsWidth : 15,
 
             //fonts
-            fontNumbers: settings.numbersFont && settings.numbersFont.family ? settings.numbersFont.family : 'RobotoDraft',
-            fontTitle: settings.titleFont && settings.titleFont.family ? settings.titleFont.family : 'RobotoDraft',
-            fontUnits: settings.unitsFont && settings.unitsFont.family ? settings.unitsFont.family : 'RobotoDraft',
-            fontValue: settings.valueFont && settings.valueFont.family ? settings.valueFont.family : 'RobotoDraft',
+            fontNumbers: getFontFamily(settings.numbersFont),
+            fontTitle: getFontFamily(settings.titleFont),
+            fontUnits: getFontFamily(settings.unitsFont),
+            fontValue: getFontFamily(settings.valueFont),
 
             fontNumbersSize: settings.numbersFont && settings.numbersFont.size ? settings.numbersFont.size : 18,
             fontTitleSize: settings.titleFont && settings.titleFont.size ? settings.titleFont.size : 24,
@@ -150,7 +162,7 @@ export default class TbAnalogueRadialGauge {
             colorNeedleShadowDown: settings.colorNeedleShadowDown || 'rgba(188,143,143,0.45)',
 
             // animations
-            animation: settings.animation !== false,
+            animation: settings.animation !== false && !ctx.isMobile,
             animationDuration: (angular.isDefined(settings.animationDuration) && settings.animationDuration !== null) ? settings.animationDuration : 500,
             animationRule: settings.animationRule || 'cycle',
 
@@ -178,13 +190,9 @@ export default class TbAnalogueRadialGauge {
         this.gauge = new canvasGauges.RadialGauge(gaugeData).draw();
     }
 
-    redraw(width, height, data, sizeChanged) {
-        if (sizeChanged) {
-            this.gauge.update({width: width, height: height});
-        }
-
-        if (data.length > 0) {
-            var cellData = data[0];
+    update() {
+        if (this.ctx.data.length > 0) {
+            var cellData = this.ctx.data[0];
             if (cellData.data.length > 0) {
                 var tvPair = cellData.data[cellData.data.length -
                 1];
@@ -192,7 +200,808 @@ export default class TbAnalogueRadialGauge {
                 this.gauge.value = value;
             }
         }
+
     }
+
+    mobileModeChanged() {
+        var animation = this.ctx.settings.animation !== false && !this.ctx.isMobile;
+        this.gauge.update({animation: animation});
+    }
+
+    resize() {
+        this.gauge.update({width: this.ctx.width, height: this.ctx.height});
+    }
+
+    static get settingsSchema() {
+        return {
+            "schema": {
+                "type": "object",
+                "title": "Settings",
+                "properties": {
+                    "minValue": {
+                        "title": "Minimum value",
+                        "type": "number",
+                        "default": 0
+                    },
+                    "maxValue": {
+                        "title": "Maximum value",
+                        "type": "number",
+                        "default": 100
+                    },
+                    "unitTitle": {
+                        "title": "Unit title",
+                        "type": "string",
+                        "default": null
+                    },
+                    "showUnitTitle": {
+                        "title": "Show unit title",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "majorTicksCount": {
+                        "title": "Major ticks count",
+                        "type": "number",
+                        "default": null
+                    },
+                    "minorTicks": {
+                        "title": "Minor ticks count",
+                        "type": "number",
+                        "default": 2
+                    },
+                    "valueBox": {
+                        "title": "Show value box",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "valueInt": {
+                        "title": "Digits count for integer part of value",
+                        "type": "number",
+                        "default": 3
+                    },
+                    "defaultColor": {
+                        "title": "Default color",
+                        "type": "string",
+                        "default": null
+                    },
+                    "colorPlate": {
+                        "title": "Plate color",
+                        "type": "string",
+                        "default": "#fff"
+                    },
+                    "colorMajorTicks": {
+                        "title": "Major ticks color",
+                        "type": "string",
+                        "default": "#444"
+                    },
+                    "colorMinorTicks": {
+                        "title": "Minor ticks color",
+                        "type": "string",
+                        "default": "#666"
+                    },
+                    "colorNeedle": {
+                        "title": "Needle color",
+                        "type": "string",
+                        "default": null
+                    },
+                    "colorNeedleEnd": {
+                        "title": "Needle color - end gradient",
+                        "type": "string",
+                        "default": null
+                    },
+                    "colorNeedleShadowUp": {
+                        "title": "Upper half of the needle shadow color",
+                        "type": "string",
+                        "default": "rgba(2,255,255,0.2)"
+                    },
+                    "colorNeedleShadowDown": {
+                        "title": "Drop shadow needle color.",
+                        "type": "string",
+                        "default": "rgba(188,143,143,0.45)"
+                    },
+                    "colorValueBoxRect": {
+                        "title": "Value box rectangle stroke color",
+                        "type": "string",
+                        "default": "#888"
+                    },
+                    "colorValueBoxRectEnd": {
+                        "title": "Value box rectangle stroke color - end gradient",
+                        "type": "string",
+                        "default": "#666"
+                    },
+                    "colorValueBoxBackground": {
+                        "title": "Value box background color",
+                        "type": "string",
+                        "default": "#babab2"
+                    },
+                    "colorValueBoxShadow": {
+                        "title": "Value box shadow color",
+                        "type": "string",
+                        "default": "rgba(0,0,0,1)"
+                    },
+                    "highlights": {
+                        "title": "Highlights",
+                        "type": "array",
+                        "items": {
+                            "title": "Highlight",
+                            "type": "object",
+                            "properties": {
+                                "from": {
+                                    "title": "From",
+                                    "type": "number"
+                                },
+                                "to": {
+                                    "title": "To",
+                                    "type": "number"
+                                },
+                                "color": {
+                                    "title": "Color",
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "highlightsWidth": {
+                        "title": "Highlights width",
+                        "type": "number",
+                        "default": 15
+                    },
+                    "showBorder": {
+                        "title": "Show border",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "numbersFont": {
+                        "title": "Tick numbers font",
+                        "type": "object",
+                        "properties": {
+                            "family": {
+                                "title": "Font family",
+                                "type": "string",
+                                "default": "Roboto"
+                            },
+                            "size": {
+                                "title": "Size",
+                                "type": "number",
+                                "default": 18
+                            },
+                            "style": {
+                                "title": "Style",
+                                "type": "string",
+                                "default": "normal"
+                            },
+                            "weight": {
+                                "title": "Weight",
+                                "type": "string",
+                                "default": "500"
+                            },
+                            "color": {
+                                "title": "color",
+                                "type": "string",
+                                "default": null
+                            }
+                        }
+                    },
+                    "titleFont": {
+                        "title": "Title text font",
+                        "type": "object",
+                        "properties": {
+                            "family": {
+                                "title": "Font family",
+                                "type": "string",
+                                "default": "Roboto"
+                            },
+                            "size": {
+                                "title": "Size",
+                                "type": "number",
+                                "default": 24
+                            },
+                            "style": {
+                                "title": "Style",
+                                "type": "string",
+                                "default": "normal"
+                            },
+                            "weight": {
+                                "title": "Weight",
+                                "type": "string",
+                                "default": "500"
+                            },
+                            "color": {
+                                "title": "color",
+                                "type": "string",
+                                "default": "#888"
+                            }
+                        }
+                    },
+                    "unitsFont": {
+                        "title": "Units text font",
+                        "type": "object",
+                        "properties": {
+                            "family": {
+                                "title": "Font family",
+                                "type": "string",
+                                "default": "Roboto"
+                            },
+                            "size": {
+                                "title": "Size",
+                                "type": "number",
+                                "default": 22
+                            },
+                            "style": {
+                                "title": "Style",
+                                "type": "string",
+                                "default": "normal"
+                            },
+                            "weight": {
+                                "title": "Weight",
+                                "type": "string",
+                                "default": "500"
+                            },
+                            "color": {
+                                "title": "color",
+                                "type": "string",
+                                "default": "#888"
+                            }
+                        }
+                    },
+                    "valueFont": {
+                        "title": "Value text font",
+                        "type": "object",
+                        "properties": {
+                            "family": {
+                                "title": "Font family",
+                                "type": "string",
+                                "default": "Roboto"
+                            },
+                            "size": {
+                                "title": "Size",
+                                "type": "number",
+                                "default": 40
+                            },
+                            "style": {
+                                "title": "Style",
+                                "type": "string",
+                                "default": "normal"
+                            },
+                            "weight": {
+                                "title": "Weight",
+                                "type": "string",
+                                "default": "500"
+                            },
+                            "color": {
+                                "title": "color",
+                                "type": "string",
+                                "default": "#444"
+                            },
+                            "shadowColor": {
+                                "title": "Shadow color",
+                                "type": "string",
+                                "default": "rgba(0,0,0,0.3)"
+                            }
+                        }
+                    },
+                    "animation": {
+                        "title": "Enable animation",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "animationDuration": {
+                        "title": "Animation duration",
+                        "type": "number",
+                        "default": 500
+                    },
+                    "animationRule": {
+                        "title": "Animation rule",
+                        "type": "string",
+                        "default": "cycle"
+                    },
+                    "startAngle": {
+                        "title": "Start ticks angle",
+                        "type": "number",
+                        "default": 45
+                    },
+                    "ticksAngle": {
+                        "title": "Ticks angle",
+                        "type": "number",
+                        "default": 270
+                    },
+                    "needleCircleSize": {
+                        "title": "Needle circle size",
+                        "type": "number",
+                        "default": 10
+                    }
+                },
+                "required": []
+            },
+            "form": [
+                "startAngle",
+                "ticksAngle",
+                "needleCircleSize",
+                "minValue",
+                "maxValue",
+                "unitTitle",
+                "showUnitTitle",
+                "majorTicksCount",
+                "minorTicks",
+                "valueBox",
+                "valueInt",
+                {
+                    "key": "defaultColor",
+                    "type": "color"
+                },
+                {
+                    "key": "colorPlate",
+                    "type": "color"
+                },
+                {
+                    "key": "colorMajorTicks",
+                    "type": "color"
+                },
+                {
+                    "key": "colorMinorTicks",
+                    "type": "color"
+                },
+                {
+                    "key": "colorNeedle",
+                    "type": "color"
+                },
+                {
+                    "key": "colorNeedleEnd",
+                    "type": "color"
+                },
+                {
+                    "key": "colorNeedleShadowUp",
+                    "type": "color"
+                },
+                {
+                    "key": "colorNeedleShadowDown",
+                    "type": "color"
+                },
+                {
+                    "key": "colorValueBoxRect",
+                    "type": "color"
+                },
+                {
+                    "key": "colorValueBoxRectEnd",
+                    "type": "color"
+                },
+                {
+                    "key": "colorValueBoxBackground",
+                    "type": "color"
+                },
+                {
+                    "key": "colorValueBoxShadow",
+                    "type": "color"
+                },
+                {
+                    "key": "highlights",
+                    "items": [
+                        "highlights[].from",
+                        "highlights[].to",
+                        {
+                            "key": "highlights[].color",
+                            "type": "color"
+                        }
+                    ]
+                },
+                "highlightsWidth",
+                "showBorder",
+                {
+                    "key": "numbersFont",
+                    "items": [
+                        "numbersFont.family",
+                        "numbersFont.size",
+                        {
+                            "key": "numbersFont.style",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "italic",
+                                    "label": "Italic"
+                                },
+                                {
+                                    "value": "oblique",
+                                    "label": "Oblique"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "numbersFont.weight",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "bold",
+                                    "label": "Bold"
+                                },
+                                {
+                                    "value": "bolder",
+                                    "label": "Bolder"
+                                },
+                                {
+                                    "value": "lighter",
+                                    "label": "Lighter"
+                                },
+                                {
+                                    "value": "100",
+                                    "label": "100"
+                                },
+                                {
+                                    "value": "200",
+                                    "label": "200"
+                                },
+                                {
+                                    "value": "300",
+                                    "label": "300"
+                                },
+                                {
+                                    "value": "400",
+                                    "label": "400"
+                                },
+                                {
+                                    "value": "500",
+                                    "label": "500"
+                                },
+                                {
+                                    "value": "600",
+                                    "label": "600"
+                                },
+                                {
+                                    "value": "700",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "800",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "900",
+                                    "label": "900"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "numbersFont.color",
+                            "type": "color"
+                        }
+                    ]
+                },
+                {
+                    "key": "titleFont",
+                    "items": [
+                        "titleFont.family",
+                        "titleFont.size",
+                        {
+                            "key": "titleFont.style",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "italic",
+                                    "label": "Italic"
+                                },
+                                {
+                                    "value": "oblique",
+                                    "label": "Oblique"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "titleFont.weight",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "bold",
+                                    "label": "Bold"
+                                },
+                                {
+                                    "value": "bolder",
+                                    "label": "Bolder"
+                                },
+                                {
+                                    "value": "lighter",
+                                    "label": "Lighter"
+                                },
+                                {
+                                    "value": "100",
+                                    "label": "100"
+                                },
+                                {
+                                    "value": "200",
+                                    "label": "200"
+                                },
+                                {
+                                    "value": "300",
+                                    "label": "300"
+                                },
+                                {
+                                    "value": "400",
+                                    "label": "400"
+                                },
+                                {
+                                    "value": "500",
+                                    "label": "500"
+                                },
+                                {
+                                    "value": "600",
+                                    "label": "600"
+                                },
+                                {
+                                    "value": "700",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "800",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "900",
+                                    "label": "900"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "titleFont.color",
+                            "type": "color"
+                        }
+                    ]
+                },
+                {
+                    "key": "unitsFont",
+                    "items": [
+                        "unitsFont.family",
+                        "unitsFont.size",
+                        {
+                            "key": "unitsFont.style",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "italic",
+                                    "label": "Italic"
+                                },
+                                {
+                                    "value": "oblique",
+                                    "label": "Oblique"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "unitsFont.weight",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "bold",
+                                    "label": "Bold"
+                                },
+                                {
+                                    "value": "bolder",
+                                    "label": "Bolder"
+                                },
+                                {
+                                    "value": "lighter",
+                                    "label": "Lighter"
+                                },
+                                {
+                                    "value": "100",
+                                    "label": "100"
+                                },
+                                {
+                                    "value": "200",
+                                    "label": "200"
+                                },
+                                {
+                                    "value": "300",
+                                    "label": "300"
+                                },
+                                {
+                                    "value": "400",
+                                    "label": "400"
+                                },
+                                {
+                                    "value": "500",
+                                    "label": "500"
+                                },
+                                {
+                                    "value": "600",
+                                    "label": "600"
+                                },
+                                {
+                                    "value": "700",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "800",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "900",
+                                    "label": "900"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "unitsFont.color",
+                            "type": "color"
+                        }
+                    ]
+                },
+                {
+                    "key": "valueFont",
+                    "items": [
+                        "valueFont.family",
+                        "valueFont.size",
+                        {
+                            "key": "valueFont.style",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "italic",
+                                    "label": "Italic"
+                                },
+                                {
+                                    "value": "oblique",
+                                    "label": "Oblique"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "valueFont.weight",
+                            "type": "rc-select",
+                            "multiple": false,
+                            "items": [
+                                {
+                                    "value": "normal",
+                                    "label": "Normal"
+                                },
+                                {
+                                    "value": "bold",
+                                    "label": "Bold"
+                                },
+                                {
+                                    "value": "bolder",
+                                    "label": "Bolder"
+                                },
+                                {
+                                    "value": "lighter",
+                                    "label": "Lighter"
+                                },
+                                {
+                                    "value": "100",
+                                    "label": "100"
+                                },
+                                {
+                                    "value": "200",
+                                    "label": "200"
+                                },
+                                {
+                                    "value": "300",
+                                    "label": "300"
+                                },
+                                {
+                                    "value": "400",
+                                    "label": "400"
+                                },
+                                {
+                                    "value": "500",
+                                    "label": "500"
+                                },
+                                {
+                                    "value": "600",
+                                    "label": "600"
+                                },
+                                {
+                                    "value": "700",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "800",
+                                    "label": "800"
+                                },
+                                {
+                                    "value": "900",
+                                    "label": "900"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "valueFont.color",
+                            "type": "color"
+                        },
+                        {
+                            "key": "valueFont.shadowColor",
+                            "type": "color"
+                        }
+                    ]
+                },
+                "animation",
+                "animationDuration",
+                {
+                    "key": "animationRule",
+                    "type": "rc-select",
+                    "multiple": false,
+                    "items": [
+                        {
+                            "value": "linear",
+                            "label": "Linear"
+                        },
+                        {
+                            "value": "quad",
+                            "label": "Quad"
+                        },
+                        {
+                            "value": "quint",
+                            "label": "Quint"
+                        },
+                        {
+                            "value": "cycle",
+                            "label": "Cycle"
+                        },
+                        {
+                            "value": "bounce",
+                            "label": "Bounce"
+                        },
+                        {
+                            "value": "elastic",
+                            "label": "Elastic"
+                        },
+                        {
+                            "value": "dequad",
+                            "label": "Dequad"
+                        },
+                        {
+                            "value": "dequint",
+                            "label": "Dequint"
+                        },
+                        {
+                            "value": "decycle",
+                            "label": "Decycle"
+                        },
+                        {
+                            "value": "debounce",
+                            "label": "Debounce"
+                        },
+                        {
+                            "value": "delastic",
+                            "label": "Delastic"
+                        }
+                    ]
+                }
+            ]
+        };
+    }
+
 }
 
 /* eslint-enable angular/angularelement */

@@ -19,7 +19,9 @@ import thingsboardUtils from '../common/utils.service';
 import thingsboardDeviceAliasSelect from './device-alias-select.directive';
 import thingsboardDatasource from './datasource.directive';
 import thingsboardTimewindow from './timewindow.directive';
+import thingsboardLegendConfig from './legend-config.directive';
 import thingsboardJsonForm from "./json-form.directive";
+import 'angular-ui-ace';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -34,12 +36,14 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     thingsboardJsonForm,
     thingsboardDeviceAliasSelect,
     thingsboardDatasource,
-    thingsboardTimewindow])
+    thingsboardTimewindow,
+    thingsboardLegendConfig,
+    'ui.ace'])
     .directive('tbWidgetConfig', WidgetConfig)
     .name;
 
 /*@ngInject*/
-function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
+function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, utils) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -58,6 +62,16 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
             '*'
         ];
 
+        scope.titleStyleEditorOptions = {
+            useWrapMode: true,
+            mode: 'json',
+            advanced: {
+                enableSnippets: true,
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true
+            }
+        };
+
         if (angular.isUndefined(scope.forceExpandDatasources)) {
             scope.forceExpandDatasources = false;
         }
@@ -75,10 +89,25 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 scope.title = ngModelCtrl.$viewValue.title;
                 scope.showTitle = ngModelCtrl.$viewValue.showTitle;
                 scope.dropShadow = angular.isDefined(ngModelCtrl.$viewValue.dropShadow) ? ngModelCtrl.$viewValue.dropShadow : true;
+                scope.enableFullscreen = angular.isDefined(ngModelCtrl.$viewValue.enableFullscreen) ? ngModelCtrl.$viewValue.enableFullscreen : true;
                 scope.backgroundColor = ngModelCtrl.$viewValue.backgroundColor;
                 scope.color = ngModelCtrl.$viewValue.color;
                 scope.padding = ngModelCtrl.$viewValue.padding;
+                scope.titleStyle =
+                    angular.toJson(angular.isDefined(ngModelCtrl.$viewValue.titleStyle) ? ngModelCtrl.$viewValue.titleStyle : {
+                        fontSize: '16px',
+                        fontWeight: 400
+                    }, true);
+                scope.mobileOrder = ngModelCtrl.$viewValue.mobileOrder;
+                scope.mobileHeight = ngModelCtrl.$viewValue.mobileHeight;
+                scope.units = ngModelCtrl.$viewValue.units;
+                scope.decimals = ngModelCtrl.$viewValue.decimals;
+                scope.useDashboardTimewindow = angular.isDefined(ngModelCtrl.$viewValue.useDashboardTimewindow) ?
+                    ngModelCtrl.$viewValue.useDashboardTimewindow : true;
                 scope.timewindow = ngModelCtrl.$viewValue.timewindow;
+                scope.showLegend = angular.isDefined(ngModelCtrl.$viewValue.showLegend) ?
+                    ngModelCtrl.$viewValue.showLegend : scope.widgetType === types.widgetType.timeseries.value;
+                scope.legendConfig = ngModelCtrl.$viewValue.legendConfig;
                 if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value) {
                     if (scope.datasources) {
                         scope.datasources.splice(0, scope.datasources.length);
@@ -107,8 +136,6 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 scope.settings = ngModelCtrl.$viewValue.settings;
 
                 scope.updateSchemaForm();
-
-                scope.updateDatasourcesAccordionState();
             }
         };
 
@@ -128,12 +155,6 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
             }
         }
 
-        scope.$on('datasources-accordion:onReady', function () {
-            if (scope.updateDatasourcesAccordionStatePending) {
-                scope.updateDatasourcesAccordionState();
-            }
-        });
-
         scope.updateValidity = function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
@@ -145,20 +166,39 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                     valid = value && value.datasources && value.datasources.length > 0;
                     ngModelCtrl.$setValidity('datasources', valid);
                 }
+                try {
+                    angular.fromJson(scope.titleStyle);
+                    ngModelCtrl.$setValidity('titleStyle', true);
+                } catch (e) {
+                    ngModelCtrl.$setValidity('titleStyle', false);
+                }
             }
         };
 
-        scope.$watch('title + showTitle + dropShadow + backgroundColor + color + padding + intervalSec', function () {
+        scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
+            'padding + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 value.title = scope.title;
                 value.showTitle = scope.showTitle;
                 value.dropShadow = scope.dropShadow;
+                value.enableFullscreen = scope.enableFullscreen;
                 value.backgroundColor = scope.backgroundColor;
                 value.color = scope.color;
                 value.padding = scope.padding;
-                value.intervalSec = scope.intervalSec;
+                try {
+                    value.titleStyle = angular.fromJson(scope.titleStyle);
+                } catch (e) {
+                    value.titleStyle = {};
+                }
+                value.mobileOrder = angular.isNumber(scope.mobileOrder) ? scope.mobileOrder : undefined;
+                value.mobileHeight = scope.mobileHeight;
+                value.units = scope.units;
+                value.decimals = scope.decimals;
+                value.useDashboardTimewindow = scope.useDashboardTimewindow;
+                value.showLegend = scope.showLegend;
                 ngModelCtrl.$setViewValue(value);
+                scope.updateValidity();
             }
         });
 
@@ -174,6 +214,14 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 value.timewindow = scope.timewindow;
+                ngModelCtrl.$setViewValue(value);
+            }
+        }, true);
+
+        scope.$watch('legendConfig', function () {
+            if (ngModelCtrl.$viewValue) {
+                var value = ngModelCtrl.$viewValue;
+                value.legendConfig = scope.legendConfig;
                 ngModelCtrl.$setViewValue(value);
             }
         }, true);
@@ -236,23 +284,6 @@ function WidgetConfig($compile, $templateCache, $rootScope, types, utils) {
                 }
             }
         };
-
-        scope.updateDatasourcesAccordionState = function () {
-            if (scope.widgetType !== types.widgetType.rpc.value &&
-                scope.widgetType !== types.widgetType.static.value) {
-                if (scope.datasourcesAccordion) {
-                    scope.updateDatasourcesAccordionStatePending = false;
-                    var expand = scope.datasources && scope.datasources.length < 4;
-                    if (expand) {
-                        scope.datasourcesAccordion.expand('datasources-pane');
-                    } else {
-                        scope.datasourcesAccordion.collapse('datasources-pane');
-                    }
-                } else {
-                    scope.updateDatasourcesAccordionStatePending = true;
-                }
-            }
-        }
 
         scope.generateDataKey = function (chip, type) {
 

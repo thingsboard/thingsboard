@@ -89,7 +89,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ActiveProfiles("test")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes=AbstractControllerTest.class, loader=SpringApplicationContextLoader.class)
-@TestPropertySource("classpath:cassandra-test.properties")
+@TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:thingsboard-test.properties"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
 @EnableAutoConfiguration

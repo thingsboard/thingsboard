@@ -20,9 +20,10 @@ import TbGoogleMap from './google-map';
 import TbOpenStreetMap from './openstreet-map';
 
 export default class TbMapWidget {
-    constructor(mapProvider, drawRoutes, containerElement, settings, datasources) {
+    constructor(mapProvider, drawRoutes, ctx) {
 
         var tbMap = this;
+        this.ctx = ctx;
 
         this.drawRoutes = drawRoutes;
         this.markers = [];
@@ -31,6 +32,8 @@ export default class TbMapWidget {
         }
         this.locationsSettings = [];
         this.varsRegex = /\$\{([^\}]*)\}/g;
+
+        var settings = ctx.settings;
 
         if (settings.defaultZoomLevel) {
             if (settings.defaultZoomLevel > 0 && settings.defaultZoomLevel < 21) {
@@ -67,8 +70,8 @@ export default class TbMapWidget {
                 }
                 if (variableInfo.dataKeyIndex === -1) {
                     var offset = 0;
-                    for (var i=0;i<datasources.length;i++) {
-                        var datasource = datasources[i];
+                    for (var i=0;i<ctx.datasources.length;i++) {
+                        var datasource = ctx.datasources[i];
                         for (var k = 0; k < datasource.dataKeys.length; k++) {
                             var dataKey = datasource.dataKeys[k];
                             if (dataKey.label === label) {
@@ -161,15 +164,21 @@ export default class TbMapWidget {
         }
 
         var minZoomLevel = this.drawRoutes ? 18 : 15;
+
+        var initCallback = function() {
+              tbMap.update();
+              tbMap.resize();
+        };
+
         if (mapProvider === 'google-map') {
-            this.map = new TbGoogleMap(containerElement, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey);
+            this.map = new TbGoogleMap(ctx.$container, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey);
         } else if (mapProvider === 'openstreet-map') {
-            this.map = new TbOpenStreetMap(containerElement, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
+            this.map = new TbOpenStreetMap(ctx.$container, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
         }
 
     }
 
-    redraw(data, sizeChanged) {
+    update() {
 
         var tbMap = this;
 
@@ -403,31 +412,14 @@ export default class TbMapWidget {
         }
 
         if (this.map && this.map.inited()) {
-            if (data) {
+            if (this.ctx.data) {
                 if (!this.locations) {
-                    loadLocations(data);
+                    loadLocations(this.ctx.data);
                 } else {
-                    updateLocations(data);
+                    updateLocations(this.ctx.data);
                 }
             }
-            if (sizeChanged) {
-                this.map.invalidateSize();
-                if (!this.dontFitMapBounds) {
-                    var bounds = this.map.createBounds();
-                    for (var m in this.markers) {
-                        bounds.extend(this.map.getMarkerPosition(this.markers[m]));
-                    }
-                    if (this.polylines) {
-                        for (var p in this.polylines) {
-                            this.map.extendBounds(bounds, this.polylines[p]);
-                        }
-                    }
-                    this.map.fitBounds(bounds);
-                }
-            }
-
             var tooltips = this.map.getTooltips();
-
             for (var t in tooltips) {
                 var tooltip = tooltips[t];
                 var text = tooltip.pattern;
@@ -436,9 +428,9 @@ export default class TbMapWidget {
                     var variableInfo = replaceInfo.variables[v];
                     var txtVal = '';
                     if (variableInfo.dataKeyIndex > -1) {
-                        var varData = data[variableInfo.dataKeyIndex].data;
+                        var varData = this.ctx.data[variableInfo.dataKeyIndex].data;
                         if (varData.length > 0) {
-                            var val = varData[varData.length-1][1];
+                            var val = varData[varData.length - 1][1];
                             if (isNumber(val)) {
                                 txtVal = padValue(val, variableInfo.valDec, 0);
                             } else {
@@ -450,9 +442,25 @@ export default class TbMapWidget {
                 }
                 tooltip.popup.setContent(text);
             }
-
         }
+    }
 
+    resize() {
+        if (this.map && this.map.inited()) {
+            this.map.invalidateSize();
+            if (!this.dontFitMapBounds && this.locations && this.locations.size > 0) {
+                var bounds = this.map.createBounds();
+                for (var m in this.markers) {
+                    bounds.extend(this.map.getMarkerPosition(this.markers[m]));
+                }
+                if (this.polylines) {
+                    for (var p in this.polylines) {
+                        this.map.extendBounds(bounds, this.polylines[p]);
+                    }
+                }
+                this.map.fitBounds(bounds);
+            }
+        }
     }
 
 }

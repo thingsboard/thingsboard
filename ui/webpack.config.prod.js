@@ -23,7 +23,10 @@ const path = require('path');
 
 module.exports = {
     devtool: 'source-map',
-    entry: ['./src/app/app.js'],
+    entry: [
+        './src/app/app.js',
+        'webpack-material-design-icons'
+    ],
     output: {
         path: path.resolve(__dirname, 'target/generated-resources/public/static'),
         publicPath: '/static/',
@@ -39,7 +42,6 @@ module.exports = {
             moment: "moment"
         }),
         new CopyWebpackPlugin([
-            {from: './src/locale', to: 'locale'},
             {from: './src/thingsboard.ico', to: 'thingsboard.ico'}
         ]),
         new HtmlWebpackPlugin({

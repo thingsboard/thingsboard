@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -22,11 +23,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface DeviceService {
     
     Device findDeviceById(DeviceId deviceId);
+
+    ListenableFuture<Device> findDeviceByIdAsync(DeviceId deviceId);
 
     Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
@@ -40,9 +44,13 @@ public interface DeviceService {
 
     TextPageData<Device> findDevicesByTenantId(TenantId tenantId, TextPageLink pageLink);
 
+    ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds);
+
     void deleteDevicesByTenantId(TenantId tenantId);
 
     TextPageData<Device> findDevicesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds);
 
     void unassignCustomerDevices(TenantId tenantId, CustomerId customerId);
 }

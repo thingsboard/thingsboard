@@ -27,7 +27,7 @@ class ThingsboardCheckbox extends React.Component {
                 label={this.props.form.title}
                 disabled={this.props.form.readonly}
                 onCheck={(e, checked) => {this.props.onChangeValidate(e)}}
-                style={{paddingTop: '20px'}}
+                style={{paddingTop: '14px'}}
             />
         );
     }

@@ -63,7 +63,7 @@ function Menu(userService, $state, $rootScope) {
                         {
                             name: 'home.home',
                             type: 'link',
-                            state: 'home',
+                            state: 'home.links',
                             icon: 'home'
                         },
                         {
@@ -167,7 +167,7 @@ function Menu(userService, $state, $rootScope) {
                         {
                             name: 'home.home',
                             type: 'link',
-                            state: 'home',
+                            state: 'home.links',
                             icon: 'home'
                         },
                         {
@@ -264,7 +264,7 @@ function Menu(userService, $state, $rootScope) {
                         {
                             name: 'home.home',
                             type: 'link',
-                            state: 'home',
+                            state: 'home.links',
                             icon: 'home'
                         },
                         {

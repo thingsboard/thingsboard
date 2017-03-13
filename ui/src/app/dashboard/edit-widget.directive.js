@@ -35,8 +35,8 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
                     function(widgetInfo) {
                         scope.$applyAsync(function(scope) {
                             scope.widgetConfig = scope.widget.config;
-                            var settingsSchema = widgetInfo.settingsSchema;
-                            var dataKeySettingsSchema = widgetInfo.dataKeySettingsSchema;
+                            var settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
+                            var dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
                             if (!settingsSchema || settingsSchema === '') {
                                 scope.settingsSchema = {};
                             } else {
@@ -58,7 +58,7 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
         });
 
         scope.fetchDeviceKeys = function (deviceAliasId, query, type) {
-            var deviceAlias = scope.dashboard.configuration.deviceAliases[deviceAliasId];
+            var deviceAlias = scope.aliasesInfo.deviceAliases[deviceAliasId];
             if (deviceAlias && deviceAlias.deviceId) {
                 return deviceService.getDeviceKeys(deviceAlias.deviceId, query, type);
             } else {
@@ -69,7 +69,7 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
         scope.createDeviceAlias = function (event, alias) {
 
             var deferred = $q.defer();
-            var singleDeviceAlias = {id: null, alias: alias, deviceId: null};
+            var singleDeviceAlias = {id: null, alias: alias, deviceFilter: null};
 
             $mdDialog.show({
                 controller: 'DeviceAliasesController',
@@ -79,7 +79,7 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
                     config: {
                         deviceAliases: angular.copy(scope.dashboard.configuration.deviceAliases),
                         widgets: null,
-                        isSingleDevice: true,
+                        isSingleDeviceAlias: true,
                         singleDeviceAlias: singleDeviceAlias
                     }
                 },
@@ -89,8 +89,15 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
                 targetEvent: event
             }).then(function (singleDeviceAlias) {
                 scope.dashboard.configuration.deviceAliases[singleDeviceAlias.id] =
-                            { alias: singleDeviceAlias.alias, deviceId: singleDeviceAlias.deviceId };
-                deferred.resolve(singleDeviceAlias);
+                            { alias: singleDeviceAlias.alias, deviceFilter: singleDeviceAlias.deviceFilter };
+                deviceService.processDeviceAliases(scope.dashboard.configuration.deviceAliases).then(
+                    function(resolution) {
+                        if (!resolution.error) {
+                            scope.aliasesInfo = resolution.aliasesInfo;
+                        }
+                        deferred.resolve(singleDeviceAlias);
+                    }
+                );
             }, function () {
                 deferred.reject();
             });
@@ -106,6 +113,7 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
         link: linker,
         scope: {
             dashboard: '=',
+            aliasesInfo: '=',
             widget: '=',
             theForm: '='
         }

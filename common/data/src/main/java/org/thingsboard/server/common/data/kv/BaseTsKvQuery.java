@@ -15,59 +15,29 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import java.util.Optional;
+import lombok.Data;
 
+@Data
 public class BaseTsKvQuery implements TsKvQuery {
 
-    private String key;
-    private Optional<Long> startTs;
-    private Optional<Long> endTs;
-    private Optional<Integer> limit;
+    private final String key;
+    private final long startTs;
+    private final long endTs;
+    private final long interval;
+    private final int limit;
+    private final Aggregation aggregation;
 
-    public BaseTsKvQuery(String key, Optional<Long> startTs, Optional<Long> endTs, Optional<Integer> limit) {
+    public BaseTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation) {
         this.key = key;
         this.startTs = startTs;
         this.endTs = endTs;
+        this.interval = interval;
         this.limit = limit;
-    }
-    
-    public BaseTsKvQuery(String key, Long startTs, Long endTs, Integer limit) {
-        this(key, Optional.ofNullable(startTs), Optional.ofNullable(endTs), Optional.ofNullable(limit));
+        this.aggregation = aggregation;
     }
 
-    public BaseTsKvQuery(String key, Long startTs, Integer limit) {
-        this(key, startTs, null, limit);
+    public BaseTsKvQuery(String key, long startTs, long endTs) {
+        this(key, startTs, endTs, endTs-startTs, 1, Aggregation.AVG);
     }
 
-    public BaseTsKvQuery(String key, Long startTs, Long endTs) {
-        this(key, startTs, endTs, null);
-    }
-
-    public BaseTsKvQuery(String key, Long startTs) {
-        this(key, startTs, null, null);
-    }
-
-    public BaseTsKvQuery(String key, Integer limit) {
-        this(key, null, null, limit);
-    }
-
-    @Override
-    public String getKey() {
-        return key;
-    }
-
-    @Override
-    public Optional<Long> getStartTs() {
-        return startTs;
-    }
-
-    @Override
-    public Optional<Long> getEndTs() {
-        return endTs;
-    }
-
-    @Override
-    public Optional<Integer> getLimit() {
-        return limit;
-    }
 }

@@ -16,11 +16,13 @@
 package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
 public abstract class SubscriptionCmd implements TelemetryPluginCmd {
 
     private int cmdId;
@@ -30,46 +32,6 @@ public abstract class SubscriptionCmd implements TelemetryPluginCmd {
     private boolean unsubscribe;
 
     public abstract SubscriptionType getType();
-
-    public int getCmdId() {
-        return cmdId;
-    }
-
-    public void setCmdId(int cmdId) {
-        this.cmdId = cmdId;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getKeys() {
-        return keys;
-    }
-
-    public void setTags(String tags) {
-        this.keys = tags;
-    }
-
-    public boolean isUnsubscribe() {
-        return unsubscribe;
-    }
-
-    public void setUnsubscribe(boolean unsubscribe) {
-        this.unsubscribe = unsubscribe;
-    }
-
-    public String getScope() {
-        return scope;
-    }
-
-    public void setKeys(String keys) {
-        this.keys = keys;
-    }
 
     @Override
     public String toString() {

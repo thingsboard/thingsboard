@@ -27,7 +27,7 @@
                 </md-button>
             </div>
         </md-toolbar>
-        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-show="loading"></md-progress-linear>
+        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
         <span style="min-height: 5px;" flex="" ng-show="!loading"></span>
         <md-dialog-content>
             <div class="md-dialog-content" style="padding-top: 0px;">
@@ -37,7 +37,7 @@
                                       ng-model="vm.widgetConfig"
                                       widget-settings-schema="vm.settingsSchema"
                                       datakey-settings-schema="vm.dataKeySettingsSchema"
-                                      device-aliases="vm.dashboard.configuration.deviceAliases"
+                                      device-aliases="vm.aliasesInfo.deviceAliases"
                                       functions-only="vm.functionsOnly"
                                       fetch-device-keys="vm.fetchDeviceKeys(deviceAliasId, query, type)"
                                       on-create-device-alias="vm.createDeviceAlias(event, alias)"

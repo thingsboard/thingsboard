@@ -38,9 +38,9 @@ function DatakeyConfigDialogController($scope, $mdDialog, deviceService, dataKey
     };
 
     vm.fetchDeviceKeys = function (deviceAliasId, query, type) {
-        var deviceId = vm.deviceAliases[deviceAliasId];
-        if (deviceId) {
-            return deviceService.getDeviceKeys(deviceId, query, type);
+        var alias = vm.deviceAliases[deviceAliasId];
+        if (alias) {
+            return deviceService.getDeviceKeys(alias.deviceId, query, type);
         } else {
             return [];
         }

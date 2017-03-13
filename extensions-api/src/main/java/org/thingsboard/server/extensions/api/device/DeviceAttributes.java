@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.extensions.api.device;
 
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.*;
@@ -64,5 +66,29 @@ public class DeviceAttributes {
 
     public Optional<AttributeKvEntry> getServerPublicAttribute(String attribute) {
         return Optional.ofNullable(serverPublicAttributesMap.get(attribute));
+    }
+
+    public void remove(AttributeKey key) {
+        Map<String, AttributeKvEntry> map = getMapByScope(key.getScope());
+        if (map != null) {
+            map.remove(key);
+        }
+    }
+
+    public void update(String scope, List<AttributeKvEntry> values) {
+        Map<String, AttributeKvEntry> map = getMapByScope(scope);
+        values.forEach(v -> map.put(v.getKey(), v));
+    }
+
+    private Map<String, AttributeKvEntry> getMapByScope(String scope) {
+        Map<String, AttributeKvEntry> map = null;
+        if (scope.equalsIgnoreCase(DataConstants.CLIENT_SCOPE)) {
+            map = clientSideAttributesMap;
+        } else if (scope.equalsIgnoreCase(DataConstants.SHARED_SCOPE)) {
+            map = serverPublicAttributesMap;
+        } else if (scope.equalsIgnoreCase(DataConstants.SERVER_SCOPE)) {
+            map = serverPrivateAttributesMap;
+        }
+        return map;
     }
 }

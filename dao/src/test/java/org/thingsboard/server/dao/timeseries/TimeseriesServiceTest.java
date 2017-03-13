@@ -51,8 +51,6 @@ public class TimeseriesServiceTest extends AbstractServiceTest {
     private static final String DOUBLE_KEY = "doubleKey";
     private static final String BOOLEAN_KEY = "booleanKey";
 
-    public static final int PARTITION_MINUTES = 1100;
-
     private static final long TS = 42L;
 
     KvEntry stringKvEntry = new StringDataEntry(STRING_KEY, "value");
@@ -103,27 +101,101 @@ public class TimeseriesServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindDeviceTsDataByQuery() throws Exception {
+    public void testFindDeviceTsData() throws Exception {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
-        LocalDateTime localDateTime = LocalDateTime.now(ZoneOffset.UTC).minusMinutes(PARTITION_MINUTES);
-        log.debug("Start event time is {}", localDateTime);
-        List<TsKvEntry> entries = new ArrayList<>(PARTITION_MINUTES);
+        List<TsKvEntry> entries = new ArrayList<>();
 
-        for (int i = 0; i < PARTITION_MINUTES; i++) {
-            long time = localDateTime.plusMinutes(i).toInstant(ZoneOffset.UTC).toEpochMilli();
-            BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(time, stringKvEntry);
-            tsService.save(DataConstants.DEVICE, deviceId, tsKvEntry).get();
-            entries.add(tsKvEntry);
-        }
-        log.debug("Saved all records {}", localDateTime);
-        List<TsKvEntry> list = tsService.find(DataConstants.DEVICE, deviceId, new BaseTsKvQuery(STRING_KEY, entries.get(599).getTs(),
-                LocalDateTime.now(ZoneOffset.UTC).toInstant(ZoneOffset.UTC).toEpochMilli()));
-        log.debug("Fetched records {}", localDateTime);
-        List<TsKvEntry> expected = entries.subList(600, PARTITION_MINUTES);
-        assertEquals(expected.size(), list.size());
-        assertEquals(expected, list);
+        entries.add(save(deviceId, 5000, 100));
+        entries.add(save(deviceId, 15000, 200));
+
+        entries.add(save(deviceId, 25000, 300));
+        entries.add(save(deviceId, 35000, 400));
+
+        entries.add(save(deviceId, 45000, 500));
+        entries.add(save(deviceId, 55000, 600));
+
+        List<TsKvEntry> list = tsService.findAll(DataConstants.DEVICE, deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
+                60000, 20000, 3, Aggregation.NONE))).get();
+        assertEquals(3, list.size());
+        assertEquals(55000, list.get(0).getTs());
+        assertEquals(java.util.Optional.of(600L), list.get(0).getLongValue());
+
+        assertEquals(45000, list.get(1).getTs());
+        assertEquals(java.util.Optional.of(500L), list.get(1).getLongValue());
+
+        assertEquals(35000, list.get(2).getTs());
+        assertEquals(java.util.Optional.of(400L), list.get(2).getLongValue());
+
+        list = tsService.findAll(DataConstants.DEVICE, deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
+                60000, 20000, 3, Aggregation.AVG))).get();
+        assertEquals(3, list.size());
+        assertEquals(10000, list.get(0).getTs());
+        assertEquals(java.util.Optional.of(150L), list.get(0).getLongValue());
+
+        assertEquals(30000, list.get(1).getTs());
+        assertEquals(java.util.Optional.of(350L), list.get(1).getLongValue());
+
+        assertEquals(50000, list.get(2).getTs());
+        assertEquals(java.util.Optional.of(550L), list.get(2).getLongValue());
+
+        list = tsService.findAll(DataConstants.DEVICE, deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
+                60000, 20000, 3, Aggregation.SUM))).get();
+
+        assertEquals(3, list.size());
+        assertEquals(10000, list.get(0).getTs());
+        assertEquals(java.util.Optional.of(300L), list.get(0).getLongValue());
+
+        assertEquals(30000, list.get(1).getTs());
+        assertEquals(java.util.Optional.of(700L), list.get(1).getLongValue());
+
+        assertEquals(50000, list.get(2).getTs());
+        assertEquals(java.util.Optional.of(1100L), list.get(2).getLongValue());
+
+        list = tsService.findAll(DataConstants.DEVICE, deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
+                60000, 20000, 3, Aggregation.MIN))).get();
+
+        assertEquals(3, list.size());
+        assertEquals(10000, list.get(0).getTs());
+        assertEquals(java.util.Optional.of(100L), list.get(0).getLongValue());
+
+        assertEquals(30000, list.get(1).getTs());
+        assertEquals(java.util.Optional.of(300L), list.get(1).getLongValue());
+
+        assertEquals(50000, list.get(2).getTs());
+        assertEquals(java.util.Optional.of(500L), list.get(2).getLongValue());
+
+        list = tsService.findAll(DataConstants.DEVICE, deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
+                60000, 20000, 3, Aggregation.MAX))).get();
+
+        assertEquals(3, list.size());
+        assertEquals(10000, list.get(0).getTs());
+        assertEquals(java.util.Optional.of(200L), list.get(0).getLongValue());
+
+        assertEquals(30000, list.get(1).getTs());
+        assertEquals(java.util.Optional.of(400L), list.get(1).getLongValue());
+
+        assertEquals(50000, list.get(2).getTs());
+        assertEquals(java.util.Optional.of(600L), list.get(2).getLongValue());
+
+        list = tsService.findAll(DataConstants.DEVICE, deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
+                60000, 20000, 3, Aggregation.COUNT))).get();
+
+        assertEquals(3, list.size());
+        assertEquals(10000, list.get(0).getTs());
+        assertEquals(java.util.Optional.of(2L), list.get(0).getLongValue());
+
+        assertEquals(30000, list.get(1).getTs());
+        assertEquals(java.util.Optional.of(2L), list.get(1).getLongValue());
+
+        assertEquals(50000, list.get(2).getTs());
+        assertEquals(java.util.Optional.of(2L), list.get(2).getLongValue());
     }
 
+    private TsKvEntry save(DeviceId deviceId, long ts, long value) throws Exception {
+        TsKvEntry entry = new BasicTsKvEntry(ts, new LongDataEntry(LONG_KEY, value));
+        tsService.save(DataConstants.DEVICE, deviceId, entry).get();
+        return entry;
+    }
 
     private void saveEntries(DeviceId deviceId, long ts) throws ExecutionException, InterruptedException {
         tsService.save(DataConstants.DEVICE, deviceId, toTsEntry(ts, stringKvEntry)).get();

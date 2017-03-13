@@ -45,7 +45,25 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         exportToPc(prepareExport(widgetItem), name + '.json');
     }
 
-    function importWidget($event, dashboard) {
+    function prepareDeviceAlias(aliasInfo) {
+        var deviceFilter;
+        if (aliasInfo.deviceId) {
+            deviceFilter = {
+                useFilter: false,
+                deviceNameFilter: '',
+                deviceList: [aliasInfo.deviceId]
+            }
+            delete aliasInfo.deviceId;
+        } else {
+            deviceFilter = aliasInfo.deviceFilter;
+        }
+        return {
+            alias: aliasInfo.aliasName,
+            deviceFilter: deviceFilter
+        };
+    }
+
+    function importWidget($event, dashboard, onAliasesUpdate) {
         openImportDialog($event, 'dashboard.import-widget', 'dashboard.widget-file').then(
             function success(widgetItem) {
                 if (!validateImportedWidget(widgetItem)) {
@@ -66,20 +84,14 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                         if (datasourceAliases) {
                             for (datasourceIndex in datasourceAliases) {
                                 datasourceAliasesMap[aliasId] = datasourceIndex;
-                                deviceAliases[aliasId] = {
-                                    alias: datasourceAliases[datasourceIndex].aliasName,
-                                    deviceId: datasourceAliases[datasourceIndex].deviceId
-                                };
+                                deviceAliases[aliasId] = prepareDeviceAlias(datasourceAliases[datasourceIndex]);
                                 aliasId++;
                             }
                         }
                         if (targetDeviceAliases) {
                             for (datasourceIndex in targetDeviceAliases) {
                                 targetDeviceAliasesMap[aliasId] = datasourceIndex;
-                                deviceAliases[aliasId] = {
-                                    alias: targetDeviceAliases[datasourceIndex].aliasName,
-                                    deviceId: targetDeviceAliases[datasourceIndex].deviceId
-                                };
+                                deviceAliases[aliasId] = prepareDeviceAlias(targetDeviceAliases[datasourceIndex]);
                                 aliasId++;
                             }
                         }
@@ -97,26 +109,26 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                                                     var datasourceIndex;
                                                     if (datasourceAliasesMap[aliasId]) {
                                                         datasourceIndex = datasourceAliasesMap[aliasId];
-                                                        datasourceAliases[datasourceIndex].deviceId = deviceAlias.deviceId;
+                                                        datasourceAliases[datasourceIndex].deviceFilter = deviceAlias.deviceFilter;
                                                     } else if (targetDeviceAliasesMap[aliasId]) {
                                                         datasourceIndex = targetDeviceAliasesMap[aliasId];
-                                                        targetDeviceAliases[datasourceIndex].deviceId = deviceAlias.deviceId;
+                                                        targetDeviceAliases[datasourceIndex].deviceFilter = deviceAlias.deviceFilter;
                                                     }
                                                 }
-                                                addImportedWidget(dashboard, widget, aliasesInfo, originalColumns);
+                                                addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
                                             },
                                             function fail() {}
                                         );
                                     } else {
-                                        addImportedWidget(dashboard, widget, aliasesInfo, originalColumns);
+                                        addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
                                     }
                                 }
                             );
                         } else {
-                            addImportedWidget(dashboard, widget, aliasesInfo, originalColumns);
+                            addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
                         }
                     } else {
-                        addImportedWidget(dashboard, widget, aliasesInfo, originalColumns);
+                        addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
                     }
                 }
             },
@@ -140,8 +152,8 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return true;
     }
 
-    function addImportedWidget(dashboard, widget, aliasesInfo, originalColumns) {
-        itembuffer.addWidgetToDashboard(dashboard, widget, aliasesInfo, originalColumns, -1, -1);
+    function addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns) {
+        itembuffer.addWidgetToDashboard(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns, -1, -1);
     }
 
     // Dashboard functions
@@ -248,19 +260,18 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     function checkDeviceAlias(index, aliasIds, deviceAliases, missingDeviceAliases, deferred) {
         var aliasId = aliasIds[index];
         var deviceAlias = deviceAliases[aliasId];
-        if (deviceAlias.deviceId) {
-            deviceService.getDevice(deviceAlias.deviceId, true).then(
-                function success() {
+        deviceService.checkDeviceAlias(deviceAlias).then(
+            function(result) {
+                if (result) {
                     checkNextDeviceAliasOrComplete(index, aliasIds, deviceAliases, missingDeviceAliases, deferred);
-                },
-                function fail() {
+                } else {
                     var missingDeviceAlias = angular.copy(deviceAlias);
-                    missingDeviceAlias.deviceId = null;
+                    missingDeviceAlias.deviceFilter = null;
                     missingDeviceAliases[aliasId] = missingDeviceAlias;
                     checkNextDeviceAliasOrComplete(index, aliasIds, deviceAliases, missingDeviceAliases, deferred);
                 }
-            );
-        }
+            }
+        );
     }
 
     function editMissingAliases($event, widgets, isSingleWidget, customTitle, missingDeviceAliases) {
@@ -274,7 +285,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     deviceAliases: missingDeviceAliases,
                     widgets: widgets,
                     isSingleWidget: isSingleWidget,
-                    isSingleDevice: false,
+                    isSingleDeviceAlias: false,
                     singleDeviceAlias: null,
                     customTitle: customTitle,
                     disableAdd: true

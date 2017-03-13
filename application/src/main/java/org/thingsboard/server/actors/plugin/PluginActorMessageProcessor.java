@@ -173,7 +173,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
 
     @Override
     public void onUpdate(ActorContext context) throws Exception {
-        PluginMetaData oldPluginMd = systemContext.getPluginService().findPluginById(entityId);
+        PluginMetaData oldPluginMd = pluginMd;
         pluginMd = systemContext.getPluginService().findPluginById(entityId);
         boolean requiresRestart = false;
         logger.info("[{}] Plugin configuration was updated from {} to {}.", entityId, oldPluginMd, pluginMd);

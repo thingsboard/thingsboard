@@ -42,7 +42,7 @@ public interface PluginContext {
 
     void reply(PluginToRuleMsg<?> msg);
 
-    boolean checkAccess(DeviceId deviceId);
+    void checkAccess(DeviceId deviceId, PluginCallback<Void> callback);
 
     Optional<PluginApiCallSecurityContext> getSecurityCtx();
 
@@ -82,7 +82,7 @@ public interface PluginContext {
 
     void saveTsData(DeviceId deviceId, List<TsKvEntry> entry, PluginCallback<Void> callback);
 
-    List<TsKvEntry> loadTimeseries(DeviceId deviceId, TsKvQuery query);
+    void loadTimeseries(DeviceId deviceId, List<TsKvQuery> queries, PluginCallback<List<TsKvEntry>> callback);
 
     void loadLatestTimeseries(DeviceId deviceId, Collection<String> keys, PluginCallback<List<TsKvEntry>> callback);
 
@@ -92,15 +92,19 @@ public interface PluginContext {
         Attributes API
      */
 
-    void saveAttributes(DeviceId deviceId, String attributeType, List<AttributeKvEntry> attributes, PluginCallback<Void> callback);
+    void saveAttributes(TenantId tenantId, DeviceId deviceId, String attributeType, List<AttributeKvEntry> attributes, PluginCallback<Void> callback);
 
-    Optional<AttributeKvEntry> loadAttribute(DeviceId deviceId, String attributeType, String attributeKey);
+    void removeAttributes(TenantId tenantId, DeviceId deviceId, String scope, List<String> attributeKeys, PluginCallback<Void> callback);
 
-    List<AttributeKvEntry> loadAttributes(DeviceId deviceId, String attributeType, List<String> attributeKeys);
+    void loadAttribute(DeviceId deviceId, String attributeType, String attributeKey, PluginCallback<Optional<AttributeKvEntry>> callback);
 
-    List<AttributeKvEntry> loadAttributes(DeviceId deviceId, String attributeType);
+    void loadAttributes(DeviceId deviceId, String attributeType, Collection<String> attributeKeys, PluginCallback<List<AttributeKvEntry>> callback);
 
-    void removeAttributes(DeviceId deviceId, String scope, List<String> attributeKeys);
+    void loadAttributes(DeviceId deviceId, String attributeType, PluginCallback<List<AttributeKvEntry>> callback);
+
+    void loadAttributes(DeviceId deviceId, Collection<String> attributeTypes, PluginCallback<List<AttributeKvEntry>> callback);
+
+    void loadAttributes(DeviceId deviceId, Collection<String> attributeTypes, Collection<String> attributeKeys, PluginCallback<List<AttributeKvEntry>> callback);
 
     void getCustomerDevices(TenantId tenantId, CustomerId customerId, int limit, PluginCallback<List<Device>> callback);
 }

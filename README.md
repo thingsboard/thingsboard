@@ -10,9 +10,13 @@ Thingsboard is an open-source IoT platform for data collection, processing, visu
 
 Thingsboard documentation is hosted on [thingsboard.io](https://thingsboard.io/docs).
 
-## Sample Dashboard
+## Sample Dashboards
 
-![Dashboard](./img/dashboard.gif?raw=true "Real-time Fleet Dashboard")
+[**Smart energy monitoring**](https://demo.thingsboard.io/demo?dashboardId=e8e409c0-f2b5-11e6-a6ee-bb0136cc33d0&source=github)
+[![Smart energy monitoring demo](https://cloud.githubusercontent.com/assets/8308069/23790111/62c8a61e-0586-11e7-84eb-51febc54ec09.png "Smart energy monitoring demo")](https://demo.thingsboard.io/demo?dashboardId=e8e409c0-f2b5-11e6-a6ee-bb0136cc33d0&source=github)
+
+[**Smart bus tracking**](https://demo.thingsboard.io/demo?dashboardId=3d0bf910-ee09-11e6-b619-bb0136cc33d0&source=github)
+[![Smart bus tracking demo](https://cloud.githubusercontent.com/assets/8308069/23790110/62c6ecde-0586-11e7-8249-19eafd5bf8cc.png "Smart bus tracking demo")](https://demo.thingsboard.io/demo?dashboardId=3d0bf910-ee09-11e6-b619-bb0136cc33d0&source=github)
 
 ## Getting Started
 

@@ -20,7 +20,7 @@ export default angular.module('thingsboard.api.device', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
+function DeviceService($http, $q, $filter, userService, telemetryWebsocketService, types) {
 
 
     var deviceAttributesSubscriptionMap = {};
@@ -30,6 +30,9 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         deleteDevice: deleteDevice,
         getCustomerDevices: getCustomerDevices,
         getDevice: getDevice,
+        getDevices: getDevices,
+        processDeviceAliases: processDeviceAliases,
+        checkDeviceAlias: checkDeviceAlias,
         getDeviceCredentials: getDeviceCredentials,
         getDeviceKeys: getDeviceKeys,
         getDeviceTimeseriesValues: getDeviceTimeseriesValues,
@@ -96,6 +99,200 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         }, function fail(response) {
             deferred.reject(response.data);
         });
+        return deferred.promise;
+    }
+
+    function getDevices(deviceIds) {
+        var deferred = $q.defer();
+        var ids = '';
+        for (var i=0;i<deviceIds.length;i++) {
+            if (i>0) {
+                ids += ',';
+            }
+            ids += deviceIds[i];
+        }
+        var url = '/api/devices?deviceIds=' + ids;
+        $http.get(url, null).then(function success(response) {
+            var devices = response.data;
+            devices.sort(function (device1, device2) {
+               var id1 =  device1.id.id;
+               var id2 =  device2.id.id;
+               var index1 = deviceIds.indexOf(id1);
+               var index2 = deviceIds.indexOf(id2);
+               return index1 - index2;
+            });
+            deferred.resolve(devices);
+        }, function fail(response) {
+            deferred.reject(response.data);
+        });
+        return deferred.promise;
+    }
+
+    function fetchAliasDeviceByNameFilter(deviceNameFilter, limit) {
+        var deferred = $q.defer();
+        var user = userService.getCurrentUser();
+        var promise;
+        var pageLink = {limit: limit, textSearch: deviceNameFilter};
+        if (user.authority === 'CUSTOMER_USER') {
+            var customerId = user.customerId;
+            promise = getCustomerDevices(customerId, pageLink);
+        } else {
+            promise = getTenantDevices(pageLink);
+        }
+        promise.then(
+            function success(result) {
+                if (result.data && result.data.length > 0) {
+                    deferred.resolve(result.data);
+                } else {
+                    deferred.resolve(null);
+                }
+            },
+            function fail() {
+                deferred.resolve(null);
+            }
+        );
+        return deferred.promise;
+    }
+
+    function deviceToDeviceInfo(device) {
+        return { name: device.name, id: device.id.id };
+    }
+
+    function devicesToDevicesInfo(devices) {
+        var devicesInfo = [];
+        for (var d in devices) {
+            devicesInfo.push(deviceToDeviceInfo(devices[d]));
+        }
+        return devicesInfo;
+    }
+
+    function processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred) {
+        if (index < aliasIds.length) {
+            var aliasId = aliasIds[index];
+            var deviceAlias = deviceAliases[aliasId];
+            var alias = deviceAlias.alias;
+            if (!deviceAlias.deviceFilter) {
+                getDevice(deviceAlias.deviceId).then(
+                    function success(device) {
+                        var resolvedAlias = {alias: alias, deviceId: device.id.id};
+                        resolution.aliasesInfo.deviceAliases[aliasId] = resolvedAlias;
+                        resolution.aliasesInfo.deviceAliasesInfo[aliasId] = [
+                            deviceToDeviceInfo(device)
+                        ];
+                        index++;
+                        processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred);
+                    },
+                    function fail() {
+                        if (!resolution.error) {
+                            resolution.error = 'dashboard.invalid-aliases-config';
+                        }
+                        index++;
+                        processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred);
+                    }
+                );
+            } else {
+                var deviceFilter = deviceAlias.deviceFilter;
+                if (deviceFilter.useFilter) {
+                    var deviceNameFilter = deviceFilter.deviceNameFilter;
+                    fetchAliasDeviceByNameFilter(deviceNameFilter, 100).then(
+                        function(devices) {
+                            if (devices && devices != null) {
+                                var resolvedAlias = {alias: alias, deviceId: devices[0].id.id};
+                                resolution.aliasesInfo.deviceAliases[aliasId] = resolvedAlias;
+                                resolution.aliasesInfo.deviceAliasesInfo[aliasId] = devicesToDevicesInfo(devices);
+                                index++;
+                                processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred);
+                            } else {
+                                if (!resolution.error) {
+                                    resolution.error = 'dashboard.invalid-aliases-config';
+                                }
+                                index++;
+                                processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred);
+                            }
+                        });
+                } else {
+                    var deviceList = deviceFilter.deviceList;
+                    getDevices(deviceList).then(
+                        function success(devices) {
+                            if (devices && devices.length > 0) {
+                                var resolvedAlias = {alias: alias, deviceId: devices[0].id.id};
+                                resolution.aliasesInfo.deviceAliases[aliasId] = resolvedAlias;
+                                resolution.aliasesInfo.deviceAliasesInfo[aliasId] = devicesToDevicesInfo(devices);
+                                index++;
+                                processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred);
+                            } else {
+                                if (!resolution.error) {
+                                    resolution.error = 'dashboard.invalid-aliases-config';
+                                }
+                                index++;
+                                processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred);
+                            }
+                        },
+                        function fail() {
+                            if (!resolution.error) {
+                                resolution.error = 'dashboard.invalid-aliases-config';
+                            }
+                            index++;
+                            processDeviceAlias(index, aliasIds, deviceAliases, resolution, deferred);
+                        }
+                    );
+                }
+            }
+        } else {
+            deferred.resolve(resolution);
+        }
+    }
+
+    function processDeviceAliases(deviceAliases) {
+        var deferred = $q.defer();
+        var resolution = {
+            aliasesInfo: {
+                deviceAliases: {},
+                deviceAliasesInfo: {}
+            }
+        };
+        var aliasIds = [];
+        if (deviceAliases) {
+            for (var aliasId in deviceAliases) {
+                aliasIds.push(aliasId);
+            }
+        }
+        processDeviceAlias(0, aliasIds, deviceAliases, resolution, deferred);
+        return deferred.promise;
+    }
+
+    function checkDeviceAlias(deviceAlias) {
+        var deferred = $q.defer();
+        var deviceFilter;
+        if (deviceAlias.deviceId) {
+            deviceFilter = {
+                useFilter: false,
+                deviceNameFilter: '',
+                deviceList: [deviceAlias.deviceId]
+            }
+        } else {
+            deviceFilter = deviceAlias.deviceFilter;
+        }
+        var promise;
+        if (deviceFilter.useFilter) {
+            var deviceNameFilter = deviceFilter.deviceNameFilter;
+            promise = fetchAliasDeviceByNameFilter(deviceNameFilter, 1);
+        } else {
+            var deviceList = deviceFilter.deviceList;
+            promise = getDevices(deviceList);
+        }
+        promise.then(
+            function success(devices) {
+                if (devices && devices.length > 0) {
+                    deferred.resolve(true);
+                } else {
+                    deferred.resolve(false);
+                }
+            },
+            function fail() {
+                deferred.resolve(false);
+            }
+        );
         return deferred.promise;
     }
 
@@ -212,7 +409,7 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         return deferred.promise;
     }
 
-    function processDeviceAttributes(attributes, query, deferred, successCallback, update) {
+    function processDeviceAttributes(attributes, query, deferred, successCallback, update, apply) {
         attributes = $filter('orderBy')(attributes, query.order);
         if (query.search != null) {
             attributes = $filter('filter')(attributes, {key: query.search});
@@ -222,7 +419,7 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
         }
         var startIndex = query.limit * (query.page - 1);
         responseData.data = attributes.slice(startIndex, startIndex + query.limit);
-        successCallback(responseData, update);
+        successCallback(responseData, update, apply);
         if (deferred) {
             deferred.resolve();
         }
@@ -236,13 +433,13 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
             if (das.attributes) {
                 processDeviceAttributes(das.attributes, query, deferred, successCallback);
                 das.subscriptionCallback = function(attributes) {
-                    processDeviceAttributes(attributes, query, null, successCallback, true);
+                    processDeviceAttributes(attributes, query, null, successCallback, true, true);
                 }
             } else {
                 das.subscriptionCallback = function(attributes) {
-                    processDeviceAttributes(attributes, query, deferred, successCallback);
+                    processDeviceAttributes(attributes, query, deferred, successCallback, false, true);
                     das.subscriptionCallback = function(attributes) {
-                        processDeviceAttributes(attributes, query, null, successCallback, true);
+                        processDeviceAttributes(attributes, query, null, successCallback, true, true);
                     }
                 }
             }
@@ -304,7 +501,9 @@ function DeviceService($http, $q, $filter, telemetryWebsocketService, types) {
                 subscriptionCommand: subscriptionCommand,
                 type: type,
                 onData: function (data) {
-                    onSubscriptionData(data, subscriptionId);
+                    if (data.data) {
+                        onSubscriptionData(data.data, subscriptionId);
+                    }
                 }
             };
             deviceAttributesSubscription = {

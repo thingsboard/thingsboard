@@ -22,7 +22,7 @@ export default angular.module('thingsboard.utils', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function Utils($mdColorPalette, types) {
+function Utils($mdColorPalette, $rootScope, $window, types) {
 
     var predefinedFunctions = {},
         predefinedFunctionsList = [],
@@ -102,6 +102,7 @@ function Utils($mdColorPalette, types) {
         genMaterialColor: genMaterialColor,
         objectHashCode: objectHashCode,
         parseException: parseException,
+        processWidgetException: processWidgetException,
         isDescriptorSchemaNotEmpty: isDescriptorSchemaNotEmpty,
         filterSearchTextEntities: filterSearchTextEntities
     }
@@ -147,7 +148,7 @@ function Utils($mdColorPalette, types) {
         return hash;
     }
 
-    function parseException(exception) {
+    function parseException(exception, lineOffset) {
         var data = {};
         if (exception) {
             if (angular.isString(exception) || exception instanceof String) {
@@ -170,13 +171,26 @@ function Utils($mdColorPalette, types) {
                     var lineInfoRegexp = /(.*<anonymous>):(\d*)(:)?(\d*)?/g;
                     var lineInfoGroups = lineInfoRegexp.exec(exception.stack);
                     if (lineInfoGroups != null && lineInfoGroups.length >= 3) {
-                        data.lineNumber = lineInfoGroups[2] - 2;
+                        if (angular.isUndefined(lineOffset)) {
+                            lineOffset = -2;
+                        }
+                        data.lineNumber = Number(lineInfoGroups[2]) + lineOffset;
                         if (lineInfoGroups.length >= 5) {
                             data.columnNumber = lineInfoGroups[4];
                         }
                     }
                 }
             }
+        }
+        return data;
+    }
+
+    function processWidgetException(exception) {
+        var parentScope = $window.parent.angular.element($window.frameElement).scope();
+        var data = parseException(exception, -5);
+        if ($rootScope.widgetEditMode) {
+            parentScope.$emit('widgetException', data);
+            parentScope.$apply();
         }
         return data;
     }
