@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import injectTapEventPlugin from 'react-tap-event-plugin';
+import UrlHandler from './url.handler';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -38,7 +39,7 @@ export default function AppConfig($provide,
 
     injectTapEventPlugin();
     $locationProvider.html5Mode(true);
-    //$urlRouterProvider.otherwise('/home');
+    $urlRouterProvider.otherwise(UrlHandler);
     storeProvider.setCaching(false);
 
     $translateProvider.useSanitizeValueStrategy('sanitize');

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 import Flow from '@flowjs/ng-flow/dist/ng-flow-standalone.min';
+import UrlHandler from './url.handler';
 
 /*@ngInject*/
-export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $filter, loginService, userService, $translate) {
+export default function AppRun($rootScope, $window, $injector, $location, $log, $state, $mdDialog, $filter, loginService, userService, $translate) {
 
     $window.Flow = Flow;
     var frame = $window.frameElement;
@@ -36,19 +37,17 @@ export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $fi
 
     initWatchers();
 
-    checkCurrentState();
-
     function initWatchers() {
         $rootScope.unauthenticatedHandle = $rootScope.$on('unauthenticated', function (event, doLogout) {
             if (doLogout) {
                 $state.go('login');
             } else {
-                checkCurrentState();
+                UrlHandler($injector, $location);
             }
         });
 
         $rootScope.authenticatedHandle = $rootScope.$on('authenticated', function () {
-            checkCurrentState();
+            UrlHandler($injector, $location);
         });
 
         $rootScope.forbiddenHandle = $rootScope.$on('forbidden', function () {
@@ -108,24 +107,6 @@ export default function AppRun($rootScope, $window, $log, $state, $mdDialog, $fi
                 });
             }
         })
-    }
-
-    function checkCurrentState() {
-        if (userService.isUserLoaded() === true) {
-            if (userService.isAuthenticated()) {
-                gotoDefaultPlace();
-            } else {
-                $state.go('login');
-            }
-        } else {
-            if ($rootScope.userLoadedHandle) {
-                $rootScope.userLoadedHandle();
-            }
-            $rootScope.userLoadedHandle = $rootScope.$on('userLoaded', function () {
-                $rootScope.userLoadedHandle();
-                checkCurrentState();
-            });
-        }
     }
 
     function gotoDefaultPlace(params) {
