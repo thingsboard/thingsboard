@@ -386,7 +386,7 @@ export default class TbMapWidget {
                     if (location.polyline) {
                         tbMap.map.extendBounds(bounds, location.polyline);
                     } else if (location.marker) {
-                        bounds.extend(tbMap.map.getMarkerPosition(location.marker));
+                        tbMap.map.extendBoundsWithMarker(bounds, location.marker);
                     }
                 }
             }
@@ -403,10 +403,10 @@ export default class TbMapWidget {
                 if (location.polyline) {
                     tbMap.map.extendBounds(bounds, location.polyline);
                 } else if (location.marker) {
-                    bounds.extend(tbMap.map.getMarkerPosition(location.marker));
+                    tbMap.map.extendBoundsWithMarker(bounds, location.marker);
                 }
             }
-            if (!tbMap.dontFitMapBounds && locationsChanged) {
+            if (locationsChanged) {
                 tbMap.map.fitBounds(bounds);
             }
         }
@@ -448,10 +448,10 @@ export default class TbMapWidget {
     resize() {
         if (this.map && this.map.inited()) {
             this.map.invalidateSize();
-            if (!this.dontFitMapBounds && this.locations && this.locations.size > 0) {
+            if (this.locations && this.locations.size > 0) {
                 var bounds = this.map.createBounds();
                 for (var m in this.markers) {
-                    bounds.extend(this.map.getMarkerPosition(this.markers[m]));
+                    this.map.extendBoundsWithMarker(bounds, this.markers[m]);
                 }
                 if (this.polylines) {
                     for (var p in this.polylines) {

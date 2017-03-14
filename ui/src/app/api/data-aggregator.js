@@ -19,6 +19,10 @@ export default class DataAggregator {
     constructor(onDataCb, tsKeyNames, startTs, limit, aggregationType, timeWindow, interval, types, $timeout, $filter) {
         this.onDataCb = onDataCb;
         this.tsKeyNames = tsKeyNames;
+        this.dataBuffer = {};
+        for (var k in tsKeyNames) {
+            this.dataBuffer[tsKeyNames[k]] = [];
+        }
         this.startTs = startTs;
         this.aggregationType = aggregationType;
         this.types = types;
@@ -120,11 +124,11 @@ export default class DataAggregator {
             if (delta || !this.data) {
                 this.startTs += delta * this.interval;
                 this.endTs += delta * this.interval;
-                this.data = toData(this.tsKeyNames, this.aggregationMap, this.startTs, this.endTs, this.$filter, this.limit);
+                this.data = this.updateData();
                 this.elapsed = this.elapsed - delta * this.interval;
             }
         } else {
-            this.data = toData(this.tsKeyNames, this.aggregationMap, this.startTs, this.endTs, this.$filter, this.limit);
+            this.data = this.updateData();
         }
         if (this.onDataCb) {
             this.onDataCb(this.data, this.startTs, this.endTs, apply);
@@ -136,6 +140,31 @@ export default class DataAggregator {
                 self.onInterval();
             }, this.aggregationTimeout, false);
         }
+    }
+
+    updateData() {
+        for (var k in this.tsKeyNames) {
+            this.dataBuffer[this.tsKeyNames[k]] = [];
+        }
+        for (var key in this.aggregationMap) {
+            var aggKeyData = this.aggregationMap[key];
+            var keyData = this.dataBuffer[key];
+            for (var aggTimestamp in aggKeyData) {
+                if (aggTimestamp <= this.startTs) {
+                    delete aggKeyData[aggTimestamp];
+                } else if (aggTimestamp <= this.endTs) {
+                    var aggData = aggKeyData[aggTimestamp];
+                    var kvPair = [Number(aggTimestamp), aggData.aggValue];
+                    keyData.push(kvPair);
+                }
+            }
+            keyData = this.$filter('orderBy')(keyData, '+this[0]');
+            if (keyData.length > this.limit) {
+                keyData = keyData.slice(keyData.length - this.limit);
+            }
+            this.dataBuffer[key] = keyData;
+        }
+        return this.dataBuffer;
     }
 
     destroy() {
@@ -206,32 +235,6 @@ function updateAggregatedData(aggregationMap, isCount, noAggregation, aggFunctio
             }
         }
     }
-}
-
-function toData(tsKeyNames, aggregationMap, startTs, endTs, $filter, limit) {
-    var data = {};
-    for (var k in tsKeyNames) {
-        data[tsKeyNames[k]] = [];
-    }
-    for (var key in aggregationMap) {
-        var aggKeyData = aggregationMap[key];
-        var keyData = data[key];
-        for (var aggTimestamp in aggKeyData) {
-            if (aggTimestamp <= startTs) {
-                delete aggKeyData[aggTimestamp];
-            } else if (aggTimestamp <= endTs) {
-                var aggData = aggKeyData[aggTimestamp];
-                var kvPair = [Number(aggTimestamp), aggData.aggValue];
-                keyData.push(kvPair);
-            }
-        }
-        keyData = $filter('orderBy')(keyData, '+this[0]');
-        if (keyData.length > limit) {
-            keyData = keyData.slice(keyData.length - limit);
-        }
-        data[key] = keyData;
-    }
-    return data;
 }
 
 function convertValue(value, noAggregation) {

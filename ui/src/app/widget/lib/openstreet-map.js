@@ -146,23 +146,28 @@ export default class TbOpenStreetMap {
     }
 
     fitBounds(bounds) {
-        var tbMap = this;
-        this.map.once('zoomend', function() {
-            var newZoomLevel = tbMap.map.getZoom();
-            if (tbMap.dontFitMapBounds && tbMap.defaultZoomLevel) {
-                newZoomLevel = tbMap.defaultZoomLevel;
+        if (bounds.isValid()) {
+            if (this.dontFitMapBounds && this.defaultZoomLevel) {
+                this.map.setZoom(this.defaultZoomLevel, {animate: false});
+                this.map.panTo(bounds.getCenter(), {animate: false});
+            } else {
+                var tbMap = this;
+                this.map.once('zoomend', function() {
+                    if (!tbMap.defaultZoomLevel && tbMap.map.getZoom() > tbMap.minZoomLevel) {
+                        tbMap.map.setZoom(tbMap.minZoomLevel, {animate: false});
+                    }
+                });
+                this.map.fitBounds(bounds, {padding: [50, 50], animate: false});
             }
-            tbMap.map.setZoom(newZoomLevel, {animate: false});
-
-            if (!tbMap.defaultZoomLevel && tbMap.map.getZoom() > tbMap.minZoomLevel) {
-                tbMap.map.setZoom(tbMap.minZoomLevel, {animate: false});
-            }
-        });
-        this.map.fitBounds(bounds, {padding: [50, 50], animate: false});
+        }
     }
 
     createLatLng(lat, lng) {
         return L.latLng(lat, lng);
+    }
+
+    extendBoundsWithMarker(bounds, marker) {
+        bounds.extend(marker.getLatLng());
     }
 
     getMarkerPosition(marker) {

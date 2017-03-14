@@ -246,24 +246,29 @@ export default class TbGoogleMap {
     }
     /* eslint-enable no-undef */
 
+    /* eslint-disable no-undef */
     fitBounds(bounds) {
-        var tbMap = this;
-        google.maps.event.addListenerOnce(this.map, 'bounds_changed', function() { // eslint-disable-line no-undef
-            var newZoomLevel = tbMap.map.getZoom();
-            if (tbMap.dontFitMapBounds && tbMap.defaultZoomLevel) {
-                newZoomLevel = tbMap.defaultZoomLevel;
-            }
-            tbMap.map.setZoom(newZoomLevel);
-
-            if (!tbMap.defaultZoomLevel && tbMap.map.getZoom() > tbMap.minZoomLevel) {
-                tbMap.map.setZoom(tbMap.minZoomLevel);
-            }
-        });
-        this.map.fitBounds(bounds);
+        if (this.dontFitMapBounds && this.defaultZoomLevel) {
+            this.map.setZoom(this.defaultZoomLevel);
+            this.map.setCenter(bounds.getCenter());
+        } else {
+            var tbMap = this;
+            google.maps.event.addListenerOnce(this.map, 'bounds_changed', function() { // eslint-disable-line no-undef
+                if (!tbMap.defaultZoomLevel && tbMap.map.getZoom() > tbMap.minZoomLevel) {
+                    tbMap.map.setZoom(tbMap.minZoomLevel);
+                }
+            });
+            this.map.fitBounds(bounds);
+        }
     }
+    /* eslint-enable no-undef */
 
     createLatLng(lat, lng) {
         return new google.maps.LatLng(lat, lng); // eslint-disable-line no-undef
+    }
+
+    extendBoundsWithMarker(bounds, marker) {
+        bounds.extend(marker.getPosition());
     }
 
     getMarkerPosition(marker) {
