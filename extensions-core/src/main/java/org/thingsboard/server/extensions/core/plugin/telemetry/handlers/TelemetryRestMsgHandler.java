@@ -87,30 +87,26 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
             } else if (method.equals("values")) {
                 if ("timeseries".equals(entity)) {
                     String keysStr = request.getParameter("keys");
+                    List<String> keys = Arrays.asList(keysStr.split(","));
+
                     Optional<Long> startTs = request.getLongParamValue("startTs");
                     Optional<Long> endTs = request.getLongParamValue("endTs");
                     Optional<Long> interval = request.getLongParamValue("interval");
                     Optional<Integer> limit = request.getIntParamValue("limit");
-                    Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
 
-                    List<String> keys = Arrays.asList(keysStr.split(","));
-                    List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg)).collect(Collectors.toList());
-                    ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
-                        @Override
-                        public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
-                            Map<String, List<TsData>> result = new LinkedHashMap<>();
-                            for (TsKvEntry entry : data) {
-                                result.put(entry.getKey(), data.stream().map(v -> new TsData(v.getTs(), v.getValueAsString())).collect(Collectors.toList()));
-                            }
-                            msg.getResponseHolder().setResult(new ResponseEntity<>(data, HttpStatus.OK));
+                    if (startTs.isPresent() || endTs.isPresent() || interval.isPresent() || limit.isPresent()) {
+                        if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent()) {
+                            msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+                            return;
                         }
+                        Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
 
-                        @Override
-                        public void onFailure(PluginContext ctx, Exception e) {
-                            log.error("Failed to fetch historical data", e);
-                            msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
-                        }
-                    });
+                        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
+                                .collect(Collectors.toList());
+                        ctx.loadTimeseries(deviceId, queries, getTsKvListCallback(msg));
+                    } else {
+                        ctx.loadLatestTimeseries(deviceId, keys, getTsKvListCallback(msg));
+                    }
                 } else if ("attributes".equals(entity)) {
                     String keys = request.getParameter("keys", "");
 
@@ -135,6 +131,25 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
         } else {
             msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
         }
+    }
+
+    private PluginCallback<List<TsKvEntry>> getTsKvListCallback(final PluginRestMsg msg) {
+        return new PluginCallback<List<TsKvEntry>>() {
+            @Override
+            public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
+                Map<String, List<TsData>> result = new LinkedHashMap<>();
+                for (TsKvEntry entry : data) {
+                    result.put(entry.getKey(), data.stream().map(v -> new TsData(v.getTs(), v.getValueAsString())).collect(Collectors.toList()));
+                }
+                msg.getResponseHolder().setResult(new ResponseEntity<>(result, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to fetch historical data", e);
+                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            }
+        };
     }
 
     @Override
