@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -118,7 +119,7 @@ public class DashboardController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/dashboards", params = { "limit" }, method = RequestMethod.GET)
     @ResponseBody
-    public TextPageData<Dashboard> getTenantDashboards(
+    public TextPageData<DashboardInfo> getTenantDashboards(
             @RequestParam int limit,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
@@ -135,7 +136,7 @@ public class DashboardController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/dashboards", params = { "limit" }, method = RequestMethod.GET)
     @ResponseBody
-    public TextPageData<Dashboard> getCustomerDashboards(
+    public TextPageData<DashboardInfo> getCustomerDashboards(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int limit,
             @RequestParam(required = false) String textSearch,

@@ -177,6 +177,7 @@ export default function RuleDirective($compile, $templateCache, $mdDialog, $docu
             theForm: '=',
             onActivateRule: '&',
             onSuspendRule: '&',
+            onExportRule: '&',
             onDeleteRule: '&'
         }
     };

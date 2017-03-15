@@ -21,9 +21,17 @@ import pluginCard from './plugin-card.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function PluginController(pluginService, userService, $state, $stateParams, $filter, $translate, types, helpLinks) {
+export default function PluginController(pluginService, userService, importExport, $state, $stateParams, $filter, $translate, types, helpLinks) {
 
     var pluginActionsList = [
+        {
+            onAction: function ($event, item) {
+                exportPlugin($event, item);
+            },
+            name: function() { $translate.instant('action.export') },
+            details: function() { return $translate.instant('plugin.export') },
+            icon: "file_download"
+        },
         {
             onAction: function ($event, item) {
                 activatePlugin($event, item);
@@ -57,6 +65,30 @@ export default function PluginController(pluginService, userService, $state, $st
         }
     ];
 
+    var pluginAddItemActionsList = [
+        {
+            onAction: function ($event) {
+                vm.grid.addItem($event);
+            },
+            name: function() { return $translate.instant('action.create') },
+            details: function() { return $translate.instant('plugin.create-new-plugin') },
+            icon: "insert_drive_file"
+        },
+        {
+            onAction: function ($event) {
+                importExport.importPlugin($event).then(
+                    function() {
+                        vm.grid.refreshList();
+                    }
+                );
+            },
+            name: function() { return $translate.instant('action.import') },
+            details: function() { return $translate.instant('plugin.import') },
+            icon: "file_upload"
+        }
+    ];
+
+
     var vm = this;
 
     vm.types = types;
@@ -82,6 +114,7 @@ export default function PluginController(pluginService, userService, $state, $st
         parentCtl: vm,
 
         actionsList: pluginActionsList,
+        addItemActions: pluginAddItemActionsList,
 
         onGridInited: gridInited,
 
@@ -107,6 +140,7 @@ export default function PluginController(pluginService, userService, $state, $st
 
     vm.activatePlugin = activatePlugin;
     vm.suspendPlugin = suspendPlugin;
+    vm.exportPlugin = exportPlugin;
 
     function helpLinkIdForPlugin() {
         return helpLinks.getPluginLink(vm.grid.operatingItem());
@@ -158,6 +192,11 @@ export default function PluginController(pluginService, userService, $state, $st
         } else {
             return userService.getAuthority() === 'SYS_ADMIN';
         }
+    }
+
+    function exportPlugin($event, plugin) {
+        $event.stopPropagation();
+        importExport.exportPlugin(plugin.id.id);
     }
 
     function activatePlugin(event, plugin) {

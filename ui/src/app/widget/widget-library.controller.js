@@ -20,7 +20,7 @@ import selectWidgetTypeTemplate from './select-widget-type.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function WidgetLibraryController($scope, $rootScope, $q, widgetService, userService,
+export default function WidgetLibraryController($scope, $rootScope, $q, widgetService, userService, importExport,
                                                 $state, $stateParams, $document, $mdDialog, $translate, $filter, types) {
 
     var vm = this;
@@ -36,6 +36,8 @@ export default function WidgetLibraryController($scope, $rootScope, $q, widgetSe
     vm.dashboardInitFailed = dashboardInitFailed;
     vm.addWidgetType = addWidgetType;
     vm.openWidgetType = openWidgetType;
+    vm.exportWidgetType = exportWidgetType;
+    vm.importWidgetType = importWidgetType;
     vm.removeWidgetType = removeWidgetType;
     vm.loadWidgetLibrary = loadWidgetLibrary;
     vm.addWidgetType = addWidgetType;
@@ -171,6 +173,21 @@ export default function WidgetLibraryController($scope, $rootScope, $q, widgetSe
             }, function () {
             });
         }
+    }
+
+    function exportWidgetType(event, widget) {
+        event.stopPropagation();
+        importExport.exportWidgetType(widget.id.id);
+    }
+
+    function importWidgetType($event) {
+        $event.stopPropagation();
+        importExport.importWidgetType($event, vm.widgetsBundle.alias).then(
+            function success() {
+                $state.go($state.current, $state.params, {reload: true});
+            },
+            function fail() {}
+        );
     }
 
     function removeWidgetType(event, widget) {

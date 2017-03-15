@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.dashboard;
 
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,11 +35,11 @@ public interface DashboardService {
 
     public void deleteDashboard(DashboardId dashboardId);
     
-    public TextPageData<Dashboard> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
+    public TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
 
     public void deleteDashboardsByTenantId(TenantId tenantId);
     
-    public TextPageData<Dashboard> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+    public TextPageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 
     public void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
     

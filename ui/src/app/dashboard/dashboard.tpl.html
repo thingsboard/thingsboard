@@ -49,6 +49,13 @@
                     </md-button>
                     <tb-user-menu ng-show="forceFullscreen" display-user-info="true">
                     </tb-user-menu>
+                    <md-button aria-label="{{ 'action.export' | translate }}" class="md-icon-button"
+                               ng-click="vm.exportDashboard($event)">
+                        <md-tooltip md-direction="bottom">
+                            {{ 'dashboard.export' | translate }}
+                        </md-tooltip>
+                        <md-icon aria-label="{{ 'action.export' | translate }}" class="material-icons">file_download</md-icon>
+                    </md-button>
                     <tb-timewindow is-toolbar direction="left" tooltip-direction="bottom" aggregation ng-model="vm.dashboardConfiguration.timewindow">
                     </tb-timewindow>
                     <tb-aliases-device-select ng-show="!vm.isEdit"
@@ -70,6 +77,11 @@
                         </md-tooltip>
                         <md-icon aria-label="{{ 'dashboard.settings' | translate }}" class="material-icons">settings</md-icon>
                     </md-button>
+                    <tb-dashboard-select   ng-show="!vm.isEdit && !vm.widgetEditMode"
+                                           ng-model="vm.currentDashboardId"
+                                           dashboards-scope="{{vm.currentDashboardScope}}"
+                                           customer-id="vm.currentCustomerId">
+                    </tb-dashboard-select>
                 </md-fab-actions>
             </md-toolbar>
         </md-fab-toolbar>

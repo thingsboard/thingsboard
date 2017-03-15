@@ -21,9 +21,17 @@ import widgetsBundleCard from './widgets-bundle-card.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function WidgetsBundleController(widgetService, userService, $state, $stateParams, $filter, $translate, types) {
+export default function WidgetsBundleController(widgetService, userService, importExport, $state, $stateParams, $filter, $translate, types) {
 
     var widgetsBundleActionsList = [
+        {
+            onAction: function ($event, item) {
+                exportWidgetsBundle($event, item);
+            },
+            name: function() { $translate.instant('action.export') },
+            details: function() { return $translate.instant('widgets-bundle.export') },
+            icon: "file_download"
+        },
         {
             onAction: function ($event, item) {
                 vm.grid.openItem($event, item);
@@ -42,6 +50,29 @@ export default function WidgetsBundleController(widgetService, userService, $sta
             isEnabled: isWidgetsBundleEditable
         }
    ];
+
+    var widgetsBundleAddItemActionsList = [
+        {
+            onAction: function ($event) {
+                vm.grid.addItem($event);
+            },
+            name: function() { return $translate.instant('action.create') },
+            details: function() { return $translate.instant('widgets-bundle.create-new-widgets-bundle') },
+            icon: "insert_drive_file"
+        },
+        {
+            onAction: function ($event) {
+                importExport.importWidgetsBundle($event).then(
+                    function() {
+                        vm.grid.refreshList();
+                    }
+                );
+            },
+            name: function() { return $translate.instant('action.import') },
+            details: function() { return $translate.instant('widgets-bundle.import') },
+            icon: "file_upload"
+        }
+    ];
 
     var vm = this;
 
@@ -67,6 +98,7 @@ export default function WidgetsBundleController(widgetService, userService, $sta
         parentCtl: vm,
 
         actionsList: widgetsBundleActionsList,
+        addItemActions: widgetsBundleAddItemActionsList,
 
         onGridInited: gridInited,
 
@@ -89,6 +121,8 @@ export default function WidgetsBundleController(widgetService, userService, $sta
     if (angular.isDefined($stateParams.topIndex) && $stateParams.topIndex > 0) {
         vm.widgetsBundleGridConfig.topIndex = $stateParams.topIndex;
     }
+
+    vm.exportWidgetsBundle = exportWidgetsBundle;
 
     function deleteWidgetsBundleTitle(widgetsBundle) {
         return $translate.instant('widgets-bundle.delete-widgets-bundle-title', {widgetsBundleTitle: widgetsBundle.title});
@@ -136,6 +170,11 @@ export default function WidgetsBundleController(widgetService, userService, $sta
         } else {
             return userService.getAuthority() === 'SYS_ADMIN';
         }
+    }
+
+    function exportWidgetsBundle($event, widgetsBundle) {
+        $event.stopPropagation();
+        importExport.exportWidgetsBundle(widgetsBundle.id.id);
     }
 
     function openWidgetsBundle($event, widgetsBundle) {

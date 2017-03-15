@@ -389,7 +389,17 @@ public abstract class BaseController {
 
     protected RuleMetaData checkRule(RuleMetaData rule) throws ThingsboardException {
         checkNotNull(rule);
-        checkTenantId(rule.getTenantId());
+        SecurityUser authUser = getCurrentUser();
+        TenantId tenantId = rule.getTenantId();
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        if (authUser.getAuthority() != Authority.SYS_ADMIN) {
+            if (authUser.getTenantId() == null ||
+                    !tenantId.getId().equals(ModelConstants.NULL_UUID) && !authUser.getTenantId().equals(tenantId)) {
+                throw new ThingsboardException("You don't have permission to perform this operation!",
+                        ThingsboardErrorCode.PERMISSION_DENIED);
+
+            }
+        }
         return rule;
     }
 

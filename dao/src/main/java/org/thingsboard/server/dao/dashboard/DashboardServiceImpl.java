@@ -23,6 +23,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -30,9 +31,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.CustomerEntity;
-import org.thingsboard.server.dao.model.DashboardEntity;
-import org.thingsboard.server.dao.model.TenantEntity;
+import org.thingsboard.server.dao.model.*;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
@@ -40,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.Validator;
 
 @Service
@@ -49,7 +47,10 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Autowired
     private DashboardDao dashboardDao;
-    
+
+    @Autowired
+    private DashboardInfoDao dashboardInfoDao;
+
     @Autowired
     private TenantDao tenantDao;
     
@@ -94,13 +95,13 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public TextPageData<Dashboard> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink) {
+    public TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink) {
         log.trace("Executing findDashboardsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<DashboardEntity> dashboardEntities = dashboardDao.findDashboardsByTenantId(tenantId.getId(), pageLink);
-        List<Dashboard> dashboards = convertDataList(dashboardEntities);
-        return new TextPageData<Dashboard>(dashboards, pageLink);
+        List<DashboardInfoEntity> dashboardEntities = dashboardInfoDao.findDashboardsByTenantId(tenantId.getId(), pageLink);
+        List<DashboardInfo> dashboards = convertDataList(dashboardEntities);
+        return new TextPageData<DashboardInfo>(dashboards, pageLink);
     }
 
     @Override
@@ -111,14 +112,14 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public TextPageData<Dashboard> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink) {
+    public TextPageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(customerId, "Incorrect customerId " + customerId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<DashboardEntity> dashboardEntities = dashboardDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
-        List<Dashboard> dashboards = convertDataList(dashboardEntities);
-        return new TextPageData<Dashboard>(dashboards, pageLink);
+        List<DashboardInfoEntity> dashboardEntities = dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
+        List<DashboardInfo> dashboards = convertDataList(dashboardEntities);
+        return new TextPageData<DashboardInfo>(dashboards, pageLink);
     }
 
     @Override
@@ -158,21 +159,21 @@ public class DashboardServiceImpl implements DashboardService {
                 }
     };
     
-    private PaginatedRemover<TenantId, DashboardEntity> tenantDashboardsRemover =
-            new PaginatedRemover<TenantId, DashboardEntity>() {
+    private PaginatedRemover<TenantId, DashboardInfoEntity> tenantDashboardsRemover =
+            new PaginatedRemover<TenantId, DashboardInfoEntity>() {
         
         @Override
-        protected List<DashboardEntity> findEntities(TenantId id, TextPageLink pageLink) {
-            return dashboardDao.findDashboardsByTenantId(id.getId(), pageLink);
+        protected List<DashboardInfoEntity> findEntities(TenantId id, TextPageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
         }
 
         @Override
-        protected void removeEntity(DashboardEntity entity) {
+        protected void removeEntity(DashboardInfoEntity entity) {
             deleteDashboard(new DashboardId(entity.getId()));
         }
     };
     
-    class CustomerDashboardsUnassigner extends PaginatedRemover<CustomerId, DashboardEntity> {
+    class CustomerDashboardsUnassigner extends PaginatedRemover<CustomerId, DashboardInfoEntity> {
         
         private TenantId tenantId;
         
@@ -181,12 +182,12 @@ public class DashboardServiceImpl implements DashboardService {
         }
 
         @Override
-        protected List<DashboardEntity> findEntities(CustomerId id, TextPageLink pageLink) {
-            return dashboardDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
+        protected List<DashboardInfoEntity> findEntities(CustomerId id, TextPageLink pageLink) {
+            return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
         }
 
         @Override
-        protected void removeEntity(DashboardEntity entity) {
+        protected void removeEntity(DashboardInfoEntity entity) {
             unassignDashboardFromCustomer(new DashboardId(entity.getId()));
         }
         

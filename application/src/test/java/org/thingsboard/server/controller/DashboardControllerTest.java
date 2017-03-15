@@ -24,10 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -43,7 +40,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 public class DashboardControllerTest extends AbstractControllerTest {
     
-    private IdComparator<Dashboard> idComparator = new IdComparator<>();
+    private IdComparator<DashboardInfo> idComparator = new IdComparator<>();
     
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -203,18 +200,18 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindTenantDashboards() throws Exception {
-        List<Dashboard> dashboards = new ArrayList<>();
+        List<DashboardInfo> dashboards = new ArrayList<>();
         for (int i=0;i<173;i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTitle("Dashboard"+i);
-            dashboards.add(doPost("/api/dashboard", dashboard, Dashboard.class));
+            dashboards.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
-        List<Dashboard> loadedDashboards = new ArrayList<>();
+        List<DashboardInfo> loadedDashboards = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(24);
-        TextPageData<Dashboard> pageData = null;
+        TextPageData<DashboardInfo> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?", 
-                    new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                    new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
             loadedDashboards.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -230,32 +227,32 @@ public class DashboardControllerTest extends AbstractControllerTest {
     @Test
     public void testFindTenantDashboardsByTitle() throws Exception {
         String title1 = "Dashboard title 1";
-        List<Dashboard> dashboardsTitle1 = new ArrayList<>();
+        List<DashboardInfo> dashboardsTitle1 = new ArrayList<>();
         for (int i=0;i<134;i++) {
             Dashboard dashboard = new Dashboard();
             String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
             String title = title1+suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             dashboard.setTitle(title);
-            dashboardsTitle1.add(doPost("/api/dashboard", dashboard, Dashboard.class));
+            dashboardsTitle1.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
         String title2 = "Dashboard title 2";
-        List<Dashboard> dashboardsTitle2 = new ArrayList<>();
+        List<DashboardInfo> dashboardsTitle2 = new ArrayList<>();
         for (int i=0;i<112;i++) {
             Dashboard dashboard = new Dashboard();
             String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
             String title = title2+suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             dashboard.setTitle(title);
-            dashboardsTitle2.add(doPost("/api/dashboard", dashboard, Dashboard.class));
+            dashboardsTitle2.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
         
-        List<Dashboard> loadedDashboardsTitle1 = new ArrayList<>();
+        List<DashboardInfo> loadedDashboardsTitle1 = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(15, title1);
-        TextPageData<Dashboard> pageData = null;
+        TextPageData<DashboardInfo> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?", 
-                    new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                    new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
             loadedDashboardsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -267,11 +264,11 @@ public class DashboardControllerTest extends AbstractControllerTest {
         
         Assert.assertEquals(dashboardsTitle1, loadedDashboardsTitle1);
         
-        List<Dashboard> loadedDashboardsTitle2 = new ArrayList<>();
+        List<DashboardInfo> loadedDashboardsTitle2 = new ArrayList<>();
         pageLink = new TextPageLink(4, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?", 
-                    new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                    new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
             loadedDashboardsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -283,25 +280,25 @@ public class DashboardControllerTest extends AbstractControllerTest {
         
         Assert.assertEquals(dashboardsTitle2, loadedDashboardsTitle2);
         
-        for (Dashboard dashboard : loadedDashboardsTitle1) {
+        for (DashboardInfo dashboard : loadedDashboardsTitle1) {
             doDelete("/api/dashboard/"+dashboard.getId().getId().toString())
             .andExpect(status().isOk());
         }
         
         pageLink = new TextPageLink(4, title1);
         pageData = doGetTypedWithPageLink("/api/tenant/dashboards?", 
-                new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
         
-        for (Dashboard dashboard : loadedDashboardsTitle2) {
+        for (DashboardInfo dashboard : loadedDashboardsTitle2) {
             doDelete("/api/dashboard/"+dashboard.getId().getId().toString())
             .andExpect(status().isOk());
         }
         
         pageLink = new TextPageLink(4, title2);
         pageData = doGetTypedWithPageLink("/api/tenant/dashboards?", 
-                new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
@@ -313,21 +310,21 @@ public class DashboardControllerTest extends AbstractControllerTest {
         customer = doPost("/api/customer", customer, Customer.class);
         CustomerId customerId = customer.getId();
         
-        List<Dashboard> dashboards = new ArrayList<>();
+        List<DashboardInfo> dashboards = new ArrayList<>();
         for (int i=0;i<173;i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTitle("Dashboard"+i);
             dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-            dashboards.add(doPost("/api/customer/" + customerId.getId().toString() 
-                            + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class));
+            dashboards.add(new DashboardInfo(doPost("/api/customer/" + customerId.getId().toString()
+                            + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class)));
         }
         
-        List<Dashboard> loadedDashboards = new ArrayList<>();
+        List<DashboardInfo> loadedDashboards = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(21);
-        TextPageData<Dashboard> pageData = null;
+        TextPageData<DashboardInfo> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?", 
-                    new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                    new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
             loadedDashboards.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -348,7 +345,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         CustomerId customerId = customer.getId();
 
         String title1 = "Dashboard title 1";
-        List<Dashboard> dashboardsTitle1 = new ArrayList<>();
+        List<DashboardInfo> dashboardsTitle1 = new ArrayList<>();
         for (int i=0;i<125;i++) {
             Dashboard dashboard = new Dashboard();
             String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
@@ -356,11 +353,11 @@ public class DashboardControllerTest extends AbstractControllerTest {
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             dashboard.setTitle(title);
             dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-            dashboardsTitle1.add(doPost("/api/customer/" + customerId.getId().toString() 
-                    + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class));
+            dashboardsTitle1.add(new DashboardInfo(doPost("/api/customer/" + customerId.getId().toString()
+                    + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class)));
         }
         String title2 = "Dashboard title 2";
-        List<Dashboard> dashboardsTitle2 = new ArrayList<>();
+        List<DashboardInfo> dashboardsTitle2 = new ArrayList<>();
         for (int i=0;i<143;i++) {
             Dashboard dashboard = new Dashboard();
             String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
@@ -368,16 +365,16 @@ public class DashboardControllerTest extends AbstractControllerTest {
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             dashboard.setTitle(title);
             dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
-            dashboardsTitle2.add(doPost("/api/customer/" + customerId.getId().toString() 
-                    + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class));
+            dashboardsTitle2.add(new DashboardInfo(doPost("/api/customer/" + customerId.getId().toString()
+                    + "/dashboard/" + dashboard.getId().getId().toString(), Dashboard.class)));
         }
         
-        List<Dashboard> loadedDashboardsTitle1 = new ArrayList<>();
+        List<DashboardInfo> loadedDashboardsTitle1 = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(18, title1);
-        TextPageData<Dashboard> pageData = null;
+        TextPageData<DashboardInfo> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?", 
-                    new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                    new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
             loadedDashboardsTitle1.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -389,11 +386,11 @@ public class DashboardControllerTest extends AbstractControllerTest {
         
         Assert.assertEquals(dashboardsTitle1, loadedDashboardsTitle1);
         
-        List<Dashboard> loadedDashboardsTitle2 = new ArrayList<>();
+        List<DashboardInfo> loadedDashboardsTitle2 = new ArrayList<>();
         pageLink = new TextPageLink(7, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?", 
-                    new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                    new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
             loadedDashboardsTitle2.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
@@ -405,25 +402,25 @@ public class DashboardControllerTest extends AbstractControllerTest {
         
         Assert.assertEquals(dashboardsTitle2, loadedDashboardsTitle2);
         
-        for (Dashboard dashboard : loadedDashboardsTitle1) {
+        for (DashboardInfo dashboard : loadedDashboardsTitle1) {
             doDelete("/api/customer/dashboard/" + dashboard.getId().getId().toString())
             .andExpect(status().isOk());
         }
         
         pageLink = new TextPageLink(5, title1);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?", 
-                new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
         
-        for (Dashboard dashboard : loadedDashboardsTitle2) {
+        for (DashboardInfo dashboard : loadedDashboardsTitle2) {
             doDelete("/api/customer/dashboard/" + dashboard.getId().getId().toString())
             .andExpect(status().isOk());
         }
         
         pageLink = new TextPageLink(9, title2);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/dashboards?", 
-                new TypeReference<TextPageData<Dashboard>>(){}, pageLink);
+                new TypeReference<TextPageData<DashboardInfo>>(){}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }

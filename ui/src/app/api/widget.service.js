@@ -92,6 +92,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
         getInstantWidgetInfo: getInstantWidgetInfo,
         deleteWidgetType: deleteWidgetType,
         saveWidgetType: saveWidgetType,
+        saveImportedWidgetType: saveImportedWidgetType,
         getWidgetType: getWidgetType,
         getWidgetTypeById: getWidgetTypeById,
         toWidgetInfo: toWidgetInfo
@@ -672,6 +673,19 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
     function saveWidgetType(widgetInfo, id, bundleAlias) {
         var deferred = $q.defer();
         var widgetType = toWidgetType(widgetInfo, id, undefined, bundleAlias);
+        var url = '/api/widgetType';
+        $http.post(url, widgetType).then(function success(response) {
+            var widgetType = response.data;
+            deleteWidgetInfoFromCache(widgetType.bundleAlias, widgetType.alias, widgetType.tenantId.id === types.id.nullUid);
+            deferred.resolve(widgetType);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function saveImportedWidgetType(widgetType) {
+        var deferred = $q.defer();
         var url = '/api/widgetType';
         $http.post(url, widgetType).then(function success(response) {
             var widgetType = response.data;

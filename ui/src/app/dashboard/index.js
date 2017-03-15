@@ -26,6 +26,7 @@ import thingsboardApiCustomer from '../api/customer.service';
 import thingsboardDetailsSidenav from '../components/details-sidenav.directive';
 import thingsboardDeviceFilter from '../components/device-filter.directive';
 import thingsboardWidgetConfig from '../components/widget-config.directive';
+import thingsboardDashboardSelect from '../components/dashboard-select.directive';
 import thingsboardDashboard from '../components/dashboard.directive';
 import thingsboardExpandFullscreen from '../components/expand-fullscreen.directive';
 import thingsboardWidgetsBundleSelect from '../components/widgets-bundle-select.directive';
@@ -60,6 +61,7 @@ export default angular.module('thingsboard.dashboard', [
     thingsboardDetailsSidenav,
     thingsboardDeviceFilter,
     thingsboardWidgetConfig,
+    thingsboardDashboardSelect,
     thingsboardDashboard,
     thingsboardExpandFullscreen,
     thingsboardWidgetsBundleSelect

@@ -269,6 +269,10 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
                 return $q.when([]);
             };
 
+        vm.loadItemDetailsFunc = vm.config.loadItemDetailsFunc || function (item) {
+                return $q.when(item);
+            };
+
         vm.saveItemFunc = vm.config.saveItemFunc || function (item) {
                 return $q.when(item);
             };
@@ -423,9 +427,12 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
                 return;
             }
         }
-        vm.detailsConfig.currentItem = item;
-        vm.detailsConfig.isDetailsEditMode = false;
-        vm.detailsConfig.isDetailsOpen = true;
+        vm.loadItemDetailsFunc(item).then(function success(detailsItem) {
+            detailsItem.index = item.index;
+            vm.detailsConfig.currentItem = detailsItem;
+            vm.detailsConfig.isDetailsEditMode = false;
+            vm.detailsConfig.isDetailsOpen = true;
+        });
     }
 
     function isCurrentItem(item) {

@@ -23,7 +23,8 @@ import addDashboardsToCustomerTemplate from './add-dashboards-to-customer.tpl.ht
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DashboardsController(userService, dashboardService, customerService, importExport, $scope, $controller, $state, $stateParams, $mdDialog, $document, $q, $translate) {
+export default function DashboardsController(userService, dashboardService, customerService, importExport, types, $scope, $controller,
+                                             $state, $stateParams, $mdDialog, $document, $q, $translate) {
 
     var customerId = $stateParams.customerId;
 
@@ -41,6 +42,7 @@ export default function DashboardsController(userService, dashboardService, cust
     var dashboardGroupActionsList = [];
 
     var vm = this;
+    vm.types = types;
 
     vm.dashboardGridConfig = {
         deleteItemTitleFunc: deleteDashboardTitle,
@@ -49,12 +51,15 @@ export default function DashboardsController(userService, dashboardService, cust
         deleteItemsActionTitleFunc: deleteDashboardsActionTitle,
         deleteItemsContentFunc: deleteDashboardsText,
 
+        loadItemDetailsFunc: loadDashboard,
+
         saveItemFunc: saveDashboard,
 
         clickItemFunc: openDashboard,
 
         getItemTitleFunc: getDashboardTitle,
         itemCardTemplateUrl: dashboardCard,
+        parentCtl: vm,
 
         actionsList: dashboardActionsList,
         groupActionsList: dashboardGroupActionsList,
@@ -128,7 +133,21 @@ export default function DashboardsController(userService, dashboardService, cust
                     },
                     name: function() { return $translate.instant('action.assign') },
                     details: function() { return $translate.instant('dashboard.assign-to-customer') },
-                    icon: "assignment_ind"
+                    icon: "assignment_ind",
+                    isEnabled: function(dashboard) {
+                        return dashboard && (!dashboard.customerId || dashboard.customerId.id === types.id.nullUid);
+                    }
+                },
+                {
+                    onAction: function ($event, item) {
+                        unassignFromCustomer($event, item);
+                    },
+                    name: function() { return $translate.instant('action.unassign') },
+                    details: function() { return $translate.instant('dashboard.unassign-from-customer') },
+                    icon: "assignment_return",
+                    isEnabled: function(dashboard) {
+                        return dashboard && dashboard.customerId && dashboard.customerId.id !== types.id.nullUid;
+                    }
                 }
             );
 
@@ -203,6 +222,17 @@ export default function DashboardsController(userService, dashboardService, cust
                 dashboardActionsList.push(
                     {
                         onAction: function ($event, item) {
+                            exportDashboard($event, item);
+                        },
+                        name: function() { $translate.instant('action.export') },
+                        details: function() { return $translate.instant('dashboard.export') },
+                        icon: "file_download"
+                    }
+                );
+
+                dashboardActionsList.push(
+                    {
+                        onAction: function ($event, item) {
                             unassignFromCustomer($event, item);
                         },
                         name: function() { return $translate.instant('action.unassign') },
@@ -270,6 +300,10 @@ export default function DashboardsController(userService, dashboardService, cust
 
     function getDashboardTitle(dashboard) {
         return dashboard ? dashboard.title : '';
+    }
+
+    function loadDashboard(dashboard) {
+        return dashboardService.getDashboard(dashboard.id.id);
     }
 
     function saveDashboard(dashboard) {

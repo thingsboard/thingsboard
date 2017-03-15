@@ -28,6 +28,7 @@
                                the-form="vm.grid.detailsForm"
                                on-activate-rule="vm.activateRule(event, vm.grid.detailsConfig.currentItem)"
                                on-suspend-rule="vm.suspendRule(event, vm.grid.detailsConfig.currentItem)"
+                               on-export-rule="vm.exportRule(event, vm.grid.detailsConfig.currentItem)"
                                on-delete-rule="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-rule>
         </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'rule.events' | translate }}">

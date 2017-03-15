@@ -27,6 +27,7 @@ import thingsboardApiUser from '../api/user.service';
 
 import thingsboardNoAnimate from '../components/no-animate.directive';
 import thingsboardSideMenu from '../components/side-menu.directive';
+import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
 
 import thingsboardUserMenu from './user-menu.directive';
 
@@ -72,7 +73,8 @@ export default angular.module('thingsboard.home', [
     thingsboardApiLogin,
     thingsboardApiUser,
     thingsboardNoAnimate,
-    thingsboardSideMenu
+    thingsboardSideMenu,
+    thingsboardDashboardAutocomplete
 ])
     .config(HomeRoutes)
     .controller('HomeController', HomeController)

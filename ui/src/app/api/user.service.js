@@ -22,9 +22,10 @@ export default angular.module('thingsboard.api.user', [thingsboardApiLogin,
     .name;
 
 /*@ngInject*/
-function UserService($http, $q, $rootScope, adminService, toast, store, jwtHelper, $translate, $state) {
+function UserService($http, $q, $rootScope, adminService, dashboardService, toast, store, jwtHelper, $translate, $state) {
     var currentUser = null,
         currentUserDetails = null,
+        allowedDashboardIds = [],
         userLoaded = false;
 
     var refreshTokenQueue = [];
@@ -90,6 +91,7 @@ function UserService($http, $q, $rootScope, adminService, toast, store, jwtHelpe
     function setUserFromJwtToken(jwtToken, refreshToken, notify, doLogout) {
         currentUser = null;
         currentUserDetails = null;
+        allowedDashboardIds = [];
         if (!jwtToken) {
             clearTokenData();
             if (notify) {
@@ -230,13 +232,28 @@ function UserService($http, $q, $rootScope, adminService, toast, store, jwtHelpe
                     getUser(currentUser.userId).then(
                         function success(user) {
                             currentUserDetails = user;
+                            $rootScope.forceFullscreen = false;
                             if (currentUserDetails.additionalInfo &&
                                 currentUserDetails.additionalInfo.defaultDashboardFullscreen) {
                                 $rootScope.forceFullscreen = currentUserDetails.additionalInfo.defaultDashboardFullscreen === true;
-                            } else {
-                                $rootScope.forceFullscreen = false;
                             }
-                            deferred.resolve();
+                            if ($rootScope.forceFullscreen && currentUser.authority === 'CUSTOMER_USER') {
+                                var pageLink = {limit: 100};
+                                dashboardService.getCustomerDashboards(currentUser.customerId, pageLink).then(
+                                    function success(result) {
+                                        var dashboards = result.data;
+                                        for (var d in dashboards) {
+                                            allowedDashboardIds.push(dashboards[d].id.id);
+                                        }
+                                        deferred.resolve();
+                                    },
+                                    function fail() {
+                                        deferred.reject();
+                                    }
+                                );
+                            } else {
+                                deferred.resolve();
+                            }
                         },
                         function fail() {
                             deferred.reject();
@@ -362,7 +379,9 @@ function UserService($http, $q, $rootScope, adminService, toast, store, jwtHelpe
                     if ($rootScope.forceFullscreen) {
                         if (to.name === 'home.profile') {
                             return false;
-                        } else if (to.name !== 'home.dashboards.dashboard' && params.dashboardId !== currentUserDetails.additionalInfo.defaultDashboardId) {
+                        } else if (to.name === 'home.dashboards.dashboard' && allowedDashboardIds.indexOf(params.dashboardId) > -1) {
+                            return false;
+                        } else {
                             return true;
                         }
                     }

@@ -83,6 +83,7 @@ export default function PluginDirective($compile, $templateCache, types, utils, 
             theForm: '=',
             onActivatePlugin: '&',
             onSuspendPlugin: '&',
+            onExportPlugin: '&',
             onDeletePlugin: '&'
         }
     };

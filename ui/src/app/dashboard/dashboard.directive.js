@@ -20,10 +20,30 @@ import dashboardFieldsetTemplate from './dashboard-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DashboardDirective($compile, $templateCache) {
+export default function DashboardDirective($compile, $templateCache, types, customerService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(dashboardFieldsetTemplate);
         element.html(template);
+
+        scope.isAssignedToCustomer = false;
+        scope.assignedCustomer = null;
+
+        scope.$watch('dashboard', function(newVal) {
+            if (newVal) {
+                if (scope.dashboard.customerId && scope.dashboard.customerId.id !== types.id.nullUid) {
+                    scope.isAssignedToCustomer = true;
+                    customerService.getCustomer(scope.dashboard.customerId.id).then(
+                        function success(customer) {
+                            scope.assignedCustomer = customer;
+                        }
+                    );
+                } else {
+                    scope.isAssignedToCustomer = false;
+                    scope.assignedCustomer = null;
+                }
+            }
+        });
+
         $compile(element.contents())(scope);
     }
     return {

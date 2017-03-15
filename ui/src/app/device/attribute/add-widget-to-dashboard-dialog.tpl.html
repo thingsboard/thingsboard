@@ -36,11 +36,12 @@
                             <md-radio-button flex ng-value=0 class="md-primary md-align-top-left md-radio-interactive">
                                 <section flex layout="column" style="width: 300px;">
                                     <span translate style="padding-bottom: 10px;">dashboard.select-existing</span>
-                                    <tb-dashboard-select the-form="theForm"
+                                    <tb-dashboard-autocomplete the-form="theForm"
+                                                         ng-disabled="loading || vm.addToDashboardType != 0"
                                                          tb-required="vm.addToDashboardType === 0"
-                                                         ng-model="vm.dashboard"
+                                                         ng-model="vm.dashboardId"
                                                          select-first-dashboard="false">
-                                    </tb-dashboard-select>
+                                    </tb-dashboard-autocomplete>
                                 </section>
                             </md-radio-button>
                             <md-radio-button flex ng-value=1 class="md-primary md-align-top-left md-radio-interactive">

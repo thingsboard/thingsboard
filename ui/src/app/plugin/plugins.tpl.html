@@ -28,6 +28,7 @@
                  the-form="vm.grid.detailsForm"
                  on-activate-plugin="vm.activatePlugin(event, vm.grid.detailsConfig.currentItem)"
                  on-suspend-plugin="vm.suspendPlugin(event, vm.grid.detailsConfig.currentItem)"
+                 on-export-plugin="vm.exportPlugin(event, vm.grid.detailsConfig.currentItem)"
                  on-delete-plugin="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-plugin>
         </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'plugin.events' | translate }}">

@@ -43,16 +43,17 @@
             <label translate>user.description</label>
             <textarea ng-model="user.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
-        <section class="tb-default-dashboard" flex layout="column"ng-show="isCustomerUser()">
+        <section class="tb-default-dashboard" flex layout="column" ng-show="isCustomerUser()">
             <span class="tb-default-dashboard-label" ng-class="{'tb-disabled-label': loading || !isEdit}" translate>user.default-dashboard</span>
             <section flex layout="column" layout-gt-sm="row">
-                <tb-dashboard-select flex
+                <tb-dashboard-autocomplete flex
+                                     ng-disabled="loading || !isEdit"
                                      the-form="theForm"
-                                     ng-model="defaultDashboard"
+                                     ng-model="user.additionalInfo.defaultDashboardId"
                                      dashboards-scope="customer"
                                      customer-id="user.customerId.id"
                                      select-first-dashboard="false">
-                </tb-dashboard-select>
+                </tb-dashboard-autocomplete>
                 <md-checkbox ng-disabled="loading || !isEdit" flex aria-label="{{ 'user.always-fullscreen' | translate }}"
                              ng-model="user.additionalInfo.defaultDashboardFullscreen">{{ 'user.always-fullscreen' | translate }}
                 </md-checkbox>

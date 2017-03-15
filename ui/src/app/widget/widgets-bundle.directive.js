@@ -34,6 +34,7 @@ export default function WidgetsBundleDirective($compile, $templateCache) {
             isEdit: '=',
             isReadOnly: '=',
             theForm: '=',
+            onExportWidgetsBundle: '&',
             onDeleteWidgetsBundle: '&'
         }
     };

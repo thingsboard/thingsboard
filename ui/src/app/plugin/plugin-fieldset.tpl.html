@@ -15,9 +15,18 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onActivatePlugin({event: $event})" ng-show="!isEdit && !isReadOnly && plugin.state === 'SUSPENDED'" class="md-raised md-primary">{{ 'plugin.activate' | translate }}</md-button>
-<md-button ng-click="onSuspendPlugin({event: $event})" ng-show="!isEdit && !isReadOnly && plugin.state === 'ACTIVE'" class="md-raised md-primary">{{ 'plugin.suspend' | translate }}</md-button>
-<md-button ng-click="onDeletePlugin({event: $event})" ng-show="!isEdit && !isReadOnly" class="md-raised md-primary">{{ 'plugin.delete' | translate }}</md-button>
+<md-button ng-click="onActivatePlugin({event: $event})"
+           ng-show="!isEdit && !isReadOnly && plugin.state === 'SUSPENDED'"
+           class="md-raised md-primary">{{ 'plugin.activate' | translate }}</md-button>
+<md-button ng-click="onSuspendPlugin({event: $event})"
+           ng-show="!isEdit && !isReadOnly && plugin.state === 'ACTIVE'"
+           class="md-raised md-primary">{{ 'plugin.suspend' | translate }}</md-button>
+<md-button ng-click="onExportPlugin({event: $event})"
+           ng-show="!isEdit"
+           class="md-raised md-primary">{{ 'plugin.export' | translate }}</md-button>
+<md-button ng-click="onDeletePlugin({event: $event})"
+           ng-show="!isEdit && !isReadOnly"
+           class="md-raised md-primary">{{ 'plugin.delete' | translate }}</md-button>
 
 <md-content class="md-padding" layout="column" style="overflow-x: hidden">
     <fieldset ng-disabled="loading || !isEdit || isReadOnly">

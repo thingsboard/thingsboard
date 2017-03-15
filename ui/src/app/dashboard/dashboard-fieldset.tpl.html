@@ -15,12 +15,25 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onAssignToCustomer({event: $event})" ng-show="!isEdit && dashboardScope === 'tenant'" class="md-raised md-primary">{{ 'dashboard.assign-to-customer' | translate }}</md-button>
-<md-button ng-click="onUnassignFromCustomer({event: $event})" ng-show="!isEdit && dashboardScope === 'customer'" class="md-raised md-primary">{{ 'dashboard.unassign-from-customer' | translate }}</md-button>
-<md-button ng-click="onExportDashboard({event: $event})" ng-show="!isEdit && dashboardScope === 'tenant'" class="md-raised md-primary">{{ 'dashboard.export' | translate }}</md-button>
-<md-button ng-click="onDeleteDashboard({event: $event})" ng-show="!isEdit && dashboardScope === 'tenant'" class="md-raised md-primary">{{ 'dashboard.delete' | translate }}</md-button>
+<md-button ng-click="onAssignToCustomer({event: $event})"
+		   ng-show="!isEdit && dashboardScope === 'tenant' && !isAssignedToCustomer"
+		   class="md-raised md-primary">{{ 'dashboard.assign-to-customer' | translate }}</md-button>
+<md-button ng-click="onUnassignFromCustomer({event: $event})"
+		   ng-show="!isEdit && (dashboardScope === 'customer' || dashboardScope === 'tenant') && isAssignedToCustomer"
+		   class="md-raised md-primary">{{ 'dashboard.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onExportDashboard({event: $event})"
+		   ng-show="!isEdit && dashboardScope === 'tenant'"
+		   class="md-raised md-primary">{{ 'dashboard.export' | translate }}</md-button>
+<md-button ng-click="onDeleteDashboard({event: $event})"
+		   ng-show="!isEdit && dashboardScope === 'tenant'"
+		   class="md-raised md-primary">{{ 'dashboard.delete' | translate }}</md-button>
 
 <md-content class="md-padding" layout="column">
+	<md-input-container class="md-block"
+						ng-show="isAssignedToCustomer && dashboardScope === 'tenant'">
+		<label translate>dashboard.assignedToCustomer</label>
+		<input ng-model="assignedCustomer.title" disabled>
+	</md-input-container>
 	<fieldset ng-disabled="loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>dashboard.title</label>

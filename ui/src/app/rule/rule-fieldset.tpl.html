@@ -15,9 +15,18 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onActivateRule({event: $event})" ng-show="!isEdit && !isReadOnly && rule.state === 'SUSPENDED'" class="md-raised md-primary">{{ 'rule.activate' | translate }}</md-button>
-<md-button ng-click="onSuspendRule({event: $event})" ng-show="!isEdit && !isReadOnly && rule.state === 'ACTIVE'" class="md-raised md-primary">{{ 'rule.suspend' | translate }}</md-button>
-<md-button ng-click="onDeleteRule({event: $event})" ng-show="!isEdit && !isReadOnly" class="md-raised md-primary">{{ 'rule.delete' | translate }}</md-button>
+<md-button ng-click="onActivateRule({event: $event})"
+           ng-show="!isEdit && !isReadOnly && rule.state === 'SUSPENDED'"
+           class="md-raised md-primary">{{ 'rule.activate' | translate }}</md-button>
+<md-button ng-click="onSuspendRule({event: $event})"
+           ng-show="!isEdit && !isReadOnly && rule.state === 'ACTIVE'"
+           class="md-raised md-primary">{{ 'rule.suspend' | translate }}</md-button>
+<md-button ng-click="onExportRule({event: $event})"
+           ng-show="!isEdit"
+           class="md-raised md-primary">{{ 'rule.export' | translate }}</md-button>
+<md-button ng-click="onDeleteRule({event: $event})"
+           ng-show="!isEdit && !isReadOnly"
+           class="md-raised md-primary">{{ 'rule.delete' | translate }}</md-button>
 
 <md-content class="md-padding tb-rule" layout="column">
     <fieldset ng-disabled="loading || !isEdit || isReadOnly">

@@ -25,18 +25,29 @@ import org.thingsboard.server.dao.model.DashboardEntity;
 import org.thingsboard.server.dao.model.DashboardInfoEntity;
 
 /**
- * The Interface DashboardDao.
+ * The Interface DashboardInfoDao.
  *
  * @param <T> the generic type
  */
-public interface DashboardDao extends Dao<DashboardEntity> {
+public interface DashboardInfoDao extends Dao<DashboardInfoEntity> {
 
     /**
-     * Save or update dashboard object
+     * Find dashboards by tenantId and page link.
      *
-     * @param dashboard the dashboard object
-     * @return saved dashboard object
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of dashboard objects
      */
-    DashboardEntity save(Dashboard dashboard);
+    List<DashboardInfoEntity> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink);
+
+    /**
+     * Find dashboards by tenantId, customerId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param pageLink the page link
+     * @return the list of dashboard objects
+     */
+    List<DashboardInfoEntity> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
 
 }

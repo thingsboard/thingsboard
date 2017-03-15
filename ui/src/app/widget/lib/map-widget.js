@@ -171,7 +171,7 @@ export default class TbMapWidget {
         };
 
         if (mapProvider === 'google-map') {
-            this.map = new TbGoogleMap(ctx.$container, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey);
+            this.map = new TbGoogleMap(ctx.$container, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
         } else if (mapProvider === 'openstreet-map') {
             this.map = new TbOpenStreetMap(ctx.$container, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
         }

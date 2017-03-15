@@ -15,7 +15,12 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onDeleteWidgetsBundle({event: $event})" ng-show="!isEdit && !isReadOnly" class="md-raised md-primary">{{ 'widgets-bundle.delete' | translate }}</md-button>
+<md-button ng-click="onExportWidgetsBundle({event: $event})"
+           ng-show="!isEdit"
+           class="md-raised md-primary">{{ 'widgets-bundle.export' | translate }}</md-button>
+<md-button ng-click="onDeleteWidgetsBundle({event: $event})"
+           ng-show="!isEdit && !isReadOnly"
+           class="md-raised md-primary">{{ 'widgets-bundle.delete' | translate }}</md-button>
 
 <md-content class="md-padding" layout="column">
     <fieldset ng-disabled="loading || !isEdit">

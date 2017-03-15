@@ -15,4 +15,6 @@
     limitations under the License.
 
 -->
-<div></div>
+<div class="tb-small" ng-if="item &&
+            item.customerId.id != parentCtl.types.id.nullUid &&
+            parentCtl.dashboardsScope === 'tenant'" translate>dashboard.assignedToCustomer</div>

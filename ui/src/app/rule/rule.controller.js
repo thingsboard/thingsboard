@@ -21,9 +21,17 @@ import ruleCard from './rule-card.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleController(ruleService, userService, $state, $stateParams, $filter, $translate, types) {
+export default function RuleController(ruleService, userService, importExport, $state, $stateParams, $filter, $translate, types) {
 
     var ruleActionsList = [
+        {
+            onAction: function ($event, item) {
+                exportRule($event, item);
+            },
+            name: function() { $translate.instant('action.export') },
+            details: function() { return $translate.instant('rule.export') },
+            icon: "file_download"
+        },
         {
             onAction: function ($event, item) {
                 activateRule($event, item);
@@ -57,6 +65,29 @@ export default function RuleController(ruleService, userService, $state, $stateP
         }
     ];
 
+    var ruleAddItemActionsList = [
+        {
+            onAction: function ($event) {
+                vm.grid.addItem($event);
+            },
+            name: function() { return $translate.instant('action.create') },
+            details: function() { return $translate.instant('rule.create-new-rule') },
+            icon: "insert_drive_file"
+        },
+        {
+            onAction: function ($event) {
+                importExport.importRule($event).then(
+                    function() {
+                        vm.grid.refreshList();
+                    }
+                );
+            },
+            name: function() { return $translate.instant('action.import') },
+            details: function() { return $translate.instant('rule.import') },
+            icon: "file_upload"
+        }
+    ];
+
     var vm = this;
 
     vm.types = types;
@@ -80,6 +111,7 @@ export default function RuleController(ruleService, userService, $state, $stateP
         parentCtl: vm,
 
         actionsList: ruleActionsList,
+        addItemActions: ruleAddItemActionsList,
 
         onGridInited: gridInited,
 
@@ -104,6 +136,7 @@ export default function RuleController(ruleService, userService, $state, $stateP
 
     vm.activateRule = activateRule;
     vm.suspendRule = suspendRule;
+    vm.exportRule = exportRule;
 
     function deleteRuleTitle(rule) {
         return $translate.instant('rule.delete-rule-title', {ruleName: rule.name});
@@ -151,6 +184,11 @@ export default function RuleController(ruleService, userService, $state, $stateP
         } else {
             return userService.getAuthority() === 'SYS_ADMIN';
         }
+    }
+
+    function exportRule($event, rule) {
+        $event.stopPropagation();
+        importExport.exportRule(rule.id.id);
     }
 
     function activateRule(event, rule) {

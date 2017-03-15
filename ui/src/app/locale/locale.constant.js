@@ -250,7 +250,7 @@ export default angular.module('thingsboard.locale', [])
                     "title-color": "Title color",
                     "import": "Import dashboard",
                     "export": "Export dashboard",
-                    "export-failed-error": "Unable to export dashboard: {error}",
+                    "export-failed-error": "Unable to export dashboard: {{error}}",
                     "create-new-dashboard": "Create new dashboard",
                     "dashboard-file": "Dashboard file",
                     "invalid-dashboard-file-error": "Unable to import dashboard: Invalid dashboard data structure.",
@@ -266,7 +266,8 @@ export default angular.module('thingsboard.locale', [])
                     "alias-resolution-error-title": "Dashboard aliases configuration error",
                     "invalid-aliases-config": "Unable to find any devices matching to some of the aliases filter.<br/>" +
                                               "Please contact your administrator in order to resolve this issue.",
-                    "select-devices": "Select devices"
+                    "select-devices": "Select devices",
+                    "assignedToCustomer": "Assigned to customer"
                 },
                 "datakey": {
                     "settings": "Settings",
@@ -502,7 +503,13 @@ export default angular.module('thingsboard.locale', [])
                     "plugin-required": "Plugin is required.",
                     "plugin-require-match": "Please select an existing plugin.",
                     "events": "Events",
-                    "details": "Details"
+                    "details": "Details",
+                    "import": "Import plugin",
+                    "export": "Export plugin",
+                    "export-failed-error": "Unable to export plugin: {{error}}",
+                    "create-new-plugin": "Create new plugin",
+                    "plugin-file": "Plugin file",
+                    "invalid-plugin-file-error": "Unable to import plugin: Invalid plugin data structure."
                 },
                 "position": {
                     "top": "Top",
@@ -559,7 +566,13 @@ export default angular.module('thingsboard.locale', [])
                     "create-action": "Create action",
                     "details": "Details",
                     "events": "Events",
-                    "system": "System"
+                    "system": "System",
+                    "import": "Import rule",
+                    "export": "Export rule",
+                    "export-failed-error": "Unable to export rule: {{error}}",
+                    "create-new-rule": "Create new rule",
+                    "rule-file": "Rule file",
+                    "invalid-rule-file-error": "Unable to import rule: Invalid rule data structure."
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"
@@ -718,7 +731,13 @@ export default angular.module('thingsboard.locale', [])
                     "delete-widgets-bundles-text": "Be careful, after the confirmation all selected widgets bundles will be removed and all related data will become unrecoverable.",
                     "no-widgets-bundles-matching": "No widgets bundles matching '{{widgetsBundle}}' were found.",
                     "widgets-bundle-required": "Widgets bundle is required.",
-                    "system": "System"
+                    "system": "System",
+                    "import": "Import widgets bundle",
+                    "export": "Export widgets bundle",
+                    "export-failed-error": "Unable to export widgets bundle: {{error}}",
+                    "create-new-widgets-bundle": "Create new widgets bundle",
+                    "widgets-bundle-file": "Widgets bundle file",
+                    "invalid-widgets-bundle-file-error": "Unable to import widgets bundle: Invalid widgets bundle data structure."
                 },
                 "widget-config": {
                     "data": "Data",
@@ -747,6 +766,14 @@ export default angular.module('thingsboard.locale', [])
                     "remove-datasource": "Remove datasource",
                     "add-datasource": "Add datasource",
                     "target-device": "Target device"
+                },
+                "widget-type": {
+                    "import": "Import widget type",
+                    "export": "Export widget type",
+                    "export-failed-error": "Unable to export widget type: {{error}}",
+                    "create-new-widget-type": "Create new widget type",
+                    "widget-type-file": "Widget type file",
+                    "invalid-widget-type-file-error": "Unable to import widget type: Invalid widget type data structure."
                 }
             }
         }

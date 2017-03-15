@@ -19,7 +19,7 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
     var vm = this;
 
     vm.widget = widget;
-    vm.dashboard = null;
+    vm.dashboardId = null;
     vm.addToDashboardType = 0;
     vm.newDashboard = {};
     vm.openDashboard = false;
@@ -33,12 +33,20 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
 
     function add() {
         $scope.theForm.$setPristine();
-        var theDashboard;
         if (vm.addToDashboardType === 0) {
-            theDashboard = vm.dashboard;
+            dashboardService.getDashboard(vm.dashboardId).then(
+                function success(dashboard) {
+                    addWidgetToDashboard(dashboard);
+                },
+                function fail() {}
+            );
         } else {
-            theDashboard = vm.newDashboard;
+            addWidgetToDashboard(vm.newDashboard);
         }
+
+    }
+
+    function addWidgetToDashboard(theDashboard) {
         var aliasesInfo = {
             datasourceAliases: {},
             targetDeviceAliases: {}
@@ -51,7 +59,7 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
                 deviceList: [deviceId]
             }
         };
-        theDashboard = itembuffer.addWidgetToDashboard(theDashboard, widget, aliasesInfo, null, 48, -1, -1);
+        theDashboard = itembuffer.addWidgetToDashboard(theDashboard, vm.widget, aliasesInfo, null, 48, -1, -1);
         dashboardService.saveDashboard(theDashboard).then(
             function success(dashboard) {
                 $mdDialog.hide();

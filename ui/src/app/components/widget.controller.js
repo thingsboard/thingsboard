@@ -43,7 +43,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var targetDeviceId = null;
     var originalTimewindow = null;
     var subscriptionTimewindow = null;
-    var dataUpdateCaf = null;
+    var cafs = {};
 
     var varsRegex = /\$\{([^\}]*)\}/g;
 
@@ -186,11 +186,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function onDataUpdated() {
         if (widgetContext.inited) {
-            if (dataUpdateCaf) {
-                dataUpdateCaf();
-                dataUpdateCaf = null;
+            if (cafs['dataUpdate']) {
+                cafs['dataUpdate']();
+                cafs['dataUpdate'] = null;
             }
-            dataUpdateCaf = tbRaf(function() {
+            cafs['dataUpdate'] = tbRaf(function() {
                     try {
                         widgetTypeInstance.onDataUpdated();
                     } catch (e) {
@@ -222,7 +222,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     function onResize() {
         if (checkSize()) {
             if (widgetContext.inited) {
-                tbRaf(function() {
+                if (cafs['resize']) {
+                    cafs['resize']();
+                    cafs['resize'] = null;
+                }
+                cafs['resize'] = tbRaf(function() {
                     try {
                         widgetTypeInstance.onResize();
                     } catch (e) {
@@ -251,7 +255,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         if (widgetContext.isEdit != isEdit) {
             widgetContext.isEdit = isEdit;
             if (widgetContext.inited) {
-                tbRaf(function() {
+                if (cafs['editMode']) {
+                    cafs['editMode']();
+                    cafs['editMode'] = null;
+                }
+                cafs['editMode'] = tbRaf(function() {
                     try {
                         widgetTypeInstance.onEditModeChanged();
                     } catch (e) {
@@ -266,7 +274,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         if (widgetContext.isMobile != isMobile) {
             widgetContext.isMobile = isMobile;
             if (widgetContext.inited) {
-                tbRaf(function() {
+                if (cafs['mobileMode']) {
+                    cafs['mobileMode']();
+                    cafs['mobileMode'] = null;
+                }
+                cafs['mobileMode'] = tbRaf(function() {
                     try {
                         widgetTypeInstance.onMobileModeChanged();
                     } catch (e) {
@@ -282,6 +294,12 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         if (widgetContext.inited) {
             widgetContext.inited = false;
             widgetContext.dataUpdatePending = false;
+            for (var cafId in cafs) {
+                if (cafs[cafId]) {
+                    cafs[cafId]();
+                    cafs[cafId] = null;
+                }
+            }
             try {
                 widgetTypeInstance.onDestroy();
             } catch (e) {

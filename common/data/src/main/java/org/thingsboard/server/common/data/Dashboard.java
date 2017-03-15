@@ -15,19 +15,13 @@
  */
 package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.TenantId;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.id.DashboardId;
 
-public class Dashboard extends SearchTextBased<DashboardId> {
+public class Dashboard extends DashboardInfo {
 
     private static final long serialVersionUID = 872682138346187503L;
     
-    private TenantId tenantId;
-    private CustomerId customerId;
-    private String title;
     private JsonNode configuration;
     
     public Dashboard() {
@@ -37,37 +31,14 @@ public class Dashboard extends SearchTextBased<DashboardId> {
     public Dashboard(DashboardId id) {
         super(id);
     }
-    
+
+    public Dashboard(DashboardInfo dashboardInfo) {
+        super(dashboardInfo);
+    }
+
     public Dashboard(Dashboard dashboard) {
         super(dashboard);
-        this.tenantId = dashboard.getTenantId();
-        this.customerId = dashboard.getCustomerId();
-        this.title = dashboard.getTitle();
         this.configuration = dashboard.getConfiguration();
-    }
-    
-    public TenantId getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(TenantId tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public CustomerId getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(CustomerId customerId) {
-        this.customerId = customerId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public JsonNode getConfiguration() {
@@ -79,18 +50,10 @@ public class Dashboard extends SearchTextBased<DashboardId> {
     }
 
     @Override
-    public String getSearchText() {
-        return title;
-    }
-
-    @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((configuration == null) ? 0 : configuration.hashCode());
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
-        result = prime * result + ((title == null) ? 0 : title.hashCode());
         return result;
     }
 
@@ -108,21 +71,6 @@ public class Dashboard extends SearchTextBased<DashboardId> {
                 return false;
         } else if (!configuration.equals(other.configuration))
             return false;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
-            return false;
-        if (title == null) {
-            if (other.title != null)
-                return false;
-        } else if (!title.equals(other.title))
-            return false;
         return true;
     }
 
@@ -130,15 +78,14 @@ public class Dashboard extends SearchTextBased<DashboardId> {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("Dashboard [tenantId=");
-        builder.append(tenantId);
+        builder.append(getTenantId());
         builder.append(", customerId=");
-        builder.append(customerId);
+        builder.append(getCustomerId());
         builder.append(", title=");
-        builder.append(title);
+        builder.append(getTitle());
         builder.append(", configuration=");
         builder.append(configuration);
         builder.append("]");
         return builder.toString();
     }
-
 }

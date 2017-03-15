@@ -15,28 +15,12 @@
     limitations under the License.
 
 -->
-<md-autocomplete ng-required="tbRequired"
-                 md-input-name="dashboard"
-                 ng-model="dashboard"
-                 md-selected-item="dashboard"
-                 md-search-text="dashboardSearchText"
-                 md-search-text-change="dashboardSearchTextChanged()"
-                 md-items="item in fetchDashboards(dashboardSearchText)"
-                 md-item-text="item.title"
-                 md-min-length="0"
-                 placeholder="{{ 'dashboard.select-dashboard' | translate }}"
-                 md-menu-class="tb-dashboard-autocomplete">
-    <md-item-template>
-        <div class="tb-dashboard-item">
-            <span md-highlight-text="dashboardSearchText" md-highlight-flags="^i">{{item.title}}</span>
-        </div>
-    </md-item-template>
-    <md-not-found>
-        <div class="tb-not-found">
-            <span translate translate-values='{ dashboard: dashboardSearchText }'>dashboard.no-dashboards-matching</span>
-        </div>
-    </md-not-found>
-    <div ng-messages="theForm.dashboard.$error">
-        <div translate ng-message="required">dashboard.dashboard-required</div>
-    </div>
-</md-autocomplete>
+
+<md-select ng-required="tbRequired"
+           ng-disabled="disabled"
+           ng-model="dashboardId"
+           aria-label="{{ 'dashboard.dashboard' | translate }}">
+    <md-option ng-repeat="dashboard in dashboards" ng-value="dashboard.id.id">
+        {{dashboard.title}}
+    </md-option>
+</md-select>

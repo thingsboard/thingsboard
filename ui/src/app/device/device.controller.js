@@ -48,6 +48,7 @@ export default function DeviceController(userService, deviceService, customerSer
         getItemTitleFunc: getDeviceTitle,
 
         itemCardTemplateUrl: deviceCard,
+        parentCtl: vm,
 
         actionsList: deviceActionsList,
         groupActionsList: deviceGroupActionsList,

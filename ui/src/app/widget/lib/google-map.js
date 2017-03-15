@@ -20,13 +20,14 @@ var gmGlobals = {
 }
 
 export default class TbGoogleMap {
-    constructor($containerElement, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, gmApiKey) {
+    constructor($containerElement, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, gmApiKey, gmDefaultMapType) {
 
         var tbMap = this;
         this.defaultZoomLevel = defaultZoomLevel;
         this.dontFitMapBounds = dontFitMapBounds;
         this.minZoomLevel = minZoomLevel;
         this.tooltips = [];
+        this.defaultMapType = gmDefaultMapType;
 
         function clearGlobalId() {
             if (gmGlobals.loadingGmId && gmGlobals.loadingGmId === tbMap.mapId) {
@@ -44,6 +45,7 @@ export default class TbGoogleMap {
 
             tbMap.map = new google.maps.Map($containerElement[0], { // eslint-disable-line no-undef
                 scrollwheel: false,
+                mapTypeId: getGoogleMapTypeId(tbMap.defaultMapType),
                 zoom: tbMap.defaultZoomLevel || 8
             });
 
@@ -52,6 +54,24 @@ export default class TbGoogleMap {
             }
 
         }
+
+        /* eslint-disable no-undef */
+
+        function getGoogleMapTypeId(mapType) {
+            var mapTypeId = google.maps.MapTypeId.ROADMAP;
+            if (mapType) {
+                if (mapType === 'hybrid') {
+                    mapTypeId = google.maps.MapTypeId.HYBRID;
+                } else if (mapType === 'satellite') {
+                    mapTypeId = google.maps.MapTypeId.SATELLITE;
+                } else if (mapType === 'terrain') {
+                    mapTypeId = google.maps.MapTypeId.TERRAIN;
+                }
+            }
+            return mapTypeId;
+        }
+
+        /* eslint-enable no-undef */
 
         this.mapId = '' + Math.random().toString(36).substr(2, 9);
         this.apiKey = gmApiKey || '';

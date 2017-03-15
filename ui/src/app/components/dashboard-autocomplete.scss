@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-tb-dashboard-select {
-  md-select {
-    pointer-events: all;
+.tb-dashboard-autocomplete {
+  .tb-not-found {
+    display: block;
+    line-height: 1.5;
+    height: 48px;
+  }
+  .tb-dashboard-item {
+    display: block;
+    height: 48px;
+  }
+  li {
+    height: auto !important;
+    white-space: normal !important;
   }
 }

@@ -24,17 +24,311 @@ import deviceAliasesTemplate from '../dashboard/device-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, deviceService, dashboardService, toast) {
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, types,
+                                     deviceService, dashboardService, pluginService, ruleService, widgetService, toast) {
 
 
     var service = {
         exportDashboard: exportDashboard,
         importDashboard: importDashboard,
         exportWidget: exportWidget,
-        importWidget: importWidget
+        importWidget: importWidget,
+        exportPlugin: exportPlugin,
+        importPlugin: importPlugin,
+        exportRule: exportRule,
+        importRule: importRule,
+        exportWidgetType: exportWidgetType,
+        importWidgetType: importWidgetType,
+        exportWidgetsBundle: exportWidgetsBundle,
+        importWidgetsBundle: importWidgetsBundle
     }
 
     return service;
+
+    // Widgets bundle functions
+
+    function exportWidgetsBundle(widgetsBundleId) {
+        widgetService.getWidgetsBundle(widgetsBundleId).then(
+            function success(widgetsBundle) {
+                var bundleAlias = widgetsBundle.alias;
+                var isSystem = widgetsBundle.tenantId.id === types.id.nullUid;
+                widgetService.getBundleWidgetTypes(bundleAlias, isSystem).then(
+                    function success (widgetTypes) {
+                        prepareExport(widgetsBundle);
+                        var widgetsBundleItem = {
+                           widgetsBundle:  prepareExport(widgetsBundle),
+                           widgetTypes: []
+                        };
+                        for (var t in widgetTypes) {
+                            var widgetType = widgetTypes[t];
+                            if (angular.isDefined(widgetType.bundleAlias)) {
+                                delete widgetType.bundleAlias;
+                            }
+                            widgetsBundleItem.widgetTypes.push(prepareExport(widgetType));
+                        }
+                        var name = widgetsBundle.title;
+                        name = name.toLowerCase().replace(/\W/g,"_");
+                        exportToPc(widgetsBundleItem, name + '.json');
+                    },
+                    function fail (rejection) {
+                        var message = rejection;
+                        if (!message) {
+                            message = $translate.instant('error.unknown-error');
+                        }
+                        toast.showError($translate.instant('widgets-bundle.export-failed-error', {error: message}));
+                    }
+                );
+            },
+            function fail(rejection) {
+                var message = rejection;
+                if (!message) {
+                    message = $translate.instant('error.unknown-error');
+                }
+                toast.showError($translate.instant('widgets-bundle.export-failed-error', {error: message}));
+            }
+        );
+    }
+
+    function importNextWidgetType(widgetTypes, bundleAlias, index, deferred) {
+        if (!widgetTypes || widgetTypes.length <= index) {
+            deferred.resolve();
+        } else {
+            var widgetType = widgetTypes[index];
+            widgetType.bundleAlias = bundleAlias;
+            widgetService.saveImportedWidgetType(widgetType).then(
+                function success() {
+                    index++;
+                    importNextWidgetType(widgetTypes, bundleAlias, index, deferred);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+
+        }
+    }
+
+    function importWidgetsBundle($event) {
+        var deferred = $q.defer();
+        openImportDialog($event, 'widgets-bundle.import', 'widgets-bundle.widgets-bundle-file').then(
+            function success(widgetsBundleItem) {
+                if (!validateImportedWidgetsBundle(widgetsBundleItem)) {
+                    toast.showError($translate.instant('widgets-bundle.invalid-widgets-bundle-file-error'));
+                    deferred.reject();
+                } else {
+                    var widgetsBundle = widgetsBundleItem.widgetsBundle;
+                    widgetService.saveWidgetsBundle(widgetsBundle).then(
+                        function success(savedWidgetsBundle) {
+                            var bundleAlias = savedWidgetsBundle.alias;
+                            var widgetTypes = widgetsBundleItem.widgetTypes;
+                            importNextWidgetType(widgetTypes, bundleAlias, 0, deferred);
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                }
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function validateImportedWidgetsBundle(widgetsBundleItem) {
+        if (angular.isUndefined(widgetsBundleItem.widgetsBundle)) {
+            return false;
+        }
+        if (angular.isUndefined(widgetsBundleItem.widgetTypes)) {
+            return false;
+        }
+        var widgetsBundle = widgetsBundleItem.widgetsBundle;
+        if (angular.isUndefined(widgetsBundle.title)) {
+            return false;
+        }
+        var widgetTypes = widgetsBundleItem.widgetTypes;
+        for (var t in widgetTypes) {
+            var widgetType = widgetTypes[t];
+            if (!validateImportedWidgetType(widgetType)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Widget type functions
+
+    function exportWidgetType(widgetTypeId) {
+        widgetService.getWidgetTypeById(widgetTypeId).then(
+            function success(widgetType) {
+                if (angular.isDefined(widgetType.bundleAlias)) {
+                    delete widgetType.bundleAlias;
+                }
+                var name = widgetType.name;
+                name = name.toLowerCase().replace(/\W/g,"_");
+                exportToPc(prepareExport(widgetType), name + '.json');
+            },
+            function fail(rejection) {
+                var message = rejection;
+                if (!message) {
+                    message = $translate.instant('error.unknown-error');
+                }
+                toast.showError($translate.instant('widget-type.export-failed-error', {error: message}));
+            }
+        );
+    }
+
+    function importWidgetType($event, bundleAlias) {
+        var deferred = $q.defer();
+        openImportDialog($event, 'widget-type.import', 'widget-type.widget-type-file').then(
+            function success(widgetType) {
+                if (!validateImportedWidgetType(widgetType)) {
+                    toast.showError($translate.instant('widget-type.invalid-widget-type-file-error'));
+                    deferred.reject();
+                } else {
+                    widgetType.bundleAlias = bundleAlias;
+                    widgetService.saveImportedWidgetType(widgetType).then(
+                        function success() {
+                            deferred.resolve();
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                }
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function validateImportedWidgetType(widgetType) {
+        if (angular.isUndefined(widgetType.name)
+            || angular.isUndefined(widgetType.descriptor))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    // Rule functions
+
+    function exportRule(ruleId) {
+        ruleService.getRule(ruleId).then(
+            function success(rule) {
+                var name = rule.name;
+                name = name.toLowerCase().replace(/\W/g,"_");
+                exportToPc(prepareExport(rule), name + '.json');
+            },
+            function fail(rejection) {
+                var message = rejection;
+                if (!message) {
+                    message = $translate.instant('error.unknown-error');
+                }
+                toast.showError($translate.instant('rule.export-failed-error', {error: message}));
+            }
+        );
+    }
+
+    function importRule($event) {
+        var deferred = $q.defer();
+        openImportDialog($event, 'rule.import', 'rule.rule-file').then(
+            function success(rule) {
+                if (!validateImportedRule(rule)) {
+                    toast.showError($translate.instant('rule.invalid-rule-file-error'));
+                    deferred.reject();
+                } else {
+                    rule.state = 'SUSPENDED';
+                    ruleService.saveRule(rule).then(
+                        function success() {
+                            deferred.resolve();
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                }
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function validateImportedRule(rule) {
+        if (angular.isUndefined(rule.name)
+            || angular.isUndefined(rule.pluginToken)
+            || angular.isUndefined(rule.filters)
+            || angular.isUndefined(rule.action))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    // Plugin functions
+
+    function exportPlugin(pluginId) {
+        pluginService.getPlugin(pluginId).then(
+            function success(plugin) {
+                if (!plugin.configuration || plugin.configuration === null) {
+                    plugin.configuration = {};
+                }
+                var name = plugin.name;
+                name = name.toLowerCase().replace(/\W/g,"_");
+                exportToPc(prepareExport(plugin), name + '.json');
+            },
+            function fail(rejection) {
+                var message = rejection;
+                if (!message) {
+                    message = $translate.instant('error.unknown-error');
+                }
+                toast.showError($translate.instant('plugin.export-failed-error', {error: message}));
+            }
+        );
+    }
+
+    function importPlugin($event) {
+        var deferred = $q.defer();
+        openImportDialog($event, 'plugin.import', 'plugin.plugin-file').then(
+            function success(plugin) {
+                if (!validateImportedPlugin(plugin)) {
+                    toast.showError($translate.instant('plugin.invalid-plugin-file-error'));
+                    deferred.reject();
+                } else {
+                    plugin.state = 'SUSPENDED';
+                    pluginService.savePlugin(plugin).then(
+                        function success() {
+                            deferred.resolve();
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                }
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function validateImportedPlugin(plugin) {
+        if (angular.isUndefined(plugin.name)
+            || angular.isUndefined(plugin.clazz)
+            || angular.isUndefined(plugin.apiToken)
+            || angular.isUndefined(plugin.configuration))
+        {
+            return false;
+        }
+        return true;
+    }
 
     // Widget functions
 

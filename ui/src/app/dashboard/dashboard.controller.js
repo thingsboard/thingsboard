@@ -26,10 +26,9 @@ export default function DashboardController(types, widgetService, userService,
                                             dashboardService, timeService, deviceService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $state, $stateParams, $mdDialog, $timeout, $document, $q, $translate, $filter) {
 
-    var user = userService.getCurrentUser();
-
     var vm = this;
 
+    vm.user = userService.getCurrentUser();
     vm.dashboard = null;
     vm.editingWidget = null;
     vm.editingWidgetOriginal = null;
@@ -48,6 +47,15 @@ export default function DashboardController(types, widgetService, userService,
     vm.dashboardInitComplete = false;
 
     vm.isToolbarOpened = false;
+
+    vm.currentDashboardId = $stateParams.dashboardId;
+    if ($stateParams.customerId) {
+        vm.currentCustomerId = $stateParams.customerId;
+        vm.currentDashboardScope = 'customer';
+    } else {
+        vm.currentDashboardScope = vm.user.authority === 'TENANT_ADMIN' ? 'tenant' : 'customer';
+        vm.currentCustomerId = vm.user.customerId;
+    }
 
     Object.defineProperty(vm, 'toolbarOpened', {
         get: function() { return vm.isToolbarOpened || vm.isEdit; },
@@ -75,6 +83,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.prepareDashboardContextMenu = prepareDashboardContextMenu;
     vm.prepareWidgetContextMenu = prepareWidgetContextMenu;
     vm.editWidget = editWidget;
+    vm.exportDashboard = exportDashboard;
     vm.exportWidget = exportWidget;
     vm.importWidget = importWidget;
     vm.isTenantAdmin = isTenantAdmin;
@@ -103,6 +112,20 @@ export default function DashboardController(types, widgetService, userService,
             loadWidgetLibrary();
         }
     });
+
+    $scope.$watch('vm.currentDashboardId', function (newVal, prevVal) {
+        if (newVal !== prevVal && !vm.widgetEditMode) {
+            if (vm.currentDashboardScope === 'customer' && vm.user.authority === 'TENANT_ADMIN') {
+                $state.go('home.customers.dashboards.dashboard', {
+                    customerId: vm.currentCustomerId,
+                    dashboardId: vm.currentDashboardId
+                });
+            } else {
+                $state.go('home.dashboards.dashboard', {dashboardId: vm.currentDashboardId});
+            }
+        }
+    });
+
 
     function loadWidgetLibrary() {
         vm.latestWidgetTypes = [];
@@ -251,11 +274,11 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function isTenantAdmin() {
-        return user.authority === 'TENANT_ADMIN';
+        return vm.user.authority === 'TENANT_ADMIN';
     }
 
     function isSystemAdmin() {
-        return user.authority === 'SYS_ADMIN';
+        return vm.user.authority === 'SYS_ADMIN';
     }
 
     function noData() {
@@ -267,7 +290,7 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function showDashboardToolbar() {
-        return vm.dashboardInitComplete && !vm.configurationError;
+        return vm.dashboardInitComplete;
     }
 
     function openDeviceAliases($event) {
@@ -346,6 +369,10 @@ export default function DashboardController(types, widgetService, userService,
                 }, delayOffset, false);
             }
         }
+    }
+    function exportDashboard($event) {
+        $event.stopPropagation();
+        importExport.exportDashboard(vm.currentDashboardId);
     }
 
     function exportWidget($event, widget) {
