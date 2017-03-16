@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.plugin.PluginActor;
 import org.thingsboard.server.actors.service.ContextAwareActor;
-import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -60,10 +59,12 @@ public abstract class PluginManager {
 
     abstract TenantId getTenantId();
 
+    abstract String getDispatcherName();
+
     public ActorRef getOrCreatePluginActor(ActorContext context, PluginId pluginId) {
         return pluginActors.computeIfAbsent(pluginId, pId ->
                 context.actorOf(Props.create(new PluginActor.ActorCreator(systemContext, getTenantId(), pId))
-                        .withDispatcher(DefaultActorService.PLUGIN_DISPATCHER_NAME), pId.toString()));
+                        .withDispatcher(getDispatcherName()), pId.toString()));
     }
 
     public void broadcast(Object msg) {

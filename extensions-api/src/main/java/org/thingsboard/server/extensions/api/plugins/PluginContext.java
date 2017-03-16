@@ -16,10 +16,7 @@
 package org.thingsboard.server.extensions.api.plugins;
 
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.PluginId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
@@ -45,6 +42,8 @@ public interface PluginContext {
     void checkAccess(DeviceId deviceId, PluginCallback<Void> callback);
 
     Optional<PluginApiCallSecurityContext> getSecurityCtx();
+
+    void persistError(String method, Exception e);
 
     /*
         Device RPC API

@@ -32,10 +32,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.PluginId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -72,6 +69,10 @@ public final class PluginProcessingContext implements PluginContext {
         super();
         this.pluginCtx = pluginCtx;
         this.securityCtx = Optional.ofNullable(securityCtx);
+    }
+
+    public void persistError(String method, Exception e) {
+        pluginCtx.persistError(method, e);
     }
 
     @Override
