@@ -42,7 +42,7 @@ export default function AppConfig($provide,
     $urlRouterProvider.otherwise(UrlHandler);
     storeProvider.setCaching(false);
 
-    $translateProvider.useSanitizeValueStrategy('sanitize');
+    $translateProvider.useSanitizeValueStrategy('sce');
     $translateProvider.preferredLanguage('en_US');
     $translateProvider.useLocalStorage();
     $translateProvider.useMissingTranslationHandlerLog();
