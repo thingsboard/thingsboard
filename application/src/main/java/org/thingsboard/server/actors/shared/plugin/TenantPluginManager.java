@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors.shared.plugin;
 
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
@@ -38,4 +39,10 @@ public class TenantPluginManager extends PluginManager {
     TenantId getTenantId() {
         return tenantId;
     }
+
+    @Override
+    protected String getDispatcherName() {
+        return DefaultActorService.TENANT_PLUGIN_DISPATCHER_NAME;
+    }
+
 }

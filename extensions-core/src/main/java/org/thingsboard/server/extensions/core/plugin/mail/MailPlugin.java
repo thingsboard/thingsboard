@@ -33,6 +33,9 @@ import org.thingsboard.server.extensions.core.action.mail.SendMailActionMsg;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.util.Properties;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Andrew Shvayka
@@ -40,6 +43,9 @@ import java.util.Properties;
 @Plugin(name = "Mail Plugin", actions = {SendMailAction.class}, descriptor = "MailPluginDescriptor.json", configuration = MailPluginConfiguration.class)
 @Slf4j
 public class MailPlugin extends AbstractPlugin<MailPluginConfiguration> implements RuleMsgHandler {
+
+    //TODO: Add logic to close this executor on shutdown.
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private MailPluginConfiguration configuration;
     private JavaMailSenderImpl mailSender;
@@ -84,12 +90,14 @@ public class MailPlugin extends AbstractPlugin<MailPluginConfiguration> implemen
     @Override
     public void process(PluginContext ctx, TenantId tenantId, RuleId ruleId, RuleToPluginMsg<?> msg) throws RuleException {
         if (msg.getPayload() instanceof SendMailActionMsg) {
-            try {
-                sendMail((SendMailActionMsg) msg.getPayload());
-            } catch (Exception e) {
-                log.warn("Failed to send email", e);
-                throw new RuleException("Failed to send email", e);
-            }
+            executor.submit(() -> {
+                try {
+                    sendMail((SendMailActionMsg) msg.getPayload());
+                } catch (Exception e) {
+                    log.warn("[{}] Failed to send email", ctx.getPluginId(), e);
+                    ctx.persistError("Failed to send email", e);
+                }
+            });
         } else {
             throw new RuntimeException("Not supported msg type: " + msg.getPayload().getClass() + "!");
         }
