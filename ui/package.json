@@ -1,7 +1,7 @@
 {
   "name": "thingsboard",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.2.0",
   "description": "Thingsboard UI",
   "licenses": [
     {
@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "start": "babel-node --max_old_space_size=4096 server.js",
-    "build": "NODE_ENV=production webpack -p"
+    "build": "cross-env NODE_ENV=production webpack -p"
   },
   "dependencies": {
     "@flowjs/ng-flow": "^2.7.1",
@@ -48,6 +48,7 @@
     "canvas-gauges": "^2.0.9",
     "clipboard": "^1.5.15",
     "compass-sass-mixins": "^0.12.7",
+    "cross-env": "^3.2.4",
     "flot": "git://github.com/flot/flot.git#0.9-work",
     "font-awesome": "^4.6.3",
     "javascript-detect-element-resize": "^0.5.3",
