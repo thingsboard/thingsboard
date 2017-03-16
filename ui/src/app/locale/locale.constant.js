@@ -693,7 +693,7 @@ export default angular.module('thingsboard.locale', [])
                     "title-required": "Widget title is required.",
                     "type": "Widget type",
                     "resources": "Resources",
-                    "resource-url": "JavaScript/CSS URI",
+                    "resource-url": "JavaScript/CSS URL",
                     "remove-resource": "Remove resource",
                     "add-resource": "Add resource",
                     "html": "HTML",
