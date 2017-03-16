@@ -200,7 +200,7 @@ export default class TbGoogleMap {
                 map: this.map,
                 icon: pinImage,
                 shadow: pinShadow,
-                labelContent: '<b>'+settings.label+'</b>',
+                labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.label+'</b></div>',
                 labelClass: "tb-labels",
                 labelAnchor: new google.maps.Point(50, height + 20)
             });

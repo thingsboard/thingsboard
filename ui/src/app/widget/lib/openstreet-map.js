@@ -78,7 +78,7 @@ export default class TbOpenStreetMap {
             marker.setIcon(icon);
             if (settings.showLabel) {
                 marker.unbindTooltip();
-                marker.bindTooltip('<b>' + settings.label + '</b>',
+                marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.label+'</b></div>',
                     { className: 'tb-marker-label', permanent: true, direction: 'top', offset: [0, -height + 10] });
             }
         }
@@ -101,7 +101,7 @@ export default class TbOpenStreetMap {
         var marker = L.marker(location, {icon: icon}).addTo(this.map);
 
         if (settings.showLabel) {
-            marker.bindTooltip('<b>' + settings.label + '</b>',
+            marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.label+'</b></div>',
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: [0, -height + 10] });
         }
 
