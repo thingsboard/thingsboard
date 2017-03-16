@@ -238,22 +238,24 @@ function TimeService($translate, types) {
             interval = timewindow.realtime.interval;
         }
 
+        var aggType;
+        if (timewindow.aggregation) {
+            aggType = timewindow.aggregation.type || types.aggregation.avg.value;
+        } else {
+            aggType = types.aggregation.avg.value;
+        }
+
         var historyTimewindow = {
             history: {
                 fixedTimewindow: {
                     startTimeMs: startTimeMs,
                     endTimeMs: endTimeMs
                 },
-                interval: boundIntervalToTimewindow(endTimeMs - startTimeMs, interval)
+                interval: boundIntervalToTimewindow(endTimeMs - startTimeMs, interval, aggType)
             },
             aggregation: {
-
+                type: aggType
             }
-        }
-        if (timewindow.aggregation) {
-            historyTimewindow.aggregation.type = timewindow.aggregation.type || types.aggregation.avg.value;
-        } else {
-            historyTimewindow.aggregation.type = types.aggregation.avg.value;
         }
 
         return historyTimewindow;
@@ -281,7 +283,8 @@ function TimeService($translate, types) {
         if (angular.isDefined(timewindow.realtime)) {
             subscriptionTimewindow.realtimeWindowMs = timewindow.realtime.timewindowMs;
             subscriptionTimewindow.aggregation.interval =
-                boundIntervalToTimewindow(subscriptionTimewindow.realtimeWindowMs, timewindow.realtime.interval);
+                boundIntervalToTimewindow(subscriptionTimewindow.realtimeWindowMs, timewindow.realtime.interval,
+                    subscriptionTimewindow.aggregation.type);
             subscriptionTimewindow.startTs = (new Date).getTime() + stDiff - subscriptionTimewindow.realtimeWindowMs;
             var startDiff = subscriptionTimewindow.startTs % subscriptionTimewindow.aggregation.interval;
             aggTimewindow = subscriptionTimewindow.realtimeWindowMs;
@@ -306,7 +309,8 @@ function TimeService($translate, types) {
                 aggTimewindow = subscriptionTimewindow.fixedWindow.endTimeMs - subscriptionTimewindow.fixedWindow.startTimeMs;
             }
             subscriptionTimewindow.startTs = subscriptionTimewindow.fixedWindow.startTimeMs;
-            subscriptionTimewindow.aggregation.interval = boundIntervalToTimewindow(aggTimewindow, timewindow.history.interval);
+            subscriptionTimewindow.aggregation.interval =
+                boundIntervalToTimewindow(aggTimewindow, timewindow.history.interval, subscriptionTimewindow.aggregation.type);
         }
         var aggregation = subscriptionTimewindow.aggregation;
         aggregation.timeWindow = aggTimewindow;
@@ -316,13 +320,17 @@ function TimeService($translate, types) {
         return subscriptionTimewindow;
     }
 
-    function boundIntervalToTimewindow(timewindow, intervalMs) {
-        var min = minIntervalLimit(timewindow);
-        var max = maxIntervalLimit(timewindow);
-        if (intervalMs) {
-            return toBound(intervalMs, min, max, intervalMs);
+    function boundIntervalToTimewindow(timewindow, intervalMs, aggType) {
+        if (aggType === types.aggregation.none.value) {
+            return SECOND;
         } else {
-            return boundToPredefinedInterval(min, max, avgInterval(timewindow));
+            var min = minIntervalLimit(timewindow);
+            var max = maxIntervalLimit(timewindow);
+            if (intervalMs) {
+                return toBound(intervalMs, min, max, intervalMs);
+            } else {
+                return boundToPredefinedInterval(min, max, avgInterval(timewindow));
+            }
         }
     }
 
