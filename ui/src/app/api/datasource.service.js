@@ -546,7 +546,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
             var keyData = sourceData[keyName];
             var key = keyName + '_' + type;
             var dataKeyList = dataKeys[key];
-            for (var keyIndex = 0; keyIndex < dataKeyList.length; keyIndex++) {
+            for (var keyIndex = 0; dataKeyList && keyIndex < dataKeyList.length; keyIndex++) {
                 var datasourceKey = key + "_" + keyIndex;
                 if (datasourceData[datasourceKey].data) {
                     var dataKey = dataKeyList[keyIndex];
@@ -595,6 +595,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         datasourceData[datasourceKey].data = data;
                         for (var i2 in listeners) {
                             var listener = listeners[i2];
+                            if (angular.isFunction(listener))
+                              continue;
                             listener.dataUpdated(datasourceData[datasourceKey],
                                 listener.datasourceIndex,
                                 dataKey.index, apply);
@@ -605,4 +607,3 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
     }
 }
-

@@ -158,6 +158,8 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
 
     function resolveRefreshTokenQueue(data) {
         for (var q in refreshTokenQueue) {
+            if (isNaN(q))
+              continue;
             refreshTokenQueue[q].resolve(data);
         }
         refreshTokenQueue = [];
@@ -165,6 +167,8 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
 
     function rejectRefreshTokenQueue(message) {
         for (var q in refreshTokenQueue) {
+            if (isNaN(q))
+              continue;
             refreshTokenQueue[q].reject(message);
         }
         refreshTokenQueue = [];

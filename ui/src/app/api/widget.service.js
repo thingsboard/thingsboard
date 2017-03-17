@@ -483,6 +483,8 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
         var fetchQueue = widgetsInfoFetchQueue[key];
         if (fetchQueue) {
             for (var q in fetchQueue) {
+                if (isNaN(q))
+                  continue;
                 fetchQueue[q].resolve(widgetInfo);
             }
             delete widgetsInfoFetchQueue[key];

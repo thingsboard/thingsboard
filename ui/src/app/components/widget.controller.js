@@ -807,6 +807,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             var index = 0;
             for (var i in widgetContext.datasources) {
                 var datasource = widgetContext.datasources[i];
+                if (angular.isFunction(datasource))
+                    continue;
                 var deviceId = null;
                 if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
                     if (aliasesInfo.deviceAliases[datasource.deviceAliasId]) {
