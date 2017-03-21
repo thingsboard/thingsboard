@@ -100,10 +100,12 @@ public abstract class RuleManager {
 
     abstract FetchFunction<RuleMetaData> getFetchRulesFunction();
 
+    abstract String getDispatcherName();
+
     public ActorRef getOrCreateRuleActor(ActorContext context, RuleId ruleId) {
         return ruleActors.computeIfAbsent(ruleId, rId ->
                 context.actorOf(Props.create(new RuleActor.ActorCreator(systemContext, tenantId, rId))
-                        .withDispatcher(DefaultActorService.RULE_DISPATCHER_NAME), rId.toString()));
+                        .withDispatcher(getDispatcherName()), rId.toString()));
     }
 
     public RuleActorChain getRuleChain() {

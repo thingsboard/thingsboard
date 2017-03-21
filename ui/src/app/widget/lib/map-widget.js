@@ -99,6 +99,7 @@ export default class TbMapWidget {
                 lngKeyName: "lng",
                 showLabel: true,
                 label: "",
+                labelColor: ctx.widgetConfig.color || '#000000',
                 color: "#FE7569",
                 useColorFunction: false,
                 colorFunction: null,

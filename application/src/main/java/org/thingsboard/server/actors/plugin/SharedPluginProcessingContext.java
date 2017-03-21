@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
@@ -73,6 +74,10 @@ public final class SharedPluginProcessingContext {
         return pluginId;
     }
 
+    public TenantId getPluginTenantId() {
+        return tenantId;
+    }
+
     public void toDeviceActor(DeviceAttributesEventNotificationMsg msg) {
         forward(msg.getDeviceId(), msg, rpcService::tell);
     }
@@ -103,6 +108,10 @@ public final class SharedPluginProcessingContext {
                 systemContext.getActorSystem().dispatcher(),
                 ActorRef.noSender());
 
+    }
+
+    public void persistError(String method, Exception e) {
+        systemContext.persistError(tenantId, pluginId, method, e);
     }
 
     public ActorRef self() {

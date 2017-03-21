@@ -131,7 +131,7 @@ export default class DataAggregator {
             this.data = this.updateData();
         }
         if (this.onDataCb) {
-            this.onDataCb(this.data, this.startTs, this.endTs, apply);
+            this.onDataCb(this.data, apply);
         }
 
         var self = this;
