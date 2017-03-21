@@ -215,6 +215,7 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
                 PreparedStatement proto = getFetchStmt(aggregation);
                 List<ResultSetFuture> futures = new ArrayList<>(partitions.size());
                 for (Long partition : partitions) {
+                    log.trace("Fetching data for partition [{}] for entityType {} and entityId {}", partition, entityType, entityId);
                     BoundStatement stmt = proto.bind();
                     stmt.setString(0, entityType);
                     stmt.setUUID(1, entityId);
