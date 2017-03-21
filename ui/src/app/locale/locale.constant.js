@@ -774,6 +774,11 @@ export default angular.module('thingsboard.locale', [])
                     "create-new-widget-type": "Create new widget type",
                     "widget-type-file": "Widget type file",
                     "invalid-widget-type-file-error": "Unable to import widget type: Invalid widget type data structure."
+                },
+                "language": {
+                    "language": "Language",
+                    "en_US": "English",
+                    "ko_KR": "Korean"
                 }
             }
         }

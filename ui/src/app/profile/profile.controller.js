@@ -20,25 +20,29 @@ import changePasswordTemplate from './change-password.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function ProfileController(userService, $scope, $document, $mdDialog) {
+export default function ProfileController(userService, $scope, $document, $mdDialog, $translate) {
     var vm = this;
 
     vm.profileUser = {};
 
     vm.save = save;
     vm.changePassword = changePassword;
+    vm.languageList = {en_US: {value: "en_US", name: "language.en_US"}, ko_KR: {value : "ko_KR", name: "language.ko_KR"}};
 
     loadProfile();
 
     function loadProfile() {
         userService.getUser(userService.getCurrentUser().userId).then(function success(user) {
             vm.profileUser = user;
+            vm.profileUser.lang = $translate.use();
         });
     }
 
     function save() {
         userService.saveUser(vm.profileUser).then(function success(user) {
+            $translate.use(vm.profileUser.lang);
             vm.profileUser = user;
+            vm.profileUser.lang = $translate.use();
             $scope.theForm.$setPristine();
         });
     }

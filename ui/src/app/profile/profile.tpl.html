@@ -40,6 +40,14 @@
                         <label translate>user.last-name</label>
                         <input name="lastName" ng-model="vm.profileUser.lastName">
                     </md-input-container>
+                    <md-input-container class="md-block">
+                        <label translate>language.language</label>
+                        <md-select name="language" ng-model="vm.profileUser.lang">
+                            <md-option ng-repeat="lang in vm.languageList" ng-value="lang.value">
+                                {{lang.name | translate}}
+                            </md-option>
+                        </md-select>
+                    </md-input-container>
                     <md-button ng-disabled="loading" ng-click="vm.changePassword($event)"
                                class="md-raised md-primary">{{ 'profile.change-password' | translate }}
                     </md-button>
