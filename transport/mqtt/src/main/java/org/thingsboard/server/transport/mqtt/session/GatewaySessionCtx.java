@@ -90,6 +90,7 @@ public class GatewaySessionCtx {
         String deviceName = checkDeviceName(getDeviceName(msg));
         GatewayDeviceSessionCtx deviceSessionCtx = devices.remove(deviceName);
         if (deviceSessionCtx != null) {
+            processor.process(SessionCloseMsg.onDisconnect(deviceSessionCtx.getSessionId()));
             deviceSessionCtx.setClosed(true);
         }
         ack(msg);
