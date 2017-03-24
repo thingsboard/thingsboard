@@ -91,7 +91,7 @@ export default class TbGoogleMap {
                 function success() {
                     gmGlobals.gmApiKeys[tbMap.apiKey].loaded = true;
                     initGoogleMap();
-                    for (var p in gmGlobals.gmApiKeys[tbMap.apiKey].pendingInits) {
+                    for (var p = 0; p < gmGlobals.gmApiKeys[tbMap.apiKey].pendingInits.length; p++) {
                         var pendingInit = gmGlobals.gmApiKeys[tbMap.apiKey].pendingInits[p];
                         pendingInit();
                     }

@@ -153,7 +153,7 @@
             </tb-dashboard>
         </div>
         <tb-details-sidenav class="tb-widget-details-sidenav"
-                            header-title="vm.editingWidget.config.title"
+                            header-title="{{vm.editingWidget.config.title}}"
                             header-subtitle="{{vm.editingWidgetSubtitle}}"
                             is-read-only="false"
                             is-open="vm.isEditingWidget"
@@ -175,7 +175,7 @@
             </form>
         </tb-details-sidenav>
         <tb-details-sidenav ng-if="!vm.widgetEditMode" class="tb-select-widget-sidenav"
-                            header-title="'dashboard.select-widget-title' | translate"
+                            header-title="{{'dashboard.select-widget-title' | translate}}"
                             header-height-px="120"
                             is-read-only="true"
                             is-open="vm.isAddingWidget"
@@ -249,7 +249,6 @@
                       class="md-headline tb-absolute-fill">widget.select-widgets-bundle</span>
             </div>
         </tb-details-sidenav>
-        <!-- </section> -->
         <section layout="row" layout-wrap class="tb-footer-buttons md-fab" layout-align="start end">
             <md-fab-speed-dial ng-disabled="loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
                                md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up">

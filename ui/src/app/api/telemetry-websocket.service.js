@@ -94,7 +94,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         }
         if (isReconnect) {
             isReconnect = false;
-            for (var r in reconnectSubscribers) {
+            for (var r=0; r<reconnectSubscribers.length;r++) {
                 var reconnectSubscriber = reconnectSubscribers[r];
                 if (reconnectSubscriber.onReconnected) {
                     reconnectSubscriber.onReconnected();
@@ -136,7 +136,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
                     if (!data.data) {
                         data.data = {};
                     }
-                    for (var k in keys) {
+                    for (var k = 0; k < keys.length; k++) {
                         var key = keys[k];
                         if (!data.data[key]) {
                             data.data[key] = [];

@@ -160,7 +160,7 @@ function DeviceService($http, $q, $filter, userService, telemetryWebsocketServic
 
     function devicesToDevicesInfo(devices) {
         var devicesInfo = [];
-        for (var d in devices) {
+        for (var d = 0; d < devices.length; d++) {
             devicesInfo.push(deviceToDeviceInfo(devices[d]));
         }
         return devicesInfo;
@@ -376,7 +376,7 @@ function DeviceService($http, $q, $filter, userService, telemetryWebsocketServic
                 if (query) {
                     var dataKeys = response.data;
                     var lowercaseQuery = angular.lowercase(query);
-                    for (var i in dataKeys) {
+                    for (var i=0; i<dataKeys.length;i++) {
                         if (angular.lowercase(dataKeys[i]).indexOf(lowercaseQuery) === 0) {
                             result.push(dataKeys[i]);
                         }
@@ -526,7 +526,7 @@ function DeviceService($http, $q, $filter, userService, telemetryWebsocketServic
     function saveDeviceAttributes(deviceId, attributeScope, attributes) {
         var deferred = $q.defer();
         var attributesData = {};
-        for (var a in attributes) {
+        for (var a=0; a<attributes.length;a++) {
             attributesData[attributes[a].key] = attributes[a].value;
         }
         var url = '/api/plugins/telemetry/' + deviceId + '/' + attributeScope;

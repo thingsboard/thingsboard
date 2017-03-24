@@ -341,9 +341,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
              $scope.legendConfig.showTotal === true);
 
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
-            for (var i in widgetContext.datasources) {
+            for (var i = 0; i < widgetContext.datasources.length; i++) {
                 var datasource = widgetContext.datasources[i];
-                for (var a in datasource.dataKeys) {
+                for (var a = 0; a < datasource.dataKeys.length; a++) {
                     var dataKey = datasource.dataKeys[a];
                     dataKey.pattern = angular.copy(dataKey.label);
                     var datasourceData = {
@@ -723,7 +723,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     function checkSubscriptions() {
         if (widget.type !== types.widgetType.rpc.value) {
             var subscriptionsChanged = false;
-            for (var i in datasourceListeners) {
+            for (var i = 0; i < datasourceListeners.length; i++) {
                 var listener = datasourceListeners[i];
                 var deviceId = null;
                 var aliasName = null;
@@ -748,7 +748,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function unsubscribe() {
         if (widget.type !== types.widgetType.rpc.value) {
-            for (var i in datasourceListeners) {
+            for (var i = 0; i < datasourceListeners.length; i++) {
                 var listener = datasourceListeners[i];
                 datasourceService.unsubscribeFromDatasource(listener);
             }
@@ -805,7 +805,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 }
             }
             var index = 0;
-            for (var i in widgetContext.datasources) {
+            for (var i = 0; i < widgetContext.datasources.length; i++) {
                 var datasource = widgetContext.datasources[i];
                 if (angular.isFunction(datasource))
                     continue;

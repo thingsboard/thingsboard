@@ -20,7 +20,7 @@ export default class DataAggregator {
         this.onDataCb = onDataCb;
         this.tsKeyNames = tsKeyNames;
         this.dataBuffer = {};
-        for (var k in tsKeyNames) {
+        for (var k = 0; k < tsKeyNames.length; k++) {
             this.dataBuffer[tsKeyNames[k]] = [];
         }
         this.startTs = startTs;
@@ -143,7 +143,7 @@ export default class DataAggregator {
     }
 
     updateData() {
-        for (var k in this.tsKeyNames) {
+        for (var k = 0; k < this.tsKeyNames.length; k++) {
             this.dataBuffer[this.tsKeyNames[k]] = [];
         }
         for (var key in this.aggregationMap) {
@@ -193,7 +193,7 @@ function processAggregatedData(data, isCount, noAggregation) {
             aggregationMap[key] = aggKeyData;
         }
         var keyData = data[key];
-        for (var i in keyData) {
+        for (var i = 0; i < keyData.length; i++) {
             var kvPair = keyData[i];
             var timestamp = kvPair[0];
             var value = convertValue(kvPair[1], noAggregation);
@@ -217,7 +217,7 @@ function updateAggregatedData(aggregationMap, isCount, noAggregation, aggFunctio
             aggregationMap[key] = aggKeyData;
         }
         var keyData = data[key];
-        for (var i in keyData) {
+        for (var i = 0; i < keyData.length; i++) {
             var kvPair = keyData[i];
             var timestamp = kvPair[0];
             var value = convertValue(kvPair[1], noAggregation);

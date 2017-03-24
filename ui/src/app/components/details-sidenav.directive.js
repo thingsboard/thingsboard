@@ -76,7 +76,7 @@ function DetailsSidenav($timeout) {
             detailsButtons: '?detailsButtons'
         },
         scope: {
-            headerTitle: '=',
+            headerTitle: '@',
             headerSubtitle: '@',
             headerHeightPx: '@',
             isReadOnly: '=',

@@ -61,7 +61,7 @@
         </md-virtual-repeat-container>
     </div>
     <tb-details-sidenav
-            header-title="vm.getItemTitleFunc(vm.operatingItem())"
+            header-title="{{vm.getItemTitleFunc(vm.operatingItem())}}"
             header-subtitle="{{vm.itemDetailsText()}}"
             is-read-only="vm.isDetailsReadOnly(vm.operatingItem())"
             is-open="vm.detailsConfig.isDetailsOpen"

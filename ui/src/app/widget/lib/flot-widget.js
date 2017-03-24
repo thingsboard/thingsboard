@@ -33,7 +33,7 @@ export default class TbFlot {
         this.chartType = chartType || 'line';
 
         var colors = [];
-        for (var i in ctx.data) {
+        for (var i = 0; i < ctx.data.length; i++) {
             var series = ctx.data[i];
             colors.push(series.dataKey.color);
             var keySettings = series.dataKey.settings;
@@ -61,7 +61,7 @@ export default class TbFlot {
         }
         ctx.tooltip = $('#flot-series-tooltip');
         if (ctx.tooltip.length === 0) {
-            ctx.tooltip = $("<div id=flot-series-tooltip' class='flot-mouse-value'></div>");
+            ctx.tooltip = $("<div id='flot-series-tooltip' class='flot-mouse-value'></div>");
             ctx.tooltip.css({
                 fontSize: "12px",
                 fontFamily: "Roboto",
@@ -85,7 +85,7 @@ export default class TbFlot {
             divElement.css({
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center"
+                justifyContent: "flex-start"
             });
             var lineSpan = $('<span></span>');
             lineSpan.css({
@@ -147,7 +147,7 @@ export default class TbFlot {
                     fontWeight: "700"
                 });
                 content += dateDiv.prop('outerHTML');
-                for (var i in hoverInfo.seriesHover) {
+                for (var i = 0; i < hoverInfo.seriesHover.length; i++) {
                     var seriesHoverInfo = hoverInfo.seriesHover[i];
                     if (tbFlot.ctx.tooltipIndividual && seriesHoverInfo.index !== seriesIndex) {
                         continue;
@@ -333,7 +333,7 @@ export default class TbFlot {
             this.ctx.pieData = angular.copy(this.ctx.data);
             this.ctx.pieRenderedData = [];
             this.ctx.pieTargetData = [];
-            for (i in this.ctx.data) {
+            for (i = 0; i < this.ctx.data.length; i++) {
                 this.ctx.pieTargetData[i] = (this.ctx.data[i].data && this.ctx.data[i].data[0])
                     ? this.ctx.data[i].data[0][1] : 0;
             }
@@ -929,7 +929,7 @@ export default class TbFlot {
     }
 
     pieDataRendered() {
-        for (var i in this.ctx.pieTargetData) {
+        for (var i = 0; i < this.ctx.pieTargetData.length; i++) {
             var value = this.ctx.pieTargetData[i] ? this.ctx.pieTargetData[i] : 0;
             this.ctx.pieRenderedData[i] = value;
             if (!this.ctx.pieData[i].data[0]) {
@@ -943,7 +943,7 @@ export default class TbFlot {
         if (start) {
             this.finishPieDataAnimation();
             this.ctx.pieAnimationStartTime = this.ctx.pieAnimationLastTime = Date.now();
-            for (var i in this.ctx.data) {
+            for (var i = 0;  i < this.ctx.data.length; i++) {
                 this.ctx.pieTargetData[i] = (this.ctx.data[i].data && this.ctx.data[i].data[0])
                     ? this.ctx.data[i].data[0][1] : 0;
             }
@@ -968,7 +968,7 @@ export default class TbFlot {
             this.finishPieDataAnimation();
         } else {
             if (elapsed >= 40) {
-                for (var i in this.ctx.pieTargetData) {
+                for (var i = 0; i < this.ctx.pieTargetData.length; i++) {
                     var prevValue = this.ctx.pieRenderedData[i];
                     var targetValue = this.ctx.pieTargetData[i];
                     var value = prevValue + (targetValue - prevValue) * progress;

@@ -364,7 +364,7 @@ export default class TbMapWidget {
             var bounds = tbMap.map.createBounds();
             tbMap.locations = [];
             var dataMap = toLabelValueMap(data);
-            for (var l in tbMap.locationsSettings) {
+            for (var l=0; l < tbMap.locationsSettings.length; l++) {
                 var locationSettings = tbMap.locationsSettings[l];
                 var latIndex = -1;
                 var lngIndex = -1;
@@ -398,7 +398,7 @@ export default class TbMapWidget {
             var locationsChanged = false;
             var bounds = tbMap.map.createBounds();
             var dataMap = toLabelValueMap(data);
-            for (var p in tbMap.locations) {
+            for (var p = 0; p < tbMap.locations.length; p++) {
                 var location = tbMap.locations[p];
                 locationsChanged |= updateLocation(location, data, dataMap);
                 if (location.polyline) {
@@ -421,11 +421,11 @@ export default class TbMapWidget {
                 }
             }
             var tooltips = this.map.getTooltips();
-            for (var t in tooltips) {
+            for (var t=0; t < tooltips.length; t++) {
                 var tooltip = tooltips[t];
                 var text = tooltip.pattern;
                 var replaceInfo = tooltip.replaceInfo;
-                for (var v in replaceInfo.variables) {
+                for (var v = 0; v < replaceInfo.variables.length; v++) {
                     var variableInfo = replaceInfo.variables[v];
                     var txtVal = '';
                     if (variableInfo.dataKeyIndex > -1) {
@@ -451,11 +451,11 @@ export default class TbMapWidget {
             this.map.invalidateSize();
             if (this.locations && this.locations.size > 0) {
                 var bounds = this.map.createBounds();
-                for (var m in this.markers) {
+                for (var m = 0; m < this.markers.length; m++) {
                     this.map.extendBoundsWithMarker(bounds, this.markers[m]);
                 }
                 if (this.polylines) {
-                    for (var p in this.polylines) {
+                    for (var p = 0; p < this.polylines.length; p++) {
                         this.map.extendBounds(bounds, this.polylines[p]);
                     }
                 }

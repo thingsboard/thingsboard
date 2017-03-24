@@ -275,7 +275,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 dataKeys: []
             }
             var i = 0;
-            for (var attr in scope.selectedAttributes) {
+            for (var attr =0; attr < scope.selectedAttributes.length;attr++) {
                 var attribute = scope.selectedAttributes[attr];
                 var dataKey = {
                     name: attribute.key,

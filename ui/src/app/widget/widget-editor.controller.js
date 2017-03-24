@@ -343,7 +343,7 @@ export default function WidgetEditorController(widgetService, userService, types
                             }
                         };
                     }
-                    for (var i in config.datasources) {
+                    for (var i = 0; i < config.datasources.length; i++) {
                         var datasource = config.datasources[i];
                         datasource.type = vm.widget.type;
                         if (vm.widget.type !== types.widgetType.timeseries.value && datasource.intervalSec) {
@@ -455,7 +455,7 @@ export default function WidgetEditorController(widgetService, userService, types
     }
 
     function onDividerDrag() {
-        for (var i in ace_editors) {
+        for (var i = 0; i < ace_editors.length; i++) {
             var ace = ace_editors[i];
             ace.resize();
             ace.renderer.updateFull();

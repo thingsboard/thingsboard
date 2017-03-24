@@ -157,18 +157,14 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
     }
 
     function resolveRefreshTokenQueue(data) {
-        for (var q in refreshTokenQueue) {
-            if (isNaN(q))
-              continue;
+        for (var q=0; q < refreshTokenQueue.length;q++) {
             refreshTokenQueue[q].resolve(data);
         }
         refreshTokenQueue = [];
     }
 
     function rejectRefreshTokenQueue(message) {
-        for (var q in refreshTokenQueue) {
-            if (isNaN(q))
-              continue;
+        for (var q=0;q<refreshTokenQueue.length;q++) {
             refreshTokenQueue[q].reject(message);
         }
         refreshTokenQueue = [];
@@ -246,7 +242,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
                                 dashboardService.getCustomerDashboards(currentUser.customerId, pageLink).then(
                                     function success(result) {
                                         var dashboards = result.data;
-                                        for (var d in dashboards) {
+                                        for (var d=0;d<dashboards.length;d++) {
                                             allowedDashboardIds.push(dashboards[d].id.id);
                                         }
                                         deferred.resolve();

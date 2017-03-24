@@ -44,7 +44,7 @@ function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, t
         }
 
         var subscriptionDataKeys = [];
-        for (var d in datasource.dataKeys) {
+        for (var d = 0; d < datasource.dataKeys.length; d++) {
             var dataKey = datasource.dataKeys[d];
             var subscriptionDataKey = {
                 name: dataKey.name,
@@ -295,7 +295,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         }
                         subscriber.onReconnected = function() {
                             var newSubsTw = null;
-                            for (var i2 in listeners) {
+                            for (var i2 = 0; i2 < listeners.length; i2++) {
                                 var listener = listeners[i2];
                                 if (!newSubsTw) {
                                     newSubsTw = listener.updateRealtimeSubscription();
@@ -454,7 +454,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         var value = dataKey.func(time, prevSeries[1]);
         series.push(value);
         datasourceData[dataKey.key].data = [series];
-        for (var i in listeners) {
+        for (var i = 0; i < listeners.length; i++) {
             var listener = listeners[i];
             listener.dataUpdated(datasourceData[dataKey.key],
                 listener.datasourceIndex,
@@ -566,7 +566,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     }
                     if (datasourceSubscription.type === types.widgetType.timeseries.value) {
                         var series, time, value;
-                        for (var i in keyData) {
+                        for (var i = 0; i < keyData.length; i++) {
                             series = keyData[i];
                             time = series[0];
                             value = convertValue(series[1]);
@@ -593,7 +593,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     }
                     if (update) {
                         datasourceData[datasourceKey].data = data;
-                        for (var i2 in listeners) {
+                        for (var i2 = 0; i2 < listeners.length; i2++) {
                             var listener = listeners[i2];
                             if (angular.isFunction(listener))
                               continue;
