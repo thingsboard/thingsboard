@@ -16,7 +16,7 @@ Thingsboard documentation is hosted on [thingsboard.io](https://thingsboard.io/d
 [![Smart energy monitoring demo](https://cloud.githubusercontent.com/assets/8308069/24495682/aebd45d0-153e-11e7-8de4-7360ed5b41ae.gif "Smart energy")](https://thingsboard.io/smart-energy/)
 
 [**Smart farming**](https://thingsboard.io/smart-farming/)
-[![Smart farming](https://cloud.githubusercontent.com/assets/8308069/23996135/00214844-0a55-11e7-9623-d1e3be0702ca.png "Smart farming")](https://thingsboard.io/smart-farming/)
+[![Smart farming](https://cloud.githubusercontent.com/assets/8308069/24496824/10dc1144-1542-11e7-8aa1-5d3a281d5a1a.gif "Smart farming")](https://thingsboard.io/smart-farming/)
 
 [**Fleet tracking**](https://thingsboard.io/fleet-tracking/)
 [![Fleet tracking](https://cloud.githubusercontent.com/assets/8308069/23790110/62c6ecde-0586-11e7-8249-19eafd5bf8cc.png "Fleet tracking")](https://thingsboard.io/fleet-tracking/)
