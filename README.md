@@ -19,7 +19,7 @@ Thingsboard documentation is hosted on [thingsboard.io](https://thingsboard.io/d
 [![Smart farming](https://cloud.githubusercontent.com/assets/8308069/24496824/10dc1144-1542-11e7-8aa1-5d3a281d5a1a.gif "Smart farming")](https://thingsboard.io/smart-farming/)
 
 [**Fleet tracking**](https://thingsboard.io/fleet-tracking/)
-[![Fleet tracking](https://cloud.githubusercontent.com/assets/8308069/23790110/62c6ecde-0586-11e7-8249-19eafd5bf8cc.png "Fleet tracking")](https://thingsboard.io/fleet-tracking/)
+[![Fleet tracking](https://cloud.githubusercontent.com/assets/8308069/24497169/3a1a61e0-1543-11e7-8d55-3c8a13f35634.gif "Fleet tracking")](https://thingsboard.io/fleet-tracking/)
 
 ## Getting Started
 
