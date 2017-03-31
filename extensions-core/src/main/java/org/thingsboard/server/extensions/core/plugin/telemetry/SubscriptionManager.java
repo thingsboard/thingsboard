@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry;
 
-import com.sun.javafx.collections.MappingChange;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DataConstants;
