@@ -15,14 +15,10 @@
  */
 package org.thingsboard.server.dao;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.dao.model.ToData;
+
+import java.util.*;
 
 public abstract class DaoUtil {
 

@@ -15,27 +15,24 @@
  */
 package org.thingsboard.server.dao.device;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.thingsboard.server.dao.model.ModelConstants.*;
-
-import java.util.*;
-
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.AbstractSearchTextDao;
+import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.DeviceEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.*;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implements DeviceDao {
+public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEntity, Device> implements DeviceDao {
 
     @Override
     protected Class<DeviceEntity> getColumnFamilyClass() {
@@ -48,23 +45,17 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
     }
 
     @Override
-    public DeviceEntity save(Device device) {
-        log.debug("Save device [{}] ", device);
-        return save(new DeviceEntity(device));
-    }
-
-    @Override
-    public List<DeviceEntity> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink) {
+    public List<Device> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Collections.singletonList(eq(DEVICE_TENANT_ID_PROPERTY, tenantId)), pageLink);
 
         log.trace("Found devices [{}] by tenantId [{}] and pageLink [{}]", deviceEntities, tenantId, pageLink);
-        return deviceEntities;
+        return DaoUtil.convertDataList(deviceEntities);
     }
 
     @Override
-    public ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds) {
+    public ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds) {
         log.debug("Try to find devices by tenantId [{}] and device Ids [{}]", tenantId, deviceIds);
         Select select = select().from(getColumnFamilyName());
         Select.Where query = select.where();
@@ -74,7 +65,7 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
     }
 
     @Override
-    public List<DeviceEntity> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
+    public List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
         List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
@@ -82,11 +73,11 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
                 pageLink);
 
         log.trace("Found devices [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, pageLink);
-        return deviceEntities;
+        return DaoUtil.convertDataList(deviceEntities);
     }
 
     @Override
-    public ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
+    public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
         log.debug("Try to find devices by tenantId [{}], customerId [{}] and device Ids [{}]", tenantId, customerId, deviceIds);
         Select select = select().from(getColumnFamilyName());
         Select.Where query = select.where();
@@ -97,12 +88,12 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
     }
 
     @Override
-    public Optional<DeviceEntity> findDevicesByTenantIdAndName(UUID tenantId, String deviceName) {
+    public Optional<Device> findDevicesByTenantIdAndName(UUID tenantId, String deviceName) {
         Select select = select().from(DEVICE_BY_TENANT_AND_NAME_VIEW_NAME);
         Select.Where query = select.where();
         query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(DEVICE_NAME_PROPERTY, deviceName));
-        return Optional.ofNullable(findOneByStatement(query));
+        return Optional.ofNullable(DaoUtil.getData(findOneByStatement(query)));
     }
 
 }

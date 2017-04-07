@@ -23,7 +23,7 @@ import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.model.type.*;
 
 @Slf4j
-public abstract class AbstractDao {
+public abstract class CassandraAbstractDao {
 
     @Autowired
     protected CassandraCluster cluster;

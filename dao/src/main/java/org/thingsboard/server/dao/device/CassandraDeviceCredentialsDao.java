@@ -15,26 +15,23 @@
  */
 package org.thingsboard.server.dao.device;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-
-import java.util.UUID;
-
+import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.dao.AbstractModelDao;
+import org.thingsboard.server.dao.CassandraAbstractModelDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.DeviceCredentialsEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
-
-import com.datastax.driver.core.querybuilder.Select.Where;
 import org.thingsboard.server.dao.model.ModelConstants;
+
+import java.util.UUID;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 @Component
 @Slf4j
-public class DeviceCredentialsDaoImpl extends AbstractModelDao<DeviceCredentialsEntity> implements DeviceCredentialsDao {
+public class CassandraDeviceCredentialsDao extends CassandraAbstractModelDao<DeviceCredentialsEntity, DeviceCredentials> implements DeviceCredentialsDao {
 
     @Override
     protected Class<DeviceCredentialsEntity> getColumnFamilyClass() {
@@ -47,31 +44,24 @@ public class DeviceCredentialsDaoImpl extends AbstractModelDao<DeviceCredentials
     }
 
     @Override
-    public DeviceCredentialsEntity findByDeviceId(UUID deviceId) {
+    public DeviceCredentials findByDeviceId(UUID deviceId) {
         log.debug("Try to find device credentials by deviceId [{}] ", deviceId);
         Where query = select().from(ModelConstants.DEVICE_CREDENTIALS_BY_DEVICE_COLUMN_FAMILY_NAME)
                 .where(eq(ModelConstants.DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY, deviceId));
         log.trace("Execute query {}", query);
         DeviceCredentialsEntity deviceCredentialsEntity = findOneByStatement(query);
         log.trace("Found device credentials [{}] by deviceId [{}]", deviceCredentialsEntity, deviceId);
-        return deviceCredentialsEntity;
+        return DaoUtil.getData(deviceCredentialsEntity);
     }
     
     @Override
-    public DeviceCredentialsEntity findByCredentialsId(String credentialsId) {
+    public DeviceCredentials findByCredentialsId(String credentialsId) {
         log.debug("Try to find device credentials by credentialsId [{}] ", credentialsId);
         Where query = select().from(ModelConstants.DEVICE_CREDENTIALS_BY_CREDENTIALS_ID_COLUMN_FAMILY_NAME)
                 .where(eq(ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_ID_PROPERTY, credentialsId));
         log.trace("Execute query {}", query);
         DeviceCredentialsEntity deviceCredentialsEntity = findOneByStatement(query);
         log.trace("Found device credentials [{}] by credentialsId [{}]", deviceCredentialsEntity, credentialsId);
-        return deviceCredentialsEntity;
+        return DaoUtil.getData(deviceCredentialsEntity);
     }
-
-    @Override
-    public DeviceCredentialsEntity save(DeviceCredentials deviceCredentials) {
-        log.debug("Save device credentials [{}] ", deviceCredentials);
-        return save(new DeviceCredentialsEntity(deviceCredentials));
-    }
-
 }

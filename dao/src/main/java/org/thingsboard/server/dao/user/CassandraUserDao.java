@@ -15,29 +15,27 @@
  */
 package org.thingsboard.server.dao.user;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
+import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.AbstractSearchTextDao;
-import org.thingsboard.server.dao.model.UserEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.querybuilder.Select.Where;
+import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.UserEntity;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 @Component
 @Slf4j
-public class UserDaoImpl extends AbstractSearchTextDao<UserEntity> implements UserDao {
+public class CassandraUserDao extends CassandraAbstractSearchTextDao<UserEntity, User> implements UserDao {
 
     @Override
     protected Class<UserEntity> getColumnFamilyClass() {
@@ -50,23 +48,17 @@ public class UserDaoImpl extends AbstractSearchTextDao<UserEntity> implements Us
     }
 
     @Override
-    public UserEntity findByEmail(String email) {
+    public User findByEmail(String email) {
         log.debug("Try to find user by email [{}] ", email);
         Where query = select().from(ModelConstants.USER_BY_EMAIL_COLUMN_FAMILY_NAME).where(eq(ModelConstants.USER_EMAIL_PROPERTY, email));
         log.trace("Execute query {}", query);
         UserEntity userEntity = findOneByStatement(query);
         log.trace("Found user [{}] by email [{}]", userEntity, email);
-        return userEntity;
+        return DaoUtil.getData(userEntity);
     }
 
     @Override
-    public UserEntity save(User user) {
-        log.debug("Save user [{}] ", user);
-        return save(new UserEntity(user));
-    }
-
-    @Override
-    public List<UserEntity> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
+    public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find tenant admin users by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<UserEntity> userEntities = findPageWithTextSearch(ModelConstants.USER_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.USER_TENANT_ID_PROPERTY, tenantId),
@@ -74,11 +66,11 @@ public class UserDaoImpl extends AbstractSearchTextDao<UserEntity> implements Us
                               eq(ModelConstants.USER_AUTHORITY_PROPERTY, Authority.TENANT_ADMIN.name())),
                 pageLink); 
         log.trace("Found tenant admin users [{}] by tenantId [{}] and pageLink [{}]", userEntities, tenantId, pageLink);
-        return userEntities;
+        return DaoUtil.convertDataList(userEntities);
     }
 
     @Override
-    public List<UserEntity> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
+    public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find customer users by tenantId [{}], customerId [{}] and pageLink [{}]", tenantId, customerId, pageLink);
         List<UserEntity> userEntities = findPageWithTextSearch(ModelConstants.USER_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.USER_TENANT_ID_PROPERTY, tenantId),
@@ -86,7 +78,7 @@ public class UserDaoImpl extends AbstractSearchTextDao<UserEntity> implements Us
                               eq(ModelConstants.USER_AUTHORITY_PROPERTY, Authority.CUSTOMER_USER.name())),
                 pageLink); 
         log.trace("Found customer users [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", userEntities, tenantId, customerId, pageLink);
-        return userEntities;
+        return DaoUtil.convertDataList(userEntities);
     }
 
 }

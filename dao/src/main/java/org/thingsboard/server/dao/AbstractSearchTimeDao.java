@@ -21,34 +21,29 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.querybuilder.Select.Where;
 import com.datastax.driver.core.utils.UUIDs;
-import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
-public abstract class AbstractSearchTimeDao<T extends BaseEntity<?>> extends AbstractModelDao<T> {
+public abstract class AbstractSearchTimeDao<E extends BaseEntity<D>, D> extends CassandraAbstractModelDao<E, D> {
 
 
-    protected List<T> findPageWithTimeSearch(String searchView, List<Clause> clauses, TimePageLink pageLink) {
+    protected List<E> findPageWithTimeSearch(String searchView, List<Clause> clauses, TimePageLink pageLink) {
         return findPageWithTimeSearch(searchView, clauses, Collections.emptyList(), pageLink);
     }
 
-    protected List<T> findPageWithTimeSearch(String searchView, List<Clause> clauses, Ordering ordering, TimePageLink pageLink) {
+    protected List<E> findPageWithTimeSearch(String searchView, List<Clause> clauses, Ordering ordering, TimePageLink pageLink) {
         return findPageWithTimeSearch(searchView, clauses, Collections.singletonList(ordering), pageLink);
     }
 
-
-    protected List<T> findPageWithTimeSearch(String searchView, List<Clause> clauses, List<Ordering> topLevelOrderings, TimePageLink pageLink) {
+    protected List<E> findPageWithTimeSearch(String searchView, List<Clause> clauses, List<Ordering> topLevelOrderings, TimePageLink pageLink) {
         Select select = select().from(searchView);
         Where query = select.where();
         for (Clause clause : clauses) {

@@ -27,9 +27,10 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.dao.AbstractSearchTextDao;
-import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ComponentDescriptorEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +45,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
  */
 @Component
 @Slf4j
-public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentDescriptorEntity> implements ComponentDescriptorDao {
+public class BaseComponentDescriptorDao extends CassandraAbstractSearchTextDao<ComponentDescriptorEntity, ComponentDescriptor> implements ComponentDescriptorDao {
 
     @Override
     protected Class<ComponentDescriptorEntity> getColumnFamilyClass() {
@@ -57,10 +58,10 @@ public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentD
     }
 
     @Override
-    public Optional<ComponentDescriptorEntity> save(ComponentDescriptor component) {
+    public Optional<ComponentDescriptor> saveIfNotExist(ComponentDescriptor component) {
         ComponentDescriptorEntity entity = new ComponentDescriptorEntity(component);
         log.debug("Save component entity [{}]", entity);
-        Optional<ComponentDescriptorEntity> result = saveIfNotExist(entity);
+        Optional<ComponentDescriptor> result = saveIfNotExist(entity);
         if (log.isTraceEnabled()) {
             log.trace("Saved result: [{}] for component entity [{}]", result.isPresent(), result.orElse(null));
         } else {
@@ -70,19 +71,19 @@ public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentD
     }
 
     @Override
-    public ComponentDescriptorEntity findById(ComponentDescriptorId componentId) {
+    public ComponentDescriptor findById(ComponentDescriptorId componentId) {
         log.debug("Search component entity by id [{}]", componentId);
-        ComponentDescriptorEntity entity = super.findById(componentId.getId());
+        ComponentDescriptor componentDescriptor = super.findById(componentId.getId());
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}] for component entity [{}]", entity != null, entity);
+            log.trace("Search result: [{}] for component entity [{}]", componentDescriptor != null, componentDescriptor);
         } else {
-            log.debug("Search result: [{}]", entity != null);
+            log.debug("Search result: [{}]", componentDescriptor != null);
         }
-        return entity;
+        return componentDescriptor;
     }
 
     @Override
-    public ComponentDescriptorEntity findByClazz(String clazz) {
+    public ComponentDescriptor findByClazz(String clazz) {
         log.debug("Search component entity by clazz [{}]", clazz);
         Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY, clazz));
         log.trace("Execute query [{}]", query);
@@ -92,11 +93,11 @@ public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentD
         } else {
             log.debug("Search result: [{}]", entity != null);
         }
-        return entity;
+        return DaoUtil.getData(entity);
     }
 
     @Override
-    public List<ComponentDescriptorEntity> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
+    public List<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
         log.debug("Try to find component by type [{}] and pageLink [{}]", type, pageLink);
         List<ComponentDescriptorEntity> entities = findPageWithTextSearch(ModelConstants.COMPONENT_DESCRIPTOR_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type.name())), pageLink);
@@ -105,11 +106,11 @@ public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentD
         } else {
             log.debug("Search result: [{}]", entities.size());
         }
-        return entities;
+        return DaoUtil.convertDataList(entities);
     }
 
     @Override
-    public List<ComponentDescriptorEntity> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
+    public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         log.debug("Try to find component by scope [{}] and type [{}] and pageLink [{}]", scope, type, pageLink);
         List<ComponentDescriptorEntity> entities = findPageWithTextSearch(ModelConstants.COMPONENT_DESCRIPTOR_BY_SCOPE_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type.name()),
@@ -119,20 +120,20 @@ public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentD
         } else {
             log.debug("Search result: [{}]", entities.size());
         }
-        return entities;
+        return DaoUtil.convertDataList(entities);
     }
 
-    public ResultSet removeById(UUID key) {
+    public boolean removeById(UUID key) {
         Statement delete = QueryBuilder.delete().all().from(ModelConstants.COMPONENT_DESCRIPTOR_BY_ID).where(eq(ModelConstants.ID_PROPERTY, key));
         log.debug("Remove request: {}", delete.toString());
-        return getSession().execute(delete);
+        return getSession().execute(delete).wasApplied();
     }
 
     @Override
     public void deleteById(ComponentDescriptorId id) {
         log.debug("Delete plugin meta-data entity by id [{}]", id);
-        ResultSet resultSet = removeById(id.getId());
-        log.debug("Delete result: [{}]", resultSet.wasApplied());
+        boolean result = removeById(id.getId());
+        log.debug("Delete result: [{}]", result);
     }
 
     @Override
@@ -144,7 +145,7 @@ public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentD
         log.debug("Delete result: [{}]", resultSet.wasApplied());
     }
 
-    private Optional<ComponentDescriptorEntity> saveIfNotExist(ComponentDescriptorEntity entity) {
+    private Optional<ComponentDescriptor> saveIfNotExist(ComponentDescriptorEntity entity) {
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
         }
@@ -161,7 +162,7 @@ public class BaseComponentDescriptorDao extends AbstractSearchTextDao<ComponentD
                 .ifNotExists()
         );
         if (rs.wasApplied()) {
-            return Optional.of(entity);
+            return Optional.of(DaoUtil.getData(entity));
         } else {
             return Optional.empty();
         }

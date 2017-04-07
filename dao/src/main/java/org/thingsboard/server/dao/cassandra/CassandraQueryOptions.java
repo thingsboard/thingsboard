@@ -21,11 +21,8 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
-
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @Component
 @Configuration

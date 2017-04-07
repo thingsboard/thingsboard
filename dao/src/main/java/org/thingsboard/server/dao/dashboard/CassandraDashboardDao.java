@@ -15,20 +15,23 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.model.DashboardEntity;
 
-/**
- * The Interface DashboardDao.
- */
-public interface DashboardDao extends Dao<Dashboard> {
+import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME;
 
-    /**
-     * Save or update dashboard object
-     *
-     * @param dashboard the dashboard object
-     * @return saved dashboard object
-     */
-    Dashboard save(Dashboard dashboard);
+@Component
+public class CassandraDashboardDao extends CassandraAbstractSearchTextDao<DashboardEntity, Dashboard> implements DashboardDao {
 
+    @Override
+    protected Class<DashboardEntity> getColumnFamilyClass() {
+        return DashboardEntity.class;
+    }
+
+    @Override
+    protected String getColumnFamilyName() {
+        return DASHBOARD_COLUMN_FAMILY_NAME;
+    }
 }

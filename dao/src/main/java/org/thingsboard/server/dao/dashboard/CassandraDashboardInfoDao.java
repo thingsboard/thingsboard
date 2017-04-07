@@ -17,8 +17,10 @@ package org.thingsboard.server.dao.dashboard;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.AbstractSearchTextDao;
+import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.DashboardInfoEntity;
 
 import java.util.Arrays;
@@ -31,7 +33,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-public class DashboardInfoDaoImpl extends AbstractSearchTextDao<DashboardInfoEntity> implements DashboardInfoDao {
+public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<DashboardInfoEntity, DashboardInfo> implements DashboardInfoDao {
 
     @Override
     protected Class<DashboardInfoEntity> getColumnFamilyClass() {
@@ -44,18 +46,18 @@ public class DashboardInfoDaoImpl extends AbstractSearchTextDao<DashboardInfoEnt
     }
 
     @Override
-    public List<DashboardInfoEntity> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink) {
+    public List<DashboardInfo> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find dashboards by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<DashboardInfoEntity> dashboardEntities = findPageWithTextSearch(DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Collections.singletonList(eq(DASHBOARD_TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
 
         log.trace("Found dashboards [{}] by tenantId [{}] and pageLink [{}]", dashboardEntities, tenantId, pageLink);
-        return dashboardEntities;
+        return DaoUtil.convertDataList(dashboardEntities);
     }
 
     @Override
-    public List<DashboardInfoEntity> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
+    public List<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find dashboards by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
         List<DashboardInfoEntity> dashboardEntities = findPageWithTextSearch(DASHBOARD_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(DASHBOARD_CUSTOMER_ID_PROPERTY, customerId),
@@ -63,7 +65,7 @@ public class DashboardInfoDaoImpl extends AbstractSearchTextDao<DashboardInfoEnt
                 pageLink);
 
         log.trace("Found dashboards [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", dashboardEntities, tenantId, customerId, pageLink);
-        return dashboardEntities;
+        return DaoUtil.convertDataList(dashboardEntities);
     }
 
 }

@@ -25,22 +25,22 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 
 public interface DashboardService {
     
-    public Dashboard findDashboardById(DashboardId dashboardId);
-    
-    public Dashboard saveDashboard(Dashboard dashboard);
-    
-    public Dashboard assignDashboardToCustomer(DashboardId dashboardId, CustomerId customerId);
+    Dashboard findDashboardById(DashboardId dashboardId);
 
-    public Dashboard unassignDashboardFromCustomer(DashboardId dashboardId);
+    Dashboard saveDashboard(Dashboard dashboard);
 
-    public void deleteDashboard(DashboardId dashboardId);
-    
-    public TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
+    Dashboard assignDashboardToCustomer(DashboardId dashboardId, CustomerId customerId);
 
-    public void deleteDashboardsByTenantId(TenantId tenantId);
-    
-    public TextPageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+    Dashboard unassignDashboardFromCustomer(DashboardId dashboardId);
 
-    public void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
-    
+    void deleteDashboard(DashboardId dashboardId);
+
+    TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
+
+    void deleteDashboardsByTenantId(TenantId tenantId);
+
+    TextPageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
+
 }

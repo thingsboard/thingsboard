@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.rule;
 
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,8 @@ import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
-import org.thingsboard.server.dao.AbstractSearchTextDao;
+import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.RuleMetaDataEntity;
 
@@ -36,7 +36,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Component
 @Slf4j
-public class BaseRuleDao extends AbstractSearchTextDao<RuleMetaDataEntity> implements RuleDao {
+public class CassandraBaseRuleDao extends CassandraAbstractSearchTextDao<RuleMetaDataEntity, RuleMetaData> implements RuleDao {
 
     @Override
     protected Class<RuleMetaDataEntity> getColumnFamilyClass() {
@@ -49,17 +49,12 @@ public class BaseRuleDao extends AbstractSearchTextDao<RuleMetaDataEntity> imple
     }
 
     @Override
-    public RuleMetaDataEntity findById(RuleId ruleId) {
+    public RuleMetaData findById(RuleId ruleId) {
         return findById(ruleId.getId());
     }
 
     @Override
-    public RuleMetaDataEntity save(RuleMetaData rule) {
-        return save(new RuleMetaDataEntity(rule));
-    }
-
-    @Override
-    public List<RuleMetaDataEntity> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
+    public List<RuleMetaData> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
         log.debug("Try to find rules by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<RuleMetaDataEntity> entities = findPageWithTextSearch(ModelConstants.RULE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.RULE_TENANT_ID_PROPERTY, tenantId.getId())), pageLink);
@@ -68,11 +63,11 @@ public class BaseRuleDao extends AbstractSearchTextDao<RuleMetaDataEntity> imple
         } else {
             log.debug("Search result: [{}]", entities.size());
         }
-        return entities;
+        return DaoUtil.convertDataList(entities);
     }
 
     @Override
-    public List<RuleMetaDataEntity> findAllTenantRulesByTenantId(UUID tenantId, TextPageLink pageLink) {
+    public List<RuleMetaData> findAllTenantRulesByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find all tenant rules by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<RuleMetaDataEntity> entities = findPageWithTextSearch(ModelConstants.RULE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(in(ModelConstants.RULE_TENANT_ID_PROPERTY, Arrays.asList(NULL_UUID, tenantId))),
@@ -82,23 +77,23 @@ public class BaseRuleDao extends AbstractSearchTextDao<RuleMetaDataEntity> imple
         } else {
             log.debug("Search result: [{}]", entities.size());
         }
-        return entities;
+        return DaoUtil.convertDataList(entities);
     }
 
     @Override
-    public List<RuleMetaDataEntity> findRulesByPlugin(String pluginToken) {
+    public List<RuleMetaData> findRulesByPlugin(String pluginToken) {
         log.debug("Search rules by api token [{}]", pluginToken);
         Select select = select().from(ModelConstants.RULE_BY_PLUGIN_TOKEN);
         Select.Where query = select.where();
         query.and(eq(ModelConstants.RULE_PLUGIN_TOKEN_PROPERTY, pluginToken));
-        return findListByStatement(query);
+        return DaoUtil.convertDataList(findListByStatement(query));
     }
 
     @Override
     public void deleteById(UUID id) {
         log.debug("Delete rule meta-data entity by id [{}]", id);
-        ResultSet resultSet = removeById(id);
-        log.debug("Delete result: [{}]", resultSet.wasApplied());
+        boolean result = removeById(id);
+        log.debug("Delete result: [{}]", result);
     }
 
     @Override

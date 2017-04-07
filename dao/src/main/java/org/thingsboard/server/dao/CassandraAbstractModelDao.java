@@ -28,8 +28,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.wrapper.EntityResultSet;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.wrapper.EntityResultSet;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -37,26 +37,25 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.lt;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 @Slf4j
-public abstract class AbstractModelDao<T extends BaseEntity<?>> extends AbstractDao implements Dao<T> {
+public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> extends CassandraAbstractDao implements Dao<D> {
 
-    protected abstract Class<T> getColumnFamilyClass();
+    protected abstract Class<E> getColumnFamilyClass();
 
     protected abstract String getColumnFamilyName();
 
-    protected Mapper<T> getMapper() {
+    protected Mapper<E> getMapper() {
         return cluster.getMapper(getColumnFamilyClass());
     }
 
-    protected List<T> findListByStatement(Statement statement) {
-        List<T> list = Collections.emptyList();
+    protected List<E> findListByStatement(Statement statement) {
+        List<E> list = Collections.emptyList();
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
             ResultSet resultSet = getSession().execute(statement);
-            Result<T> result = getMapper().map(resultSet);
+            Result<E> result = getMapper().map(resultSet);
             if (result != null) {
                 list = result.all();
             }
@@ -64,33 +63,33 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         return list;
     }
 
-    protected ListenableFuture<List<T>> findListByStatementAsync(Statement statement) {
+    protected ListenableFuture<List<D>> findListByStatementAsync(Statement statement) {
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
             ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
-            ListenableFuture<List<T>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<T>>() {
+            return Futures.transform(resultSetFuture, new Function<ResultSet, List<D>>() {
                 @Nullable
                 @Override
-                public List<T> apply(@Nullable ResultSet resultSet) {
-                    Result<T> result = getMapper().map(resultSet);
+                public List<D> apply(@Nullable ResultSet resultSet) {
+                    Result<E> result = getMapper().map(resultSet);
                     if (result != null) {
-                        return result.all();
+                        List<E> entities = result.all();
+                        return DaoUtil.convertDataList(entities);
                     } else {
                         return Collections.emptyList();
                     }
                 }
             });
-            return result;
         }
         return Futures.immediateFuture(Collections.emptyList());
     }
 
-    protected T findOneByStatement(Statement statement) {
-        T object = null;
+    protected E findOneByStatement(Statement statement) {
+        E object = null;
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
             ResultSet resultSet = getSession().execute(statement);
-            Result<T> result = getMapper().map(resultSet);
+            Result<E> result = getMapper().map(resultSet);
             if (result != null) {
                 object = result.one();
             }
@@ -98,32 +97,32 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         return object;
     }
 
-    protected ListenableFuture<T> findOneByStatementAsync(Statement statement) {
+    protected ListenableFuture<D> findOneByStatementAsync(Statement statement) {
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
             ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
-            ListenableFuture<T> result = Futures.transform(resultSetFuture, new Function<ResultSet, T>() {
+            return Futures.transform(resultSetFuture, new Function<ResultSet, D>() {
                 @Nullable
                 @Override
-                public T apply(@Nullable ResultSet resultSet) {
-                    Result<T> result = getMapper().map(resultSet);
+                public D apply(@Nullable ResultSet resultSet) {
+                    Result<E> result = getMapper().map(resultSet);
                     if (result != null) {
-                        return result.one();
+                        E entity = result.one();
+                        return DaoUtil.getData(entity);
                     } else {
                         return null;
                     }
                 }
             });
-            return result;
         }
         return Futures.immediateFuture(null);
     }
 
-    protected Statement getSaveQuery(T dto) {
+    protected Statement getSaveQuery(E dto) {
         return getMapper().saveQuery(dto);
     }
 
-    protected EntityResultSet<T> saveWithResult(T entity) {
+    protected EntityResultSet<E> saveWithResult(E entity) {
         log.debug("Save entity {}", entity);
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
@@ -136,34 +135,48 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         return new EntityResultSet<>(resultSet, entity);
     }
 
-    public T save(T entity) {
-        return saveWithResult(entity).getEntity();
+    @Override
+    public D save(D domain) {
+        E entity;
+        try {
+            entity = getColumnFamilyClass().getConstructor(domain.getClass()).newInstance(domain);
+        } catch (Exception e) {
+            log.error("Can't create entity for domain object {}", domain, e);
+            throw new IllegalArgumentException("Can't create entity for domain object {" + domain + "}", e);
+        }
+        log.debug("Saving entity {}", entity);
+        entity = saveWithResult(entity).getEntity();
+        return DaoUtil.getData(entity);
     }
 
-    public T findById(UUID key) {
+    @Override
+    public D findById(UUID key) {
         log.debug("Get entity by key {}", key);
         Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, key));
         log.trace("Execute query {}", query);
-        return findOneByStatement(query);
+        E entity = findOneByStatement(query);
+        return DaoUtil.getData(entity);
     }
 
-    public ListenableFuture<T> findByIdAsync(UUID key) {
+    @Override
+    public ListenableFuture<D> findByIdAsync(UUID key) {
         log.debug("Get entity by key {}", key);
         Select.Where query = select().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, key));
         log.trace("Execute query {}", query);
         return findOneByStatementAsync(query);
     }
 
-
-    public ResultSet removeById(UUID key) {
+    @Override
+    public boolean removeById(UUID key) {
         Statement delete = QueryBuilder.delete().all().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, key));
         log.debug("Remove request: {}", delete.toString());
-        return getSession().execute(delete);
+        return getSession().execute(delete).wasApplied();
     }
 
-
-    public List<T> find() {
+    @Override
+    public List<D> find() {
         log.debug("Get all entities from column family {}", getColumnFamilyName());
-        return findListByStatement(QueryBuilder.select().all().from(getColumnFamilyName()).setConsistencyLevel(cluster.getDefaultReadConsistencyLevel()));
+        List<E> entities = findListByStatement(QueryBuilder.select().all().from(getColumnFamilyName()).setConsistencyLevel(cluster.getDefaultReadConsistencyLevel()));
+        return DaoUtil.convertDataList(entities);
     }
 }

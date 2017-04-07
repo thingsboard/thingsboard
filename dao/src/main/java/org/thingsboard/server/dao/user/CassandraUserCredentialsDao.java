@@ -15,26 +15,23 @@
  */
 package org.thingsboard.server.dao.user;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-
-import java.util.UUID;
-
+import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.dao.AbstractModelDao;
-import org.thingsboard.server.dao.model.UserCredentialsEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Repository;
-
-import com.datastax.driver.core.querybuilder.Select.Where;
+import org.thingsboard.server.dao.CassandraAbstractModelDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.UserCredentialsEntity;
+
+import java.util.UUID;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 @Component
 @Slf4j
-public class UserCredentialsDaoImpl extends AbstractModelDao<UserCredentialsEntity> implements UserCredentialsDao {
+public class CassandraUserCredentialsDao extends CassandraAbstractModelDao<UserCredentialsEntity, UserCredentials> implements UserCredentialsDao {
 
     @Override
     protected Class<UserCredentialsEntity> getColumnFamilyClass() {
@@ -47,41 +44,35 @@ public class UserCredentialsDaoImpl extends AbstractModelDao<UserCredentialsEnti
     }
 
     @Override
-    public UserCredentialsEntity save(UserCredentials userCredentials) {
-        log.debug("Save user credentials [{}] ", userCredentials);
-        return save(new UserCredentialsEntity(userCredentials));
-    }
-
-    @Override
-    public UserCredentialsEntity findByUserId(UUID userId) {
+    public UserCredentials findByUserId(UUID userId) {
         log.debug("Try to find user credentials by userId [{}] ", userId);
         Where query = select().from(ModelConstants.USER_CREDENTIALS_BY_USER_COLUMN_FAMILY_NAME).where(eq(ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, userId));
         log.trace("Execute query {}", query);
         UserCredentialsEntity userCredentialsEntity = findOneByStatement(query);
         log.trace("Found user credentials [{}] by userId [{}]", userCredentialsEntity, userId);
-        return userCredentialsEntity;
+        return DaoUtil.getData(userCredentialsEntity);
     }
 
     @Override
-    public UserCredentialsEntity findByActivateToken(String activateToken) {
+    public UserCredentials findByActivateToken(String activateToken) {
         log.debug("Try to find user credentials by activateToken [{}] ", activateToken);
         Where query = select().from(ModelConstants.USER_CREDENTIALS_BY_ACTIVATE_TOKEN_COLUMN_FAMILY_NAME)
                 .where(eq(ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY, activateToken));
         log.trace("Execute query {}", query);
         UserCredentialsEntity userCredentialsEntity = findOneByStatement(query);
         log.trace("Found user credentials [{}] by activateToken [{}]", userCredentialsEntity, activateToken);
-        return userCredentialsEntity;
+        return DaoUtil.getData(userCredentialsEntity);
     }
 
     @Override
-    public UserCredentialsEntity findByResetToken(String resetToken) {
+    public UserCredentials findByResetToken(String resetToken) {
         log.debug("Try to find user credentials by resetToken [{}] ", resetToken);
         Where query = select().from(ModelConstants.USER_CREDENTIALS_BY_RESET_TOKEN_COLUMN_FAMILY_NAME)
                 .where(eq(ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY, resetToken));
         log.trace("Execute query {}", query);
         UserCredentialsEntity userCredentialsEntity = findOneByStatement(query);
         log.trace("Found user credentials [{}] by resetToken [{}]", userCredentialsEntity, resetToken);
-        return userCredentialsEntity;
+        return DaoUtil.getData(userCredentialsEntity);
     }
 
 }

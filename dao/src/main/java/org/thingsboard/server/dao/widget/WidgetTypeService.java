@@ -23,16 +23,16 @@ import java.util.List;
 
 public interface WidgetTypeService {
 
-    public WidgetType findWidgetTypeById(WidgetTypeId widgetTypeId);
+    WidgetType findWidgetTypeById(WidgetTypeId widgetTypeId);
 
-    public WidgetType saveWidgetType(WidgetType widgetType);
+    WidgetType saveWidgetType(WidgetType widgetType);
 
-    public void deleteWidgetType(WidgetTypeId widgetTypeId);
+    void deleteWidgetType(WidgetTypeId widgetTypeId);
 
-    public List<WidgetType> findWidgetTypesByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
+    List<WidgetType> findWidgetTypesByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
 
-    public WidgetType findWidgetTypeByTenantIdBundleAliasAndAlias(TenantId tenantId, String bundleAlias, String alias);
+    WidgetType findWidgetTypeByTenantIdBundleAliasAndAlias(TenantId tenantId, String bundleAlias, String alias);
 
-    public void deleteWidgetTypesByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
+    void deleteWidgetTypesByTenantIdAndBundleAlias(TenantId tenantId, String bundleAlias);
 
 }

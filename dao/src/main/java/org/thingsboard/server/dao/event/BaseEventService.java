@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.event;
 
+// CASSANDRA ???
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,14 +28,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.EventEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Service
@@ -59,7 +57,7 @@ public class BaseEventService implements EventService {
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
         }
-        return getData(eventDao.save(event));
+        return eventDao.save(event);
     }
 
     @Override
@@ -75,8 +73,8 @@ public class BaseEventService implements EventService {
         if (event.getId() == null) {
             event.setId(new EventId(UUIDs.timeBased()));
         }
-        Optional<EventEntity> result = eventDao.saveIfNotExists(event);
-        return result.isPresent() ? Optional.of(getData(result.get())) : Optional.empty();
+        Optional<Event> result = eventDao.saveIfNotExists(event);
+        return result.isPresent() ? Optional.of(result.get()) : Optional.empty();
     }
 
     @Override
@@ -93,22 +91,19 @@ public class BaseEventService implements EventService {
         if (StringUtils.isEmpty(eventUid)) {
             throw new DataValidationException("Event uid should be specified!.");
         }
-        EventEntity entity = eventDao.findEvent(tenantId.getId(), entityId, eventType, eventUid);
-        return entity != null ? Optional.of(getData(entity)) : Optional.empty();
+        Event event = eventDao.findEvent(tenantId.getId(), entityId, eventType, eventUid);
+        return event != null ? Optional.of(event) : Optional.empty();
     }
 
     @Override
     public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
-        List<EventEntity> entities = eventDao.findEvents(tenantId.getId(), entityId, pageLink);
-        List<Event> events = convertDataList(entities);
+        List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, pageLink);
         return new TimePageData<Event>(events, pageLink);
     }
 
-
     @Override
     public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        List<EventEntity> entities = eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
-        List<Event> events = convertDataList(entities);
+        List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
         return new TimePageData<Event>(events, pageLink);
     }
 

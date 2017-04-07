@@ -19,27 +19,28 @@ import com.datastax.driver.core.querybuilder.Clause;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.querybuilder.Select.Where;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.List;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.gt;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.gte;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.lt;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
-public abstract class AbstractSearchTextDao<T extends SearchTextEntity<?>> extends AbstractModelDao<T> {
+@Slf4j
+public abstract class CassandraAbstractSearchTextDao<E extends SearchTextEntity<D>, D> extends CassandraAbstractModelDao<E, D> {
 
-    public T save(T entity) {
+    public D save(D domain) {
+
         entity.setSearchText(entity.getSearchTextSource().toLowerCase());
+
         return super.save(entity);
     }
-    
-    protected List<T> findPageWithTextSearch(String searchView, List<Clause> clauses, TextPageLink pageLink) {
+
+    protected List<E> findPageWithTextSearch(String searchView, List<Clause> clauses, TextPageLink pageLink) {
         Select select = select().from(searchView);
         Where query = select.where();
         for (Clause clause : clauses) {
@@ -49,7 +50,7 @@ public abstract class AbstractSearchTextDao<T extends SearchTextEntity<?>> exten
         if (!StringUtils.isEmpty(pageLink.getTextOffset())) {
             query.and(eq(ModelConstants.SEARCH_TEXT_PROPERTY, pageLink.getTextOffset()));
             query.and(QueryBuilder.lt(ModelConstants.ID_PROPERTY, pageLink.getIdOffset()));
-            List<T> result = findListByStatement(query);
+            List<E> result = findListByStatement(query);
             if (result.size() < pageLink.getLimit()) {
                 select = select().from(searchView);
                 query = select.where();

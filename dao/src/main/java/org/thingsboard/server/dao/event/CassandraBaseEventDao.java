@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.AbstractSearchTimeDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EventEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
@@ -36,13 +37,11 @@ import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_BY_ID_VIEW_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_BY_TYPE_AND_ID_VIEW_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-public class BaseEventDao extends AbstractSearchTimeDao<EventEntity> implements EventDao {
+public class CassandraBaseEventDao extends AbstractSearchTimeDao<EventEntity, Event> implements EventDao {
 
     @Override
     protected Class<EventEntity> getColumnFamilyClass() {
@@ -55,18 +54,18 @@ public class BaseEventDao extends AbstractSearchTimeDao<EventEntity> implements 
     }
 
     @Override
-    public EventEntity save(Event event) {
+    public Event save(Event event) {
         log.debug("Save event [{}] ", event);
         return save(new EventEntity(event), false).orElse(null);
     }
 
     @Override
-    public Optional<EventEntity> saveIfNotExists(Event event) {
+    public Optional<Event> saveIfNotExists(Event event) {
         return save(new EventEntity(event), true);
     }
 
     @Override
-    public EventEntity findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
+    public Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
         log.debug("Search event entity by [{}][{}][{}][{}]", tenantId, entityId, eventType, eventUid);
         Select.Where query = select().from(getColumnFamilyName()).where(
                 eq(ModelConstants.EVENT_TENANT_ID_PROPERTY, tenantId))
@@ -81,11 +80,11 @@ public class BaseEventDao extends AbstractSearchTimeDao<EventEntity> implements 
         } else {
             log.debug("Search result: [{}]", entity != null);
         }
-        return entity;
+        return DaoUtil.getData(entity);
     }
 
     @Override
-    public List<EventEntity> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
+    public List<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
         log.trace("Try to find events by tenant [{}], entity [{}]and pageLink [{}]", tenantId, entityId, pageLink);
         List<EventEntity> entities = findPageWithTimeSearch(EVENT_BY_ID_VIEW_NAME,
                 Arrays.asList(eq(ModelConstants.EVENT_TENANT_ID_PROPERTY, tenantId),
@@ -93,11 +92,11 @@ public class BaseEventDao extends AbstractSearchTimeDao<EventEntity> implements 
                         eq(ModelConstants.EVENT_ENTITY_ID_PROPERTY, entityId.getId())),
                 pageLink);
         log.trace("Found events by tenant [{}], entity [{}] and pageLink [{}]", tenantId, entityId, pageLink);
-        return entities;
+        return DaoUtil.convertDataList(entities);
     }
 
     @Override
-    public List<EventEntity> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
+    public List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
         log.trace("Try to find events by tenant [{}], entity [{}], type [{}] and pageLink [{}]", tenantId, entityId, eventType, pageLink);
         List<EventEntity> entities = findPageWithTimeSearch(EVENT_BY_TYPE_AND_ID_VIEW_NAME,
                 Arrays.asList(eq(ModelConstants.EVENT_TENANT_ID_PROPERTY, tenantId),
@@ -108,10 +107,10 @@ public class BaseEventDao extends AbstractSearchTimeDao<EventEntity> implements 
                         QueryBuilder.desc(ModelConstants.EVENT_TYPE_PROPERTY),
                 pageLink);
         log.trace("Found events by tenant [{}], entity [{}], type [{}] and pageLink [{}]", tenantId, entityId, eventType, pageLink);
-        return entities;
+        return DaoUtil.convertDataList(entities);
     }
 
-    private Optional<EventEntity> save(EventEntity entity, boolean ifNotExists) {
+    private Optional<Event> save(EventEntity entity, boolean ifNotExists) {
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
         }
@@ -128,7 +127,7 @@ public class BaseEventDao extends AbstractSearchTimeDao<EventEntity> implements 
         }
         ResultSet rs = executeWrite(insert);
         if (rs.wasApplied()) {
-            return Optional.of(entity);
+            return Optional.of(DaoUtil.getData(entity));
         } else {
             return Optional.empty();
         }

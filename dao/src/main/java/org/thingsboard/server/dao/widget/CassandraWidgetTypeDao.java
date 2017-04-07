@@ -17,12 +17,10 @@ package org.thingsboard.server.dao.widget;
 
 import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 import org.thingsboard.server.common.data.widget.WidgetType;
-import org.thingsboard.server.dao.AbstractModelDao;
+import org.thingsboard.server.dao.CassandraAbstractModelDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.WidgetTypeEntity;
 
 import java.util.List;
@@ -34,7 +32,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-public class WidgetTypeDaoImpl extends AbstractModelDao<WidgetTypeEntity> implements WidgetTypeDao {
+public class CassandraWidgetTypeDao extends CassandraAbstractModelDao<WidgetTypeEntity, WidgetType> implements WidgetTypeDao {
 
     @Override
     protected Class<WidgetTypeEntity> getColumnFamilyClass() {
@@ -47,13 +45,7 @@ public class WidgetTypeDaoImpl extends AbstractModelDao<WidgetTypeEntity> implem
     }
 
     @Override
-    public WidgetTypeEntity save(WidgetType widgetType) {
-        log.debug("Save widget type [{}] ", widgetType);
-        return save(new WidgetTypeEntity(widgetType));
-    }
-
-    @Override
-    public List<WidgetTypeEntity> findWidgetTypesByTenantIdAndBundleAlias(UUID tenantId, String bundleAlias) {
+    public List<WidgetType> findWidgetTypesByTenantIdAndBundleAlias(UUID tenantId, String bundleAlias) {
         log.debug("Try to find widget types by tenantId [{}] and bundleAlias [{}]", tenantId, bundleAlias);
         Where query = select().from(WIDGET_TYPE_BY_TENANT_AND_ALIASES_COLUMN_FAMILY_NAME)
                 .where()
@@ -61,11 +53,11 @@ public class WidgetTypeDaoImpl extends AbstractModelDao<WidgetTypeEntity> implem
                 .and(eq(WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY, bundleAlias));
         List<WidgetTypeEntity> widgetTypesEntities = findListByStatement(query);
         log.trace("Found widget types [{}] by tenantId [{}] and bundleAlias [{}]", widgetTypesEntities, tenantId, bundleAlias);
-        return widgetTypesEntities;
+        return DaoUtil.convertDataList(widgetTypesEntities);
     }
 
     @Override
-    public WidgetTypeEntity findByTenantIdBundleAliasAndAlias(UUID tenantId, String bundleAlias, String alias) {
+    public WidgetType findByTenantIdBundleAliasAndAlias(UUID tenantId, String bundleAlias, String alias) {
         log.debug("Try to find widget type by tenantId [{}], bundleAlias [{}] and alias [{}]", tenantId, bundleAlias, alias);
         Where query = select().from(WIDGET_TYPE_BY_TENANT_AND_ALIASES_COLUMN_FAMILY_NAME)
                 .where()
@@ -76,7 +68,7 @@ public class WidgetTypeDaoImpl extends AbstractModelDao<WidgetTypeEntity> implem
         WidgetTypeEntity widgetTypeEntity = findOneByStatement(query);
         log.trace("Found widget type [{}] by tenantId [{}], bundleAlias [{}] and alias [{}]",
                 widgetTypeEntity, tenantId, bundleAlias, alias);
-        return widgetTypeEntity;
+        return DaoUtil.getData(widgetTypeEntity);
     }
 
 }

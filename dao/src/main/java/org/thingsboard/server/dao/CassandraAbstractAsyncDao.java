@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
 /**
  * Created by ashvayka on 21.02.17.
  */
-public abstract class AbstractAsyncDao extends AbstractDao {
+public abstract class CassandraAbstractAsyncDao extends CassandraAbstractDao {
 
     protected ExecutorService readResultsProcessingExecutor;
 

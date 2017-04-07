@@ -43,13 +43,9 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import java.util.List;
 import java.util.Optional;
 
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
-import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
+import static org.thingsboard.server.dao.DaoUtil.*;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.thingsboard.server.dao.service.Validator.validateId;
-import static org.thingsboard.server.dao.service.Validator.validateIds;
-import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
@@ -71,15 +67,14 @@ public class DeviceServiceImpl implements DeviceService {
     public Device findDeviceById(DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, "Incorrect deviceId " + deviceId);
-        DeviceEntity deviceEntity = deviceDao.findById(deviceId.getId());
-        return getData(deviceEntity);
+        return deviceDao.findById(deviceId.getId());
     }
 
     @Override
     public ListenableFuture<Device> findDeviceByIdAsync(DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, "Incorrect deviceId " + deviceId);
-        ListenableFuture<DeviceEntity> deviceEntity = deviceDao.findByIdAsync(deviceId.getId());
+        ListenableFuture<Device> deviceEntity = deviceDao.findByIdAsync(deviceId.getId());
         return Futures.transform(deviceEntity, (Function<? super DeviceEntity, ? extends Device>) input -> getData(input));
     }
 
@@ -87,9 +82,9 @@ public class DeviceServiceImpl implements DeviceService {
     public Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findDeviceByTenantIdAndName [{}][{}]", tenantId, name);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        Optional<DeviceEntity> deviceEntityOpt = deviceDao.findDevicesByTenantIdAndName(tenantId.getId(), name);
+        Optional<Device> deviceEntityOpt = deviceDao.findDevicesByTenantIdAndName(tenantId.getId(), name);
         if (deviceEntityOpt.isPresent()) {
-            return Optional.of(getData(deviceEntityOpt.get()));
+            return Optional.of(deviceEntityOpt.get());
         } else {
             return Optional.empty();
         }
@@ -99,15 +94,15 @@ public class DeviceServiceImpl implements DeviceService {
     public Device saveDevice(Device device) {
         log.trace("Executing saveDevice [{}]", device);
         deviceValidator.validate(device);
-        DeviceEntity deviceEntity = deviceDao.save(device);
+        Device savedDevice = deviceDao.save(device);
         if (device.getId() == null) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
-            deviceCredentials.setDeviceId(new DeviceId(deviceEntity.getId()));
+            deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
             deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
             deviceCredentials.setCredentialsId(RandomStringUtils.randomAlphanumeric(20));
             deviceCredentialsService.createDeviceCredentials(deviceCredentials);
         }
-        return getData(deviceEntity);
+        return savedDevice;
     }
 
     @Override
@@ -140,8 +135,7 @@ public class DeviceServiceImpl implements DeviceService {
         log.trace("Executing findDevicesByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<DeviceEntity> deviceEntities = deviceDao.findDevicesByTenantId(tenantId.getId(), pageLink);
-        List<Device> devices = convertDataList(deviceEntities);
+        List<Device> devices = deviceDao.findDevicesByTenantId(tenantId.getId(), pageLink);
         return new TextPageData<Device>(devices, pageLink);
     }
 
@@ -150,7 +144,7 @@ public class DeviceServiceImpl implements DeviceService {
         log.trace("Executing findDevicesByTenantIdAndIdsAsync, tenantId [{}], deviceIds [{}]", tenantId, deviceIds);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
-        ListenableFuture<List<DeviceEntity>> deviceEntities = deviceDao.findDevicesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceIds));
+        ListenableFuture<List<Device>> devices = deviceDao.findDevicesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceIds));
         return Futures.transform(deviceEntities, (Function<List<DeviceEntity>, List<Device>>) input -> convertDataList(input));
     }
 
@@ -168,8 +162,7 @@ public class DeviceServiceImpl implements DeviceService {
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
         validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<DeviceEntity> deviceEntities = deviceDao.findDevicesByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
-        List<Device> devices = convertDataList(deviceEntities);
+        List<Device> devices = deviceDao.findDevicesByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
         return new TextPageData<Device>(devices, pageLink);
     }
 

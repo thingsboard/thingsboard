@@ -24,10 +24,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.dao.AbstractAsyncDao;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.dao.CassandraAbstractAsyncDao;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.common.data.kv.*;
-import org.thingsboard.server.dao.timeseries.BaseTimeseriesDao;
+import org.thingsboard.server.dao.timeseries.CassandraBaseTimeseriesDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -37,15 +38,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 /**
  * @author Andrew Shvayka
  */
 @Component
 @Slf4j
-public class BaseAttributesDao extends AbstractAsyncDao implements AttributesDao {
+public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implements AttributesDao {
 
     private PreparedStatement saveStmt;
 
@@ -161,7 +163,7 @@ public class BaseAttributesDao extends AbstractAsyncDao implements AttributesDao
         AttributeKvEntry attributeEntry = null;
         if (row != null) {
             long lastUpdateTs = row.get(LAST_UPDATE_TS_COLUMN, Long.class);
-            attributeEntry = new BaseAttributeKvEntry(BaseTimeseriesDao.toKvEntry(row, key), lastUpdateTs);
+            attributeEntry = new BaseAttributeKvEntry(CassandraBaseTimeseriesDao.toKvEntry(row, key), lastUpdateTs);
         }
         return attributeEntry;
     }

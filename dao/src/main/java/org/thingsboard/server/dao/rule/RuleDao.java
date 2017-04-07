@@ -20,20 +20,19 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.RuleMetaDataEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface RuleDao extends Dao<RuleMetaDataEntity> {
+public interface RuleDao extends Dao<RuleMetaData> {
 
-    RuleMetaDataEntity save(RuleMetaData rule);
+    RuleMetaData save(RuleMetaData rule);
 
-    RuleMetaDataEntity findById(RuleId ruleId);
+    RuleMetaData findById(RuleId ruleId);
 
-    List<RuleMetaDataEntity> findRulesByPlugin(String pluginToken);
+    List<RuleMetaData> findRulesByPlugin(String pluginToken);
 
-    List<RuleMetaDataEntity> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
+    List<RuleMetaData> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
 
     /**
      * Find all tenant rules (including system) by tenantId and page link.
@@ -42,7 +41,7 @@ public interface RuleDao extends Dao<RuleMetaDataEntity> {
      * @param pageLink the page link
      * @return the list of rules objects
      */
-    List<RuleMetaDataEntity> findAllTenantRulesByTenantId(UUID tenantId, TextPageLink pageLink);
+    List<RuleMetaData> findAllTenantRulesByTenantId(UUID tenantId, TextPageLink pageLink);
 
     void deleteById(UUID id);
 

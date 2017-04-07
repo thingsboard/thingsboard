@@ -15,17 +15,15 @@
  */
 package org.thingsboard.server.dao.plugin;
 
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
-import org.thingsboard.server.dao.AbstractSearchTextDao;
+import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.PluginMetaDataEntity;
 
@@ -38,7 +36,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Component
 @Slf4j
-public class BasePluginDao extends AbstractSearchTextDao<PluginMetaDataEntity> implements PluginDao {
+public class CassandraBasePluginDao extends CassandraAbstractSearchTextDao<PluginMetaDataEntity, PluginMetaData> implements PluginDao {
 
     @Override
     protected Class<PluginMetaDataEntity> getColumnFamilyClass() {
@@ -51,24 +49,19 @@ public class BasePluginDao extends AbstractSearchTextDao<PluginMetaDataEntity> i
     }
 
     @Override
-    public PluginMetaDataEntity save(PluginMetaData plugin) {
-        return save(new PluginMetaDataEntity(plugin));
-    }
-
-    @Override
-    public PluginMetaDataEntity findById(PluginId pluginId) {
+    public PluginMetaData findById(PluginId pluginId) {
         log.debug("Search plugin meta-data entity by id [{}]", pluginId);
-        PluginMetaDataEntity entity = super.findById(pluginId.getId());
+        PluginMetaData pluginMetaData = super.findById(pluginId.getId());
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}] for plugin entity [{}]", entity != null, entity);
+            log.trace("Search result: [{}] for plugin entity [{}]", pluginMetaData != null, pluginMetaData);
         } else {
-            log.debug("Search result: [{}]", entity != null);
+            log.debug("Search result: [{}]", pluginMetaData != null);
         }
-        return entity;
+        return pluginMetaData;
     }
 
     @Override
-    public PluginMetaDataEntity findByApiToken(String apiToken) {
+    public PluginMetaData findByApiToken(String apiToken) {
         log.debug("Search plugin meta-data entity by api token [{}]", apiToken);
         Select.Where query = select().from(ModelConstants.PLUGIN_BY_API_TOKEN_COLUMN_FAMILY_NAME).where(eq(ModelConstants.PLUGIN_API_TOKEN_PROPERTY, apiToken));
         log.trace("Execute query [{}]", query);
@@ -78,14 +71,14 @@ public class BasePluginDao extends AbstractSearchTextDao<PluginMetaDataEntity> i
         } else {
             log.debug("Search result: [{}]", entity != null);
         }
-        return entity;
+        return DaoUtil.getData(entity);
     }
 
     @Override
     public void deleteById(UUID id) {
         log.debug("Delete plugin meta-data entity by id [{}]", id);
-        ResultSet resultSet = removeById(id);
-        log.debug("Delete result: [{}]", resultSet.wasApplied());
+        boolean result = removeById(id);
+        log.debug("Delete result: [{}]", result);
     }
 
     @Override
@@ -94,7 +87,7 @@ public class BasePluginDao extends AbstractSearchTextDao<PluginMetaDataEntity> i
     }
 
     @Override
-    public List<PluginMetaDataEntity> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
+    public List<PluginMetaData> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
         log.debug("Try to find plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<PluginMetaDataEntity> entities = findPageWithTextSearch(ModelConstants.PLUGIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.PLUGIN_TENANT_ID_PROPERTY, tenantId.getId())), pageLink);
@@ -103,11 +96,11 @@ public class BasePluginDao extends AbstractSearchTextDao<PluginMetaDataEntity> i
         } else {
             log.debug("Search result: [{}]", entities.size());
         }
-        return entities;
+        return DaoUtil.convertDataList(entities);
     }
 
     @Override
-    public List<PluginMetaDataEntity> findAllTenantPluginsByTenantId(UUID tenantId, TextPageLink pageLink) {
+    public List<PluginMetaData> findAllTenantPluginsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find all tenant plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<PluginMetaDataEntity> pluginEntities = findPageWithTextSearch(ModelConstants.PLUGIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(in(ModelConstants.PLUGIN_TENANT_ID_PROPERTY, Arrays.asList(NULL_UUID, tenantId))),
@@ -117,7 +110,7 @@ public class BasePluginDao extends AbstractSearchTextDao<PluginMetaDataEntity> i
         } else {
             log.debug("Search result: [{}]", pluginEntities.size());
         }
-        return pluginEntities;
+        return DaoUtil.convertDataList(pluginEntities);
     }
 
 }

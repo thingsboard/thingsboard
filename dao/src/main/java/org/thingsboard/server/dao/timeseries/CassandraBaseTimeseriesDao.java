@@ -28,8 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.dao.AbstractAsyncDao;
-import org.thingsboard.server.dao.AbstractDao;
+import org.thingsboard.server.dao.CassandraAbstractAsyncDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import javax.annotation.Nullable;
@@ -38,20 +37,20 @@ import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 /**
  * @author Andrew Shvayka
  */
 @Component
 @Slf4j
-public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao {
+public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implements TimeseriesDao {
 
     //@Value("${cassandra.query.min_aggregation_step_ms}")
     //TODO:
