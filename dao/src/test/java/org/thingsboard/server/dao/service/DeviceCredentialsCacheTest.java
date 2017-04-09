@@ -36,11 +36,13 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceCredentialsDao;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.model.DeviceCredentialsEntity;
 
 import java.util.UUID;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @TestPropertySource(properties = {"cache.enabled = true"})
 public class DeviceCredentialsCacheTest extends AbstractServiceTest {
@@ -140,9 +142,8 @@ public class DeviceCredentialsCacheTest extends AbstractServiceTest {
         return null;
     }
 
-    private DeviceCredentialsEntity createDummyDeviceCredentialsEntity(String deviceCredentialsId) {
-        DeviceCredentialsEntity result = new DeviceCredentialsEntity();
-        result.setId(UUIDs.timeBased());
+    private DeviceCredentials createDummyDeviceCredentialsEntity(String deviceCredentialsId) {
+        DeviceCredentials result = new DeviceCredentials(new DeviceCredentialsId(UUIDs.timeBased()));
         result.setCredentialsId(deviceCredentialsId);
         return result;
     }

@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.AbstractSearchTimeDao;
+import org.thingsboard.server.dao.CassandraAbstractSearchTimeDao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EventEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -41,7 +41,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-public class CassandraBaseEventDao extends AbstractSearchTimeDao<EventEntity, Event> implements EventDao {
+public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventEntity, Event> implements EventDao {
 
     @Override
     protected Class<EventEntity> getColumnFamilyClass() {

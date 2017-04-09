@@ -45,7 +45,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
  */
 @Component
 @Slf4j
-public class BaseComponentDescriptorDao extends CassandraAbstractSearchTextDao<ComponentDescriptorEntity, ComponentDescriptor> implements ComponentDescriptorDao {
+public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearchTextDao<ComponentDescriptorEntity, ComponentDescriptor> implements ComponentDescriptorDao {
 
     @Override
     protected Class<ComponentDescriptorEntity> getColumnFamilyClass() {

@@ -32,7 +32,7 @@ import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
-public abstract class AbstractSearchTimeDao<E extends BaseEntity<D>, D> extends CassandraAbstractModelDao<E, D> {
+public abstract class CassandraAbstractSearchTimeDao<E extends BaseEntity<D>, D> extends CassandraAbstractModelDao<E, D> {
 
 
     protected List<E> findPageWithTimeSearch(String searchView, List<Clause> clauses, TimePageLink pageLink) {

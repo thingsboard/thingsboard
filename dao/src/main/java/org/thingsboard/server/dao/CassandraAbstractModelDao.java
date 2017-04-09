@@ -27,8 +27,10 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.wrapper.EntityResultSet;
 
 import javax.annotation.Nullable;
@@ -45,6 +47,10 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
     protected abstract Class<E> getColumnFamilyClass();
 
     protected abstract String getColumnFamilyName();
+
+    protected boolean isSearchTextDao() {
+        return false;
+    }
 
     protected Mapper<E> getMapper() {
         return cluster.getMapper(getColumnFamilyClass());
@@ -143,6 +149,9 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
         } catch (Exception e) {
             log.error("Can't create entity for domain object {}", domain, e);
             throw new IllegalArgumentException("Can't create entity for domain object {" + domain + "}", e);
+        }
+        if (isSearchTextDao()) {
+            ((SearchTextEntity) entity).setSearchText(((SearchTextEntity) entity).getSearchTextSource().toLowerCase());
         }
         log.debug("Saving entity {}", entity);
         entity = saveWithResult(entity).getEntity();

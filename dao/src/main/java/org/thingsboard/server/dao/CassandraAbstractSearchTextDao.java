@@ -33,11 +33,9 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 @Slf4j
 public abstract class CassandraAbstractSearchTextDao<E extends SearchTextEntity<D>, D> extends CassandraAbstractModelDao<E, D> {
 
-    public D save(D domain) {
-
-        entity.setSearchText(entity.getSearchTextSource().toLowerCase());
-
-        return super.save(entity);
+    @Override
+    protected boolean isSearchTextDao() {
+        return true;
     }
 
     protected List<E> findPageWithTextSearch(String searchView, List<Clause> clauses, TextPageLink pageLink) {
