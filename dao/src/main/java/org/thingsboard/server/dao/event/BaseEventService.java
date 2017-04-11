@@ -15,15 +15,12 @@
  */
 package org.thingsboard.server.dao.event;
 
-// CASSANDRA ???
-import com.datastax.driver.core.utils.UUIDs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -33,13 +30,9 @@ import org.thingsboard.server.dao.service.DataValidator;
 import java.util.List;
 import java.util.Optional;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-
 @Service
 @Slf4j
 public class BaseEventService implements EventService {
-
-    private final TenantId systemTenantId = new TenantId(NULL_UUID);
 
     @Autowired
     public EventDao eventDao;
@@ -47,16 +40,6 @@ public class BaseEventService implements EventService {
     @Override
     public Event save(Event event) {
         eventValidator.validate(event);
-        if (event.getTenantId() == null) {
-            log.trace("Save system event with predefined id {}", systemTenantId);
-            event.setTenantId(systemTenantId);
-        }
-        if (event.getId() == null) {
-            event.setId(new EventId(UUIDs.timeBased()));
-        }
-        if (StringUtils.isEmpty(event.getUid())) {
-            event.setUid(event.getId().toString());
-        }
         return eventDao.save(event);
     }
 
@@ -65,13 +48,6 @@ public class BaseEventService implements EventService {
         eventValidator.validate(event);
         if (StringUtils.isEmpty(event.getUid())) {
             throw new DataValidationException("Event uid should be specified!.");
-        }
-        if (event.getTenantId() == null) {
-            log.trace("Save system event with predefined id {}", systemTenantId);
-            event.setTenantId(systemTenantId);
-        }
-        if (event.getId() == null) {
-            event.setId(new EventId(UUIDs.timeBased()));
         }
         Optional<Event> result = eventDao.saveIfNotExists(event);
         return result.isPresent() ? Optional.of(result.get()) : Optional.empty();
@@ -98,13 +74,13 @@ public class BaseEventService implements EventService {
     @Override
     public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
         List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, pageLink);
-        return new TimePageData<Event>(events, pageLink);
+        return new TimePageData<>(events, pageLink);
     }
 
     @Override
     public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
         List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
-        return new TimePageData<Event>(events, pageLink);
+        return new TimePageData<>(events, pageLink);
     }
 
     private DataValidator<Event> eventValidator =

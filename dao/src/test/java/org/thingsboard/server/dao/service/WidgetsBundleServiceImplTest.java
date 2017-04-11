@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

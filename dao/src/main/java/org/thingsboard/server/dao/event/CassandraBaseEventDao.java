@@ -21,9 +21,12 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.CassandraAbstractSearchTimeDao;
 import org.thingsboard.server.dao.DaoUtil;
@@ -43,6 +46,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Slf4j
 public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventEntity, Event> implements EventDao {
 
+    private final TenantId systemTenantId = new TenantId(NULL_UUID);
+
     @Override
     protected Class<EventEntity> getColumnFamilyClass() {
         return EventEntity.class;
@@ -56,11 +61,28 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
     @Override
     public Event save(Event event) {
         log.debug("Save event [{}] ", event);
+        if (event.getTenantId() == null) {
+            log.trace("Save system event with predefined id {}", systemTenantId);
+            event.setTenantId(systemTenantId);
+        }
+        if (event.getId() == null) {
+            event.setId(new EventId(UUIDs.timeBased()));
+        }
+        if (StringUtils.isEmpty(event.getUid())) {
+            event.setUid(event.getId().toString());
+        }
         return save(new EventEntity(event), false).orElse(null);
     }
 
     @Override
     public Optional<Event> saveIfNotExists(Event event) {
+        if (event.getTenantId() == null) {
+            log.trace("Save system event with predefined id {}", systemTenantId);
+            event.setTenantId(systemTenantId);
+        }
+        if (event.getId() == null) {
+            event.setId(new EventId(UUIDs.timeBased()));
+        }
         return save(new EventEntity(event), true);
     }
 
