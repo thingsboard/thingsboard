@@ -188,3 +188,15 @@ cache:
 updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
+
+cassandra:
+  enabled: "${CASSANDRA_ENABLED:true}"
+
+# SQL DAO Configuration
+
+sql:
+  enabled: "${SQL_ENABLED:false}"
+  datasource:
+    url: "${SQL_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    username: "${SQL_DATASOURCE_USERNAME:postgres}"
+    password: "${SQL_DATASOURCE_PASSWORD:postgres}"

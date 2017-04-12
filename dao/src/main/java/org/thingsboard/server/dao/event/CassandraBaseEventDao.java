@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.CassandraAbstractSearchTimeDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.EventEntity;
+import org.thingsboard.server.dao.model.nosql.EventEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.Arrays;

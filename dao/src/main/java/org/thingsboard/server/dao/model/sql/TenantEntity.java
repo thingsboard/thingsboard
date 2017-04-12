@@ -13,103 +13,88 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.dao.model.sql;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ADDRESS2_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ADDRESS_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.CITY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.COUNTRY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_TENANT_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_TITLE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EMAIL_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.PHONE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.STATE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ZIP_PROPERTY;
+import com.datastax.driver.core.utils.UUIDs;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.UUID;
 
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.type.JsonCodec;
-
-import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
-import com.fasterxml.jackson.databind.JsonNode;
-
-@Table(name = CUSTOMER_COLUMN_FAMILY_NAME)
-public final class CustomerEntity implements SearchTextEntity<Customer> {
+@Entity
+@Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
+public final class TenantEntity implements SearchTextEntity<Tenant> {
 
     @Transient
-    private static final long serialVersionUID = -7732527103760948490L;
-    
-    @PartitionKey(value = 0)
-    @Column(name = ID_PROPERTY)
+    private static final long serialVersionUID = -4330655990232136337L;
+
+    @Id
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
-    
-    @PartitionKey(value = 1)
-    @Column(name = CUSTOMER_TENANT_ID_PROPERTY)
-    private UUID tenantId;
-    
-    @Column(name = CUSTOMER_TITLE_PROPERTY)
+
+    @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
     
-    @Column(name = SEARCH_TEXT_PROPERTY)
+    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
+
+    @Column(name = ModelConstants.TENANT_REGION_PROPERTY)
+    private String region;
     
-    @Column(name = COUNTRY_PROPERTY)
+    @Column(name = ModelConstants.COUNTRY_PROPERTY)
     private String country;
     
-    @Column(name = STATE_PROPERTY)
+    @Column(name = ModelConstants.STATE_PROPERTY)
     private String state;
 
-    @Column(name = CITY_PROPERTY)
+    @Column(name = ModelConstants.CITY_PROPERTY)
     private String city;
 
-    @Column(name = ADDRESS_PROPERTY)
+    @Column(name = ModelConstants.ADDRESS_PROPERTY)
     private String address;
 
-    @Column(name = ADDRESS2_PROPERTY)
+    @Column(name = ModelConstants.ADDRESS2_PROPERTY)
     private String address2;
 
-    @Column(name = ZIP_PROPERTY)
+    @Column(name = ModelConstants.ZIP_PROPERTY)
     private String zip;
 
-    @Column(name = PHONE_PROPERTY)
+    @Column(name = ModelConstants.PHONE_PROPERTY)
     private String phone;
 
-    @Column(name = EMAIL_PROPERTY)
+    @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
-    @Column(name = CUSTOMER_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
-    public CustomerEntity() {
+    public TenantEntity() {
         super();
     }
 
-    public CustomerEntity(Customer customer) {
-        if (customer.getId() != null) {
-            this.id = customer.getId().getId();
+    public TenantEntity(Tenant tenant) {
+        if (tenant.getId() != null) {
+            this.id = tenant.getId().getId();
         }
-        this.tenantId = customer.getTenantId().getId();
-        this.title = customer.getTitle();
-        this.country = customer.getCountry();
-        this.state = customer.getState();
-        this.city = customer.getCity();
-        this.address = customer.getAddress();
-        this.address2 = customer.getAddress2();
-        this.zip = customer.getZip();
-        this.phone = customer.getPhone();
-        this.email = customer.getEmail();
-        this.additionalInfo = customer.getAdditionalInfo();
+        this.title = tenant.getTitle();
+        this.region = tenant.getRegion();
+        this.country = tenant.getCountry();
+        this.state = tenant.getState();
+        this.city = tenant.getCity();
+        this.address = tenant.getAddress();
+        this.address2 = tenant.getAddress2();
+        this.zip = tenant.getZip();
+        this.phone = tenant.getPhone();
+        this.email = tenant.getEmail();
+        this.additionalInfo = tenant.getAdditionalInfo();
     }
     
     public UUID getId() {
@@ -120,20 +105,20 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         this.id = id;
     }
 
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 
     public String getCountry() {
@@ -207,7 +192,7 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
     public void setAdditionalInfo(JsonNode additionalInfo) {
         this.additionalInfo = additionalInfo;
     }
-    
+
     @Override
     public String getSearchTextSource() {
         return title;
@@ -234,8 +219,8 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         result = prime * result + ((email == null) ? 0 : email.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((phone == null) ? 0 : phone.hashCode());
+        result = prime * result + ((region == null) ? 0 : region.hashCode());
         result = prime * result + ((state == null) ? 0 : state.hashCode());
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
         result = prime * result + ((title == null) ? 0 : title.hashCode());
         result = prime * result + ((zip == null) ? 0 : zip.hashCode());
         return result;
@@ -249,7 +234,7 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        CustomerEntity other = (CustomerEntity) obj;
+        TenantEntity other = (TenantEntity) obj;
         if (additionalInfo == null) {
             if (other.additionalInfo != null)
                 return false;
@@ -290,15 +275,15 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
                 return false;
         } else if (!phone.equals(other.phone))
             return false;
+        if (region == null) {
+            if (other.region != null)
+                return false;
+        } else if (!region.equals(other.region))
+            return false;
         if (state == null) {
             if (other.state != null)
                 return false;
         } else if (!state.equals(other.state))
-            return false;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
             return false;
         if (title == null) {
             if (other.title != null)
@@ -316,12 +301,12 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("CustomerEntity [id=");
+        builder.append("TenantEntity [id=");
         builder.append(id);
-        builder.append(", tenantId=");
-        builder.append(tenantId);
         builder.append(", title=");
         builder.append(title);
+        builder.append(", region=");
+        builder.append(region);
         builder.append(", country=");
         builder.append(country);
         builder.append(", state=");
@@ -345,21 +330,22 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
     }
 
     @Override
-    public Customer toData() {
-        Customer customer = new Customer(new CustomerId(id));
-        customer.setCreatedTime(UUIDs.unixTimestamp(id));
-        customer.setTenantId(new TenantId(tenantId));
-        customer.setTitle(title);
-        customer.setCountry(country);
-        customer.setState(state);
-        customer.setCity(city);
-        customer.setAddress(address);
-        customer.setAddress2(address2);
-        customer.setZip(zip);
-        customer.setPhone(phone);
-        customer.setEmail(email);
-        customer.setAdditionalInfo(additionalInfo);
-        return customer;
+    public Tenant toData() {
+        Tenant tenant = new Tenant(new TenantId(id));
+        tenant.setCreatedTime(UUIDs.unixTimestamp(id));
+        tenant.setTitle(title);
+        tenant.setRegion(region);
+        tenant.setCountry(country);
+        tenant.setState(state);
+        tenant.setCity(city);
+        tenant.setAddress(address);
+        tenant.setAddress2(address2);
+        tenant.setZip(zip);
+        tenant.setPhone(phone);
+        tenant.setEmail(email);
+        tenant.setAdditionalInfo(additionalInfo);
+        return tenant;
     }
+
 
 }

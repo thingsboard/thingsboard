@@ -13,69 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.Device;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.type.JsonCodec;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
-
-@Table(name = DEVICE_COLUMN_FAMILY_NAME)
-public final class DeviceEntity implements SearchTextEntity<Device> {
+@Entity
+@Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
+public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
 
     @Transient
-    private static final long serialVersionUID = -1265181166886910152L;
-    
-    @PartitionKey(value = 0)
-    @Column(name = ID_PROPERTY)
+    private static final long serialVersionUID = -5525675905528050250L;
+
+    @Id
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
-    
-    @PartitionKey(value = 1)
-    @Column(name = DEVICE_TENANT_ID_PROPERTY)
+
+    @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @PartitionKey(value = 2)
-    @Column(name = DEVICE_CUSTOMER_ID_PROPERTY)
+    @Column(name = ModelConstants.DASHBOARD_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
-    @Column(name = DEVICE_NAME_PROPERTY)
-    private String name;
-    
-    @Column(name = SEARCH_TEXT_PROPERTY)
-    private String searchText;
-    
-    @Column(name = DEVICE_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
-    private JsonNode additionalInfo;
+    @Column(name = ModelConstants.DASHBOARD_TITLE_PROPERTY)
+    private String title;
 
-    public DeviceEntity() {
+    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    private String searchText;
+
+    public DashboardInfoEntity() {
         super();
     }
 
-    public DeviceEntity(Device device) {
-        if (device.getId() != null) {
-            this.id = device.getId().getId();
+    public DashboardInfoEntity(DashboardInfo dashboardInfo) {
+        if (dashboardInfo.getId() != null) {
+            this.id = dashboardInfo.getId().getId();
         }
-        if (device.getTenantId() != null) {
-            this.tenantId = device.getTenantId().getId();
+        if (dashboardInfo.getTenantId() != null) {
+            this.tenantId = dashboardInfo.getTenantId().getId();
         }
-        if (device.getCustomerId() != null) {
-            this.customerId = device.getCustomerId().getId();
+        if (dashboardInfo.getCustomerId() != null) {
+            this.customerId = dashboardInfo.getCustomerId().getId();
         }
-        this.name = device.getName();
-        this.additionalInfo = device.getAdditionalInfo();
+        this.title = dashboardInfo.getTitle();
     }
-    
+
     public UUID getId() {
         return id;
     }
@@ -99,33 +93,25 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     public void setCustomerId(UUID customerId) {
         this.customerId = customerId;
     }
-    
-    public String getName() {
-        return name;
+
+    public String getTitle() {
+        return title;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-    
     @Override
     public String getSearchTextSource() {
-        return name;
+        return title;
     }
 
     @Override
     public void setSearchText(String searchText) {
         this.searchText = searchText;
     }
-    
+
     public String getSearchText() {
         return searchText;
     }
@@ -134,11 +120,11 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((additionalInfo == null) ? 0 : additionalInfo.hashCode());
         result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((searchText == null) ? 0 : searchText.hashCode());
         result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
+        result = prime * result + ((title == null) ? 0 : title.hashCode());
         return result;
     }
 
@@ -150,12 +136,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        DeviceEntity other = (DeviceEntity) obj;
-        if (additionalInfo == null) {
-            if (other.additionalInfo != null)
-                return false;
-        } else if (!additionalInfo.equals(other.additionalInfo))
-            return false;
+        DashboardInfoEntity other = (DashboardInfoEntity) obj;
         if (customerId == null) {
             if (other.customerId != null)
                 return false;
@@ -166,15 +147,20 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
                 return false;
         } else if (!id.equals(other.id))
             return false;
-        if (name == null) {
-            if (other.name != null)
+        if (searchText == null) {
+            if (other.searchText != null)
                 return false;
-        } else if (!name.equals(other.name))
+        } else if (!searchText.equals(other.searchText))
             return false;
         if (tenantId == null) {
             if (other.tenantId != null)
                 return false;
         } else if (!tenantId.equals(other.tenantId))
+            return false;
+        if (title == null) {
+            if (other.title != null)
+                return false;
+        } else if (!title.equals(other.title))
             return false;
         return true;
     }
@@ -182,33 +168,32 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("DeviceEntity [id=");
+        builder.append("DashboardInfoEntity [id=");
         builder.append(id);
         builder.append(", tenantId=");
         builder.append(tenantId);
         builder.append(", customerId=");
         builder.append(customerId);
-        builder.append(", name=");
-        builder.append(name);
-        builder.append(", additionalInfo=");
-        builder.append(additionalInfo);
+        builder.append(", title=");
+        builder.append(title);
+        builder.append(", searchText=");
+        builder.append(searchText);
         builder.append("]");
         return builder.toString();
     }
 
     @Override
-    public Device toData() {
-        Device device = new Device(new DeviceId(id));
-        device.setCreatedTime(UUIDs.unixTimestamp(id));
+    public DashboardInfo toData() {
+        DashboardInfo dashboardInfo = new DashboardInfo(new DashboardId(id));
+        dashboardInfo.setCreatedTime(UUIDs.unixTimestamp(id));
         if (tenantId != null) {
-            device.setTenantId(new TenantId(tenantId));
+            dashboardInfo.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            device.setCustomerId(new CustomerId(customerId));
+            dashboardInfo.setCustomerId(new CustomerId(customerId));
         }
-        device.setName(name);
-        device.setAdditionalInfo(additionalInfo);
-        return device;
+        dashboardInfo.setTitle(title);
+        return dashboardInfo;
     }
 
 }

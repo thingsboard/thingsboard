@@ -13,58 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.*;
-import org.thingsboard.server.dao.model.type.EntityTypeCodec;
-import org.thingsboard.server.dao.model.type.JsonCodec;
+import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
-
-/**
- * @author Andrew Shvayka
- */
 @Data
 @NoArgsConstructor
-@Table(name = DEVICE_COLUMN_FAMILY_NAME)
+@Entity
+@Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 
     @Transient
-    private static final long serialVersionUID = -1265181166886910153L;
+    private static final long serialVersionUID = -5717830061727466727L;
 
-    @Column(name = ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
-    @PartitionKey()
-    @Column(name = EVENT_TENANT_ID_PROPERTY)
+    @Id
+    @Column(name = ModelConstants.EVENT_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @PartitionKey(value = 1)
-    @Column(name = EVENT_ENTITY_TYPE_PROPERTY, codec = EntityTypeCodec.class)
+    @Column(name = ModelConstants.EVENT_ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
-    @PartitionKey(value = 2)
-    @Column(name = EVENT_ENTITY_ID_PROPERTY)
+    @Column(name = ModelConstants.EVENT_ENTITY_ID_PROPERTY)
     private UUID entityId;
 
-    @ClusteringColumn()
-    @Column(name = EVENT_TYPE_PROPERTY)
+    @Column(name = ModelConstants.EVENT_TYPE_PROPERTY)
     private String eventType;
 
-    @ClusteringColumn(value = 1)
-    @Column(name = EVENT_UID_PROPERTY)
+    @Column(name = ModelConstants.EVENT_UID_PROPERTY)
     private String eventUId;
 
-    @Column(name = EVENT_BODY_PROPERTY, codec = JsonCodec.class)
+    @Column(name = ModelConstants.EVENT_BODY_PROPERTY)
     private JsonNode body;
 
     public EventEntity(Event event) {

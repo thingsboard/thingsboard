@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.AdminSettingsEntity;
+import org.thingsboard.server.dao.model.nosql.AdminSettingsEntity;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;

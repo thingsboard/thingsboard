@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.WidgetsBundleEntity;
+import org.thingsboard.server.dao.model.nosql.WidgetsBundleEntity;
 
 import java.util.Arrays;
 import java.util.List;

@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.DeviceCredentialsEntity;
+import org.thingsboard.server.dao.model.nosql.DeviceCredentialsEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
