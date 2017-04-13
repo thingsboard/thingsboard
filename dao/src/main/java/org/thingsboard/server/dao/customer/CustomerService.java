@@ -23,14 +23,14 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 
 public interface CustomerService {
 
-    public Customer findCustomerById(CustomerId customerId);
+    Customer findCustomerById(CustomerId customerId);
     
-    public Customer saveCustomer(Customer customer);
+    Customer saveCustomer(Customer customer);
     
-    public void deleteCustomer(CustomerId customerId);
+    void deleteCustomer(CustomerId customerId);
     
-    public TextPageData<Customer> findCustomersByTenantId(TenantId tenantId, TextPageLink pageLink);
+    TextPageData<Customer> findCustomersByTenantId(TenantId tenantId, TextPageLink pageLink);
     
-    public void deleteCustomersByTenantId(TenantId tenantId);
+    void deleteCustomersByTenantId(TenantId tenantId);
     
 }

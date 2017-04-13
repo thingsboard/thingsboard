@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.plugin;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.PluginId;
@@ -29,13 +27,12 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DatabaseException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.PluginMetaDataEntity;
-import org.thingsboard.server.dao.model.RuleMetaDataEntity;
 import org.thingsboard.server.dao.rule.RuleDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -45,9 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
 
 @Service
 @Slf4j
@@ -73,7 +67,7 @@ public class BasePluginService implements PluginService {
             plugin.setTenantId(SYSTEM_TENANT);
         }
         if (plugin.getId() != null) {
-            PluginMetaData oldVersion = getData(pluginDao.findById(plugin.getId()));
+            PluginMetaData oldVersion = pluginDao.findById(plugin.getId());
             if (plugin.getState() == null) {
                 plugin.setState(oldVersion.getState());
             } else if (plugin.getState() != oldVersion.getState()) {
@@ -92,33 +86,32 @@ public class BasePluginService implements PluginService {
         } else if (!ComponentType.PLUGIN.equals(descriptor.getType())) {
             throw new IncorrectParameterException("Plugin class is actually " + descriptor.getType() + "!");
         }
-        PluginMetaDataEntity entity = pluginDao.findByApiToken(plugin.getApiToken());
-        if (entity != null && (plugin.getId() == null || !entity.getId().equals(plugin.getId().getId()))) {
+        PluginMetaData savedPlugin = pluginDao.findByApiToken(plugin.getApiToken());
+        if (savedPlugin != null && (plugin.getId() == null || !savedPlugin.getId().getId().equals(plugin.getId().getId()))) {
             throw new IncorrectParameterException("API token is already reserved!");
         }
         if (!componentDescriptorService.validate(descriptor, plugin.getConfiguration())) {
             throw new IncorrectParameterException("Filters configuration is not valid!");
         }
-        return getData(pluginDao.save(plugin));
+        return pluginDao.save(plugin);
     }
 
     @Override
     public PluginMetaData findPluginById(PluginId pluginId) {
         Validator.validateId(pluginId, "Incorrect plugin id for search request.");
-        return getData(pluginDao.findById(pluginId));
+        return pluginDao.findById(pluginId);
     }
 
     @Override
     public PluginMetaData findPluginByApiToken(String apiToken) {
         Validator.validateString(apiToken, "Incorrect plugin apiToken for search request.");
-        return getData(pluginDao.findByApiToken(apiToken));
+        return pluginDao.findByApiToken(apiToken);
     }
 
     @Override
     public TextPageData<PluginMetaData> findSystemPlugins(TextPageLink pageLink) {
         Validator.validatePageLink(pageLink, "Incorrect PageLink object for search system plugin request.");
-        List<PluginMetaDataEntity> pluginEntities = pluginDao.findByTenantIdAndPageLink(SYSTEM_TENANT, pageLink);
-        List<PluginMetaData> plugins = convertDataList(pluginEntities);
+        List<PluginMetaData> plugins = pluginDao.findByTenantIdAndPageLink(SYSTEM_TENANT, pageLink);
         return new TextPageData<>(plugins, pageLink);
     }
 
@@ -126,8 +119,7 @@ public class BasePluginService implements PluginService {
     public TextPageData<PluginMetaData> findTenantPlugins(TenantId tenantId, TextPageLink pageLink) {
         Validator.validateId(tenantId, "Incorrect tenant id for search plugins request.");
         Validator.validatePageLink(pageLink, "Incorrect PageLink object for search plugin request.");
-        List<PluginMetaDataEntity> pluginEntities = pluginDao.findByTenantIdAndPageLink(tenantId, pageLink);
-        List<PluginMetaData> plugins = convertDataList(pluginEntities);
+        List<PluginMetaData> plugins = pluginDao.findByTenantIdAndPageLink(tenantId, pageLink);
         return new TextPageData<>(plugins, pageLink);
     }
 
@@ -152,8 +144,7 @@ public class BasePluginService implements PluginService {
         log.trace("Executing findAllTenantPluginsByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<PluginMetaDataEntity> pluginsEntities = pluginDao.findAllTenantPluginsByTenantId(tenantId.getId(), pageLink);
-        List<PluginMetaData> plugins = convertDataList(pluginsEntities);
+        List<PluginMetaData> plugins = pluginDao.findAllTenantPluginsByTenantId(tenantId.getId(), pageLink);
         return new TextPageData<>(plugins, pageLink);
     }
 
@@ -181,8 +172,8 @@ public class BasePluginService implements PluginService {
 
     @Override
     public void suspendPluginById(PluginId pluginId) {
-        PluginMetaDataEntity plugin = pluginDao.findById(pluginId);
-        List<RuleMetaDataEntity> affectedRules = ruleDao.findRulesByPlugin(plugin.getApiToken())
+        PluginMetaData plugin = pluginDao.findById(pluginId);
+        List<RuleMetaData> affectedRules = ruleDao.findRulesByPlugin(plugin.getApiToken())
                 .stream().filter(rule -> rule.getState() == ComponentLifecycleState.ACTIVE).collect(Collectors.toList());
         if (affectedRules.isEmpty()) {
             updateLifeCycleState(pluginId, ComponentLifecycleState.SUSPENDED);
@@ -193,7 +184,7 @@ public class BasePluginService implements PluginService {
 
     private void updateLifeCycleState(PluginId pluginId, ComponentLifecycleState state) {
         Validator.validateId(pluginId, "Incorrect plugin id for state change request.");
-        PluginMetaDataEntity plugin = pluginDao.findById(pluginId);
+        PluginMetaData plugin = pluginDao.findById(pluginId);
         if (plugin != null) {
             plugin.setState(state);
             pluginDao.save(plugin);
@@ -209,8 +200,8 @@ public class BasePluginService implements PluginService {
     }
 
     private void checkRulesAndDelete(UUID pluginId) {
-        PluginMetaDataEntity plugin = pluginDao.findById(pluginId);
-        List<RuleMetaDataEntity> affectedRules = ruleDao.findRulesByPlugin(plugin.getApiToken());
+        PluginMetaData plugin = pluginDao.findById(pluginId);
+        List<RuleMetaData> affectedRules = ruleDao.findRulesByPlugin(plugin.getApiToken());
         if (affectedRules.isEmpty()) {
             pluginDao.deleteById(pluginId);
         } else {
@@ -244,17 +235,17 @@ public class BasePluginService implements PluginService {
                 }
             };
 
-    private PaginatedRemover<TenantId, PluginMetaDataEntity> tenantPluginRemover =
-            new PaginatedRemover<TenantId, PluginMetaDataEntity>() {
+    private PaginatedRemover<TenantId, PluginMetaData> tenantPluginRemover =
+            new PaginatedRemover<TenantId, PluginMetaData>() {
 
                 @Override
-                protected List<PluginMetaDataEntity> findEntities(TenantId id, TextPageLink pageLink) {
+                protected List<PluginMetaData> findEntities(TenantId id, TextPageLink pageLink) {
                     return pluginDao.findByTenantIdAndPageLink(id, pageLink);
                 }
 
                 @Override
-                protected void removeEntity(PluginMetaDataEntity entity) {
-                    checkRulesAndDelete(entity.getId());
+                protected void removeEntity(PluginMetaData entity) {
+                    checkRulesAndDelete(entity.getUuidId());
                 }
             };
 }

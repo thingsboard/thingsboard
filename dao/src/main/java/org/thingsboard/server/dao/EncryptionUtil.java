@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao;
 
-import com.google.common.base.CharMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.digests.SHA3Digest;
 import org.bouncycastle.pqc.math.linearalgebra.ByteUtils;

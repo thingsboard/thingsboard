@@ -19,7 +19,6 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.EventEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,10 +26,8 @@ import java.util.UUID;
 
 /**
  * The Interface DeviceDao.
- *
- * @param <T> the generic type
  */
-public interface EventDao extends Dao<EventEntity> {
+public interface EventDao extends Dao<Event> {
 
     /**
      * Save or update event object
@@ -38,7 +35,7 @@ public interface EventDao extends Dao<EventEntity> {
      * @param event the event object
      * @return saved event object
      */
-    EventEntity save(Event event);
+    Event save(Event event);
 
     /**
      * Save event object if it is not yet saved
@@ -46,7 +43,7 @@ public interface EventDao extends Dao<EventEntity> {
      * @param event the event object
      * @return saved event object
      */
-    Optional<EventEntity> saveIfNotExists(Event event);
+    Optional<Event> saveIfNotExists(Event event);
 
     /**
      * Find event by tenantId, entityId and eventUid.
@@ -57,7 +54,7 @@ public interface EventDao extends Dao<EventEntity> {
      * @param eventUid the eventUid
      * @return the event
      */
-    EventEntity findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid);
+    Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid);
 
     /**
      * Find events by tenantId, entityId and pageLink.
@@ -67,7 +64,7 @@ public interface EventDao extends Dao<EventEntity> {
      * @param pageLink the pageLink
      * @return the event list
      */
-    List<EventEntity> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink);
+    List<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink);
 
     /**
      * Find events by tenantId, entityId, eventType and pageLink.
@@ -78,5 +75,5 @@ public interface EventDao extends Dao<EventEntity> {
      * @param pageLink the pageLink
      * @return the event list
      */
-    List<EventEntity> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
+    List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
 }

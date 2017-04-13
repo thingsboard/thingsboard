@@ -22,16 +22,14 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 
 public interface TenantService {
 
-    public Tenant findTenantById(TenantId tenantId);
+    Tenant findTenantById(TenantId tenantId);
     
-    public Tenant saveTenant(Tenant tenant);
+    Tenant saveTenant(Tenant tenant);
     
-    public void deleteTenant(TenantId tenantId);
+    void deleteTenant(TenantId tenantId);
     
-    public TextPageData<Tenant> findTenants(TextPageLink pageLink);
+    TextPageData<Tenant> findTenants(TextPageLink pageLink);
     
-    //public TextPageData<Tenant> findTenantsByTitle(String title, PageLink pageLink);
-    
-    public void deleteTenants();
+    void deleteTenants();
     
 }

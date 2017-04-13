@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao;
 
-import com.datastax.driver.core.ResultSet;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.List;
@@ -31,6 +30,6 @@ public interface Dao<T> {
 
     T save(T t);
 
-    ResultSet removeById(UUID id);
+    boolean removeById(UUID id);
 
 }

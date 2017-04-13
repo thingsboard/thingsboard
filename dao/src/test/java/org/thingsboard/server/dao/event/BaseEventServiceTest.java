@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.event;
 
-import com.datastax.driver.core.utils.UUIDs;
-import org.apache.cassandra.utils.UUIDGen;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.DataConstants;
@@ -34,7 +32,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Optional;
 
 public class BaseEventServiceTest extends AbstractServiceTest {

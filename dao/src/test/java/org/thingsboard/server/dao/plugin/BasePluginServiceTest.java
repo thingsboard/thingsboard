@@ -15,22 +15,19 @@
  */
 package org.thingsboard.server.dao.plugin;
 
-import java.util.UUID;
-
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
+import org.junit.Test;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
-import org.thingsboard.server.common.data.rule.RuleMetaData;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.utils.UUIDs;
-import org.thingsboard.server.dao.model.ModelConstants;
+import java.util.UUID;
 
 @Slf4j
 public class BasePluginServiceTest extends AbstractServiceTest {

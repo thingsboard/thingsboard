@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.common.data.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.ToString;
 import org.thingsboard.server.common.data.SearchTextBased;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 
 @Data

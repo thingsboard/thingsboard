@@ -15,21 +15,13 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
-import java.util.List;
-import java.util.UUID;
-
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.DashboardEntity;
-import org.thingsboard.server.dao.model.DashboardInfoEntity;
 
 /**
  * The Interface DashboardDao.
- *
- * @param <T> the generic type
  */
-public interface DashboardDao extends Dao<DashboardEntity> {
+public interface DashboardDao extends Dao<Dashboard> {
 
     /**
      * Save or update dashboard object
@@ -37,6 +29,6 @@ public interface DashboardDao extends Dao<DashboardEntity> {
      * @param dashboard the dashboard object
      * @return saved dashboard object
      */
-    DashboardEntity save(Dashboard dashboard);
+    Dashboard save(Dashboard dashboard);
 
 }

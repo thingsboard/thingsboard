@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.dao.customer;
 
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
-
-import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -31,17 +29,13 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.CustomerEntity;
-import org.thingsboard.server.dao.model.TenantEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.service.Validator;
+
+import java.util.List;
 @Service
 @Slf4j
 public class CustomerServiceImpl implements CustomerService {
@@ -65,16 +59,14 @@ public class CustomerServiceImpl implements CustomerService {
     public Customer findCustomerById(CustomerId customerId) {
         log.trace("Executing findCustomerById [{}]", customerId);
         Validator.validateId(customerId, "Incorrect customerId " + customerId);
-        CustomerEntity customerEntity = customerDao.findById(customerId.getId());
-        return getData(customerEntity);
+        return customerDao.findById(customerId.getId());
     }
 
     @Override
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
         customerValidator.validate(customer);
-        CustomerEntity customerEntity = customerDao.save(customer);
-        return getData(customerEntity);
+        return customerDao.save(customer);
     }
 
     @Override
@@ -96,8 +88,7 @@ public class CustomerServiceImpl implements CustomerService {
         log.trace("Executing findCustomersByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<CustomerEntity> customerEntities = customerDao.findCustomersByTenantId(tenantId.getId(), pageLink);
-        List<Customer> customers = convertDataList(customerEntities);
+        List<Customer> customers = customerDao.findCustomersByTenantId(tenantId.getId(), pageLink);
         return new TextPageData<Customer>(customers, pageLink);
     }
 
@@ -121,7 +112,7 @@ public class CustomerServiceImpl implements CustomerService {
                     if (customer.getTenantId() == null) {
                         throw new DataValidationException("Customer should be assigned to tenant!");
                     } else {
-                        TenantEntity tenant = tenantDao.findById(customer.getTenantId().getId());
+                        Tenant tenant = tenantDao.findById(customer.getTenantId().getId());
                         if (tenant == null) {
                             throw new DataValidationException("Customer is referencing to non-existent tenant!");
                         }
@@ -129,17 +120,17 @@ public class CustomerServiceImpl implements CustomerService {
                 }
     };
 
-    private PaginatedRemover<TenantId, CustomerEntity> customersByTenantRemover =
-            new PaginatedRemover<TenantId, CustomerEntity>() {
+    private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
+            new PaginatedRemover<TenantId, Customer>() {
         
         @Override
-        protected List<CustomerEntity> findEntities(TenantId id, TextPageLink pageLink) {
+        protected List<Customer> findEntities(TenantId id, TextPageLink pageLink) {
             return customerDao.findCustomersByTenantId(id.getId(), pageLink);
         }
 
         @Override
-        protected void removeEntity(CustomerEntity entity) {
-            deleteCustomer(new CustomerId(entity.getId()));
+        protected void removeEntity(Customer entity) {
+            deleteCustomer(new CustomerId(entity.getUuidId()));
         }
     };
 }

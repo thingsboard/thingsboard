@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.dao.cassandra;
 
+import com.datastax.driver.core.SocketOptions;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
-
-import com.datastax.driver.core.SocketOptions;
 
 import javax.annotation.PostConstruct;
 

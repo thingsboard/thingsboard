@@ -15,17 +15,13 @@
  */
 package org.thingsboard.server.dao.user;
 
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
-import static org.thingsboard.server.dao.service.Validator.validateId;
-import static org.thingsboard.server.dao.service.Validator.validatePageLink;
-import static org.thingsboard.server.dao.service.Validator.validateString;
-
-import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,18 +33,20 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.*;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
 public class UserServiceImpl implements UserService {
+
+    private static final int DEFAULT_TOKEN_LENGTH = 30;
 
     @Autowired
     private UserDao userDao;
@@ -66,63 +64,57 @@ public class UserServiceImpl implements UserService {
 	public User findUserByEmail(String email) {
 	    log.trace("Executing findUserByEmail [{}]", email);
 		validateString(email, "Incorrect email " + email);
-		UserEntity userEntity = userDao.findByEmail(email);
-		return getData(userEntity);
+		return userDao.findByEmail(email);
 	}
 
 	@Override
 	public User findUserById(UserId userId) {
 	    log.trace("Executing findUserById [{}]", userId);
 		validateId(userId, "Incorrect userId " + userId);
-		UserEntity userEntity = userDao.findById(userId.getId());
-		return getData(userEntity);
+		return userDao.findById(userId.getId());
 	}
 
     @Override
     public User saveUser(User user) {
         log.trace("Executing saveUser [{}]", user);
         userValidator.validate(user);
-        UserEntity userEntity = userDao.save(user);
+        User savedUser = userDao.save(user);
         if (user.getId() == null) {
             UserCredentials userCredentials = new UserCredentials();
             userCredentials.setEnabled(false);
-            userCredentials.setActivateToken(RandomStringUtils.randomAlphanumeric(30));
-            userCredentials.setUserId(new UserId(userEntity.getId()));
+            userCredentials.setActivateToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+            userCredentials.setUserId(new UserId(savedUser.getUuidId()));
             userCredentialsDao.save(userCredentials);
         }        
-        return getData(userEntity);
+        return savedUser;
     }
     
     @Override
     public UserCredentials findUserCredentialsByUserId(UserId userId) {
         log.trace("Executing findUserCredentialsByUserId [{}]", userId);
         validateId(userId, "Incorrect userId " + userId);
-        UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByUserId(userId.getId());
-        return getData(userCredentialsEntity);
+        return userCredentialsDao.findByUserId(userId.getId());
     }
 
     @Override
     public UserCredentials findUserCredentialsByActivateToken(String activateToken) {
         log.trace("Executing findUserCredentialsByActivateToken [{}]", activateToken);
         validateString(activateToken, "Incorrect activateToken " + activateToken);
-        UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByActivateToken(activateToken);
-        return getData(userCredentialsEntity);
+        return userCredentialsDao.findByActivateToken(activateToken);
     }
 
     @Override
     public UserCredentials findUserCredentialsByResetToken(String resetToken) {
         log.trace("Executing findUserCredentialsByResetToken [{}]", resetToken);
         validateString(resetToken, "Incorrect resetToken " + resetToken);
-        UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByResetToken(resetToken);
-        return getData(userCredentialsEntity);
+        return userCredentialsDao.findByResetToken(resetToken);
     }
 
     @Override
     public UserCredentials saveUserCredentials(UserCredentials userCredentials) {
         log.trace("Executing saveUserCredentials [{}]", userCredentials);
         userCredentialsValidator.validate(userCredentials);
-        UserCredentialsEntity userCredentialsEntity = userCredentialsDao.save(userCredentials);
-        return getData(userCredentialsEntity);
+        return userCredentialsDao.save(userCredentials);
     }
     
     @Override
@@ -130,11 +122,10 @@ public class UserServiceImpl implements UserService {
         log.trace("Executing activateUserCredentials activateToken [{}], password [{}]", activateToken, password);
         validateString(activateToken, "Incorrect activateToken " + activateToken);
         validateString(password, "Incorrect password " + password);
-        UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByActivateToken(activateToken);
-        if (userCredentialsEntity == null) {
+        UserCredentials userCredentials = userCredentialsDao.findByActivateToken(activateToken);
+        if (userCredentials == null) {
             throw new IncorrectParameterException(String.format("Unable to find user credentials by activateToken [%s]", activateToken));
         }
-        UserCredentials userCredentials = getData(userCredentialsEntity);
         if (userCredentials.isEnabled()) {
             throw new IncorrectParameterException("User credentials already activated");
         }
@@ -149,16 +140,15 @@ public class UserServiceImpl implements UserService {
     public UserCredentials requestPasswordReset(String email) {
         log.trace("Executing requestPasswordReset email [{}]", email);
         validateString(email, "Incorrect email " + email);
-        UserEntity userEntity = userDao.findByEmail(email);
-        if (userEntity == null) {
+        User user = userDao.findByEmail(email);
+        if (user == null) {
             throw new IncorrectParameterException(String.format("Unable to find user by email [%s]", email));
         }
-        UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByUserId(userEntity.getId());
-        UserCredentials userCredentials = getData(userCredentialsEntity);
+        UserCredentials userCredentials = userCredentialsDao.findByUserId(user.getUuidId());
         if (!userCredentials.isEnabled()) {
             throw new IncorrectParameterException("Unable to reset password for inactive user");
         }
-        userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(30));
+        userCredentials.setResetToken(RandomStringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
         return saveUserCredentials(userCredentials);
     }
 
@@ -167,8 +157,8 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(UserId userId) {
         log.trace("Executing deleteUser [{}]", userId);
         validateId(userId, "Incorrect userId " + userId);
-        UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByUserId(userId.getId());
-        userCredentialsDao.removeById(userCredentialsEntity.getId());
+        UserCredentials userCredentials = userCredentialsDao.findByUserId(userId.getId());
+        userCredentialsDao.removeById(userCredentials.getUuidId());
         userDao.removeById(userId.getId());
     }
 
@@ -177,9 +167,8 @@ public class UserServiceImpl implements UserService {
         log.trace("Executing findTenantAdmins, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<UserEntity> userEntities = userDao.findTenantAdmins(tenantId.getId(), pageLink);
-        List<User> users = convertDataList(userEntities);
-        return new TextPageData<User>(users, pageLink);
+        List<User> users = userDao.findTenantAdmins(tenantId.getId(), pageLink);
+        return new TextPageData<>(users, pageLink);
     }
 
     @Override
@@ -195,9 +184,8 @@ public class UserServiceImpl implements UserService {
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
         validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<UserEntity> userEntities = userDao.findCustomerUsers(tenantId.getId(), customerId.getId(), pageLink);
-        List<User> users = convertDataList(userEntities);
-        return new TextPageData<User>(users, pageLink);
+        List<User> users = userDao.findCustomerUsers(tenantId.getId(), customerId.getId(), pageLink);
+        return new TextPageData<>(users, pageLink);
     }
 
     @Override
@@ -266,16 +254,16 @@ public class UserServiceImpl implements UserService {
                                 + " already present in database!");
                     }
                     if (!tenantId.getId().equals(ModelConstants.NULL_UUID)) {
-                        TenantEntity tenant = tenantDao.findById(user.getTenantId().getId());
+                        Tenant tenant = tenantDao.findById(user.getTenantId().getId());
                         if (tenant == null) {
                             throw new DataValidationException("User is referencing to non-existent tenant!");
                         }
                     }
                     if (!customerId.getId().equals(ModelConstants.NULL_UUID)) {
-                        CustomerEntity customer = customerDao.findById(user.getCustomerId().getId());
+                        Customer customer = customerDao.findById(user.getCustomerId().getId());
                         if (customer == null) {
                             throw new DataValidationException("User is referencing to non-existent customer!");
-                        } else if (!customer.getTenantId().equals(tenantId.getId())) {
+                        } else if (!customer.getTenantId().getId().equals(tenantId.getId())) {
                             throw new DataValidationException("User can't be assigned to customer from different tenant!");
                         }
                     }
@@ -303,7 +291,7 @@ public class UserServiceImpl implements UserService {
                             throw new DataValidationException("Enabled user credentials can't have activate token!");
                         }
                     }
-                    UserCredentialsEntity existingUserCredentialsEntity = userCredentialsDao.findById(userCredentials.getId().getId());
+                    UserCredentials existingUserCredentialsEntity = userCredentialsDao.findById(userCredentials.getId().getId());
                     if (existingUserCredentialsEntity == null) {
                         throw new DataValidationException("Unable to update non-existent user credentials!");
                     }
@@ -314,21 +302,21 @@ public class UserServiceImpl implements UserService {
                 }
     };
     
-    private PaginatedRemover<TenantId, UserEntity> tenantAdminsRemover =
-            new PaginatedRemover<TenantId, UserEntity>() {
+    private PaginatedRemover<TenantId, User> tenantAdminsRemover =
+            new PaginatedRemover<TenantId, User>() {
         
         @Override
-        protected List<UserEntity> findEntities(TenantId id, TextPageLink pageLink) {
+        protected List<User> findEntities(TenantId id, TextPageLink pageLink) {
             return userDao.findTenantAdmins(id.getId(), pageLink);
         }
 
         @Override
-        protected void removeEntity(UserEntity entity) {
-            deleteUser(new UserId(entity.getId()));
+        protected void removeEntity(User entity) {
+            deleteUser(new UserId(entity.getUuidId()));
         }
     };
     
-    class CustomerUsersRemover extends PaginatedRemover<CustomerId, UserEntity> {
+    private class CustomerUsersRemover extends PaginatedRemover<CustomerId, User> {
         
         private TenantId tenantId;
         
@@ -337,14 +325,14 @@ public class UserServiceImpl implements UserService {
         }
 
         @Override
-        protected List<UserEntity> findEntities(CustomerId id, TextPageLink pageLink) {
+        protected List<User> findEntities(CustomerId id, TextPageLink pageLink) {
             return userDao.findCustomerUsers(tenantId.getId(), id.getId(), pageLink);
  
         }
 
         @Override
-        protected void removeEntity(UserEntity entity) {
-            deleteUser(new UserId(entity.getId()));
+        protected void removeEntity(User entity) {
+            deleteUser(new UserId(entity.getUuidId()));
         }
         
     }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.hazelcast.core.HazelcastInstance;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
@@ -36,7 +35,6 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.DeviceCredentialsDao;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.model.DeviceCredentialsEntity;
 
 import java.util.UUID;
 
@@ -140,9 +138,8 @@ public class DeviceCredentialsCacheTest extends AbstractServiceTest {
         return null;
     }
 
-    private DeviceCredentialsEntity createDummyDeviceCredentialsEntity(String deviceCredentialsId) {
-        DeviceCredentialsEntity result = new DeviceCredentialsEntity();
-        result.setId(UUIDs.timeBased());
+    private DeviceCredentials createDummyDeviceCredentialsEntity(String deviceCredentialsId) {
+        DeviceCredentials result = new DeviceCredentials(new DeviceCredentialsId(UUIDs.timeBased()));
         result.setCredentialsId(deviceCredentialsId);
         return result;
     }

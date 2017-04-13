@@ -20,10 +20,10 @@ import org.thingsboard.server.common.data.id.AdminSettingsId;
 
 public interface AdminSettingsService {
 
-    public AdminSettings findAdminSettingsById(AdminSettingsId adminSettingsId);
+    AdminSettings findAdminSettingsById(AdminSettingsId adminSettingsId);
 
-    public AdminSettings findAdminSettingsByKey(String key);
+    AdminSettings findAdminSettingsByKey(String key);
     
-    public AdminSettings saveAdminSettings(AdminSettings adminSettings);
+    AdminSettings saveAdminSettings(AdminSettings adminSettings);
     
 }

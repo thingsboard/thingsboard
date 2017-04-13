@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.dao.tenant;
 
-import java.util.List;
-
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.TenantEntity;
 
-public interface TenantDao extends Dao<TenantEntity> {
+import java.util.List;
+
+public interface TenantDao extends Dao<Tenant> {
 
     /**
      * Save or update tenant object
@@ -30,7 +29,7 @@ public interface TenantDao extends Dao<TenantEntity> {
      * @param tenant the tenant object
      * @return saved tenant object
      */
-    TenantEntity save(Tenant tenant);
+    Tenant save(Tenant tenant);
     
     /**
      * Find tenants by region and page link.
@@ -39,6 +38,6 @@ public interface TenantDao extends Dao<TenantEntity> {
      * @param pageLink the page link
      * @return the list of tenant objects
      */
-    List<TenantEntity> findTenantsByRegion(String region, TextPageLink pageLink);
+    List<Tenant> findTenantsByRegion(String region, TextPageLink pageLink);
     
 }
