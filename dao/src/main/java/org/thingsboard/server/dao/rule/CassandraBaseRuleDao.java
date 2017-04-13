@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.RuleMetaDataEntity;
+import org.thingsboard.server.dao.model.nosql.RuleMetaDataEntity;
 
 import java.util.Arrays;
 import java.util.List;

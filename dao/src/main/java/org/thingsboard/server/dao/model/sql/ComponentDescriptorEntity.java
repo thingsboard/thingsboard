@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.dao.model.type.JsonCodec;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.UUID;
 
-/**
- * @author Andrew Shvayka
- */
+@Entity
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 
-    private static final long serialVersionUID = 1L;
+    @Transient
+    private static final long serialVersionUID = 253590350877992402L;
 
-    @PartitionKey
+    @Id
     @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
@@ -51,7 +53,7 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY)
     private String clazz;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY, codec = JsonCodec.class)
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY)
     private JsonNode configurationDescriptor;
 
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)

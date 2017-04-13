@@ -13,51 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.dao.model.sql;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.USER_CREDENTIALS_PASSWORD_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.USER_CREDENTIALS_ENABLED_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY;
-
-import java.util.UUID;
-
+import com.datastax.driver.core.utils.UUIDs;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 
-import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
+import java.util.UUID;
 
-@Table(name = USER_CREDENTIALS_COLUMN_FAMILY_NAME)
+@Entity
+@Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class UserCredentialsEntity implements BaseEntity<UserCredentials> {
 
     @Transient
     private static final long serialVersionUID = 1348221414123438374L;
-    
-    @PartitionKey(value = 0)
-    @Column(name = ID_PROPERTY)
+
+    @Id
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
     
-    @Column(name = USER_CREDENTIALS_USER_ID_PROPERTY)
+    @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY)
     private UUID userId;
 
-    @Column(name = USER_CREDENTIALS_ENABLED_PROPERTY)
+    @Column(name = ModelConstants.USER_CREDENTIALS_ENABLED_PROPERTY)
     private boolean enabled;
 
-    @Column(name = USER_CREDENTIALS_PASSWORD_PROPERTY)
+    @Column(name = ModelConstants.USER_CREDENTIALS_PASSWORD_PROPERTY)
     private String password;
 
-    @Column(name = USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY)
+    @Column(name = ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY)
     private String activateToken;
 
-    @Column(name = USER_CREDENTIALS_RESET_TOKEN_PROPERTY)
+    @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY)
     private String resetToken;
 
     public UserCredentialsEntity() {

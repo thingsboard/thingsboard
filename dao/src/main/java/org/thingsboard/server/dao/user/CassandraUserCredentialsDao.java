@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.UserCredentialsEntity;
+import org.thingsboard.server.dao.model.nosql.UserCredentialsEntity;
 
 import java.util.UUID;
 

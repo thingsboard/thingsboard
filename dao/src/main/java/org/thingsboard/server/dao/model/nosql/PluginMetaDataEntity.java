@@ -13,31 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
+package org.thingsboard.server.dao.model.nosql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.ClusteringColumn;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ADDITIONAL_INFO_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.RULE_ACTION;
-
 @Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
 public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
 
-    private static final long serialVersionUID = 1L;
+    @Transient
+    private static final long serialVersionUID = -5231612734979707866L;
 
     @PartitionKey
     @Column(name = ModelConstants.ID_PROPERTY)
@@ -68,7 +65,7 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
     public PluginMetaDataEntity() {

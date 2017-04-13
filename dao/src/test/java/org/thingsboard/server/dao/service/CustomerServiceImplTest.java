@@ -15,23 +15,21 @@
  */
 package org.thingsboard.server.dao.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
-import com.datastax.driver.core.utils.UUIDs;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class CustomerServiceImplTest extends AbstractServiceTest {
     

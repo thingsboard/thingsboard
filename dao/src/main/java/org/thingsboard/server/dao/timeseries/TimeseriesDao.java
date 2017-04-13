@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-// CASSANDRA ???
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;

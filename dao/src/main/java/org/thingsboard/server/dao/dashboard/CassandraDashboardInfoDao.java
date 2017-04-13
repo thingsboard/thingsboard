@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.DashboardInfoEntity;
+import org.thingsboard.server.dao.model.nosql.DashboardInfoEntity;
 
 import java.util.Arrays;
 import java.util.Collections;

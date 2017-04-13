@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model;
-
-import static org.thingsboard.server.dao.model.ModelConstants.ADDRESS2_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ADDRESS_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.CITY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.COUNTRY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EMAIL_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.PHONE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.STATE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.TENANT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.TENANT_REGION_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.TENANT_TITLE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ZIP_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
+package org.thingsboard.server.dao.model.nosql;
 
 import java.util.UUID;
 
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import com.datastax.driver.core.utils.UUIDs;
@@ -43,50 +30,50 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 
-@Table(name = TENANT_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
 public final class TenantEntity implements SearchTextEntity<Tenant> {
 
     @Transient
     private static final long serialVersionUID = -6198635547142409206L;
     
     @PartitionKey(value = 0)
-    @Column(name = ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
-    @Column(name = TENANT_TITLE_PROPERTY)
+    @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
     
-    @Column(name = SEARCH_TEXT_PROPERTY)
+    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Column(name = TENANT_REGION_PROPERTY)
+    @Column(name = ModelConstants.TENANT_REGION_PROPERTY)
     private String region;
     
-    @Column(name = COUNTRY_PROPERTY)
+    @Column(name = ModelConstants.COUNTRY_PROPERTY)
     private String country;
     
-    @Column(name = STATE_PROPERTY)
+    @Column(name = ModelConstants.STATE_PROPERTY)
     private String state;
 
-    @Column(name = CITY_PROPERTY)
+    @Column(name = ModelConstants.CITY_PROPERTY)
     private String city;
 
-    @Column(name = ADDRESS_PROPERTY)
+    @Column(name = ModelConstants.ADDRESS_PROPERTY)
     private String address;
 
-    @Column(name = ADDRESS2_PROPERTY)
+    @Column(name = ModelConstants.ADDRESS2_PROPERTY)
     private String address2;
 
-    @Column(name = ZIP_PROPERTY)
+    @Column(name = ModelConstants.ZIP_PROPERTY)
     private String zip;
 
-    @Column(name = PHONE_PROPERTY)
+    @Column(name = ModelConstants.PHONE_PROPERTY)
     private String phone;
 
-    @Column(name = EMAIL_PROPERTY)
+    @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
-    @Column(name = TENANT_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
     public TenantEntity() {

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.hazelcast.core.HazelcastInstance;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
@@ -39,10 +38,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 
 import java.util.UUID;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @TestPropertySource(properties = {"cache.enabled = true"})
 public class DeviceCredentialsCacheTest extends AbstractServiceTest {

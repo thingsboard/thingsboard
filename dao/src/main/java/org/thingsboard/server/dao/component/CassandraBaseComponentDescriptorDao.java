@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.ComponentDescriptorEntity;
+import org.thingsboard.server.dao.model.nosql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.Arrays;

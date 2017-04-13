@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.dao.attributes;
 
-// CASSANDRA ???
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;

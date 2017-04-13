@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.WidgetTypeEntity;
+import org.thingsboard.server.dao.model.nosql.WidgetTypeEntity;
 
 import java.util.List;
 import java.util.UUID;

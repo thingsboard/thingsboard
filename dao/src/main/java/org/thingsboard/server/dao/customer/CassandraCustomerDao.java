@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.CustomerEntity;
+import org.thingsboard.server.dao.model.nosql.CustomerEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.Arrays;

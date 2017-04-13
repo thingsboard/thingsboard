@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.PluginMetaDataEntity;
+import org.thingsboard.server.dao.model.nosql.PluginMetaDataEntity;
 
 import java.util.Arrays;
 import java.util.List;

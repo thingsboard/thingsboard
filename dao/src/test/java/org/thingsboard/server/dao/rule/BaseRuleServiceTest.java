@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.rule;
 
-import com.datastax.driver.core.utils.UUIDs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.id.TenantId;
