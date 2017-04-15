@@ -24,9 +24,10 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import java.util.UUID;
 
@@ -35,36 +36,36 @@ import java.util.UUID;
  */
 @Data
 @NoArgsConstructor
-@Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
+@Table(name = DEVICE_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 
     @Transient
     private static final long serialVersionUID = -1265181166886910153L;
 
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
 
     @PartitionKey()
-    @Column(name = ModelConstants.EVENT_TENANT_ID_PROPERTY)
+    @Column(name = EVENT_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.EVENT_ENTITY_TYPE_PROPERTY, codec = EntityTypeCodec.class)
+    @Column(name = EVENT_ENTITY_TYPE_PROPERTY, codec = EntityTypeCodec.class)
     private EntityType entityType;
 
     @PartitionKey(value = 2)
-    @Column(name = ModelConstants.EVENT_ENTITY_ID_PROPERTY)
+    @Column(name = EVENT_ENTITY_ID_PROPERTY)
     private UUID entityId;
 
     @ClusteringColumn()
-    @Column(name = ModelConstants.EVENT_TYPE_PROPERTY)
+    @Column(name = EVENT_TYPE_PROPERTY)
     private String eventType;
 
     @ClusteringColumn(value = 1)
-    @Column(name = ModelConstants.EVENT_UID_PROPERTY)
+    @Column(name = EVENT_UID_PROPERTY)
     private String eventUId;
 
-    @Column(name = ModelConstants.EVENT_BODY_PROPERTY, codec = JsonCodec.class)
+    @Column(name = EVENT_BODY_PROPERTY, codec = JsonCodec.class)
     private JsonNode body;
 
     public EventEntity(Event event) {

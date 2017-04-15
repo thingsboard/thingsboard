@@ -24,36 +24,36 @@ import com.datastax.driver.mapping.annotations.Transient;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-@Table(name = ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
+@Table(name = WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
 public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle> {
 
     @Transient
     private static final long serialVersionUID = -8842195928585650849L;
 
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
 
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
+    @Column(name = WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.WIDGETS_BUNDLE_ALIAS_PROPERTY)
+    @Column(name = WIDGETS_BUNDLE_ALIAS_PROPERTY)
     private String alias;
 
-    @Column(name = ModelConstants.WIDGETS_BUNDLE_TITLE_PROPERTY)
+    @Column(name = WIDGETS_BUNDLE_TITLE_PROPERTY)
     private String title;
 
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Column(name = ModelConstants.WIDGETS_BUNDLE_IMAGE_PROPERTY)
+    @Column(name = WIDGETS_BUNDLE_IMAGE_PROPERTY)
     private ByteBuffer image;
 
     public WidgetsBundleEntity() {

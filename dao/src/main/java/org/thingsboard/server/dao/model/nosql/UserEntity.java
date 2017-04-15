@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.AuthorityCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
@@ -33,42 +32,43 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
-@Table(name = ModelConstants.USER_COLUMN_FAMILY_NAME)
+@Table(name = USER_COLUMN_FAMILY_NAME)
 public final class UserEntity implements SearchTextEntity<User> {
 
 	@Transient
 	private static final long serialVersionUID = -7740338274987723489L;
     
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
 
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY)
+    @Column(name = USER_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @PartitionKey(value = 2)
-    @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY)
+    @Column(name = USER_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
     @PartitionKey(value = 3)
-    @Column(name = ModelConstants.USER_AUTHORITY_PROPERTY, codec = AuthorityCodec.class)
+    @Column(name = USER_AUTHORITY_PROPERTY, codec = AuthorityCodec.class)
     private Authority authority;
 
-    @Column(name = ModelConstants.USER_EMAIL_PROPERTY)
+    @Column(name = USER_EMAIL_PROPERTY)
     private String email;
     
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
     
-    @Column(name = ModelConstants.USER_FIRST_NAME_PROPERTY)
+    @Column(name = USER_FIRST_NAME_PROPERTY)
     private String firstName;
     
-    @Column(name = ModelConstants.USER_LAST_NAME_PROPERTY)
+    @Column(name = USER_LAST_NAME_PROPERTY)
     private String lastName;
 
-    @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = USER_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
     public UserEntity() {

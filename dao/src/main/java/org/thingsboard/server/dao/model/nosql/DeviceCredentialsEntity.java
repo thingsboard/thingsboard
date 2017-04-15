@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
 
 import com.datastax.driver.core.utils.UUIDs;
@@ -31,26 +30,28 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 
-@Table(name = ModelConstants.DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
+@Table(name = DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentials> {
 
     @Transient
     private static final long serialVersionUID = -2667310560260623272L;
     
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
     
-    @Column(name = ModelConstants.DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY)
+    @Column(name = DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY)
     private UUID deviceId;
     
-    @Column(name = ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_TYPE_PROPERTY, codec = DeviceCredentialsTypeCodec.class)
+    @Column(name = DEVICE_CREDENTIALS_CREDENTIALS_TYPE_PROPERTY, codec = DeviceCredentialsTypeCodec.class)
     private DeviceCredentialsType credentialsType;
 
-    @Column(name = ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_ID_PROPERTY)
+    @Column(name = DEVICE_CREDENTIALS_CREDENTIALS_ID_PROPERTY)
     private String credentialsId;
 
-    @Column(name = ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_VALUE_PROPERTY)
+    @Column(name = DEVICE_CREDENTIALS_CREDENTIALS_VALUE_PROPERTY)
     private String credentialsValue;
 
     public DeviceCredentialsEntity() {
