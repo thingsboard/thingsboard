@@ -26,43 +26,44 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import javax.persistence.Transient;
 import java.util.Objects;
 import java.util.UUID;
 
-@Table(name = ModelConstants.RULE_COLUMN_FAMILY_NAME)
+@Table(name = RULE_COLUMN_FAMILY_NAME)
 public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
 
     @Transient
     private static final long serialVersionUID = 4011728715100800304L;
     @PartitionKey
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
     @ClusteringColumn
-    @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY)
+    @Column(name = RULE_TENANT_ID_PROPERTY)
     private UUID tenantId;
-    @Column(name = ModelConstants.RULE_NAME_PROPERTY)
+    @Column(name = RULE_NAME_PROPERTY)
     private String name;
-    @Column(name = ModelConstants.RULE_STATE_PROPERTY, codec = ComponentLifecycleStateCodec.class)
+    @Column(name = RULE_STATE_PROPERTY, codec = ComponentLifecycleStateCodec.class)
     private ComponentLifecycleState state;
-    @Column(name = ModelConstants.RULE_WEIGHT_PROPERTY)
+    @Column(name = RULE_WEIGHT_PROPERTY)
     private int weight;
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
-    @Column(name = ModelConstants.RULE_PLUGIN_TOKEN_PROPERTY)
+    @Column(name = RULE_PLUGIN_TOKEN_PROPERTY)
     private String pluginToken;
-    @Column(name = ModelConstants.RULE_FILTERS, codec = JsonCodec.class)
+    @Column(name = RULE_FILTERS, codec = JsonCodec.class)
     private JsonNode filters;
-    @Column(name = ModelConstants.RULE_PROCESSOR, codec = JsonCodec.class)
+    @Column(name = RULE_PROCESSOR, codec = JsonCodec.class)
     private JsonNode processor;
-    @Column(name = ModelConstants.RULE_ACTION, codec = JsonCodec.class)
+    @Column(name = RULE_ACTION, codec = JsonCodec.class)
     private JsonNode action;
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
     public RuleMetaDataEntity() {

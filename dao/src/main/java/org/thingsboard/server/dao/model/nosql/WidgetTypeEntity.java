@@ -25,36 +25,36 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.type.JsonCodec;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import java.util.UUID;
 
-@Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
+@Table(name = WIDGET_TYPE_COLUMN_FAMILY_NAME)
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 
     @Transient
     private static final long serialVersionUID = 3591054897680176342L;
 
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
 
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
+    @Column(name = WIDGET_TYPE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @PartitionKey(value = 2)
-    @Column(name = ModelConstants.WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY)
+    @Column(name = WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY)
     private String bundleAlias;
 
-    @Column(name = ModelConstants.WIDGET_TYPE_ALIAS_PROPERTY)
+    @Column(name = WIDGET_TYPE_ALIAS_PROPERTY)
     private String alias;
 
-    @Column(name = ModelConstants.WIDGET_TYPE_NAME_PROPERTY)
+    @Column(name = WIDGET_TYPE_NAME_PROPERTY)
     private String name;
 
-    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY, codec = JsonCodec.class)
+    @Column(name = WIDGET_TYPE_DESCRIPTOR_PROPERTY, codec = JsonCodec.class)
     private JsonNode descriptor;
 
     public WidgetTypeEntity() {
@@ -157,7 +157,7 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
         sb.append(", tenantId=").append(tenantId);
         sb.append(", bundleAlias='").append(bundleAlias).append('\'');
         sb.append(", alias='").append(alias).append('\'');
-        sb.append(", name='").append(name).append('\'');
+        sb.append(", name ='").append(name).append('\'');
         sb.append(", descriptor=").append(descriptor);
         sb.append('}');
         return sb.toString();

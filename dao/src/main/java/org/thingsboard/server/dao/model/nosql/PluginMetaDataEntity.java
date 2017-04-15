@@ -22,50 +22,51 @@ import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
 import java.util.Objects;
 import java.util.UUID;
 
-@Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
+@Table(name = PLUGIN_COLUMN_FAMILY_NAME)
 public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
 
     @Transient
     private static final long serialVersionUID = -5231612734979707866L;
 
     @PartitionKey
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
 
-    @Column(name = ModelConstants.PLUGIN_API_TOKEN_PROPERTY)
+    @Column(name = PLUGIN_API_TOKEN_PROPERTY)
     private String apiToken;
 
     @ClusteringColumn
-    @Column(name = ModelConstants.PLUGIN_TENANT_ID_PROPERTY)
+    @Column(name = PLUGIN_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.PLUGIN_NAME_PROPERTY)
+    @Column(name = PLUGIN_NAME_PROPERTY)
     private String name;
 
-    @Column(name = ModelConstants.PLUGIN_CLASS_PROPERTY)
+    @Column(name = PLUGIN_CLASS_PROPERTY)
     private String clazz;
 
-    @Column(name = ModelConstants.PLUGIN_ACCESS_PROPERTY)
+    @Column(name = PLUGIN_ACCESS_PROPERTY)
     private boolean publicAccess;
 
-    @Column(name = ModelConstants.PLUGIN_STATE_PROPERTY, codec = ComponentLifecycleStateCodec.class)
+    @Column(name = PLUGIN_STATE_PROPERTY, codec = ComponentLifecycleStateCodec.class)
     private ComponentLifecycleState state;
 
-    @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
+    @Column(name = PLUGIN_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
     private JsonNode configuration;
 
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
     public PluginMetaDataEntity() {

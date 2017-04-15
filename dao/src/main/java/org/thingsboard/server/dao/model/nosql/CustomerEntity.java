@@ -20,7 +20,6 @@ import java.util.UUID;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
@@ -31,51 +30,53 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 
-@Table(name = ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME)
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
+@Table(name = CUSTOMER_COLUMN_FAMILY_NAME)
 public final class CustomerEntity implements SearchTextEntity<Customer> {
 
     @Transient
     private static final long serialVersionUID = -7732527103760948490L;
     
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
     
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.CUSTOMER_TENANT_ID_PROPERTY)
+    @Column(name = CUSTOMER_TENANT_ID_PROPERTY)
     private UUID tenantId;
     
-    @Column(name = ModelConstants.CUSTOMER_TITLE_PROPERTY)
+    @Column(name = CUSTOMER_TITLE_PROPERTY)
     private String title;
     
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
     
-    @Column(name = ModelConstants.COUNTRY_PROPERTY)
+    @Column(name = COUNTRY_PROPERTY)
     private String country;
     
-    @Column(name = ModelConstants.STATE_PROPERTY)
+    @Column(name = STATE_PROPERTY)
     private String state;
 
-    @Column(name = ModelConstants.CITY_PROPERTY)
+    @Column(name = CITY_PROPERTY)
     private String city;
 
-    @Column(name = ModelConstants.ADDRESS_PROPERTY)
+    @Column(name = ADDRESS_PROPERTY)
     private String address;
 
-    @Column(name = ModelConstants.ADDRESS2_PROPERTY)
+    @Column(name = ADDRESS2_PROPERTY)
     private String address2;
 
-    @Column(name = ModelConstants.ZIP_PROPERTY)
+    @Column(name = ZIP_PROPERTY)
     private String zip;
 
-    @Column(name = ModelConstants.PHONE_PROPERTY)
+    @Column(name = PHONE_PROPERTY)
     private String phone;
 
-    @Column(name = ModelConstants.EMAIL_PROPERTY)
+    @Column(name = EMAIL_PROPERTY)
     private String email;
 
-    @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = CUSTOMER_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
     public CustomerEntity() {

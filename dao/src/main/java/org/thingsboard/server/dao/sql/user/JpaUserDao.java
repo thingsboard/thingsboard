@@ -19,10 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.user.UserDao;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -30,13 +34,13 @@ import java.util.UUID;
  */
 @Component
 @ConditionalOnProperty(prefix="sql", value="enabled",havingValue = "true", matchIfMissing = false)
-public class JpaUserDao extends JpaAbstractDao<UserEntity, User> {
+public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements UserDao {
 
     @Autowired
     private UserRepository userRepository;
 
     @Override
-    protected Class<UserEntity> getColumnFamilyClass() {
+    protected Class<UserEntity> getEntityClass() {
         return UserEntity.class;
     }
 
@@ -48,5 +52,20 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> {
     @Override
     protected JpaRepository<UserEntity, UUID> getCrudRepository() {
         return userRepository;
+    }
+
+    @Override
+    public User findByEmail(String email) {
+        return DaoUtil.getData(userRepository.findByEmail(email));
+    }
+
+    @Override
+    public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
+        return null;
+    }
+
+    @Override
+    public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
+        return null;
     }
 }

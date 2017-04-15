@@ -25,37 +25,38 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
 import java.util.UUID;
 
-@Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
+@Table(name = DEVICE_COLUMN_FAMILY_NAME)
 public final class DeviceEntity implements SearchTextEntity<Device> {
 
     @Transient
     private static final long serialVersionUID = -1265181166886910152L;
     
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
     
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY)
+    @Column(name = DEVICE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @PartitionKey(value = 2)
-    @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
+    @Column(name = DEVICE_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
-    @Column(name = ModelConstants.DEVICE_NAME_PROPERTY)
+    @Column(name = DEVICE_NAME_PROPERTY)
     private String name;
     
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
     
-    @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    @Column(name = DEVICE_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
     public DeviceEntity() {

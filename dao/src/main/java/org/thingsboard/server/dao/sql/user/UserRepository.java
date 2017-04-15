@@ -15,12 +15,18 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
  * @author Valerii Sosliuk
  */
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
+
+    UserEntity findByEmail(String email);
+
 }

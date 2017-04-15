@@ -23,43 +23,44 @@ import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
 /**
  * @author Andrew Shvayka
  */
-@Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
+@Table(name = COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 
     private static final long serialVersionUID = 1L;
 
     @PartitionKey
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY)
+    @Column(name = COMPONENT_DESCRIPTOR_TYPE_PROPERTY)
     private ComponentType type;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_SCOPE_PROPERTY)
+    @Column(name = COMPONENT_DESCRIPTOR_SCOPE_PROPERTY)
     private ComponentScope scope;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_NAME_PROPERTY)
+    @Column(name = COMPONENT_DESCRIPTOR_NAME_PROPERTY)
     private String name;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY)
+    @Column(name = COMPONENT_DESCRIPTOR_CLASS_PROPERTY)
     private String clazz;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY, codec = JsonCodec.class)
+    @Column(name = COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY, codec = JsonCodec.class)
     private JsonNode configurationDescriptor;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)
+    @Column(name = COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)
     private String actions;
 
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
     public ComponentDescriptorEntity() {

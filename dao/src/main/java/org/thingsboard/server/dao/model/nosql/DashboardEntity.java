@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
@@ -32,31 +31,33 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 
-@Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
+@Table(name = DASHBOARD_COLUMN_FAMILY_NAME)
 public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     
     @Transient
     private static final long serialVersionUID = 2998395951247446191L;
 
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
     
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
+    @Column(name = DASHBOARD_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @PartitionKey(value = 2)
-    @Column(name = ModelConstants.DASHBOARD_CUSTOMER_ID_PROPERTY)
+    @Column(name = DASHBOARD_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
-    @Column(name = ModelConstants.DASHBOARD_TITLE_PROPERTY)
+    @Column(name = DASHBOARD_TITLE_PROPERTY)
     private String title;
     
-    @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
+    @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
     
-    @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
+    @Column(name = DASHBOARD_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
     private JsonNode configuration;
 
     public DashboardEntity() {

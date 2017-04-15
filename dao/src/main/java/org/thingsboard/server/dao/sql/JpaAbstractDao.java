@@ -33,7 +33,7 @@ import java.util.UUID;
 @Slf4j
 public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<D> {
 
-    protected abstract Class<E> getColumnFamilyClass();
+    protected abstract Class<E> getEntityClass();
 
     protected abstract String getColumnFamilyName();
 
@@ -47,7 +47,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     public D save(D domain) {
         E entity;
         try {
-            entity = getColumnFamilyClass().getConstructor(domain.getClass()).newInstance(domain);
+            entity = getEntityClass().getConstructor(domain.getClass()).newInstance(domain);
         } catch (Exception e) {
             log.error("Can't create entity for domain object {}", domain, e);
             throw new IllegalArgumentException("Can't create entity for domain object {" + domain + "}", e);

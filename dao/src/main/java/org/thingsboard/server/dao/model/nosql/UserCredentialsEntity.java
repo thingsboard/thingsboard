@@ -27,31 +27,31 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.ModelConstants;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
-@Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
+@Table(name = USER_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class UserCredentialsEntity implements BaseEntity<UserCredentials> {
 
     @Transient
     private static final long serialVersionUID = 1348221414123438374L;
     
     @PartitionKey(value = 0)
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ID_PROPERTY)
     private UUID id;
     
-    @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY)
+    @Column(name = USER_CREDENTIALS_USER_ID_PROPERTY)
     private UUID userId;
 
-    @Column(name = ModelConstants.USER_CREDENTIALS_ENABLED_PROPERTY)
+    @Column(name = USER_CREDENTIALS_ENABLED_PROPERTY)
     private boolean enabled;
 
-    @Column(name = ModelConstants.USER_CREDENTIALS_PASSWORD_PROPERTY)
+    @Column(name = USER_CREDENTIALS_PASSWORD_PROPERTY)
     private String password;
 
-    @Column(name = ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY)
+    @Column(name = USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY)
     private String activateToken;
 
-    @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY)
+    @Column(name = USER_CREDENTIALS_RESET_TOKEN_PROPERTY)
     private String resetToken;
 
     public UserCredentialsEntity() {
