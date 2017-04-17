@@ -26,7 +26,7 @@ import logoSvg from '../../svg/logo_title_white.svg';
 
 /*@ngInject*/
 export default function HomeController(loginService, userService, deviceService, Fullscreen, $scope, $element, $rootScope, $document, $state,
-                                       $log, $mdMedia, $animate, $timeout) {
+                                       $window, $log, $mdMedia, $animate, $timeout) {
 
     var siteSideNav = $('.tb-site-sidenav', $element);
 
@@ -48,6 +48,7 @@ export default function HomeController(loginService, userService, deviceService,
 
     vm.displaySearchMode = displaySearchMode;
     vm.openSidenav = openSidenav;
+    vm.goBack = goBack;
     vm.searchTextUpdated = searchTextUpdated;
     vm.sidenavClicked = sidenavClicked;
     vm.toggleFullscreen = toggleFullscreen;
@@ -102,6 +103,10 @@ export default function HomeController(loginService, userService, deviceService,
 
     function openSidenav() {
         vm.isShowSidenav = true;
+    }
+
+    function goBack() {
+        $window.history.back();
     }
 
     function closeSidenav() {
