@@ -45,6 +45,10 @@
 		      		class="md-icon-button" ng-click="vm.openSidenav()" aria-label="{{ 'home.menu' | translate }}" ng-class="{'tb-invisible': vm.displaySearchMode()}">
 		      		<md-icon aria-label="{{ 'home.menu' | translate }}" class="material-icons">menu</md-icon>
 		      </md-button>
+			  <md-button ng-show="forceFullscreen"
+					   class="md-icon-button" aria-label="{{ 'action.back' | translate }}" ng-click="vm.goBack()" ng-class="{'tb-invisible': vm.displaySearchMode()}">
+				  <md-icon aria-label="{{ 'action.back' | translate }}" class="material-icons">arrow_back</md-icon>
+			  </md-button>
 	          <md-button class="md-icon-button" aria-label="{{ 'action.back' | translate }}" ng-click="searchConfig.showSearch = !searchConfig.showSearch" ng-class="{'tb-invisible': !vm.displaySearchMode()}" >
 		      	  <md-icon aria-label="{{ 'action.back' | translate }}" class="material-icons">arrow_back</md-icon>
 	          </md-button>		    

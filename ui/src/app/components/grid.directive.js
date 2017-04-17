@@ -211,26 +211,31 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
                     vm.items.pending = true;
                     promise.then(
                         function success(items) {
-                            vm.items.data = vm.items.data.concat(items.data);
-                            var startIndex = vm.items.data.length - items.data.length;
-                            var endIndex = vm.items.data.length;
-                            for (var i = startIndex; i < endIndex; i++) {
-                                var item = vm.items.data[i];
-                                item.index = i;
-                                var row = Math.floor(i / vm.columns);
-                                var itemRow = vm.items.rowData[row];
-                                if (!itemRow) {
-                                    itemRow = [];
-                                    vm.items.rowData.push(itemRow);
+                            if (vm.items.reloadPending) {
+                                vm.items.pending = false;
+                                reload();
+                            } else {
+                                vm.items.data = vm.items.data.concat(items.data);
+                                var startIndex = vm.items.data.length - items.data.length;
+                                var endIndex = vm.items.data.length;
+                                for (var i = startIndex; i < endIndex; i++) {
+                                    var item = vm.items.data[i];
+                                    item.index = i;
+                                    var row = Math.floor(i / vm.columns);
+                                    var itemRow = vm.items.rowData[row];
+                                    if (!itemRow) {
+                                        itemRow = [];
+                                        vm.items.rowData.push(itemRow);
+                                    }
+                                    itemRow.push(item);
                                 }
-                                itemRow.push(item);
+                                vm.items.nextPageLink = items.nextPageLink;
+                                vm.items.hasNext = items.hasNext;
+                                if (vm.items.hasNext) {
+                                    vm.items.nextPageLink.limit = pageSize;
+                                }
+                                vm.items.pending = false;
                             }
-                            vm.items.nextPageLink = items.nextPageLink;
-                            vm.items.hasNext = items.hasNext;
-                            if (vm.items.hasNext) {
-                                vm.items.nextPageLink.limit = pageSize;
-                            }
-                            vm.items.pending = false;
                         },
                         function fail() {
                             vm.items.hasNext = false;
@@ -425,25 +430,34 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
     }
 
     $scope.$on('searchTextUpdated', function () {
-        vm.items = {
-            data: [],
-            rowData: [],
-            nextPageLink: {
-                limit: pageSize,
-                textSearch: $scope.searchConfig.searchText
-            },
-            selections: {},
-            selectedCount: 0,
-            hasNext: true,
-            pending: false
-        };
-        vm.detailsConfig.isDetailsOpen = false;
-        vm.itemRows.getItemAtIndex(pageSize);
+        reload();
     });
 
     vm.onGridInited(vm);
 
     vm.itemRows.getItemAtIndex(pageSize);
+
+    function reload() {
+        if (vm.items && vm.items.pending) {
+            vm.items.reloadPending = true;
+        } else {
+            vm.items = {
+                data: [],
+                rowData: [],
+                nextPageLink: {
+                    limit: pageSize,
+                    textSearch: $scope.searchConfig.searchText
+                },
+                selections: {},
+                selectedCount: 0,
+                hasNext: true,
+                pending: false
+            };
+            vm.detailsConfig.isDetailsOpen = false;
+            vm.items.reloadPending = false;
+            vm.itemRows.getItemAtIndex(pageSize);
+        }
+    }
 
     function refreshList() {
         $state.go($state.current, vm.refreshParamsFunc(), {reload: true});
