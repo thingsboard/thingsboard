@@ -111,11 +111,12 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
     function request(config) {
         var rejected = false;
         if (config.url.startsWith('/api/')) {
-            $rootScope.loading = !isInternalUrlPrefix(config.url);
+            var isLoading = !isInternalUrlPrefix(config.url);
+            updateLoadingState(config, isLoading);
             if (isTokenBasedAuthEntryPoint(config.url)) {
                 if (!getUserService().updateAuthorizationHeader(config.headers) &&
                     !getUserService().refreshTokenPending()) {
-                    $rootScope.loading = false;
+                    updateLoadingState(config, false);
                     rejected = true;
                     getUserService().clearJwtToken(false);
                     return $q.reject({ data: {message: getTranslate().instant('access.unauthorized')}, status: 401, config: config});
@@ -131,21 +132,21 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
 
     function requestError(rejection) {
         if (rejection.config.url.startsWith('/api/')) {
-            $rootScope.loading = false;
+            updateLoadingState(rejection.config, false);
         }
         return $q.reject(rejection);
     }
 
     function response(response) {
         if (response.config.url.startsWith('/api/')) {
-            $rootScope.loading = false;
+            updateLoadingState(response.config, false);
         }
         return response;
     }
 
     function responseError(rejection) {
         if (rejection.config.url.startsWith('/api/')) {
-            $rootScope.loading = false;
+            updateLoadingState(rejection.config, false);
         }
         var unhandled = false;
         var ignoreErrors = rejection.config.ignoreErrors;
@@ -183,5 +184,11 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             }
         }
         return $q.reject(rejection);
+    }
+
+    function updateLoadingState(config, isLoading) {
+        if (!config || angular.isUndefined(config.ignoreLoading) || !config.ignoreLoading) {
+            $rootScope.loading = isLoading;
+        }
     }
 }
