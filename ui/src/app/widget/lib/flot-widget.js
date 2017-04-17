@@ -24,6 +24,7 @@ import 'flot/src/plugins/jquery.flot.selection';
 import 'flot/src/plugins/jquery.flot.pie';
 import 'flot/src/plugins/jquery.flot.crosshair';
 import 'flot/src/plugins/jquery.flot.stack';
+import 'flot.curvedlines/curvedLines';
 
 /* eslint-disable angular/angularelement */
 export default class TbFlot {
@@ -31,6 +32,7 @@ export default class TbFlot {
 
         this.ctx = ctx;
         this.chartType = chartType || 'line';
+        var settings = ctx.settings;
 
         var colors = [];
         for (var i = 0; i < ctx.data.length; i++) {
@@ -51,6 +53,12 @@ export default class TbFlot {
                 series.points.show = true;
                 series.points.lineWidth = 5;
                 series.points.radius = 3;
+            }
+
+            if (this.chartType === 'line' && settings.smoothLines && !series.points.show) {
+                series.curvedLines = {
+                    apply: true
+                }
             }
 
             var lineColor = tinycolor(series.dataKey.color);
@@ -160,7 +168,6 @@ export default class TbFlot {
             };
         }
 
-        var settings = ctx.settings;
         ctx.trackDecimals = angular.isDefined(settings.decimals) ?
             settings.decimals : ctx.decimals;
 
@@ -266,6 +273,13 @@ export default class TbFlot {
 
             options.series = {
                 stack: settings.stack === true
+            }
+
+            if (this.chartType === 'line' && settings.smoothLines) {
+                options.series.curvedLines = {
+                    active: true,
+                    monotonicFit: true
+                }
             }
 
             if (this.chartType === 'bar') {
@@ -473,6 +487,11 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "smoothLines": {
+                        "title": "Display smooth (curved) lines",
+                        "type": "boolean",
+                        "default": false
+                    },
                     "shadowSize": {
                         "title": "Shadow size",
                         "type": "number",
@@ -591,6 +610,7 @@ export default class TbFlot {
             },
             "form": [
                 "stack",
+                "smoothLines",
                 "shadowSize",
                 {
                     "key": "fontColor",
@@ -910,7 +930,7 @@ export default class TbFlot {
                     value = series.data[hoverIndex][1];
                 }
 
-                if (series.stack) {
+                if (series.stack || (series.curvedLines && series.curvedLines.apply)) {
                     hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
                 }
                 results.seriesHover.push({
