@@ -26,6 +26,7 @@ import gridTemplate from './grid.tpl.html';
 
 export default angular.module('thingsboard.directives.grid', [thingsboardScopeElement, thingsboardDetailsSidenav])
     .directive('tbGrid', Grid)
+    .controller('ItemCardController', ItemCardController)
     .directive('tbGridCardContent', GridCardContent)
     .filter('range', RangeFilter)
     .name;
@@ -44,14 +45,52 @@ function RangeFilter() {
 }
 
 /*@ngInject*/
-function GridCardContent($compile) {
+function ItemCardController() {
+
+    var vm = this; //eslint-disable-line
+
+}
+
+/*@ngInject*/
+function GridCardContent($compile, $controller) {
     var linker = function(scope, element) {
+
+        var controllerInstance = null;
+
         scope.$watch('itemTemplate',
-            function(value) {
-                element.html(value);
-                $compile(element.contents())(scope);
+            function() {
+                initContent();
             }
         );
+        scope.$watch('itemController',
+            function() {
+                initContent();
+            }
+        );
+        scope.$watch('parentCtl',
+            function() {
+                controllerInstance.parentCtl = scope.parentCtl;
+            }
+        );
+        scope.$watch('item',
+            function() {
+                controllerInstance.item = scope.item;
+            }
+        );
+
+        function initContent() {
+            if (scope.itemTemplate && scope.itemController && !controllerInstance) {
+                element.html(scope.itemTemplate);
+                var locals = {};
+                angular.extend(locals, {$scope: scope, $element: element});
+                var controller = $controller(scope.itemController, locals, true, 'vm');
+                controller.instance = controller();
+                controllerInstance = controller.instance;
+                controllerInstance.item = scope.item;
+                controllerInstance.parentCtl = scope.parentCtl;
+                $compile(element.contents())(scope);
+            }
+        }
     };
 
     return {
@@ -61,6 +100,7 @@ function GridCardContent($compile) {
             parentCtl: "=parentCtl",
             gridCtl: "=gridCtl",
             itemTemplate: "=itemTemplate",
+            itemController: "=itemController",
             item: "=item"
         }
     };
@@ -290,6 +330,11 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
             vm.itemCardTemplate = vm.config.itemCardTemplate;
         } else if (vm.config.itemCardTemplateUrl) {
             vm.itemCardTemplate = $templateCache.get(vm.config.itemCardTemplateUrl);
+        }
+        if (vm.config.itemCardController) {
+            vm.itemCardController =  vm.config.itemCardController;
+        } else {
+            vm.itemCardController = 'ItemCardController';
         }
 
         vm.parentCtl = vm.config.parentCtl || vm;

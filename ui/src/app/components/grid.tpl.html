@@ -43,7 +43,7 @@
                                 </md-card-title>
                             </section>
                             <md-card-content flex>
-                                <tb-grid-card-content grid-ctl="vm" parent-ctl="vm.parentCtl" item-template="vm.itemCardTemplate" item="rowItem[n]"></tb-grid-card-content>
+                                <tb-grid-card-content grid-ctl="vm" parent-ctl="vm.parentCtl" item-controller="vm.itemCardController" item-template="vm.itemCardTemplate" item="rowItem[n]"></tb-grid-card-content>
                             </md-card-content>
                             <md-card-actions layout="row" layout-align="end end">
                                 <md-button ng-if="action.isEnabled(rowItem[n])" ng-disabled="loading" class="md-icon-button md-primary" ng-repeat="action in vm.actionsList"

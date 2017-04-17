@@ -23,6 +23,7 @@ function CustomerService($http, $q) {
     var service = {
         getCustomers: getCustomers,
         getCustomer: getCustomer,
+        getCustomerTitle: getCustomerTitle,
         deleteCustomer: deleteCustomer,
         saveCustomer: saveCustomer
     }
@@ -52,6 +53,17 @@ function CustomerService($http, $q) {
     function getCustomer(customerId) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId;
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail(response) {
+            deferred.reject(response.data);
+        });
+        return deferred.promise;
+    }
+
+    function getCustomerTitle(customerId) {
+        var deferred = $q.defer();
+        var url = '/api/customer/' + customerId + '/title';
         $http.get(url, null).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
