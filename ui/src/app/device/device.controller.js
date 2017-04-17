@@ -31,7 +31,7 @@ export function DeviceCardController($scope, types, customerService) {
     vm.types = types;
 
     vm.isAssignedToCustomer = function() {
-        if (vm.item && vm.item.customerId && vm.parentCtl.devicesScope === 'tenant',
+        if (vm.item && vm.item.customerId && vm.parentCtl.devicesScope === 'tenant' &&
             vm.item.customerId.id != vm.types.id.nullUid) {
             return true;
         }
@@ -40,7 +40,7 @@ export function DeviceCardController($scope, types, customerService) {
 
     $scope.$watch('vm.item',
         function() {
-            if (vm.item && vm.item.customerId && vm.item.customerId.id != vm.types.id.nullUid) {
+            if (vm.isAssignedToCustomer()) {
                 customerService.getCustomerTitle(vm.item.customerId.id).then(
                     function success(title) {
                         vm.customerTitle = title;

@@ -23,7 +23,35 @@ import addDashboardsToCustomerTemplate from './add-dashboards-to-customer.tpl.ht
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DashboardsController(userService, dashboardService, customerService, importExport, types, $scope, $controller,
+export function DashboardCardController($scope, types, customerService) {
+
+    var vm = this;
+
+    vm.types = types;
+
+    vm.isAssignedToCustomer = function() {
+        if (vm.item && vm.item.customerId && vm.parentCtl.dashboardsScope === 'tenant' &&
+            vm.item.customerId.id != vm.types.id.nullUid) {
+            return true;
+        }
+        return false;
+    }
+
+    $scope.$watch('vm.item',
+        function() {
+            if (vm.isAssignedToCustomer()) {
+                customerService.getCustomerTitle(vm.item.customerId.id).then(
+                    function success(title) {
+                        vm.customerTitle = title;
+                    }
+                );
+            }
+        }
+    );
+}
+
+/*@ngInject*/
+export function DashboardsController(userService, dashboardService, customerService, importExport, types, $scope, $controller,
                                              $state, $stateParams, $mdDialog, $document, $q, $translate) {
 
     var customerId = $stateParams.customerId;
@@ -58,6 +86,7 @@ export default function DashboardsController(userService, dashboardService, cust
         clickItemFunc: openDashboard,
 
         getItemTitleFunc: getDashboardTitle,
+        itemCardController: 'DashboardCardController',
         itemCardTemplateUrl: dashboardCard,
         parentCtl: vm,
 
