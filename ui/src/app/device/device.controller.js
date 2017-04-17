@@ -24,7 +24,36 @@ import deviceCredentialsTemplate from './device-credentials.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DeviceController(userService, deviceService, customerService, $scope, $controller, $state, $stateParams, $document, $mdDialog, $q, $translate, types) {
+export function DeviceCardController($scope, types, customerService) {
+
+    var vm = this;
+
+    vm.types = types;
+
+    vm.isAssignedToCustomer = function() {
+        if (vm.item && vm.item.customerId && vm.parentCtl.devicesScope === 'tenant',
+            vm.item.customerId.id != vm.types.id.nullUid) {
+            return true;
+        }
+        return false;
+    }
+
+    $scope.$watch('vm.item',
+        function() {
+            if (vm.item && vm.item.customerId && vm.item.customerId.id != vm.types.id.nullUid) {
+                customerService.getCustomerTitle(vm.item.customerId.id).then(
+                    function success(title) {
+                        vm.customerTitle = title;
+                    }
+                );
+            }
+        }
+    );
+}
+
+
+/*@ngInject*/
+export function DeviceController(userService, deviceService, customerService, $scope, $controller, $state, $stateParams, $document, $mdDialog, $q, $translate, types) {
 
     var customerId = $stateParams.customerId;
 
@@ -47,6 +76,7 @@ export default function DeviceController(userService, deviceService, customerSer
 
         getItemTitleFunc: getDeviceTitle,
 
+        itemCardController: 'DeviceCardController',
         itemCardTemplateUrl: deviceCard,
         parentCtl: vm,
 
