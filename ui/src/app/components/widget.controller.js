@@ -341,6 +341,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
              $scope.legendConfig.showTotal === true);
 
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
+            var dataIndex = 0;
             for (var i = 0; i < widgetContext.datasources.length; i++) {
                 var datasource = widgetContext.datasources[i];
                 for (var a = 0; a < datasource.dataKeys.length; a++) {
@@ -356,7 +357,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     if ($scope.displayLegend) {
                         var legendKey = {
                             dataKey: dataKey,
-                            dataIndex: Number(i) + Number(a)
+                            dataIndex: dataIndex++
                         };
                         $scope.legendData.keys.push(legendKey);
                         var legendKeyData = {
