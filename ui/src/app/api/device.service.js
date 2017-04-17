@@ -51,7 +51,7 @@ function DeviceService($http, $q, $filter, userService, telemetryWebsocketServic
 
     return service;
 
-    function getTenantDevices(pageLink) {
+    function getTenantDevices(pageLink, config) {
         var deferred = $q.defer();
         var url = '/api/tenant/devices?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -63,7 +63,7 @@ function DeviceService($http, $q, $filter, userService, telemetryWebsocketServic
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
         }
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
@@ -425,7 +425,7 @@ function DeviceService($http, $q, $filter, userService, telemetryWebsocketServic
         }
     }
 
-    function getDeviceAttributes(deviceId, attributeScope, query, successCallback) {
+    function getDeviceAttributes(deviceId, attributeScope, query, successCallback, config) {
         var deferred = $q.defer();
         var subscriptionId = deviceId + attributeScope;
         var das = deviceAttributesSubscriptionMap[subscriptionId];
@@ -445,7 +445,7 @@ function DeviceService($http, $q, $filter, userService, telemetryWebsocketServic
             }
         } else {
             var url = '/api/plugins/telemetry/' + deviceId + '/values/attributes/' + attributeScope;
-            $http.get(url, null).then(function success(response) {
+            $http.get(url, config).then(function success(response) {
                 processDeviceAttributes(response.data, query, deferred, successCallback);
             }, function fail() {
                 deferred.reject();
