@@ -2,9 +2,6 @@
 
 setlocal ENABLEEXTENSIONS
 
-IF %PROCESSOR_ARCHITECTURE%==AMD64 GOTO CHECK_JAVA_64
-IF %PROCESSOR_ARCHITECTURE%==x86 GOTO CHECK_JAVA_32
-
 @ECHO Detecting Java version installed.
 :CHECK_JAVA_64
 @ECHO Detecting if it is 64 bit machine
@@ -36,7 +33,6 @@ if defined ValueName (
 )
 
 IF NOT "%JRE_PATH2%" == "" GOTO JAVA_INSTALLED
-IF "%JRE_PATH2%" == "" GOTO JAVA_NOT_INSTALLED
 
 :CHECK_JAVA_32
 @ECHO Detecting if it is 32 bit machine
