@@ -291,7 +291,6 @@ public class SubscriptionManager {
                     } else {
                         log.trace("[{}] Remote subscription is now handled on new server address: [{}]", s.getWsSessionId(), newAddress);
                         subscriptionIterator.remove();
-
                         //TODO: onUpdate state of subscription by WsSessionId and other maps.
                     }
                 }
