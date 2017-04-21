@@ -139,7 +139,12 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
             public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
                 Map<String, List<TsData>> result = new LinkedHashMap<>();
                 for (TsKvEntry entry : data) {
-                    result.put(entry.getKey(), data.stream().map(v -> new TsData(v.getTs(), v.getValueAsString())).collect(Collectors.toList()));
+                    List<TsData> vList = result.get(entry.getKey());
+                    if (vList == null) {
+                        vList = new ArrayList<>();
+                        result.put(entry.getKey(), vList);
+                    }
+                    vList.add(new TsData(entry.getTs(), entry.getValueAsString()));
                 }
                 msg.getResponseHolder().setResult(new ResponseEntity<>(result, HttpStatus.OK));
             }
