@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.event;
 
+import com.datastax.driver.core.utils.UUIDs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.DataConstants;

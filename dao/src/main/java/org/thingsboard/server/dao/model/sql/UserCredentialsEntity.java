@@ -16,11 +16,14 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import lombok.Data;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -29,18 +32,19 @@ import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
+@Data
 @Entity
 @Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class UserCredentialsEntity implements BaseEntity<UserCredentials> {
 
     @Transient
-    private static final long serialVersionUID = 1348221414123438374L;
+    private static final long serialVersionUID = -3989724854149114846L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
-    
-    @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY)
+
+    @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, columnDefinition = "BINARY(16)", unique = true)
     private UUID userId;
 
     @Column(name = ModelConstants.USER_CREDENTIALS_ENABLED_PROPERTY)
@@ -49,10 +53,10 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
     @Column(name = ModelConstants.USER_CREDENTIALS_PASSWORD_PROPERTY)
     private String password;
 
-    @Column(name = ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY)
+    @Column(name = ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY, unique = true)
     private String activateToken;
 
-    @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY)
+    @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY, unique = true)
     private String resetToken;
 
     public UserCredentialsEntity() {
@@ -70,54 +74,6 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
         this.password = userCredentials.getPassword();
         this.activateToken = userCredentials.getActivateToken();
         this.resetToken = userCredentials.getResetToken();
-    }
-    
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-    
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getActivateToken() {
-        return activateToken;
-    }
-
-    public void setActivateToken(String activateToken) {
-        this.activateToken = activateToken;
-    }
-
-    public String getResetToken() {
-        return resetToken;
-    }
-
-    public void setResetToken(String resetToken) {
-        this.resetToken = resetToken;
     }
 
     @Override
@@ -186,4 +142,13 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
         return userCredentials;
     }
 
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(UUID id) {
+        this.id = id;
+    }
 }

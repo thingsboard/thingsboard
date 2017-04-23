@@ -34,7 +34,7 @@ import java.util.UUID;
 
 @Data
 @NoArgsConstructor
-@Entity
+//@Entity
 @Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 

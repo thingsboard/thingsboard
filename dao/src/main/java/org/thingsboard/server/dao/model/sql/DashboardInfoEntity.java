@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.UUID;
 
-@Entity
+//@Entity
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
 

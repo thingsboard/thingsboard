@@ -17,45 +17,44 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.SearchTextEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
+import java.io.IOException;
 import java.util.UUID;
 
 /**
- * @author Valerii Sosliuk
+ * Created by Valerii Sosliuk on 4/21/2017.
  */
+@Data
 @Entity
-@Table(name= ModelConstants.USER_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.USER_COLUMN_FAMILY_NAME)
 public class UserEntity implements SearchTextEntity<User> {
-
     @Transient
-    private static final long serialVersionUID = 4349485207981226785L;
+    private static final long serialVersionUID = -271106508790582977L;
 
     @Id
-    @Column(name=ModelConstants.ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID tenantId;
 
-    @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY)
+    @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID customerId;
 
     @Column(name = ModelConstants.USER_AUTHORITY_PROPERTY)
     private Authority authority;
 
-    @Column(name = ModelConstants.USER_EMAIL_PROPERTY)
+    @Column(name = ModelConstants.USER_EMAIL_PROPERTY, unique = true)
     private String email;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
@@ -68,7 +67,10 @@ public class UserEntity implements SearchTextEntity<User> {
     private String lastName;
 
     @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY)
-    private JsonNode additionalInfo;
+    private String additionalInfo;
+
+    public UserEntity() {
+    }
 
     public UserEntity(User user) {
         if (user.getId() != null) {
@@ -84,11 +86,7 @@ public class UserEntity implements SearchTextEntity<User> {
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
-        this.additionalInfo = user.getAdditionalInfo();
-    }
-
-    public String getSearchText() {
-        return searchText;
+        this.additionalInfo = user.getAdditionalInfo().toString();
     }
 
     @Override
@@ -109,62 +107,6 @@ public class UserEntity implements SearchTextEntity<User> {
     @Override
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(UUID customerId) {
-        this.customerId = customerId;
-    }
-
-    public Authority getAuthority() {
-        return authority;
-    }
-
-    public void setAuthority(Authority authority) {
-        this.authority = authority;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
     }
 
     @Override
@@ -204,9 +146,18 @@ public class UserEntity implements SearchTextEntity<User> {
         user.setEmail(email);
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setAdditionalInfo(additionalInfo);
+        ObjectMapper mapper = new ObjectMapper();
+        if (additionalInfo != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(additionalInfo);
+                user.setAdditionalInfo(jsonNode);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         return user;
     }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -270,5 +221,4 @@ public class UserEntity implements SearchTextEntity<User> {
             return false;
         return true;
     }
-
 }

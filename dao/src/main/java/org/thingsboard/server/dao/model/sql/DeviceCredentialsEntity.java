@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
-@Entity
+//@Entity
 @Table(name = ModelConstants.DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentials> {
 

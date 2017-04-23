@@ -20,53 +20,52 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.sql.UserEntity;
+import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.dao.user.UserCredentialsDao;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
- * @author Valerii Sosliuk
+ * Created by Valerii Sosliuk on 4/22/2017.
  */
 @Component
 @ConditionalOnProperty(prefix="sql", value="enabled",havingValue = "true", matchIfMissing = false)
-public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements UserDao {
+public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity, UserCredentials> implements UserCredentialsDao {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserCredentialsRepository userCredentialsRepository;
 
     @Override
-    protected Class<UserEntity> getEntityClass() {
-        return UserEntity.class;
+    protected Class<UserCredentialsEntity> getEntityClass() {
+        return UserCredentialsEntity.class;
     }
 
     @Override
     protected String getColumnFamilyName() {
-        return ModelConstants.USER_COLUMN_FAMILY_NAME;
+        return ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME;
     }
 
     @Override
-    protected CrudRepository<UserEntity, UUID> getCrudRepository() {
-        return userRepository;
+    protected CrudRepository<UserCredentialsEntity, UUID> getCrudRepository() {
+        return userCredentialsRepository;
     }
 
     @Override
-    public User findByEmail(String email) {
-        return DaoUtil.getData(userRepository.findByEmail(email));
+    public UserCredentials findByUserId(UUID userId) {
+        return DaoUtil.getData(userCredentialsRepository.findByUserId(userId));
     }
 
     @Override
-    public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
-        throw new RuntimeException("Not Implemented");
+    public UserCredentials findByActivateToken(String activateToken) {
+        return DaoUtil.getData(userCredentialsRepository.findByActivateToken(activateToken));
     }
 
     @Override
-    public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        throw new RuntimeException("Not Implemented");
+    public UserCredentials findByResetToken(String resetToken) {
+        return DaoUtil.getData(userCredentialsRepository.findByResetToken(resetToken));
     }
 }

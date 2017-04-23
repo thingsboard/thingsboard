@@ -32,7 +32,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
-@Entity
+//@Entity
 @Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 

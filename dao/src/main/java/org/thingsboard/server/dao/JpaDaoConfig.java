@@ -16,27 +16,33 @@
 package org.thingsboard.server.dao;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
+import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 /**
  * @author Valerii Sosliuk
  */
 @Configuration
+@EnableAutoConfiguration
 @ConditionalOnProperty(prefix="sql", value="enabled",havingValue = "true", matchIfMissing = false)
+@ComponentScan("org.thingsboard.server.dao.sql")
+@EnableJpaRepositories("org.thingsboard.server.dao.sql")
+@EntityScan("org.thingsboard.server.dao.model.sql")
+@EnableTransactionManagement
 public class JpaDaoConfig {
 
-    @Value("sql.datasource.url")
-    private String url;
-    @Value("sql.datasource.username")
-    private String username;
-    @Value("sql.datasource.password")
-    private String password;
-
-    public DataSource dataSource() {
-        return DataSourceBuilder.create().url(url).username(username).password(password).build();
-    }
 }

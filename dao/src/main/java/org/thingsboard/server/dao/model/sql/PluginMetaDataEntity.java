@@ -32,7 +32,7 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import java.util.Objects;
 import java.util.UUID;
 
-@Entity
+//@Entity
 @Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
 public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
 

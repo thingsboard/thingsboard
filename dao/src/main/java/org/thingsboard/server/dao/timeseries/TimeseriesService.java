@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.TsKvEntry;

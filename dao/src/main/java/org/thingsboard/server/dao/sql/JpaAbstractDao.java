@@ -18,11 +18,11 @@ package org.thingsboard.server.dao.sql;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.sql.user.JpaRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +37,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
 
     protected abstract String getColumnFamilyName();
 
-    protected abstract JpaRepository<E, UUID> getCrudRepository();
+    protected abstract CrudRepository<E, UUID> getCrudRepository();
 
     protected boolean isSearchTextDao() {
         return false;
@@ -69,7 +69,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     @Override
     public ListenableFuture<D> findByIdAsync(UUID key) {
         log.debug("Get entity by key {}", key);
-        org.springframework.util.concurrent.ListenableFuture<E> entityFuture = getCrudRepository().findByIdAsync(key);
+       // org.springframework.util.concurrent.ListenableFuture<E> entityFuture = getCrudRepository().findByIdAsync(key);
         // TODO: vsosliuk implement
         return null;
     }

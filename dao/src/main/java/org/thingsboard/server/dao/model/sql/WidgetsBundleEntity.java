@@ -22,6 +22,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -31,6 +33,7 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+@Data
 @Entity
 @Table(name = ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
 public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle> {
@@ -39,10 +42,10 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
     private static final long serialVersionUID = 6897035686422298096L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID tenantId;
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_ALIAS_PROPERTY)
@@ -55,7 +58,7 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
     private String searchText;
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_IMAGE_PROPERTY)
-    private ByteBuffer image;
+    private byte[] image;
 
     public WidgetsBundleEntity() {
         super();
@@ -71,7 +74,7 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
         if (widgetsBundle.getImage() != null) {
-            this.image = ByteBuffer.wrap(widgetsBundle.getImage());
+            this.image = widgetsBundle.getImage();
         }
     }
 
@@ -85,38 +88,6 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
         this.id = id;
     }
 
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public void setAlias(String alias) {
-        this.alias = alias;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public ByteBuffer getImage() {
-        return image;
-    }
-
-    public void setImage(ByteBuffer image) {
-        this.image = image;
-    }
-
     @Override
     public String getSearchTextSource() {
         return title;
@@ -125,10 +96,6 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
     @Override
     public void setSearchText(String searchText) {
         this.searchText = searchText;
-    }
-
-    public String getSearchText() {
-        return searchText;
     }
 
     @Override
@@ -155,7 +122,6 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
         if (title != null ? !title.equals(that.title) : that.title != null) return false;
         if (searchText != null ? !searchText.equals(that.searchText) : that.searchText != null) return false;
         return image != null ? image.equals(that.image) : that.image == null;
-
     }
 
     @Override
@@ -180,11 +146,7 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
         }
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
-        if (image != null) {
-            byte[] imageByteArray = new byte[image.remaining()];
-            image.get(imageByteArray);
-            widgetsBundle.setImage(imageByteArray);
-        }
+        widgetsBundle.setImage(image);
         return widgetsBundle;
     }
 }

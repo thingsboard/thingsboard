@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.attributes;
 
+import com.datastax.driver.core.utils.UUIDs;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;

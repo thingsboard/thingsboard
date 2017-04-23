@@ -30,7 +30,7 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
-@Entity
+//@Entity
 @Table(name = ADMIN_SETTINGS_COLUMN_FAMILY_NAME)
 public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
 

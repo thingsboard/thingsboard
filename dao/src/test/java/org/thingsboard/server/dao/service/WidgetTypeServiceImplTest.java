@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;

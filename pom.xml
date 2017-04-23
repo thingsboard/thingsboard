@@ -71,6 +71,9 @@
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
         <bouncycastle.version>1.56</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
+        <h2.version>1.4.194</h2.version>
+        <dbunit.version>2.5.3</dbunit.version>
+        <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
     </properties>
 
     <modules>
@@ -443,6 +446,11 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>com.github.springtestdbunit</groupId>
+                <artifactId>spring-test-dbunit</artifactId>
+                <version>${spring-test-dbunit.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>${jjwt.version}</version>
@@ -641,6 +649,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.dbunit</groupId>
+                <artifactId>dbunit</artifactId>
+                <version>${dbunit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
                 <version>${mockito.version}</version>
@@ -711,6 +725,11 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk15on</artifactId>
                 <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.winsw</groupId>

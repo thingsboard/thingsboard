@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.UUID;
 
-@Entity
+//@Entity
 @Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
 public final class TenantEntity implements SearchTextEntity<Tenant> {
 

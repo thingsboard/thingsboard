@@ -15,17 +15,21 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.util.concurrent.ListenableFuture;
+import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 
-import java.io.Serializable;
+import java.util.UUID;
 
 /**
- * @author Valerii Sosliuk
+ * Created by Valerii Sosliuk on 4/22/2017.
  */
-public interface JpaRepository<E, ID extends Serializable> extends CrudRepository<E, ID> {
+@ConditionalOnProperty(prefix="sql", value="enabled",havingValue = "true", matchIfMissing = false)
+public interface UserCredentialsRepository extends CrudRepository<UserCredentialsEntity, UUID> {
 
-    @Async
-    ListenableFuture<E> findByIdAsync(ID key);
+    UserCredentialsEntity findByUserId(UUID userId);
+
+    UserCredentialsEntity findByActivateToken(String activateToken);
+
+    UserCredentialsEntity findByResetToken(String resetToken);
 }

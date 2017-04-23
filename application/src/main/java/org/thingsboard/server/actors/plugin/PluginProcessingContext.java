@@ -16,6 +16,9 @@
 package org.thingsboard.server.actors.plugin;
 
 import akka.actor.ActorRef;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;

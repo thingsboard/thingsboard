@@ -30,7 +30,10 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.UUID;
 
-@Entity
+/**
+ * @author Andrew Shvayka
+ */
+//@Entity
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 

@@ -31,7 +31,7 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.UUID;
 
-@Entity
+//@Entity
 @Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
 public final class DeviceEntity implements SearchTextEntity<Device> {
 
