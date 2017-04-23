@@ -30,14 +30,23 @@ export default function CustomerController(customerService, $state, $stateParams
             },
             name: function() { return $translate.instant('user.users') },
             details: function() { return $translate.instant('customer.manage-customer-users') },
-            icon: "account_circle"
+            icon: "account_circle",
+            isEnabled: function(customer) {
+                return customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
+            }
         },
         {
             onAction: function ($event, item) {
                 openCustomerDevices($event, item);
             },
             name: function() { return $translate.instant('device.devices') },
-            details: function() { return $translate.instant('customer.manage-customer-devices') },
+            details: function(customer) {
+                if (customer && customer.additionalInfo && customer.additionalInfo.isPublic) {
+                    return $translate.instant('customer.manage-public-devices')
+                } else {
+                    return $translate.instant('customer.manage-customer-devices')
+                }
+            },
             icon: "devices_other"
         },
         {
@@ -45,7 +54,13 @@ export default function CustomerController(customerService, $state, $stateParams
                 openCustomerDashboards($event, item);
             },
             name: function() { return $translate.instant('dashboard.dashboards') },
-            details: function() { return $translate.instant('customer.manage-customer-dashboards') },
+            details: function(customer) {
+                if (customer && customer.additionalInfo && customer.additionalInfo.isPublic) {
+                    return $translate.instant('customer.manage-public-dashboards')
+                } else {
+                    return $translate.instant('customer.manage-customer-dashboards')
+                }
+            },
             icon: "dashboard"
         },
         {
@@ -54,7 +69,10 @@ export default function CustomerController(customerService, $state, $stateParams
             },
             name: function() { return $translate.instant('action.delete') },
             details: function() { return $translate.instant('customer.delete') },
-            icon: "delete"
+            icon: "delete",
+            isEnabled: function(customer) {
+                return customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
+            }
         }
     ];
 
@@ -86,7 +104,19 @@ export default function CustomerController(customerService, $state, $stateParams
 
         addItemText: function() { return $translate.instant('customer.add-customer-text') },
         noItemsText: function() { return $translate.instant('customer.no-customers-text') },
-        itemDetailsText: function() { return $translate.instant('customer.customer-details') }
+        itemDetailsText: function(customer) {
+            if (customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic)) {
+                return $translate.instant('customer.customer-details')
+            } else {
+                return '';
+            }
+        },
+        isSelectionEnabled: function (customer) {
+            return customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
+        },
+        isDetailsReadOnly: function (customer) {
+            return customer && customer.additionalInfo && customer.additionalInfo.isPublic;
+        }
     };
 
     if (angular.isDefined($stateParams.items) && $stateParams.items !== null) {

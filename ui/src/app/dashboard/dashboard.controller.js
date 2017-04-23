@@ -86,6 +86,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.exportDashboard = exportDashboard;
     vm.exportWidget = exportWidget;
     vm.importWidget = importWidget;
+    vm.isPublicUser = isPublicUser;
     vm.isTenantAdmin = isTenantAdmin;
     vm.isSystemAdmin = isSystemAdmin;
     vm.loadDashboard = loadDashboard;
@@ -271,6 +272,10 @@ export default function DashboardController(types, widgetService, userService,
         vm.dashboardContainer = dashboard;
         initHotKeys();
         vm.dashboardInitComplete = true;
+    }
+
+    function isPublicUser() {
+        return vm.user.isPublic === true;
     }
 
     function isTenantAdmin() {
@@ -617,22 +622,8 @@ export default function DashboardController(types, widgetService, userService,
                     sizeY: widgetTypeInfo.sizeY,
                     config: config
                 };
-                $mdDialog.show({
-                    controller: 'AddWidgetController',
-                    controllerAs: 'vm',
-                    templateUrl: addWidgetTemplate,
-                    locals: {dashboard: vm.dashboard, aliasesInfo: vm.aliasesInfo, widget: newWidget, widgetInfo: widgetTypeInfo},
-                    parent: angular.element($document[0].body),
-                    fullscreen: true,
-                    skipHide: true,
-                    targetEvent: event,
-                    onComplete: function () {
-                        var w = angular.element($window);
-                        w.triggerHandler('resize');
-                    }
-                }).then(function (result) {
-                    var widget = result.widget;
-                    vm.aliasesInfo = result.aliasesInfo;
+
+                function addWidget(widget) {
                     var columns = 24;
                     if (vm.dashboard.configuration.gridSettings && vm.dashboard.configuration.gridSettings.columns) {
                         columns = vm.dashboard.configuration.gridSettings.columns;
@@ -643,9 +634,37 @@ export default function DashboardController(types, widgetService, userService,
                         widget.sizeY *= ratio;
                     }
                     vm.widgets.push(widget);
-                }, function (rejection) {
-                    vm.aliasesInfo = rejection.aliasesInfo;
-                });
+                }
+
+                if (widgetTypeInfo.useCustomDatasources) {
+                    addWidget(newWidget);
+                } else {
+                    $mdDialog.show({
+                        controller: 'AddWidgetController',
+                        controllerAs: 'vm',
+                        templateUrl: addWidgetTemplate,
+                        locals: {
+                            dashboard: vm.dashboard,
+                            aliasesInfo: vm.aliasesInfo,
+                            widget: newWidget,
+                            widgetInfo: widgetTypeInfo
+                        },
+                        parent: angular.element($document[0].body),
+                        fullscreen: true,
+                        skipHide: true,
+                        targetEvent: event,
+                        onComplete: function () {
+                            var w = angular.element($window);
+                            w.triggerHandler('resize');
+                        }
+                    }).then(function (result) {
+                        var widget = result.widget;
+                        vm.aliasesInfo = result.aliasesInfo;
+                        addWidget(widget);
+                    }, function (rejection) {
+                        vm.aliasesInfo = rejection.aliasesInfo;
+                    });
+                }
             }
         );
     }

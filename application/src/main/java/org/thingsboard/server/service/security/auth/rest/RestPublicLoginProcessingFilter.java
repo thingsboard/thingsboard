@@ -37,15 +37,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingFilter {
-    private static Logger logger = LoggerFactory.getLogger(RestLoginProcessingFilter.class);
+public class RestPublicLoginProcessingFilter extends AbstractAuthenticationProcessingFilter {
+    private static Logger logger = LoggerFactory.getLogger(RestPublicLoginProcessingFilter.class);
 
     private final AuthenticationSuccessHandler successHandler;
     private final AuthenticationFailureHandler failureHandler;
 
     private final ObjectMapper objectMapper;
 
-    public RestLoginProcessingFilter(String defaultProcessUrl, AuthenticationSuccessHandler successHandler,
+    public RestPublicLoginProcessingFilter(String defaultProcessUrl, AuthenticationSuccessHandler successHandler,
                                      AuthenticationFailureHandler failureHandler, ObjectMapper mapper) {
         super(defaultProcessUrl);
         this.successHandler = successHandler;
@@ -63,20 +63,20 @@ public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingF
             throw new AuthMethodNotSupportedException("Authentication method not supported");
         }
 
-        LoginRequest loginRequest;
+        PublicLoginRequest loginRequest;
         try {
-            loginRequest = objectMapper.readValue(request.getReader(), LoginRequest.class);
+            loginRequest = objectMapper.readValue(request.getReader(), PublicLoginRequest.class);
         } catch (Exception e) {
-            throw new AuthenticationServiceException("Invalid login request payload");
+            throw new AuthenticationServiceException("Invalid public login request payload");
         }
 
-        if (StringUtils.isBlank(loginRequest.getUsername()) || StringUtils.isBlank(loginRequest.getPassword())) {
-            throw new AuthenticationServiceException("Username or Password not provided");
+        if (StringUtils.isBlank(loginRequest.getPublicId())) {
+            throw new AuthenticationServiceException("Public Id is not provided");
         }
 
-        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, loginRequest.getUsername());
+        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.PUBLIC_ID, loginRequest.getPublicId());
 
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(principal, loginRequest.getPassword());
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(principal, "");
 
         return this.getAuthenticationManager().authenticate(token);
     }

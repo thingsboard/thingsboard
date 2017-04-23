@@ -61,7 +61,7 @@ export default function DeviceRoutes($stateProvider) {
                 pageTitle: 'customer.devices'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "devices_other", "label": "customer.devices"}'
+                label: '{"icon": "devices_other", "label": "{{ vm.customerDevicesTitle }}", "translate": "false"}'
             }
         });
 

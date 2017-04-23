@@ -52,7 +52,7 @@ export default function AddDevicesToCustomerController(deviceService, $mdDialog,
         fetchMoreItems_: function () {
             if (vm.devices.hasNext && !vm.devices.pending) {
                 vm.devices.pending = true;
-                deviceService.getTenantDevices(vm.devices.nextPageLink).then(
+                deviceService.getTenantDevices(vm.devices.nextPageLink, false).then(
                     function success(devices) {
                         vm.devices.data = vm.devices.data.concat(devices.data);
                         vm.devices.nextPageLink = devices.nextPageLink;

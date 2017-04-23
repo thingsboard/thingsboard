@@ -24,7 +24,21 @@ export default function CustomerDirective($compile, $templateCache) {
     var linker = function (scope, element) {
         var template = $templateCache.get(customerFieldsetTemplate);
         element.html(template);
+
+        scope.isPublic = false;
+
+        scope.$watch('customer', function(newVal) {
+            if (newVal) {
+                if (scope.customer.additionalInfo) {
+                    scope.isPublic = scope.customer.additionalInfo.isPublic;
+                } else {
+                    scope.isPublic = false;
+                }
+            }
+        });
+
         $compile(element.contents())(scope);
+
     }
     return {
         restrict: "E",

@@ -28,6 +28,8 @@ public interface CustomerService {
     public Customer saveCustomer(Customer customer);
     
     public void deleteCustomer(CustomerId customerId);
+
+    public Customer findOrCreatePublicCustomer(TenantId tenantId);
     
     public TextPageData<Customer> findCustomersByTenantId(TenantId tenantId, TextPageLink pageLink);
     

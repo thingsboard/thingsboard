@@ -22,9 +22,10 @@ export default angular.module('thingsboard.api.user', [thingsboardApiLogin,
     .name;
 
 /*@ngInject*/
-function UserService($http, $q, $rootScope, adminService, dashboardService, toast, store, jwtHelper, $translate, $state) {
+function UserService($http, $q, $rootScope, adminService, dashboardService, loginService, toast, store, jwtHelper, $translate, $state, $location) {
     var currentUser = null,
         currentUserDetails = null,
+        lastPublicDashboardId = null,
         allowedDashboardIds = [],
         userLoaded = false;
 
@@ -33,6 +34,9 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
     var service = {
         deleteUser: deleteUser,
         getAuthority: getAuthority,
+        isPublic: isPublic,
+        getPublicId: getPublicId,
+        parsePublicId: parsePublicId,
         isAuthenticated: isAuthenticated,
         getCurrentUser: getCurrentUser,
         getCustomerUsers: getCustomerUsers,
@@ -51,18 +55,25 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
         updateAuthorizationHeader: updateAuthorizationHeader,
         gotoDefaultPlace: gotoDefaultPlace,
         forceDefaultPlace: forceDefaultPlace,
-        logout: logout
+        updateLastPublicDashboardId: updateLastPublicDashboardId,
+        logout: logout,
+        reloadUser: reloadUser
     }
 
-    loadUser(true).then(function success() {
-        notifyUserLoaded();
-    }, function fail() {
-        notifyUserLoaded();
-    });
+    reloadUser();
 
     return service;
 
-    function updateAndValidateToken(token, prefix) {
+    function reloadUser() {
+        userLoaded = false;
+        loadUser(true).then(function success() {
+            notifyUserLoaded();
+        }, function fail() {
+            notifyUserLoaded();
+        });
+    }
+
+    function updateAndValidateToken(token, prefix, notify) {
         var valid = false;
         var tokenData = jwtHelper.decodeToken(token);
         var issuedAt = tokenData.iat;
@@ -76,7 +87,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
                 valid = true;
             }
         }
-        if (!valid) {
+        if (!valid && notify) {
             $rootScope.$broadcast('unauthenticated');
         }
     }
@@ -91,6 +102,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
     function setUserFromJwtToken(jwtToken, refreshToken, notify, doLogout) {
         currentUser = null;
         currentUserDetails = null;
+        lastPublicDashboardId = null;
         allowedDashboardIds = [];
         if (!jwtToken) {
             clearTokenData();
@@ -98,8 +110,8 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
                 $rootScope.$broadcast('unauthenticated', doLogout);
             }
         } else {
-            updateAndValidateToken(jwtToken, 'jwt_token');
-            updateAndValidateToken(refreshToken, 'refresh_token');
+            updateAndValidateToken(jwtToken, 'jwt_token', true);
+            updateAndValidateToken(refreshToken, 'refresh_token', true);
             if (notify) {
                 loadUser(false).then(function success() {
                     $rootScope.$broadcast('authenticated');
@@ -213,13 +225,58 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
         }
     }
 
+    function isPublic() {
+        if (currentUser) {
+            return currentUser.isPublic;
+        } else {
+            return false;
+        }
+    }
+
+    function getPublicId() {
+        if (isPublic()) {
+            return currentUser.sub;
+        } else {
+            return null;
+        }
+    }
+
+    function parsePublicId() {
+        var token = getJwtToken();
+        if (token) {
+            var tokenData = jwtHelper.decodeToken(token);
+            if (tokenData && tokenData.isPublic) {
+                return tokenData.sub;
+            }
+        }
+        return null;
+    }
+
     function isUserLoaded() {
         return userLoaded;
     }
 
     function loadUser(doTokenRefresh) {
+
         var deferred = $q.defer();
-        if (!currentUser) {
+
+        function fetchAllowedDashboardIds() {
+            var pageLink = {limit: 100};
+            dashboardService.getCustomerDashboards(currentUser.customerId, pageLink).then(
+                function success(result) {
+                    var dashboards = result.data;
+                    for (var d=0;d<dashboards.length;d++) {
+                        allowedDashboardIds.push(dashboards[d].id.id);
+                    }
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+
+        function procceedJwtTokenValidate() {
             validateJwtToken(doTokenRefresh).then(function success() {
                 var jwtToken = store.get('jwt_token');
                 currentUser = jwtHelper.decodeToken(jwtToken);
@@ -228,29 +285,19 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
                 } else if (currentUser) {
                     currentUser.authority = "ANONYMOUS";
                 }
-                if (currentUser.userId) {
+                if (currentUser.isPublic) {
+                    $rootScope.forceFullscreen = true;
+                    fetchAllowedDashboardIds();
+                } else if (currentUser.userId) {
                     getUser(currentUser.userId).then(
                         function success(user) {
                             currentUserDetails = user;
                             $rootScope.forceFullscreen = false;
-                            if (currentUserDetails.additionalInfo &&
-                                currentUserDetails.additionalInfo.defaultDashboardFullscreen) {
-                                $rootScope.forceFullscreen = currentUserDetails.additionalInfo.defaultDashboardFullscreen === true;
+                            if (userForceFullscreen()) {
+                                $rootScope.forceFullscreen = true;
                             }
                             if ($rootScope.forceFullscreen && currentUser.authority === 'CUSTOMER_USER') {
-                                var pageLink = {limit: 100};
-                                dashboardService.getCustomerDashboards(currentUser.customerId, pageLink).then(
-                                    function success(result) {
-                                        var dashboards = result.data;
-                                        for (var d=0;d<dashboards.length;d++) {
-                                            allowedDashboardIds.push(dashboards[d].id.id);
-                                        }
-                                        deferred.resolve();
-                                    },
-                                    function fail() {
-                                        deferred.reject();
-                                    }
-                                );
+                                fetchAllowedDashboardIds();
                             } else {
                                 deferred.resolve();
                             }
@@ -265,6 +312,23 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
             }, function fail() {
                 deferred.reject();
             });
+        }
+
+        if (!currentUser) {
+            var locationSearch = $location.search();
+            if (locationSearch.publicId) {
+                loginService.publicLogin(locationSearch.publicId).then(function success(response) {
+                    var token = response.data.token;
+                    var refreshToken = response.data.refreshToken;
+                    updateAndValidateToken(token, 'jwt_token', false);
+                    updateAndValidateToken(refreshToken, 'refresh_token', false);
+                    procceedJwtTokenValidate();
+                }, function fail() {
+                    deferred.reject();
+                });
+            } else {
+                procceedJwtTokenValidate();
+            }
         } else {
             deferred.resolve();
         }
@@ -373,17 +437,17 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
     function forceDefaultPlace(to, params) {
         if (currentUser && isAuthenticated()) {
             if (currentUser.authority === 'CUSTOMER_USER') {
-                if (currentUserDetails &&
-                    currentUserDetails.additionalInfo &&
-                    currentUserDetails.additionalInfo.defaultDashboardId) {
-                    if ($rootScope.forceFullscreen) {
-                        if (to.name === 'home.profile') {
-                            return false;
-                        } else if (to.name === 'home.dashboards.dashboard' && allowedDashboardIds.indexOf(params.dashboardId) > -1) {
+                if ((userHasDefaultDashboard() && $rootScope.forceFullscreen) || isPublic()) {
+                    if (to.name === 'home.profile') {
+                        if (userHasProfile()) {
                             return false;
                         } else {
                             return true;
                         }
+                    } else if (to.name === 'home.dashboards.dashboard' && allowedDashboardIds.indexOf(params.dashboardId) > -1) {
+                        return false;
+                    } else {
+                        return true;
                     }
                 }
             }
@@ -395,11 +459,12 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
         if (currentUser && isAuthenticated()) {
             var place = 'home.links';
             if (currentUser.authority === 'CUSTOMER_USER') {
-                if (currentUserDetails &&
-                    currentUserDetails.additionalInfo &&
-                    currentUserDetails.additionalInfo.defaultDashboardId) {
+                if (userHasDefaultDashboard()) {
                     place = 'home.dashboards.dashboard';
                     params = {dashboardId: currentUserDetails.additionalInfo.defaultDashboardId};
+                } else if (isPublic()) {
+                    place = 'home.dashboards.dashboard';
+                    params = {dashboardId: lastPublicDashboardId};
                 }
             } else if (currentUser.authority === 'SYS_ADMIN') {
                 adminService.checkUpdates().then(
@@ -413,6 +478,29 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, toas
             $state.go(place, params);
         } else {
             $state.go('login', params);
+        }
+    }
+
+    function userHasDefaultDashboard() {
+        return currentUserDetails &&
+               currentUserDetails.additionalInfo &&
+               currentUserDetails.additionalInfo.defaultDashboardId;
+    }
+
+    function userForceFullscreen() {
+        return (currentUser && currentUser.isPublic) ||
+               (currentUserDetails.additionalInfo &&
+                currentUserDetails.additionalInfo.defaultDashboardFullscreen &&
+                currentUserDetails.additionalInfo.defaultDashboardFullscreen === true);
+    }
+
+    function userHasProfile() {
+        return currentUser && !currentUser.isPublic;
+    }
+
+    function updateLastPublicDashboardId(dashboardId) {
+        if (isPublic()) {
+            lastPublicDashboardId = dashboardId;
         }
     }
 

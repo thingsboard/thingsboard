@@ -58,10 +58,10 @@ function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, t
         var datasourceSubscription = {
             datasourceType: datasource.type,
             dataKeys: subscriptionDataKeys,
-            type: listener.widget.type
+            type: listener.subscriptionType
         };
 
-        if (listener.widget.type === types.widgetType.timeseries.value) {
+        if (listener.subscriptionType === types.widgetType.timeseries.value) {
             datasourceSubscription.subscriptionTimewindow = angular.copy(listener.subscriptionTimewindow);
         }
         if (datasourceSubscription.datasourceType === types.datasourceType.device) {
