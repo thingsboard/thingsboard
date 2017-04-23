@@ -15,4 +15,4 @@
     limitations under the License.
 
 -->
-<div class="tb-uppercase">{{ item | contactShort }}</div>
+<div ng-show="item && (!item.additionalInfo || !item.additionalInfo.isPublic)" class="tb-uppercase">{{ item | contactShort }}</div>

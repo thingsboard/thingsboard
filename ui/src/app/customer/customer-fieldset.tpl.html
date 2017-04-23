@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<md-button ng-click="onManageUsers({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.manage-users' | translate }}</md-button>
+<md-button ng-click="onManageUsers({event: $event})" ng-show="!isEdit && !isPublic" class="md-raised md-primary">{{ 'customer.manage-users' | translate }}</md-button>
 <md-button ng-click="onManageDevices({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.manage-devices' | translate }}</md-button>
 <md-button ng-click="onManageDashboards({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.manage-dashboards' | translate }}</md-button>
-<md-button ng-click="onDeleteCustomer({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'customer.delete' | translate }}</md-button>
+<md-button ng-click="onDeleteCustomer({event: $event})" ng-show="!isEdit && !isPublic" class="md-raised md-primary">{{ 'customer.delete' | translate }}</md-button>
 
 <md-content class="md-padding" layout="column">
-	<fieldset ng-disabled="loading || !isEdit">
+	<fieldset ng-show="!isPublic" ng-disabled="loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>customer.title</label>
 			<input required name="title" ng-model="customer.title">	

@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -111,6 +112,21 @@ public class DashboardController extends BaseController {
                 throw new IncorrectParameterException("Dashboard isn't assigned to any customer!");
             }
             return checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/public/dashboard/{dashboardId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard assignDashboardToPublicCustomer(@PathVariable("dashboardId") String strDashboardId) throws ThingsboardException {
+        checkParameter("dashboardId", strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId);
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
+            return checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, publicCustomer.getId()));
         } catch (Exception e) {
             throw handleException(e);
         }

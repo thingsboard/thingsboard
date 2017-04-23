@@ -17,7 +17,8 @@ import $ from 'jquery';
 import moment from 'moment';
 import tinycolor from 'tinycolor2';
 
-import thinsboardLedLight from '../components/led-light.directive';
+import thingsboardLedLight from '../components/led-light.directive';
+import thingsboardTimeseriesTableWidget from '../widget/lib/timeseries-table-widget';
 
 import TbFlot from '../widget/lib/flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
@@ -31,7 +32,8 @@ import cssjs from '../../vendor/css.js/css';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
 
-export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thinsboardLedLight, thingsboardTypes, thingsboardUtils])
+export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget,
+    thingsboardTypes, thingsboardUtils])
     .factory('widgetService', WidgetService)
     .name;
 
@@ -539,6 +541,10 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
 
          '    }\n\n' +
 
+         '    self.useCustomDatasources = function() {\n\n' +
+
+         '    }\n\n' +
+
          '    self.onResize = function() {\n\n' +
 
          '    }\n\n' +
@@ -579,6 +585,11 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
             if (angular.isFunction(widgetTypeInstance.getDataKeySettingsSchema)) {
                 result.dataKeySettingsSchema = widgetTypeInstance.getDataKeySettingsSchema();
             }
+            if (angular.isFunction(widgetTypeInstance.useCustomDatasources)) {
+                result.useCustomDatasources = widgetTypeInstance.useCustomDatasources();
+            } else {
+                result.useCustomDatasources = false;
+            }
             return result;
         } catch (e) {
             utils.processWidgetException(e);
@@ -617,6 +628,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
                     if (widgetType.dataKeySettingsSchema) {
                         widgetInfo.typeDataKeySettingsSchema = widgetType.dataKeySettingsSchema;
                     }
+                    widgetInfo.useCustomDatasources = widgetType.useCustomDatasources;
                     putWidgetInfoToCache(widgetInfo, bundleAlias, widgetInfo.alias, isSystem);
                     putWidgetTypeFunctionToCache(widgetType.widgetTypeFunction, bundleAlias, widgetInfo.alias, isSystem);
                     deferred.resolve(widgetInfo);

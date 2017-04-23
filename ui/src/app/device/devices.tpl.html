@@ -27,7 +27,8 @@
                        device-scope="vm.devicesScope"
                        the-form="vm.grid.detailsForm"
                        on-assign-to-customer="vm.assignToCustomer(event, [ vm.grid.detailsConfig.currentItem.id.id ])"
-                       on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem)"
+                       on-make-public="vm.makePublic(event, vm.grid.detailsConfig.currentItem)"
+                       on-unassign-from-customer="vm.unassignFromCustomer(event, vm.grid.detailsConfig.currentItem, isPublic)"
                        on-manage-credentials="vm.manageCredentials(event, vm.grid.detailsConfig.currentItem)"
                        on-delete-device="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-device>
         </md-tab>

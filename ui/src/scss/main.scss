@@ -236,6 +236,32 @@ div {
   }
 }
 
+pre.tb-highlight {
+  background-color: #f7f7f7;
+  display: block;
+  margin: 20px 0;
+  padding: 15px;
+  overflow-x: auto;
+  code {
+    padding: 0;
+    color: #303030;
+    font-family: monospace;
+    display: inline-block;
+    box-sizing: border-box;
+    vertical-align: bottom;
+    font-size: 16px;
+    font-weight: bold;
+  }
+}
+
+.tb-notice {
+  background-color: #f7f7f7;
+  padding: 15px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+
 /***********************
  * Flow
  ***********************/

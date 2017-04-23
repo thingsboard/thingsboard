@@ -1,0 +1,43 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<md-tabs md-selected="vm.sourceIndex" ng-class="{'tb-headless': vm.sources.length === 1}"
+         id="tabs" md-border-bottom flex class="tb-absolute-fill">
+    <md-tab ng-repeat="source in vm.sources" label="{{ source.datasource.name }}">
+        <md-table-container>
+            <table md-table>
+                <thead md-head md-order="source.query.order" md-on-reorder="vm.onReorder(source)">
+                <tr md-row>
+                    <th ng-show="vm.showTimestamp" md-column md-order-by="0"><span>Timestamp</span></th>
+                    <th md-column md-order-by="{{ h.index }}" ng-repeat="h in source.ts.header"><span>{{ h.dataKey.label }}</span></th>
+                </tr>
+                </thead>
+                <tbody md-body>
+                <tr md-row ng-repeat="row in source.ts.data">
+                    <td ng-show="$index > 0 || ($index === 0 && vm.showTimestamp)" md-cell ng-repeat="d in row track by $index" ng-style="vm.cellStyle(source, $index, d)" ng-bind-html="vm.cellContent(source, $index, row, d)">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </md-table-container>
+        <md-table-pagination md-limit="source.query.limit" md-limit-options="[5, 10, 15]"
+                             md-page="source.query.page" md-total="{{source.ts.count}}"
+                             md-on-paginate="vm.onPaginate(source)" md-page-select>
+        </md-table-pagination>
+    </md-tab>
+</md-tabs>

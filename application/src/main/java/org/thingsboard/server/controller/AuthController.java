@@ -36,6 +36,7 @@ import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.mail.MailService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -167,7 +168,8 @@ public class AuthController extends BaseController {
             String encodedPassword = passwordEncoder.encode(password);
             UserCredentials credentials = userService.activateUserCredentials(activateToken, encodedPassword);
             User user = userService.findUserById(credentials.getUserId());
-            SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled());
+            UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+            SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
             String baseUrl = constructBaseUrl(request);
             String loginUrl = String.format("%s/login", baseUrl);
             String email = user.getEmail();
@@ -201,7 +203,8 @@ public class AuthController extends BaseController {
                 userCredentials.setResetToken(null);
                 userCredentials = userService.saveUserCredentials(userCredentials);
                 User user = userService.findUserById(userCredentials.getUserId());
-                SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled());
+                UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
+                SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), principal);
                 String baseUrl = constructBaseUrl(request);
                 String loginUrl = String.format("%s/login", baseUrl);
                 String email = user.getEmail();

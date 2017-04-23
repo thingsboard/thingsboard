@@ -35,7 +35,7 @@ import thingsboardItemBuffer from '../services/item-buffer.service';
 import thingsboardImportExport from '../import-export';
 
 import DashboardRoutes from './dashboard.routes';
-import {DashboardsController, DashboardCardController} from './dashboards.controller';
+import {DashboardsController, DashboardCardController, MakeDashboardPublicDialogController} from './dashboards.controller';
 import DashboardController from './dashboard.controller';
 import DeviceAliasesController from './device-aliases.controller';
 import AliasesDeviceSelectPanelController from './aliases-device-select-panel.controller';
@@ -69,6 +69,7 @@ export default angular.module('thingsboard.dashboard', [
     .config(DashboardRoutes)
     .controller('DashboardsController', DashboardsController)
     .controller('DashboardCardController', DashboardCardController)
+    .controller('MakeDashboardPublicDialogController', MakeDashboardPublicDialogController)
     .controller('DashboardController', DashboardController)
     .controller('DeviceAliasesController', DeviceAliasesController)
     .controller('AliasesDeviceSelectPanelController', AliasesDeviceSelectPanelController)

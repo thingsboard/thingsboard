@@ -85,7 +85,7 @@ export default class TbOpenStreetMap {
         testImage.src = image;
     }
 
-    createMarker(location, settings) {
+    createMarker(location, settings, onClickListener) {
         var height = 34;
         var pinColor = settings.color.substr(1);
         var icon = L.icon({
@@ -111,7 +111,15 @@ export default class TbOpenStreetMap {
 
         this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo);
 
+        if (onClickListener) {
+            marker.on('click', onClickListener);
+        }
+
         return marker;
+    }
+
+    removeMarker(marker) {
+        this.map.removeLayer(marker);
     }
 
     createTooltip(marker, pattern, replaceInfo) {
@@ -143,6 +151,10 @@ export default class TbOpenStreetMap {
             }
         ).addTo(this.map);
         return polyline;
+    }
+
+    removePolyline(polyline) {
+        this.map.removeLayer(polyline);
     }
 
     fitBounds(bounds) {

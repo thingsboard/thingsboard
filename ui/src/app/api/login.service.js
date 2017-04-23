@@ -25,6 +25,7 @@ function LoginService($http, $q) {
         changePassword: changePassword,
         hasUser: hasUser,
         login: login,
+        publicLogin: publicLogin,
         resetPassword: resetPassword,
         sendResetPasswordLink: sendResetPasswordLink,
     }
@@ -42,6 +43,19 @@ function LoginService($http, $q) {
             password: user.password
         };
         $http.post('/api/auth/login', loginRequest).then(function success(response) {
+            deferred.resolve(response);
+        }, function fail(response) {
+            deferred.reject(response);
+        });
+        return deferred.promise;
+    }
+
+    function publicLogin(publicId) {
+        var deferred = $q.defer();
+        var pubilcLoginRequest = {
+            publicId: publicId
+        };
+        $http.post('/api/auth/login/public', pubilcLoginRequest).then(function success(response) {
             deferred.resolve(response);
         }, function fail(response) {
             deferred.reject(response);

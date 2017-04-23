@@ -31,7 +31,7 @@
                 </section>
             </div>
             <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
-                         ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value">
+                         ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value && isDataEnabled">
                 <v-pane id="datasources-pane" expanded="true">
                     <v-pane-header>
                         {{ 'widget-config.datasources' | translate }}
@@ -96,7 +96,7 @@
                 </v-pane>
             </v-accordion>
             <v-accordion id="target-devices-accordion" control="targetDevicesAccordion" class="vAccordion--default"
-                         ng-show="widgetType === types.widgetType.rpc.value">
+                         ng-show="widgetType === types.widgetType.rpc.value && isDataEnabled">
                 <v-pane id="target-devices-pane" expanded="true">
                     <v-pane-header>
                         {{ 'widget-config.target-device' | translate }}
