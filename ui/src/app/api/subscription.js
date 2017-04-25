@@ -350,9 +350,9 @@ export default class Subscription {
         var subscription = this;
         this.cafs['dataUpdated'] = this.ctx.tbRaf(function() {
             try {
-                subscription.callbacks.onDataUpdated(this, apply);
+                subscription.callbacks.onDataUpdated(subscription, apply);
             } catch (e) {
-                subscription.callbacks.onDataUpdateError(this, e);
+                subscription.callbacks.onDataUpdateError(subscription, e);
             }
         });
         if (apply) {
