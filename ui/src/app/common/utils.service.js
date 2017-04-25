@@ -342,6 +342,7 @@ function Utils($mdColorPalette, $rootScope, $window, $q, deviceService, types) {
             datasource = {
                 type: subscriptionInfo.type,
                 deviceName: device.name,
+                name: device.name,
                 deviceId: device.id.id,
                 dataKeys: []
             }

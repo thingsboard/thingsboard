@@ -19,7 +19,7 @@ import tinycolor from 'tinycolor2';
 import TbGoogleMap from './google-map';
 import TbOpenStreetMap from './openstreet-map';
 
-function procesTooltipPattern(tbMap, pattern, datasources) {
+function procesTooltipPattern(tbMap, pattern, datasources, dsIndex) {
     var match = tbMap.varsRegex.exec(pattern);
     var replaceInfo = {};
     replaceInfo.variables = [];
@@ -48,11 +48,13 @@ function procesTooltipPattern(tbMap, pattern, datasources) {
             var offset = 0;
             for (var i=0;i<datasources.length;i++) {
                 var datasource = datasources[i];
-                for (var k = 0; k < datasource.dataKeys.length; k++) {
-                    var dataKey = datasource.dataKeys[k];
-                    if (dataKey.label === label) {
-                        variableInfo.dataKeyIndex = offset + k;
-                        break;
+                if (angular.isUndefined(dsIndex) || dsIndex == i) {
+                    for (var k = 0; k < datasource.dataKeys.length; k++) {
+                        var dataKey = datasource.dataKeys[k];
+                        if (dataKey.label === label) {
+                            variableInfo.dataKeyIndex = offset + k;
+                            break;
+                        }
                     }
                 }
                 offset += datasource.dataKeys.length;
@@ -168,6 +170,7 @@ export default class TbMapWidget {
                         latKeyName: localLatKeyName,
                         lngKeyName: localLngKeyName,
                         showLabel: subscriptionLocationSettings.showLabel !== false,
+                        displayTooltip: subscriptionLocationSettings.displayTooltip !== false,
                         label: datasource.name,
                         labelColor: this.ctx.widgetConfig.color || '#000000',
                         color: "#FE7569",
@@ -179,10 +182,10 @@ export default class TbMapWidget {
                         useMarkerImageFunction: false,
                         markerImageFunction: null,
                         markerImages: [],
-                        tooltipPattern: "<b>Latitude:</b> ${#"+latKeyIndex+":7}<br/><b>Longitude:</b> ${#"+lngKeyIndex+":7}"
+                        tooltipPattern: subscriptionLocationSettings.tooltipPattern || "<b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}"
                     };
 
-                    locationsSettings.tooltipReplaceInfo = procesTooltipPattern(this, locationsSettings.tooltipPattern, this.subscription.datasources);
+                    locationsSettings.tooltipReplaceInfo = procesTooltipPattern(this, locationsSettings.tooltipPattern, this.subscription.datasources, i);
 
                     locationsSettings.useColorFunction = subscriptionLocationSettings.useColorFunction === true;
                     if (angular.isDefined(subscriptionLocationSettings.colorFunction) && subscriptionLocationSettings.colorFunction.length > 0) {
@@ -211,6 +214,7 @@ export default class TbMapWidget {
                 latKeyName: "lat",
                 lngKeyName: "lng",
                 showLabel: true,
+                displayTooltip: true,
                 label: "",
                 labelColor: this.ctx.widgetConfig.color || '#000000',
                 color: "#FE7569",

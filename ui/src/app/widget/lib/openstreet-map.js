@@ -109,7 +109,9 @@ export default class TbOpenStreetMap {
             this.updateMarkerImage(marker, settings, settings.markerImage, settings.markerImageSize || 34);
         }
 
-        this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo);
+        if (settings.displayTooltip) {
+            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo);
+        }
 
         if (onClickListener) {
             marker.on('click', onClickListener);
