@@ -72,7 +72,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
         scope.$watch("deviceId", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {
                 scope.resetFilter();
-                scope.getDeviceAttributes();
+                scope.getDeviceAttributes(false, true);
             }
         });
 
@@ -81,7 +81,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                 scope.mode = 'default';
                 scope.query.search = null;
                 scope.selectedAttributes = [];
-                scope.getDeviceAttributes();
+                scope.getDeviceAttributes(false, true);
             }
         });
 
@@ -117,15 +117,25 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             }
         }
 
-        scope.getDeviceAttributes = function(forceUpdate) {
+        scope.onReorder = function() {
+            scope.getDeviceAttributes(false, false);
+        }
+
+        scope.onPaginate = function() {
+            scope.getDeviceAttributes(false, false);
+        }
+
+        scope.getDeviceAttributes = function(forceUpdate, reset) {
             if (scope.attributesDeferred) {
                 scope.attributesDeferred.resolve();
             }
             if (scope.deviceId && scope.attributeScope) {
-                scope.attributes = {
-                    count: 0,
-                    data: []
-                };
+                if (reset) {
+                    scope.attributes = {
+                        count: 0,
+                        data: []
+                    };
+                }
                 scope.checkSubscription();
                 scope.attributesDeferred = deviceService.getDeviceAttributes(scope.deviceId, scope.attributeScope.value,
                     scope.query, function(attributes, update, apply) {
