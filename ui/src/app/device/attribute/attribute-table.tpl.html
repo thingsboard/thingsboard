@@ -126,7 +126,7 @@
         </md-toolbar>
         <md-table-container ng-show="mode!='widget'">
             <table md-table md-row-select multiple="" ng-model="selectedAttributes" md-progress="attributesDeferred.promise">
-                <thead md-head md-order="query.order" md-on-reorder="getDeviceAttributes">
+                <thead md-head md-order="query.order" md-on-reorder="onReorder">
                     <tr md-row>
                         <th md-column md-order-by="lastUpdateTs"><span>Last update time</span></th>
                         <th md-column md-order-by="key"><span>Key</span></th>
@@ -147,7 +147,7 @@
         </md-table-container>
         <md-table-pagination ng-show="mode!='widget'" md-limit="query.limit" md-limit-options="[5, 10, 15]"
                              md-page="query.page" md-total="{{attributes.count}}"
-                             md-on-paginate="getDeviceAttributes" md-page-select>
+                             md-on-paginate="onPaginate" md-page-select>
         </md-table-pagination>
         <ul flex rn-carousel ng-if="mode==='widget'" class="widgets-carousel"
             rn-carousel-index="widgetsCarousel.index"

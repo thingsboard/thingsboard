@@ -169,15 +169,7 @@ export default class Subscription {
                 });
                 this.registrations.push(registration);
             } else {
-                registration = this.ctx.$scope.$watch(function () {
-                    return subscription.timeWindowConfig;
-                }, function (newTimewindow, prevTimewindow) {
-                    if (!angular.equals(newTimewindow, prevTimewindow)) {
-                        subscription.unsubscribe();
-                        subscription.subscribe();
-                    }
-                });
-                this.registrations.push(registration);
+                this.startWatchingTimewindow();
             }
         }
 
@@ -186,6 +178,29 @@ export default class Subscription {
         });
 
         this.registrations.push(registration);
+    }
+
+    startWatchingTimewindow() {
+        var subscription = this;
+        this.timeWindowWatchRegistration = this.ctx.$scope.$watch(function () {
+            return subscription.timeWindowConfig;
+        }, function (newTimewindow, prevTimewindow) {
+            if (!angular.equals(newTimewindow, prevTimewindow)) {
+                subscription.unsubscribe();
+                subscription.subscribe();
+            }
+        }, true);
+        this.registrations.push(this.timeWindowWatchRegistration);
+    }
+
+    stopWatchingTimewindow() {
+        if (this.timeWindowWatchRegistration) {
+            this.timeWindowWatchRegistration();
+            var index = this.registrations.indexOf(this.timeWindowWatchRegistration);
+            if (index > -1) {
+                this.registrations.splice(index, 1);
+            }
+        }
     }
 
     initRpc() {
@@ -335,9 +350,9 @@ export default class Subscription {
         var subscription = this;
         this.cafs['dataUpdated'] = this.ctx.tbRaf(function() {
             try {
-                subscription.callbacks.onDataUpdated(this, apply);
+                subscription.callbacks.onDataUpdated(subscription, apply);
             } catch (e) {
-                subscription.callbacks.onDataUpdateError(this, e);
+                subscription.callbacks.onDataUpdateError(subscription, e);
             }
         });
         if (apply) {
@@ -354,9 +369,13 @@ export default class Subscription {
             this.ctx.dashboardTimewindowApi.onResetTimewindow();
         } else {
             if (this.originalTimewindow) {
+                this.stopWatchingTimewindow();
                 this.timeWindowConfig = angular.copy(this.originalTimewindow);
                 this.originalTimewindow = null;
                 this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
+                this.unsubscribe();
+                this.subscribe();
+                this.startWatchingTimewindow();
             }
         }
     }
@@ -365,11 +384,15 @@ export default class Subscription {
         if (this.useDashboardTimewindow) {
             this.ctx.dashboardTimewindowApi.onUpdateTimewindow(startTimeMs, endTimeMs);
         } else {
+            this.stopWatchingTimewindow();
             if (!this.originalTimewindow) {
                 this.originalTimewindow = angular.copy(this.timeWindowConfig);
             }
             this.timeWindowConfig = this.ctx.timeService.toHistoryTimewindow(this.timeWindowConfig, startTimeMs, endTimeMs);
             this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
+            this.unsubscribe();
+            this.subscribe();
+            this.startWatchingTimewindow();
         }
     }
 

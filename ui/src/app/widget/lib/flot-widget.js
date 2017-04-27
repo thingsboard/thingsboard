@@ -374,6 +374,10 @@ export default class TbFlot {
     }
 
     update() {
+        if (this.updateTimeoutHandle) {
+            this.ctx.$scope.$timeout.cancel(this.updateTimeoutHandle);
+            this.updateTimeoutHandle = null;
+        }
         if (this.subscription) {
             if (!this.isMouseInteraction && this.ctx.plot) {
                 if (this.chartType === 'line' || this.chartType === 'bar') {
@@ -396,6 +400,11 @@ export default class TbFlot {
                         this.ctx.plot.draw();
                     }
                 }
+            } else if (this.isMouseInteraction && this.ctx.plot){
+                var tbFlot = this;
+                this.updateTimeoutHandle = this.ctx.$scope.$timeout(function() {
+                    tbFlot.update();
+                }, 30, false);
             }
         }
     }
