@@ -172,7 +172,7 @@ export default class TbMapWidget {
                         showLabel: subscriptionLocationSettings.showLabel !== false,
                         displayTooltip: subscriptionLocationSettings.displayTooltip !== false,
                         label: datasource.name,
-                        labelColor: this.ctx.widgetConfig.color || '#000000',
+                        labelColor: subscriptionLocationSettings.labelColor || this.ctx.widgetConfig.color || '#000000',
                         color: "#FE7569",
                         useColorFunction: false,
                         colorFunction: null,
@@ -197,6 +197,8 @@ export default class TbMapWidget {
                     }
 
                     this.locationsSettings.push(locationsSettings);
+                    latKeyIndex = -1;
+                    lngKeyIndex = -1;
                 }
                 index++;
             }
@@ -576,7 +578,7 @@ export default class TbMapWidget {
     resize() {
         if (this.map && this.map.inited()) {
             this.map.invalidateSize();
-            if (this.locations && this.locations.size > 0) {
+            if (this.locations && this.locations.length > 0) {
                 var bounds = this.map.createBounds();
                 for (var m = 0; m < this.markers.length; m++) {
                     this.map.extendBoundsWithMarker(bounds, this.markers[m]);
