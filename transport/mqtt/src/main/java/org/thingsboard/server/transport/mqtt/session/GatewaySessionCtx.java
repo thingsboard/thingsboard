@@ -134,7 +134,7 @@ public class GatewaySessionCtx {
             JsonObject jsonObj = json.getAsJsonObject();
             String deviceName = checkDeviceConnected(jsonObj.get("device").getAsString());
             Integer requestId = jsonObj.get("id").getAsInt();
-            String data = jsonObj.get("data").getAsString();
+            String data = jsonObj.get("data").toString();
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
             processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
