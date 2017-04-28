@@ -16,8 +16,7 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -36,6 +35,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_COL
  * Created by Valerii Sosliuk on 4/23/2017.
  */
 @Component
+@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, WidgetsBundle> implements WidgetsBundleDao {
 
     @Autowired
@@ -64,24 +64,34 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     @Override
     public List<WidgetsBundle> findSystemWidgetsBundles(TextPageLink pageLink) {
         if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesFirstPage(pageLink.getLimit()
-                    , pageLink.getTextSearch()));
+            return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesFirstPage(pageLink.getLimit(),
+                    pageLink.getTextSearch()));
         } else {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesNextPage(pageLink.getLimit()
-                    , pageLink.getTextSearch(), pageLink.getIdOffset()));
+            return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesNextPage(pageLink.getLimit(),
+                    pageLink.getTextSearch(), pageLink.getIdOffset()));
         }
-        //return DaoUtil.convertDataList(widgetsBundleRepository.findBySearchTextStartsWithIgnoreCase(pageLink.getTextSearch().toLowerCase()));
-        //return DaoUtil.convertDataList(widgetsBundleRepository.findBySearchTextStartsWithIgnoreCase(pageLink.getTextSearch().toLowerCase() ,pageable));
     }
 
     @Override
     public List<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
-        throw new RuntimeException("Not implemented");
+        if (pageLink.getIdOffset() == null) {
+            return DaoUtil.convertDataList(widgetsBundleRepository.findTenantWidgetsBundlesByTenantIdFirstPage(pageLink.getLimit(),
+                    tenantId, pageLink.getTextSearch()));
+        } else {
+            return DaoUtil.convertDataList(widgetsBundleRepository.findTenantWidgetsBundlesByTenantIdNextPage(pageLink.getLimit(),
+                    tenantId, pageLink.getTextSearch(), pageLink.getIdOffset()));
+        }
     }
 
     @Override
     public List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
-        throw new RuntimeException("Not implemented");
+        if (pageLink.getIdOffset() == null) {
+            return DaoUtil.convertDataList(widgetsBundleRepository.findAllTenantWidgetsBundlesByTenantIdFirstPage(pageLink.getLimit(),
+                    tenantId, pageLink.getTextSearch()));
+        } else {
+            return DaoUtil.convertDataList(widgetsBundleRepository.findAllTenantWidgetsBundlesByTenantIdNextPage(pageLink.getLimit(),
+                    tenantId, pageLink.getTextSearch(), pageLink.getIdOffset()));
+        }
     }
 
     @Override

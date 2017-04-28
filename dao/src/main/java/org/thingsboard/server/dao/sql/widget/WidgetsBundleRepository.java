@@ -47,4 +47,23 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
             "AND ID > ?3 ORDER BY ID LIMIT ?1")
     List<WidgetsBundleEntity> findSystemWidgetsBundlesNextPage(Integer limit, String searchText, UUID idOffset);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID = ?2 " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
+            "ORDER BY ID LIMIT ?1")
+    List<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantIdFirstPage(int limit, UUID tenantId, String textSearch);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID = ?2 " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
+            "AND ID > ?4 ORDER BY ID LIMIT ?1")
+    List<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantIdNextPage(int limit, UUID tenantId, String textSearch, UUID idOffset);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE (TENANT_ID IS NULL OR TENANT_ID = ?2) " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
+            "ORDER BY ID LIMIT ?1")
+    List<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdFirstPage(int limit, UUID tenantId, String textSearch);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE (TENANT_ID IS NULL OR TENANT_ID = ?2) " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
+            "AND ID > ?4 ORDER BY ID LIMIT ?1")
+    List<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdNextPage(int limit, UUID tenantId, String textSearch, UUID idOffset);
 }
