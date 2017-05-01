@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,20 +16,28 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.UUID;
 
-//@Entity
+@Slf4j
+@Data
+@Entity
 @Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
 public final class TenantEntity implements SearchTextEntity<Tenant> {
 
@@ -37,21 +45,21 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     private static final long serialVersionUID = -4330655990232136337L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
-    
+
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
     @Column(name = ModelConstants.TENANT_REGION_PROPERTY)
     private String region;
-    
+
     @Column(name = ModelConstants.COUNTRY_PROPERTY)
     private String country;
-    
+
     @Column(name = ModelConstants.STATE_PROPERTY)
     private String state;
 
@@ -74,7 +82,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     private String email;
 
     @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
-    private JsonNode additionalInfo;
+    private String additionalInfo;
 
     public TenantEntity() {
         super();
@@ -94,104 +102,11 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.zip = tenant.getZip();
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
-        this.additionalInfo = tenant.getAdditionalInfo();
-    }
-    
-    public UUID getId() {
-        return id;
+        if (tenant.getAdditionalInfo() != null) {
+            this.additionalInfo = tenant.getAdditionalInfo().toString();
+        }
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getAddress2() {
-        return address2;
-    }
-
-    public void setAddress2(String address2) {
-        this.address2 = address2;
-    }
-
-    public String getZip() {
-        return zip;
-    }
-
-    public void setZip(String zip) {
-        this.zip = zip;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
 
     @Override
     public String getSearchTextSource() {
@@ -202,7 +117,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     public void setSearchText(String searchText) {
         this.searchText = searchText;
     }
-    
+
     public String getSearchText() {
         return searchText;
     }
@@ -343,7 +258,15 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         tenant.setZip(zip);
         tenant.setPhone(phone);
         tenant.setEmail(email);
-        tenant.setAdditionalInfo(additionalInfo);
+        ObjectMapper mapper = new ObjectMapper();
+        if (additionalInfo != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(additionalInfo);
+                tenant.setAdditionalInfo(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
+            }
+        }
         return tenant;
     }
 

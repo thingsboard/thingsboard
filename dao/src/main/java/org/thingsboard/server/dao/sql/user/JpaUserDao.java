@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import java.util.UUID;
  * @author Valerii Sosliuk
  */
 @Component
-@ConditionalOnProperty(prefix="sql", value="enabled",havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements UserDao {
 
     @Autowired
@@ -62,11 +62,20 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
 
     @Override
     public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
-        throw new RuntimeException("Not Implemented");
+        if (pageLink.getIdOffset() == null) {
+            return DaoUtil.convertDataList(userRepository.findTenantAdminsFirstPage(pageLink.getLimit(), tenantId));
+        } else {
+            return DaoUtil.convertDataList(userRepository.findTenantAdminsNextPage(pageLink.getLimit(), tenantId, pageLink.getIdOffset()));
+        }
     }
 
     @Override
     public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        throw new RuntimeException("Not Implemented");
+        if (pageLink.getIdOffset() == null) {
+            return DaoUtil.convertDataList(userRepository.findCustomerUsersFirstPage(pageLink.getLimit(), tenantId, customerId));
+        } else {
+            return DaoUtil.convertDataList(userRepository.findCustomerUsersNextPage(pageLink.getLimit(), tenantId,
+                    customerId, pageLink.getIdOffset()));
+        }
     }
 }

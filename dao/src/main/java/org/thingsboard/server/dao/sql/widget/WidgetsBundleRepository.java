@@ -15,25 +15,19 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/23/2017.
  */
-//public interface WidgetsBundleRepository extends CrudRepository<WidgetsBundleEntity, UUID> {
-public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEntity, UUID>, JpaSpecificationExecutor {
+@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
+public interface WidgetsBundleRepository extends CrudRepository<WidgetsBundleEntity, UUID> {
 
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 

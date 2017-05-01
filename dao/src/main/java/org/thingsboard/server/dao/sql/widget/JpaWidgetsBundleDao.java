@@ -62,6 +62,11 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
+    protected boolean isSearchTextDao() {
+        return true;
+    }
+
+    @Override
     public List<WidgetsBundle> findSystemWidgetsBundles(TextPageLink pageLink) {
         if (pageLink.getIdOffset() == null) {
             return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesFirstPage(pageLink.getLimit(),
@@ -92,10 +97,5 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
             return DaoUtil.convertDataList(widgetsBundleRepository.findAllTenantWidgetsBundlesByTenantIdNextPage(pageLink.getLimit(),
                     tenantId, pageLink.getTextSearch(), pageLink.getIdOffset()));
         }
-    }
-
-    @Override
-    protected boolean isSearchTextDao() {
-        return true;
     }
 }

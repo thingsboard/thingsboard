@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +35,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 4/21/2017.
  */
+@Slf4j
 @Data
 @Entity
 @Table(name = ModelConstants.USER_COLUMN_FAMILY_NAME)
@@ -86,7 +88,9 @@ public class UserEntity implements SearchTextEntity<User> {
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
-        this.additionalInfo = user.getAdditionalInfo().toString();
+        if (user.getAdditionalInfo() != null) {
+            this.additionalInfo = user.getAdditionalInfo().toString();
+        }
     }
 
     @Override
@@ -152,7 +156,7 @@ public class UserEntity implements SearchTextEntity<User> {
                 JsonNode jsonNode = mapper.readTree(additionalInfo);
                 user.setAdditionalInfo(jsonNode);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
             }
         }
         return user;

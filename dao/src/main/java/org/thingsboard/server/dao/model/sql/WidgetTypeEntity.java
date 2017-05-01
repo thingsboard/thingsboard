@@ -24,15 +24,19 @@ import javax.persistence.Transient;
 
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
+import java.io.IOException;
 import java.util.UUID;
 
-//@Entity
+@Slf4j
+@Entity
 @Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 
@@ -40,11 +44,11 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     private static final long serialVersionUID = -5436279069884988630L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
 
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID tenantId;
 
     @PartitionKey(value = 2)
@@ -58,7 +62,7 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     private String name;
 
     @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY)
-    private JsonNode descriptor;
+    private String descriptor;
 
     public WidgetTypeEntity() {
         super();
@@ -74,7 +78,9 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
         this.bundleAlias = widgetType.getBundleAlias();
         this.alias = widgetType.getAlias();
         this.name = widgetType.getName();
-        this.descriptor = widgetType.getDescriptor();
+        if (widgetType.getDescriptor() != null) {
+            this.descriptor = widgetType.getDescriptor().toString();
+        }
     }
 
     @Override
@@ -119,11 +125,11 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
         this.name = name;
     }
 
-    public JsonNode getDescriptor() {
+    public String getDescriptor() {
         return descriptor;
     }
 
-    public void setDescriptor(JsonNode descriptor) {
+    public void setDescriptor(String descriptor) {
         this.descriptor = descriptor;
     }
 
@@ -176,7 +182,15 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
         widgetType.setBundleAlias(bundleAlias);
         widgetType.setAlias(alias);
         widgetType.setName(name);
-        widgetType.setDescriptor(descriptor);
+        ObjectMapper mapper = new ObjectMapper();
+        if (descriptor != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(descriptor);
+                widgetType.setDescriptor(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", descriptor, e.getMessage()), e);
+            }
+        }
         return widgetType;
     }
 

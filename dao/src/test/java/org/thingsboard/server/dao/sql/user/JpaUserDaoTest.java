@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.user.UserDao;
@@ -51,7 +53,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
 
     @Test
     @DatabaseSetup("classpath:dbunit/users.xml")
-    public void findByEmail() {
+    public void testFindByEmail() {
         User user = userDao.findByEmail("sysadm@thingsboard.org");
         assertNotNull("User is expected to be not null", user);
         assertEquals("9cb58ba0-27c1-11e7-93ae-92361f002671", user.getId().toString());
@@ -61,6 +63,40 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         assertEquals("John", user.getFirstName());
         assertEquals("Doe", user.getLastName());
         assertEquals("{\"key\":\"value-0\"}", user.getAdditionalInfo().toString());
+    }
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void testFindTenantAdmins() {
+        UUID tenantId = UUIDs.timeBased();
+        UUID customerId = UUIDs.timeBased();
+        create30Adminsand60Users(tenantId, customerId);
+        assertEquals(90, userDao.find().size());
+        List<User> tenantAdmins1 = userDao.findTenantAdmins(tenantId, new TextPageLink(20));
+        assertEquals(20, tenantAdmins1.size());
+        List<User> tenantAdmins2 = userDao.findTenantAdmins(tenantId,
+                new TextPageLink(20, null, tenantAdmins1.get(19).getId().getId(), null));
+        assertEquals(10, tenantAdmins2.size());
+        List<User> tenantAdmins3 = userDao.findTenantAdmins(tenantId,
+                new TextPageLink(20, null, tenantAdmins2.get(9).getId().getId(), null));
+        assertEquals(0, tenantAdmins3.size());
+    }
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void testFindCustomerUsers() {
+        UUID tenantId = UUIDs.timeBased();
+        UUID customerId = UUIDs.timeBased();
+        create30Adminsand60Users(tenantId, customerId);
+        assertEquals(90, userDao.find().size());
+        List<User> customerUsers1 = userDao.findCustomerUsers(tenantId, customerId, new TextPageLink(40));
+        assertEquals(40, customerUsers1.size());
+        List<User> customerUsers2 = userDao.findCustomerUsers(tenantId, customerId,
+                new TextPageLink(20, null, customerUsers1.get(39).getId().getId(), null));
+        assertEquals(20, customerUsers2.size());
+        List<User> customerUsers3 = userDao.findCustomerUsers(tenantId, customerId,
+                new TextPageLink(20, null, customerUsers2.get(19).getId().getId(), null));
+        assertEquals(0, customerUsers3.size());
     }
 
     @Test
@@ -81,5 +117,31 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         assertEquals(6, userDao.find().size());
         User savedUser = userDao.findByEmail("user@thingsboard.org");
         assertNotNull(savedUser);
+    }
+
+    private void create30Adminsand60Users(UUID tenantId, UUID customerId) {
+        // Create 30 tenant admins and 60 customer users
+        for (int i = 0; i < 30; i++) {
+            saveUser(tenantId, null);
+            saveUser(tenantId, customerId);
+            saveUser(tenantId, customerId);
+        }
+    }
+
+    private void saveUser(UUID tenantId, UUID customerId) {
+        User user = new User();
+        UUID id = UUIDs.timeBased();
+        user.setId(new UserId(id));
+        user.setTenantId(new TenantId(tenantId));
+        if (customerId == null) {
+            user.setAuthority(Authority.TENANT_ADMIN);
+        } else {
+            user.setCustomerId(new CustomerId(customerId));
+            user.setAuthority(Authority.CUSTOMER_USER);
+        }
+        String idString = id.toString();
+        String email = idString.substring(0, idString.indexOf('-')) + "@thingsboard.org";
+        user.setEmail(email);
+        userDao.save(user);
     }
 }
