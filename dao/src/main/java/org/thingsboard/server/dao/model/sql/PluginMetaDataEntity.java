@@ -22,6 +22,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
@@ -29,23 +32,25 @@ import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
-
-//@Entity
+@Slf4j
+@Data
+@Entity
 @Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
 public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
 
     @Transient
     private static final long serialVersionUID = -6164321050824823149L;
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(name = ModelConstants.PLUGIN_API_TOKEN_PROPERTY)
     private String apiToken;
 
-    @Column(name = ModelConstants.PLUGIN_TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.PLUGIN_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID tenantId;
 
     @Column(name = ModelConstants.PLUGIN_NAME_PROPERTY)
@@ -61,13 +66,13 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     private ComponentLifecycleState state;
 
     @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY)
-    private JsonNode configuration;
+    private String configuration;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
-    private JsonNode additionalInfo;
+    private String additionalInfo;
 
     public PluginMetaDataEntity() {
     }
@@ -82,9 +87,13 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
         this.name = pluginMetaData.getName();
         this.publicAccess = pluginMetaData.isPublicAccess();
         this.state = pluginMetaData.getState();
-        this.configuration = pluginMetaData.getConfiguration();
         this.searchText = pluginMetaData.getName();
-        this.additionalInfo = pluginMetaData.getAdditionalInfo();
+        if (pluginMetaData.getConfiguration() != null) {
+            this.configuration = pluginMetaData.getConfiguration().toString();
+        }
+        if (pluginMetaData.getAdditionalInfo() != null) {
+            this.additionalInfo = pluginMetaData.getAdditionalInfo().toString();
+        }
     }
 
     @Override
@@ -107,86 +116,33 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
         this.id = id;
     }
 
-    public String getApiToken() {
-        return apiToken;
-    }
-
-    public void setApiToken(String apiToken) {
-        this.apiToken = apiToken;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getClazz() {
-        return clazz;
-    }
-
-    public void setClazz(String clazz) {
-        this.clazz = clazz;
-    }
-
-    public JsonNode getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(JsonNode configuration) {
-        this.configuration = configuration;
-    }
-
-    public boolean isPublicAccess() {
-        return publicAccess;
-    }
-
-    public void setPublicAccess(boolean publicAccess) {
-        this.publicAccess = publicAccess;
-    }
-
-    public ComponentLifecycleState getState() {
-        return state;
-    }
-
-    public void setState(ComponentLifecycleState state) {
-        this.state = state;
-    }
-
-    public String getSearchText() {
-        return searchText;
-    }
-
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-
     @Override
     public PluginMetaData toData() {
         PluginMetaData data = new PluginMetaData(new PluginId(id));
         data.setTenantId(new TenantId(tenantId));
         data.setCreatedTime(UUIDs.unixTimestamp(id));
         data.setName(name);
-        data.setConfiguration(configuration);
         data.setClazz(clazz);
         data.setPublicAccess(publicAccess);
         data.setState(state);
         data.setApiToken(apiToken);
-        data.setAdditionalInfo(additionalInfo);
+        ObjectMapper mapper = new ObjectMapper();
+        if (configuration != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(configuration);
+                data.setConfiguration(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", configuration, e.getMessage()), e);
+            }
+        }
+        if (additionalInfo != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(additionalInfo);
+                data.setAdditionalInfo(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
+            }
+        }
         return data;
     }
 

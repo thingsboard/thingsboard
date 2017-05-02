@@ -1,0 +1,34 @@
+<dataset>
+    <rule
+        id="uuid'8e834e11-2e0a-11e7-83ec-f7f6dbfb4833'"
+        tenant_id="uuid'8e834e10-2e0a-11e7-83ec-f7f6dbfb4833'"
+        name="RULE_11"
+        weight="1"
+        search_text="rule_11"
+        plugin_token="token_1"
+    />
+    <rule
+        id="uuid'8e834e12-2e0a-11e7-83ec-f7f6dbfb4833'"
+        tenant_id="uuid'8e834e10-2e0a-11e7-83ec-f7f6dbfb4833'"
+        name="RULE_12"
+        weight="1"
+        search_text="rule_12"
+        plugin_token="token_1"
+    />
+    <rule
+        id="uuid'8e834e13-2e0a-11e7-83ec-f7f6dbfb4833'"
+        tenant_id="uuid'8e834e10-2e0a-11e7-83ec-f7f6dbfb4833'"
+        name="RULE_13"
+        weight="1"
+        search_text="rule_13"
+        plugin_token="token_1"
+    />
+    <rule
+        id="uuid'8e834e14-2e0a-11e7-83ec-f7f6dbfb4833'"
+        tenant_id="uuid'8e834e10-2e0a-11e7-83ec-f7f6dbfb4833'"
+        name="RULE_14"
+        weight="2"
+        search_text="rule_14"
+        plugin_token="token_2"
+    />
+</dataset>

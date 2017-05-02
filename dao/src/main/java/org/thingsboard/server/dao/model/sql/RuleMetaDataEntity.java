@@ -16,12 +16,17 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
@@ -30,19 +35,22 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
 
-//@Entity
+@Slf4j
+@Data
+@Entity
 @Table(name = ModelConstants.RULE_COLUMN_FAMILY_NAME)
 public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
 
     @Transient
     private static final long serialVersionUID = -1506905644259463884L;
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
-    @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY)
+    @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID tenantId;
     @Column(name = ModelConstants.RULE_NAME_PROPERTY)
     private String name;
@@ -55,13 +63,13 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
     @Column(name = ModelConstants.RULE_PLUGIN_TOKEN_PROPERTY)
     private String pluginToken;
     @Column(name = ModelConstants.RULE_FILTERS)
-    private JsonNode filters;
+    private String filters;
     @Column(name = ModelConstants.RULE_PROCESSOR)
-    private JsonNode processor;
+    private String processor;
     @Column(name = ModelConstants.RULE_ACTION)
-    private JsonNode action;
+    private String action;
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
-    private JsonNode additionalInfo;
+    private String additionalInfo;
 
     public RuleMetaDataEntity() {
     }
@@ -76,10 +84,18 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
         this.state = rule.getState();
         this.weight = rule.getWeight();
         this.searchText = rule.getName();
-        this.filters = rule.getFilters();
-        this.processor = rule.getProcessor();
-        this.action = rule.getAction();
-        this.additionalInfo = rule.getAdditionalInfo();
+        if (rule.getFilters() != null) {
+            this.filters = rule.getFilters().toString();
+        }
+        if (rule.getProcessor() != null) {
+            this.processor = rule.getProcessor().toString();
+        }
+        if (rule.getAction() != null) {
+            this.action = rule.getAction().toString();
+        }
+        if (rule.getAdditionalInfo() != null) {
+            this.additionalInfo = rule.getAdditionalInfo().toString();
+        }
     }
 
     @Override
@@ -102,82 +118,6 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
         this.id = id;
     }
 
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public ComponentLifecycleState getState() {
-        return state;
-    }
-
-    public void setState(ComponentLifecycleState state) {
-        this.state = state;
-    }
-
-    public int getWeight() {
-        return weight;
-    }
-
-    public void setWeight(int weight) {
-        this.weight = weight;
-    }
-
-    public String getPluginToken() {
-        return pluginToken;
-    }
-
-    public void setPluginToken(String pluginToken) {
-        this.pluginToken = pluginToken;
-    }
-
-    public String getSearchText() {
-        return searchText;
-    }
-
-    public JsonNode getFilters() {
-        return filters;
-    }
-
-    public void setFilters(JsonNode filters) {
-        this.filters = filters;
-    }
-
-    public JsonNode getProcessor() {
-        return processor;
-    }
-
-    public void setProcessor(JsonNode processor) {
-        this.processor = processor;
-    }
-
-    public JsonNode getAction() {
-        return action;
-    }
-
-    public void setAction(JsonNode action) {
-        this.action = action;
-    }
-
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-
     @Override
     public RuleMetaData toData() {
         RuleMetaData rule = new RuleMetaData(new RuleId(id));
@@ -187,10 +127,39 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
         rule.setWeight(weight);
         rule.setCreatedTime(UUIDs.unixTimestamp(id));
         rule.setPluginToken(pluginToken);
-        rule.setFilters(filters);
-        rule.setProcessor(processor);
-        rule.setAction(action);
-        rule.setAdditionalInfo(additionalInfo);
+        ObjectMapper mapper = new ObjectMapper();
+        if (filters != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(filters);
+                rule.setFilters(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", filters, e.getMessage()), e);
+            }
+        }
+        if (processor != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(processor);
+                rule.setProcessor(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", processor, e.getMessage()), e);
+            }
+        }
+        if (action != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(action);
+                rule.setAction(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", action, e.getMessage()), e);
+            }
+        }
+        if (additionalInfo != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(additionalInfo);
+                rule.setAdditionalInfo(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
+            }
+        }
         return rule;
     }
 

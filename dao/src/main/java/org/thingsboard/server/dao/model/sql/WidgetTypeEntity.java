@@ -25,6 +25,7 @@ import javax.persistence.Transient;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
@@ -36,6 +37,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Slf4j
+@Data
 @Entity
 @Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
@@ -91,46 +93,6 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     @Override
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getBundleAlias() {
-        return bundleAlias;
-    }
-
-    public void setBundleAlias(String bundleAlias) {
-        this.bundleAlias = bundleAlias;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public void setAlias(String alias) {
-        this.alias = alias;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescriptor() {
-        return descriptor;
-    }
-
-    public void setDescriptor(String descriptor) {
-        this.descriptor = descriptor;
     }
 
     @Override
