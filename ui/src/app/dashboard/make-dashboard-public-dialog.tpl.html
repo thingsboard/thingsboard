@@ -43,6 +43,12 @@
                         </md-button>
                     </div>
                     <div class="tb-notice" translate>dashboard.public-dashboard-notice</div>
+                    <tb-social-share-panel style="padding-top: 15px;"
+                            share-title="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle:vm.dashboard.title} }}"
+                            share-text="{{ 'dashboard.socialshare-text' | translate:{dashboardTitle:vm.dashboard.title} }}"
+                            share-link="{{ vm.publicLink }}"
+                            share-hash-tags="thingsboard, iot">
+                    </tb-social-share-panel>
                 </md-content>
             </div>
         </md-dialog-content>

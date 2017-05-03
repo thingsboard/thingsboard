@@ -60,6 +60,7 @@ module.exports = {
             allChunks: true,
         }),
         new webpack.DefinePlugin({
+            THINGSBOARD_VERSION: JSON.stringify(require('./package.json').version),
             '__DEVTOOLS__': false,
             'process.env': {
                 NODE_ENV: JSON.stringify('development'),

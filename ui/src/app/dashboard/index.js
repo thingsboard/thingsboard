@@ -30,6 +30,7 @@ import thingsboardDashboardSelect from '../components/dashboard-select.directive
 import thingsboardDashboard from '../components/dashboard.directive';
 import thingsboardExpandFullscreen from '../components/expand-fullscreen.directive';
 import thingsboardWidgetsBundleSelect from '../components/widgets-bundle-select.directive';
+import thingsboardSocialsharePanel from '../components/socialshare-panel.directive';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardItemBuffer from '../services/item-buffer.service';
 import thingsboardImportExport from '../import-export';
@@ -64,7 +65,8 @@ export default angular.module('thingsboard.dashboard', [
     thingsboardDashboardSelect,
     thingsboardDashboard,
     thingsboardExpandFullscreen,
-    thingsboardWidgetsBundleSelect
+    thingsboardWidgetsBundleSelect,
+    thingsboardSocialsharePanel
 ])
     .config(DashboardRoutes)
     .controller('DashboardsController', DashboardsController)

@@ -44,7 +44,7 @@ export default angular.module('thingsboard.locale', [])
                     "assign": "Assign",
                     "unassign": "Unassign",
                     "share": "Share",
-                    "unshare": "Unshare",
+                    "make-private": "Make private",
                     "apply": "Apply",
                     "apply-changes": "Apply changes",
                     "edit-mode": "Edit mode",
@@ -63,7 +63,8 @@ export default angular.module('thingsboard.locale', [])
                     "copy": "Copy",
                     "paste": "Paste",
                     "import": "Import",
-                    "export": "Export"
+                    "export": "Export",
+                    "share-via": "Share via {{provider}}"
                 },
                 "aggregation": {
                     "aggregation": "Aggregation",
@@ -233,6 +234,8 @@ export default angular.module('thingsboard.locale', [])
                     "make-private-dashboard-title": "Are you sure you want to make the dashboard '{{dashboardTitle}}' private?",
                     "make-private-dashboard-text": "After the confirmation the dashboard will be made private and won't be accessible by others.",
                     "make-private-dashboard": "Make dashboard private",
+                    "socialshare-text": "'{{dashboardTitle}}' powered by ThingsBoard",
+                    "socialshare-title": "'{{dashboardTitle}}' powered by ThingsBoard",
                     "select-dashboard": "Select dashboard",
                     "no-dashboards-matching": "No dashboards matching '{{dashboard}}' were found.",
                     "dashboard-required": "Dashboard is required.",
@@ -262,6 +265,9 @@ export default angular.module('thingsboard.locale', [])
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
                     "display-title": "Display dashboard title",
                     "title-color": "Title color",
+                    "display-device-selection": "Display device selection",
+                    "display-dashboard-timewindow": "Display timewindow",
+                    "display-dashboard-export": "Display export",
                     "import": "Import dashboard",
                     "export": "Export dashboard",
                     "export-failed-error": "Unable to export dashboard: {{error}}",

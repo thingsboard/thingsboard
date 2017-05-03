@@ -224,7 +224,7 @@ export function DashboardsController(userService, dashboardService, customerServ
                     onAction: function ($event, item) {
                         unassignFromCustomer($event, item, true);
                     },
-                    name: function() { return $translate.instant('action.unshare') },
+                    name: function() { return $translate.instant('action.make-private') },
                     details: function() { return $translate.instant('dashboard.make-private') },
                     icon: "reply",
                     isEnabled: function(dashboard) {
@@ -329,7 +329,7 @@ export function DashboardsController(userService, dashboardService, customerServ
                         onAction: function ($event, item) {
                             unassignFromCustomer($event, item, true);
                         },
-                        name: function() { return $translate.instant('action.unshare') },
+                        name: function() { return $translate.instant('action.make-private') },
                         details: function() { return $translate.instant('dashboard.make-private') },
                         icon: "reply",
                         isEnabled: function(dashboard) {
@@ -404,7 +404,28 @@ export function DashboardsController(userService, dashboardService, customerServ
     }
 
     function saveDashboard(dashboard) {
-        return dashboardService.saveDashboard(dashboard);
+        var deferred = $q.defer();
+        dashboardService.saveDashboard(dashboard).then(
+            function success(savedDashboard) {
+                var dashboards = [ savedDashboard ];
+                customerService.applyAssignedCustomersInfo(dashboards).then(
+                    function success(items) {
+                        if (items && items.length == 1) {
+                            deferred.resolve(items[0]);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
     }
 
     function assignToCustomer($event, dashboardIds) {

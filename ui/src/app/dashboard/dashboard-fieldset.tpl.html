@@ -36,20 +36,28 @@
 		<label translate>dashboard.assignedToCustomer</label>
 		<input ng-model="assignedCustomer.title" disabled>
 	</md-input-container>
-	<div layout="row" ng-show="!isEdit && isPublic && (dashboardScope === 'customer' || dashboardScope === 'tenant')">
-		<md-input-container class="md-block" flex>
-			<label translate>dashboard.public-link</label>
-			<input ng-model="publicLink" disabled>
-		</md-input-container>
-		<md-button class="md-icon-button" style="margin-top: 14px;"
-				   ngclipboard
-				   data-clipboard-text="{{ publicLink }}"
-				   ngclipboard-success="onPublicLinkCopied(e)">
-			<md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
-			<md-tooltip md-direction="top">
-				{{ 'dashboard.copy-public-link' | translate }}
-			</md-tooltip>
-		</md-button>
+	<div layout="column" ng-show="!isEdit && isPublic && (dashboardScope === 'customer' || dashboardScope === 'tenant')">
+		<tb-social-share-panel style="padding-bottom: 10px;"
+							   share-title="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle: dashboard.title} }}"
+							   share-text="{{ 'dashboard.socialshare-text' | translate:{dashboardTitle: dashboard.title} }}"
+							   share-link="{{ publicLink }}"
+							   share-hash-tags="thingsboard, iot">
+		</tb-social-share-panel>
+		<div layout="row">
+			<md-input-container class="md-block" flex>
+				<label translate>dashboard.public-link</label>
+				<input ng-model="publicLink" disabled>
+			</md-input-container>
+			<md-button class="md-icon-button" style="margin-top: 14px;"
+					   ngclipboard
+					   data-clipboard-text="{{ publicLink }}"
+					   ngclipboard-success="onPublicLinkCopied(e)">
+				<md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+				<md-tooltip md-direction="top">
+					{{ 'dashboard.copy-public-link' | translate }}
+				</md-tooltip>
+			</md-button>
+		</div>
 	</div>
 	<fieldset ng-disabled="loading || !isEdit">
 		<md-input-container class="md-block">

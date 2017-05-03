@@ -31,6 +31,18 @@ export default function DashboardSettingsController($scope, $mdDialog, gridSetti
         vm.gridSettings.showTitle = true;
     }
 
+    if (angular.isUndefined(vm.gridSettings.showDevicesSelect)) {
+        vm.gridSettings.showDevicesSelect = true;
+    }
+
+    if (angular.isUndefined(vm.gridSettings.showDashboardTimewindow)) {
+        vm.gridSettings.showDashboardTimewindow = true;
+    }
+
+    if (angular.isUndefined(vm.gridSettings.showDashboardExport)) {
+        vm.gridSettings.showDashboardExport = true;
+    }
+
     vm.gridSettings.backgroundColor = vm.gridSettings.backgroundColor || 'rgba(0,0,0,0)';
     vm.gridSettings.titleColor = vm.gridSettings.titleColor || 'rgba(0,0,0,0.870588)';
     vm.gridSettings.columns = vm.gridSettings.columns || 24;

@@ -106,7 +106,8 @@ function Utils($mdColorPalette, $rootScope, $window, $q, deviceService, types) {
         isDescriptorSchemaNotEmpty: isDescriptorSchemaNotEmpty,
         filterSearchTextEntities: filterSearchTextEntities,
         guid: guid,
-        createDatasoucesFromSubscriptionsInfo: createDatasoucesFromSubscriptionsInfo
+        createDatasoucesFromSubscriptionsInfo: createDatasoucesFromSubscriptionsInfo,
+        isLocalUrl: isLocalUrl
     }
 
     return service;
@@ -426,6 +427,17 @@ function Utils($mdColorPalette, $rootScope, $window, $q, deviceService, types) {
         var datasources = [];
         processSubscriptionsInfo(0, subscriptionsInfo, datasources, deferred);
         return deferred.promise;
+    }
+
+    function isLocalUrl(url) {
+        var parser = document.createElement('a'); //eslint-disable-line
+        parser.href = url;
+        var host = parser.hostname;
+        if (host === "localhost" || host === "127.0.0.1") {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }

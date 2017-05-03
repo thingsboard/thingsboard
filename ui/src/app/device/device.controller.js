@@ -185,7 +185,7 @@ export function DeviceController(userService, deviceService, customerService, $s
                 onAction: function ($event, item) {
                     unassignFromCustomer($event, item, true);
                 },
-                name: function() { return $translate.instant('action.unshare') },
+                name: function() { return $translate.instant('action.make-private') },
                 details: function() { return $translate.instant('device.make-private') },
                 icon: "reply",
                 isEnabled: function(device) {
@@ -271,7 +271,7 @@ export function DeviceController(userService, deviceService, customerService, $s
                         onAction: function ($event, item) {
                             unassignFromCustomer($event, item, true);
                         },
-                        name: function() { return $translate.instant('action.unshare') },
+                        name: function() { return $translate.instant('action.make-private') },
                         details: function() { return $translate.instant('device.make-private') },
                         icon: "reply",
                         isEnabled: function(device) {
@@ -364,8 +364,29 @@ export function DeviceController(userService, deviceService, customerService, $s
         return device ? device.name : '';
     }
 
-    function saveDevice (device) {
-        return deviceService.saveDevice(device);
+    function saveDevice(device) {
+        var deferred = $q.defer();
+        deviceService.saveDevice(device).then(
+            function success(savedDevice) {
+                var devices = [ savedDevice ];
+                customerService.applyAssignedCustomersInfo(devices).then(
+                    function success(items) {
+                        if (items && items.length == 1) {
+                            deferred.resolve(items[0]);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
     }
 
     function isCustomerUser() {

@@ -48,6 +48,8 @@ export default function DashboardController(types, widgetService, userService,
 
     vm.isToolbarOpened = false;
 
+    vm.thingsboardVersion = THINGSBOARD_VERSION; //eslint-disable-line
+
     vm.currentDashboardId = $stateParams.dashboardId;
     if ($stateParams.customerId) {
         vm.currentCustomerId = $stateParams.customerId;
@@ -105,6 +107,9 @@ export default function DashboardController(types, widgetService, userService,
     vm.onRevertWidgetEdit = onRevertWidgetEdit;
     vm.helpLinkIdForWidgetType = helpLinkIdForWidgetType;
     vm.displayTitle = displayTitle;
+    vm.displayExport = displayExport;
+    vm.displayDashboardTimewindow = displayDashboardTimewindow;
+    vm.displayDevicesSelect = displayDevicesSelect;
 
     vm.widgetsBundle;
 
@@ -560,6 +565,33 @@ export default function DashboardController(types, widgetService, userService,
         if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
             angular.isDefined(vm.dashboard.configuration.gridSettings.showTitle)) {
             return vm.dashboard.configuration.gridSettings.showTitle;
+        } else {
+            return true;
+        }
+    }
+
+    function displayExport() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardExport)) {
+            return vm.dashboard.configuration.gridSettings.showDashboardExport;
+        } else {
+            return true;
+        }
+    }
+
+    function displayDashboardTimewindow() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardTimewindow)) {
+            return vm.dashboard.configuration.gridSettings.showDashboardTimewindow;
+        } else {
+            return true;
+        }
+    }
+
+    function displayDevicesSelect() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDevicesSelect)) {
+            return vm.dashboard.configuration.gridSettings.showDevicesSelect;
         } else {
             return true;
         }
