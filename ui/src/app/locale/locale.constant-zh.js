@@ -352,7 +352,7 @@ export default function addLocaleChinese(locales) {
 			"access-token-required": "需要访问令牌",
 			"access-token-invalid": "访问令牌长度必须为1到20个字符。",
 			"rsa-key": "RSA公钥",
-			"access-token-required": "需要RSA公钥",
+			"rsa-key-required": "需要RSA公钥",
 			"secret": "密钥",
 			"secret-required": "密钥是必需的",
 			"name": "名称",

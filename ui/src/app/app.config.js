@@ -57,8 +57,8 @@ export default function AppConfig($provide,
     if (lang === 'ko') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('ko_KR');
-    }else if(lang === 'zh'){
-    	$translateProvider.useSanitizeValueStrategy(null);
+    }else if(lang === 'zh') {
+        $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('zh_CN');
     }
 
