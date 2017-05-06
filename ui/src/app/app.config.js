@@ -46,7 +46,6 @@ export default function AppConfig($provide,
 
     $translateProvider.useSanitizeValueStrategy('sce');
     $translateProvider.preferredLanguage('en_US');
-    //$translateProvider.preferredLanguage('zh_CN');
     $translateProvider.useLocalStorage();
     $translateProvider.useMissingTranslationHandlerLog();
     $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
@@ -56,7 +55,6 @@ export default function AppConfig($provide,
     
     var $window = angular.injector(['ng']).get('$window');
     var lang = $window.navigator.language || $window.navigator.userLanguage;
-    //$log.log("----====User language ====----"+lang);
     if (lang === 'ko') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('ko_KR');
