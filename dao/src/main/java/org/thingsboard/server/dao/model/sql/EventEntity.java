@@ -22,46 +22,51 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.ModelConstants;
 
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
+import java.io.IOException;
 import java.util.UUID;
 
 @Data
+@Slf4j
 @NoArgsConstructor
-//@Entity
-@Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
+@Entity
+@Table(name = EVENT_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 
     @Transient
     private static final long serialVersionUID = -5717830061727466727L;
 
-    @Column(name = ModelConstants.ID_PROPERTY)
+    @Id
+    @Column(name = ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Id
-    @Column(name = ModelConstants.EVENT_TENANT_ID_PROPERTY)
+    @Column(name = EVENT_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID tenantId;
 
-    @Column(name = ModelConstants.EVENT_ENTITY_TYPE_PROPERTY)
+    @Column(name = EVENT_ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
-    @Column(name = ModelConstants.EVENT_ENTITY_ID_PROPERTY)
+    @Column(name = EVENT_ENTITY_ID_PROPERTY, columnDefinition = "BINARY(16)")
     private UUID entityId;
 
-    @Column(name = ModelConstants.EVENT_TYPE_PROPERTY)
+    @Column(name = EVENT_TYPE_PROPERTY)
     private String eventType;
 
-    @Column(name = ModelConstants.EVENT_UID_PROPERTY)
-    private String eventUId;
+    @Column(name = EVENT_UID_PROPERTY)
+    private String eventUid;
 
-    @Column(name = ModelConstants.EVENT_BODY_PROPERTY)
-    private JsonNode body;
+    @Column(name = EVENT_BODY_PROPERTY)
+    private String body;
 
     public EventEntity(Event event) {
         if (event.getId() != null) {
@@ -75,8 +80,10 @@ public class EventEntity implements BaseEntity<Event> {
             this.entityId = event.getEntityId().getId();
         }
         this.eventType = event.getType();
-        this.eventUId = event.getUid();
-        this.body = event.getBody();
+        this.eventUid = event.getUid();
+        if (event.getBody() != null) {
+            this.body = event.getBody().toString();
+        }
     }
 
     @Override
@@ -111,9 +118,17 @@ public class EventEntity implements BaseEntity<Event> {
                 event.setEntityId(new PluginId(entityId));
                 break;
         }
-        event.setBody(body);
+        ObjectMapper mapper = new ObjectMapper();
+        if (body != null) {
+            try {
+                JsonNode jsonNode = mapper.readTree(body);
+                event.setBody(jsonNode);
+            } catch (IOException e) {
+                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", body, e.getMessage()), e);
+            }
+        }
         event.setType(eventType);
-        event.setUid(eventUId);
+        event.setUid(eventUid);
         return event;
     }
 }

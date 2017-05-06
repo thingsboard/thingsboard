@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.PluginMetaDataEntity;
 import org.thingsboard.server.dao.plugin.PluginDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +41,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
-public class JpaBasePluginDao extends JpaAbstractDao<PluginMetaDataEntity, PluginMetaData> implements PluginDao {
+public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEntity, PluginMetaData> implements PluginDao {
 
     @Autowired
     private PluginMetaDataRepository pluginMetaDataRepository;
@@ -58,11 +59,6 @@ public class JpaBasePluginDao extends JpaAbstractDao<PluginMetaDataEntity, Plugi
     @Override
     protected CrudRepository<PluginMetaDataEntity, UUID> getCrudRepository() {
         return pluginMetaDataRepository;
-    }
-
-    @Override
-    protected boolean isSearchTextDao() {
-        return true;
     }
 
     @Override

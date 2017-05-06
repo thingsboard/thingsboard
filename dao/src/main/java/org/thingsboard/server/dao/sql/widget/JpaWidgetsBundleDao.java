@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.List;
@@ -36,7 +37,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_COL
  */
 @Component
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
-public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, WidgetsBundle> implements WidgetsBundleDao {
+public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleEntity, WidgetsBundle> implements WidgetsBundleDao {
 
     @Autowired
     private WidgetsBundleRepository widgetsBundleRepository;
@@ -61,10 +62,6 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
         return DaoUtil.getData(widgetsBundleRepository.findWidgetsBundleByTenantIdAndAlias(tenantId, alias));
     }
 
-    @Override
-    protected boolean isSearchTextDao() {
-        return true;
-    }
 
     @Override
     public List<WidgetsBundle> findSystemWidgetsBundles(TextPageLink pageLink) {

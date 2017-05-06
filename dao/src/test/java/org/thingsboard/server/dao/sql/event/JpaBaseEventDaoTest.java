@@ -1,0 +1,145 @@
+package org.thingsboard.server.dao.sql.event;
+
+import ch.qos.logback.core.net.SyslogOutputStream;
+import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.springtestdbunit.annotation.DatabaseSetup;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.AbstractJpaDaoTest;
+import org.thingsboard.server.dao.event.EventDao;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.Assert.*;
+import static org.thingsboard.server.common.data.DataConstants.STATS;
+
+/**
+ * Created by Valerii Sosliuk on 5/5/2017.
+ */
+@Slf4j
+public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
+
+    public static final long HOUR_MILLISECONDS = (long) 3.6e+6;
+    @Autowired
+    private EventDao eventDao;
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void testSaveIfNotExists() {
+        UUID eventId = UUIDs.timeBased();
+        UUID tenantId = UUIDs.timeBased();
+        UUID entityId = UUIDs.timeBased();
+        Event event = getEvent(eventId, tenantId, entityId);
+        Optional<Event> optEvent1 = eventDao.saveIfNotExists(event);
+        assertTrue("Optional is expected to be non-empty", optEvent1.isPresent());
+        assertEquals(optEvent1.get(), event);
+        Optional<Event> optEvent2 = eventDao.saveIfNotExists(event);
+        assertFalse("Optional is expected to be empty", optEvent2.isPresent());
+    }
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/events.xml")
+    public void findEvent() {
+        UUID tenantId = UUID.fromString("be41c7a0-31f5-11e7-9cfd-2786e6aa2046");
+        UUID entityId = UUID.fromString("be41c7a1-31f5-11e7-9cfd-2786e6aa2046");
+        String eventType = STATS;
+        String eventUid = "be41c7a3-31f5-11e7-9cfd-2786e6aa2046";
+        Event event = eventDao.findEvent(tenantId, new DeviceId(entityId), eventType, eventUid);
+        assertNotNull("Event expected to be not null", event);
+        assertEquals("be41c7a2-31f5-11e7-9cfd-2786e6aa2046", event.getId().getId().toString());
+    }
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void findEventsByEntityIdAndPageLink() {
+        UUID tenantId = UUIDs.timeBased();
+        UUID entityId1 = UUIDs.timeBased();
+        UUID entityId2 = UUIDs.timeBased();
+        long startTime = System.currentTimeMillis();
+        long endTime = createEventsTwoEntities(tenantId, entityId1, entityId2, startTime, 20);
+        List<Event> allEvents = eventDao.find();
+
+        assertEquals(20, allEvents.size());
+
+        TimePageLink pageLink1 = new TimePageLink(30, null, null, true);
+        List<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink1);
+        assertEquals(10, events1.size());
+
+        TimePageLink pageLink2 = new TimePageLink(30, startTime, null, true);
+        List<Event> events2 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink2);
+        assertEquals(10, events2.size());
+
+        TimePageLink pageLink3 = new TimePageLink(30, startTime, endTime, true);
+        List<Event> events3 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink3);
+        assertEquals(10, events3.size());
+
+        TimePageLink pageLink4 = new TimePageLink(5, startTime, endTime, true);
+        List<Event> events4 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink4);
+        assertEquals(5, events4.size());
+
+        UUID idOffset = events4.get(4).getId().getId();
+        TimePageLink pageLink5 = new TimePageLink(10, startTime, endTime, true, idOffset);
+        List<Event> events5 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink5);
+        assertEquals(5, events5.size());
+
+    }
+
+    private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
+        // Generate #count events for two entities with timestamps from an hour ago till now
+
+        // Distribute events uniformly
+        long step = HOUR_MILLISECONDS / count;
+        long timestamp = startTime;
+        for (int i = 0; i < count / 2; i++) {
+            //UUID eventId1 = UUIDs.startOf(timestamp);
+            UUID eventId1 = UUIDs.timeBased();
+            Event event1 = getEvent(eventId1, tenantId, entityId1);
+            eventDao.save(event1);
+            timestamp += step;
+            //UUID eventId2 = UUIDs.startOf(timestamp);
+            UUID eventId2 = UUIDs.timeBased();
+            Event event2 = getEvent(eventId2, tenantId, entityId2);
+            eventDao.save(event2);
+            timestamp += step;
+        }
+        return System.currentTimeMillis();
+    }
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void findEventsByEntityIdAndEventTypeAndPageLink() {
+
+    }
+
+    private Event getEvent(UUID eventId, UUID tenantId, UUID entityId) {
+        Event event = new Event();
+        event.setId(new EventId(eventId));
+        event.setTenantId(new TenantId(tenantId));
+        EntityId deviceId = new DeviceId(entityId);
+        event.setEntityId(deviceId);
+        event.setUid(entityId.toString());
+        event.setType(STATS);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            JsonNode jsonNode = mapper.readTree("{\"key\":\"value\"}");
+            event.setBody(jsonNode);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+        return event;
+    }
+}

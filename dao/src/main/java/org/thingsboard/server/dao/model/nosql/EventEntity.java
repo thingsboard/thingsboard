@@ -36,7 +36,7 @@ import java.util.UUID;
  */
 @Data
 @NoArgsConstructor
-@Table(name = DEVICE_COLUMN_FAMILY_NAME)
+@Table(name = EVENT_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 
     @Transient
@@ -63,7 +63,7 @@ public class EventEntity implements BaseEntity<Event> {
 
     @ClusteringColumn(value = 1)
     @Column(name = EVENT_UID_PROPERTY)
-    private String eventUId;
+    private String eventUid;
 
     @Column(name = EVENT_BODY_PROPERTY, codec = JsonCodec.class)
     private JsonNode body;
@@ -80,7 +80,7 @@ public class EventEntity implements BaseEntity<Event> {
             this.entityId = event.getEntityId().getId();
         }
         this.eventType = event.getType();
-        this.eventUId = event.getUid();
+        this.eventUid = event.getUid();
         this.body = event.getBody();
     }
 
@@ -118,7 +118,7 @@ public class EventEntity implements BaseEntity<Event> {
         }
         event.setBody(body);
         event.setType(eventType);
-        event.setUid(eventUId);
+        event.setUid(eventUid);
         return event;
     }
 }

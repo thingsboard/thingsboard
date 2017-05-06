@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TenantEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
@@ -36,7 +37,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.TENANT_COLUMN_FAMI
  */
 @Component
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
-public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implements TenantDao {
+public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant> implements TenantDao {
 
     @Autowired
     private TenantRepository tenantRepository;
@@ -54,11 +55,6 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     @Override
     protected CrudRepository<TenantEntity, UUID> getCrudRepository() {
         return tenantRepository;
-    }
-
-    @Override
-    protected boolean isSearchTextDao() {
-        return true;
     }
 
     @Override

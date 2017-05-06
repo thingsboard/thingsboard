@@ -142,7 +142,7 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
                 .value(ModelConstants.EVENT_ENTITY_TYPE_PROPERTY, entity.getEntityType())
                 .value(ModelConstants.EVENT_ENTITY_ID_PROPERTY, entity.getEntityId())
                 .value(ModelConstants.EVENT_TYPE_PROPERTY, entity.getEventType())
-                .value(ModelConstants.EVENT_UID_PROPERTY, entity.getEventUId())
+                .value(ModelConstants.EVENT_UID_PROPERTY, entity.getEventUid())
                 .value(ModelConstants.EVENT_BODY_PROPERTY, entity.getBody());
         if (ifNotExists) {
             insert = insert.ifNotExists();
