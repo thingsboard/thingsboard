@@ -46,18 +46,21 @@ export default function AppConfig($provide,
 
     $translateProvider.useSanitizeValueStrategy('sce');
     $translateProvider.preferredLanguage('en_US');
+    //$translateProvider.preferredLanguage('zh_CN');
     $translateProvider.useLocalStorage();
     $translateProvider.useMissingTranslationHandlerLog();
     $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
 
     addLocaleKorean(locales);
     addLocaleChinese(locales);
+    
     var $window = angular.injector(['ng']).get('$window');
     var lang = $window.navigator.language || $window.navigator.userLanguage;
+    //$log.log("----====User language ====----"+lang);
     if (lang === 'ko') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('ko_KR');
-    }else if(lang === 'zh') {
+    } else if (lang === 'zh') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('zh_CN');
     }
