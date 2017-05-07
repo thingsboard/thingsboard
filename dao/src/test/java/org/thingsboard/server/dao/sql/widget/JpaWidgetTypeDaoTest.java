@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;

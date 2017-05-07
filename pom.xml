@@ -74,6 +74,7 @@
         <h2.version>1.4.194</h2.version>
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
+        <postgresql.driver.version>9.4.1211</postgresql.driver.version>
     </properties>
 
     <modules>
@@ -418,6 +419,11 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-jpa</artifactId>
                 <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.driver.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>

@@ -41,10 +41,10 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
     private static final long serialVersionUID = -3989724854149114846L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
-    @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, columnDefinition = "BINARY(16)", unique = true)
+    @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, unique = true)
     private UUID userId;
 
     @Column(name = ModelConstants.USER_CREDENTIALS_ENABLED_PROPERTY)

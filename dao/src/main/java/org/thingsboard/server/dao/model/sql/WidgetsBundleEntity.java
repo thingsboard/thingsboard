@@ -42,10 +42,10 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
     private static final long serialVersionUID = 6897035686422298096L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
-    @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_ALIAS_PROPERTY)

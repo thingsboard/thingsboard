@@ -46,11 +46,11 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     private static final long serialVersionUID = -5436279069884988630L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
     @PartitionKey(value = 1)
-    @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @PartitionKey(value = 2)

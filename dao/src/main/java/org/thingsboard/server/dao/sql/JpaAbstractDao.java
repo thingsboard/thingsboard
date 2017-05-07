@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
@@ -29,6 +30,8 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 /**
  * @author Valerii Sosliuk
@@ -47,6 +50,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     }
 
     @Override
+    @Transactional(propagation = REQUIRES_NEW)
     public D save(D domain) {
         E entity;
         try {
@@ -80,6 +84,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     }
 
     @Override
+    @Transactional(propagation = REQUIRES_NEW)
     public boolean removeById(UUID key) {
         getCrudRepository().delete(key);
         log.debug("Remove request: {}", key);

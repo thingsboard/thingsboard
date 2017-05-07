@@ -71,7 +71,6 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         UUID tenantId = UUIDs.timeBased();
         UUID customerId = UUIDs.timeBased();
         create30Adminsand60Users(tenantId, customerId);
-        assertEquals(90, userDao.find().size());
         List<User> tenantAdmins1 = userDao.findTenantAdmins(tenantId, new TextPageLink(20));
         assertEquals(20, tenantAdmins1.size());
         List<User> tenantAdmins2 = userDao.findTenantAdmins(tenantId,
@@ -88,7 +87,6 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         UUID tenantId = UUIDs.timeBased();
         UUID customerId = UUIDs.timeBased();
         create30Adminsand60Users(tenantId, customerId);
-        assertEquals(90, userDao.find().size());
         List<User> customerUsers1 = userDao.findCustomerUsers(tenantId, customerId, new TextPageLink(40));
         assertEquals(40, customerUsers1.size());
         List<User> customerUsers2 = userDao.findCustomerUsers(tenantId, customerId,

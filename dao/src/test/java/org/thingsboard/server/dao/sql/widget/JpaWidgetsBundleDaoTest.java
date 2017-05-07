@@ -16,7 +16,9 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.github.springtestdbunit.annotation.DatabaseOperation;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
+import com.github.springtestdbunit.annotation.DatabaseTearDown;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +43,15 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     private WidgetsBundleDao widgetsBundleDao;
 
     @Test
-    @DatabaseSetup("classpath:dbunit/widgets_bundle.xml")
+    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml",type= DatabaseOperation.CLEAN_INSERT)
+    @DatabaseTearDown(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindAll() {
         assertEquals(7, widgetsBundleDao.find().size());
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/widgets_bundle.xml")
+    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml",type= DatabaseOperation.CLEAN_INSERT)
+    @DatabaseTearDown(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindWidgetsBundleByTenantIdAndAlias() {
         WidgetsBundle widgetsBundle = widgetsBundleDao.findWidgetsBundleByTenantIdAndAlias(
                 UUID.fromString("250aca8e-2825-11e7-93ae-92361f002671"), "WB3");
@@ -55,7 +59,8 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
+   // @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindSystemWidgetsBundles() {
         createSystemWidgetBundles(30, "WB_");
         assertEquals(30, widgetsBundleDao.find().size());
@@ -70,7 +75,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindWidgetsBundlesByTenantId() {
         UUID tenantId1 = UUIDs.timeBased();
         UUID tenantId2 = UUIDs.timeBased();
@@ -97,7 +102,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindAllWidgetsBundlesByTenantId() {
         UUID tenantId1 = UUIDs.timeBased();
         UUID tenantId2 = UUIDs.timeBased();
@@ -129,9 +134,9 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         assertEquals(0, widgetsBundles4.size());
     }
 
-
     @Test
     @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml", type= DatabaseOperation.DELETE_ALL)
     public void testNonSearchTextNotFound() {
         UUID tenantId = UUIDs.timeBased();
         createWidgetBundles(5, tenantId, "ABC_");

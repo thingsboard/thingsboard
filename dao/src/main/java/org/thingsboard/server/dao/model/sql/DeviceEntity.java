@@ -22,6 +22,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -29,9 +32,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
+import java.io.IOException;
 import java.util.UUID;
 
-//@Entity
+@Data
+@Slf4j
+@Entity
 @Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
 public final class DeviceEntity implements SearchTextEntity<Device> {
 
@@ -55,7 +61,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     private String searchText;
     
     @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
-    private JsonNode additionalInfo;
+    private String additionalInfo;
 
     public DeviceEntity() {
         super();
@@ -72,49 +78,11 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
             this.customerId = device.getCustomerId().getId();
         }
         this.name = device.getName();
-        this.additionalInfo = device.getAdditionalInfo();
-    }
-    
-    public UUID getId() {
-        return id;
+        if (additionalInfo != null) {
+            this.additionalInfo = device.getAdditionalInfo().toString();
+        }
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(UUID customerId) {
-        this.customerId = customerId;
-    }
-    
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-    
     @Override
     public String getSearchTextSource() {
         return name;
@@ -206,8 +174,16 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
             device.setCustomerId(new CustomerId(customerId));
         }
         device.setName(name);
-        device.setAdditionalInfo(additionalInfo);
+        if (additionalInfo != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = null;
+            try {
+                jsonNode = mapper.readTree(additionalInfo);
+                device.setAdditionalInfo(jsonNode);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
         return device;
     }
-
 }

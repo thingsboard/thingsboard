@@ -45,7 +45,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     private static final long serialVersionUID = -4330655990232136337L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
     @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)

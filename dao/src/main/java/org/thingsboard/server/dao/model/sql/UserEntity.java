@@ -38,19 +38,19 @@ import java.util.UUID;
 @Slf4j
 @Data
 @Entity
-@Table(name = ModelConstants.USER_COLUMN_FAMILY_NAME)
+@Table(name = ModelConstants.USER_PG_HIBERNATE_COLUMN_FAMILY_NAME)
 public class UserEntity implements SearchTextEntity<User> {
     @Transient
     private static final long serialVersionUID = -271106508790582977L;
 
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
-    @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
     @Column(name = ModelConstants.USER_AUTHORITY_PROPERTY)

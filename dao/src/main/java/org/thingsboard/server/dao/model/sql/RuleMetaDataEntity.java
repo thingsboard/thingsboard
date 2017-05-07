@@ -48,9 +48,9 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
     @Transient
     private static final long serialVersionUID = -1506905644259463884L;
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
-    @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY)
     private UUID tenantId;
     @Column(name = ModelConstants.RULE_NAME_PROPERTY)
     private String name;

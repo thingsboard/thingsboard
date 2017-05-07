@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao;
 
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
+import com.github.springtestdbunit.annotation.DbUnitConfiguration;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
@@ -29,11 +30,12 @@ import org.springframework.test.context.support.DirtiesContextTestExecutionListe
  * Created by Valerii Sosliuk on 4/22/2017.
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {JpaDaoConfig.class})
+@ContextConfiguration(classes = {JpaDaoConfig.class, JpaDbunitTestConfig.class})
 @TestPropertySource("classpath:jpa-test.properties")
 @TestExecutionListeners({ DependencyInjectionTestExecutionListener.class,
         DirtiesContextTestExecutionListener.class,
         DbUnitTestExecutionListener.class })
+@DbUnitConfiguration(databaseConnection = "dbUnitDatabaseConnection")
 public class AbstractJpaDaoTest extends AbstractTransactionalJUnit4SpringContextTests {
 
 }

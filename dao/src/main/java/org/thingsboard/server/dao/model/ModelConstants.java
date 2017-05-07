@@ -45,6 +45,7 @@ public class ModelConstants {
      * Cassandra user constants.
      */
     public static final String USER_COLUMN_FAMILY_NAME = "user";
+    public static final String USER_PG_HIBERNATE_COLUMN_FAMILY_NAME = "tb_user";
     public static final String USER_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String USER_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String USER_EMAIL_PROPERTY = "email";

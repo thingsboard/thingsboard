@@ -47,16 +47,16 @@ public class EventEntity implements BaseEntity<Event> {
     private static final long serialVersionUID = -5717830061727466727L;
 
     @Id
-    @Column(name = ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ID_PROPERTY)
     private UUID id;
 
-    @Column(name = EVENT_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = EVENT_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @Column(name = EVENT_ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
-    @Column(name = EVENT_ENTITY_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = EVENT_ENTITY_ID_PROPERTY)
     private UUID entityId;
 
     @Column(name = EVENT_TYPE_PROPERTY)

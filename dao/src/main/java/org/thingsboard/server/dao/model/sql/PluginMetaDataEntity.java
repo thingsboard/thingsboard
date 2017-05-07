@@ -44,13 +44,13 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     @Transient
     private static final long serialVersionUID = -6164321050824823149L;
     @Id
-    @Column(name = ModelConstants.ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
     @Column(name = ModelConstants.PLUGIN_API_TOKEN_PROPERTY)
     private String apiToken;
 
-    @Column(name = ModelConstants.PLUGIN_TENANT_ID_PROPERTY, columnDefinition = "BINARY(16)")
+    @Column(name = ModelConstants.PLUGIN_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
     @Column(name = ModelConstants.PLUGIN_NAME_PROPERTY)

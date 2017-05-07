@@ -21,6 +21,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -30,7 +32,8 @@ import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
 
-//@Entity
+@Data
+@Entity
 @Table(name = ModelConstants.DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentials> {
 
@@ -68,46 +71,6 @@ public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentia
         this.credentialsValue = deviceCredentials.getCredentialsValue(); 
     }
     
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(UUID deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public DeviceCredentialsType getCredentialsType() {
-        return credentialsType;
-    }
-
-    public void setCredentialsType(DeviceCredentialsType credentialsType) {
-        this.credentialsType = credentialsType;
-    }
-
-    public String getCredentialsId() {
-        return credentialsId;
-    }
-
-    public void setCredentialsId(String credentialsId) {
-        this.credentialsId = credentialsId;
-    }
-
-    public String getCredentialsValue() {
-        return credentialsValue;
-    }
-
-    public void setCredentialsValue(String credentialsValue) {
-        this.credentialsValue = credentialsValue;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
