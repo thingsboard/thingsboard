@@ -30,6 +30,24 @@
       "password": {
         "title": "Password",
         "type": "string"
+      },
+      "headers": {
+        "title": "Request Headers",
+        "type": "array",
+        "items": {
+          "title": "Request Header",
+          "type": "object",
+          "properties": {
+            "key": {
+              "title": "Key",
+              "type": "string"
+            },
+            "value": {
+              "title": "Value",
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "required": [
@@ -62,6 +80,7 @@
     {
       "key": "password",
       "type": "password"
-    }
+    },
+    "headers"
   ]
 }

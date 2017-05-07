@@ -52,6 +52,7 @@ export default function AppConfig($provide,
 
     addLocaleKorean(locales);
     addLocaleChinese(locales);
+
     var $window = angular.injector(['ng']).get('$window');
     var lang = $window.navigator.language || $window.navigator.userLanguage;
     if (lang === 'ko') {
