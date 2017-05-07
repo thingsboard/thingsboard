@@ -21,6 +21,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import lombok.Data;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -30,7 +32,8 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.UUID;
 
-//@Entity
+@Data
+@Entity
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
 
@@ -68,38 +71,6 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
             this.customerId = dashboardInfo.getCustomerId().getId();
         }
         this.title = dashboardInfo.getTitle();
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(UUID customerId) {
-        this.customerId = customerId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     @Override

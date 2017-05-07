@@ -22,6 +22,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -29,9 +32,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
+import java.io.IOException;
 import java.util.UUID;
 
-//@Entity
+@Data
+@Slf4j
+@Entity
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public final class DashboardEntity implements SearchTextEntity<Dashboard> {
 
@@ -55,7 +61,7 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     private String searchText;
     
     @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY)
-    private JsonNode configuration;
+    private String configuration;
 
     public DashboardEntity() {
         super();
@@ -72,47 +78,18 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
             this.customerId = dashboard.getCustomerId().getId();
         }
         this.title = dashboard.getTitle();
-        this.configuration = dashboard.getConfiguration();
+        if (configuration != null) {
+            this.configuration = dashboard.getConfiguration().toString();
+        }
     }
-    
+
+    @Override
     public UUID getId() {
         return id;
     }
 
+    @Override
     public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(UUID customerId) {
-        this.customerId = customerId;
-    }
-    
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public JsonNode getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(JsonNode configuration) {
-        this.configuration = configuration;
     }
     
     @Override
@@ -214,8 +191,16 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
             dashboard.setCustomerId(new CustomerId(customerId));
         }
         dashboard.setTitle(title);
-        dashboard.setConfiguration(configuration);
+        if (configuration != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = null;
+            try {
+                jsonNode = mapper.readTree(configuration);
+                dashboard.setConfiguration(jsonNode);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
         return dashboard;
     }
-
 }

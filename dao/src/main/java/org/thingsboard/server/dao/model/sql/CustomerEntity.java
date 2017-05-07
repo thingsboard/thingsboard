@@ -22,15 +22,21 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
+import java.io.IOException;
 import java.util.UUID;
 
-//@Entity
+@Data
+@Slf4j
+@Entity
 @Table(name = ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME)
 public final class CustomerEntity implements SearchTextEntity<Customer> {
 
@@ -75,7 +81,7 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
     private String email;
 
     @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY)
-    private JsonNode additionalInfo;
+    private String additionalInfo;
 
     public CustomerEntity() {
         super();
@@ -95,105 +101,21 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         this.zip = customer.getZip();
         this.phone = customer.getPhone();
         this.email = customer.getEmail();
-        this.additionalInfo = customer.getAdditionalInfo();
+        if (additionalInfo != null) {
+            this.additionalInfo = customer.getAdditionalInfo().toString();
+        }
     }
-    
+
+    @Override
     public UUID getId() {
         return id;
     }
 
+    @Override
     public void setId(UUID id) {
         this.id = id;
     }
 
-    public UUID getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(UUID tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getAddress2() {
-        return address2;
-    }
-
-    public void setAddress2(String address2) {
-        this.address2 = address2;
-    }
-
-    public String getZip() {
-        return zip;
-    }
-
-    public void setZip(String zip) {
-        this.zip = zip;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-    
     @Override
     public String getSearchTextSource() {
         return title;
@@ -204,10 +126,6 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         this.searchText = searchText;
     }
     
-    public String getSearchText() {
-        return searchText;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -344,8 +262,15 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         customer.setZip(zip);
         customer.setPhone(phone);
         customer.setEmail(email);
-        customer.setAdditionalInfo(additionalInfo);
+        if (additionalInfo != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                JsonNode jsonNode = mapper.readTree(additionalInfo);
+                customer.setAdditionalInfo(jsonNode);
+            } catch (IOException e) {
+               log.error(e.getMessage(), e);
+            }
+        }
         return customer;
     }
-
 }

@@ -1,13 +1,11 @@
 package org.thingsboard.server.dao.sql.device;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.github.springtestdbunit.annotation.DatabaseOperation;
-import com.github.springtestdbunit.annotation.DatabaseSetup;
-import com.github.springtestdbunit.annotation.DatabaseTearDown;
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -17,7 +15,6 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.device.DeviceDao;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -29,15 +26,12 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
-@Transactional
 public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
 
     @Autowired
     private DeviceDao deviceDao;
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
-    @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
     public void testFindDevicesByTenantId() {
         UUID tenantId1 = UUIDs.timeBased();
         UUID tenantId2 = UUIDs.timeBased();
@@ -55,8 +49,6 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
-    @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
     public void testFindAsync() throws ExecutionException, InterruptedException {
         UUID tenantId = UUIDs.timeBased();
         UUID customerId = UUIDs.timeBased();
@@ -75,8 +67,6 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
-    @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
     public void testFindDevicesByTenantIdAndIdsAsync() throws ExecutionException, InterruptedException {
         UUID tenantId1 = UUIDs.timeBased();
         UUID customerId1 = UUIDs.timeBased();
@@ -100,8 +90,6 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
-    @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml",type = DatabaseOperation.DELETE_ALL)
     public void testFindDevicesByTenantIdAndCustomerIdAndIdsAsync() throws ExecutionException, InterruptedException {
         UUID tenantId1 = UUIDs.timeBased();
         UUID customerId1 = UUIDs.timeBased();

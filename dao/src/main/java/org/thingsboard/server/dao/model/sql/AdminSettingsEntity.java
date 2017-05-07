@@ -22,15 +22,21 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.dao.model.BaseEntity;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
-//@Entity
+@Data
+@Slf4j
+@Entity
 @Table(name = ADMIN_SETTINGS_COLUMN_FAMILY_NAME)
 public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
 
@@ -45,7 +51,7 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
     private String key;
 
     @Column(name = ADMIN_SETTINGS_JSON_VALUE_PROPERTY)
-    private JsonNode jsonValue;
+    private String jsonValue;
 
     public AdminSettingsEntity() {
         super();
@@ -56,33 +62,21 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
             this.id = adminSettings.getId().getId();
         }
         this.key = adminSettings.getKey();
-        this.jsonValue = adminSettings.getJsonValue();
+        if (jsonValue != null) {
+            this.jsonValue = adminSettings.getJsonValue().toString();
+        }
     }
-    
+
+    @Override
     public UUID getId() {
         return id;
     }
 
+    @Override
     public void setId(UUID id) {
         this.id = id;
     }
     
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public JsonNode getJsonValue() {
-        return jsonValue;
-    }
-
-    public void setJsonValue(JsonNode jsonValue) {
-        this.jsonValue = jsonValue;
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -138,7 +132,16 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
         AdminSettings adminSettings = new AdminSettings(new AdminSettingsId(id));
         adminSettings.setCreatedTime(UUIDs.unixTimestamp(id));
         adminSettings.setKey(key);
-        adminSettings.setJsonValue(jsonValue);
+        if (jsonValue != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = null;
+            try {
+                jsonNode = mapper.readTree(jsonValue);
+                adminSettings.setJsonValue(jsonNode);
+            } catch (IOException e) {
+               log.error(e.getMessage(), e);
+            }
+        }
         return adminSettings;
     }
 

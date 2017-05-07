@@ -21,6 +21,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
@@ -28,12 +31,12 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
+import java.io.IOException;
 import java.util.UUID;
 
-/**
- * @author Andrew Shvayka
- */
-//@Entity
+@Data
+@Slf4j
+@Entity
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 
@@ -57,7 +60,7 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     private String clazz;
 
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY)
-    private JsonNode configurationDescriptor;
+    private String configurationDescriptor;
 
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)
     private String actions;
@@ -77,7 +80,9 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
         this.scope = component.getScope();
         this.name = component.getName();
         this.clazz = component.getClazz();
-        this.configurationDescriptor = component.getConfigurationDescriptor();
+        if (configurationDescriptor != null) {
+            this.configurationDescriptor = component.getConfigurationDescriptor().toString();
+        }
         this.searchText = component.getName();
     }
 
@@ -89,7 +94,16 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
         data.setName(this.getName());
         data.setClazz(this.getClazz());
         data.setActions(this.getActions());
-        data.setConfigurationDescriptor(this.getConfigurationDescriptor());
+        if (configurationDescriptor != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode jsonNode = null;
+            try {
+                jsonNode = mapper.readTree(configurationDescriptor);
+                data.setConfigurationDescriptor(jsonNode);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
         return data;
     }
 
@@ -101,54 +115,6 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     @Override
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public String getActions() {
-        return actions;
-    }
-
-    public void setActions(String actions) {
-        this.actions = actions;
-    }
-
-    public ComponentType getType() {
-        return type;
-    }
-
-    public void setType(ComponentType type) {
-        this.type = type;
-    }
-
-    public ComponentScope getScope() {
-        return scope;
-    }
-
-    public void setScope(ComponentScope scope) {
-        this.scope = scope;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getClazz() {
-        return clazz;
-    }
-
-    public void setClazz(String clazz) {
-        this.clazz = clazz;
-    }
-
-    public JsonNode getConfigurationDescriptor() {
-        return configurationDescriptor;
-    }
-
-    public void setConfigurationDescriptor(JsonNode configurationDescriptor) {
-        this.configurationDescriptor = configurationDescriptor;
     }
 
     public String getSearchText() {
