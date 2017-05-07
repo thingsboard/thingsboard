@@ -52,13 +52,12 @@ export default function AppConfig($provide,
 
     addLocaleKorean(locales);
     addLocaleChinese(locales);
-
     var $window = angular.injector(['ng']).get('$window');
     var lang = $window.navigator.language || $window.navigator.userLanguage;
     if (lang === 'ko') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('ko_KR');
-    } else if (lang === 'zh'){
+    } else if (lang === 'zh') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('zh_CN');
     }
