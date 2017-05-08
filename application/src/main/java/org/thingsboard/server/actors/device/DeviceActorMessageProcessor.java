@@ -51,13 +51,7 @@ import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequestBody;
 import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequestPluginMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginRpcResponseDeviceMsg;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -205,25 +199,21 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
         refreshAttributes(msg);
-        Set<AttributeKey> keys = msg.getDeletedKeys();
         if (attributeSubscriptions.size() > 0) {
             ToDeviceMsg notification = null;
             if (msg.isDeleted()) {
-                List<AttributeKey> sharedKeys = keys.stream()
+                List<AttributeKey> sharedKeys = msg.getDeletedKeys().stream()
                         .filter(key -> DataConstants.SHARED_SCOPE.equals(key.getScope()))
                         .collect(Collectors.toList());
                 notification = new AttributesUpdateNotification(BasicAttributeKVMsg.fromDeleted(sharedKeys));
             } else {
-                List<AttributeKvEntry> attributes = keys.stream()
-                        .filter(key -> DataConstants.SHARED_SCOPE.equals(key.getScope()))
-                        .map(key -> deviceAttributes.getServerPublicAttribute(key.getAttributeKey()))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toList());
-                if (attributes.size() > 0) {
-                    notification = new AttributesUpdateNotification(BasicAttributeKVMsg.fromShared(attributes));
-                } else {
-                    logger.debug("[{}] No public server side attributes changed!", deviceId);
+                if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
+                    List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
+                    if (attributes.size() > 0) {
+                        notification = new AttributesUpdateNotification(BasicAttributeKVMsg.fromShared(attributes));
+                    } else {
+                        logger.debug("[{}] No public server side attributes changed!", deviceId);
+                    }
                 }
             }
             if (notification != null) {
