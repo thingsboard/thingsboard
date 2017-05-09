@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tb-db-schema-deployment
+spec:
+  containers:
+  - name: tb-db-schema-k8
+    image: thingsboard/thingsboard-db-schema:k8test
+    env:
+    - name: SKIP_SCHEMA_CREATION
+      value: "false"
+    - name: SKIP_SYSTEM_DATA
+      value: "false"
+    - name : SKIP_DEMO_DATA
+      value: "false"
+    - name : CASSANDRA_URL
+      value: "cassandra"
+    command:
+    - sh
+    - -c
+    - ./install_schema.sh
+  restartPolicy: Never

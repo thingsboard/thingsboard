@@ -20,7 +20,7 @@ metadata:
   name: zk-config
 data:
   ensemble: "zk-0;zk-1;zk-2"
-  jvm.heap: "2G"
+  jvm.heap: "1G"
   tick: "2000"
   init: "10"
   sync: "5"
@@ -51,34 +51,25 @@ spec:
         app: zk
       annotations:
         pod.alpha.kubernetes.io/initialized: "true"
-        scheduler.alpha.kubernetes.io/affinity: >
-          {
-            "podAntiAffinity": {
-              "requiredDuringSchedulingIgnoredDuringExecution": [
-                {
-                  "labelSelector": {
-                    "matchExpressions": [
-                      {
-                        "key": "app",
-                        "operator": "In",
-                        "values": [ "zk-headless" ]
-                      }
-                    ]
-                  },
-                  "topologyKey": "kubernetes.io/hostname"
-                }
-              ]
-            }
-          }
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                    - zk-headless
+              topologyKey: "kubernetes.io/hostname"
       containers:
       - name: k8szk
         imagePullPolicy: Always
         image: gcr.io/google_samples/k8szk:v1
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "0.5"
+            memory: "0.5Gi"
+            cpu: "0.2"
         ports:
         - containerPort: 2181
           name: client
@@ -164,4 +155,4 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: 20Gi
+          storage: 1Gi

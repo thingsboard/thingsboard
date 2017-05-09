@@ -1,0 +1,105 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thingsboard-external
+  labels:
+    app: thingsboard-external
+spec:
+  ports:
+  - port: 8080
+    name: ui
+  - port: 1883
+    name: mqtt
+  - port: 5683
+    name: coap
+  - port: 9001
+    name: rpc
+  selector:
+    app: thingsboard
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thingsboard-headless
+  labels:
+    app: thingsboard-headless
+spec:
+  ports:
+  - port: 8080
+    name: ui
+  - port: 1883
+    name: mqtt
+  - port: 5683
+    name: coap
+  - port: 9001
+    name: rpc
+  selector:
+    app: thingsboard
+  clusterIP: None
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tb-config
+data:
+  zookeeper.enabled: "true"
+  zookeeper.url: "zk-headless"
+  cassandra.url: "cassandra:9042"
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: tb
+spec:
+  serviceName: "thingsboard-headless"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: thingsboard
+    spec:
+      terminationGracePeriodSeconds: 10
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                    - thingsboard-headless
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: thingsboard
+        image: thingsboard/application:k8test
+        ports:
+        - containerPort: 8080
+          name: ui
+        - containerPort: 1883
+          name: mqtt
+        - containerPort: 5683
+          name: coap
+        - containerPort: 9001
+          name: rpc
+        env:
+        - name: ZOOKEEPER_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: zookeeper.enabled
+        - name: ZOOKEEPER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: zookeeper.url
+        - name : CASSANDRA_URL
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: cassandra.url
+        command:
+        - sh
+        - -c
+        - ./run_thingsboard.sh

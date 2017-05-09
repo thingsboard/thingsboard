@@ -18,9 +18,11 @@
 
 cp ../../application/target/thingsboard.deb thingsboard.deb
 
-docker build -t thingsboard/application:1.2.2 -t thingsboard/application:latest .
+docker build -t thingsboard/application:k8test .
 
 docker login
 
-docker push thingsboard/application:1.2.2
-docker push thingsboard/application:latest
+docker push thingsboard/application:k8test
+
+# cleanup
+rm thingsboard.deb
