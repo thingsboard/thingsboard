@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry;
 
-import com.sun.javafx.collections.MappingChange;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DataConstants;
@@ -292,7 +291,6 @@ public class SubscriptionManager {
                     } else {
                         log.trace("[{}] Remote subscription is now handled on new server address: [{}]", s.getWsSessionId(), newAddress);
                         subscriptionIterator.remove();
-
                         //TODO: onUpdate state of subscription by WsSessionId and other maps.
                     }
                 }

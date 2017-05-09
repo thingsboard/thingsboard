@@ -24,7 +24,31 @@ import deviceCredentialsTemplate from './device-credentials.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DeviceController(userService, deviceService, customerService, $scope, $controller, $state, $stateParams, $document, $mdDialog, $q, $translate, types) {
+export function DeviceCardController(types) {
+
+    var vm = this;
+
+    vm.types = types;
+
+    vm.isAssignedToCustomer = function() {
+        if (vm.item && vm.item.customerId && vm.parentCtl.devicesScope === 'tenant' &&
+            vm.item.customerId.id != vm.types.id.nullUid && !vm.item.assignedCustomer.isPublic) {
+            return true;
+        }
+        return false;
+    }
+
+    vm.isPublic = function() {
+        if (vm.item && vm.item.assignedCustomer && vm.parentCtl.devicesScope === 'tenant' && vm.item.assignedCustomer.isPublic) {
+            return true;
+        }
+        return false;
+    }
+}
+
+
+/*@ngInject*/
+export function DeviceController(userService, deviceService, customerService, $state, $stateParams, $document, $mdDialog, $q, $translate, types) {
 
     var customerId = $stateParams.customerId;
 
@@ -47,6 +71,7 @@ export default function DeviceController(userService, deviceService, customerSer
 
         getItemTitleFunc: getDeviceTitle,
 
+        itemCardController: 'DeviceCardController',
         itemCardTemplateUrl: deviceCard,
         parentCtl: vm,
 
@@ -77,6 +102,7 @@ export default function DeviceController(userService, deviceService, customerSer
     vm.devicesScope = $state.$current.data.devicesType;
 
     vm.assignToCustomer = assignToCustomer;
+    vm.makePublic = makePublic;
     vm.unassignFromCustomer = unassignFromCustomer;
     vm.manageCredentials = manageCredentials;
 
@@ -93,10 +119,20 @@ export default function DeviceController(userService, deviceService, customerSer
             vm.devicesScope = 'customer_user';
             customerId = user.customerId;
         }
+        if (customerId) {
+            vm.customerDevicesTitle = $translate.instant('customer.devices');
+            customerService.getShortCustomerInfo(customerId).then(
+                function success(info) {
+                    if (info.isPublic) {
+                        vm.customerDevicesTitle = $translate.instant('customer.public-devices');
+                    }
+                }
+            );
+        }
 
         if (vm.devicesScope === 'tenant') {
             fetchDevicesFunction = function (pageLink) {
-                return deviceService.getTenantDevices(pageLink);
+                return deviceService.getTenantDevices(pageLink, true);
             };
             deleteDeviceFunction = function (deviceId) {
                 return deviceService.deleteDevice(deviceId);
@@ -104,6 +140,18 @@ export default function DeviceController(userService, deviceService, customerSer
             refreshDevicesParamsFunction = function() {
                 return {"topIndex": vm.topIndex};
             };
+
+            deviceActionsList.push({
+                onAction: function ($event, item) {
+                    makePublic($event, item);
+                },
+                name: function() { return $translate.instant('action.share') },
+                details: function() { return $translate.instant('device.make-public') },
+                icon: "share",
+                isEnabled: function(device) {
+                    return device && (!device.customerId || device.customerId.id === types.id.nullUid);
+                }
+            });
 
             deviceActionsList.push(
                 {
@@ -122,16 +170,28 @@ export default function DeviceController(userService, deviceService, customerSer
             deviceActionsList.push(
                 {
                     onAction: function ($event, item) {
-                        unassignFromCustomer($event, item);
+                        unassignFromCustomer($event, item, false);
                     },
                     name: function() { return $translate.instant('action.unassign') },
                     details: function() { return $translate.instant('device.unassign-from-customer') },
                     icon: "assignment_return",
                     isEnabled: function(device) {
-                        return device && device.customerId && device.customerId.id !== types.id.nullUid;
+                        return device && device.customerId && device.customerId.id !== types.id.nullUid && !device.assignedCustomer.isPublic;
                     }
                 }
             );
+
+            deviceActionsList.push({
+                onAction: function ($event, item) {
+                    unassignFromCustomer($event, item, true);
+                },
+                name: function() { return $translate.instant('action.make-private') },
+                details: function() { return $translate.instant('device.make-private') },
+                icon: "reply",
+                isEnabled: function(device) {
+                    return device && device.customerId && device.customerId.id !== types.id.nullUid && device.assignedCustomer.isPublic;
+                }
+            });
 
             deviceActionsList.push(
                 {
@@ -183,7 +243,7 @@ export default function DeviceController(userService, deviceService, customerSer
 
         } else if (vm.devicesScope === 'customer' || vm.devicesScope === 'customer_user') {
             fetchDevicesFunction = function (pageLink) {
-                return deviceService.getCustomerDevices(customerId, pageLink);
+                return deviceService.getCustomerDevices(customerId, pageLink, true);
             };
             deleteDeviceFunction = function (deviceId) {
                 return deviceService.unassignDeviceFromCustomer(deviceId);
@@ -196,13 +256,30 @@ export default function DeviceController(userService, deviceService, customerSer
                 deviceActionsList.push(
                     {
                         onAction: function ($event, item) {
-                            unassignFromCustomer($event, item);
+                            unassignFromCustomer($event, item, false);
                         },
                         name: function() { return $translate.instant('action.unassign') },
                         details: function() { return $translate.instant('device.unassign-from-customer') },
-                        icon: "assignment_return"
+                        icon: "assignment_return",
+                        isEnabled: function(device) {
+                            return device && !device.assignedCustomer.isPublic;
+                        }
                     }
                 );
+                deviceActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            unassignFromCustomer($event, item, true);
+                        },
+                        name: function() { return $translate.instant('action.make-private') },
+                        details: function() { return $translate.instant('device.make-private') },
+                        icon: "reply",
+                        isEnabled: function(device) {
+                            return device && device.assignedCustomer.isPublic;
+                        }
+                    }
+                );
+
                 deviceActionsList.push(
                     {
                         onAction: function ($event, item) {
@@ -287,8 +364,29 @@ export default function DeviceController(userService, deviceService, customerSer
         return device ? device.name : '';
     }
 
-    function saveDevice (device) {
-        return deviceService.saveDevice(device);
+    function saveDevice(device) {
+        var deferred = $q.defer();
+        deviceService.saveDevice(device).then(
+            function success(savedDevice) {
+                var devices = [ savedDevice ];
+                customerService.applyAssignedCustomersInfo(devices).then(
+                    function success(items) {
+                        if (items && items.length == 1) {
+                            deferred.resolve(items[0]);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
     }
 
     function isCustomerUser() {
@@ -335,7 +433,7 @@ export default function DeviceController(userService, deviceService, customerSer
             $event.stopPropagation();
         }
         var pageSize = 10;
-        deviceService.getTenantDevices({limit: pageSize, textSearch: ''}).then(
+        deviceService.getTenantDevices({limit: pageSize, textSearch: ''}, false).then(
             function success(_devices) {
                 var devices = {
                     pageSize: pageSize,
@@ -374,15 +472,27 @@ export default function DeviceController(userService, deviceService, customerSer
         assignToCustomer($event, deviceIds);
     }
 
-    function unassignFromCustomer($event, device) {
+    function unassignFromCustomer($event, device, isPublic) {
         if ($event) {
             $event.stopPropagation();
         }
+        var title;
+        var content;
+        var label;
+        if (isPublic) {
+            title = $translate.instant('device.make-private-device-title', {deviceName: device.name});
+            content = $translate.instant('device.make-private-device-text');
+            label = $translate.instant('device.make-private');
+        } else {
+            title = $translate.instant('device.unassign-device-title', {deviceName: device.name});
+            content = $translate.instant('device.unassign-device-text');
+            label = $translate.instant('device.unassign-device');
+        }
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
-            .title($translate.instant('device.unassign-device-title', {deviceName: device.name}))
-            .htmlContent($translate.instant('device.unassign-device-text'))
-            .ariaLabel($translate.instant('device.unassign-device'))
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
@@ -406,6 +516,24 @@ export default function DeviceController(userService, deviceService, customerSer
                 tasks.push(deviceService.unassignDeviceFromCustomer(id));
             }
             $q.all(tasks).then(function () {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
+    function makePublic($event, device) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('device.make-public-device-title', {deviceName: device.name}))
+            .htmlContent($translate.instant('device.make-public-device-text'))
+            .ariaLabel($translate.instant('device.make-public'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            deviceService.makeDevicePublic(device.id.id).then(function success() {
                 vm.grid.refreshList();
             });
         });

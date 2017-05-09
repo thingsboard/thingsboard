@@ -182,7 +182,7 @@ export default class TbGoogleMap {
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
-    createMarker(location, settings) {
+    createMarker(location, settings, onClickListener) {
         var height = 34;
         var pinColor = settings.color.substr(1);
         var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
@@ -217,10 +217,21 @@ export default class TbGoogleMap {
             this.updateMarkerImage(marker, settings, settings.markerImage, settings.markerImageSize || 34);
         }
 
-        this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo);
+        if (settings.displayTooltip) {
+            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo);
+        }
+
+        if (onClickListener) {
+            marker.addListener('click', onClickListener);
+        }
 
         return marker;
     }
+
+    removeMarker(marker) {
+        marker.setMap(null);
+    }
+
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
@@ -265,6 +276,10 @@ export default class TbGoogleMap {
         return polyline;
     }
     /* eslint-enable no-undef */
+
+    removePolyline(polyline) {
+        polyline.setMap(null);
+    }
 
     /* eslint-disable no-undef */
     fitBounds(bounds) {

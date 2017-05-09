@@ -45,14 +45,20 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         socketCloseTimer,
         reconnectTimer;
 
+    var port = location.port;
     if (location.protocol === "https:") {
+        if (!port) {
+            port = "443";
+        }
         telemetryUri = "wss:";
     } else {
+        if (!port) {
+            port = "80";
+        }
         telemetryUri = "ws:";
     }
-    telemetryUri += "//" + location.hostname + ":" + location.port;
+    telemetryUri += "//" + location.hostname + ":" + port;
     telemetryUri += "/api/ws/plugins/telemetry";
-
 
     var service = {
         subscribe: subscribe,

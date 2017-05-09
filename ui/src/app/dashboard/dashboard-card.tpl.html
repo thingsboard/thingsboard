@@ -15,6 +15,6 @@
     limitations under the License.
 
 -->
-<div class="tb-small" ng-if="item &&
-            item.customerId.id != parentCtl.types.id.nullUid &&
-            parentCtl.dashboardsScope === 'tenant'" translate>dashboard.assignedToCustomer</div>
+<div class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'dashboard.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
+<div class="tb-small" ng-show="vm.isPublic()">{{'dashboard.public' | translate}}</div>
+

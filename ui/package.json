@@ -1,7 +1,7 @@
 {
   "name": "thingsboard",
   "private": true,
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Thingsboard UI",
   "licenses": [
     {
@@ -33,6 +33,7 @@
     "angular-messages": "1.5.8",
     "angular-route": "1.5.8",
     "angular-sanitize": "1.5.8",
+    "angular-socialshare": "^2.3.8",
     "angular-storage": "0.0.15",
     "angular-touch": "1.5.8",
     "angular-translate": "2.13.1",
@@ -49,6 +50,7 @@
     "clipboard": "^1.5.15",
     "compass-sass-mixins": "^0.12.7",
     "flot": "git://github.com/flot/flot.git#0.9-work",
+    "flot-curvedlines": "git://github.com/MichaelZinsmaier/CurvedLines.git#master",
     "font-awesome": "^4.6.3",
     "javascript-detect-element-resize": "^0.5.3",
     "jquery": "^3.1.0",

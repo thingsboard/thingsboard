@@ -41,7 +41,7 @@ function DeviceFilter($compile, $templateCache, $q, deviceService) {
 
             var deferred = $q.defer();
 
-            deviceService.getTenantDevices(pageLink).then(function success(result) {
+            deviceService.getTenantDevices(pageLink, false).then(function success(result) {
                 deferred.resolve(result.data);
             }, function fail() {
                 deferred.reject();

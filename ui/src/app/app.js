@@ -19,6 +19,7 @@ import angular from 'angular';
 import ngMaterial from 'angular-material';
 import ngMdIcons from 'angular-material-icons';
 import ngCookies from 'angular-cookies';
+import angularSocialshare from 'angular-socialshare';
 import 'angular-translate';
 import 'angular-translate-loader-static-files';
 import 'angular-translate-storage-local';
@@ -82,6 +83,7 @@ angular.module('thingsboard', [
     ngMaterial,
     ngMdIcons,
     ngCookies,
+    angularSocialshare,
     'pascalprecht.translate',
     'mdColorPicker',
     mdPickers,

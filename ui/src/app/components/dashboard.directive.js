@@ -87,8 +87,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     var highlightedMode = false;
     var highlightedWidget = null;
     var selectedWidget = null;
-    var mouseDownWidget = -1;
-    var widgetMouseMoved = false;
 
     var gridsterParent = $('#gridster-parent', $element);
     var gridsterElement = angular.element($('#gridster-child', gridsterParent));
@@ -152,9 +150,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     vm.resetHighlight = resetHighlight;
 
     vm.onWidgetFullscreenChanged = onWidgetFullscreenChanged;
+
     vm.widgetMouseDown = widgetMouseDown;
-    vm.widgetMouseMove = widgetMouseMove;
-    vm.widgetMouseUp = widgetMouseUp;
+    vm.widgetClicked = widgetClicked;
 
     vm.widgetSizeX = widgetSizeX;
     vm.widgetSizeY = widgetSizeY;
@@ -184,22 +182,22 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
 
     vm.dashboardTimewindowApi = {
         onResetTimewindow: function() {
-            if (vm.originalDashboardTimewindow) {
-                vm.dashboardTimewindow = angular.copy(vm.originalDashboardTimewindow);
-                vm.originalDashboardTimewindow = null;
-            }
+            $timeout(function() {
+                if (vm.originalDashboardTimewindow) {
+                    vm.dashboardTimewindow = angular.copy(vm.originalDashboardTimewindow);
+                    vm.originalDashboardTimewindow = null;
+                }
+            }, 0);
         },
         onUpdateTimewindow: function(startTimeMs, endTimeMs) {
             if (!vm.originalDashboardTimewindow) {
                 vm.originalDashboardTimewindow = angular.copy(vm.dashboardTimewindow);
             }
-            vm.dashboardTimewindow = timeService.toHistoryTimewindow(vm.dashboardTimewindow, startTimeMs, endTimeMs);
+            $timeout(function() {
+                vm.dashboardTimewindow = timeService.toHistoryTimewindow(vm.dashboardTimewindow, startTimeMs, endTimeMs);
+            }, 0);
         }
     };
-
-    //$element[0].onmousemove=function(){
-    //    widgetMouseMove();
-   // }
 
     //TODO: widgets visibility
     /*gridsterParent.scroll(function () {
@@ -350,7 +348,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function loadDashboard() {
-        resetWidgetClick();
         $timeout(function () {
             if (vm.loadWidgets) {
                 var promise = vm.loadWidgets();
@@ -434,40 +431,15 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         return gridsterElement && gridsterElement[0] === gridster.$element[0];
     }
 
-    function resetWidgetClick () {
-        mouseDownWidget = -1;
-        widgetMouseMoved = false;
-    }
-
     function onWidgetFullscreenChanged(expanded, widget) {
         vm.isWidgetExpanded = expanded;
         $scope.$broadcast('onWidgetFullscreenChanged', vm.isWidgetExpanded, widget);
     }
 
     function widgetMouseDown ($event, widget) {
-        mouseDownWidget = widget;
-        widgetMouseMoved = false;
         if (vm.onWidgetMouseDown) {
             vm.onWidgetMouseDown({event: $event, widget: widget});
         }
-    }
-
-    function widgetMouseMove () {
-        if (mouseDownWidget) {
-            widgetMouseMoved = true;
-        }
-    }
-
-    function widgetMouseUp ($event, widget) {
-        $timeout(function () {
-            if (!widgetMouseMoved && mouseDownWidget) {
-                if (widget === mouseDownWidget) {
-                    widgetClicked($event, widget);
-                }
-            }
-            mouseDownWidget = null;
-            widgetMouseMoved = false;
-        }, 0);
     }
 
     function widgetClicked ($event, widget) {
@@ -518,7 +490,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function editWidget ($event, widget) {
-        resetWidgetClick();
         if ($event) {
             $event.stopPropagation();
         }
@@ -528,7 +499,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function exportWidget ($event, widget) {
-        resetWidgetClick();
         if ($event) {
             $event.stopPropagation();
         }
@@ -538,7 +508,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function removeWidget($event, widget) {
-        resetWidgetClick();
         if ($event) {
             $event.stopPropagation();
         }
@@ -548,27 +517,21 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function highlightWidget(widget, delay) {
-        highlightedMode = true;
-        highlightedWidget = widget;
-        if (vm.gridster) {
-            var item = $('.gridster-item', vm.gridster.$element)[vm.widgets.indexOf(widget)];
-            if (item) {
-                var height = $(item).outerHeight(true);
-                var rectHeight = gridsterParent.height();
-                var offset = (rectHeight - height) / 2;
-                var scrollTop = item.offsetTop;
-                if (offset > 0) {
-                    scrollTop -= offset;
-                }
-                gridsterParent.animate({
-                    scrollTop: scrollTop
-                }, delay);
-            }
+        if (!highlightedMode || highlightedWidget != widget) {
+            highlightedMode = true;
+            highlightedWidget = widget;
+            scrollToWidget(widget, delay);
         }
     }
 
     function selectWidget(widget, delay) {
-        selectedWidget = widget;
+        if (selectedWidget != widget) {
+            selectedWidget = widget;
+            scrollToWidget(widget, delay);
+        }
+    }
+
+    function scrollToWidget(widget, delay) {
         if (vm.gridster) {
             var item = $('.gridster-item', vm.gridster.$element)[vm.widgets.indexOf(widget)];
             if (item) {

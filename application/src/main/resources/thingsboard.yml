@@ -188,3 +188,25 @@ cache:
 updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
+  
+  # spring CORS configuration
+spring.mvc.cors:
+   mappings:
+     # Intercept path
+      "/api/auth/**":
+         #Comma-separated list of origins to allow. '*' allows all origins. When not set,CORS support is disabled.
+         allowed-origins: "*"
+         #Comma-separated list of methods to allow. '*' allows all methods.
+         allowed-methods: "POST,GET,OPTIONS"
+         #Comma-separated list of headers to allow in a request. '*' allows all headers.
+         allowed-headers: "*"
+         #How long, in seconds, the response from a pre-flight request can be cached by clients.
+         max-age: "1800"
+         #Set whether credentials are supported. When not set, credentials are not supported.
+         allow-credentials: "true"
+      "/api/v1/**":
+         allowed-origins: "*"
+         allowed-methods: "*"
+         allowed-headers: "*"
+         max-age: "1800"
+         allow-credentials: "true"

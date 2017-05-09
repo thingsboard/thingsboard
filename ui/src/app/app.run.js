@@ -55,8 +55,39 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
         });
 
         $rootScope.stateChangeStartHandle = $rootScope.$on('$stateChangeStart', function (evt, to, params) {
+
+            function waitForUserLoaded() {
+                if ($rootScope.userLoadedHandle) {
+                    $rootScope.userLoadedHandle();
+                }
+                $rootScope.userLoadedHandle = $rootScope.$on('userLoaded', function () {
+                    $rootScope.userLoadedHandle();
+                    $state.go(to.name, params);
+                });
+            }
+
+            function reloadUserFromPublicId() {
+                userService.setUserFromJwtToken(null, null, false);
+                waitForUserLoaded();
+                userService.reloadUser();
+            }
+
+            var locationSearch = $location.search();
+            var publicId = locationSearch.publicId;
+
             if (userService.isUserLoaded() === true) {
                 if (userService.isAuthenticated()) {
+                    if (userService.isPublic()) {
+                        if (userService.parsePublicId() !== publicId) {
+                            evt.preventDefault();
+                            if (publicId && publicId.length > 0) {
+                                reloadUserFromPublicId();
+                            } else {
+                                userService.logout();
+                            }
+                            return;
+                        }
+                    }
                     if (userService.forceDefaultPlace(to, params)) {
                         evt.preventDefault();
                         gotoDefaultPlace(params);
@@ -75,7 +106,10 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
                         }
                     }
                 } else {
-                    if (to.module === 'private') {
+                    if (publicId && publicId.length > 0) {
+                        evt.preventDefault();
+                        reloadUserFromPublicId();
+                    } else if (to.module === 'private') {
                         evt.preventDefault();
                         if (to.url === '/home' || to.url === '/') {
                             $state.go('login', params);
@@ -86,19 +120,17 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
                 }
             } else {
                 evt.preventDefault();
-                if ($rootScope.userLoadedHandle) {
-                    $rootScope.userLoadedHandle();
-                }
-                $rootScope.userLoadedHandle = $rootScope.$on('userLoaded', function () {
-                    $rootScope.userLoadedHandle();
-                    $state.go(to.name, params);
-                });
+                waitForUserLoaded();
             }
         })
 
         $rootScope.pageTitle = 'Thingsboard';
 
-        $rootScope.stateChangeSuccessHandle = $rootScope.$on('$stateChangeSuccess', function (evt, to) {
+        $rootScope.stateChangeSuccessHandle = $rootScope.$on('$stateChangeSuccess', function (evt, to, params) {
+            if (userService.isPublic() && to.name === 'home.dashboards.dashboard') {
+                $location.search('publicId', userService.getPublicId());
+                userService.updateLastPublicDashboardId(params.dashboardId);
+            }
             if (angular.isDefined(to.data.pageTitle)) {
                 $translate(to.data.pageTitle).then(function (translation) {
                     $rootScope.pageTitle = 'Thingsboard | ' + translation;

@@ -37,9 +37,7 @@
 										           'tb-not-highlighted': vm.isNotHighlighted(widget),
 										           'md-whiteframe-4dp': vm.dropWidgetShadow(widget)}"
 										tb-mousedown="vm.widgetMouseDown($event, widget)"
-										tb-mousemove="vm.widgetMouseMove($event, widget)"
-										tb-mouseup="vm.widgetMouseUp($event, widget)"
-										ng-click=""
+										ng-click="vm.widgetClicked($event, widget)"
 										tb-contextmenu="vm.openWidgetContextMenu($event, widget, $mdOpenMousepointMenu)"
 									    ng-style="{cursor: 'pointer',
             									   color: vm.widgetColor(widget),
@@ -49,7 +47,7 @@
 									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{widget.config.title}}</span>
 									<tb-timewindow aggregation ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 								</div>
-								<div class="tb-widget-actions" layout="row" layout-align="start center">
+								<div class="tb-widget-actions" layout="row" layout-align="start center" tb-mousedown="$event.stopPropagation()">
 									<md-button id="expand-button"
 											   ng-show="!vm.isEdit && vm.enableWidgetFullscreen(widget)"
 											   aria-label="{{ 'fullscreen.fullscreen' | translate }}"

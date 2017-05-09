@@ -22,7 +22,7 @@ export default angular.module('thingsboard.utils', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function Utils($mdColorPalette, $rootScope, $window, types) {
+function Utils($mdColorPalette, $rootScope, $window, $q, deviceService, types) {
 
     var predefinedFunctions = {},
         predefinedFunctionsList = [],
@@ -104,7 +104,10 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
         parseException: parseException,
         processWidgetException: processWidgetException,
         isDescriptorSchemaNotEmpty: isDescriptorSchemaNotEmpty,
-        filterSearchTextEntities: filterSearchTextEntities
+        filterSearchTextEntities: filterSearchTextEntities,
+        guid: guid,
+        createDatasoucesFromSubscriptionsInfo: createDatasoucesFromSubscriptionsInfo,
+        isLocalUrl: isLocalUrl
     }
 
     return service;
@@ -274,6 +277,167 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
             response.hasNext = true;
         }
         deferred.resolve(response);
+    }
+
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    }
+
+    function genNextColor(datasources) {
+        var index = 0;
+        if (datasources) {
+            for (var i = 0; i < datasources.length; i++) {
+                var datasource = datasources[i];
+                index += datasource.dataKeys.length;
+            }
+        }
+        return getMaterialColor(index);
+    }
+
+    /*var defaultDataKey = {
+        name: 'f(x)',
+        type: types.dataKeyType.function,
+        label: 'Sin',
+        color: getMaterialColor(0),
+        funcBody: getPredefinedFunctionBody('Sin'),
+        settings: {},
+        _hash: Math.random()
+    };
+
+    var defaultDatasource = {
+        type: types.datasourceType.function,
+        name: types.datasourceType.function,
+        dataKeys: [angular.copy(defaultDataKey)]
+    };*/
+
+    function createKey(keyInfo, type, datasources) {
+        var dataKey = {
+            name: keyInfo.name,
+            type: type,
+            label: keyInfo.label || keyInfo.name,
+            color: genNextColor(datasources),
+            funcBody: keyInfo.funcBody,
+            settings: {},
+            _hash: Math.random()
+        }
+        return dataKey;
+    }
+
+    function createDatasourceKeys(keyInfos, type, datasource, datasources) {
+        for (var i=0;i<keyInfos.length;i++) {
+            var keyInfo = keyInfos[i];
+            var dataKey = createKey(keyInfo, type, datasources);
+            datasource.dataKeys.push(dataKey);
+        }
+    }
+
+    function createDatasourceFromSubscription(subscriptionInfo, datasources, device) {
+        var datasource;
+        if (subscriptionInfo.type === types.datasourceType.device) {
+            datasource = {
+                type: subscriptionInfo.type,
+                deviceName: device.name,
+                name: device.name,
+                deviceId: device.id.id,
+                dataKeys: []
+            }
+        } else if (subscriptionInfo.type === types.datasourceType.function) {
+            datasource = {
+                type: subscriptionInfo.type,
+                name: subscriptionInfo.name || types.datasourceType.function,
+                dataKeys: []
+            }
+        }
+        datasources.push(datasource);
+        if (subscriptionInfo.timeseries) {
+            createDatasourceKeys(subscriptionInfo.timeseries, types.dataKeyType.timeseries, datasource, datasources);
+        }
+        if (subscriptionInfo.attributes) {
+            createDatasourceKeys(subscriptionInfo.attributes, types.dataKeyType.attribute, datasource, datasources);
+        }
+        if (subscriptionInfo.functions) {
+            createDatasourceKeys(subscriptionInfo.functions, types.dataKeyType.function, datasource, datasources);
+        }
+    }
+
+    function processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred) {
+        if (index < subscriptionsInfo.length) {
+            var subscriptionInfo = subscriptionsInfo[index];
+            if (subscriptionInfo.type === types.datasourceType.device) {
+                if (subscriptionInfo.deviceId) {
+                    deviceService.getDevice(subscriptionInfo.deviceId, true, {ignoreLoading: true}).then(
+                        function success(device) {
+                            createDatasourceFromSubscription(subscriptionInfo, datasources, device);
+                            index++;
+                            processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                        },
+                        function fail() {
+                            index++;
+                            processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                        }
+                    );
+                } else if (subscriptionInfo.deviceName || subscriptionInfo.deviceNamePrefix
+                    || subscriptionInfo.deviceIds) {
+                    var promise;
+                    if (subscriptionInfo.deviceName) {
+                        promise = deviceService.fetchAliasDeviceByNameFilter(subscriptionInfo.deviceName, 1, false, {ignoreLoading: true});
+                    } else if (subscriptionInfo.deviceNamePrefix) {
+                        promise = deviceService.fetchAliasDeviceByNameFilter(subscriptionInfo.deviceNamePrefix, 100, false, {ignoreLoading: true});
+                    } else if (subscriptionInfo.deviceIds) {
+                        promise = deviceService.getDevices(subscriptionInfo.deviceIds, {ignoreLoading: true});
+                    }
+                    promise.then(
+                        function success(devices) {
+                            if (devices && devices.length > 0) {
+                                for (var i = 0; i < devices.length; i++) {
+                                    var device = devices[i];
+                                    createDatasourceFromSubscription(subscriptionInfo, datasources, device);
+                                }
+                            }
+                            index++;
+                            processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                        },
+                        function fail() {
+                            index++;
+                            processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                        }
+                    )
+                } else {
+                    index++;
+                    processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                }
+            } else if (subscriptionInfo.type === types.datasourceType.function) {
+                createDatasourceFromSubscription(subscriptionInfo, datasources);
+                index++;
+                processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+            }
+        } else {
+            deferred.resolve(datasources);
+        }
+    }
+
+    function createDatasoucesFromSubscriptionsInfo(subscriptionsInfo) {
+        var deferred = $q.defer();
+        var datasources = [];
+        processSubscriptionsInfo(0, subscriptionsInfo, datasources, deferred);
+        return deferred.promise;
+    }
+
+    function isLocalUrl(url) {
+        var parser = document.createElement('a'); //eslint-disable-line
+        parser.href = url;
+        var host = parser.hostname;
+        if (host === "localhost" || host === "127.0.0.1") {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 }

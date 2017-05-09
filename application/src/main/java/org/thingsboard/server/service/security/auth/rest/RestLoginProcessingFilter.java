@@ -29,6 +29,7 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
+import org.thingsboard.server.service.security.model.UserPrincipal;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -73,7 +74,9 @@ public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingF
             throw new AuthenticationServiceException("Username or Password not provided");
         }
 
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
+        UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, loginRequest.getUsername());
+
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(principal, loginRequest.getPassword());
 
         return this.getAuthenticationManager().authenticate(token);
     }

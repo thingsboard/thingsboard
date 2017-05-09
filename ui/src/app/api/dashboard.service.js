@@ -17,7 +17,7 @@ export default angular.module('thingsboard.api.dashboard', [])
     .factory('dashboardService', DashboardService).name;
 
 /*@ngInject*/
-function DashboardService($http, $q) {
+function DashboardService($http, $q, $location, customerService) {
 
     var service = {
         assignDashboardToCustomer: assignDashboardToCustomer,
@@ -27,7 +27,9 @@ function DashboardService($http, $q) {
         getTenantDashboards: getTenantDashboards,
         deleteDashboard: deleteDashboard,
         saveDashboard: saveDashboard,
-        unassignDashboardFromCustomer: unassignDashboardFromCustomer
+        unassignDashboardFromCustomer: unassignDashboardFromCustomer,
+        makeDashboardPublic: makeDashboardPublic,
+        getPublicDashboardLink: getPublicDashboardLink
     }
 
     return service;
@@ -45,7 +47,15 @@ function DashboardService($http, $q) {
             url += '&textOffset=' + pageLink.textOffset;
         }
         $http.get(url, null).then(function success(response) {
-            deferred.resolve(response.data);
+            customerService.applyAssignedCustomersInfo(response.data.data).then(
+                function success(data) {
+                    response.data.data = data;
+                    deferred.resolve(response.data);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
         }, function fail() {
             deferred.reject();
         });
@@ -65,7 +75,15 @@ function DashboardService($http, $q) {
             url += '&textOffset=' + pageLink.textOffset;
         }
         $http.get(url, null).then(function success(response) {
-            deferred.resolve(response.data);
+            customerService.applyAssignedCustomerInfo(response.data.data, customerId).then(
+                function success(data) {
+                    response.data.data = data;
+                    deferred.resolve(response.data);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
         }, function fail() {
             deferred.reject();
         });
@@ -92,8 +110,8 @@ function DashboardService($http, $q) {
         var url = '/api/dashboard/' + dashboardId;
         $http.get(url, null).then(function success(response) {
             deferred.resolve(response.data);
-        }, function fail(response) {
-            deferred.reject(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }
@@ -103,8 +121,8 @@ function DashboardService($http, $q) {
         var url = '/api/dashboard';
         $http.post(url, dashboard).then(function success(response) {
             deferred.resolve(response.data);
-        }, function fail(response) {
-            deferred.reject(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }
@@ -114,8 +132,8 @@ function DashboardService($http, $q) {
         var url = '/api/dashboard/' + dashboardId;
         $http.delete(url).then(function success() {
             deferred.resolve();
-        }, function fail(response) {
-            deferred.reject(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }
@@ -123,10 +141,10 @@ function DashboardService($http, $q) {
     function assignDashboardToCustomer(customerId, dashboardId) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/dashboard/' + dashboardId;
-        $http.post(url, null).then(function success() {
-            deferred.resolve();
-        }, function fail(response) {
-            deferred.reject(response.data);
+        $http.post(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }
@@ -134,12 +152,33 @@ function DashboardService($http, $q) {
     function unassignDashboardFromCustomer(dashboardId) {
         var deferred = $q.defer();
         var url = '/api/customer/dashboard/' + dashboardId;
-        $http.delete(url).then(function success() {
-            deferred.resolve();
-        }, function fail(response) {
-            deferred.reject(response.data);
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
+    }
+
+    function makeDashboardPublic(dashboardId) {
+        var deferred = $q.defer();
+        var url = '/api/customer/public/dashboard/' + dashboardId;
+        $http.post(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getPublicDashboardLink(dashboard) {
+        var url = $location.protocol() + '://' + $location.host();
+        var port = $location.port();
+        if (port != 80 && port != 443) {
+            url += ":" + port;
+        }
+        url += "/dashboards/" + dashboard.id.id + "?publicId=" + dashboard.customerId.id;
+        return url;
     }
 
 }

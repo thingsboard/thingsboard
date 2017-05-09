@@ -48,6 +48,8 @@ export default function DashboardController(types, widgetService, userService,
 
     vm.isToolbarOpened = false;
 
+    vm.thingsboardVersion = THINGSBOARD_VERSION; //eslint-disable-line
+
     vm.currentDashboardId = $stateParams.dashboardId;
     if ($stateParams.customerId) {
         vm.currentCustomerId = $stateParams.customerId;
@@ -86,6 +88,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.exportDashboard = exportDashboard;
     vm.exportWidget = exportWidget;
     vm.importWidget = importWidget;
+    vm.isPublicUser = isPublicUser;
     vm.isTenantAdmin = isTenantAdmin;
     vm.isSystemAdmin = isSystemAdmin;
     vm.loadDashboard = loadDashboard;
@@ -104,6 +107,9 @@ export default function DashboardController(types, widgetService, userService,
     vm.onRevertWidgetEdit = onRevertWidgetEdit;
     vm.helpLinkIdForWidgetType = helpLinkIdForWidgetType;
     vm.displayTitle = displayTitle;
+    vm.displayExport = displayExport;
+    vm.displayDashboardTimewindow = displayDashboardTimewindow;
+    vm.displayDevicesSelect = displayDevicesSelect;
 
     vm.widgetsBundle;
 
@@ -271,6 +277,10 @@ export default function DashboardController(types, widgetService, userService,
         vm.dashboardContainer = dashboard;
         initHotKeys();
         vm.dashboardInitComplete = true;
+    }
+
+    function isPublicUser() {
+        return vm.user.isPublic === true;
     }
 
     function isTenantAdmin() {
@@ -560,6 +570,33 @@ export default function DashboardController(types, widgetService, userService,
         }
     }
 
+    function displayExport() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardExport)) {
+            return vm.dashboard.configuration.gridSettings.showDashboardExport;
+        } else {
+            return true;
+        }
+    }
+
+    function displayDashboardTimewindow() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardTimewindow)) {
+            return vm.dashboard.configuration.gridSettings.showDashboardTimewindow;
+        } else {
+            return true;
+        }
+    }
+
+    function displayDevicesSelect() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDevicesSelect)) {
+            return vm.dashboard.configuration.gridSettings.showDevicesSelect;
+        } else {
+            return true;
+        }
+    }
+
     function onRevertWidgetEdit(widgetForm) {
         if (widgetForm.$dirty) {
             widgetForm.$setPristine();
@@ -617,22 +654,8 @@ export default function DashboardController(types, widgetService, userService,
                     sizeY: widgetTypeInfo.sizeY,
                     config: config
                 };
-                $mdDialog.show({
-                    controller: 'AddWidgetController',
-                    controllerAs: 'vm',
-                    templateUrl: addWidgetTemplate,
-                    locals: {dashboard: vm.dashboard, aliasesInfo: vm.aliasesInfo, widget: newWidget, widgetInfo: widgetTypeInfo},
-                    parent: angular.element($document[0].body),
-                    fullscreen: true,
-                    skipHide: true,
-                    targetEvent: event,
-                    onComplete: function () {
-                        var w = angular.element($window);
-                        w.triggerHandler('resize');
-                    }
-                }).then(function (result) {
-                    var widget = result.widget;
-                    vm.aliasesInfo = result.aliasesInfo;
+
+                function addWidget(widget) {
                     var columns = 24;
                     if (vm.dashboard.configuration.gridSettings && vm.dashboard.configuration.gridSettings.columns) {
                         columns = vm.dashboard.configuration.gridSettings.columns;
@@ -643,9 +666,37 @@ export default function DashboardController(types, widgetService, userService,
                         widget.sizeY *= ratio;
                     }
                     vm.widgets.push(widget);
-                }, function (rejection) {
-                    vm.aliasesInfo = rejection.aliasesInfo;
-                });
+                }
+
+                if (widgetTypeInfo.useCustomDatasources) {
+                    addWidget(newWidget);
+                } else {
+                    $mdDialog.show({
+                        controller: 'AddWidgetController',
+                        controllerAs: 'vm',
+                        templateUrl: addWidgetTemplate,
+                        locals: {
+                            dashboard: vm.dashboard,
+                            aliasesInfo: vm.aliasesInfo,
+                            widget: newWidget,
+                            widgetInfo: widgetTypeInfo
+                        },
+                        parent: angular.element($document[0].body),
+                        fullscreen: true,
+                        skipHide: true,
+                        targetEvent: event,
+                        onComplete: function () {
+                            var w = angular.element($window);
+                            w.triggerHandler('resize');
+                        }
+                    }).then(function (result) {
+                        var widget = result.widget;
+                        vm.aliasesInfo = result.aliasesInfo;
+                        addWidget(widget);
+                    }, function (rejection) {
+                        vm.aliasesInfo = rejection.aliasesInfo;
+                    });
+                }
             }
         );
     }

@@ -26,6 +26,7 @@ import gridTemplate from './grid.tpl.html';
 
 export default angular.module('thingsboard.directives.grid', [thingsboardScopeElement, thingsboardDetailsSidenav])
     .directive('tbGrid', Grid)
+    .controller('ItemCardController', ItemCardController)
     .directive('tbGridCardContent', GridCardContent)
     .filter('range', RangeFilter)
     .name;
@@ -44,14 +45,52 @@ function RangeFilter() {
 }
 
 /*@ngInject*/
-function GridCardContent($compile) {
+function ItemCardController() {
+
+    var vm = this; //eslint-disable-line
+
+}
+
+/*@ngInject*/
+function GridCardContent($compile, $controller) {
     var linker = function(scope, element) {
+
+        var controllerInstance = null;
+
         scope.$watch('itemTemplate',
-            function(value) {
-                element.html(value);
-                $compile(element.contents())(scope);
+            function() {
+                initContent();
             }
         );
+        scope.$watch('itemController',
+            function() {
+                initContent();
+            }
+        );
+        scope.$watch('parentCtl',
+            function() {
+                controllerInstance.parentCtl = scope.parentCtl;
+            }
+        );
+        scope.$watch('item',
+            function() {
+                controllerInstance.item = scope.item;
+            }
+        );
+
+        function initContent() {
+            if (scope.itemTemplate && scope.itemController && !controllerInstance) {
+                element.html(scope.itemTemplate);
+                var locals = {};
+                angular.extend(locals, {$scope: scope, $element: element});
+                var controller = $controller(scope.itemController, locals, true, 'vm');
+                controller.instance = controller();
+                controllerInstance = controller.instance;
+                controllerInstance.item = scope.item;
+                controllerInstance.parentCtl = scope.parentCtl;
+                $compile(element.contents())(scope);
+            }
+        }
     };
 
     return {
@@ -61,6 +100,7 @@ function GridCardContent($compile) {
             parentCtl: "=parentCtl",
             gridCtl: "=gridCtl",
             itemTemplate: "=itemTemplate",
+            itemController: "=itemController",
             item: "=item"
         }
     };
@@ -171,26 +211,31 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
                     vm.items.pending = true;
                     promise.then(
                         function success(items) {
-                            vm.items.data = vm.items.data.concat(items.data);
-                            var startIndex = vm.items.data.length - items.data.length;
-                            var endIndex = vm.items.data.length;
-                            for (var i = startIndex; i < endIndex; i++) {
-                                var item = vm.items.data[i];
-                                item.index = i;
-                                var row = Math.floor(i / vm.columns);
-                                var itemRow = vm.items.rowData[row];
-                                if (!itemRow) {
-                                    itemRow = [];
-                                    vm.items.rowData.push(itemRow);
+                            if (vm.items.reloadPending) {
+                                vm.items.pending = false;
+                                reload();
+                            } else {
+                                vm.items.data = vm.items.data.concat(items.data);
+                                var startIndex = vm.items.data.length - items.data.length;
+                                var endIndex = vm.items.data.length;
+                                for (var i = startIndex; i < endIndex; i++) {
+                                    var item = vm.items.data[i];
+                                    item.index = i;
+                                    var row = Math.floor(i / vm.columns);
+                                    var itemRow = vm.items.rowData[row];
+                                    if (!itemRow) {
+                                        itemRow = [];
+                                        vm.items.rowData.push(itemRow);
+                                    }
+                                    itemRow.push(item);
                                 }
-                                itemRow.push(item);
+                                vm.items.nextPageLink = items.nextPageLink;
+                                vm.items.hasNext = items.hasNext;
+                                if (vm.items.hasNext) {
+                                    vm.items.nextPageLink.limit = pageSize;
+                                }
+                                vm.items.pending = false;
                             }
-                            vm.items.nextPageLink = items.nextPageLink;
-                            vm.items.hasNext = items.hasNext;
-                            if (vm.items.hasNext) {
-                                vm.items.nextPageLink.limit = pageSize;
-                            }
-                            vm.items.pending = false;
                         },
                         function fail() {
                             vm.items.hasNext = false;
@@ -291,6 +336,11 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         } else if (vm.config.itemCardTemplateUrl) {
             vm.itemCardTemplate = $templateCache.get(vm.config.itemCardTemplateUrl);
         }
+        if (vm.config.itemCardController) {
+            vm.itemCardController =  vm.config.itemCardController;
+        } else {
+            vm.itemCardController = 'ItemCardController';
+        }
 
         vm.parentCtl = vm.config.parentCtl || vm;
 
@@ -380,25 +430,34 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
     }
 
     $scope.$on('searchTextUpdated', function () {
-        vm.items = {
-            data: [],
-            rowData: [],
-            nextPageLink: {
-                limit: pageSize,
-                textSearch: $scope.searchConfig.searchText
-            },
-            selections: {},
-            selectedCount: 0,
-            hasNext: true,
-            pending: false
-        };
-        vm.detailsConfig.isDetailsOpen = false;
-        vm.itemRows.getItemAtIndex(pageSize);
+        reload();
     });
 
     vm.onGridInited(vm);
 
     vm.itemRows.getItemAtIndex(pageSize);
+
+    function reload() {
+        if (vm.items && vm.items.pending) {
+            vm.items.reloadPending = true;
+        } else {
+            vm.items = {
+                data: [],
+                rowData: [],
+                nextPageLink: {
+                    limit: pageSize,
+                    textSearch: $scope.searchConfig.searchText
+                },
+                selections: {},
+                selectedCount: 0,
+                hasNext: true,
+                pending: false
+            };
+            vm.detailsConfig.isDetailsOpen = false;
+            vm.items.reloadPending = false;
+            vm.itemRows.getItemAtIndex(pageSize);
+        }
+    }
 
     function refreshList() {
         $state.go($state.current, vm.refreshParamsFunc(), {reload: true});

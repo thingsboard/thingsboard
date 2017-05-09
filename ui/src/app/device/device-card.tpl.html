@@ -15,6 +15,5 @@
     limitations under the License.
 
 -->
-<div class="tb-small" ng-if="item &&
-            item.customerId.id != parentCtl.types.id.nullUid &&
-            parentCtl.devicesScope === 'tenant'" translate>device.assignedToCustomer</div>
+<div class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'device.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
+<div class="tb-small" ng-show="vm.isPublic()">{{'device.public' | translate}}</div>

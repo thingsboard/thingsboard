@@ -19,11 +19,62 @@ import tinycolor from 'tinycolor2';
 import TbGoogleMap from './google-map';
 import TbOpenStreetMap from './openstreet-map';
 
+function procesTooltipPattern(tbMap, pattern, datasources, dsIndex) {
+    var match = tbMap.varsRegex.exec(pattern);
+    var replaceInfo = {};
+    replaceInfo.variables = [];
+    while (match !== null) {
+        var variableInfo = {};
+        variableInfo.dataKeyIndex = -1;
+        var variable = match[0];
+        var label = match[1];
+        var valDec = 2;
+        var splitVals = label.split(':');
+        if (splitVals.length > 1) {
+            label = splitVals[0];
+            valDec = parseFloat(splitVals[1]);
+        }
+        variableInfo.variable = variable;
+        variableInfo.valDec = valDec;
+
+        if (label.startsWith('#')) {
+            var keyIndexStr = label.substring(1);
+            var n = Math.floor(Number(keyIndexStr));
+            if (String(n) === keyIndexStr && n >= 0) {
+                variableInfo.dataKeyIndex = n;
+            }
+        }
+        if (variableInfo.dataKeyIndex === -1) {
+            var offset = 0;
+            for (var i=0;i<datasources.length;i++) {
+                var datasource = datasources[i];
+                if (angular.isUndefined(dsIndex) || dsIndex == i) {
+                    for (var k = 0; k < datasource.dataKeys.length; k++) {
+                        var dataKey = datasource.dataKeys[k];
+                        if (dataKey.label === label) {
+                            variableInfo.dataKeyIndex = offset + k;
+                            break;
+                        }
+                    }
+                }
+                offset += datasource.dataKeys.length;
+            }
+        }
+        replaceInfo.variables.push(variableInfo);
+        match = tbMap.varsRegex.exec(pattern);
+    }
+    return replaceInfo;
+}
+
+
 export default class TbMapWidget {
-    constructor(mapProvider, drawRoutes, ctx) {
+    constructor(mapProvider, drawRoutes, ctx, useDynamicLocations, $element) {
 
         var tbMap = this;
         this.ctx = ctx;
+        if (!$element) {
+            $element = ctx.$container;
+        }
 
         this.drawRoutes = drawRoutes;
         this.markers = [];
@@ -35,6 +86,9 @@ export default class TbMapWidget {
 
         var settings = ctx.settings;
 
+        this.callbacks = {};
+        this.callbacks.onLocationClick = function(){};
+
         if (settings.defaultZoomLevel) {
             if (settings.defaultZoomLevel > 0 && settings.defaultZoomLevel < 21) {
                 this.defaultZoomLevel = Math.floor(settings.defaultZoomLevel);
@@ -43,52 +97,116 @@ export default class TbMapWidget {
 
         this.dontFitMapBounds = settings.fitMapBounds === false;
 
-        function procesTooltipPattern(pattern) {
-            var match = tbMap.varsRegex.exec(pattern);
-            var replaceInfo = {};
-            replaceInfo.variables = [];
-            while (match !== null) {
-                var variableInfo = {};
-                variableInfo.dataKeyIndex = -1;
-                var variable = match[0];
-                var label = match[1];
-                var valDec = 2;
-                var splitVals = label.split(':');
-                if (splitVals.length > 1) {
-                    label = splitVals[0];
-                    valDec = parseFloat(splitVals[1]);
-                }
-                variableInfo.variable = variable;
-                variableInfo.valDec = valDec;
-
-                if (label.startsWith('#')) {
-                    var keyIndexStr = label.substring(1);
-                    var n = Math.floor(Number(keyIndexStr));
-                    if (String(n) === keyIndexStr && n >= 0) {
-                        variableInfo.dataKeyIndex = n;
-                    }
-                }
-                if (variableInfo.dataKeyIndex === -1) {
-                    var offset = 0;
-                    for (var i=0;i<ctx.datasources.length;i++) {
-                        var datasource = ctx.datasources[i];
-                        for (var k = 0; k < datasource.dataKeys.length; k++) {
-                            var dataKey = datasource.dataKeys[k];
-                            if (dataKey.label === label) {
-                                variableInfo.dataKeyIndex = offset + k;
-                                break;
-                            }
-                        }
-                        offset += datasource.dataKeys.length;
-                    }
-                }
-                replaceInfo.variables.push(variableInfo);
-                match = tbMap.varsRegex.exec(pattern);
-            }
-            return replaceInfo;
+        if (!useDynamicLocations) {
+            this.subscription = this.ctx.defaultSubscription;
+            this.configureLocationsFromSettings();
         }
 
-        var configuredLocationsSettings = drawRoutes ? settings.routesSettings : settings.markersSettings;
+        var minZoomLevel = this.drawRoutes ? 18 : 15;
+
+        var initCallback = function() {
+              tbMap.update();
+              tbMap.resize();
+        };
+
+        if (mapProvider === 'google-map') {
+            this.map = new TbGoogleMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
+        } else if (mapProvider === 'openstreet-map') {
+            this.map = new TbOpenStreetMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
+        }
+
+    }
+
+    setCallbacks(callbacks) {
+        Object.assign(this.callbacks, callbacks);
+    }
+
+    clearLocations() {
+        if (this.locations) {
+            var tbMap = this;
+            this.locations.forEach(function(location) {
+                if (location.marker) {
+                    tbMap.map.removeMarker(location.marker);
+                }
+                if (location.polyline) {
+                    tbMap.map.removePolyline(location.polyline);
+                }
+            });
+            this.locations = null;
+            this.markers = [];
+            if (this.drawRoutes) {
+                this.polylines = [];
+            }
+        }
+    }
+
+    configureLocationsFromSubscription(subscription, subscriptionLocationSettings) {
+        this.subscription = subscription;
+        this.clearLocations();
+        this.locationsSettings = [];
+        var latKeyName = subscriptionLocationSettings.latKeyName;
+        var lngKeyName = subscriptionLocationSettings.lngKeyName;
+        var index = 0;
+        for (var i=0;i<subscription.datasources.length;i++) {
+            var datasource = subscription.datasources[i];
+            var dataKeys = datasource.dataKeys;
+            var latKeyIndex = -1;
+            var lngKeyIndex = -1;
+            var localLatKeyName = latKeyName;
+            var localLngKeyName = lngKeyName;
+            for (var k=0;k<dataKeys.length;k++) {
+                var dataKey = dataKeys[k];
+                if (dataKey.name === latKeyName) {
+                    latKeyIndex = index;
+                    localLatKeyName = localLatKeyName + index;
+                    dataKey.locationAttrName = localLatKeyName;
+                } else if (dataKey.name === lngKeyName) {
+                    lngKeyIndex = index;
+                    localLngKeyName = localLngKeyName + index;
+                    dataKey.locationAttrName = localLngKeyName;
+                }
+                if (latKeyIndex > -1 && lngKeyIndex > -1) {
+                    var locationsSettings = {
+                        latKeyName: localLatKeyName,
+                        lngKeyName: localLngKeyName,
+                        showLabel: subscriptionLocationSettings.showLabel !== false,
+                        displayTooltip: subscriptionLocationSettings.displayTooltip !== false,
+                        label: datasource.name,
+                        labelColor: subscriptionLocationSettings.labelColor || this.ctx.widgetConfig.color || '#000000',
+                        color: "#FE7569",
+                        useColorFunction: false,
+                        colorFunction: null,
+                        markerImage: null,
+                        markerImageSize: 34,
+                        useMarkerImage: false,
+                        useMarkerImageFunction: false,
+                        markerImageFunction: null,
+                        markerImages: [],
+                        tooltipPattern: subscriptionLocationSettings.tooltipPattern || "<b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}"
+                    };
+
+                    locationsSettings.tooltipReplaceInfo = procesTooltipPattern(this, locationsSettings.tooltipPattern, this.subscription.datasources, i);
+
+                    locationsSettings.useColorFunction = subscriptionLocationSettings.useColorFunction === true;
+                    if (angular.isDefined(subscriptionLocationSettings.colorFunction) && subscriptionLocationSettings.colorFunction.length > 0) {
+                        try {
+                            locationsSettings.colorFunction = new Function('data, dsData, dsIndex', subscriptionLocationSettings.colorFunction);
+                        } catch (e) {
+                            locationsSettings.colorFunction = null;
+                        }
+                    }
+
+                    this.locationsSettings.push(locationsSettings);
+                    latKeyIndex = -1;
+                    lngKeyIndex = -1;
+                }
+                index++;
+            }
+        }
+    }
+
+    configureLocationsFromSettings() {
+        var configuredLocationsSettings = this.drawRoutes ? this.ctx.settings.routesSettings : this.ctx.settings.markersSettings;
         if (!configuredLocationsSettings) {
             configuredLocationsSettings = [];
         }
@@ -98,8 +216,9 @@ export default class TbMapWidget {
                 latKeyName: "lat",
                 lngKeyName: "lng",
                 showLabel: true,
+                displayTooltip: true,
                 label: "",
-                labelColor: ctx.widgetConfig.color || '#000000',
+                labelColor: this.ctx.widgetConfig.color || '#000000',
                 color: "#FE7569",
                 useColorFunction: false,
                 colorFunction: null,
@@ -112,7 +231,7 @@ export default class TbMapWidget {
                 tooltipPattern: "<b>Latitude:</b> ${lat:7}<br/><b>Longitude:</b> ${lng:7}"
             };
 
-            if (drawRoutes) {
+            if (this.drawRoutes) {
                 this.locationsSettings[i].strokeWeight = 2;
                 this.locationsSettings[i].strokeOpacity = 1.0;
             }
@@ -123,7 +242,7 @@ export default class TbMapWidget {
 
                 this.locationsSettings[i].tooltipPattern = configuredLocationsSettings[i].tooltipPattern || "<b>Latitude:</b> ${"+this.locationsSettings[i].latKeyName+":7}<br/><b>Longitude:</b> ${"+this.locationsSettings[i].lngKeyName+":7}";
 
-                this.locationsSettings[i].tooltipReplaceInfo = procesTooltipPattern(this.locationsSettings[i].tooltipPattern);
+                this.locationsSettings[i].tooltipReplaceInfo = procesTooltipPattern(this, this.locationsSettings[i].tooltipPattern, this.subscription.datasources);
 
                 this.locationsSettings[i].showLabel = configuredLocationsSettings[i].showLabel !== false;
                 this.locationsSettings[i].label = configuredLocationsSettings[i].label || this.locationsSettings[i].label;
@@ -132,7 +251,7 @@ export default class TbMapWidget {
                 this.locationsSettings[i].useColorFunction = configuredLocationsSettings[i].useColorFunction === true;
                 if (angular.isDefined(configuredLocationsSettings[i].colorFunction) && configuredLocationsSettings[i].colorFunction.length > 0) {
                     try {
-                        this.locationsSettings[i].colorFunction = new Function('data', configuredLocationsSettings[i].colorFunction);
+                        this.locationsSettings[i].colorFunction = new Function('data, dsData, dsIndex', configuredLocationsSettings[i].colorFunction);
                     } catch (e) {
                         this.locationsSettings[i].colorFunction = null;
                     }
@@ -141,7 +260,7 @@ export default class TbMapWidget {
                 this.locationsSettings[i].useMarkerImageFunction = configuredLocationsSettings[i].useMarkerImageFunction === true;
                 if (angular.isDefined(configuredLocationsSettings[i].markerImageFunction) && configuredLocationsSettings[i].markerImageFunction.length > 0) {
                     try {
-                        this.locationsSettings[i].markerImageFunction = new Function('data, images', configuredLocationsSettings[i].markerImageFunction);
+                        this.locationsSettings[i].markerImageFunction = new Function('data, images, dsData, dsIndex', configuredLocationsSettings[i].markerImageFunction);
                     } catch (e) {
                         this.locationsSettings[i].markerImageFunction = null;
                     }
@@ -157,26 +276,12 @@ export default class TbMapWidget {
                     this.locationsSettings[i].markerImageSize = configuredLocationsSettings[i].markerImageSize || 34;
                 }
 
-                if (drawRoutes) {
+                if (this.drawRoutes) {
                     this.locationsSettings[i].strokeWeight = configuredLocationsSettings[i].strokeWeight || this.locationsSettings[i].strokeWeight;
                     this.locationsSettings[i].strokeOpacity = angular.isDefined(configuredLocationsSettings[i].strokeOpacity) ? configuredLocationsSettings[i].strokeOpacity : this.locationsSettings[i].strokeOpacity;
                 }
             }
         }
-
-        var minZoomLevel = this.drawRoutes ? 18 : 15;
-
-        var initCallback = function() {
-              tbMap.update();
-              tbMap.resize();
-        };
-
-        if (mapProvider === 'google-map') {
-            this.map = new TbGoogleMap(ctx.$container, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
-        } else if (mapProvider === 'openstreet-map') {
-            this.map = new TbOpenStreetMap(ctx.$container, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
-        }
-
     }
 
     update() {
@@ -231,22 +336,22 @@ export default class TbMapWidget {
             return true;
         }
 
-        function calculateLocationColor(settings, dataMap) {
-            if (settings.useColorFunction && settings.colorFunction) {
+        function calculateLocationColor(location, dataMap) {
+            if (location.settings.useColorFunction && location.settings.colorFunction) {
                 var color = '#FE7569';
                 try {
-                    color = settings.colorFunction(dataMap);
+                    color = location.settings.colorFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
                 } catch (e) {
                     color = '#FE7569';
                 }
                 return tinycolor(color).toHexString();
             } else {
-                return settings.color;
+                return location.settings.color;
             }
         }
 
         function updateLocationColor(location, dataMap) {
-            var color = calculateLocationColor(location.settings, dataMap);
+            var color = calculateLocationColor(location, dataMap);
             if (!location.settings.calculatedColor || location.settings.calculatedColor !== color) {
                 if (!location.settings.useMarkerImage && !location.settings.useMarkerImageFunction) {
                     tbMap.map.updateMarkerColor(location.marker, color);
@@ -258,11 +363,11 @@ export default class TbMapWidget {
             }
         }
 
-        function calculateLocationMarkerImage(settings, dataMap) {
-            if (settings.useMarkerImageFunction && settings.markerImageFunction) {
+        function calculateLocationMarkerImage(location, dataMap) {
+            if (location.settings.useMarkerImageFunction && location.settings.markerImageFunction) {
                 var image = null;
                 try {
-                    image = settings.markerImageFunction(dataMap, settings.markerImages);
+                    image = location.settings.markerImageFunction(dataMap.dataMap, location.settings.markerImages, dataMap.dsDataMap, location.dsIndex);
                 } catch (e) {
                     image = null;
                 }
@@ -273,7 +378,7 @@ export default class TbMapWidget {
         }
 
         function updateLocationMarkerImage(location, dataMap) {
-            var image = calculateLocationMarkerImage(location.settings, dataMap);
+            var image = calculateLocationMarkerImage(location, dataMap);
             if (image != null && (!location.settings.calculatedImage || !angular.equals(location.settings.calculatedImage, image))) {
                 tbMap.map.updateMarkerImage(location.marker, location.settings, image.url, image.size);
                 location.settings.calculatedImage = image;
@@ -306,7 +411,11 @@ export default class TbMapWidget {
                         if (latLngs.length > 0) {
                             var markerLocation = latLngs[latLngs.length-1];
                             if (!location.marker) {
-                                location.marker = tbMap.map.createMarker(markerLocation, location.settings);
+                                location.marker = tbMap.map.createMarker(markerLocation, location.settings,
+                                    function() {
+                                        tbMap.callbacks.onLocationClick(location);
+                                    }
+                                );
                             } else {
                                 tbMap.map.setMarkerPosition(location.marker, markerLocation);
                             }
@@ -328,7 +437,9 @@ export default class TbMapWidget {
                         lng = lngData[lngData.length-1][1];
                         latLng = tbMap.map.createLatLng(lat, lng);
                         if (!location.marker) {
-                            location.marker = tbMap.map.createMarker(latLng, location.settings);
+                            location.marker = tbMap.map.createMarker(latLng, location.settings, function() {
+                                tbMap.callbacks.onLocationClick(location);
+                            });
                             tbMap.markers.push(location.marker);
                             locationChanged = true;
                         } else {
@@ -345,8 +456,12 @@ export default class TbMapWidget {
             return locationChanged;
         }
 
-        function toLabelValueMap(data) {
+        function toLabelValueMap(data, datasources) {
             var dataMap = {};
+            var dsDataMap = [];
+            for (var d=0;d<datasources.length;d++) {
+                dsDataMap[d] = {};
+            }
             for (var i = 0; i < data.length; i++) {
                 var dataKey = data[i].dataKey;
                 var label = dataKey.label;
@@ -356,30 +471,44 @@ export default class TbMapWidget {
                     val = keyData[keyData.length-1][1];
                 }
                 dataMap[label] = val;
+                var dsIndex = datasources.indexOf(data[i].datasource);
+                dsDataMap[dsIndex][label] = val;
             }
-            return dataMap;
+            return {
+                dataMap: dataMap,
+                dsDataMap: dsDataMap
+            };
         }
 
-        function loadLocations(data) {
+        function loadLocations(data, datasources) {
             var bounds = tbMap.map.createBounds();
             tbMap.locations = [];
-            var dataMap = toLabelValueMap(data);
+            var dataMap = toLabelValueMap(data, datasources);
             for (var l=0; l < tbMap.locationsSettings.length; l++) {
                 var locationSettings = tbMap.locationsSettings[l];
                 var latIndex = -1;
                 var lngIndex = -1;
                 for (var i = 0; i < data.length; i++) {
                     var dataKey = data[i].dataKey;
-                    if (dataKey.label === locationSettings.latKeyName) {
+                    var nameToCheck;
+                    if (dataKey.locationAttrName) {
+                        nameToCheck = dataKey.locationAttrName;
+                    } else {
+                        nameToCheck = dataKey.label;
+                    }
+                    if (nameToCheck === locationSettings.latKeyName) {
                         latIndex = i;
-                    } else if (dataKey.label === locationSettings.lngKeyName) {
+                    } else if (nameToCheck === locationSettings.lngKeyName) {
                         lngIndex = i;
                     }
                 }
                 if (latIndex > -1 && lngIndex > -1) {
+                    var ds = data[latIndex].datasource;
+                    var dsIndex = datasources.indexOf(ds);
                     var location = {
                         latIndex: latIndex,
                         lngIndex: lngIndex,
+                        dsIndex: dsIndex,
                         settings: locationSettings
                     };
                     tbMap.locations.push(location);
@@ -394,10 +523,10 @@ export default class TbMapWidget {
             tbMap.map.fitBounds(bounds);
         }
 
-        function updateLocations(data) {
+        function updateLocations(data, datasources) {
             var locationsChanged = false;
             var bounds = tbMap.map.createBounds();
-            var dataMap = toLabelValueMap(data);
+            var dataMap = toLabelValueMap(data, datasources);
             for (var p = 0; p < tbMap.locations.length; p++) {
                 var location = tbMap.locations[p];
                 locationsChanged |= updateLocation(location, data, dataMap);
@@ -412,36 +541,36 @@ export default class TbMapWidget {
             }
         }
 
-        if (this.map && this.map.inited()) {
-            if (this.ctx.data) {
+        if (this.map && this.map.inited() && this.subscription) {
+            if (this.subscription.data) {
                 if (!this.locations) {
-                    loadLocations(this.ctx.data);
+                    loadLocations(this.subscription.data, this.subscription.datasources);
                 } else {
-                    updateLocations(this.ctx.data);
+                    updateLocations(this.subscription.data, this.subscription.datasources);
                 }
-            }
-            var tooltips = this.map.getTooltips();
-            for (var t=0; t < tooltips.length; t++) {
-                var tooltip = tooltips[t];
-                var text = tooltip.pattern;
-                var replaceInfo = tooltip.replaceInfo;
-                for (var v = 0; v < replaceInfo.variables.length; v++) {
-                    var variableInfo = replaceInfo.variables[v];
-                    var txtVal = '';
-                    if (variableInfo.dataKeyIndex > -1) {
-                        var varData = this.ctx.data[variableInfo.dataKeyIndex].data;
-                        if (varData.length > 0) {
-                            var val = varData[varData.length - 1][1];
-                            if (isNumber(val)) {
-                                txtVal = padValue(val, variableInfo.valDec, 0);
-                            } else {
-                                txtVal = val;
+                var tooltips = this.map.getTooltips();
+                for (var t=0; t < tooltips.length; t++) {
+                    var tooltip = tooltips[t];
+                    var text = tooltip.pattern;
+                    var replaceInfo = tooltip.replaceInfo;
+                    for (var v = 0; v < replaceInfo.variables.length; v++) {
+                        var variableInfo = replaceInfo.variables[v];
+                        var txtVal = '';
+                        if (variableInfo.dataKeyIndex > -1 && this.subscription.data[variableInfo.dataKeyIndex]) {
+                            var varData = this.subscription.data[variableInfo.dataKeyIndex].data;
+                            if (varData.length > 0) {
+                                var val = varData[varData.length - 1][1];
+                                if (isNumber(val)) {
+                                    txtVal = padValue(val, variableInfo.valDec, 0);
+                                } else {
+                                    txtVal = val;
+                                }
                             }
                         }
+                        text = text.split(variableInfo.variable).join(txtVal);
                     }
-                    text = text.split(variableInfo.variable).join(txtVal);
+                    tooltip.popup.setContent(text);
                 }
-                tooltip.popup.setContent(text);
             }
         }
     }
@@ -449,7 +578,7 @@ export default class TbMapWidget {
     resize() {
         if (this.map && this.map.inited()) {
             this.map.invalidateSize();
-            if (this.locations && this.locations.size > 0) {
+            if (this.locations && this.locations.length > 0) {
                 var bounds = this.map.createBounds();
                 for (var m = 0; m < this.markers.length; m++) {
                     this.map.extendBoundsWithMarker(bounds, this.markers[m]);

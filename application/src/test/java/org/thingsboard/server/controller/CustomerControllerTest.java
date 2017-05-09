@@ -288,7 +288,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
         for (int i=0;i<143;i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
+            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
             String title = title1+suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             customer.setTitle(title);
@@ -299,7 +299,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
         for (int i=0;i<175;i++) {
             Customer customer = new Customer();
             customer.setTenantId(tenantId);
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
+            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
             String title = title2+suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             customer.setTitle(title);

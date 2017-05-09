@@ -10,16 +10,16 @@ Thingsboard is an open-source IoT platform for data collection, processing, visu
 
 Thingsboard documentation is hosted on [thingsboard.io](https://thingsboard.io/docs).
 
-## Sample Dashboards
+## IoT use cases
 
-[**Smart energy monitoring**](https://demo.thingsboard.io/demo?dashboardId=e8e409c0-f2b5-11e6-a6ee-bb0136cc33d0&source=github)
-[![Smart energy monitoring demo](https://cloud.githubusercontent.com/assets/8308069/23790111/62c8a61e-0586-11e7-84eb-51febc54ec09.png "Smart energy monitoring demo")](https://demo.thingsboard.io/demo?dashboardId=e8e409c0-f2b5-11e6-a6ee-bb0136cc33d0&source=github)
+[**Smart energy**](https://thingsboard.io/smart-energy/)
+[![Smart energy monitoring demo](https://cloud.githubusercontent.com/assets/8308069/24495682/aebd45d0-153e-11e7-8de4-7360ed5b41ae.gif "Smart energy")](https://thingsboard.io/smart-energy/)
 
-[**Silos monitoring**](https://demo.thingsboard.io/demo?dashboardId=1f9828d0-058e-11e7-87f7-bb0136cc33d0&source=github)
-[![Silos monitoring demo](https://cloud.githubusercontent.com/assets/8308069/23996135/00214844-0a55-11e7-9623-d1e3be0702ca.png "Silos monitoring demo")](https://demo.thingsboard.io/demo?dashboardId=1f9828d0-058e-11e7-87f7-bb0136cc33d0&source=github)
+[**Smart farming**](https://thingsboard.io/smart-farming/)
+[![Smart farming](https://cloud.githubusercontent.com/assets/8308069/24496824/10dc1144-1542-11e7-8aa1-5d3a281d5a1a.gif "Smart farming")](https://thingsboard.io/smart-farming/)
 
-[**Smart bus tracking**](https://demo.thingsboard.io/demo?dashboardId=3d0bf910-ee09-11e6-b619-bb0136cc33d0&source=github)
-[![Smart bus tracking demo](https://cloud.githubusercontent.com/assets/8308069/23790110/62c6ecde-0586-11e7-8249-19eafd5bf8cc.png "Smart bus tracking demo")](https://demo.thingsboard.io/demo?dashboardId=3d0bf910-ee09-11e6-b619-bb0136cc33d0&source=github)
+[**Fleet tracking**](https://thingsboard.io/fleet-tracking/)
+[![Fleet tracking](https://cloud.githubusercontent.com/assets/8308069/24497169/3a1a61e0-1543-11e7-8d55-3c8a13f35634.gif "Fleet tracking")](https://thingsboard.io/fleet-tracking/)
 
 ## Getting Started
 

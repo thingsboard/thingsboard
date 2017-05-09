@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +40,28 @@ public class CustomerController extends BaseController {
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             return checkCustomerId(customerId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/customer/{customerId}/shortInfo", method = RequestMethod.GET)
+    @ResponseBody
+    public JsonNode getShortCustomerInfoById(@PathVariable("customerId") String strCustomerId) throws ThingsboardException {
+        checkParameter("customerId", strCustomerId);
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId);
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode infoObject = objectMapper.createObjectNode();
+            infoObject.put("title", customer.getTitle());
+            boolean isPublic = false;
+            if (customer.getAdditionalInfo() != null && customer.getAdditionalInfo().has("isPublic")) {
+                isPublic = customer.getAdditionalInfo().get("isPublic").asBoolean();
+            }
+            infoObject.put("isPublic", isPublic);
+            return infoObject;
         } catch (Exception e) {
             throw handleException(e);
         }

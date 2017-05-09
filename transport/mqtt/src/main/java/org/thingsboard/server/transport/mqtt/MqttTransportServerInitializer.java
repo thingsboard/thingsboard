@@ -40,6 +40,8 @@ import java.security.cert.CertificateException;
  */
 public class MqttTransportServerInitializer extends ChannelInitializer<SocketChannel> {
 
+    private static final int MAX_PAYLOAD_SIZE = 64 * 1024 * 1024;
+
     private final SessionMsgProcessor processor;
     private final DeviceService deviceService;
     private final DeviceAuthService authService;
@@ -63,7 +65,7 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
             sslHandler = sslHandlerProvider.getSslHandler();
             pipeline.addLast(sslHandler);
         }
-        pipeline.addLast("decoder", new MqttDecoder());
+        pipeline.addLast("decoder", new MqttDecoder(MAX_PAYLOAD_SIZE));
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
         MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, adaptor, sslHandler);

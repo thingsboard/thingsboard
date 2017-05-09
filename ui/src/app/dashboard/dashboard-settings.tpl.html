@@ -48,6 +48,17 @@
                              md-color-history="false"
                         ></div>
                     </div>
+                    <div layout="row" layout-align="start center">
+                        <md-checkbox flex aria-label="{{ 'dashboard.display-device-selection' | translate }}"
+                                     ng-model="vm.gridSettings.showDevicesSelect">{{ 'dashboard.display-device-selection' | translate }}
+                        </md-checkbox>
+                        <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-timewindow' | translate }}"
+                                     ng-model="vm.gridSettings.showDashboardTimewindow">{{ 'dashboard.display-dashboard-timewindow' | translate }}
+                        </md-checkbox>
+                        <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-export' | translate }}"
+                                     ng-model="vm.gridSettings.showDashboardExport">{{ 'dashboard.display-dashboard-export' | translate }}
+                        </md-checkbox>
+                    </div>
                     <md-input-container class="md-block">
                         <label translate>dashboard.columns-count</label>
                         <input required type="number" step="any" name="columns" ng-model="vm.gridSettings.columns" min="10"

@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -112,6 +113,21 @@ public class DeviceController extends BaseController {
                 throw new IncorrectParameterException("Device isn't assigned to any customer!");
             }
             return checkNotNull(deviceService.unassignDeviceFromCustomer(deviceId));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/public/device/{deviceId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Device assignDeviceToPublicCustomer(@PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
+        checkParameter("deviceId", strDeviceId);
+        try {
+            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+            Device device = checkDeviceId(deviceId);
+            Customer publicCustomer = customerService.findOrCreatePublicCustomer(device.getTenantId());
+            return checkNotNull(deviceService.assignDeviceToCustomer(deviceId, publicCustomer.getId()));
         } catch (Exception e) {
             throw handleException(e);
         }

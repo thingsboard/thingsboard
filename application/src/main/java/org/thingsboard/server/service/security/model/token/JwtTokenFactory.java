@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.JwtSettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.UserPrincipal;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +44,7 @@ public class JwtTokenFactory {
     private static final String FIRST_NAME = "firstName";
     private static final String LAST_NAME = "lastName";
     private static final String ENABLED = "enabled";
+    private static final String IS_PUBLIC = "isPublic";
     private static final String TENANT_ID = "tenantId";
     private static final String CUSTOMER_ID = "customerId";
 
@@ -63,12 +65,15 @@ public class JwtTokenFactory {
         if (securityUser.getAuthority() == null)
             throw new IllegalArgumentException("User doesn't have any privileges");
 
-        Claims claims = Jwts.claims().setSubject(securityUser.getEmail());
+        UserPrincipal principal = securityUser.getUserPrincipal();
+        String subject = principal.getValue();
+        Claims claims = Jwts.claims().setSubject(subject);
         claims.put(SCOPES, securityUser.getAuthorities().stream().map(s -> s.getAuthority()).collect(Collectors.toList()));
         claims.put(USER_ID, securityUser.getId().getId().toString());
         claims.put(FIRST_NAME, securityUser.getFirstName());
         claims.put(LAST_NAME, securityUser.getLastName());
         claims.put(ENABLED, securityUser.isEnabled());
+        claims.put(IS_PUBLIC, principal.getType() == UserPrincipal.Type.PUBLIC_ID);
         if (securityUser.getTenantId() != null) {
             claims.put(TENANT_ID, securityUser.getTenantId().getId().toString());
         }
@@ -104,6 +109,9 @@ public class JwtTokenFactory {
         securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
         securityUser.setLastName(claims.get(LAST_NAME, String.class));
         securityUser.setEnabled(claims.get(ENABLED, Boolean.class));
+        boolean isPublic = claims.get(IS_PUBLIC, Boolean.class);
+        UserPrincipal principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
+        securityUser.setUserPrincipal(principal);
         String tenantId = claims.get(TENANT_ID, String.class);
         if (tenantId != null) {
             securityUser.setTenantId(new TenantId(UUID.fromString(tenantId)));
@@ -123,9 +131,11 @@ public class JwtTokenFactory {
 
         DateTime currentTime = new DateTime();
 
-        Claims claims = Jwts.claims().setSubject(securityUser.getEmail());
+        UserPrincipal principal = securityUser.getUserPrincipal();
+        Claims claims = Jwts.claims().setSubject(principal.getValue());
         claims.put(SCOPES, Arrays.asList(Authority.REFRESH_TOKEN.name()));
         claims.put(USER_ID, securityUser.getId().getId().toString());
+        claims.put(IS_PUBLIC, principal.getType() == UserPrincipal.Type.PUBLIC_ID);
 
         String token = Jwts.builder()
                 .setClaims(claims)
@@ -150,8 +160,10 @@ public class JwtTokenFactory {
         if (!scopes.get(0).equals(Authority.REFRESH_TOKEN.name())) {
             throw new IllegalArgumentException("Invalid Refresh Token scope");
         }
+        boolean isPublic = claims.get(IS_PUBLIC, Boolean.class);
+        UserPrincipal principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
         SecurityUser securityUser = new SecurityUser(new UserId(UUID.fromString(claims.get(USER_ID, String.class))));
-        securityUser.setEmail(subject);
+        securityUser.setUserPrincipal(principal);
         return securityUser;
     }
 
