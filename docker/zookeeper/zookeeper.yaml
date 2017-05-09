@@ -20,7 +20,7 @@ metadata:
   name: zk-config
 data:
   ensemble: "zk-0;zk-1;zk-2"
-  jvm.heap: "1G"
+  jvm.heap: "500m"
   tick: "2000"
   init: "10"
   sync: "5"
@@ -65,11 +65,11 @@ spec:
       containers:
       - name: k8szk
         imagePullPolicy: Always
-        image: gcr.io/google_samples/k8szk:v1
+        image: thingsboard/k8szk:k8test
         resources:
           requests:
-            memory: "0.5Gi"
-            cpu: "0.2"
+            memory: "500Mi"
+            cpu: "250m"
         ports:
         - containerPort: 2181
           name: client
@@ -83,6 +83,8 @@ spec:
             configMapKeyRef:
               name: zk-config
               key: ensemble
+        - name : ZK_REPLICAS
+          value: "3"
         - name : ZK_HEAP_SIZE
           valueFrom:
             configMapKeyRef:

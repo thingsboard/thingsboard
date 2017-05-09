@@ -1,10 +1,11 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: tb-db-schema-deployment
+  name: tb-db-schema
 spec:
   containers:
-  - name: tb-db-schema-k8
+  - name: tb-db-schema
+    imagePullPolicy: Always
     image: thingsboard/thingsboard-db-schema:k8test
     env:
     - name: SKIP_SCHEMA_CREATION

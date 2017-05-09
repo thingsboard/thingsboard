@@ -2,42 +2,52 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: thingsboard-external
+  name: tb-external-ip
   labels:
-    app: thingsboard-external
+    app: tb-external-ip
 spec:
   ports:
   - port: 8080
-    name: ui
+    name: ui-port
   - port: 1883
-    name: mqtt
+    name: mqtt-port
   - port: 5683
-    name: coap
+    name: coap-port
   - port: 9001
-    name: rpc
+    name: rpc-port
   selector:
-    app: thingsboard
+    app: tb
   type: LoadBalancer
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: thingsboard-headless
+  name: tb-headless
   labels:
-    app: thingsboard-headless
+    app: tb-headless
 spec:
   ports:
   - port: 8080
-    name: ui
+    name: ui-port
   - port: 1883
-    name: mqtt
+    name: mqtt-port
   - port: 5683
-    name: coap
+    name: coap-port
   - port: 9001
-    name: rpc
+    name: rpc-port
   selector:
-    app: thingsboard
+    app: tb
   clusterIP: None
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: tb-budget
+spec:
+  selector:
+    matchLabels:
+      app: tb
+  minAvailable: 2
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -53,12 +63,12 @@ kind: StatefulSet
 metadata:
   name: tb
 spec:
-  serviceName: "thingsboard-headless"
+  serviceName: "tb-headless"
   replicas: 2
   template:
     metadata:
       labels:
-        app: thingsboard
+        app: tb
     spec:
       terminationGracePeriodSeconds: 10
       affinity:
@@ -69,20 +79,21 @@ spec:
                   - key: "app"
                     operator: In
                     values:
-                    - thingsboard-headless
+                    - tb-headless
               topologyKey: "kubernetes.io/hostname"
       containers:
-      - name: thingsboard
+      - name: tb
+        imagePullPolicy: Always
         image: thingsboard/application:k8test
         ports:
         - containerPort: 8080
-          name: ui
+          name: ui-port
         - containerPort: 1883
-          name: mqtt
+          name: mqtt-port
         - containerPort: 5683
-          name: coap
+          name: coap-port
         - containerPort: 9001
-          name: rpc
+          name: rpc-port
         env:
         - name: ZOOKEEPER_ENABLED
           valueFrom:
@@ -103,3 +114,15 @@ spec:
         - sh
         - -c
         - ./run_thingsboard.sh
+#        readinessProbe:
+#          httpGet:
+#            path: /login
+#            port: ui-port
+#          initialDelaySeconds: 30
+#          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /login
+            port: ui-port
+          initialDelaySeconds: 30
+          periodSeconds: 10
