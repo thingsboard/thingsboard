@@ -1,6 +1,6 @@
 #!/bin/bash
-#
-# Copyright © 2016-2017 The Thingsboard Authors
+
+# Copyright 2016 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,20 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-
-cp ../../dao/src/main/resources/schema.cql schema.cql
-cp ../../dao/src/main/resources/demo-data.cql demo-data.cql
-cp ../../dao/src/main/resources/system-data.cql system-data.cql
-
-docker build -t thingsboard/thingsboard-db-schema:k8test .
-
-docker login
-
-docker push thingsboard/thingsboard-db-schema:k8test
-
-# cleanup
-rm schema.cql
-rm demo-data.cql
-rm system-data.cql
+if [[ $(nodetool status | grep $POD_IP) == *"UN"* ]]; then
+  if [[ $DEBUG ]]; then
+    echo "UN";
+  fi
+  exit 0;
+else
+  if [[ $DEBUG ]]; then
+    echo "Not Up";
+  fi
+  exit 1;
+fi

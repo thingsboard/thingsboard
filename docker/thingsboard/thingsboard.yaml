@@ -8,13 +8,11 @@ metadata:
 spec:
   ports:
   - port: 8080
-    name: ui-port
+    name: ui
   - port: 1883
-    name: mqtt-port
+    name: mqtt
   - port: 5683
-    name: coap-port
-  - port: 9001
-    name: rpc-port
+    name: coap
   selector:
     app: tb
   type: LoadBalancer
@@ -27,14 +25,8 @@ metadata:
     app: tb-headless
 spec:
   ports:
-  - port: 8080
-    name: ui-port
-  - port: 1883
-    name: mqtt-port
-  - port: 5683
-    name: coap-port
   - port: 9001
-    name: rpc-port
+    name: rpc
   selector:
     app: tb
   clusterIP: None
@@ -56,7 +48,7 @@ metadata:
 data:
   zookeeper.enabled: "true"
   zookeeper.url: "zk-headless"
-  cassandra.url: "cassandra:9042"
+  cassandra.url: "cassandra-headless:9042"
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -84,16 +76,23 @@ spec:
       containers:
       - name: tb
         imagePullPolicy: Always
-        image: thingsboard/application:k8test
+        image: thingsboard/application:k8stest
         ports:
         - containerPort: 8080
-          name: ui-port
+          name: ui
         - containerPort: 1883
-          name: mqtt-port
+          name: mqtt
         - containerPort: 5683
-          name: coap-port
+          name: coap
         - containerPort: 9001
-          name: rpc-port
+          name: rpc
+        resources:
+          limits:
+            cpu: "250m"
+            memory: "500Mi"
+          requests:
+           cpu: "250m"
+           memory: "500Mi"
         env:
         - name: ZOOKEEPER_ENABLED
           valueFrom:

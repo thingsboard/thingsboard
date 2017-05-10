@@ -20,6 +20,7 @@ metadata:
   name: zk-config
 data:
   ensemble: "zk-0;zk-1;zk-2"
+  replicas: "3"
   jvm.heap: "500m"
   tick: "2000"
   init: "10"
@@ -27,6 +28,9 @@ data:
   client.cnxns: "60"
   snap.retain: "3"
   purge.interval: "1"
+  client.port: "2181"
+  server.port: "2888"
+  election.port: "3888"
 ---
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
@@ -63,9 +67,9 @@ spec:
                     - zk-headless
               topologyKey: "kubernetes.io/hostname"
       containers:
-      - name: k8szk
+      - name: zk
         imagePullPolicy: Always
-        image: thingsboard/k8szk:k8test
+        image: thingsboard/zk:k8stest
         resources:
           requests:
             memory: "500Mi"
@@ -84,48 +88,60 @@ spec:
               name: zk-config
               key: ensemble
         - name : ZK_REPLICAS
-          value: "3"
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: replicas
         - name : ZK_HEAP_SIZE
           valueFrom:
             configMapKeyRef:
-                name: zk-config
-                key: jvm.heap
+              name: zk-config
+              key: jvm.heap
         - name : ZK_TICK_TIME
           valueFrom:
             configMapKeyRef:
-                name: zk-config
-                key: tick
+              name: zk-config
+              key: tick
         - name : ZK_INIT_LIMIT
           valueFrom:
             configMapKeyRef:
-                name: zk-config
-                key: init
+              name: zk-config
+              key: init
         - name : ZK_SYNC_LIMIT
           valueFrom:
             configMapKeyRef:
-                name: zk-config
-                key: tick
+              name: zk-config
+              key: tick
         - name : ZK_MAX_CLIENT_CNXNS
           valueFrom:
             configMapKeyRef:
-                name: zk-config
-                key: client.cnxns
+              name: zk-config
+              key: client.cnxns
         - name: ZK_SNAP_RETAIN_COUNT
           valueFrom:
             configMapKeyRef:
-                name: zk-config
-                key: snap.retain
+              name: zk-config
+              key: snap.retain
         - name: ZK_PURGE_INTERVAL
           valueFrom:
             configMapKeyRef:
-                name: zk-config
-                key: purge.interval
+              name: zk-config
+              key: purge.interval
         - name: ZK_CLIENT_PORT
-          value: "2181"
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: client.port
         - name: ZK_SERVER_PORT
-          value: "2888"
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: server.port
         - name: ZK_ELECTION_PORT
-          value: "3888"
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: election.port
         command:
         - sh
         - -c
@@ -143,16 +159,16 @@ spec:
           initialDelaySeconds: 15
           timeoutSeconds: 5
         volumeMounts:
-        - name: datadir
+        - name: zkdatadir
           mountPath: /var/lib/zookeeper
       securityContext:
         runAsUser: 1000
         fsGroup: 1000
   volumeClaimTemplates:
   - metadata:
-      name: datadir
+      name: zkdatadir
       annotations:
-        volume.alpha.kubernetes.io/storage-class: anything
+        volume.beta.kubernetes.io/storage-class: slow
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:

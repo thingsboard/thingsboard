@@ -1,6 +1,6 @@
 VERSION=k8stest
 PROJECT=thingsboard
-APP=zk
+APP=cassandra
 
 all: build
 

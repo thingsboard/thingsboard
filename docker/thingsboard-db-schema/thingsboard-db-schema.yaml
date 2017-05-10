@@ -6,7 +6,7 @@ spec:
   containers:
   - name: tb-db-schema
     imagePullPolicy: Always
-    image: thingsboard/thingsboard-db-schema:k8test
+    image: thingsboard/thingsboard-db-schema:k8stest
     env:
     - name: SKIP_SCHEMA_CREATION
       value: "false"
@@ -15,7 +15,7 @@ spec:
     - name : SKIP_DEMO_DATA
       value: "false"
     - name : CASSANDRA_URL
-      value: "cassandra"
+      value: "cassandra-headless"
     command:
     - sh
     - -c
