@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: tb-external-ip
+  name: tb-service
   labels:
-    app: tb-external-ip
+    app: tb-service
 spec:
   ports:
   - port: 8080
@@ -16,20 +16,6 @@ spec:
   selector:
     app: tb
   type: LoadBalancer
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tb-headless
-  labels:
-    app: tb-headless
-spec:
-  ports:
-  - port: 9001
-    name: rpc
-  selector:
-    app: tb
-  clusterIP: None
 ---
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
@@ -55,14 +41,13 @@ kind: StatefulSet
 metadata:
   name: tb
 spec:
-  serviceName: "tb-headless"
+  serviceName: "tb-service"
   replicas: 2
   template:
     metadata:
       labels:
         app: tb
     spec:
-      terminationGracePeriodSeconds: 10
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -71,7 +56,7 @@ spec:
                   - key: "app"
                     operator: In
                     values:
-                    - tb-headless
+                    - tb-service
               topologyKey: "kubernetes.io/hostname"
       containers:
       - name: tb
@@ -109,19 +94,17 @@ spec:
             configMapKeyRef:
               name: tb-config
               key: cassandra.url
+        - name : RPC_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         command:
         - sh
         - -c
         - ./run_thingsboard.sh
-#        readinessProbe:
-#          httpGet:
-#            path: /login
-#            port: ui-port
-#          initialDelaySeconds: 30
-#          periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /login
             port: ui-port
-          initialDelaySeconds: 30
-          periodSeconds: 10
+          initialDelaySeconds: 120
+          timeoutSeconds: 10

@@ -34,9 +34,6 @@ done
 # Copying env variables into conf files
 printenv | awk -F "=" '{print "export " $1 "='\''" $2 "'\''"}' >> /usr/share/thingsboard/conf/thingsboard.conf
 
-# Set env variable for RPC address
-echo "export RPC_HOST='"$(hostname -f)"'" | tee -a /usr/share/thingsboard/conf/thingsboard.conf
-
 cat /usr/share/thingsboard/conf/thingsboard.conf
 
 echo "Starting 'Thingsboard' service..."
