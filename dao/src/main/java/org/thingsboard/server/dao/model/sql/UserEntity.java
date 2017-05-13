@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,6 +29,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import javax.persistence.*;
 import java.io.IOException;
@@ -35,9 +38,9 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 4/21/2017.
  */
-@Slf4j
 @Data
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.USER_PG_HIBERNATE_COLUMN_FAMILY_NAME)
 public class UserEntity implements SearchTextEntity<User> {
     @Transient
@@ -68,8 +71,9 @@ public class UserEntity implements SearchTextEntity<User> {
     @Column(name = ModelConstants.USER_LAST_NAME_PROPERTY)
     private String lastName;
 
-    @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY)
-    private String additionalInfo;
+    @Type(type="jsonb")
+    @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode additionalInfo;
 
     public UserEntity() {
     }
@@ -88,9 +92,7 @@ public class UserEntity implements SearchTextEntity<User> {
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
-        if (user.getAdditionalInfo() != null) {
-            this.additionalInfo = user.getAdditionalInfo().toString();
-        }
+        this.additionalInfo = user.getAdditionalInfo();
     }
 
     @Override
@@ -150,15 +152,7 @@ public class UserEntity implements SearchTextEntity<User> {
         user.setEmail(email);
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        ObjectMapper mapper = new ObjectMapper();
-        if (additionalInfo != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(additionalInfo);
-                user.setAdditionalInfo(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
-            }
-        }
+        user.setAdditionalInfo(additionalInfo);
         return user;
     }
 

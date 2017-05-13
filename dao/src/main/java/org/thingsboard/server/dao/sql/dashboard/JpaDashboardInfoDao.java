@@ -47,11 +47,6 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return DASHBOARD_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository getCrudRepository() {
         return dashboardInfoRepository;
     }

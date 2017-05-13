@@ -45,11 +45,6 @@ public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity,
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<UserCredentialsEntity, UUID> getCrudRepository() {
         return userCredentialsRepository;
     }

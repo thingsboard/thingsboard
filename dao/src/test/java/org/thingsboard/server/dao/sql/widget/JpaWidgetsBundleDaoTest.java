@@ -137,12 +137,12 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     @Test
     @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml", type= DatabaseOperation.DELETE_ALL)
-    public void testNonSearchTextNotFound() {
+    public void testSearchTextNotFound() {
         UUID tenantId = UUIDs.timeBased();
         createWidgetBundles(5, tenantId, "ABC_");
         createSystemWidgetBundles(5, "SYS_");
 
-        TextPageLink textPageLink = new TextPageLink(30, "WB");
+        TextPageLink textPageLink = new TextPageLink(30, "TEXT_NOT_FOUND");
         List<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId, textPageLink);
         assertEquals(0, widgetsBundles4.size());
     }

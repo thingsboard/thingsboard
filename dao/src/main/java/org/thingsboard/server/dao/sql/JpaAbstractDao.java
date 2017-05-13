@@ -41,8 +41,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
 
     protected abstract Class<E> getEntityClass();
 
-    protected abstract String getColumnFamilyName();
-
     protected abstract CrudRepository<E, UUID> getCrudRepository();
 
     protected boolean isSearchTextDao() {
@@ -93,7 +91,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
 
     @Override
     public List<D> find() {
-        log.debug("Get all entities from column family {}", getColumnFamilyName());
         List<E> entities = Lists.newArrayList(getCrudRepository().findAll());
         return DaoUtil.convertDataList(entities);
     }

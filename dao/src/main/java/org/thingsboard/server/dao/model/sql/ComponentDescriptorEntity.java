@@ -24,19 +24,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import java.io.IOException;
 import java.util.UUID;
 
 @Data
-@Slf4j
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 
@@ -59,8 +62,9 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY)
     private String clazz;
 
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY)
-    private String configurationDescriptor;
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode configurationDescriptor;
 
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)
     private String actions;
@@ -80,9 +84,7 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
         this.scope = component.getScope();
         this.name = component.getName();
         this.clazz = component.getClazz();
-        if (configurationDescriptor != null) {
-            this.configurationDescriptor = component.getConfigurationDescriptor().toString();
-        }
+        this.configurationDescriptor = component.getConfigurationDescriptor();
         this.searchText = component.getName();
     }
 
@@ -94,16 +96,7 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
         data.setName(this.getName());
         data.setClazz(this.getClazz());
         data.setActions(this.getActions());
-        if (configurationDescriptor != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode jsonNode = null;
-            try {
-                jsonNode = mapper.readTree(configurationDescriptor);
-                data.setConfigurationDescriptor(jsonNode);
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
-        }
+        data.setConfigurationDescriptor(configurationDescriptor);
         return data;
     }
 

@@ -48,11 +48,6 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return WIDGETS_BUNDLE_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<WidgetsBundleEntity, UUID> getCrudRepository() {
         return widgetsBundleRepository;
     }

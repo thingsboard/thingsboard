@@ -16,7 +16,9 @@
 package org.thingsboard.server.dao.sql.plugin;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.github.springtestdbunit.annotation.DatabaseOperation;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
+import com.github.springtestdbunit.annotation.DatabaseTearDown;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.PluginId;
@@ -45,7 +47,6 @@ public class JpaBasePluginDaoTest extends AbstractJpaDaoTest {
         UUID tenantId1 = UUIDs.timeBased();
         UUID tenantId2 = UUIDs.timeBased();
         createPluginsTwoTenants(tenantId1, tenantId2, "plugin_");
-        assertEquals(60, pluginDao.find().size());
         List<PluginMetaData> rules1 = pluginDao.findByTenantIdAndPageLink(
                 new TenantId(tenantId1), new TextPageLink(20, "plugin_"));
         assertEquals(20, rules1.size());
@@ -60,7 +61,7 @@ public class JpaBasePluginDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    @DatabaseSetup(value = "classpath:dbunit/empty_dataset.xml")
     public void testFindAllTenantRulesByTenantId() {
         UUID tenantId1 = UUIDs.timeBased();
         UUID tenantId2 = UUIDs.timeBased();

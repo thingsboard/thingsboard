@@ -67,11 +67,6 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return EVENT_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<EventEntity, UUID> getCrudRepository() {
         return eventRepository;
     }

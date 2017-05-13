@@ -26,10 +26,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
@@ -37,9 +40,9 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Data
-@Slf4j
 @NoArgsConstructor
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = EVENT_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 
@@ -65,8 +68,9 @@ public class EventEntity implements BaseEntity<Event> {
     @Column(name = EVENT_UID_PROPERTY)
     private String eventUid;
 
-    @Column(name = EVENT_BODY_PROPERTY)
-    private String body;
+    @Type(type = "jsonb")
+    @Column(name = EVENT_BODY_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode body;
 
     public EventEntity(Event event) {
         if (event.getId() != null) {
@@ -81,9 +85,7 @@ public class EventEntity implements BaseEntity<Event> {
         }
         this.eventType = event.getType();
         this.eventUid = event.getUid();
-        if (event.getBody() != null) {
-            this.body = event.getBody().toString();
-        }
+        this.body = event.getBody();
     }
 
     @Override
@@ -118,15 +120,7 @@ public class EventEntity implements BaseEntity<Event> {
                 event.setEntityId(new PluginId(entityId));
                 break;
         }
-        ObjectMapper mapper = new ObjectMapper();
-        if (body != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(body);
-                event.setBody(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", body, e.getMessage()), e);
-            }
-        }
+        event.setBody(body);
         event.setType(eventType);
         event.setUid(eventUid);
         return event;

@@ -46,11 +46,6 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return ModelConstants.USER_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<UserEntity, UUID> getCrudRepository() {
         return userRepository;
     }

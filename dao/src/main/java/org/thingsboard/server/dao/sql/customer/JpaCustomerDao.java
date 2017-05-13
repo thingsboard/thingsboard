@@ -46,11 +46,6 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<CustomerEntity, UUID> getCrudRepository() {
         return customerRepository;
     }

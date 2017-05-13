@@ -52,11 +52,6 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return DEVICE_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<DeviceEntity, UUID> getCrudRepository() {
         return deviceRepository;
     }

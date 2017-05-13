@@ -25,9 +25,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -35,8 +38,8 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
-@Slf4j
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ADMIN_SETTINGS_COLUMN_FAMILY_NAME)
 public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
 
@@ -50,8 +53,9 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
     @Column(name = ADMIN_SETTINGS_KEY_PROPERTY)
     private String key;
 
-    @Column(name = ADMIN_SETTINGS_JSON_VALUE_PROPERTY)
-    private String jsonValue;
+    @Type(type = "jsonb")
+    @Column(name = ADMIN_SETTINGS_JSON_VALUE_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode jsonValue;
 
     public AdminSettingsEntity() {
         super();
@@ -62,9 +66,7 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
             this.id = adminSettings.getId().getId();
         }
         this.key = adminSettings.getKey();
-        if (jsonValue != null) {
-            this.jsonValue = adminSettings.getJsonValue().toString();
-        }
+        this.jsonValue = adminSettings.getJsonValue();
     }
 
     @Override
@@ -132,16 +134,7 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
         AdminSettings adminSettings = new AdminSettings(new AdminSettingsId(id));
         adminSettings.setCreatedTime(UUIDs.unixTimestamp(id));
         adminSettings.setKey(key);
-        if (jsonValue != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode jsonNode = null;
-            try {
-                jsonNode = mapper.readTree(jsonValue);
-                adminSettings.setJsonValue(jsonNode);
-            } catch (IOException e) {
-               log.error(e.getMessage(), e);
-            }
-        }
+        adminSettings.setJsonValue(jsonValue);
         return adminSettings;
     }
 

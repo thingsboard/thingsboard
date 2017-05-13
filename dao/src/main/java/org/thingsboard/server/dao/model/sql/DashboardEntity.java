@@ -25,19 +25,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import java.io.IOException;
 import java.util.UUID;
 
 @Data
-@Slf4j
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public final class DashboardEntity implements SearchTextEntity<Dashboard> {
 
@@ -59,9 +62,10 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
-    
-    @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY)
-    private String configuration;
+
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode configuration;
 
     public DashboardEntity() {
         super();
@@ -78,9 +82,7 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
             this.customerId = dashboard.getCustomerId().getId();
         }
         this.title = dashboard.getTitle();
-        if (configuration != null) {
-            this.configuration = dashboard.getConfiguration().toString();
-        }
+        this.configuration = dashboard.getConfiguration();
     }
 
     @Override
@@ -191,16 +193,7 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
             dashboard.setCustomerId(new CustomerId(customerId));
         }
         dashboard.setTitle(title);
-        if (configuration != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode jsonNode = null;
-            try {
-                jsonNode = mapper.readTree(configuration);
-                dashboard.setConfiguration(jsonNode);
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
-        }
+        dashboard.setConfiguration(configuration);
         return dashboard;
     }
 }

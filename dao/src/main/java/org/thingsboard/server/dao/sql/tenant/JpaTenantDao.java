@@ -48,11 +48,6 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return TENANT_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<TenantEntity, UUID> getCrudRepository() {
         return tenantRepository;
     }

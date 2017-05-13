@@ -16,29 +16,24 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
-import java.io.IOException;
+import javax.persistence.*;
 import java.util.UUID;
 
-@Slf4j
 @Data
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 
@@ -63,8 +58,9 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     @Column(name = ModelConstants.WIDGET_TYPE_NAME_PROPERTY)
     private String name;
 
-    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY)
-    private String descriptor;
+    @Type(type="jsonb")
+    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode descriptor;
 
     public WidgetTypeEntity() {
         super();
@@ -80,9 +76,7 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
         this.bundleAlias = widgetType.getBundleAlias();
         this.alias = widgetType.getAlias();
         this.name = widgetType.getName();
-        if (widgetType.getDescriptor() != null) {
-            this.descriptor = widgetType.getDescriptor().toString();
-        }
+        this.descriptor = widgetType.getDescriptor();
     }
 
     @Override
@@ -144,15 +138,7 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
         widgetType.setBundleAlias(bundleAlias);
         widgetType.setAlias(alias);
         widgetType.setName(name);
-        ObjectMapper mapper = new ObjectMapper();
-        if (descriptor != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(descriptor);
-                widgetType.setDescriptor(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", descriptor, e.getMessage()), e);
-            }
-        }
+        widgetType.setDescriptor(descriptor);
         return widgetType;
     }
 

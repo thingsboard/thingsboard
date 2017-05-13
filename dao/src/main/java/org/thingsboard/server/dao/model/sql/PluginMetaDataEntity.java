@@ -25,19 +25,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
-@Slf4j
+
 @Data
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
 public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
 
@@ -65,14 +69,16 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     @Column(name = ModelConstants.PLUGIN_STATE_PROPERTY)
     private ComponentLifecycleState state;
 
-    @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY)
-    private String configuration;
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode configuration;
+
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode additionalInfo;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
-
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
-    private String additionalInfo;
 
     public PluginMetaDataEntity() {
     }
@@ -88,12 +94,8 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
         this.publicAccess = pluginMetaData.isPublicAccess();
         this.state = pluginMetaData.getState();
         this.searchText = pluginMetaData.getName();
-        if (pluginMetaData.getConfiguration() != null) {
-            this.configuration = pluginMetaData.getConfiguration().toString();
-        }
-        if (pluginMetaData.getAdditionalInfo() != null) {
-            this.additionalInfo = pluginMetaData.getAdditionalInfo().toString();
-        }
+        this.configuration = pluginMetaData.getConfiguration();
+        this.additionalInfo = pluginMetaData.getAdditionalInfo();
     }
 
     @Override
@@ -126,23 +128,8 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
         data.setPublicAccess(publicAccess);
         data.setState(state);
         data.setApiToken(apiToken);
-        ObjectMapper mapper = new ObjectMapper();
-        if (configuration != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(configuration);
-                data.setConfiguration(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", configuration, e.getMessage()), e);
-            }
-        }
-        if (additionalInfo != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(additionalInfo);
-                data.setAdditionalInfo(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
-            }
-        }
+        data.setConfiguration(configuration);
+        data.setAdditionalInfo(additionalInfo);
         return data;
     }
 

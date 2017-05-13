@@ -40,6 +40,4 @@ public interface CustomerRepository extends CrudRepository<CustomerEntity, UUID>
             "AND ID > ?4 ORDER BY ID LIMIT ?1")
     List<CustomerEntity> findByTenantIdNextPage(int limit, UUID tenantId, String textSearch, UUID idOffset);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM CUSTOMER WHERE TENANT_ID = ?1")
-    List<CustomerEntity> findByTenantId(UUID tenantId);
 }

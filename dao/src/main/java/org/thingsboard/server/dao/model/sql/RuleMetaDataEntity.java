@@ -27,6 +27,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
@@ -34,14 +36,15 @@ import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
 
-@Slf4j
 @Data
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.RULE_COLUMN_FAMILY_NAME)
 public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
 
@@ -62,14 +65,18 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
     private String searchText;
     @Column(name = ModelConstants.RULE_PLUGIN_TOKEN_PROPERTY)
     private String pluginToken;
-    @Column(name = ModelConstants.RULE_FILTERS)
-    private String filters;
-    @Column(name = ModelConstants.RULE_PROCESSOR)
-    private String processor;
-    @Column(name = ModelConstants.RULE_ACTION)
-    private String action;
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
-    private String additionalInfo;
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.RULE_FILTERS, columnDefinition = "jsonb")
+    private JsonNode filters;
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.RULE_PROCESSOR, columnDefinition = "jsonb")
+    private JsonNode processor;
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.RULE_ACTION, columnDefinition = "jsonb")
+    private JsonNode action;
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode additionalInfo;
 
     public RuleMetaDataEntity() {
     }
@@ -84,18 +91,10 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
         this.state = rule.getState();
         this.weight = rule.getWeight();
         this.searchText = rule.getName();
-        if (rule.getFilters() != null) {
-            this.filters = rule.getFilters().toString();
-        }
-        if (rule.getProcessor() != null) {
-            this.processor = rule.getProcessor().toString();
-        }
-        if (rule.getAction() != null) {
-            this.action = rule.getAction().toString();
-        }
-        if (rule.getAdditionalInfo() != null) {
-            this.additionalInfo = rule.getAdditionalInfo().toString();
-        }
+        this.filters = rule.getFilters();
+        this.processor = rule.getProcessor();
+        this.action = rule.getAction();
+        this.additionalInfo = rule.getAdditionalInfo();
     }
 
     @Override
@@ -127,39 +126,10 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
         rule.setWeight(weight);
         rule.setCreatedTime(UUIDs.unixTimestamp(id));
         rule.setPluginToken(pluginToken);
-        ObjectMapper mapper = new ObjectMapper();
-        if (filters != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(filters);
-                rule.setFilters(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", filters, e.getMessage()), e);
-            }
-        }
-        if (processor != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(processor);
-                rule.setProcessor(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", processor, e.getMessage()), e);
-            }
-        }
-        if (action != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(action);
-                rule.setAction(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", action, e.getMessage()), e);
-            }
-        }
-        if (additionalInfo != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(additionalInfo);
-                rule.setAdditionalInfo(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
-            }
-        }
+        rule.setFilters(filters);
+        rule.setProcessor(processor);
+        rule.setAction(action);
+        rule.setAdditionalInfo(additionalInfo);
         return rule;
     }
 

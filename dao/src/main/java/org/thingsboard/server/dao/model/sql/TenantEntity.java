@@ -26,18 +26,21 @@ import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import java.io.IOException;
 import java.util.UUID;
 
-@Slf4j
 @Data
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
 public final class TenantEntity implements SearchTextEntity<Tenant> {
 
@@ -81,8 +84,9 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
-    @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
-    private String additionalInfo;
+    @Type(type="jsonb")
+    @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode additionalInfo;
 
     public TenantEntity() {
         super();
@@ -102,11 +106,8 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         this.zip = tenant.getZip();
         this.phone = tenant.getPhone();
         this.email = tenant.getEmail();
-        if (tenant.getAdditionalInfo() != null) {
-            this.additionalInfo = tenant.getAdditionalInfo().toString();
-        }
+        this.additionalInfo = tenant.getAdditionalInfo();
     }
-
 
     @Override
     public String getSearchTextSource() {
@@ -258,15 +259,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
         tenant.setZip(zip);
         tenant.setPhone(phone);
         tenant.setEmail(email);
-        ObjectMapper mapper = new ObjectMapper();
-        if (additionalInfo != null) {
-            try {
-                JsonNode jsonNode = mapper.readTree(additionalInfo);
-                tenant.setAdditionalInfo(jsonNode);
-            } catch (IOException e) {
-                log.warn(String.format("Error parsing JsonNode: %s. Reason: %s ", additionalInfo, e.getMessage()), e);
-            }
-        }
+        tenant.setAdditionalInfo(additionalInfo);
         return tenant;
     }
 

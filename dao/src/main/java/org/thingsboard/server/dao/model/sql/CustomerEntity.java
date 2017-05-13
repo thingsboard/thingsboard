@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,7 +36,6 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Data
-@Slf4j
 @Entity
 @Table(name = ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME)
 public final class CustomerEntity implements SearchTextEntity<Customer> {
@@ -80,8 +80,9 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
-    @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY)
-    private String additionalInfo;
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode additionalInfo;
 
     public CustomerEntity() {
         super();
@@ -101,9 +102,7 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         this.zip = customer.getZip();
         this.phone = customer.getPhone();
         this.email = customer.getEmail();
-        if (additionalInfo != null) {
-            this.additionalInfo = customer.getAdditionalInfo().toString();
-        }
+        this.additionalInfo = customer.getAdditionalInfo();
     }
 
     @Override
@@ -262,15 +261,7 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         customer.setZip(zip);
         customer.setPhone(phone);
         customer.setEmail(email);
-        if (additionalInfo != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                JsonNode jsonNode = mapper.readTree(additionalInfo);
-                customer.setAdditionalInfo(jsonNode);
-            } catch (IOException e) {
-               log.error(e.getMessage(), e);
-            }
-        }
+        customer.setAdditionalInfo(additionalInfo);
         return customer;
     }
 }

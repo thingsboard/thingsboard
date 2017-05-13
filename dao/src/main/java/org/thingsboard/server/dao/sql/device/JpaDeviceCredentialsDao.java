@@ -44,13 +44,6 @@ public class JpaDeviceCredentialsDao extends JpaAbstractDao<DeviceCredentialsEnt
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        {
-            return ModelConstants.DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME;
-        }
-    }
-
-    @Override
     protected CrudRepository<DeviceCredentialsEntity, UUID> getCrudRepository() {
         return deviceCredentialsRepository;
     }

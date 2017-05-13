@@ -25,19 +25,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.util.JsonBinaryType;
 
 import java.io.IOException;
 import java.util.UUID;
 
 @Data
-@Slf4j
 @Entity
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
 public final class DeviceEntity implements SearchTextEntity<Device> {
 
@@ -59,9 +62,10 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
-    
-    @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
-    private String additionalInfo;
+
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    private JsonNode additionalInfo;
 
     public DeviceEntity() {
         super();
@@ -78,9 +82,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
             this.customerId = device.getCustomerId().getId();
         }
         this.name = device.getName();
-        if (additionalInfo != null) {
-            this.additionalInfo = device.getAdditionalInfo().toString();
-        }
+        this.additionalInfo = device.getAdditionalInfo();
     }
 
     @Override
@@ -174,16 +176,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
             device.setCustomerId(new CustomerId(customerId));
         }
         device.setName(name);
-        if (additionalInfo != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode jsonNode = null;
-            try {
-                jsonNode = mapper.readTree(additionalInfo);
-                device.setAdditionalInfo(jsonNode);
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-            }
-        }
+        device.setAdditionalInfo(additionalInfo);
         return device;
     }
 }

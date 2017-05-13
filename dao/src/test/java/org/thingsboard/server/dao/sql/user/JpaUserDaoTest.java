@@ -62,7 +62,6 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         assertEquals(Authority.SYS_ADMIN, user.getAuthority());
         assertEquals("John", user.getFirstName());
         assertEquals("Doe", user.getLastName());
-        assertEquals("{\"key\":\"value-0\"}", user.getAdditionalInfo().toString());
     }
 
     @Test
@@ -114,7 +113,9 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         userDao.save(user);
         assertEquals(6, userDao.find().size());
         User savedUser = userDao.findByEmail("user@thingsboard.org");
+        //User savedUser = userDao.findById(UUID.fromString("cd481534-27cc-11e7-93ae-92361f002671"));
         assertNotNull(savedUser);
+        assertEquals(additionalInfo, savedUser.getAdditionalInfo().toString());
     }
 
     private void create30Adminsand60Users(UUID tenantId, UUID customerId) {

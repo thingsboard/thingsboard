@@ -51,11 +51,6 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<ComponentDescriptorEntity, UUID> getCrudRepository() {
         return componentDescriptorRepository;
     }

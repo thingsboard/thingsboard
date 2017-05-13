@@ -52,11 +52,6 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return ModelConstants.PLUGIN_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<PluginMetaDataEntity, UUID> getCrudRepository() {
         return pluginMetaDataRepository;
     }

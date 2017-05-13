@@ -7,7 +7,6 @@
           search_text="SYSADM SEARCH TEXT"
           first_name="John"
           last_name="Doe"
-          additional_info="{&quot;key&quot;:&quot;value-0&quot;}"
     />
     <tb_user id="1312f328-27c7-11e7-93ae-92361f002671"
           tenant_id="1e1cd4c8-27c7-11e7-93ae-92361f002671"
@@ -16,7 +15,6 @@
           search_text="TENANTADM1 SEARCH TEXT"
           first_name="Samuel"
           last_name="Serif"
-          additional_info="{&quot;key&quot;:&quot;value-11&quot;}"
     />
     <tb_user id="2b090dde-27ca-11e7-93ae-92361f002671"
           tenant_id="1e1cd4c8-27c7-11e7-93ae-92361f002671"
@@ -25,7 +23,6 @@
           search_text="TENANTADM2 SEARCH TEXT"
           first_name="Penny"
           last_name="Morgan"
-          additional_info="{&quot;key&quot;:&quot;value-12&quot;}"
     />
     <tb_user id="cc8c1ca8-27c7-11e7-93ae-92361f002671"
           tenant_id="d2e27caa-27c7-11e7-93ae-92361f002671"
@@ -35,7 +32,6 @@
           search_text="CUSTOMER USER SEARCH TEXT"
           first_name="Norman"
           last_name="Gordon"
-          additional_info="{&quot;key&quot;:&quot;value-2&quot;}"
     />
     <tb_user id="edb2de58-27c7-11e7-93ae-92361f002671"
           tenant_id="f229675e-27c7-11e7-93ae-92361f002671"
@@ -45,6 +41,5 @@
           search_text="REFRESH TOKEN SEARCH TEXT"
           first_name="Dianne"
           last_name="Wensleydale"
-          additional_info="{&quot;key&quot;:&quot;value-3&quot;}"
     />
 </dataset>

@@ -46,11 +46,6 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeEntity, WidgetTyp
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return WIDGET_TYPE_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<WidgetTypeEntity, UUID> getCrudRepository() {
         return widgetTypeRepository;
     }

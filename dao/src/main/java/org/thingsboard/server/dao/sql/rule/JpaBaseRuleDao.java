@@ -50,10 +50,6 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
     protected Class<RuleMetaDataEntity> getEntityClass() {
         return RuleMetaDataEntity.class;
     }
-    @Override
-    protected String getColumnFamilyName() {
-        return ModelConstants.RULE_COLUMN_FAMILY_NAME;
-    }
 
     @Override
     protected CrudRepository<RuleMetaDataEntity, UUID> getCrudRepository() {

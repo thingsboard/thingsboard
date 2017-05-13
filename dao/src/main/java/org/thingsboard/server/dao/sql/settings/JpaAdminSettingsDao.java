@@ -41,11 +41,6 @@ public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, Adm
     }
 
     @Override
-    protected String getColumnFamilyName() {
-        return ADMIN_SETTINGS_COLUMN_FAMILY_NAME;
-    }
-
-    @Override
     protected CrudRepository<AdminSettingsEntity, UUID> getCrudRepository() {
         return adminSettingsRepository;
     }
