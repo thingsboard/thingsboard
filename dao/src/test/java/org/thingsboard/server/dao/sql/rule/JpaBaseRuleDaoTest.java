@@ -31,8 +31,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * Created by Valerii Sosliuk on 4/30/2017.
@@ -46,10 +45,7 @@ public class JpaBaseRuleDaoTest extends AbstractJpaDaoTest {
     @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testSave() throws IOException {
         UUID id = UUIDs.timeBased();
-        RuleMetaData ruleMetaData = new RuleMetaData();
-        ruleMetaData.setId(new RuleId(id));
-        ruleMetaData.setTenantId(new TenantId(UUIDs.timeBased()));
-        ruleMetaData.setName("test");
+        RuleMetaData ruleMetaData = getRuleMetaData(id);
         String filters = "{\"filters\":\"value-1\"}";
         String processor = "{\"processor\":\"value-2\"}";
         String action = "{\"action\":\"value-3\"}";
@@ -66,6 +62,19 @@ public class JpaBaseRuleDaoTest extends AbstractJpaDaoTest {
         assertEquals(processor, savedRule.getProcessor().toString());
         assertEquals(action, savedRule.getAction().toString());
         assertEquals(additionalInfo, savedRule.getAdditionalInfo().toString());
+    }
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void testDelete() throws IOException {
+        UUID id = UUIDs.timeBased();
+        RuleMetaData ruleMetaData = getRuleMetaData(id);
+        ruleDao.save(ruleMetaData);
+        RuleMetaData savedRule = ruleDao.findById(id);
+        assertNotNull(savedRule);
+        assertTrue(ruleDao.removeById(id));
+        RuleMetaData afterDelete = ruleDao.findById(id);
+        assertNull(afterDelete);
     }
 
     @Test
@@ -134,5 +143,14 @@ public class JpaBaseRuleDaoTest extends AbstractJpaDaoTest {
         ruleMetaData.setName(namePrefix + i);
         ruleMetaData.setPluginToken(pluginToken);
         ruleDao.save(ruleMetaData);
+    }
+
+    private RuleMetaData getRuleMetaData(UUID id) throws IOException {
+        RuleMetaData ruleMetaData = new RuleMetaData();
+        ruleMetaData.setId(new RuleId(id));
+        ruleMetaData.setTenantId(new TenantId(UUIDs.timeBased()));
+        ruleMetaData.setName("test");
+
+        return ruleMetaData;
     }
 }

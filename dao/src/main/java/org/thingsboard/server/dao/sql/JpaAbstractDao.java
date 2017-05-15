@@ -66,6 +66,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     }
 
     @Override
+    @Transactional(propagation = REQUIRES_NEW)
     public D findById(UUID key) {
         log.debug("Get entity by key {}", key);
         E entity = getCrudRepository().findOne(key);
@@ -86,7 +87,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     public boolean removeById(UUID key) {
         getCrudRepository().delete(key);
         log.debug("Remove request: {}", key);
-        return getCrudRepository().equals(key);
+        return getCrudRepository().findOne(key) == null;
     }
 
     @Override
