@@ -810,7 +810,8 @@ export default angular.module('thingsboard.locale', [])
                 "language": {
                     "language": "Language",
                     "en_US": "English",
-                    "ko_KR": "Korean"
+                    "ko_KR": "Korean",
+                    "zh_CN": "Chinese"
                 }
             }
         }
