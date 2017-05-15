@@ -30,7 +30,8 @@ export default function ProfileController(userService, $scope, $document, $mdDia
     vm.languageList = {
         en_US: {value : "en_US", name: "language.en_US"}, 
         ko_KR: {value : "ko_KR", name: "language.ko_KR"},
-        zh_CN: {value : "zh_CN", name: "language.zh_CN"}
+        zh_CN: {value : "zh_CN", name: "language.zh_CN"},
+        ru_RU: {value : "ru_RU", name: "language.ru_RU"}
     };
 
     loadProfile();
