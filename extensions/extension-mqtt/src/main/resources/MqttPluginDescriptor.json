@@ -14,7 +14,7 @@
         "default": 1883
       },
       "accessToken": {
-        "title": "Provide a username (accessToken) to be used for authenticating with the broker.",
+        "title": "Username (Access Token) to be used for authenticating.",
         "type": "string"
       },
       "clientId": {
@@ -22,7 +22,7 @@
         "type": "string"
       },
       "maxInFlight": {
-        "title": "The max inflight limits to how many messages we can send without receiving acknowledgments.",
+        "title": "How many messages can be send without acknowledgments.",
         "type": "integer",
         "default": 1000
       },
