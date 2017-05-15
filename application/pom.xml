@@ -91,8 +91,6 @@
         <dependency>
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-            <version>1.1.0</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.cassandraunit</groupId>
@@ -420,6 +418,11 @@
                                 <artifactItem>
                                     <groupId>org.thingsboard.extensions</groupId>
                                     <artifactId>extension-kafka</artifactId>
+                                    <classifier>extension</classifier>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.thingsboard.extensions</groupId>
+                                    <artifactId>extension-mqtt</artifactId>
                                     <classifier>extension</classifier>
                                 </artifactItem>
                             </artifactItems>

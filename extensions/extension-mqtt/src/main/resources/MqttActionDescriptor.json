@@ -1,0 +1,32 @@
+{
+  "schema": {
+    "title": "Mqtt Action Configuration",
+    "type": "object",
+    "properties": {
+      "sync": {
+        "title": "Requires delivery confirmation",
+        "type": "boolean"
+      },
+      "topic": {
+        "title": "Topic Name",
+        "type": "string"
+      },
+      "template": {
+        "title": "Body Template",
+        "type": "string"
+      }
+    },
+    "required": [
+      "topic",
+      "template"
+    ]
+  },
+  "form": [
+    "topic",
+    {
+      "key": "template",
+      "type": "textarea",
+      "rows": 5
+    }
+  ]
+}
