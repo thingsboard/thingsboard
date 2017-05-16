@@ -36,7 +36,7 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
     }
 
     initWatchers();
-
+    
     function initWatchers() {
         $rootScope.unauthenticatedHandle = $rootScope.$on('unauthenticated', function (event, doLogout) {
             if (doLogout) {

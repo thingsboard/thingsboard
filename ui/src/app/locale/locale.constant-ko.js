@@ -777,7 +777,8 @@ export default function addLocaleKorean(locales) {
             "en_US": "영어",
             "ko_KR": "한글",
             "zh_CN": "중국어",
-            "ru_RU": "러시아어"
+            "ru_RU": "러시아어",
+            "es_ES": "스페인어"
         }
     };
     angular.extend(locales, {'ko_KR': ko_KR});
