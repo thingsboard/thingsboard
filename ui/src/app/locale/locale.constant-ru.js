@@ -810,7 +810,9 @@ export default function addLocaleRussian(locales) {
             "en_US": "Английский",
             "ko_KR": "Корейский",
             "zh_CN": "Китайский",
-            "ru_RU": "Русский"
+            "ru_RU": "Русский",
+            "es_ES": "испанский"
+
         }
     };
     angular.extend(locales, {'ru_RU': ru_RU});
