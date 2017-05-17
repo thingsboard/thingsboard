@@ -7,7 +7,7 @@ build:
 	cp ../../dao/src/main/resources/demo-data.cql .
 	cp ../../dao/src/main/resources/system-data.cql .
 	docker build --pull -t ${PROJECT}/${APP}:${VERSION} .
+	rm schema.cql demo-data.cql system-data.cql
 
 push: build
 	docker push ${PROJECT}/${APP}:${VERSION}
-	rm schema.cql demo-data.cql system-data.cql
