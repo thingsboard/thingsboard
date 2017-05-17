@@ -161,9 +161,18 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         return getSession().execute(delete);
     }
 
-
     public List<T> find() {
         log.debug("Get all entities from column family {}", getColumnFamilyName());
         return findListByStatement(QueryBuilder.select().all().from(getColumnFamilyName()).setConsistencyLevel(cluster.getDefaultReadConsistencyLevel()));
+    }
+
+    protected static <T> Function<BaseEntity<T>, T> toDataFunction() {
+        return new Function<BaseEntity<T>, T>() {
+            @Nullable
+            @Override
+            public T apply(@Nullable BaseEntity<T> entity) {
+                return entity != null ? entity.toData() : null;
+            }
+        };
     }
 }

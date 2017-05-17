@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public class RelationServiceImplTest extends AbstractServiceTest {
+public class RelationServiceTest extends AbstractServiceTest {
 
     @Before
     public void before() {

@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -26,6 +28,8 @@ import org.thingsboard.server.common.data.id.TenantId;
  * Created by ashvayka on 11.05.17.
  */
 @Data
+@Builder
+@AllArgsConstructor
 public class Alarm extends BaseData<AlarmId> {
 
     private TenantId tenantId;

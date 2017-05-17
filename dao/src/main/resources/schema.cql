@@ -250,7 +250,15 @@ CREATE TABLE IF NOT EXISTS thingsboard.alarm (
 	details text,
 	propagate boolean,
 	PRIMARY KEY ((tenant_id, originator_id, originator_type), type, id)
-);
+) WITH CLUSTERING ORDER BY ( type ASC, id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.alarm_by_id AS
+    SELECT *
+    from thingsboard.alarm
+    WHERE tenant_id IS NOT NULL AND originator_id IS NOT NULL AND originator_type IS NOT NULL AND type IS NOT NULL
+    AND type IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (id, tenant_id, originator_id, originator_type, type)
+    WITH CLUSTERING ORDER BY ( tenant_id ASC, originator_id ASC, originator_type ASC, type ASC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.relation (
 	from_id timeuuid,

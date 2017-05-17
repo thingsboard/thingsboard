@@ -125,6 +125,94 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
         this.tenantId = tenantId;
     }
 
+    public UUID getOriginatorId() {
+        return originatorId;
+    }
+
+    public void setOriginatorId(UUID originatorId) {
+        this.originatorId = originatorId;
+    }
+
+    public EntityType getOriginatorType() {
+        return originatorType;
+    }
+
+    public void setOriginatorType(EntityType originatorType) {
+        this.originatorType = originatorType;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public AlarmSeverity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(AlarmSeverity severity) {
+        this.severity = severity;
+    }
+
+    public AlarmStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AlarmStatus status) {
+        this.status = status;
+    }
+
+    public Long getStartTs() {
+        return startTs;
+    }
+
+    public void setStartTs(Long startTs) {
+        this.startTs = startTs;
+    }
+
+    public Long getEndTs() {
+        return endTs;
+    }
+
+    public void setEndTs(Long endTs) {
+        this.endTs = endTs;
+    }
+
+    public Long getAckTs() {
+        return ackTs;
+    }
+
+    public void setAckTs(Long ackTs) {
+        this.ackTs = ackTs;
+    }
+
+    public Long getClearTs() {
+        return clearTs;
+    }
+
+    public void setClearTs(Long clearTs) {
+        this.clearTs = clearTs;
+    }
+
+    public JsonNode getDetails() {
+        return details;
+    }
+
+    public void setDetails(JsonNode details) {
+        this.details = details;
+    }
+
+    public Boolean getPropagate() {
+        return propagate;
+    }
+
+    public void setPropagate(Boolean propagate) {
+        this.propagate = propagate;
+    }
+
     @Override
     public Alarm toData() {
         Alarm alarm = new Alarm(new AlarmId(id));

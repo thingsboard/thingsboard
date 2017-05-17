@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,6 +91,9 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
             if (alarm.getStartTs() == 0L) {
                 alarm.setStartTs(System.currentTimeMillis());
             }
+            if (alarm.getEndTs() == 0L) {
+                alarm.setEndTs(alarm.getStartTs());
+            }
             Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
             if (existing == null || existing.getStatus().isCleared()) {
                 log.debug("New Alarm : {}", alarm);
@@ -117,11 +120,10 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
     @Override
     public ListenableFuture<Boolean> updateAlarm(Alarm update) {
         alarmDataValidator.validate(update);
-        return getAndUpdate(update.getId(), new Function<AlarmEntity, Boolean>() {
+        return getAndUpdate(update.getId(), new Function<Alarm, Boolean>() {
             @Nullable
             @Override
-            public Boolean apply(@Nullable AlarmEntity entity) {
-                Alarm alarm = getData(entity);
+            public Boolean apply(@Nullable Alarm alarm) {
                 if (alarm == null) {
                     return false;
                 } else {
@@ -139,11 +141,10 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
 
     @Override
     public ListenableFuture<Boolean> ackAlarm(AlarmId alarmId, long ackTime) {
-        return getAndUpdate(alarmId, new Function<AlarmEntity, Boolean>() {
+        return getAndUpdate(alarmId, new Function<Alarm, Boolean>() {
             @Nullable
             @Override
-            public Boolean apply(@Nullable AlarmEntity entity) {
-                Alarm alarm = getData(entity);
+            public Boolean apply(@Nullable Alarm alarm) {
                 if (alarm == null || alarm.getStatus().isAck()) {
                     return false;
                 } else {
@@ -161,11 +162,10 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
 
     @Override
     public ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long clearTime) {
-        return getAndUpdate(alarmId, new Function<AlarmEntity, Boolean>() {
+        return getAndUpdate(alarmId, new Function<Alarm, Boolean>() {
             @Nullable
             @Override
-            public Boolean apply(@Nullable AlarmEntity entity) {
-                Alarm alarm = getData(entity);
+            public Boolean apply(@Nullable Alarm alarm) {
                 if (alarm == null || alarm.getStatus().isCleared()) {
                     return false;
                 } else {
@@ -179,6 +179,13 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
                 }
             }
         });
+    }
+
+    @Override
+    public ListenableFuture<Alarm> findAlarmById(AlarmId alarmId) {
+        log.trace("Executing findAlarmById [{}]", alarmId);
+        validateId(alarmId, "Incorrect alarmId " + alarmId);
+        return alarmDao.findAlarmByIdAsync(alarmId.getId());
     }
 
     @Override
@@ -230,9 +237,9 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
         }
     }
 
-    private ListenableFuture<Boolean> getAndUpdate(AlarmId alarmId, Function<AlarmEntity, Boolean> function) {
+    private ListenableFuture<Boolean> getAndUpdate(AlarmId alarmId, Function<Alarm, Boolean> function) {
         validateId(alarmId, "Alarm id should be specified!");
-        ListenableFuture<AlarmEntity> entity = alarmDao.findByIdAsync(alarmId.getId());
+        ListenableFuture<Alarm> entity = alarmDao.findAlarmByIdAsync(alarmId.getId());
         return Futures.transform(entity, function);
     }
 
