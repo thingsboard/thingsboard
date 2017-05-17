@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.CustomerEntity;
 import org.thingsboard.server.dao.model.DeviceEntity;
@@ -53,7 +54,7 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @Slf4j
-public class DeviceServiceImpl implements DeviceService {
+public class DeviceServiceImpl extends BaseEntityService implements DeviceService {
 
     @Autowired
     private DeviceDao deviceDao;
@@ -132,6 +133,7 @@ public class DeviceServiceImpl implements DeviceService {
         if (deviceCredentials != null) {
             deviceCredentialsService.deleteDeviceCredentials(deviceCredentials);
         }
+        deleteEntityRelations(deviceId);
         deviceDao.removeById(deviceId.getId());
     }
 

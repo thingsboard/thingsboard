@@ -24,7 +24,6 @@ import thingsboardApiUser from '../api/user.service';
 import thingsboardApiDashboard from '../api/dashboard.service';
 import thingsboardApiCustomer from '../api/customer.service';
 import thingsboardDetailsSidenav from '../components/details-sidenav.directive';
-import thingsboardDeviceFilter from '../components/device-filter.directive';
 import thingsboardWidgetConfig from '../components/widget-config.directive';
 import thingsboardDashboardSelect from '../components/dashboard-select.directive';
 import thingsboardDashboard from '../components/dashboard.directive';
@@ -38,15 +37,12 @@ import thingsboardImportExport from '../import-export';
 import DashboardRoutes from './dashboard.routes';
 import {DashboardsController, DashboardCardController, MakeDashboardPublicDialogController} from './dashboards.controller';
 import DashboardController from './dashboard.controller';
-import DeviceAliasesController from './device-aliases.controller';
-import AliasesDeviceSelectPanelController from './aliases-device-select-panel.controller';
 import DashboardSettingsController from './dashboard-settings.controller';
 import AssignDashboardToCustomerController from './assign-to-customer.controller';
 import AddDashboardsToCustomerController from './add-dashboards-to-customer.controller';
 import AddWidgetController from './add-widget.controller';
 import DashboardDirective from './dashboard.directive';
 import EditWidgetDirective from './edit-widget.directive';
-import AliasesDeviceSelectDirective from './aliases-device-select.directive';
 
 export default angular.module('thingsboard.dashboard', [
     uiRouter,
@@ -60,7 +56,6 @@ export default angular.module('thingsboard.dashboard', [
     thingsboardApiDashboard,
     thingsboardApiCustomer,
     thingsboardDetailsSidenav,
-    thingsboardDeviceFilter,
     thingsboardWidgetConfig,
     thingsboardDashboardSelect,
     thingsboardDashboard,
@@ -73,13 +68,10 @@ export default angular.module('thingsboard.dashboard', [
     .controller('DashboardCardController', DashboardCardController)
     .controller('MakeDashboardPublicDialogController', MakeDashboardPublicDialogController)
     .controller('DashboardController', DashboardController)
-    .controller('DeviceAliasesController', DeviceAliasesController)
-    .controller('AliasesDeviceSelectPanelController', AliasesDeviceSelectPanelController)
     .controller('DashboardSettingsController', DashboardSettingsController)
     .controller('AssignDashboardToCustomerController', AssignDashboardToCustomerController)
     .controller('AddDashboardsToCustomerController', AddDashboardsToCustomerController)
     .controller('AddWidgetController', AddWidgetController)
     .directive('tbDashboardDetails', DashboardDirective)
     .directive('tbEditWidget', EditWidgetDirective)
-    .directive('tbAliasesDeviceSelect', AliasesDeviceSelectDirective)
     .name;

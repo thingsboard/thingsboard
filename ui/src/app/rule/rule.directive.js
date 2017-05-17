@@ -22,7 +22,8 @@ import ruleFieldsetTemplate from './rule-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleDirective($compile, $templateCache, $mdDialog, $document, $q, pluginService, componentDialogService, componentDescriptorService, types) {
+export default function RuleDirective($compile, $templateCache, $mdDialog, $document, $q, $translate, pluginService,
+                                      componentDialogService, componentDescriptorService, types, toast) {
     var linker = function (scope, element) {
         var template = $templateCache.get(ruleFieldsetTemplate);
         element.html(template);
@@ -89,6 +90,10 @@ export default function RuleDirective($compile, $templateCache, $mdDialog, $docu
                 valid = angular.isDefined(scope.rule.action) && scope.rule.action != null;
                 scope.theForm.$setValidity('action', valid);
             }
+        };
+
+        scope.onRuleIdCopied = function() {
+            toast.showSuccess($translate.instant('rule.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
         };
 
         scope.$watch('rule', function(newVal, prevVal) {

@@ -31,8 +31,8 @@ export default function DashboardSettingsController($scope, $mdDialog, gridSetti
         vm.gridSettings.showTitle = true;
     }
 
-    if (angular.isUndefined(vm.gridSettings.showDevicesSelect)) {
-        vm.gridSettings.showDevicesSelect = true;
+    if (angular.isUndefined(vm.gridSettings.showEntitiesSelect)) {
+        vm.gridSettings.showEntitiesSelect = true;
     }
 
     if (angular.isUndefined(vm.gridSettings.showDashboardTimewindow)) {

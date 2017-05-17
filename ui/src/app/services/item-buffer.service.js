@@ -24,7 +24,7 @@ export default angular.module('thingsboard.itembuffer', [angularStorage])
     .name;
 
 /*@ngInject*/
-function ItemBuffer(bufferStore, types) {
+function ItemBuffer(bufferStore, types, dashboardUtils) {
 
     const WIDGET_ITEM = "widget_item";
 
@@ -43,35 +43,26 @@ function ItemBuffer(bufferStore, types) {
         datasourceAliases: {
             datasourceIndex: {
                 aliasName: "...",
-                deviceFilter: "..."
+                entityType: "...",
+                entityFilter: "..."
             }
         }
         targetDeviceAliases: {
             targetDeviceAliasIndex: {
                 aliasName: "...",
-                deviceFilter: "..."
+                entityType: "...",
+                entityFilter: "..."
             }
         }
         ....
      }
     **/
 
-    function getDeviceFilter(alias) {
-        if (alias.deviceId) {
-            return {
-                useFilter: false,
-                deviceNameFilter: '',
-                deviceList: [alias.deviceId]
-            };
-        } else {
-            return alias.deviceFilter;
-        }
-    }
-
-    function prepareAliasInfo(deviceAlias) {
+    function prepareAliasInfo(entityAlias) {
         return {
-            aliasName: deviceAlias.alias,
-            deviceFilter: getDeviceFilter(deviceAlias)
+            aliasName: entityAlias.alias,
+            entityType: entityAlias.entityType,
+            entityFilter: entityAlias.entityFilter
         };
     }
 
@@ -86,15 +77,15 @@ function ItemBuffer(bufferStore, types) {
             originalColumns = dashboard.configuration.gridSettings.columns;
         }
         if (widget.config && dashboard.configuration
-            && dashboard.configuration.deviceAliases) {
-            var deviceAlias;
+            && dashboard.configuration.entityAliases) {
+            var entityAlias;
             if (widget.config.datasources) {
                 for (var i=0;i<widget.config.datasources.length;i++) {
                     var datasource = widget.config.datasources[i];
-                    if (datasource.type === types.datasourceType.device && datasource.deviceAliasId) {
-                        deviceAlias = dashboard.configuration.deviceAliases[datasource.deviceAliasId];
-                        if (deviceAlias) {
-                            aliasesInfo.datasourceAliases[i] = prepareAliasInfo(deviceAlias);
+                    if (datasource.type === types.datasourceType.entity && datasource.entityAliasId) {
+                        entityAlias = dashboard.configuration.entityAliases[datasource.entityAliasId];
+                        if (entityAlias) {
+                            aliasesInfo.datasourceAliases[i] = prepareAliasInfo(entityAlias);
                         }
                     }
                 }
@@ -103,9 +94,9 @@ function ItemBuffer(bufferStore, types) {
                 for (i=0;i<widget.config.targetDeviceAliasIds.length;i++) {
                     var targetDeviceAliasId = widget.config.targetDeviceAliasIds[i];
                     if (targetDeviceAliasId) {
-                        deviceAlias = dashboard.configuration.deviceAliases[targetDeviceAliasId];
-                        if (deviceAlias) {
-                            aliasesInfo.targetDeviceAliases[i] = prepareAliasInfo(deviceAlias);
+                        entityAlias = dashboard.configuration.entityAliases[targetDeviceAliasId];
+                        if (entityAlias) {
+                            aliasesInfo.targetDeviceAliases[i] = prepareAliasInfo(entityAlias);
                         }
                     }
                 }
@@ -151,17 +142,11 @@ function ItemBuffer(bufferStore, types) {
         } else {
             theDashboard = {};
         }
-        if (!theDashboard.configuration) {
-            theDashboard.configuration = {};
-        }
-        if (!theDashboard.configuration.deviceAliases) {
-            theDashboard.configuration.deviceAliases = {};
-        }
-        var newDeviceAliases = updateAliases(theDashboard, widget, aliasesInfo);
 
-        if (!theDashboard.configuration.widgets) {
-            theDashboard.configuration.widgets = [];
-        }
+        theDashboard = dashboardUtils.validateAndUpdateDashboard(theDashboard);
+
+        var newEntityAliases = updateAliases(theDashboard, widget, aliasesInfo);
+
         var targetColumns = 24;
         if (theDashboard.configuration.gridSettings &&
             theDashboard.configuration.gridSettings.columns) {
@@ -187,9 +172,9 @@ function ItemBuffer(bufferStore, types) {
             widget.row = row;
             widget.col = 0;
         }
-        var aliasesUpdated = !angular.equals(newDeviceAliases, theDashboard.configuration.deviceAliases);
+        var aliasesUpdated = !angular.equals(newEntityAliases, theDashboard.configuration.entityAliases);
         if (aliasesUpdated) {
-            theDashboard.configuration.deviceAliases = newDeviceAliases;
+            theDashboard.configuration.entityAliases = newEntityAliases;
             if (onAliasesUpdate) {
                 onAliasesUpdate();
             }
@@ -199,57 +184,56 @@ function ItemBuffer(bufferStore, types) {
     }
 
     function updateAliases(dashboard, widget, aliasesInfo) {
-        var deviceAliases = angular.copy(dashboard.configuration.deviceAliases);
+        var entityAliases = angular.copy(dashboard.configuration.entityAliases);
         var aliasInfo;
         var newAliasId;
         for (var datasourceIndex in aliasesInfo.datasourceAliases) {
             aliasInfo = aliasesInfo.datasourceAliases[datasourceIndex];
-            newAliasId = getDeviceAliasId(deviceAliases, aliasInfo);
-            widget.config.datasources[datasourceIndex].deviceAliasId = newAliasId;
+            newAliasId = getEntityAliasId(entityAliases, aliasInfo);
+            widget.config.datasources[datasourceIndex].entityAliasId = newAliasId;
         }
         for (var targetDeviceAliasIndex in aliasesInfo.targetDeviceAliases) {
             aliasInfo = aliasesInfo.targetDeviceAliases[targetDeviceAliasIndex];
-            newAliasId = getDeviceAliasId(deviceAliases, aliasInfo);
+            newAliasId = getEntityAliasId(entityAliases, aliasInfo);
             widget.config.targetDeviceAliasIds[targetDeviceAliasIndex] = newAliasId;
         }
-        return deviceAliases;
+        return entityAliases;
     }
 
-    function isDeviceFiltersEqual(alias1, alias2) {
-        var filter1 = getDeviceFilter(alias1);
-        var filter2 = getDeviceFilter(alias2);
-        return angular.equals(filter1, filter2);
+    function isEntityAliasEqual(alias1, alias2) {
+        return alias1.entityType === alias2.entityType &&
+            angular.equals(alias1.entityFilter, alias2.entityFilter);
     }
 
-    function getDeviceAliasId(deviceAliases, aliasInfo) {
+    function getEntityAliasId(entityAliases, aliasInfo) {
         var newAliasId;
-        for (var aliasId in deviceAliases) {
-            if (isDeviceFiltersEqual(deviceAliases[aliasId], aliasInfo)) {
+        for (var aliasId in entityAliases) {
+            if (isEntityAliasEqual(entityAliases[aliasId], aliasInfo)) {
                 newAliasId = aliasId;
                 break;
             }
         }
         if (!newAliasId) {
-            var newAliasName = createDeviceAliasName(deviceAliases, aliasInfo.aliasName);
+            var newAliasName = createEntityAliasName(entityAliases, aliasInfo.aliasName);
             newAliasId = 0;
-            for (aliasId in deviceAliases) {
+            for (aliasId in entityAliases) {
                 newAliasId = Math.max(newAliasId, aliasId);
             }
             newAliasId++;
-            deviceAliases[newAliasId] = {alias: newAliasName, deviceFilter: aliasInfo.deviceFilter};
+            entityAliases[newAliasId] = {alias: newAliasName, entityType: aliasInfo.entityType, entityFilter: aliasInfo.entityFilter};
         }
         return newAliasId;
     }
 
-    function createDeviceAliasName(deviceAliases, alias) {
+    function createEntityAliasName(entityAliases, alias) {
         var c = 0;
         var newAlias = angular.copy(alias);
         var unique = false;
         while (!unique) {
             unique = true;
-            for (var devAliasId in deviceAliases) {
-                var devAlias = deviceAliases[devAliasId];
-                if (newAlias === devAlias.alias) {
+            for (var entAliasId in entityAliases) {
+                var entAlias = entityAliases[entAliasId];
+                if (newAlias === entAlias.alias) {
                     c++;
                     newAlias = alias + c;
                     unique = false;

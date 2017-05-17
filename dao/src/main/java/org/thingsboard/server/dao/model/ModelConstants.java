@@ -126,6 +126,49 @@ public class ModelConstants {
     public static final String DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_and_search_text";
     public static final String DEVICE_BY_TENANT_AND_NAME_VIEW_NAME = "device_by_tenant_and_name";
 
+    /**
+     * Cassandra asset constants.
+     */
+    public static final String ASSET_COLUMN_FAMILY_NAME = "asset";
+    public static final String ASSET_TENANT_ID_PROPERTY = TENTANT_ID_PROPERTY;
+    public static final String ASSET_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ASSET_NAME_PROPERTY = "name";
+    public static final String ASSET_TYPE_PROPERTY = "type";
+    public static final String ASSET_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
+    public static final String ASSET_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "asset_by_tenant_and_search_text";
+    public static final String ASSET_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "asset_by_customer_and_search_text";
+    public static final String ASSET_BY_TENANT_AND_NAME_VIEW_NAME = "asset_by_tenant_and_name";
+
+    /**
+     * Cassandra alarm constants.
+     */
+    public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
+    public static final String ALARM_TENANT_ID_PROPERTY = TENTANT_ID_PROPERTY;
+    public static final String ALARM_TYPE_PROPERTY = "type";
+    public static final String ALARM_DETAILS_PROPERTY = "details";
+    public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
+    public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
+    public static final String ALARM_SEVERITY_PROPERTY = "severity";
+    public static final String ALARM_STATUS_PROPERTY = "status";
+    public static final String ALARM_START_TS_PROPERTY = "start_ts";
+    public static final String ALARM_END_TS_PROPERTY = "end_ts";
+    public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
+    public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
+    public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
+
+    /**
+     * Cassandra entity relation constants.
+     */
+    public static final String RELATION_COLUMN_FAMILY_NAME = "relation";
+    public static final String RELATION_FROM_ID_PROPERTY = "from_id";
+    public static final String RELATION_FROM_TYPE_PROPERTY = "from_type";
+    public static final String RELATION_TO_ID_PROPERTY = "to_id";
+    public static final String RELATION_TO_TYPE_PROPERTY = "to_type";
+    public static final String RELATION_TYPE_PROPERTY = "relation_type";
+
+    public static final String RELATION_REVERSE_VIEW_NAME = "reverse_relation";
+
 
     /**
      * Cassandra device_credentials constants.

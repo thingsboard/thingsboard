@@ -18,7 +18,6 @@ package org.thingsboard.server.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -59,7 +58,7 @@ public class EventController extends BaseController {
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(eventService.findEvents(tenantId, getEntityId(strEntityType, strEntityId), eventType, pageLink));
+            return checkNotNull(eventService.findEvents(tenantId, EntityIdFactory.getByTypeAndId(strEntityType, strEntityId), eventType, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -88,29 +87,10 @@ public class EventController extends BaseController {
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
-            return checkNotNull(eventService.findEvents(tenantId, getEntityId(strEntityType, strEntityId), pageLink));
+            return checkNotNull(eventService.findEvents(tenantId, EntityIdFactory.getByTypeAndId(strEntityType, strEntityId), pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-
-    private EntityId getEntityId(String strEntityType, String strEntityId) throws ThingsboardException {
-        EntityId entityId;
-        EntityType entityType = EntityType.valueOf(strEntityType);
-        switch (entityType) {
-            case RULE:
-                entityId = new RuleId(toUUID(strEntityId));
-                break;
-            case PLUGIN:
-                entityId = new PluginId(toUUID(strEntityId));
-                break;
-            case DEVICE:
-                entityId = new DeviceId(toUUID(strEntityId));
-                break;
-            default:
-                throw new ThingsboardException("EntityType ['" + entityType + "'] is incorrect!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-        return entityId;
-    }
 }

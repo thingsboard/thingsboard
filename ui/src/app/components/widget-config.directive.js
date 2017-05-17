@@ -16,7 +16,7 @@
 import jsonSchemaDefaults from 'json-schema-defaults';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
-import thingsboardDeviceAliasSelect from './device-alias-select.directive';
+import thingsboardEntityAliasSelect from './entity-alias-select.directive';
 import thingsboardDatasource from './datasource.directive';
 import thingsboardTimewindow from './timewindow.directive';
 import thingsboardLegendConfig from './legend-config.directive';
@@ -34,7 +34,7 @@ import widgetConfigTemplate from './widget-config.tpl.html';
 export default angular.module('thingsboard.directives.widgetConfig', [thingsboardTypes,
     thingsboardUtils,
     thingsboardJsonForm,
-    thingsboardDeviceAliasSelect,
+    thingsboardEntityAliasSelect,
     thingsboardDatasource,
     thingsboardTimewindow,
     thingsboardLegendConfig,
@@ -127,9 +127,9 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                 } else if (scope.widgetType === types.widgetType.rpc.value && scope.isDataEnabled) {
                     if (ngModelCtrl.$viewValue.targetDeviceAliasIds && ngModelCtrl.$viewValue.targetDeviceAliasIds.length > 0) {
                         var aliasId = ngModelCtrl.$viewValue.targetDeviceAliasIds[0];
-                        if (scope.deviceAliases[aliasId]) {
-                            scope.targetDeviceAlias.value = {id: aliasId, alias: scope.deviceAliases[aliasId].alias,
-                                deviceId: scope.deviceAliases[aliasId].deviceId};
+                        if (scope.entityAliases[aliasId]) {
+                            scope.targetDeviceAlias.value = {id: aliasId, alias: scope.entityAliases[aliasId].alias,
+                                entityType: scope.entityAliases[aliasId].entityType, entityId: scope.entityAliases[aliasId].entityId};
                         } else {
                             scope.targetDeviceAlias.value = null;
                         }
@@ -269,7 +269,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                 newDatasource = angular.copy(utils.getDefaultDatasource(scope.datakeySettingsSchema.schema));
                 newDatasource.dataKeys = [scope.generateDataKey('Sin', types.dataKeyType.function)];
             } else {
-                newDatasource = { type: types.datasourceType.device,
+                newDatasource = { type: types.datasourceType.entity,
                     dataKeys: []
                 };
             }
@@ -368,10 +368,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             widgetType: '=',
             widgetSettingsSchema: '=',
             datakeySettingsSchema: '=',
-            deviceAliases: '=',
+            entityAliases: '=',
             functionsOnly: '=',
-            fetchDeviceKeys: '&',
-            onCreateDeviceAlias: '&',
+            fetchEntityKeys: '&',
+            onCreateEntityAlias: '&',
             theForm: '='
         },
         link: linker

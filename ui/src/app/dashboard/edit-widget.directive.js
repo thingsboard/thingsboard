@@ -15,13 +15,13 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import deviceAliasesTemplate from './device-aliases.tpl.html';
+import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
 import editWidgetTemplate from './edit-widget.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EditWidgetDirective($compile, $templateCache, widgetService, deviceService, $q, $document, $mdDialog) {
+export default function EditWidgetDirective($compile, $templateCache, types, widgetService, entityService, $q, $document, $mdDialog) {
 
     var linker = function (scope, element) {
         var template = $templateCache.get(editWidgetTemplate);
@@ -58,45 +58,46 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
             }
         });
 
-        scope.fetchDeviceKeys = function (deviceAliasId, query, type) {
-            var deviceAlias = scope.aliasesInfo.deviceAliases[deviceAliasId];
-            if (deviceAlias && deviceAlias.deviceId) {
-                return deviceService.getDeviceKeys(deviceAlias.deviceId, query, type);
+        scope.fetchEntityKeys = function (entityAliasId, query, type) {
+            var entityAlias = scope.aliasesInfo.entityAliases[entityAliasId];
+            if (entityAlias && entityAlias.entityId) {
+                return entityService.getEntityKeys(entityAlias.entityType, entityAlias.entityId, query, type);
             } else {
                 return $q.when([]);
             }
         };
 
-        scope.createDeviceAlias = function (event, alias) {
+        scope.createEntityAlias = function (event, alias, allowedEntityTypes) {
 
             var deferred = $q.defer();
-            var singleDeviceAlias = {id: null, alias: alias, deviceFilter: null};
+            var singleEntityAlias = {id: null, alias: alias, entityType: types.entityType.device, entityFilter: null};
 
             $mdDialog.show({
-                controller: 'DeviceAliasesController',
+                controller: 'EntityAliasesController',
                 controllerAs: 'vm',
-                templateUrl: deviceAliasesTemplate,
+                templateUrl: entityAliasesTemplate,
                 locals: {
                     config: {
-                        deviceAliases: angular.copy(scope.dashboard.configuration.deviceAliases),
+                        entityAliases: angular.copy(scope.dashboard.configuration.entityAliases),
                         widgets: null,
-                        isSingleDeviceAlias: true,
-                        singleDeviceAlias: singleDeviceAlias
+                        isSingleEntityAlias: true,
+                        singleEntityAlias: singleEntityAlias,
+                        allowedEntityTypes: allowedEntityTypes
                     }
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,
                 skipHide: true,
                 targetEvent: event
-            }).then(function (singleDeviceAlias) {
-                scope.dashboard.configuration.deviceAliases[singleDeviceAlias.id] =
-                            { alias: singleDeviceAlias.alias, deviceFilter: singleDeviceAlias.deviceFilter };
-                deviceService.processDeviceAliases(scope.dashboard.configuration.deviceAliases).then(
+            }).then(function (singleEntityAlias) {
+                scope.dashboard.configuration.entityAliases[singleEntityAlias.id] =
+                            { alias: singleEntityAlias.alias, entityType: singleEntityAlias.entityType, entityFilter: singleEntityAlias.entityFilter };
+                entityService.processEntityAliases(scope.dashboard.configuration.entityAliases).then(
                     function(resolution) {
                         if (!resolution.error) {
                             scope.aliasesInfo = resolution.aliasesInfo;
                         }
-                        deferred.resolve(singleDeviceAlias);
+                        deferred.resolve(singleEntityAlias);
                     }
                 );
             }, function () {

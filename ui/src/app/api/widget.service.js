@@ -20,6 +20,8 @@ import tinycolor from 'tinycolor2';
 import thingsboardLedLight from '../components/led-light.directive';
 import thingsboardTimeseriesTableWidget from '../widget/lib/timeseries-table-widget';
 
+import agrologWidgets from '../widget/lib/agrolog';
+
 import TbFlot from '../widget/lib/flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
 import TbAnalogueRadialGauge from '../widget/lib/analogue-radial-gauge';
@@ -32,7 +34,7 @@ import cssjs from '../../vendor/css.js/css';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
 
-export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget,
+export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget, agrologWidgets,
     thingsboardTypes, thingsboardUtils])
     .factory('widgetService', WidgetService)
     .name;
