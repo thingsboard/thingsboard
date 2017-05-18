@@ -25,13 +25,12 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.service.AlarmServiceTest",
-//        "org.thingsboard.server.dao.service.*Test",
-//        "org.thingsboard.server.dao.kv.*Test",
-//        "org.thingsboard.server.dao.plugin.*Test",
-//        "org.thingsboard.server.dao.rule.*Test",
-//        "org.thingsboard.server.dao.attributes.*Test",
-//        "org.thingsboard.server.dao.timeseries.*Test"
+        "org.thingsboard.server.dao.service.*Test",
+        "org.thingsboard.server.dao.kv.*Test",
+        "org.thingsboard.server.dao.plugin.*Test",
+        "org.thingsboard.server.dao.rule.*Test",
+        "org.thingsboard.server.dao.attributes.*Test",
+        "org.thingsboard.server.dao.timeseries.*Test"
 })
 public class DaoTestSuite {
 
