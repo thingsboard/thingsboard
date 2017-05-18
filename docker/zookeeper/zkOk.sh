@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Copyright 2016 The Kubernetes Authors.
+#
+# Copyright © 2016-2017 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 # zkOk.sh uses the ruok ZooKeeper four letter work to determine if the instance
 # is health. The $? variable will be set to 0 if server responds that it is 
