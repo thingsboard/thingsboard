@@ -809,7 +809,9 @@ export default function addLocaleChinese(locales) {
             "language" : "语言",
             "en_US" : "英语",
             "ko_KR" : "韩语",
-            "zh_CN" : "汉语"
+            "zh_CN" : "汉语",
+            "ru_RU" : "俄语",
+            "es_ES": "西班牙語"
         }
     };
     angular.extend(locales, {

@@ -811,7 +811,9 @@ export default angular.module('thingsboard.locale', [])
                     "language": "Language",
                     "en_US": "English",
                     "ko_KR": "Korean",
-                    "zh_CN": "Chinese"
+                    "zh_CN": "Chinese",
+                    "ru_RU": "Russian",
+                    "es_ES": "Spanish"
                 }
             }
         }

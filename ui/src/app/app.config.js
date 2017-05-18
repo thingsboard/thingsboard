@@ -17,6 +17,8 @@ import injectTapEventPlugin from 'react-tap-event-plugin';
 import UrlHandler from './url.handler';
 import addLocaleKorean from './locale/locale.constant-ko';
 import addLocaleChinese from './locale/locale.constant-zh';
+import addLocaleRussian from './locale/locale.constant-ru';
+import addLocaleSpanish from './locale/locale.constant-es';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -52,6 +54,9 @@ export default function AppConfig($provide,
 
     addLocaleKorean(locales);
     addLocaleChinese(locales);
+    addLocaleRussian(locales);
+    addLocaleSpanish(locales);
+
     var $window = angular.injector(['ng']).get('$window');
     var lang = $window.navigator.language || $window.navigator.userLanguage;
     if (lang === 'ko') {
@@ -60,6 +65,9 @@ export default function AppConfig($provide,
     } else if (lang === 'zh') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('zh_CN');
+    } else if (lang === 'es') {
+        $translateProvider.useSanitizeValueStrategy(null);
+        $translateProvider.preferredLanguage('es_ES');
     }
 
     for (var langKey in locales) {

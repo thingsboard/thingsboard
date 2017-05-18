@@ -266,6 +266,10 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         type: types.dataKeyType.timeseries,
                         onData: function (data) {
                             if (data.data) {
+                                for (var key in data.data) {
+                                    var keyData = data.data[key];
+                                    data.data[key] = $filter('orderBy')(keyData, '+this[0]');
+                                }
                                 onData(data.data, types.dataKeyType.timeseries, true);
                             }
                         },
