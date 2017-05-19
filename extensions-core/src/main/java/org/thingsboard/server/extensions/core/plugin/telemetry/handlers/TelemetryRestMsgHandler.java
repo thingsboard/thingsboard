@@ -139,11 +139,6 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                 }
             }
         }
-                    if (vList == null) {
-                        vList = new ArrayList<>();
-                        result.put(entry.getKey(), vList);
-                    }
-                    vList.add(new TsData(entry.getTs(), entry.getValueAsString()));
     }
 
     @Override

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.datastax.driver.core.utils.UUIDs;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -171,7 +172,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         device.setName("My device");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
-        doPost("/api/customer/" + UUIDs.timeBased().toString() 
+        doPost("/api/customer/" + UUIDs.timeBased().toString()
                 + "/device/" + savedDevice.getId().getId().toString())
         .andExpect(status().isNotFound());
     }
