@@ -30,7 +30,7 @@ import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
 import org.thingsboard.server.extensions.api.rules.RuleException;
 import org.thingsboard.server.extensions.core.action.rpc.RpcPluginAction;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -51,7 +51,7 @@ public class TimePlugin extends AbstractPlugin<TimePluginConfiguration> implemen
 
             String reply;
             if (!StringUtils.isEmpty(format)) {
-                reply = "\"" + formatter.format(LocalDateTime.now()) + "\"";
+                reply = "\"" + formatter.format(ZonedDateTime.now()) + "\"";
             } else {
                 reply = Long.toString(System.currentTimeMillis());
             }

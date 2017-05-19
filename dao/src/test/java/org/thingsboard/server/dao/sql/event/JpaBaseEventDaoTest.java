@@ -71,6 +71,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         String eventType = STATS;
         String eventUid = "be41c7a3-31f5-11e7-9cfd-2786e6aa2046";
         Event event = eventDao.findEvent(tenantId, new DeviceId(entityId), eventType, eventUid);
+        eventDao.find().stream().forEach(System.out::println);
         assertNotNull("Event expected to be not null", event);
         assertEquals("be41c7a2-31f5-11e7-9cfd-2786e6aa2046", event.getId().getId().toString());
     }

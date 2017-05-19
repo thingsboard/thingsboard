@@ -55,6 +55,13 @@ public class RestApiCallPlugin extends AbstractPlugin<RestApiCallPluginConfigura
             this.headers.add(AUTHORIZATION_HEADER_NAME, String.format(AUTHORIZATION_HEADER_FORMAT, new String(token)));
         }
 
+        if (configuration.getHeaders() != null) {
+            configuration.getHeaders().forEach(h -> {
+                log.debug("Adding header to request object. Key = {}, Value = {}", h.getKey(), h.getValue());
+                this.headers.add(h.getKey(), h.getValue());
+            });
+        }
+
         init();
     }
 

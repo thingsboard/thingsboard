@@ -16,7 +16,7 @@
 import jsonSchemaDefaults from 'json-schema-defaults';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
-import thingsboardDeviceAliasSelect from './device-alias-select.directive';
+import thingsboardEntityAliasSelect from './entity-alias-select.directive';
 import thingsboardDatasource from './datasource.directive';
 import thingsboardTimewindow from './timewindow.directive';
 import thingsboardLegendConfig from './legend-config.directive';
@@ -34,7 +34,7 @@ import widgetConfigTemplate from './widget-config.tpl.html';
 export default angular.module('thingsboard.directives.widgetConfig', [thingsboardTypes,
     thingsboardUtils,
     thingsboardJsonForm,
-    thingsboardDeviceAliasSelect,
+    thingsboardEntityAliasSelect,
     thingsboardDatasource,
     thingsboardTimewindow,
     thingsboardLegendConfig,
@@ -76,6 +76,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             scope.forceExpandDatasources = false;
         }
 
+        if (angular.isUndefined(scope.isDataEnabled)) {
+            scope.isDataEnabled = true;
+        }
+
         scope.currentSettingsSchema = {};
         scope.currentSettings = angular.copy(scope.emptySettingsSchema);
 
@@ -108,7 +112,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                 scope.showLegend = angular.isDefined(ngModelCtrl.$viewValue.showLegend) ?
                     ngModelCtrl.$viewValue.showLegend : scope.widgetType === types.widgetType.timeseries.value;
                 scope.legendConfig = ngModelCtrl.$viewValue.legendConfig;
-                if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value) {
+                if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value
+                    && scope.isDataEnabled) {
                     if (scope.datasources) {
                         scope.datasources.splice(0, scope.datasources.length);
                     } else {
@@ -119,12 +124,12 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                             scope.datasources.push({value: ngModelCtrl.$viewValue.datasources[i]});
                         }
                     }
-                } else if (scope.widgetType === types.widgetType.rpc.value) {
+                } else if (scope.widgetType === types.widgetType.rpc.value && scope.isDataEnabled) {
                     if (ngModelCtrl.$viewValue.targetDeviceAliasIds && ngModelCtrl.$viewValue.targetDeviceAliasIds.length > 0) {
                         var aliasId = ngModelCtrl.$viewValue.targetDeviceAliasIds[0];
-                        if (scope.deviceAliases[aliasId]) {
-                            scope.targetDeviceAlias.value = {id: aliasId, alias: scope.deviceAliases[aliasId].alias,
-                                deviceId: scope.deviceAliases[aliasId].deviceId};
+                        if (scope.entityAliases[aliasId]) {
+                            scope.targetDeviceAlias.value = {id: aliasId, alias: scope.entityAliases[aliasId].alias,
+                                entityType: scope.entityAliases[aliasId].entityType, entityId: scope.entityAliases[aliasId].entityId};
                         } else {
                             scope.targetDeviceAlias.value = null;
                         }
@@ -159,10 +164,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 var valid;
-                if (scope.widgetType === types.widgetType.rpc.value) {
+                if (scope.widgetType === types.widgetType.rpc.value && scope.isDataEnabled) {
                     valid = value && value.targetDeviceAliasIds && value.targetDeviceAliasIds.length > 0;
                     ngModelCtrl.$setValidity('targetDeviceAliasIds', valid);
-                } else if (scope.widgetType !== types.widgetType.static.value) {
+                } else if (scope.widgetType !== types.widgetType.static.value && scope.isDataEnabled) {
                     valid = value && value.datasources && value.datasources.length > 0;
                     ngModelCtrl.$setValidity('datasources', valid);
                 }
@@ -228,7 +233,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
 
         scope.$watch('datasources', function () {
             if (ngModelCtrl.$viewValue && scope.widgetType !== types.widgetType.rpc.value
-                && scope.widgetType !== types.widgetType.static.value) {
+                && scope.widgetType !== types.widgetType.static.value && scope.isDataEnabled) {
                 var value = ngModelCtrl.$viewValue;
                 if (value.datasources) {
                     value.datasources.splice(0, value.datasources.length);
@@ -246,7 +251,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
         }, true);
 
         scope.$watch('targetDeviceAlias.value', function () {
-            if (ngModelCtrl.$viewValue && scope.widgetType === types.widgetType.rpc.value) {
+            if (ngModelCtrl.$viewValue && scope.widgetType === types.widgetType.rpc.value && scope.isDataEnabled) {
                 var value = ngModelCtrl.$viewValue;
                 if (scope.targetDeviceAlias.value) {
                     value.targetDeviceAliasIds = [scope.targetDeviceAlias.value.id];
@@ -264,7 +269,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                 newDatasource = angular.copy(utils.getDefaultDatasource(scope.datakeySettingsSchema.schema));
                 newDatasource.dataKeys = [scope.generateDataKey('Sin', types.dataKeyType.function)];
             } else {
-                newDatasource = { type: types.datasourceType.device,
+                newDatasource = { type: types.datasourceType.entity,
                     dataKeys: []
                 };
             }
@@ -359,13 +364,14 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
         require: "^ngModel",
         scope: {
             forceExpandDatasources: '=?',
+            isDataEnabled: '=?',
             widgetType: '=',
             widgetSettingsSchema: '=',
             datakeySettingsSchema: '=',
-            deviceAliases: '=',
+            entityAliases: '=',
             functionsOnly: '=',
-            fetchDeviceKeys: '&',
-            onCreateDeviceAlias: '&',
+            fetchEntityKeys: '&',
+            onCreateEntityAlias: '&',
             theForm: '='
         },
         link: linker

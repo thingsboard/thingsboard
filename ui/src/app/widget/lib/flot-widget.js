@@ -34,39 +34,12 @@ export default class TbFlot {
         this.chartType = chartType || 'line';
         var settings = ctx.settings;
 
-        var colors = [];
-        for (var i = 0; i < ctx.data.length; i++) {
-            var series = ctx.data[i];
-            colors.push(series.dataKey.color);
-            var keySettings = series.dataKey.settings;
-
-            series.lines = {
-                fill: keySettings.fillLines === true,
-                show: this.chartType === 'line' ? keySettings.showLines !== false : keySettings.showLines === true
-            };
-
-            series.points = {
-                show: false,
-                radius: 8
-            };
-            if (keySettings.showPoints === true) {
-                series.points.show = true;
-                series.points.lineWidth = 5;
-                series.points.radius = 3;
-            }
-
             if (this.chartType === 'line' && settings.smoothLines && !series.points.show) {
                 series.curvedLines = {
                     apply: true
                 }
             }
 
-            var lineColor = tinycolor(series.dataKey.color);
-            lineColor.setAlpha(.75);
-
-            series.highlightColor = lineColor.toRgbString();
-
-        }
         ctx.tooltip = $('#flot-series-tooltip');
         if (ctx.tooltip.length === 0) {
             ctx.tooltip = $("<div id='flot-series-tooltip' class='flot-mouse-value'></div>");
@@ -183,7 +156,6 @@ export default class TbFlot {
         };
 
         var options = {
-            colors: colors,
             title: null,
             subtitle: null,
             shadowSize: settings.shadowSize || 4,
@@ -290,14 +262,10 @@ export default class TbFlot {
                 }
                 options.series.bars ={
                         show: true,
-                        barWidth: ctx.timeWindow.interval * 0.6,
                         lineWidth: 0,
                         fill: 0.9
                 }
             }
-
-            options.xaxis.min = ctx.timeWindow.minTime;
-            options.xaxis.max = ctx.timeWindow.maxTime;
         } else if (this.chartType === 'pie') {
             options.series = {
                 pie: {
@@ -340,55 +308,121 @@ export default class TbFlot {
 
         this.options = options;
 
+        if (this.ctx.defaultSubscription) {
+            this.init(this.ctx.$container, this.ctx.defaultSubscription);
+        }
+    }
+
+    init($element, subscription) {
+        this.subscription = subscription;
+        this.$element = $element;
+        var colors = [];
+        for (var i = 0; i < this.subscription.data.length; i++) {
+            var series = this.subscription.data[i];
+            colors.push(series.dataKey.color);
+            var keySettings = series.dataKey.settings;
+
+            series.lines = {
+                fill: keySettings.fillLines === true,
+                show: this.chartType === 'line' ? keySettings.showLines !== false : keySettings.showLines === true
+            };
+
+            series.points = {
+                show: false,
+                radius: 8
+            };
+            if (keySettings.showPoints === true) {
+                series.points.show = true;
+                series.points.lineWidth = 5;
+                series.points.radius = 3;
+            }
+
+            if (this.chartType === 'line' && this.ctx.settings.smoothLines && !series.points.show) {
+                series.curvedLines = {
+                    apply: true
+                }
+            }
+
+            var lineColor = tinycolor(series.dataKey.color);
+            lineColor.setAlpha(.75);
+
+            series.highlightColor = lineColor.toRgbString();
+
+        }
+        this.options.colors = colors;
+        if (this.chartType === 'line' || this.chartType === 'bar') {
+            if (this.chartType === 'bar') {
+                this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+            }
+            this.options.xaxis.min = this.subscription.timeWindow.minTime;
+            this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+        }
+
         this.checkMouseEvents();
 
+        if (this.ctx.plot) {
+            this.ctx.plot.destroy();
+        }
         if (this.chartType === 'pie' && this.ctx.animatedPie) {
             this.ctx.pieDataAnimationDuration = 250;
-            this.ctx.pieData = angular.copy(this.ctx.data);
+            this.pieData = angular.copy(this.subscription.data);
             this.ctx.pieRenderedData = [];
             this.ctx.pieTargetData = [];
-            for (i = 0; i < this.ctx.data.length; i++) {
-                this.ctx.pieTargetData[i] = (this.ctx.data[i].data && this.ctx.data[i].data[0])
-                    ? this.ctx.data[i].data[0][1] : 0;
+            for (i = 0; i < this.subscription.data.length; i++) {
+                this.ctx.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
+                    ? this.subscription.data[i].data[0][1] : 0;
             }
             this.pieDataRendered();
-            this.ctx.plot = $.plot(this.ctx.$container, this.ctx.pieData, this.options);
+            this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
         } else {
-            this.ctx.plot = $.plot(this.ctx.$container, this.ctx.data, this.options);
+            this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
         }
     }
 
     update() {
-        if (!this.isMouseInteraction && this.ctx.plot) {
-            if (this.chartType === 'line' || this.chartType === 'bar') {
-                this.options.xaxis.min = this.ctx.timeWindow.minTime;
-                this.options.xaxis.max = this.ctx.timeWindow.maxTime;
-                this.ctx.plot.getOptions().xaxes[0].min = this.ctx.timeWindow.minTime;
-                this.ctx.plot.getOptions().xaxes[0].max = this.ctx.timeWindow.maxTime;
-                if (this.chartType === 'bar') {
-                    this.options.series.bars.barWidth = this.ctx.timeWindow.interval * 0.6;
-                    this.ctx.plot.getOptions().series.bars.barWidth = this.ctx.timeWindow.interval * 0.6;
-                }
-                this.ctx.plot.setData(this.ctx.data);
-                this.ctx.plot.setupGrid();
-                this.ctx.plot.draw();
-            } else if (this.chartType === 'pie') {
-                if (this.ctx.animatedPie) {
-                    this.nextPieDataAnimation(true);
-                } else {
-                    this.ctx.plot.setData(this.ctx.data);
+        if (this.updateTimeoutHandle) {
+            this.ctx.$scope.$timeout.cancel(this.updateTimeoutHandle);
+            this.updateTimeoutHandle = null;
+        }
+        if (this.subscription) {
+            if (!this.isMouseInteraction && this.ctx.plot) {
+                if (this.chartType === 'line' || this.chartType === 'bar') {
+                    this.options.xaxis.min = this.subscription.timeWindow.minTime;
+                    this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+                    this.ctx.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
+                    this.ctx.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
+                    if (this.chartType === 'bar') {
+                        this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                        this.ctx.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                    }
+                    this.ctx.plot.setData(this.subscription.data);
+                    this.ctx.plot.setupGrid();
                     this.ctx.plot.draw();
+                } else if (this.chartType === 'pie') {
+                    if (this.ctx.animatedPie) {
+                        this.nextPieDataAnimation(true);
+                    } else {
+                        this.ctx.plot.setData(this.subscription.data);
+                        this.ctx.plot.draw();
+                    }
                 }
+            } else if (this.isMouseInteraction && this.ctx.plot){
+                var tbFlot = this;
+                this.updateTimeoutHandle = this.ctx.$scope.$timeout(function() {
+                    tbFlot.update();
+                }, 30, false);
             }
         }
     }
 
     resize() {
-        this.ctx.plot.resize();
-        if (this.chartType !== 'pie') {
-            this.ctx.plot.setupGrid();
+        if (this.ctx.plot) {
+            this.ctx.plot.resize();
+            if (this.chartType !== 'pie') {
+                this.ctx.plot.setupGrid();
+            }
+            this.ctx.plot.draw();
         }
-        this.ctx.plot.draw();
     }
 
     static get pieSettingsSchema() {
@@ -708,17 +742,19 @@ export default class TbFlot {
         var enabled = !this.ctx.isMobile &&  !this.ctx.isEdit;
         if (angular.isUndefined(this.mouseEventsEnabled) || this.mouseEventsEnabled != enabled) {
             this.mouseEventsEnabled = enabled;
-            if (enabled) {
-                this.enableMouseEvents();
-            } else {
-                this.disableMouseEvents();
-            }
-            if (this.ctx.plot) {
-                this.ctx.plot.destroy();
-                if (this.chartType === 'pie' && this.ctx.animatedPie) {
-                    this.ctx.plot = $.plot(this.ctx.$container, this.ctx.pieData, this.options);
+            if (this.$element) {
+                if (enabled) {
+                    this.enableMouseEvents();
                 } else {
-                    this.ctx.plot = $.plot(this.ctx.$container, this.ctx.data, this.options);
+                    this.disableMouseEvents();
+                }
+                if (this.ctx.plot) {
+                    this.ctx.plot.destroy();
+                    if (this.chartType === 'pie' && this.ctx.animatedPie) {
+                        this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
+                    } else {
+                        this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
+                    }
                 }
             }
         }
@@ -732,8 +768,8 @@ export default class TbFlot {
     }
 
     enableMouseEvents() {
-        this.ctx.$container.css('pointer-events','');
-        this.ctx.$container.addClass('mouse-events');
+        this.$element.css('pointer-events','');
+        this.$element.addClass('mouse-events');
         this.options.selection = { mode : 'x' };
 
         var tbFlot = this;
@@ -794,33 +830,33 @@ export default class TbFlot {
                     tbFlot.ctx.plot.unhighlight();
                 }
             };
-            this.ctx.$container.bind('plothover', this.flotHoverHandler);
+            this.$element.bind('plothover', this.flotHoverHandler);
         }
 
         if (!this.flotSelectHandler) {
             this.flotSelectHandler =  function (event, ranges) {
                 tbFlot.ctx.plot.clearSelection();
-                tbFlot.ctx.timewindowFunctions.onUpdateTimewindow(ranges.xaxis.from, ranges.xaxis.to);
+                tbFlot.subscription.onUpdateTimewindow(ranges.xaxis.from, ranges.xaxis.to);
             };
-            this.ctx.$container.bind('plotselected', this.flotSelectHandler);
+            this.$element.bind('plotselected', this.flotSelectHandler);
         }
         if (!this.dblclickHandler) {
             this.dblclickHandler =  function () {
-                tbFlot.ctx.timewindowFunctions.onResetTimewindow();
+                tbFlot.subscription.onResetTimewindow();
             };
-            this.ctx.$container.bind('dblclick', this.dblclickHandler);
+            this.$element.bind('dblclick', this.dblclickHandler);
         }
         if (!this.mousedownHandler) {
             this.mousedownHandler =  function () {
                 tbFlot.isMouseInteraction = true;
             };
-            this.ctx.$container.bind('mousedown', this.mousedownHandler);
+            this.$element.bind('mousedown', this.mousedownHandler);
         }
         if (!this.mouseupHandler) {
             this.mouseupHandler =  function () {
                 tbFlot.isMouseInteraction = false;
             };
-            this.ctx.$container.bind('mouseup', this.mouseupHandler);
+            this.$element.bind('mouseup', this.mouseupHandler);
         }
         if (!this.mouseleaveHandler) {
             this.mouseleaveHandler =  function () {
@@ -829,38 +865,38 @@ export default class TbFlot {
                 tbFlot.ctx.plot.unhighlight();
                 tbFlot.isMouseInteraction = false;
             };
-            this.ctx.$container.bind('mouseleave', this.mouseleaveHandler);
+            this.$element.bind('mouseleave', this.mouseleaveHandler);
         }
     }
 
     disableMouseEvents() {
-        this.ctx.$container.css('pointer-events','none');
-        this.ctx.$container.removeClass('mouse-events');
+        this.$element.css('pointer-events','none');
+        this.$element.removeClass('mouse-events');
         this.options.selection = { mode : null };
 
         if (this.flotHoverHandler) {
-            this.ctx.$container.unbind('plothover', this.flotHoverHandler);
+            this.$element.unbind('plothover', this.flotHoverHandler);
             this.flotHoverHandler = null;
         }
 
         if (this.flotSelectHandler) {
-            this.ctx.$container.unbind('plotselected', this.flotSelectHandler);
+            this.$element.unbind('plotselected', this.flotSelectHandler);
             this.flotSelectHandler = null;
         }
         if (this.dblclickHandler) {
-            this.ctx.$container.unbind('dblclick', this.dblclickHandler);
+            this.$element.unbind('dblclick', this.dblclickHandler);
             this.dblclickHandler = null;
         }
         if (this.mousedownHandler) {
-            this.ctx.$container.unbind('mousedown', this.mousedownHandler);
+            this.$element.unbind('mousedown', this.mousedownHandler);
             this.mousedownHandler = null;
         }
         if (this.mouseupHandler) {
-            this.ctx.$container.unbind('mouseup', this.mouseupHandler);
+            this.$element.unbind('mouseup', this.mouseupHandler);
             this.mouseupHandler = null;
         }
         if (this.mouseleaveHandler) {
-            this.ctx.$container.unbind('mouseleave', this.mouseleaveHandler);
+            this.$element.unbind('mouseleave', this.mouseleaveHandler);
             this.mouseleaveHandler = null;
         }
     }
@@ -952,10 +988,10 @@ export default class TbFlot {
         for (var i = 0; i < this.ctx.pieTargetData.length; i++) {
             var value = this.ctx.pieTargetData[i] ? this.ctx.pieTargetData[i] : 0;
             this.ctx.pieRenderedData[i] = value;
-            if (!this.ctx.pieData[i].data[0]) {
-                this.ctx.pieData[i].data[0] = [0,0];
+            if (!this.pieData[i].data[0]) {
+                this.pieData[i].data[0] = [0,0];
             }
-            this.ctx.pieData[i].data[0][1] = value;
+            this.pieData[i].data[0][1] = value;
         }
     }
 
@@ -963,9 +999,9 @@ export default class TbFlot {
         if (start) {
             this.finishPieDataAnimation();
             this.ctx.pieAnimationStartTime = this.ctx.pieAnimationLastTime = Date.now();
-            for (var i = 0;  i < this.ctx.data.length; i++) {
-                this.ctx.pieTargetData[i] = (this.ctx.data[i].data && this.ctx.data[i].data[0])
-                    ? this.ctx.data[i].data[0][1] : 0;
+            for (var i = 0;  i < this.subscription.data.length; i++) {
+                this.ctx.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
+                    ? this.subscription.data[i].data[0][1] : 0;
             }
         }
         if (this.ctx.pieAnimationCaf) {
@@ -992,12 +1028,12 @@ export default class TbFlot {
                     var prevValue = this.ctx.pieRenderedData[i];
                     var targetValue = this.ctx.pieTargetData[i];
                     var value = prevValue + (targetValue - prevValue) * progress;
-                    if (!this.ctx.pieData[i].data[0]) {
-                        this.ctx.pieData[i].data[0] = [0,0];
+                    if (!this.pieData[i].data[0]) {
+                        this.pieData[i].data[0] = [0,0];
                     }
-                    this.ctx.pieData[i].data[0][1] = value;
+                    this.pieData[i].data[0][1] = value;
                 }
-                this.ctx.plot.setData(this.ctx.pieData);
+                this.ctx.plot.setData(this.pieData);
                 this.ctx.plot.draw();
                 this.ctx.pieAnimationLastTime = time;
             }
@@ -1007,7 +1043,7 @@ export default class TbFlot {
 
     finishPieDataAnimation() {
         this.pieDataRendered();
-        this.ctx.plot.setData(this.ctx.pieData);
+        this.ctx.plot.setData(this.pieData);
         this.ctx.plot.draw();
     }
 }

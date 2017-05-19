@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -58,5 +59,11 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
             return DaoUtil.convertDataList(customerRepository.findByTenantIdNextPage(pageLink.getLimit(), tenantId,
                     pageLink.getTextSearch(), pageLink.getIdOffset()));
         }
+    }
+
+    @Override
+    public Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title) {
+        // TODO: vsosliuk implement
+        return null;
     }
 }

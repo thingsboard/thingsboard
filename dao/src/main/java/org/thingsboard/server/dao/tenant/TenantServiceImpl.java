@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.tenant;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
@@ -37,21 +39,23 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
 
+import static org.thingsboard.server.dao.service.Validator.validateId;
+
 @Service
 @Slf4j
-public class TenantServiceImpl implements TenantService {
-    
+public class TenantServiceImpl extends BaseEntityService implements TenantService {
+
     private static final String DEFAULT_TENANT_REGION = "Global";
 
     @Autowired
     private TenantDao tenantDao;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private CustomerService customerService;
-    
+
     @Autowired
     private DeviceService deviceService;
 
@@ -66,12 +70,19 @@ public class TenantServiceImpl implements TenantService {
 
     @Autowired
     private PluginService pluginService;
-    
+
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         return tenantDao.findById(tenantId.getId());
+    }
+
+    @Override
+    public ListenableFuture<Tenant> findTenantByIdAsync(TenantId tenantId) {
+        log.trace("Executing TenantIdAsync [{}]", tenantId);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        return tenantDao.findByIdAsync(tenantId.getId());
     }
 
     @Override
@@ -94,6 +105,7 @@ public class TenantServiceImpl implements TenantService {
         ruleService.deleteRulesByTenantId(tenantId);
         pluginService.deletePluginsByTenantId(tenantId);
         tenantDao.removeById(tenantId.getId());
+        deleteEntityRelations(tenantId);
     }
 
     @Override
@@ -122,10 +134,10 @@ public class TenantServiceImpl implements TenantService {
                     }
                 }
     };
-    
+
     private PaginatedRemover<String, Tenant> tenantsRemover =
             new PaginatedRemover<String, Tenant>() {
-        
+
         @Override
         protected List<Tenant> findEntities(String region, TextPageLink pageLink) {
             return tenantDao.findTenantsByRegion(region, pageLink);

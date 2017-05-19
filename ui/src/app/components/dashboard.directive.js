@@ -182,12 +182,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
 
     vm.dashboardTimewindowApi = {
         onResetTimewindow: function() {
-            if (vm.originalDashboardTimewindow) {
+            $timeout(function() {
+                if (vm.originalDashboardTimewindow) {
                 $timeout(function() {
                     vm.dashboardTimewindow = angular.copy(vm.originalDashboardTimewindow);
                     vm.originalDashboardTimewindow = null;
                 }, 0);
-            }
+                }
+            }, 0);
         },
         onUpdateTimewindow: function(startTimeMs, endTimeMs) {
             if (!vm.originalDashboardTimewindow) {
@@ -272,8 +274,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
     });
 
-    $scope.$watch('vm.aliasesInfo.deviceAliases', function () {
-        $scope.$broadcast('deviceAliasListChanged', vm.aliasesInfo);
+    $scope.$watch('vm.aliasesInfo.entityAliases', function () {
+        $scope.$broadcast('entityAliasListChanged', vm.aliasesInfo);
     }, true);
 
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {

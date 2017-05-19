@@ -15,12 +15,15 @@
     limitations under the License.
 
 -->
+<md-button ng-click="onMakePublic({event: $event})"
+           ng-show="!isEdit && deviceScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+           class="md-raised md-primary">{{ 'device.make-public' | translate }}</md-button>
 <md-button ng-click="onAssignToCustomer({event: $event})"
            ng-show="!isEdit && deviceScope === 'tenant' && !isAssignedToCustomer"
            class="md-raised md-primary">{{ 'device.assign-to-customer' | translate }}</md-button>
-<md-button ng-click="onUnassignFromCustomer({event: $event})"
+<md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
            ng-show="!isEdit && (deviceScope === 'customer' || deviceScope === 'tenant') && isAssignedToCustomer"
-           class="md-raised md-primary">{{ 'device.unassign-from-customer' | translate }}</md-button>
+           class="md-raised md-primary">{{ isPublic ? 'device.make-private' : 'device.unassign-from-customer' | translate }}</md-button>
 <md-button ng-click="onManageCredentials({event: $event})"
            ng-show="!isEdit"
            class="md-raised md-primary">{{ (deviceScope === 'customer_user' ? 'device.view-credentials' : 'device.manage-credentials') | translate }}</md-button>
@@ -47,10 +50,14 @@
 
 <md-content class="md-padding" layout="column">
     <md-input-container class="md-block"
-                        ng-show="isAssignedToCustomer && deviceScope === 'tenant'">
+                        ng-show="!isEdit && isAssignedToCustomer && !isPublic && deviceScope === 'tenant'">
         <label translate>device.assignedToCustomer</label>
         <input ng-model="assignedCustomer.title" disabled>
     </md-input-container>
+    <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"
+         ng-show="!isEdit && isPublic && (deviceScope === 'customer' || deviceScope === 'tenant')">
+        {{ 'device.device-public' | translate }}
+    </div>
 	<fieldset ng-disabled="loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>device.name</label>

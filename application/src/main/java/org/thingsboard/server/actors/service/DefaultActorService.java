@@ -230,7 +230,7 @@ public class DefaultActorService implements ActorService {
     @Override
     public void onCredentialsUpdate(TenantId tenantId, DeviceId deviceId) {
         DeviceCredentialsUpdateNotificationMsg msg = new DeviceCredentialsUpdateNotificationMsg(tenantId, deviceId);
-        Optional<ServerAddress> address = actorContext.getRoutingService().resolve(deviceId);
+        Optional<ServerAddress> address = actorContext.getRoutingService().resolveById(deviceId);
         if (address.isPresent()) {
             rpcService.tell(address.get(), msg);
         } else {

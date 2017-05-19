@@ -104,7 +104,11 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
         parseException: parseException,
         processWidgetException: processWidgetException,
         isDescriptorSchemaNotEmpty: isDescriptorSchemaNotEmpty,
-        filterSearchTextEntities: filterSearchTextEntities
+        filterSearchTextEntities: filterSearchTextEntities,
+        guid: guid,
+        isLocalUrl: isLocalUrl,
+        validateDatasources: validateDatasources,
+        createKey: createKey
     }
 
     return service;
@@ -274,6 +278,72 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
             response.hasNext = true;
         }
         deferred.resolve(response);
+    }
+
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+            s4() + '-' + s4() + s4() + s4();
+    }
+
+    function genNextColor(datasources) {
+        var index = 0;
+        if (datasources) {
+            for (var i = 0; i < datasources.length; i++) {
+                var datasource = datasources[i];
+                index += datasource.dataKeys.length;
+            }
+        }
+        return getMaterialColor(index);
+    }
+
+    function isLocalUrl(url) {
+        var parser = document.createElement('a'); //eslint-disable-line
+        parser.href = url;
+        var host = parser.hostname;
+        if (host === "localhost" || host === "127.0.0.1") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function validateDatasources(datasources) {
+        datasources.forEach(function (datasource) {
+            if (datasource.type === 'device') {
+                datasource.type = types.datasourceType.entity;
+                datasource.entityType = types.entityType.device;
+                if (datasource.deviceId) {
+                    datasource.entityId = datasource.deviceId;
+                } else if (datasource.deviceAliasId) {
+                    datasource.entityAliasId = datasource.deviceAliasId;
+                }
+                if (datasource.deviceName) {
+                    datasource.entityName = datasource.deviceName;
+                }
+            }
+            if (datasource.type === types.datasourceType.entity && datasource.entityId) {
+                datasource.name = datasource.entityName;
+            }
+        });
+        return datasources;
+    }
+
+    function createKey(keyInfo, type, datasources) {
+        var dataKey = {
+            name: keyInfo.name,
+            type: type,
+            label: keyInfo.label || keyInfo.name,
+            color: genNextColor(datasources),
+            funcBody: keyInfo.funcBody,
+            settings: {},
+            _hash: Math.random()
+        }
+        return dataKey;
     }
 
 }

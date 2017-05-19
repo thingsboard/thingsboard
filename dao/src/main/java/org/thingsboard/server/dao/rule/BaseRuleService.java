@@ -17,10 +17,13 @@ package org.thingsboard.server.dao.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -31,9 +34,11 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DatabaseException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.model.AssetEntity;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -50,7 +55,7 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @Slf4j
-public class BaseRuleService implements RuleService {
+public class BaseRuleService extends BaseEntityService implements RuleService {
 
     private final TenantId systemTenantId = new TenantId(NULL_UUID);
 
@@ -164,6 +169,12 @@ public class BaseRuleService implements RuleService {
     }
 
     @Override
+    public ListenableFuture<RuleMetaData> findRuleByIdAsync(RuleId ruleId) {
+        validateId(ruleId, "Incorrect rule id for search rule request.");
+        return ruleDao.findByIdAsync(ruleId.getId());
+    }
+
+    @Override
     public List<RuleMetaData> findPluginRules(String pluginToken) {
         return ruleDao.findRulesByPlugin(pluginToken);
     }
@@ -228,6 +239,7 @@ public class BaseRuleService implements RuleService {
     @Override
     public void deleteRuleById(RuleId ruleId) {
         validateId(ruleId, "Incorrect rule id for delete rule request.");
+        deleteEntityRelations(ruleId);
         ruleDao.deleteById(ruleId);
     }
 

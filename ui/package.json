@@ -33,6 +33,7 @@
     "angular-messages": "1.5.8",
     "angular-route": "1.5.8",
     "angular-sanitize": "1.5.8",
+    "angular-socialshare": "^2.3.8",
     "angular-storage": "0.0.15",
     "angular-touch": "1.5.8",
     "angular-translate": "2.13.1",

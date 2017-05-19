@@ -3,7 +3,7 @@
         id="be41c7a2-31f5-11e7-9cfd-2786e6aa2046"
         tenant_id="be41c7a0-31f5-11e7-9cfd-2786e6aa2046"
         entity_id="be41c7a1-31f5-11e7-9cfd-2786e6aa2046"
-        entity_type="1"
+        entity_type="7"
         event_type="STATS"
         event_uid="be41c7a3-31f5-11e7-9cfd-2786e6aa2046"
     />
@@ -11,7 +11,7 @@
         id="be41c7a4-31f5-11e7-9cfd-2786e6aa2046"
         tenant_id="be41c7a0-31f5-11e7-9cfd-2786e6aa2046"
         entity_id="be41c7a1-31f5-11e7-9cfd-2786e6aa2046"
-        entity_type="1"
+        entity_type="7"
         event_type="STATS"
         event_uid="be41c7a5-31f5-11e7-9cfd-2786e6aa2046"
     />

@@ -16,7 +16,7 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import importDialogTemplate from './import-dialog.tpl.html';
-import deviceAliasesTemplate from '../dashboard/device-aliases.tpl.html';
+import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -24,8 +24,8 @@ import deviceAliasesTemplate from '../dashboard/device-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, types,
-                                     deviceService, dashboardService, pluginService, ruleService, widgetService, toast) {
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, types, dashboardUtils,
+                                     entityService, dashboardService, pluginService, ruleService, widgetService, toast) {
 
 
     var service = {
@@ -339,21 +339,49 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         exportToPc(prepareExport(widgetItem), name + '.json');
     }
 
-    function prepareDeviceAlias(aliasInfo) {
-        var deviceFilter;
-        if (aliasInfo.deviceId) {
-            deviceFilter = {
-                useFilter: false,
-                deviceNameFilter: '',
-                deviceList: [aliasInfo.deviceId]
+    function prepareAliasesInfo(aliasesInfo) {
+        var datasourceAliases = aliasesInfo.datasourceAliases;
+        var targetDeviceAliases = aliasesInfo.targetDeviceAliases;
+        var datasourceIndex;
+        if (datasourceAliases || targetDeviceAliases) {
+            if (datasourceAliases) {
+                for (datasourceIndex in datasourceAliases) {
+                    datasourceAliases[datasourceIndex] = prepareEntityAlias(datasourceAliases[datasourceIndex]);
+                }
             }
-            delete aliasInfo.deviceId;
+            if (targetDeviceAliases) {
+                for (datasourceIndex in targetDeviceAliases) {
+                    targetDeviceAliases[datasourceIndex] = prepareEntityAlias(targetDeviceAliases[datasourceIndex]);
+                }
+            }
+        }
+    }
+
+    function prepareEntityAlias(aliasInfo) {
+        var entityFilter;
+        var entityType;
+        if (aliasInfo.deviceId) {
+            entityFilter = {
+                useFilter: false,
+                entityNameFilter: '',
+                entityList: [aliasInfo.deviceId]
+            }
+            entityType = types.entityType.device;
+        } else if (aliasInfo.deviceFilter) {
+            entityFilter = {
+                useFilter: aliasInfo.deviceFilter.useFilter,
+                entityNameFilter: aliasInfo.deviceFilter.deviceNameFilter,
+                entityList: aliasInfo.deviceFilter.deviceList
+            }
+            entityType = types.entityType.device;
         } else {
-            deviceFilter = aliasInfo.deviceFilter;
+            entityFilter = aliasInfo.entityFilter;
+            entityType = aliasInfo.entityType;
         }
         return {
             alias: aliasInfo.aliasName,
-            deviceFilter: deviceFilter
+            entityType: entityType,
+            entityFilter: entityFilter
         };
     }
 
@@ -364,13 +392,13 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     toast.showError($translate.instant('dashboard.invalid-widget-file-error'));
                 } else {
                     var widget = widgetItem.widget;
-                    var aliasesInfo = widgetItem.aliasesInfo;
+                    var aliasesInfo = prepareAliasesInfo(widgetItem.aliasesInfo);
                     var originalColumns = widgetItem.originalColumns;
 
                     var datasourceAliases = aliasesInfo.datasourceAliases;
                     var targetDeviceAliases = aliasesInfo.targetDeviceAliases;
                     if (datasourceAliases || targetDeviceAliases) {
-                        var deviceAliases = {};
+                        var entityAliases = {};
                         var datasourceAliasesMap = {};
                         var targetDeviceAliasesMap = {};
                         var aliasId = 1;
@@ -378,35 +406,37 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                         if (datasourceAliases) {
                             for (datasourceIndex in datasourceAliases) {
                                 datasourceAliasesMap[aliasId] = datasourceIndex;
-                                deviceAliases[aliasId] = prepareDeviceAlias(datasourceAliases[datasourceIndex]);
+                                entityAliases[aliasId] = datasourceAliases[datasourceIndex];
                                 aliasId++;
                             }
                         }
                         if (targetDeviceAliases) {
                             for (datasourceIndex in targetDeviceAliases) {
                                 targetDeviceAliasesMap[aliasId] = datasourceIndex;
-                                deviceAliases[aliasId] = prepareDeviceAlias(targetDeviceAliases[datasourceIndex]);
+                                entityAliases[aliasId] = targetDeviceAliases[datasourceIndex];
                                 aliasId++;
                             }
                         }
 
-                        var aliasIds = Object.keys(deviceAliases);
+                        var aliasIds = Object.keys(entityAliases);
                         if (aliasIds.length > 0) {
-                            processDeviceAliases(deviceAliases, aliasIds).then(
-                                function(missingDeviceAliases) {
-                                    if (Object.keys(missingDeviceAliases).length > 0) {
+                            processEntityAliases(entityAliases, aliasIds).then(
+                                function(missingEntityAliases) {
+                                    if (Object.keys(missingEntityAliases).length > 0) {
                                         editMissingAliases($event, [ widget ],
-                                              true, 'dashboard.widget-import-missing-aliases-title', missingDeviceAliases).then(
-                                            function success(updatedDeviceAliases) {
-                                                for (var aliasId in updatedDeviceAliases) {
-                                                    var deviceAlias = updatedDeviceAliases[aliasId];
+                                              true, 'dashboard.widget-import-missing-aliases-title', missingEntityAliases).then(
+                                            function success(updatedEntityAliases) {
+                                                for (var aliasId in updatedEntityAliases) {
+                                                    var entityAlias = updatedEntityAliases[aliasId];
                                                     var datasourceIndex;
                                                     if (datasourceAliasesMap[aliasId]) {
                                                         datasourceIndex = datasourceAliasesMap[aliasId];
-                                                        datasourceAliases[datasourceIndex].deviceFilter = deviceAlias.deviceFilter;
+                                                        datasourceAliases[datasourceIndex].entityType = entityAlias.entityType;
+                                                        datasourceAliases[datasourceIndex].entityFilter = entityAlias.entityFilter;
                                                     } else if (targetDeviceAliasesMap[aliasId]) {
                                                         datasourceIndex = targetDeviceAliasesMap[aliasId];
-                                                        targetDeviceAliases[datasourceIndex].deviceFilter = deviceAlias.deviceFilter;
+                                                        targetDeviceAliases[datasourceIndex].entityType = entityAlias.entityType;
+                                                        targetDeviceAliases[datasourceIndex].entityFilter = entityAlias.entityFilter;
                                                     }
                                                 }
                                                 addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
@@ -477,18 +507,19 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     toast.showError($translate.instant('dashboard.invalid-dashboard-file-error'));
                     deferred.reject();
                 } else {
-                    var deviceAliases = dashboard.configuration.deviceAliases;
-                    if (deviceAliases) {
-                        var aliasIds = Object.keys( deviceAliases );
+                    dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
+                    var entityAliases = dashboard.configuration.entityAliases;
+                    if (entityAliases) {
+                        var aliasIds = Object.keys( entityAliases );
                         if (aliasIds.length > 0) {
-                            processDeviceAliases(deviceAliases, aliasIds).then(
-                                function(missingDeviceAliases) {
-                                    if (Object.keys( missingDeviceAliases ).length > 0) {
+                            processEntityAliases(entityAliases, aliasIds).then(
+                                function(missingEntityAliases) {
+                                    if (Object.keys( missingEntityAliases ).length > 0) {
                                         editMissingAliases($event, dashboard.configuration.widgets,
-                                                false, 'dashboard.dashboard-import-missing-aliases-title', missingDeviceAliases).then(
-                                            function success(updatedDeviceAliases) {
-                                                for (var aliasId in updatedDeviceAliases) {
-                                                    deviceAliases[aliasId] = updatedDeviceAliases[aliasId];
+                                                false, 'dashboard.dashboard-import-missing-aliases-title', missingEntityAliases).then(
+                                            function success(updatedEntityAliases) {
+                                                for (var aliasId in updatedEntityAliases) {
+                                                    entityAliases[aliasId] = updatedEntityAliases[aliasId];
                                                 }
                                                 saveImportedDashboard(dashboard, deferred);
                                             },
@@ -534,53 +565,53 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return true;
     }
 
-    function processDeviceAliases(deviceAliases, aliasIds) {
+    function processEntityAliases(entityAliases, aliasIds) {
         var deferred = $q.defer();
-        var missingDeviceAliases = {};
+        var missingEntityAliases = {};
         var index = -1;
-        checkNextDeviceAliasOrComplete(index, aliasIds, deviceAliases, missingDeviceAliases, deferred);
+        checkNextEntityAliasOrComplete(index, aliasIds, entityAliases, missingEntityAliases, deferred);
         return deferred.promise;
     }
 
-    function checkNextDeviceAliasOrComplete(index, aliasIds, deviceAliases, missingDeviceAliases, deferred) {
+    function checkNextEntityAliasOrComplete(index, aliasIds, entityAliases, missingEntityAliases, deferred) {
         index++;
         if (index == aliasIds.length) {
-            deferred.resolve(missingDeviceAliases);
+            deferred.resolve(missingEntityAliases);
         } else {
-            checkDeviceAlias(index, aliasIds, deviceAliases, missingDeviceAliases, deferred);
+            checkEntityAlias(index, aliasIds, entityAliases, missingEntityAliases, deferred);
         }
     }
 
-    function checkDeviceAlias(index, aliasIds, deviceAliases, missingDeviceAliases, deferred) {
+    function checkEntityAlias(index, aliasIds, entityAliases, missingEntityAliases, deferred) {
         var aliasId = aliasIds[index];
-        var deviceAlias = deviceAliases[aliasId];
-        deviceService.checkDeviceAlias(deviceAlias).then(
+        var entityAlias = entityAliases[aliasId];
+        entityService.checkEntityAlias(entityAlias).then(
             function(result) {
                 if (result) {
-                    checkNextDeviceAliasOrComplete(index, aliasIds, deviceAliases, missingDeviceAliases, deferred);
+                    checkNextEntityAliasOrComplete(index, aliasIds, entityAliases, missingEntityAliases, deferred);
                 } else {
-                    var missingDeviceAlias = angular.copy(deviceAlias);
-                    missingDeviceAlias.deviceFilter = null;
-                    missingDeviceAliases[aliasId] = missingDeviceAlias;
-                    checkNextDeviceAliasOrComplete(index, aliasIds, deviceAliases, missingDeviceAliases, deferred);
+                    var missingEntityAlias = angular.copy(entityAlias);
+                    missingEntityAlias.entityFilter = null;
+                    missingEntityAliases[aliasId] = missingEntityAlias;
+                    checkNextEntityAliasOrComplete(index, aliasIds, entityAliases, missingEntityAliases, deferred);
                 }
             }
         );
     }
 
-    function editMissingAliases($event, widgets, isSingleWidget, customTitle, missingDeviceAliases) {
+    function editMissingAliases($event, widgets, isSingleWidget, customTitle, missingEntityAliases) {
         var deferred = $q.defer();
         $mdDialog.show({
-            controller: 'DeviceAliasesController',
+            controller: 'EntityAliasesController',
             controllerAs: 'vm',
-            templateUrl: deviceAliasesTemplate,
+            templateUrl: entityAliasesTemplate,
             locals: {
                 config: {
-                    deviceAliases: missingDeviceAliases,
+                    entityAliases: missingEntityAliases,
                     widgets: widgets,
                     isSingleWidget: isSingleWidget,
-                    isSingleDeviceAlias: false,
-                    singleDeviceAlias: null,
+                    isSingleEntityAlias: false,
+                    singleEntityAlias: null,
                     customTitle: customTitle,
                     disableAdd: true
                 }
@@ -589,8 +620,8 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             skipHide: true,
             fullscreen: true,
             targetEvent: $event
-        }).then(function (updatedDeviceAliases) {
-            deferred.resolve(updatedDeviceAliases);
+        }).then(function (updatedEntityAliases) {
+            deferred.resolve(updatedEntityAliases);
         }, function () {
             deferred.reject();
         });

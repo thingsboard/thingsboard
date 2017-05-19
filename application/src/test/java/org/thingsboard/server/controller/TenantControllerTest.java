@@ -149,7 +149,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         List<Tenant> tenantsTitle1 = new ArrayList<>();
         for (int i=0;i<134;i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
+            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
             String title = title1+suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
@@ -159,7 +159,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         List<Tenant> tenantsTitle2 = new ArrayList<>();
         for (int i=0;i<127;i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(Math.random()*15));
+            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
             String title = title2+suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);

@@ -35,5 +35,4 @@ public interface EventRepository extends CrudRepository<EventEntity, UUID>, JpaS
 
     EventEntity findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
             UUID tenantId, EntityType entityType, UUID id, String eventType, String eventUid);
-
 }

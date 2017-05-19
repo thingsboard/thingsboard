@@ -15,15 +15,15 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import deviceAliasesTemplate from './device-aliases.tpl.html';
+import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
 import dashboardBackgroundTemplate from './dashboard-settings.tpl.html';
 import addWidgetTemplate from './add-widget.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DashboardController(types, widgetService, userService,
-                                            dashboardService, timeService, deviceService, itembuffer, importExport, hotkeys, $window, $rootScope,
+export default function DashboardController(types, dashboardUtils, widgetService, userService,
+                                            dashboardService, timeService, entityService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $state, $stateParams, $mdDialog, $timeout, $document, $q, $translate, $filter) {
 
     var vm = this;
@@ -47,6 +47,8 @@ export default function DashboardController(types, widgetService, userService,
     vm.dashboardInitComplete = false;
 
     vm.isToolbarOpened = false;
+
+    vm.thingsboardVersion = THINGSBOARD_VERSION; //eslint-disable-line
 
     vm.currentDashboardId = $stateParams.dashboardId;
     if ($stateParams.customerId) {
@@ -86,6 +88,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.exportDashboard = exportDashboard;
     vm.exportWidget = exportWidget;
     vm.importWidget = importWidget;
+    vm.isPublicUser = isPublicUser;
     vm.isTenantAdmin = isTenantAdmin;
     vm.isSystemAdmin = isSystemAdmin;
     vm.loadDashboard = loadDashboard;
@@ -95,7 +98,7 @@ export default function DashboardController(types, widgetService, userService,
     vm.showDashboardToolbar = showDashboardToolbar;
     vm.onAddWidgetClosed = onAddWidgetClosed;
     vm.onEditWidgetClosed = onEditWidgetClosed;
-    vm.openDeviceAliases = openDeviceAliases;
+    vm.openEntityAliases = openEntityAliases;
     vm.openDashboardSettings = openDashboardSettings;
     vm.removeWidget = removeWidget;
     vm.saveDashboard = saveDashboard;
@@ -104,6 +107,9 @@ export default function DashboardController(types, widgetService, userService,
     vm.onRevertWidgetEdit = onRevertWidgetEdit;
     vm.helpLinkIdForWidgetType = helpLinkIdForWidgetType;
     vm.displayTitle = displayTitle;
+    vm.displayExport = displayExport;
+    vm.displayDashboardTimewindow = displayDashboardTimewindow;
+    vm.displayEntitiesSelect = displayEntitiesSelect;
 
     vm.widgetsBundle;
 
@@ -223,21 +229,8 @@ export default function DashboardController(types, widgetService, userService,
 
             dashboardService.getDashboard($stateParams.dashboardId)
                 .then(function success(dashboard) {
-                    vm.dashboard = dashboard;
-                    if (vm.dashboard.configuration == null) {
-                        vm.dashboard.configuration = {widgets: [], deviceAliases: {}};
-                    }
-                    if (angular.isUndefined(vm.dashboard.configuration.widgets)) {
-                        vm.dashboard.configuration.widgets = [];
-                    }
-                    if (angular.isUndefined(vm.dashboard.configuration.deviceAliases)) {
-                        vm.dashboard.configuration.deviceAliases = {};
-                    }
-
-                    if (angular.isUndefined(vm.dashboard.configuration.timewindow)) {
-                        vm.dashboard.configuration.timewindow = timeService.defaultTimewindow();
-                    }
-                    deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases)
+                    vm.dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
+                    entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
                         .then(
                             function(resolution) {
                                 if (resolution.error && !isTenantAdmin()) {
@@ -273,6 +266,10 @@ export default function DashboardController(types, widgetService, userService,
         vm.dashboardInitComplete = true;
     }
 
+    function isPublicUser() {
+        return vm.user.isPublic === true;
+    }
+
     function isTenantAdmin() {
         return vm.user.authority === 'TENANT_ADMIN';
     }
@@ -293,26 +290,26 @@ export default function DashboardController(types, widgetService, userService,
         return vm.dashboardInitComplete;
     }
 
-    function openDeviceAliases($event) {
+    function openEntityAliases($event) {
         $mdDialog.show({
-            controller: 'DeviceAliasesController',
+            controller: 'EntityAliasesController',
             controllerAs: 'vm',
-            templateUrl: deviceAliasesTemplate,
+            templateUrl: entityAliasesTemplate,
             locals: {
                 config: {
-                    deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
+                    entityAliases: angular.copy(vm.dashboard.configuration.entityAliases),
                     widgets: vm.widgets,
-                    isSingleDeviceAlias: false,
-                    singleDeviceAlias: null
+                    isSingleEntityAlias: false,
+                    singleEntityAlias: null
                 }
             },
             parent: angular.element($document[0].body),
             skipHide: true,
             fullscreen: true,
             targetEvent: $event
-        }).then(function (deviceAliases) {
-            vm.dashboard.configuration.deviceAliases = deviceAliases;
-            deviceAliasesUpdated();
+        }).then(function (entityAliases) {
+            vm.dashboard.configuration.entityAliases = entityAliases;
+            entityAliasesUpdated();
         }, function () {
         });
     }
@@ -382,7 +379,7 @@ export default function DashboardController(types, widgetService, userService,
 
     function importWidget($event) {
         $event.stopPropagation();
-        importExport.importWidget($event, vm.dashboard, deviceAliasesUpdated);
+        importExport.importWidget($event, vm.dashboard, entityAliasesUpdated);
     }
 
     function widgetMouseDown($event, widget) {
@@ -463,9 +460,9 @@ export default function DashboardController(types, widgetService, userService,
             );
             dashboardContextActions.push(
                 {
-                    action: openDeviceAliases,
+                    action: openEntityAliases,
                     enabled: true,
-                    value: "device.aliases",
+                    value: "entity.aliases",
                     icon: "devices_other"
                 }
             );
@@ -484,7 +481,7 @@ export default function DashboardController(types, widgetService, userService,
 
     function pasteWidget($event) {
         var pos = vm.dashboardContainer.getEventGridPosition($event);
-        itembuffer.pasteWidget(vm.dashboard, pos, deviceAliasesUpdated);
+        itembuffer.pasteWidget(vm.dashboard, pos, entityAliasesUpdated);
     }
 
     function prepareWidgetContextMenu() {
@@ -560,6 +557,33 @@ export default function DashboardController(types, widgetService, userService,
         }
     }
 
+    function displayExport() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardExport)) {
+            return vm.dashboard.configuration.gridSettings.showDashboardExport;
+        } else {
+            return true;
+        }
+    }
+
+    function displayDashboardTimewindow() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardTimewindow)) {
+            return vm.dashboard.configuration.gridSettings.showDashboardTimewindow;
+        } else {
+            return true;
+        }
+    }
+
+    function displayEntitiesSelect() {
+        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
+            angular.isDefined(vm.dashboard.configuration.gridSettings.showEntitiesSelect)) {
+            return vm.dashboard.configuration.gridSettings.showEntitiesSelect;
+        } else {
+            return true;
+        }
+    }
+
     function onRevertWidgetEdit(widgetForm) {
         if (widgetForm.$dirty) {
             widgetForm.$setPristine();
@@ -617,22 +641,8 @@ export default function DashboardController(types, widgetService, userService,
                     sizeY: widgetTypeInfo.sizeY,
                     config: config
                 };
-                $mdDialog.show({
-                    controller: 'AddWidgetController',
-                    controllerAs: 'vm',
-                    templateUrl: addWidgetTemplate,
-                    locals: {dashboard: vm.dashboard, aliasesInfo: vm.aliasesInfo, widget: newWidget, widgetInfo: widgetTypeInfo},
-                    parent: angular.element($document[0].body),
-                    fullscreen: true,
-                    skipHide: true,
-                    targetEvent: event,
-                    onComplete: function () {
-                        var w = angular.element($window);
-                        w.triggerHandler('resize');
-                    }
-                }).then(function (result) {
-                    var widget = result.widget;
-                    vm.aliasesInfo = result.aliasesInfo;
+
+                function addWidget(widget) {
                     var columns = 24;
                     if (vm.dashboard.configuration.gridSettings && vm.dashboard.configuration.gridSettings.columns) {
                         columns = vm.dashboard.configuration.gridSettings.columns;
@@ -643,9 +653,37 @@ export default function DashboardController(types, widgetService, userService,
                         widget.sizeY *= ratio;
                     }
                     vm.widgets.push(widget);
-                }, function (rejection) {
-                    vm.aliasesInfo = rejection.aliasesInfo;
-                });
+                }
+
+                if (widgetTypeInfo.useCustomDatasources) {
+                    addWidget(newWidget);
+                } else {
+                    $mdDialog.show({
+                        controller: 'AddWidgetController',
+                        controllerAs: 'vm',
+                        templateUrl: addWidgetTemplate,
+                        locals: {
+                            dashboard: vm.dashboard,
+                            aliasesInfo: vm.aliasesInfo,
+                            widget: newWidget,
+                            widgetInfo: widgetTypeInfo
+                        },
+                        parent: angular.element($document[0].body),
+                        fullscreen: true,
+                        skipHide: true,
+                        targetEvent: event,
+                        onComplete: function () {
+                            var w = angular.element($window);
+                            w.triggerHandler('resize');
+                        }
+                    }).then(function (result) {
+                        var widget = result.widget;
+                        vm.aliasesInfo = result.aliasesInfo;
+                        addWidget(widget);
+                    }, function (rejection) {
+                        vm.aliasesInfo = rejection.aliasesInfo;
+                    });
+                }
             }
         );
     }
@@ -688,7 +726,7 @@ export default function DashboardController(types, widgetService, userService,
                     vm.dashboard = vm.prevDashboard;
                     vm.widgets = vm.dashboard.configuration.widgets;
                     vm.dashboardConfiguration = vm.dashboard.configuration;
-                    deviceAliasesUpdated();
+                    entityAliasesUpdated();
                 }
             }
         }
@@ -717,8 +755,8 @@ export default function DashboardController(types, widgetService, userService,
         $mdDialog.show(alert);
     }
 
-    function deviceAliasesUpdated() {
-        deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases)
+    function entityAliasesUpdated() {
+        entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
             .then(
                 function(resolution) {
                     if (resolution.aliasesInfo) {

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -44,7 +45,7 @@ import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends BaseEntityService implements UserService {
 
     private static final int DEFAULT_TOKEN_LENGTH = 30;
 
@@ -159,6 +160,7 @@ public class UserServiceImpl implements UserService {
         validateId(userId, "Incorrect userId " + userId);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(userId.getId());
         userCredentialsDao.removeById(userCredentials.getUuidId());
+        deleteEntityRelations(userId);
         userDao.removeById(userId.getId());
     }
 

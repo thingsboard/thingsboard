@@ -187,4 +187,14 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
         List<E> entities = findListByStatement(QueryBuilder.select().all().from(getColumnFamilyName()).setConsistencyLevel(cluster.getDefaultReadConsistencyLevel()));
         return DaoUtil.convertDataList(entities);
     }
+
+    protected static <T> Function<BaseEntity<T>, T> toDataFunction() {
+        return new Function<BaseEntity<T>, T>() {
+            @Nullable
+            @Override
+            public T apply(@Nullable BaseEntity<T> entity) {
+                return entity != null ? entity.toData() : null;
+            }
+        };
+    }
 }

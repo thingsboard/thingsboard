@@ -60,8 +60,8 @@ plugins:
 
 # JWT Token parameters
 security.jwt:
-  tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:900}" # Number of seconds (15 mins)
-  refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:3600}" # Seconds (1 hour)
+  tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000000}" # Number of seconds (15 mins)
+  refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:36000000}" # Seconds (1 hour)
   tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
   tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
 
@@ -189,11 +189,33 @@ cache:
 updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
-
+  
+  # spring CORS configuration
+spring.mvc.cors:
+   mappings:
+     # Intercept path
+      "/api/auth/**":
+         #Comma-separated list of origins to allow. '*' allows all origins. When not set,CORS support is disabled.
+         allowed-origins: "*"
+         #Comma-separated list of methods to allow. '*' allows all methods.
+         allowed-methods: "POST,GET,OPTIONS"
+         #Comma-separated list of headers to allow in a request. '*' allows all headers.
+         allowed-headers: "*"
+         #How long, in seconds, the response from a pre-flight request can be cached by clients.
+         max-age: "1800"
+         #Set whether credentials are supported. When not set, credentials are not supported.
+         allow-credentials: "true"
+      "/api/v1/**":
+         allowed-origins: "*"
+         allowed-methods: "*"
+         allowed-headers: "*"
+         max-age: "1800"
+         allow-credentials: "true"
+         
 # SQL DAO Configuration
 sql:
   enabled: "${SQL_ENABLED:false}"
   datasource:
     url: "${SQL_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SQL_DATASOURCE_USERNAME:postgres}"
-    password: "${SQL_DATASOURCE_PASSWORD:postgres}"
+    password: "${SQL_DATASOURCE_PASSWORD:postgres}"         

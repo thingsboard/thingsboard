@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
@@ -23,6 +25,9 @@ import java.util.UUID;
 /**
  * @author Andrew Shvayka
  */
+
+@JsonDeserialize(using = EntityIdDeserializer.class)
+@JsonSerialize(using = EntityIdSerializer.class)
 public interface EntityId {
 
     UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");

@@ -27,6 +27,7 @@ import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
@@ -74,6 +75,12 @@ public class RestClient implements ClientHttpRequestInterceptor {
         Device device = new Device();
         device.setName(name);
         return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
+    }
+
+
+    public Device assignDevice(CustomerId customerId, DeviceId deviceId) {
+        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/device/{deviceId}", null, Device.class,
+                customerId.toString(), deviceId.toString()).getBody();
     }
 
     public DeviceCredentials getCredentials(DeviceId id) {

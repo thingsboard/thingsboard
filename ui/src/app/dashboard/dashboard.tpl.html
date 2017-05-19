@@ -47,28 +47,33 @@
                                aria-label="{{ 'fullscreen.fullscreen' | translate }}"
                                class="md-icon-button">
                     </md-button>
-                    <tb-user-menu ng-show="forceFullscreen" display-user-info="true">
+                    <tb-user-menu ng-if="!vm.isPublicUser() && forceFullscreen" display-user-info="true">
                     </tb-user-menu>
-                    <md-button aria-label="{{ 'action.export' | translate }}" class="md-icon-button"
+                    <md-button ng-show="vm.isEdit || vm.displayExport()"
+                               aria-label="{{ 'action.export' | translate }}" class="md-icon-button"
                                ng-click="vm.exportDashboard($event)">
                         <md-tooltip md-direction="bottom">
                             {{ 'dashboard.export' | translate }}
                         </md-tooltip>
                         <md-icon aria-label="{{ 'action.export' | translate }}" class="material-icons">file_download</md-icon>
                     </md-button>
-                    <tb-timewindow is-toolbar direction="left" tooltip-direction="bottom" aggregation ng-model="vm.dashboardConfiguration.timewindow">
+                    <tb-timewindow ng-show="vm.isEdit || vm.displayDashboardTimewindow()"
+                                   is-toolbar
+                                   direction="left"
+                                   tooltip-direction="bottom" aggregation
+                                   ng-model="vm.dashboardConfiguration.timewindow">
                     </tb-timewindow>
-                    <tb-aliases-device-select ng-show="!vm.isEdit"
+                    <tb-aliases-entity-select ng-show="!vm.isEdit && vm.displayEntitiesSelect()"
                                               tooltip-direction="bottom"
-                                              ng-model="vm.aliasesInfo.deviceAliases"
-                                              device-aliases-info="vm.aliasesInfo.deviceAliasesInfo">
-                    </tb-aliases-device-select>
-                    <md-button ng-show="vm.isEdit" aria-label="{{ 'device.aliases' | translate }}" class="md-icon-button"
-                               ng-click="vm.openDeviceAliases($event)">
+                                              ng-model="vm.aliasesInfo.entityAliases"
+                                              entity-aliases-info="vm.aliasesInfo.entityAliasesInfo">
+                    </tb-aliases-entity-select>
+                    <md-button ng-show="vm.isEdit" aria-label="{{ 'entity.aliases' | translate }}" class="md-icon-button"
+                               ng-click="vm.openEntityAliases($event)">
                         <md-tooltip md-direction="bottom">
-                            {{ 'device.aliases' | translate }}
+                            {{ 'entity.aliases' | translate }}
                         </md-tooltip>
-                        <md-icon aria-label="{{ 'device.aliases' | translate }}" class="material-icons">devices_other</md-icon>
+                        <md-icon aria-label="{{ 'entity.aliases' | translate }}" class="material-icons">devices_other</md-icon>
                     </md-button>
                     <md-button ng-show="vm.isEdit" aria-label="{{ 'dashboard.settings' | translate }}" class="md-icon-button"
                                ng-click="vm.openDashboardSettings($event)">
@@ -304,6 +309,6 @@
         </section>
     </section>
     <section class="tb-powered-by-footer" ng-style="{'color': vm.dashboard.configuration.gridSettings.titleColor}">
-        <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard</a></span>
+        <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ vm.thingsboardVersion }}</a></span>
     </section>
 </md-content>

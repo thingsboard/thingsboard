@@ -15,30 +15,42 @@
  */
 package org.thingsboard.server.dao.customer;
 
+import static org.thingsboard.server.dao.service.Validator.validateId;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.model.AssetEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
-
-import java.util.List;
 @Service
 @Slf4j
-public class CustomerServiceImpl implements CustomerService {
+public class CustomerServiceImpl extends BaseEntityService implements CustomerService {
+
+    private static final String PUBLIC_CUSTOMER_TITLE = "Public";
 
     @Autowired
     private CustomerDao customerDao;
@@ -63,6 +75,13 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public ListenableFuture<Customer> findCustomerByIdAsync(CustomerId customerId) {
+        log.trace("Executing findCustomerByIdAsync [{}]", customerId);
+        validateId(customerId, "Incorrect customerId " + customerId);
+        return customerDao.findByIdAsync(customerId.getId());
+    }
+
+    @Override
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
         customerValidator.validate(customer);
@@ -72,15 +91,36 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public void deleteCustomer(CustomerId customerId) {
         log.trace("Executing deleteCustomer [{}]", customerId);
-        Validator.validateId(customerId, "Incorrect tenantId " + customerId);
+        Validator.validateId(customerId, "Incorrect customerId " + customerId);
         Customer customer = findCustomerById(customerId);
         if (customer == null) {
             throw new IncorrectParameterException("Unable to delete non-existent customer.");
         }
         dashboardService.unassignCustomerDashboards(customer.getTenantId(), customerId);
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
-        userService.deleteCustomerUsers(customer.getTenantId(), customerId);               
+        userService.deleteCustomerUsers(customer.getTenantId(), customerId);
+        deleteEntityRelations(customerId);
         customerDao.removeById(customerId.getId());
+    }
+
+    @Override
+    public Customer findOrCreatePublicCustomer(TenantId tenantId) {
+        log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
+        Validator.validateId(tenantId, "Incorrect customerId " + tenantId);
+        Optional<Customer> publicCustomerOpt = customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), PUBLIC_CUSTOMER_TITLE);
+        if (publicCustomerOpt.isPresent()) {
+            return publicCustomerOpt.get();
+        } else {
+            Customer publicCustomer = new Customer();
+            publicCustomer.setTenantId(tenantId);
+            publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);
+            try {
+                publicCustomer.setAdditionalInfo(new ObjectMapper().readValue("{ \"isPublic\": true }", JsonNode.class));
+            } catch (IOException e) {
+                throw new IncorrectParameterException("Unable to create public customer.", e);
+            }
+            return customerDao.save(publicCustomer);
+        }
     }
 
     @Override
@@ -89,7 +129,7 @@ public class CustomerServiceImpl implements CustomerService {
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
         List<Customer> customers = customerDao.findCustomersByTenantId(tenantId.getId(), pageLink);
-        return new TextPageData<Customer>(customers, pageLink);
+        return new TextPageData<>(customers, pageLink);
     }
 
     @Override
@@ -101,10 +141,34 @@ public class CustomerServiceImpl implements CustomerService {
     
     private DataValidator<Customer> customerValidator =
             new DataValidator<Customer>() {
+
+                @Override
+                protected void validateCreate(Customer customer) {
+                    customerDao.findCustomersByTenantIdAndTitle(customer.getTenantId().getId(), customer.getTitle()).ifPresent(
+                            c -> {
+                                throw new DataValidationException("Customer with such title already exists!");
+                            }
+                    );
+                }
+
+                @Override
+                protected void validateUpdate(Customer customer) {
+                    customerDao.findCustomersByTenantIdAndTitle(customer.getTenantId().getId(), customer.getTitle()).ifPresent(
+                            c -> {
+                                if (!c.getId().equals(customer.getUuidId())) {
+                                    throw new DataValidationException("Customer with such title already exists!");
+                                }
+                            }
+                    );
+                }
+
                 @Override
                 protected void validateDataImpl(Customer customer) {
                     if (StringUtils.isEmpty(customer.getTitle())) {
                         throw new DataValidationException("Customer title should be specified!");
+                    }
+                    if (customer.getTitle().equals(PUBLIC_CUSTOMER_TITLE)) {
+                        throw new DataValidationException("'Public' title for customer is system reserved!");
                     }
                     if (!StringUtils.isEmpty(customer.getEmail())) {
                         validateEmail(customer.getEmail());

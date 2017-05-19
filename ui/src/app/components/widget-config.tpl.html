@@ -31,7 +31,7 @@
                 </section>
             </div>
             <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
-                         ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value">
+                         ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value && isDataEnabled">
                 <v-pane id="datasources-pane" expanded="true">
                     <v-pane-header>
                         {{ 'widget-config.datasources' | translate }}
@@ -60,12 +60,12 @@
                                          style="padding: 0 0 0 10px; margin: 5px;">
                                         <tb-datasource flex ng-model="datasource.value"
                                                        widget-type="widgetType"
-                                                       device-aliases="deviceAliases"
+                                                       entity-aliases="entityAliases"
                                                        functions-only="functionsOnly"
                                                        datakey-settings-schema="datakeySettingsSchema"
                                                        generate-data-key="generateDataKey(chip,type)"
-                                                       fetch-device-keys="fetchDeviceKeys({deviceAliasId: deviceAliasId, query: query, type: type})"
-                                                       on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})"></tb-datasource>
+                                                       fetch-entity-keys="fetchEntityKeys({entityAliasId: entityAliasId, query: query, type: type})"
+                                                       on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias})"></tb-datasource>
                                         <md-button ng-disabled="loading" class="md-icon-button md-primary"
                                                    style="min-width: 40px;"
                                                    ng-click="removeDatasource($event, datasource)"
@@ -96,18 +96,19 @@
                 </v-pane>
             </v-accordion>
             <v-accordion id="target-devices-accordion" control="targetDevicesAccordion" class="vAccordion--default"
-                         ng-show="widgetType === types.widgetType.rpc.value">
+                         ng-show="widgetType === types.widgetType.rpc.value && isDataEnabled">
                 <v-pane id="target-devices-pane" expanded="true">
                     <v-pane-header>
                         {{ 'widget-config.target-device' | translate }}
                     </v-pane-header>
                     <v-pane-content style="padding: 0 5px;">
-                        <tb-device-alias-select flex
+                        <tb-entity-alias-select flex
                                                 tb-required="widgetType === types.widgetType.rpc.value && !widgetEditMode"
-                                                device-aliases="deviceAliases"
+                                                entity-aliases="entityAliases"
+                                                allowed-entity-types="[types.entityType.device]"
                                                 ng-model="targetDeviceAlias.value"
-                                                on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})">
-                        </tb-device-alias-select>
+                                                on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias, allowedEntityTypes: allowedEntityTypes})">
+                        </tb-entity-alias-select>
                     </v-pane-content>
                 </v-pane>
             </v-accordion>

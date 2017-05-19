@@ -19,6 +19,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
@@ -31,15 +32,15 @@ import java.util.List;
  */
 public interface TimeseriesService {
 
-    ListenableFuture<List<TsKvEntry>> findAll(String entityType, UUIDBased entityId, List<TsKvQuery> queries);
+    ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<TsKvQuery> queries);
 
-    ListenableFuture<List<ResultSet>> findLatest(String entityType, UUIDBased entityId, Collection<String> keys);
+    ListenableFuture<List<ResultSet>> findLatest(EntityId entityId, Collection<String> keys);
 
-    ResultSetFuture findAllLatest(String entityType, UUIDBased entityId);
+    ResultSetFuture findAllLatest(EntityId entityId);
 
-    ListenableFuture<List<ResultSet>> save(String entityType, UUIDBased entityId, TsKvEntry tsKvEntry);
+    ListenableFuture<List<ResultSet>> save(EntityId entityId, TsKvEntry tsKvEntry);
 
-    ListenableFuture<List<ResultSet>> save(String entityType, UUIDBased entityId, List<TsKvEntry> tsKvEntry);
+    ListenableFuture<List<ResultSet>> save(EntityId entityId, List<TsKvEntry> tsKvEntry);
 
     TsKvEntry convertResultToTsKvEntry(Row row);
 

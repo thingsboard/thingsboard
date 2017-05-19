@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -40,7 +41,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class DashboardServiceImpl implements DashboardService {
+public class DashboardServiceImpl extends BaseEntityService implements DashboardService {
 
     @Autowired
     private DashboardDao dashboardDao;
@@ -86,6 +87,7 @@ public class DashboardServiceImpl implements DashboardService {
     public void deleteDashboard(DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+        deleteEntityRelations(dashboardId);
         dashboardDao.removeById(dashboardId.getId());
     }
 
