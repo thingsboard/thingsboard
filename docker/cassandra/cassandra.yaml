@@ -34,12 +34,14 @@ metadata:
   name: cassandra
 spec:
   serviceName: cassandra-headless
-  replicas: 3
+  replicas: 2
   template:
     metadata:
       labels:
         app: cassandra
     spec:
+      nodeSelector:
+        machinetype: other
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -75,7 +77,7 @@ spec:
               command: ["/bin/sh", "-c", "PID=$(pidof java) && kill $PID && while ps -p $PID > /dev/null; do sleep 1; done"]
         env:
           - name: MAX_HEAP_SIZE
-            value: 512M
+            value: 2048M
           - name: HEAP_NEWSIZE
             value: 100M
           - name: CASSANDRA_SEEDS
@@ -118,7 +120,7 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: 2Gi
+          storage: 3Gi
   - metadata:
       name: cassandra-commitlog
       annotations:
@@ -127,4 +129,4 @@ spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
-          storage: 1Gi
+          storage: 2Gi

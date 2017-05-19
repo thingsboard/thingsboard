@@ -35,7 +35,7 @@ kind: ConfigMap
 metadata:
   name: zk-config
 data:
-  ensemble: "zk-0;zk-1;zk-2"
+  ensemble: "zk-0;zk-1"
   replicas: "3"
   jvm.heap: "500m"
   tick: "2000"
@@ -64,7 +64,7 @@ metadata:
   name: zk
 spec:
   serviceName: zk-headless
-  replicas: 3
+  replicas: 2
   template:
     metadata:
       labels:
@@ -72,6 +72,8 @@ spec:
       annotations:
         pod.alpha.kubernetes.io/initialized: "true"
     spec:
+      nodeSelector:
+        machinetype: other
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

@@ -41,7 +41,7 @@ spec:
   selector:
     matchLabels:
       app: tb
-  minAvailable: 2
+  minAvailable: 3
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -58,12 +58,14 @@ metadata:
   name: tb
 spec:
   serviceName: "tb-service"
-  replicas: 2
+  replicas: 3
   template:
     metadata:
       labels:
         app: tb
     spec:
+      nodeSelector:
+        machinetype: tb
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
