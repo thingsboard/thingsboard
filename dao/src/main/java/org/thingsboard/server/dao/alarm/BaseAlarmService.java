@@ -164,7 +164,7 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
     public ListenableFuture<Alarm> findAlarmById(AlarmId alarmId) {
         log.trace("Executing findAlarmById [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
-        return alarmDao.findAlarmByIdAsync(alarmId.getId());
+        return alarmDao.findByIdAsync(alarmId.getId());
     }
 
     @Override
@@ -218,7 +218,7 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
 
     private ListenableFuture<Boolean> getAndUpdate(AlarmId alarmId, Function<Alarm, Boolean> function) {
         validateId(alarmId, "Alarm id should be specified!");
-        ListenableFuture<Alarm> entity = alarmDao.findAlarmByIdAsync(alarmId.getId());
+        ListenableFuture<Alarm> entity = alarmDao.findByIdAsync(alarmId.getId());
         return Futures.transform(entity, function);
     }
 

@@ -45,14 +45,14 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     private UserDao userDao;
 
     @Test
-    @DatabaseSetup("classpath:dbunit/users.xml")
+    @DatabaseSetup("classpath:dbunit/user.xml")
     public void testFindAll() {
         List<User> users = userDao.find();
         assertEquals(users.size(), 5);
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/users.xml")
+    @DatabaseSetup("classpath:dbunit/user.xml")
     public void testFindByEmail() {
         User user = userDao.findByEmail("sysadm@thingsboard.org");
         assertNotNull("User is expected to be not null", user);
@@ -97,7 +97,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/users.xml")
+    @DatabaseSetup("classpath:dbunit/user.xml")
     public void testSave() throws IOException {
         User user = new User();
         user.setId(new UserId(UUID.fromString("cd481534-27cc-11e7-93ae-92361f002671")));

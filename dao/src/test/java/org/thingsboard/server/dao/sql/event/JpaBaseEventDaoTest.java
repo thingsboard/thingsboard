@@ -64,7 +64,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/events.xml")
+    @DatabaseSetup("classpath:dbunit/event.xml")
     public void findEvent() {
         UUID tenantId = UUID.fromString("be41c7a0-31f5-11e7-9cfd-2786e6aa2046");
         UUID entityId = UUID.fromString("be41c7a1-31f5-11e7-9cfd-2786e6aa2046");

@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.AssetEntity;
+import org.thingsboard.server.dao.model.nosql.AssetEntity;
 
 import java.util.*;
 
@@ -32,7 +32,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-public class AssetDaoImpl extends CassandraAbstractSearchTextDao<AssetEntity, Asset> implements AssetDao {
+public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntity, Asset> implements AssetDao {
 
     @Override
     protected Class<AssetEntity> getColumnFamilyClass() {
@@ -83,7 +83,7 @@ public class AssetDaoImpl extends CassandraAbstractSearchTextDao<AssetEntity, As
     }
 
     @Override
-    public ListenableFuture<List<Asset>> findAssetsByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> assetIds) {
+    public ListenableFuture<List<Asset>> findAssetsByTenantIdAndCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> assetIds) {
         log.debug("Try to find assets by tenantId [{}], customerId [{}] and asset Ids [{}]", tenantId, customerId, assetIds);
         Select select = select().from(getColumnFamilyName());
         Select.Where query = select.where();

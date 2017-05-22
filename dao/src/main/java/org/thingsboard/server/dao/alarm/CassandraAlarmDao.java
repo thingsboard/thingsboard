@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
-import org.thingsboard.server.dao.model.AlarmEntity;
+import org.thingsboard.server.dao.model.nosql.AlarmEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
@@ -35,7 +35,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
-public class AlarmDaoImpl extends CassandraAbstractModelDao<AlarmEntity, Alarm> implements AlarmDao {
+public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Alarm> implements AlarmDao {
 
     @Override
     protected Class<AlarmEntity> getColumnFamilyClass() {
@@ -63,15 +63,6 @@ public class AlarmDaoImpl extends CassandraAbstractModelDao<AlarmEntity, Alarm> 
         query.and(eq(ALARM_TYPE_PROPERTY, type));
         query.limit(1);
         query.orderBy(QueryBuilder.asc(ModelConstants.ALARM_TYPE_PROPERTY), QueryBuilder.desc(ModelConstants.ID_PROPERTY));
-        return findOneByStatementAsync(query);
-    }
-
-    @Override
-    public ListenableFuture<Alarm> findAlarmByIdAsync(UUID key) {
-        log.debug("Get alarm by id {}", key);
-        Select.Where query = select().from(ALARM_BY_ID_VIEW_NAME).where(eq(ModelConstants.ID_PROPERTY, key));
-        query.limit(1);
-        log.trace("Execute query {}", query);
         return findOneByStatementAsync(query);
     }
 }

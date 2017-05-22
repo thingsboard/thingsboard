@@ -38,10 +38,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.AssetEntity;
-import org.thingsboard.server.dao.model.nosql.CustomerEntity;
-import org.thingsboard.server.dao.model.nosql.TenantEntity;
-import org.thingsboard.server.dao.relation.EntityRelationsQuery;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -156,11 +152,11 @@ public class BaseAssetService extends BaseEntityService implements AssetService 
 
     @Override
     public ListenableFuture<List<Asset>> findAssetsByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<AssetId> assetIds) {
-        log.trace("Executing findAssetsByTenantIdCustomerIdAndIdsAsync, tenantId [{}], customerId [{}], assetIds [{}]", tenantId, customerId, assetIds);
+        log.trace("Executing findAssetsByTenantIdAndCustomerIdAndIdsAsync, tenantId [{}], customerId [{}], assetIds [{}]", tenantId, customerId, assetIds);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
         validateIds(assetIds, "Incorrect assetIds " + assetIds);
-        return assetDao.findAssetsByTenantIdCustomerIdAndIdsAsync(tenantId.getId(), customerId.getId(), toUUIDs(assetIds));
+        return assetDao.findAssetsByTenantIdAndCustomerIdAndIdsAsync(tenantId.getId(), customerId.getId(), toUUIDs(assetIds));
     }
 
     @Override

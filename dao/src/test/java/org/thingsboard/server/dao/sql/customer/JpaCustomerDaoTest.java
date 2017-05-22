@@ -26,9 +26,11 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.customer.CustomerDao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -55,6 +57,19 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
         TextPageLink pageLink2 = new TextPageLink(15, "CUSTOMER", customers1.get(14).getId().getId(), null);
         List<Customer> customers2 = customerDao.findCustomersByTenantId(tenantId1, pageLink2);
         assertEquals(5, customers2.size());
+    }
+
+    @Test
+    public void testFindCustomersByTenantIdAndTitle() {
+        UUID tenantId = UUIDs.timeBased();
+
+        for (int i = 0; i < 10; i++) {
+            createCustomer(tenantId, i);
+        }
+
+        Optional<Customer> customerOpt = customerDao.findCustomersByTenantIdAndTitle(tenantId, "CUSTOMER_5");
+        assertTrue(customerOpt.isPresent());
+        assertEquals("CUSTOMER_5", customerOpt.get().getTitle());
     }
 
     private void createCustomer(UUID tenantId, int index) {

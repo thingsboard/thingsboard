@@ -76,7 +76,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     @Override
     public ListenableFuture<D> findByIdAsync(UUID key) {
         log.debug("Get entity by key async {}", key);
-        // Should it be a field?
+        // Should ListeningExecutorService be a field?
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         ListenableFuture<D> listenableFuture = service.submit(() -> DaoUtil.getData(getCrudRepository().findOne(key)));
         return listenableFuture;

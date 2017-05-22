@@ -63,7 +63,7 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
 
     @Override
     public Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title) {
-        // TODO: vsosliuk implement
-        return null;
+        Customer customer = DaoUtil.getData(customerRepository.findByTenantIdAndTitle(tenantId, title));
+        return Optional.ofNullable(customer);
     }
 }
