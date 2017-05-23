@@ -17,11 +17,13 @@ package org.thingsboard.server.dao.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.model.AlarmEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -35,4 +37,5 @@ public interface AlarmDao extends Dao<AlarmEntity> {
 
     AlarmEntity save(Alarm alarm);
 
+    ListenableFuture<List<Alarm>> findAlarms(AlarmQuery query);
 }

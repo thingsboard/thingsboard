@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,63 +17,43 @@ package org.thingsboard.server.dao.alarm;
 
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.dao.asset.AssetDao;
-import org.thingsboard.server.dao.asset.AssetSearchQuery;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.AlarmEntity;
-import org.thingsboard.server.dao.model.AssetEntity;
-import org.thingsboard.server.dao.model.CustomerEntity;
-import org.thingsboard.server.dao.model.TenantEntity;
+import org.thingsboard.server.dao.model.*;
 import org.thingsboard.server.dao.relation.EntityRelationsQuery;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.*;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
 public class BaseAlarmService extends BaseEntityService implements AlarmService {
 
-    private static final String ALARM_RELATION_PREFIX = "ALARM_";
-    private static final String ALARM_RELATION = "ALARM_ANY";
+    public static final String ALARM_RELATION_PREFIX = "ALARM_";
+    public static final String ALARM_RELATION = "ALARM_ANY";
 
     @Autowired
     private AlarmDao alarmDao;
@@ -190,7 +170,14 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
 
     @Override
     public ListenableFuture<TimePageData<Alarm>> findAlarms(AlarmQuery query) {
-        return null;
+        ListenableFuture<List<Alarm>> alarms = alarmDao.findAlarms(query);
+        return Futures.transform(alarms, new Function<List<Alarm>, TimePageData<Alarm>>() {
+            @Nullable
+            @Override
+            public TimePageData<Alarm> apply(@Nullable List<Alarm> alarms) {
+                return new TimePageData<>(alarms, query.getPageLink());
+            }
+        });
     }
 
     private void deleteRelation(EntityRelation alarmRelation) throws ExecutionException, InterruptedException {

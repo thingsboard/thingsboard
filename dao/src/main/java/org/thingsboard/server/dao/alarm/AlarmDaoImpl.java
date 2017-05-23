@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,24 +15,27 @@
  */
 package org.thingsboard.server.dao.alarm;
 
-import com.datastax.driver.core.querybuilder.Ordering;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
-import com.google.common.base.Function;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.AbstractModelDao;
+import org.thingsboard.server.dao.AbstractSearchTimeDao;
 import org.thingsboard.server.dao.model.AlarmEntity;
-import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.relation.RelationDao;
 
-import javax.annotation.Nullable;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -42,6 +45,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Component
 @Slf4j
 public class AlarmDaoImpl extends AbstractModelDao<AlarmEntity> implements AlarmDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<AlarmEntity> getColumnFamilyClass() {
@@ -79,5 +85,20 @@ public class AlarmDaoImpl extends AbstractModelDao<AlarmEntity> implements Alarm
         query.limit(1);
         log.trace("Execute query {}", query);
         return Futures.transform(findOneByStatementAsync(query), toDataFunction());
+    }
+
+    @Override
+    public ListenableFuture<List<Alarm>> findAlarms(AlarmQuery query) {
+        log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
+        EntityId affectedEntity = query.getAffectedEntityId();
+        String relationType = query.getStatus() == null ? BaseAlarmService.ALARM_RELATION : BaseAlarmService.ALARM_RELATION_PREFIX + query.getStatus().name();
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, query.getPageLink());
+        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<Alarm>>) input -> {
+            List<ListenableFuture<Alarm>> alarmFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                alarmFutures.add(findAlarmByIdAsync(relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(alarmFutures);
+        });
     }
 }

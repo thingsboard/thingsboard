@@ -47,8 +47,27 @@ public abstract class AbstractSearchTimeDao<T extends BaseEntity<?>> extends Abs
         return findPageWithTimeSearch(searchView, clauses, Collections.singletonList(ordering), pageLink);
     }
 
-
     protected List<T> findPageWithTimeSearch(String searchView, List<Clause> clauses, List<Ordering> topLevelOrderings, TimePageLink pageLink) {
+        return findPageWithTimeSearch(searchView, clauses, topLevelOrderings, pageLink, ModelConstants.ID_PROPERTY);
+    }
+
+    protected List<T> findPageWithTimeSearch(String searchView, List<Clause> clauses, TimePageLink pageLink, String idColumn) {
+        return findPageWithTimeSearch(searchView, clauses, Collections.emptyList(), pageLink, idColumn);
+    }
+
+    protected List<T> findPageWithTimeSearch(String searchView, List<Clause> clauses, List<Ordering> topLevelOrderings, TimePageLink pageLink, String idColumn) {
+        return findListByStatement(buildQuery(searchView, clauses, topLevelOrderings, pageLink, idColumn));
+    }
+
+    public static Where buildQuery(String searchView, List<Clause> clauses, TimePageLink pageLink, String idColumn) {
+        return buildQuery(searchView, clauses, Collections.emptyList(), pageLink, idColumn);
+    }
+
+    public static Where buildQuery(String searchView, List<Clause> clauses, Ordering order, TimePageLink pageLink, String idColumn) {
+        return buildQuery(searchView, clauses, Collections.singletonList(order), pageLink, idColumn);
+    }
+
+    public static Where buildQuery(String searchView, List<Clause> clauses, List<Ordering> topLevelOrderings, TimePageLink pageLink, String idColumn) {
         Select select = select().from(searchView);
         Where query = select.where();
         for (Clause clause : clauses) {
@@ -57,34 +76,35 @@ public abstract class AbstractSearchTimeDao<T extends BaseEntity<?>> extends Abs
         query.limit(pageLink.getLimit());
         if (pageLink.isAscOrder()) {
             if (pageLink.getIdOffset() != null) {
-                query.and(QueryBuilder.gt(ModelConstants.ID_PROPERTY, pageLink.getIdOffset()));
+                query.and(QueryBuilder.gt(idColumn, pageLink.getIdOffset()));
             } else if (pageLink.getStartTime() != null) {
                 final UUID startOf = UUIDs.startOf(pageLink.getStartTime());
-                query.and(QueryBuilder.gte(ModelConstants.ID_PROPERTY, startOf));
+                query.and(QueryBuilder.gte(idColumn, startOf));
             }
             if (pageLink.getEndTime() != null) {
                 final UUID endOf = UUIDs.endOf(pageLink.getEndTime());
-                query.and(QueryBuilder.lte(ModelConstants.ID_PROPERTY, endOf));
+                query.and(QueryBuilder.lte(idColumn, endOf));
             }
         } else {
             if (pageLink.getIdOffset() != null) {
-                query.and(QueryBuilder.lt(ModelConstants.ID_PROPERTY, pageLink.getIdOffset()));
+                query.and(QueryBuilder.lt(idColumn, pageLink.getIdOffset()));
             } else if (pageLink.getEndTime() != null) {
                 final UUID endOf = UUIDs.endOf(pageLink.getEndTime());
-                query.and(QueryBuilder.lte(ModelConstants.ID_PROPERTY, endOf));
+                query.and(QueryBuilder.lte(idColumn, endOf));
             }
             if (pageLink.getStartTime() != null) {
                 final UUID startOf = UUIDs.startOf(pageLink.getStartTime());
-                query.and(QueryBuilder.gte(ModelConstants.ID_PROPERTY, startOf));
+                query.and(QueryBuilder.gte(idColumn, startOf));
             }
         }
         List<Ordering> orderings = new ArrayList<>(topLevelOrderings);
         if (pageLink.isAscOrder()) {
-            orderings.add(QueryBuilder.asc(ModelConstants.ID_PROPERTY));
+            orderings.add(QueryBuilder.asc(idColumn));
         } else {
-            orderings.add(QueryBuilder.desc(ModelConstants.ID_PROPERTY));
+            orderings.add(QueryBuilder.desc(idColumn));
         }
         query.orderBy(orderings.toArray(new Ordering[orderings.size()]));
-        return findListByStatement(query);
+        return query;
     }
+
 }

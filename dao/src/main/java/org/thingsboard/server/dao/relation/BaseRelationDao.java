@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.relation;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.querybuilder.Select;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
@@ -24,14 +26,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.AbstractAsyncDao;
+import org.thingsboard.server.dao.AbstractSearchTimeDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_COLUMN_FAMILY_NAME;
 
 /**
  * Created by ashvayka on 25.04.17.
@@ -145,6 +153,17 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
         return getBooleanListenableFuture(future);
     }
 
+    @Override
+    public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, TimePageLink pageLink) {
+        Select.Where query = AbstractSearchTimeDao.buildQuery(RELATION_COLUMN_FAMILY_NAME,
+                Arrays.asList(eq(ModelConstants.RELATION_FROM_ID_PROPERTY, from.getId()),
+                        eq(ModelConstants.RELATION_FROM_TYPE_PROPERTY, from.getEntityType().name()),
+                        eq(ModelConstants.RELATION_TYPE_PROPERTY, relationType)),
+                QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY),
+                pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
+        return getFuture(executeAsyncRead(query), rs -> getEntityRelations(rs));
+    }
+
     private PreparedStatement getSaveStmt() {
         if (saveStmt == null) {
             saveStmt = getSession().prepare("INSERT INTO " + ModelConstants.RELATION_COLUMN_FAMILY_NAME + " " +
@@ -235,31 +254,13 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
         return checkRelationStmt;
     }
 
-    private EntityRelation getEntityRelation(Row row) {
-        EntityRelation relation = new EntityRelation();
-        relation.setType(row.getString(ModelConstants.RELATION_TYPE_PROPERTY));
-        relation.setAdditionalInfo(row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY, JsonNode.class));
-        relation.setFrom(toEntity(row, ModelConstants.RELATION_FROM_ID_PROPERTY, ModelConstants.RELATION_FROM_TYPE_PROPERTY));
-        relation.setTo(toEntity(row, ModelConstants.RELATION_TO_ID_PROPERTY, ModelConstants.RELATION_TO_TYPE_PROPERTY));
-        return relation;
-    }
-
     private EntityId toEntity(Row row, String uuidColumn, String typeColumn) {
         return EntityIdFactory.getByTypeAndUuid(row.getString(typeColumn), row.getUUID(uuidColumn));
     }
 
     private ListenableFuture<List<EntityRelation>> executeAsyncRead(EntityId from, BoundStatement stmt) {
         log.debug("Generated query [{}] for entity {}", stmt, from);
-        return getFuture(executeAsyncRead(stmt), rs -> {
-            List<Row> rows = rs.all();
-            List<EntityRelation> entries = new ArrayList<>(rows.size());
-            if (!rows.isEmpty()) {
-                rows.forEach(row -> {
-                    entries.add(getEntityRelation(row));
-                });
-            }
-            return entries;
-        });
+        return getFuture(executeAsyncRead(stmt), rs -> getEntityRelations(rs));
     }
 
     private ListenableFuture<Boolean> getBooleanListenableFuture(ResultSetFuture rsFuture) {
@@ -274,6 +275,26 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                 return transformer.apply(input);
             }
         }, readResultsProcessingExecutor);
+    }
+
+    private List<EntityRelation> getEntityRelations(ResultSet rs) {
+        List<Row> rows = rs.all();
+        List<EntityRelation> entries = new ArrayList<>(rows.size());
+        if (!rows.isEmpty()) {
+            rows.forEach(row -> {
+                entries.add(getEntityRelation(row));
+            });
+        }
+        return entries;
+    }
+
+    private EntityRelation getEntityRelation(Row row) {
+        EntityRelation relation = new EntityRelation();
+        relation.setType(row.getString(ModelConstants.RELATION_TYPE_PROPERTY));
+        relation.setAdditionalInfo(row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY, JsonNode.class));
+        relation.setFrom(toEntity(row, ModelConstants.RELATION_FROM_ID_PROPERTY, ModelConstants.RELATION_FROM_TYPE_PROPERTY));
+        relation.setTo(toEntity(row, ModelConstants.RELATION_TO_ID_PROPERTY, ModelConstants.RELATION_TO_TYPE_PROPERTY));
+        return relation;
     }
 
 }

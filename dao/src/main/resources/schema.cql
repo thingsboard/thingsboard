@@ -268,7 +268,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.relation (
 	relation_type text,
 	additional_info text,
 	PRIMARY KEY ((from_id, from_type), relation_type, to_id, to_type)
-);
+) WITH CLUSTERING ORDER BY ( relation_type ASC, to_id ASC, to_type ASC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.reverse_relation AS
 SELECT *
