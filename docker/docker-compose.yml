@@ -18,7 +18,7 @@ version: '2'
 
 services:
   thingsboard:
-    image: "thingsboard/application:1.2.2"
+    image: "thingsboard/application:1.2.3"
     ports:
       - "8080:8080"
       - "1883:1883"
@@ -27,7 +27,7 @@ services:
       - thingsboard.env
     entrypoint: ./run_thingsboard.sh
   thingsboard-db-schema:
-    image: "thingsboard/thingsboard-db-schema:1.2.2"
+    image: "thingsboard/thingsboard-db-schema:1.2.3"
     env_file:
       - thingsboard-db-schema.env
     entrypoint: ./install_schema.sh
