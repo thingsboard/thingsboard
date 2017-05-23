@@ -18,13 +18,15 @@ version: '2'
 
 services:
   thingsboard:
-    image: "thingsboard/application:1.2.2"
+    image: "thingsboard/application:1.2.3-test"
     ports:
-      - "8080:8080"
-      - "1883:1883"
+      - "8443:8443"
+      - "1884:1883"
       - "5683:5683/udp"
     env_file:
       - thingsboard.env
+    volumes:
+      - "~/keystore.p12:/root/keystore.p12"
     entrypoint: ./run_thingsboard.sh
   thingsboard-db-schema:
     image: "thingsboard/thingsboard-db-schema:1.2.2"
