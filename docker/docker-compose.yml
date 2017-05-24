@@ -28,8 +28,10 @@ services:
     entrypoint: ./run_thingsboard.sh
   thingsboard-db-schema:
     image: "thingsboard/thingsboard-db-schema:1.2.3"
-    env_file:
-      - thingsboard-db-schema.env
+    environment:
+      - SKIP_SCHEMA_CREATION=${SKIP_SCHEMA_CREATION}
+      - SKIP_SYSTEM_DATA=${SKIP_SYSTEM_DATA}
+      - SKIP_DEMO_DATA=${SKIP_DEMO_DATA}
     entrypoint: ./install_schema.sh
   db:
     image: "cassandra:3.9"
