@@ -25,8 +25,6 @@ services:
       - "5683:5683/udp"
     env_file:
       - thingsboard.env
-    volumes:
-      - "~/keystore.p12:/root/keystore.p12"
     entrypoint: ./run_thingsboard.sh
   thingsboard-db-schema:
     image: "thingsboard/thingsboard-db-schema:1.2.3"
