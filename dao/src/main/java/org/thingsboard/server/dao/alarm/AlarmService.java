@@ -28,8 +28,6 @@ public interface AlarmService {
 
     Alarm createOrUpdateAlarm(Alarm alarm);
 
-    ListenableFuture<Boolean> updateAlarm(Alarm alarm);
-
     ListenableFuture<Boolean> ackAlarm(AlarmId alarmId, long ackTs);
 
     ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long ackTs);

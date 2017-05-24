@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -26,9 +27,9 @@ import org.thingsboard.server.common.data.page.TimePageLink;
  */
 @Data
 @Builder
+@AllArgsConstructor
 public class AlarmQuery {
 
-    private TenantId tenantId;
     private EntityId affectedEntityId;
     private TimePageLink pageLink;
     private AlarmStatus status;

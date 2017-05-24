@@ -82,7 +82,6 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
         }
     }
 
-
     @Override
     public Alarm createOrUpdateAlarm(Alarm alarm) {
         alarmDataValidator.validate(alarm);
@@ -93,51 +92,59 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
             if (alarm.getEndTs() == 0L) {
                 alarm.setEndTs(alarm.getStartTs());
             }
-            Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
-            if (existing == null || existing.getStatus().isCleared()) {
-                log.debug("New Alarm : {}", alarm);
-                Alarm saved = getData(alarmDao.save(new AlarmEntity(alarm)));
-                EntityRelationsQuery query = new EntityRelationsQuery();
-                query.setParameters(new RelationsSearchParameters(saved.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
-                List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
-                for (EntityId parentId : parentEntities) {
-                    createRelation(new EntityRelation(parentId, saved.getId(), ALARM_RELATION));
-                    createRelation(new EntityRelation(parentId, saved.getId(), ALARM_RELATION_PREFIX + saved.getStatus().name()));
+            if (alarm.getId() == null) {
+                Alarm existing = alarmDao.findLatestByOriginatorAndType(alarm.getTenantId(), alarm.getOriginator(), alarm.getType()).get();
+                if (existing == null || existing.getStatus().isCleared()) {
+                    return createAlarm(alarm);
+                } else {
+                    return updateAlarm(existing, alarm);
                 }
-                createRelation(new EntityRelation(alarm.getOriginator(), saved.getId(), ALARM_RELATION));
-                createRelation(new EntityRelation(alarm.getOriginator(), saved.getId(), ALARM_RELATION_PREFIX + saved.getStatus().name()));
-                return saved;
             } else {
-                log.debug("Alarm before merge: {}", alarm);
-                alarm = merge(existing, alarm);
-                log.debug("Alarm after merge: {}", alarm);
-                return getData(alarmDao.save(new AlarmEntity(alarm)));
+                return updateAlarm(alarm).get();
             }
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Override
-    public ListenableFuture<Boolean> updateAlarm(Alarm update) {
+    private Alarm createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
+        log.debug("New Alarm : {}", alarm);
+        Alarm saved = getData(alarmDao.save(new AlarmEntity(alarm)));
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        query.setParameters(new RelationsSearchParameters(saved.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
+        List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
+        for (EntityId parentId : parentEntities) {
+            createRelation(new EntityRelation(parentId, saved.getId(), ALARM_RELATION));
+            createRelation(new EntityRelation(parentId, saved.getId(), ALARM_RELATION_PREFIX + saved.getStatus().name()));
+        }
+        createRelation(new EntityRelation(alarm.getOriginator(), saved.getId(), ALARM_RELATION));
+        createRelation(new EntityRelation(alarm.getOriginator(), saved.getId(), ALARM_RELATION_PREFIX + saved.getStatus().name()));
+        return saved;
+    }
+
+    protected ListenableFuture<Alarm> updateAlarm(Alarm update) {
         alarmDataValidator.validate(update);
-        return getAndUpdate(update.getId(), new Function<Alarm, Boolean>() {
+        return getAndUpdate(update.getId(), new Function<Alarm, Alarm>() {
             @Nullable
             @Override
-            public Boolean apply(@Nullable Alarm alarm) {
+            public Alarm apply(@Nullable Alarm alarm) {
                 if (alarm == null) {
-                    return false;
+                    return null;
                 } else {
-                    AlarmStatus oldStatus = alarm.getStatus();
-                    AlarmStatus newStatus = update.getStatus();
-                    alarmDao.save(new AlarmEntity(merge(alarm, update)));
-                    if (oldStatus != newStatus) {
-                        updateRelations(alarm, oldStatus, newStatus);
-                    }
-                    return true;
+                    return updateAlarm(alarm, update);
                 }
             }
         });
+    }
+
+    private Alarm updateAlarm(Alarm oldAlarm, Alarm newAlarm) {
+        AlarmStatus oldStatus = oldAlarm.getStatus();
+        AlarmStatus newStatus = newAlarm.getStatus();
+        AlarmEntity result = alarmDao.save(new AlarmEntity(merge(oldAlarm, newAlarm)));
+        if (oldStatus != newStatus) {
+            updateRelations(oldAlarm, oldStatus, newStatus);
+        }
+        return result.toData();
     }
 
     @Override
@@ -247,7 +254,7 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
         }
     }
 
-    private ListenableFuture<Boolean> getAndUpdate(AlarmId alarmId, Function<Alarm, Boolean> function) {
+    private <T> ListenableFuture<T> getAndUpdate(AlarmId alarmId, Function<Alarm, T> function) {
         validateId(alarmId, "Alarm id should be specified!");
         ListenableFuture<Alarm> entity = alarmDao.findAlarmByIdAsync(alarmId.getId());
         return Futures.transform(entity, function, readResultsProcessingExecutor);
