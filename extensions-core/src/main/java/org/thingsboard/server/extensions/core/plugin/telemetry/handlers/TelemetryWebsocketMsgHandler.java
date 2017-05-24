@@ -19,7 +19,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.extensions.api.exception.UnauthorizedException;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
@@ -101,8 +102,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             if (cmd.isUnsubscribe()) {
                 unsubscribe(ctx, cmd, sessionId);
             } else if (validateSubscriptionCmd(ctx, sessionRef, cmd)) {
-                log.debug("[{}] fetching latest attributes ({}) values for device: {}", sessionId, cmd.getKeys(), cmd.getDeviceId());
-                DeviceId deviceId = DeviceId.fromString(cmd.getDeviceId());
+                EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
+                log.debug("[{}] fetching latest attributes ({}) values for device: {}", sessionId, cmd.getKeys(), entityId);
                 Optional<Set<String>> keysOptional = getKeys(cmd);
                 SubscriptionState sub;
                 if (keysOptional.isPresent()) {
@@ -118,8 +119,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                             keys.forEach(key -> subState.put(key, 0L));
                             attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
-                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.ATTRIBUTES, false, subState);
-                            subscriptionManager.addLocalWsSubscription(ctx, sessionId, deviceId, sub);
+                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.ATTRIBUTES, false, subState);
+                            subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
                         }
 
                         @Override
@@ -138,9 +139,9 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     };
 
                     if (StringUtils.isEmpty(cmd.getScope())) {
-                        ctx.loadAttributes(deviceId, Arrays.asList(DataConstants.ALL_SCOPES), keys, callback);
+                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.ALL_SCOPES), keys, callback);
                     } else {
-                        ctx.loadAttributes(deviceId, cmd.getScope(), keys, callback);
+                        ctx.loadAttributes(entityId, cmd.getScope(), keys, callback);
                     }
                 } else {
                     PluginCallback<List<AttributeKvEntry>> callback = new PluginCallback<List<AttributeKvEntry>>() {
@@ -152,8 +153,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                             Map<String, Long> subState = new HashMap<>(attributesData.size());
                             attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
-                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.ATTRIBUTES, true, subState);
-                            subscriptionManager.addLocalWsSubscription(ctx, sessionId, deviceId, sub);
+                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.ATTRIBUTES, true, subState);
+                            subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
                         }
 
                         @Override
@@ -166,9 +167,9 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     };
 
                     if (StringUtils.isEmpty(cmd.getScope())) {
-                        ctx.loadAttributes(deviceId, Arrays.asList(DataConstants.ALL_SCOPES), callback);
+                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.ALL_SCOPES), callback);
                     } else {
-                        ctx.loadAttributes(deviceId, cmd.getScope(), callback);
+                        ctx.loadAttributes(entityId, cmd.getScope(), callback);
                     }
                 }
             }
@@ -183,33 +184,33 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             if (cmd.isUnsubscribe()) {
                 unsubscribe(ctx, cmd, sessionId);
             } else if (validateSubscriptionCmd(ctx, sessionRef, cmd)) {
-                DeviceId deviceId = DeviceId.fromString(cmd.getDeviceId());
+                EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
                 Optional<Set<String>> keysOptional = getKeys(cmd);
 
                 if (keysOptional.isPresent()) {
                     long startTs;
                     if (cmd.getTimeWindow() > 0) {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
-                        log.debug("[{}] fetching timeseries data for last {} ms for keys: ({}) for device : {}", sessionId, cmd.getTimeWindow(), cmd.getKeys(), cmd.getDeviceId());
+                        log.debug("[{}] fetching timeseries data for last {} ms for keys: ({}) for device : {}", sessionId, cmd.getTimeWindow(), cmd.getKeys(), entityId);
                         startTs = cmd.getStartTs();
                         long endTs = cmd.getStartTs() + cmd.getTimeWindow();
                         List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs, endTs, cmd.getInterval(), getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
-                        ctx.loadTimeseries(deviceId, queries, getSubscriptionCallback(sessionRef, cmd, sessionId, deviceId, startTs, keys));
+                        ctx.loadTimeseries(entityId, queries, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startTs, keys));
                     } else {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
                         startTs = System.currentTimeMillis();
-                        log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), cmd.getDeviceId());
-                        ctx.loadLatestTimeseries(deviceId, keys, getSubscriptionCallback(sessionRef, cmd, sessionId, deviceId, startTs, keys));
+                        log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
+                        ctx.loadLatestTimeseries(entityId, keys, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startTs, keys));
                     }
                 } else {
-                    ctx.loadLatestTimeseries(deviceId, new PluginCallback<List<TsKvEntry>>() {
+                    ctx.loadLatestTimeseries(entityId, new PluginCallback<List<TsKvEntry>>() {
                         @Override
                         public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
                             sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
                             Map<String, Long> subState = new HashMap<>(data.size());
                             data.forEach(v -> subState.put(v.getKey(), v.getTs()));
-                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.TIMESERIES, true, subState);
-                            subscriptionManager.addLocalWsSubscription(ctx, sessionId, deviceId, sub);
+                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.TIMESERIES, true, subState);
+                            subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
                         }
 
                         @Override
@@ -230,7 +231,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         }
     }
 
-    private PluginCallback<List<TsKvEntry>> getSubscriptionCallback(final PluginWebsocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd, final String sessionId, final DeviceId deviceId, final long startTs, final List<String> keys) {
+    private PluginCallback<List<TsKvEntry>> getSubscriptionCallback(final PluginWebsocketSessionRef sessionRef, final TimeseriesSubscriptionCmd cmd, final String sessionId, final EntityId entityId, final long startTs, final List<String> keys) {
         return new PluginCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
@@ -239,8 +240,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 Map<String, Long> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startTs));
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
-                SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), deviceId, SubscriptionType.TIMESERIES, false, subState);
-                subscriptionManager.addLocalWsSubscription(ctx, sessionId, deviceId, sub);
+                SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.TIMESERIES, false, subState);
+                subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
             }
 
             @Override
@@ -263,7 +264,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             sendWsMsg(ctx, sessionRef, update);
             return;
         }
-        if (cmd.getDeviceId() == null || cmd.getDeviceId().isEmpty()) {
+        if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty() || cmd.getEntityType() == null || cmd.getEntityType().isEmpty()) {
             SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
                     "Device id is empty!");
             sendWsMsg(ctx, sessionRef, update);
@@ -275,10 +276,11 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             sendWsMsg(ctx, sessionRef, update);
             return;
         }
-        DeviceId deviceId = DeviceId.fromString(cmd.getDeviceId());
+        EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
-        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
-        ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
+        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), getAggregation(cmd.getAgg())))
+                .collect(Collectors.toList());
+        ctx.loadTimeseries(entityId, queries, new PluginCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
                 sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
@@ -321,7 +323,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
     }
 
     private void unsubscribe(PluginContext ctx, SubscriptionCmd cmd, String sessionId) {
-        if (cmd.getDeviceId() == null || cmd.getDeviceId().isEmpty()) {
+        if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty()) {
             cleanupWebSocketSession(ctx, sessionId);
         } else {
             subscriptionManager.removeSubscription(ctx, sessionId, cmd.getCmdId());
@@ -329,7 +331,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
     }
 
     private boolean validateSubscriptionCmd(PluginContext ctx, PluginWebsocketSessionRef sessionRef, SubscriptionCmd cmd) {
-        if (cmd.getDeviceId() == null || cmd.getDeviceId().isEmpty()) {
+        if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty()) {
             SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
                     "Device id is empty!");
             sendWsMsg(ctx, sessionRef, update);

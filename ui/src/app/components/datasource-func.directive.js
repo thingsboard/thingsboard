@@ -120,8 +120,8 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                 locals: {
                     dataKey: angular.copy(dataKey),
                     dataKeySettingsSchema: scope.datakeySettingsSchema,
-                    deviceAlias: null,
-                    deviceAliases: null
+                    entityAlias: null,
+                    entityAliases: null
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,

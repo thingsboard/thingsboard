@@ -15,23 +15,28 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import deviceAliasesTemplate from './device-aliases.tpl.html';
-import dashboardBackgroundTemplate from './dashboard-settings.tpl.html';
+import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
+import dashboardSettingsTemplate from './dashboard-settings.tpl.html';
+import manageDashboardLayoutsTemplate from './layouts/manage-dashboard-layouts.tpl.html';
+import manageDashboardStatesTemplate from './states/manage-dashboard-states.tpl.html';
 import addWidgetTemplate from './add-widget.tpl.html';
+import selectTargetLayoutTemplate from './layouts/select-target-layout.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function DashboardController(types, widgetService, userService,
-                                            dashboardService, timeService, deviceService, itembuffer, importExport, hotkeys, $window, $rootScope,
-                                            $scope, $state, $stateParams, $mdDialog, $timeout, $document, $q, $translate, $filter) {
+export default function DashboardController(types, dashboardUtils, widgetService, userService,
+                                            dashboardService, timeService, entityService, itembuffer, importExport, hotkeys, $window, $rootScope,
+                                            $scope, $element, $state, $stateParams, $mdDialog, $mdMedia, $timeout, $document, $q, $translate, $filter) {
 
     var vm = this;
 
     vm.user = userService.getCurrentUser();
     vm.dashboard = null;
     vm.editingWidget = null;
+    vm.editingWidgetLayout = null;
     vm.editingWidgetOriginal = null;
+    vm.editingWidgetLayoutOriginal = null;
     vm.editingWidgetSubtitle = null;
     vm.forceDashboardMobileMode = false;
     vm.isAddingWidget = false;
@@ -43,8 +48,6 @@ export default function DashboardController(types, widgetService, userService,
     vm.staticWidgetTypes = [];
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
     vm.iframeMode = $rootScope.iframeMode;
-    vm.widgets = [];
-    vm.dashboardInitComplete = false;
 
     vm.isToolbarOpened = false;
 
@@ -60,9 +63,32 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     Object.defineProperty(vm, 'toolbarOpened', {
-        get: function() { return vm.isToolbarOpened || vm.isEdit; },
+        get: function() { return !vm.widgetEditMode && ($scope.forceFullscreen || vm.isToolbarOpened || vm.isEdit || vm.showRightLayoutSwitch()); },
         set: function() { }
     });
+
+    vm.layouts = {
+        main: {
+            show: false,
+            layoutCtx: {
+                id: 'main',
+                widgets: [],
+                widgetLayouts: {},
+                gridSettings: {},
+                ignoreLoading: false
+            }
+        },
+        right: {
+            show: false,
+            layoutCtx: {
+                id: 'right',
+                widgets: [],
+                widgetLayouts: {},
+                gridSettings: {},
+                ignoreLoading: false
+            }
+        }
+    };
 
     vm.openToolbar = function() {
         $timeout(function() {
@@ -76,31 +102,78 @@ export default function DashboardController(types, widgetService, userService,
         });
     }
 
+    vm.showCloseToolbar = function() {
+        return !$scope.forceFullscreen && !vm.isEdit && !vm.showRightLayoutSwitch();
+    }
+
+    vm.showRightLayoutSwitch = function() {
+        return vm.isMobile && vm.layouts.right.show;
+    }
+
+    vm.toggleLayouts = function() {
+        vm.isRightLayoutOpened = !vm.isRightLayoutOpened;
+    }
+
+    vm.openRightLayout = function() {
+        vm.isRightLayoutOpened = true;
+    }
+
+    vm.isRightLayoutOpened = false;
+    vm.isMobile = !$mdMedia('gt-sm');
+
+    $scope.$watch(function() { return $mdMedia('gt-sm'); }, function(isGtSm) {
+        vm.isMobile = !isGtSm;
+    });
+
+    vm.mainLayoutWidth = function() {
+        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'main') {
+            return '100%';
+        } else {
+            return vm.layouts.right.show && !vm.isMobile ? '50%' : '100%';
+        }
+    }
+
+    vm.mainLayoutHeight = function() {
+        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'main') {
+            return '100%';
+        } else {
+            return 'auto';
+        }
+    }
+
+    vm.rightLayoutWidth = function() {
+        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'right') {
+            return '100%';
+        } else {
+            return vm.isMobile ? '100%' : '50%';
+        }
+    }
+
+    vm.rightLayoutHeight = function() {
+        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'right') {
+            return '100%';
+        } else {
+            return 'auto';
+        }
+    }
+
+    vm.getServerTimeDiff = getServerTimeDiff;
     vm.addWidget = addWidget;
     vm.addWidgetFromType = addWidgetFromType;
-    vm.dashboardInited = dashboardInited;
-    vm.dashboardInitFailed = dashboardInitFailed;
-    vm.widgetMouseDown = widgetMouseDown;
-    vm.widgetClicked = widgetClicked;
-    vm.prepareDashboardContextMenu = prepareDashboardContextMenu;
-    vm.prepareWidgetContextMenu = prepareWidgetContextMenu;
-    vm.editWidget = editWidget;
     vm.exportDashboard = exportDashboard;
-    vm.exportWidget = exportWidget;
     vm.importWidget = importWidget;
     vm.isPublicUser = isPublicUser;
     vm.isTenantAdmin = isTenantAdmin;
     vm.isSystemAdmin = isSystemAdmin;
-    vm.loadDashboard = loadDashboard;
-    vm.getServerTimeDiff = getServerTimeDiff;
-    vm.noData = noData;
     vm.dashboardConfigurationError = dashboardConfigurationError;
     vm.showDashboardToolbar = showDashboardToolbar;
     vm.onAddWidgetClosed = onAddWidgetClosed;
     vm.onEditWidgetClosed = onEditWidgetClosed;
-    vm.openDeviceAliases = openDeviceAliases;
+    vm.openDashboardState = openDashboardState;
+    vm.openEntityAliases = openEntityAliases;
     vm.openDashboardSettings = openDashboardSettings;
-    vm.removeWidget = removeWidget;
+    vm.manageDashboardLayouts = manageDashboardLayouts;
+    vm.manageDashboardStates = manageDashboardStates;
     vm.saveDashboard = saveDashboard;
     vm.saveWidget = saveWidget;
     vm.toggleDashboardEditMode = toggleDashboardEditMode;
@@ -109,9 +182,55 @@ export default function DashboardController(types, widgetService, userService,
     vm.displayTitle = displayTitle;
     vm.displayExport = displayExport;
     vm.displayDashboardTimewindow = displayDashboardTimewindow;
-    vm.displayDevicesSelect = displayDevicesSelect;
+    vm.displayDashboardsSelect = displayDashboardsSelect;
+    vm.displayEntitiesSelect = displayEntitiesSelect;
 
     vm.widgetsBundle;
+
+    vm.dashboardCtx = {
+        state: null,
+        stateController: {
+            openRightLayout: function() {
+                vm.openRightLayout();
+            }
+        },
+        onAddWidget: function(event, layoutCtx) {
+            addWidget(event, layoutCtx);
+        },
+        onEditWidget: function(event, layoutCtx, widget) {
+            editWidget(event, layoutCtx, widget);
+        },
+        onExportWidget: function(event, layoutCtx, widget) {
+            exportWidget(event, layoutCtx, widget);
+        },
+        onWidgetMouseDown: function(event, layoutCtx, widget) {
+            widgetMouseDown(event, layoutCtx, widget);
+        },
+        onWidgetClicked: function(event, layoutCtx, widget) {
+            widgetClicked(event, layoutCtx, widget);
+        },
+        prepareDashboardContextMenu: function(layoutCtx) {
+            return prepareDashboardContextMenu(layoutCtx);
+        },
+        prepareWidgetContextMenu: function(layoutCtx, widget) {
+            return prepareWidgetContextMenu(layoutCtx, widget);
+        },
+        onRemoveWidget: function(event, layoutCtx, widget) {
+            removeWidget(event, layoutCtx, widget);
+        },
+        copyWidget: function($event, layoutCtx, widget) {
+            copyWidget($event, layoutCtx, widget);
+        },
+        copyWidgetReference: function($event, layoutCtx, widget) {
+            copyWidgetReference($event, layoutCtx, widget);
+        },
+        pasteWidget: function($event, layoutCtx, pos) {
+            pasteWidget($event, layoutCtx, pos);
+        },
+        pasteWidgetReference: function($event, layoutCtx, pos) {
+            pasteWidgetReference($event, layoutCtx, pos);
+        }
+    };
 
     $scope.$watch('vm.widgetsBundle', function (newVal, prevVal) {
         if (newVal !== prevVal && !vm.widgetEditMode) {
@@ -132,6 +251,7 @@ export default function DashboardController(types, widgetService, userService,
         }
     });
 
+    loadDashboard();
 
     function loadWidgetLibrary() {
         vm.latestWidgetTypes = [];
@@ -199,84 +319,100 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function loadDashboard() {
-
-        var deferred = $q.defer();
-
         if (vm.widgetEditMode) {
-            $timeout(function () {
-                vm.dashboardConfiguration = {
-                    timewindow: timeService.defaultTimewindow()
-                };
-                vm.widgets = [{
-                    isSystemType: true,
-                    bundleAlias: 'customWidgetBundle',
-                    typeAlias: 'customWidget',
-                    type: $rootScope.editWidgetInfo.type,
-                    title: 'My widget',
-                    sizeX: $rootScope.editWidgetInfo.sizeX * 2,
-                    sizeY: $rootScope.editWidgetInfo.sizeY * 2,
-                    row: 2,
-                    col: 4,
-                    config: angular.fromJson($rootScope.editWidgetInfo.defaultConfig)
-                }];
-                vm.widgets[0].config.title = vm.widgets[0].config.title || $rootScope.editWidgetInfo.widgetName;
-                deferred.resolve();
-                var parentScope = $window.parent.angular.element($window.frameElement).scope();
-                parentScope.$root.$broadcast('widgetEditModeInited');
-                parentScope.$root.$apply();
-            });
-        } else {
+            var widget = {
+                isSystemType: true,
+                bundleAlias: 'customWidgetBundle',
+                typeAlias: 'customWidget',
+                type: $rootScope.editWidgetInfo.type,
+                title: 'My widget',
+                sizeX: $rootScope.editWidgetInfo.sizeX * 2,
+                sizeY: $rootScope.editWidgetInfo.sizeY * 2,
+                row: 2,
+                col: 4,
+                config: angular.fromJson($rootScope.editWidgetInfo.defaultConfig)
+            };
+            widget.config.title = widget.config.title || $rootScope.editWidgetInfo.widgetName;
 
+            vm.dashboard = dashboardUtils.createSingleWidgetDashboard(widget);
+            vm.dashboardConfiguration = vm.dashboard.configuration;
+            vm.dashboardCtx.dashboard = vm.dashboard;
+            vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+            var parentScope = $window.parent.angular.element($window.frameElement).scope();
+            parentScope.$root.$broadcast('widgetEditModeInited');
+            parentScope.$root.$apply();
+        } else {
             dashboardService.getDashboard($stateParams.dashboardId)
                 .then(function success(dashboard) {
-                    vm.dashboard = dashboard;
-                    if (vm.dashboard.configuration == null) {
-                        vm.dashboard.configuration = {widgets: [], deviceAliases: {}};
-                    }
-                    if (angular.isUndefined(vm.dashboard.configuration.widgets)) {
-                        vm.dashboard.configuration.widgets = [];
-                    }
-                    if (angular.isUndefined(vm.dashboard.configuration.deviceAliases)) {
-                        vm.dashboard.configuration.deviceAliases = {};
-                    }
-
-                    if (angular.isUndefined(vm.dashboard.configuration.timewindow)) {
-                        vm.dashboard.configuration.timewindow = timeService.defaultTimewindow();
-                    }
-                    deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases)
+                    vm.dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
+                    entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
                         .then(
                             function(resolution) {
                                 if (resolution.error && !isTenantAdmin()) {
                                     vm.configurationError = true;
                                     showAliasesResolutionError(resolution.error);
-                                    deferred.reject();
                                 } else {
-                                    vm.aliasesInfo = resolution.aliasesInfo;
                                     vm.dashboardConfiguration = vm.dashboard.configuration;
-                                    vm.widgets = vm.dashboard.configuration.widgets;
-                                    deferred.resolve();
+                                    vm.dashboardCtx.dashboard = vm.dashboard;
+                                    vm.dashboardCtx.aliasesInfo = resolution.aliasesInfo;
+                                    vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
                                 }
                             }
                         );
-                }, function fail(e) {
-                    deferred.reject(e);
+                }, function fail() {
+                    vm.configurationError = true;
                 });
-
         }
-        return deferred.promise;
     }
 
-    function dashboardInitFailed() {
-        var parentScope = $window.parent.angular.element($window.frameElement).scope();
-        parentScope.$emit('widgetEditModeInited');
-        parentScope.$apply();
-        vm.dashboardInitComplete = true;
+    function openDashboardState(state) {
+        var layoutsData = dashboardUtils.getStateLayoutsData(vm.dashboard, state);
+        if (layoutsData) {
+            vm.dashboardCtx.state = state;
+            var layoutVisibilityChanged = false;
+            for (var l in vm.layouts) {
+                var layout = vm.layouts[l];
+                var showLayout;
+                if (layoutsData[l]) {
+                    showLayout = true;
+                } else {
+                    showLayout = false;
+                }
+                if (layout.show != showLayout) {
+                    layout.show = showLayout;
+                    layoutVisibilityChanged = !vm.isMobile;
+                }
+            }
+            vm.isRightLayoutOpened = false;
+            updateLayouts(layoutVisibilityChanged);
+        }
+
+        function updateLayouts(layoutVisibilityChanged) {
+            for (l in vm.layouts) {
+                layout = vm.layouts[l];
+                if (layoutsData[l]) {
+                    var layoutInfo = layoutsData[l];
+                    if (layout.layoutCtx.id === 'main') {
+                        layout.layoutCtx.ctrl.setResizing(layoutVisibilityChanged);
+                    }
+                    updateLayout(layout, layoutInfo.widgets, layoutInfo.widgetLayouts, layoutInfo.gridSettings);
+                } else {
+                    updateLayout(layout, [], {}, null);
+                }
+            }
+        }
     }
 
-    function dashboardInited(dashboard) {
-        vm.dashboardContainer = dashboard;
-        initHotKeys();
-        vm.dashboardInitComplete = true;
+    function updateLayout(layout, widgets, widgetLayouts, gridSettings) {
+        if (gridSettings) {
+            layout.layoutCtx.gridSettings = gridSettings;
+        }
+        layout.layoutCtx.widgets = widgets;
+        layout.layoutCtx.widgetLayouts = widgetLayouts;
+        if (layout.show && layout.layoutCtx.ctrl) {
+            layout.layoutCtx.ctrl.reload();
+        }
+        layout.layoutCtx.ignoreLoading = true;
     }
 
     function isPublicUser() {
@@ -291,91 +427,148 @@ export default function DashboardController(types, widgetService, userService,
         return vm.user.authority === 'SYS_ADMIN';
     }
 
-    function noData() {
-        return vm.dashboardInitComplete && !vm.configurationError && vm.widgets.length == 0;
-    }
-
     function dashboardConfigurationError() {
-        return vm.dashboardInitComplete && vm.configurationError;
+        return vm.configurationError;
     }
 
     function showDashboardToolbar() {
-        return vm.dashboardInitComplete;
+        return true;
     }
 
-    function openDeviceAliases($event) {
+    function openEntityAliases($event) {
         $mdDialog.show({
-            controller: 'DeviceAliasesController',
+            controller: 'EntityAliasesController',
             controllerAs: 'vm',
-            templateUrl: deviceAliasesTemplate,
+            templateUrl: entityAliasesTemplate,
             locals: {
                 config: {
-                    deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
-                    widgets: vm.widgets,
-                    isSingleDeviceAlias: false,
-                    singleDeviceAlias: null
+                    entityAliases: angular.copy(vm.dashboard.configuration.entityAliases),
+                    widgets: dashboardUtils.getWidgetsArray(vm.dashboard),
+                    isSingleEntityAlias: false,
+                    singleEntityAlias: null
                 }
             },
             parent: angular.element($document[0].body),
             skipHide: true,
             fullscreen: true,
             targetEvent: $event
-        }).then(function (deviceAliases) {
-            vm.dashboard.configuration.deviceAliases = deviceAliases;
-            deviceAliasesUpdated();
+        }).then(function (entityAliases) {
+            vm.dashboard.configuration.entityAliases = entityAliases;
+            entityAliasesUpdated();
         }, function () {
         });
     }
 
     function openDashboardSettings($event) {
+        var gridSettings = null;
+        var layoutKeys = dashboardUtils.isSingleLayoutDashboard(vm.dashboard);
+        if (layoutKeys) {
+            gridSettings = angular.copy(vm.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout].gridSettings)
+        }
         $mdDialog.show({
             controller: 'DashboardSettingsController',
             controllerAs: 'vm',
-            templateUrl: dashboardBackgroundTemplate,
+            templateUrl: dashboardSettingsTemplate,
             locals: {
-                gridSettings: angular.copy(vm.dashboard.configuration.gridSettings)
+                settings: angular.copy(vm.dashboard.configuration.settings),
+                gridSettings: gridSettings
             },
             parent: angular.element($document[0].body),
             skipHide: true,
             fullscreen: true,
             targetEvent: $event
-        }).then(function (gridSettings) {
-            var prevGridSettings = vm.dashboard.configuration.gridSettings;
-            var prevColumns = prevGridSettings ? prevGridSettings.columns : 24;
-            var ratio = gridSettings.columns / prevColumns;
-            var currentWidgets = angular.copy(vm.widgets);
-            vm.widgets = [];
-            vm.dashboard.configuration.gridSettings = gridSettings;
-            for (var w in currentWidgets) {
-                var widget = currentWidgets[w];
-                widget.sizeX = Math.round(widget.sizeX * ratio);
-                widget.sizeY = Math.round(widget.sizeY * ratio);
-                widget.col = Math.round(widget.col * ratio);
-                widget.row = Math.round(widget.row * ratio);
+        }).then(function (data) {
+            vm.dashboard.configuration.settings = data.settings;
+            var gridSettings = data.gridSettings;
+            if (gridSettings) {
+                updateLayoutGrid(layoutKeys, gridSettings);
             }
-            vm.dashboard.configuration.widgets = currentWidgets;
-            vm.widgets = vm.dashboard.configuration.widgets;
         }, function () {
         });
     }
 
-    function editWidget($event, widget) {
+    function manageDashboardLayouts($event) {
+        $mdDialog.show({
+            controller: 'ManageDashboardLayoutsController',
+            controllerAs: 'vm',
+            templateUrl: manageDashboardLayoutsTemplate,
+            locals: {
+                layouts: angular.copy(vm.dashboard.configuration.states[vm.dashboardCtx.state].layouts)
+            },
+            parent: angular.element($document[0].body),
+            skipHide: true,
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function (layouts) {
+            updateLayouts(layouts);
+        }, function () {
+        });
+    }
+
+    function manageDashboardStates($event) {
+        var dashboardConfiguration = vm.dashboard.configuration;
+        var states = angular.copy(dashboardConfiguration.states);
+
+        $mdDialog.show({
+            controller: 'ManageDashboardStatesController',
+            controllerAs: 'vm',
+            templateUrl: manageDashboardStatesTemplate,
+            locals: {
+                states: states
+            },
+            parent: angular.element($document[0].body),
+            skipHide: true,
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function (states) {
+            updateStates(states);
+        }, function () {
+        });
+    }
+
+    function updateLayoutGrid(layoutKeys, gridSettings) {
+        var layout = vm.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout];
+        var layoutCtx = vm.layouts[layoutKeys.layout];
+        layoutCtx.widgets = [];
+        dashboardUtils.updateLayoutSettings(layout, gridSettings);
+        var layoutsData = dashboardUtils.getStateLayoutsData(vm.dashboard, layoutKeys.state);
+        layoutCtx.widgets = layoutsData[layoutKeys.layout].widgets;
+    }
+
+    function updateLayouts(layouts) {
+        dashboardUtils.setLayouts(vm.dashboard, vm.dashboardCtx.state, layouts);
+        openDashboardState(vm.dashboardCtx.state);
+    }
+
+    function updateStates(states) {
+        vm.dashboard.configuration.states = states;
+        dashboardUtils.removeUnusedWidgets(vm.dashboard);
+        var targetState = vm.dashboardCtx.state;
+        if (!vm.dashboard.configuration.states[targetState]) {
+            targetState = dashboardUtils.getRootStateId(vm.dashboardConfiguration.states);
+        }
+        openDashboardState(targetState);
+    }
+
+    function editWidget($event, layoutCtx, widget) {
         $event.stopPropagation();
         if (vm.editingWidgetOriginal === widget) {
             $timeout(onEditWidgetClosed());
         } else {
             var transition = !vm.forceDashboardMobileMode;
             vm.editingWidgetOriginal = widget;
+            vm.editingWidgetLayoutOriginal = layoutCtx.widgetLayouts[widget.id];
             vm.editingWidget = angular.copy(vm.editingWidgetOriginal);
+            vm.editingWidgetLayout = angular.copy(vm.editingWidgetLayoutOriginal);
+            vm.editingLayoutCtx = layoutCtx;
             vm.editingWidgetSubtitle = widgetService.getInstantWidgetInfo(vm.editingWidget).widgetName;
             vm.forceDashboardMobileMode = true;
             vm.isEditingWidget = true;
-
-            if (vm.dashboardContainer) {
+            if (layoutCtx) {
                 var delayOffset = transition ? 350 : 0;
                 var delay = transition ? 400 : 300;
                 $timeout(function () {
-                    vm.dashboardContainer.highlightWidget(vm.editingWidgetOriginal, delay);
+                    layoutCtx.ctrl.highlightWidget(vm.editingWidgetOriginal, delay);
                 }, delayOffset, false);
             }
         }
@@ -385,82 +578,36 @@ export default function DashboardController(types, widgetService, userService,
         importExport.exportDashboard(vm.currentDashboardId);
     }
 
-    function exportWidget($event, widget) {
+    function exportWidget($event, layoutCtx, widget) {
         $event.stopPropagation();
-        importExport.exportWidget(vm.dashboard, widget);
+        importExport.exportWidget(vm.dashboard, vm.dashboardCtx.state, layoutCtx.id, widget);
     }
 
     function importWidget($event) {
         $event.stopPropagation();
-        importExport.importWidget($event, vm.dashboard, deviceAliasesUpdated);
+        importExport.importWidget($event, vm.dashboard, vm.dashboardCtx.state,
+            selectTargetLayout, entityAliasesUpdated).then(
+            function success(importData) {
+                var widget = importData.widget;
+                var layoutId = importData.layoutId;
+                vm.layouts[layoutId].layoutCtx.widgets.push(widget);
+            }
+        );
     }
 
-    function widgetMouseDown($event, widget) {
+    function widgetMouseDown($event, layoutCtx, widget) {
         if (vm.isEdit && !vm.isEditingWidget) {
-            vm.dashboardContainer.selectWidget(widget, 0);
+            layoutCtx.ctrl.selectWidget(widget, 0);
         }
     }
 
-    function widgetClicked($event, widget) {
+    function widgetClicked($event, layoutCtx, widget) {
         if (vm.isEditingWidget) {
-            editWidget($event, widget);
+            editWidget($event, layoutCtx, widget);
         }
     }
 
-    function isHotKeyAllowed(event) {
-        var target = event.target || event.srcElement;
-        var scope = angular.element(target).scope();
-        return scope && scope.$parent !== $rootScope;
-    }
-
-    function initHotKeys() {
-        $translate(['action.copy', 'action.paste', 'action.delete']).then(function (translations) {
-            hotkeys.bindTo($scope)
-                .add({
-                    combo: 'ctrl+c',
-                    description: translations['action.copy'],
-                    callback: function (event) {
-                        if (isHotKeyAllowed(event) &&
-                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
-                            var widget = vm.dashboardContainer.getSelectedWidget();
-                            if (widget) {
-                                event.preventDefault();
-                                copyWidget(event, widget);
-                            }
-                        }
-                    }
-                })
-                .add({
-                    combo: 'ctrl+v',
-                    description: translations['action.paste'],
-                    callback: function (event) {
-                        if (isHotKeyAllowed(event) &&
-                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
-                            if (itembuffer.hasWidget()) {
-                                event.preventDefault();
-                                pasteWidget(event);
-                            }
-                        }
-                    }
-                })
-                .add({
-                    combo: 'ctrl+x',
-                    description: translations['action.delete'],
-                    callback: function (event) {
-                        if (isHotKeyAllowed(event) &&
-                            vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
-                            var widget = vm.dashboardContainer.getSelectedWidget();
-                            if (widget) {
-                                event.preventDefault();
-                                removeWidget(event, widget);
-                            }
-                        }
-                    }
-                });
-        });
-    }
-
-    function prepareDashboardContextMenu() {
+    function prepareDashboardContextMenu(layoutCtx) {
         var dashboardContextActions = [];
         if (vm.isEdit && !vm.isEditingWidget && !vm.widgetEditMode) {
             dashboardContextActions.push(
@@ -473,36 +620,47 @@ export default function DashboardController(types, widgetService, userService,
             );
             dashboardContextActions.push(
                 {
-                    action: openDeviceAliases,
+                    action: openEntityAliases,
                     enabled: true,
-                    value: "device.aliases",
+                    value: "entity.aliases",
                     icon: "devices_other"
                 }
             );
             dashboardContextActions.push(
                 {
-                    action: pasteWidget,
+                    action: function ($event) {
+                        layoutCtx.ctrl.pasteWidget($event);
+                    },
                     enabled: itembuffer.hasWidget(),
                     value: "action.paste",
                     icon: "content_paste",
                     shortcut: "M-V"
                 }
             );
+            dashboardContextActions.push(
+                {
+                    action: function ($event) {
+                        layoutCtx.ctrl.pasteWidgetReference($event);
+                    },
+                    enabled: itembuffer.canPasteWidgetReference(vm.dashboard, vm.dashboardCtx.state, layoutCtx.id),
+                    value: "action.paste-reference",
+                    icon: "content_paste",
+                    shortcut: "M-I"
+                }
+            );
+
         }
         return dashboardContextActions;
     }
 
-    function pasteWidget($event) {
-        var pos = vm.dashboardContainer.getEventGridPosition($event);
-        itembuffer.pasteWidget(vm.dashboard, pos, deviceAliasesUpdated);
-    }
-
-    function prepareWidgetContextMenu() {
+    function prepareWidgetContextMenu(layoutCtx) {
         var widgetContextActions = [];
         if (vm.isEdit && !vm.isEditingWidget) {
             widgetContextActions.push(
                 {
-                    action: editWidget,
+                    action: function (event, widget) {
+                        editWidget(event, layoutCtx, widget);
+                    },
                     enabled: true,
                     value: "action.edit",
                     icon: "edit"
@@ -511,7 +669,9 @@ export default function DashboardController(types, widgetService, userService,
             if (!vm.widgetEditMode) {
                 widgetContextActions.push(
                     {
-                        action: copyWidget,
+                        action: function (event, widget) {
+                            copyWidget(event, layoutCtx, widget);
+                        },
                         enabled: true,
                         value: "action.copy",
                         icon: "content_copy",
@@ -520,7 +680,20 @@ export default function DashboardController(types, widgetService, userService,
                 );
                 widgetContextActions.push(
                     {
-                        action: removeWidget,
+                        action: function (event, widget) {
+                            copyWidgetReference(event, layoutCtx, widget);
+                        },
+                        enabled: true,
+                        value: "action.copy-reference",
+                        icon: "content_copy",
+                        shortcut: "M-R"
+                    }
+                );
+                widgetContextActions.push(
+                    {
+                        action: function (event, widget) {
+                            removeWidget(event, layoutCtx, widget);
+                        },
                         enabled: true,
                         value: "action.delete",
                         icon: "clear",
@@ -532,8 +705,12 @@ export default function DashboardController(types, widgetService, userService,
         return widgetContextActions;
     }
 
-    function copyWidget($event, widget) {
-        itembuffer.copyWidget(vm.dashboard, widget);
+    function copyWidget($event, layoutCtx, widget) {
+        itembuffer.copyWidget(vm.dashboard, vm.dashboardCtx.state, layoutCtx.id, widget);
+    }
+
+    function copyWidgetReference($event, layoutCtx, widget) {
+        itembuffer.copyWidgetReference(vm.dashboard, vm.dashboardCtx.state, layoutCtx.id, widget);
     }
 
     function helpLinkIdForWidgetType() {
@@ -562,36 +739,45 @@ export default function DashboardController(types, widgetService, userService,
     }
 
     function displayTitle() {
-        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
-            angular.isDefined(vm.dashboard.configuration.gridSettings.showTitle)) {
-            return vm.dashboard.configuration.gridSettings.showTitle;
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.showTitle)) {
+            return vm.dashboard.configuration.settings.showTitle;
         } else {
             return true;
         }
     }
 
     function displayExport() {
-        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
-            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardExport)) {
-            return vm.dashboard.configuration.gridSettings.showDashboardExport;
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.showDashboardExport)) {
+            return vm.dashboard.configuration.settings.showDashboardExport;
         } else {
             return true;
         }
     }
 
     function displayDashboardTimewindow() {
-        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
-            angular.isDefined(vm.dashboard.configuration.gridSettings.showDashboardTimewindow)) {
-            return vm.dashboard.configuration.gridSettings.showDashboardTimewindow;
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.showDashboardTimewindow)) {
+            return vm.dashboard.configuration.settings.showDashboardTimewindow;
         } else {
             return true;
         }
     }
 
-    function displayDevicesSelect() {
-        if (vm.dashboard && vm.dashboard.configuration.gridSettings &&
-            angular.isDefined(vm.dashboard.configuration.gridSettings.showDevicesSelect)) {
-            return vm.dashboard.configuration.gridSettings.showDevicesSelect;
+    function displayDashboardsSelect() {
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.showDashboardsSelect)) {
+            return vm.dashboard.configuration.settings.showDashboardsSelect;
+        } else {
+            return true;
+        }
+    }
+
+    function displayEntitiesSelect() {
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.showEntitiesSelect)) {
+            return vm.dashboard.configuration.settings.showEntitiesSelect;
         } else {
             return true;
         }
@@ -601,32 +787,40 @@ export default function DashboardController(types, widgetService, userService,
         if (widgetForm.$dirty) {
             widgetForm.$setPristine();
             vm.editingWidget = angular.copy(vm.editingWidgetOriginal);
+            vm.editingWidgetLayout = angular.copy(vm.editingWidgetLayoutOriginal);
         }
     }
 
     function saveWidget(widgetForm) {
         widgetForm.$setPristine();
         var widget = angular.copy(vm.editingWidget);
-        var index = vm.widgets.indexOf(vm.editingWidgetOriginal);
-        vm.widgets[index] = widget;
+        var widgetLayout = angular.copy(vm.editingWidgetLayout);
+        var id = vm.editingWidgetOriginal.id;
+        var index = vm.editingLayoutCtx.widgets.indexOf(vm.editingWidgetOriginal);
+        vm.dashboardConfiguration.widgets[id] = widget;
         vm.editingWidgetOriginal = widget;
-        vm.dashboardContainer.highlightWidget(vm.editingWidgetOriginal, 0);
+        vm.editingWidgetLayoutOriginal = widgetLayout;
+        vm.editingLayoutCtx.widgets[index] = widget;
+        vm.editingLayoutCtx.widgetLayouts[widget.id] = widgetLayout;
+        vm.editingLayoutCtx.ctrl.highlightWidget(vm.editingWidgetOriginal, 0);
     }
 
     function onEditWidgetClosed() {
         vm.editingWidgetOriginal = null;
         vm.editingWidget = null;
+        vm.editingWidgetLayoutOriginal = null;
+        vm.editingWidgetLayout = null;
+        vm.editingLayoutCtx = null;
         vm.editingWidgetSubtitle = null;
         vm.isEditingWidget = false;
-        if (vm.dashboardContainer) {
-            vm.dashboardContainer.resetHighlight();
-        }
+        resetHighlight();
         vm.forceDashboardMobileMode = false;
     }
 
-    function addWidget() {
+    function addWidget(event, layoutCtx) {
         loadWidgetLibrary();
         vm.isAddingWidget = true;
+        vm.addingLayoutCtx = layoutCtx;
     }
 
     function onAddWidgetClosed() {
@@ -634,6 +828,33 @@ export default function DashboardController(types, widgetService, userService,
         vm.latestWidgetTypes = [];
         vm.rpcWidgetTypes = [];
         vm.staticWidgetTypes = [];
+    }
+
+    function selectTargetLayout($event) {
+        var deferred = $q.defer();
+        var layouts = vm.dashboardConfiguration.states[vm.dashboardCtx.state].layouts;
+        var layoutIds = Object.keys(layouts);
+        if (layoutIds.length > 1) {
+            $mdDialog.show({
+                controller: 'SelectTargetLayoutController',
+                controllerAs: 'vm',
+                templateUrl: selectTargetLayoutTemplate,
+                parent: angular.element($document[0].body),
+                fullscreen: true,
+                skipHide: true,
+                targetEvent: $event
+            }).then(
+                function success(layoutId) {
+                    deferred.resolve(layoutId);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } else {
+            deferred.resolve(layoutIds[0]);
+        }
+        return deferred.promise;
     }
 
     function addWidgetFromType(event, widget) {
@@ -655,17 +876,22 @@ export default function DashboardController(types, widgetService, userService,
                     config: config
                 };
 
+                function addWidgetToLayout(widget, layoutId) {
+                    dashboardUtils.addWidgetToLayout(vm.dashboard, vm.dashboardCtx.state, layoutId, widget);
+                    vm.layouts[layoutId].layoutCtx.widgets.push(widget);
+                }
+
                 function addWidget(widget) {
-                    var columns = 24;
-                    if (vm.dashboard.configuration.gridSettings && vm.dashboard.configuration.gridSettings.columns) {
-                        columns = vm.dashboard.configuration.gridSettings.columns;
+                    if (vm.addingLayoutCtx) {
+                        addWidgetToLayout(widget, vm.addingLayoutCtx.id);
+                        vm.addingLayoutCtx = null;
+                    } else {
+                        selectTargetLayout(event).then(
+                            function success(layoutId) {
+                                addWidgetToLayout(widget, layoutId);
+                            }
+                        );
                     }
-                    if (columns != 24) {
-                        var ratio = columns / 24;
-                        widget.sizeX *= ratio;
-                        widget.sizeY *= ratio;
-                    }
-                    vm.widgets.push(widget);
                 }
 
                 if (widgetTypeInfo.useCustomDatasources) {
@@ -677,7 +903,7 @@ export default function DashboardController(types, widgetService, userService,
                         templateUrl: addWidgetTemplate,
                         locals: {
                             dashboard: vm.dashboard,
-                            aliasesInfo: vm.aliasesInfo,
+                            aliasesInfo: vm.dashboardCtx.aliasesInfo,
                             widget: newWidget,
                             widgetInfo: widgetTypeInfo
                         },
@@ -691,17 +917,17 @@ export default function DashboardController(types, widgetService, userService,
                         }
                     }).then(function (result) {
                         var widget = result.widget;
-                        vm.aliasesInfo = result.aliasesInfo;
+                        vm.dashboardCtx.aliasesInfo = result.aliasesInfo;
                         addWidget(widget);
                     }, function (rejection) {
-                        vm.aliasesInfo = rejection.aliasesInfo;
+                        vm.dashboardCtx.aliasesInfo = rejection.aliasesInfo;
                     });
                 }
             }
         );
     }
 
-    function removeWidget(event, widget) {
+    function removeWidget(event, layoutCtx, widget) {
         var title = widget.config.title;
         if (!title || title.length === 0) {
             title = widgetService.getInstantWidgetInfo(widget).widgetName;
@@ -714,32 +940,61 @@ export default function DashboardController(types, widgetService, userService,
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            vm.widgets.splice(vm.widgets.indexOf(widget), 1);
+            var index = layoutCtx.widgets.indexOf(widget);
+            if (index > -1) {
+                layoutCtx.widgets.splice(index, 1);
+                dashboardUtils.removeWidgetFromLayout(vm.dashboard, vm.dashboardCtx.state, layoutCtx.id, widget.id);
+            }
         });
+    }
+
+    function pasteWidget(event, layoutCtx, pos) {
+        itembuffer.pasteWidget(vm.dashboard, vm.dashboardCtx.state, layoutCtx.id, pos, entityAliasesUpdated).then(
+            function (widget) {
+                if (widget) {
+                    layoutCtx.widgets.push(widget);
+                }
+            }
+        );
+    }
+
+    function pasteWidgetReference(event, layoutCtx, pos) {
+        itembuffer.pasteWidgetReference(vm.dashboard, vm.dashboardCtx.state, layoutCtx.id, pos).then(
+            function (widget) {
+                if (widget) {
+                    layoutCtx.widgets.push(widget);
+                }
+            }
+        );
     }
 
     function setEditMode(isEdit, revert) {
         vm.isEdit = isEdit;
         if (vm.isEdit) {
-            if (vm.widgetEditMode) {
-                vm.prevWidgets = angular.copy(vm.widgets);
-            } else {
-                vm.prevDashboard = angular.copy(vm.dashboard);
-            }
+            vm.prevDashboard = angular.copy(vm.dashboard);
+            vm.prevDashboardState = vm.dashboardCtx.state;
         } else {
             if (vm.widgetEditMode) {
                 if (revert) {
-                    vm.widgets = vm.prevWidgets;
+                    vm.dashboard = vm.prevDashboard;
                 }
             } else {
-                if (vm.dashboardContainer) {
-                    vm.dashboardContainer.resetHighlight();
-                }
+                resetHighlight();
                 if (revert) {
                     vm.dashboard = vm.prevDashboard;
-                    vm.widgets = vm.dashboard.configuration.widgets;
                     vm.dashboardConfiguration = vm.dashboard.configuration;
-                    deviceAliasesUpdated();
+                    openDashboardState(vm.prevDashboardState);
+                    entityAliasesUpdated();
+                }
+            }
+        }
+    }
+
+    function resetHighlight() {
+        for (var l in vm.layouts) {
+            if (vm.layouts[l].layoutCtx) {
+                if (vm.layouts[l].layoutCtx.ctrl) {
+                    vm.layouts[l].layoutCtx.ctrl.resetHighlight();
                 }
             }
         }
@@ -768,21 +1023,27 @@ export default function DashboardController(types, widgetService, userService,
         $mdDialog.show(alert);
     }
 
-    function deviceAliasesUpdated() {
-        deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases)
+    function entityAliasesUpdated() {
+        var deferred = $q.defer();
+        entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
             .then(
                 function(resolution) {
                     if (resolution.aliasesInfo) {
-                        vm.aliasesInfo = resolution.aliasesInfo;
+                        vm.dashboardCtx.aliasesInfo = resolution.aliasesInfo;
                     }
+                   deferred.resolve();
                 }
             );
+        return deferred.promise;
     }
 
     function notifyDashboardUpdated() {
         if (vm.widgetEditMode) {
             var parentScope = $window.parent.angular.element($window.frameElement).scope();
-            var widget = vm.widgets[0];
+            var widget = vm.layouts.main.layoutCtx.widgets[0];
+            var layout = vm.layouts.main.layoutCtx.widgetLayouts[widget.id];
+            widget.sizeX = layout.sizeX;
+            widget.sizeY = layout.sizeY;
             parentScope.$root.$broadcast('widgetEditUpdated', widget);
             parentScope.$root.$apply();
         } else {

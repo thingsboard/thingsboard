@@ -16,8 +16,10 @@
 
 -->
 <md-content flex layout="column" class="tb-progress-cover" layout-align="center center"
-   ng-show="(vm.loading() || vm.dashboardLoading) && !vm.isEdit">
-	<md-progress-circular md-mode="indeterminate" ng-disabled="!vm.loading() && !vm.dashboardLoading || vm.isEdit" class="md-warn" md-diameter="100"></md-progress-circular>
+			ng-style="vm.dashboardStyle"
+   ng-show="((vm.loading() || vm.dashboardLoading) && !vm.isEdit) || vm.isResizing">
+	<md-progress-circular md-mode="indeterminate" ng-disabled="(!vm.loading() && !vm.dashboardLoading || vm.isEdit) && !vm.isResizing" class="md-warn" md-diameter="100">
+	</md-progress-circular>
 </md-content>
 <md-menu md-position-mode="target target" tb-mousepoint-menu>
 	<md-content id="gridster-parent" class="tb-dashboard-content" flex layout-wrap ng-click="" tb-contextmenu="vm.openDashboardContextMenu($event, $mdOpenMousepointMenu)">
@@ -88,6 +90,7 @@
 										 locals="{ visibleRect: vm.visibleRect,
 										 widget: widget,
 										 aliasesInfo: vm.aliasesInfo,
+										 stateController: vm.stateController,
 										 isEdit: vm.isEdit,
 										 stDiff: vm.stDiff,
 										 dashboardTimewindow: vm.dashboardTimewindow,

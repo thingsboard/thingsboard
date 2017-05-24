@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+import ThingsboardMissingTranslateHandler from './translate-handler';
+
 export default angular.module('thingsboard.locale', [])
+    .factory('tbMissingTranslationHandler', ThingsboardMissingTranslateHandler)
     .constant('locales',
         {
             'en_US': {
@@ -62,6 +65,8 @@ export default angular.module('thingsboard.locale', [])
                     "undo": "Undo",
                     "copy": "Copy",
                     "paste": "Paste",
+                    "copy-reference": "Copy reference",
+                    "paste-reference": "Paste reference",
                     "import": "Import",
                     "export": "Export",
                     "share-via": "Share via {{provider}}"
@@ -100,6 +105,56 @@ export default angular.module('thingsboard.locale', [])
                     "timeout-invalid": "That doesn't look like a valid timeout.",
                     "enable-tls": "Enable TLS",
                     "send-test-mail": "Send test mail"
+                },
+                "asset": {
+                    "asset": "Asset",
+                    "assets": "Assets",
+                    "management": "Asset management",
+                    "view-assets": "View Assets",
+                    "add": "Add Asset",
+                    "assign-to-customer": "Assign to customer",
+                    "assign-asset-to-customer": "Assign Asset(s) To Customer",
+                    "assign-asset-to-customer-text": "Please select the assets to assign to the customer",
+                    "no-assets-text": "No assets found",
+                    "assign-to-customer-text": "Please select the customer to assign the asset(s)",
+                    "public": "Public",
+                    "assignedToCustomer": "Assigned to customer",
+                    "make-public": "Make asset public",
+                    "make-private": "Make asset private",
+                    "unassign-from-customer": "Unassign from customer",
+                    "delete": "Delete asset",
+                    "asset-public": "Asset is public",
+                    "name": "Name",
+                    "name-required": "Name is required.",
+                    "description": "Description",
+                    "type": "Type",
+                    "type-required": "Type is required.",
+                    "details": "Details",
+                    "events": "Events",
+                    "add-asset-text": "Add new asset",
+                    "asset-details": "Asset details",
+                    "assign-assets": "Assign assets",
+                    "assign-assets-text": "Assign { count, select, 1 {1 asset} other {# assets} } to customer",
+                    "delete-assets": "Delete assets",
+                    "unassign-assets": "Unassign assets",
+                    "unassign-assets-action-title": "Unassign { count, select, 1 {1 asset} other {# assets} } from customer",
+                    "assign-new-asset": "Assign new asset",
+                    "delete-asset-title": "Are you sure you want to delete the asset '{{assetName}}'?",
+                    "delete-asset-text": "Be careful, after the confirmation the asset and all related data will become unrecoverable.",
+                    "delete-assets-title": "Are you sure you want to delete { count, select, 1 {1 asset} other {# assets} }?",
+                    "delete-assets-action-title": "Delete { count, select, 1 {1 asset} other {# assets} }",
+                    "delete-assets-text": "Be careful, after the confirmation all selected assets will be removed and all related data will become unrecoverable.",
+                    "make-public-asset-title": "Are you sure you want to make the asset '{{assetName}}' public?",
+                    "make-public-asset-text": "After the confirmation the asset and all its data will be made public and accessible by others.",
+                    "make-private-asset-title": "Are you sure you want to make the asset '{{assetName}}' private?",
+                    "make-private-asset-text": "After the confirmation the asset and all its data will be made private and won't be accessible by others.",
+                    "unassign-asset-title": "Are you sure you want to unassign the asset '{{assetName}}'?",
+                    "unassign-asset-text": "After the confirmation the asset will be unassigned and won't be accessible by the customer.",
+                    "unassign-asset": "Unassign asset",
+                    "unassign-assets-title": "Are you sure you want to unassign { count, select, 1 {1 asset} other {# assets} }?",
+                    "unassign-assets-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the customer.",
+                    "copyId": "Copy asset Id",
+                    "idCopiedMessage": "Asset Id has been copied to clipboard"
                 },
                 "attribute": {
                     "attributes": "Attributes",
@@ -157,8 +212,10 @@ export default angular.module('thingsboard.locale', [])
                     "dashboard": "Customer Dashboard",
                     "dashboards": "Customer Dashboards",
                     "devices": "Customer Devices",
+                    "assets": "Customer Assets",
                     "public-dashboards": "Public Dashboards",
                     "public-devices": "Public Devices",
+                    "public-assets": "Public Assets",
                     "add": "Add Customer",
                     "delete": "Delete customer",
                     "manage-customer-users": "Manage customer users",
@@ -166,6 +223,8 @@ export default angular.module('thingsboard.locale', [])
                     "manage-customer-dashboards": "Manage customer dashboards",
                     "manage-public-devices": "Manage public devices",
                     "manage-public-dashboards": "Manage public dashboards",
+                    "manage-customer-assets": "Manage customer assets",
+                    "manage-public-assets": "Manage public assets",
                     "add-customer-text": "Add new customer",
                     "no-customers-text": "No customers found",
                     "customer-details": "Customer details",
@@ -175,11 +234,16 @@ export default angular.module('thingsboard.locale', [])
                     "delete-customers-action-title": "Delete { count, select, 1 {1 customer} other {# customers} }",
                     "delete-customers-text": "Be careful, after the confirmation all selected customers will be removed and all related data will become unrecoverable.",
                     "manage-users": "Manage users",
+                    "manage-assets": "Manage assets",
                     "manage-devices": "Manage devices",
                     "manage-dashboards": "Manage dashboards",
                     "title": "Title",
                     "title-required": "Title is required.",
-                    "description": "Description"
+                    "description": "Description",
+                    "details": "Details",
+                    "events": "Events",
+                    "copyId": "Copy customer Id",
+                    "idCopiedMessage": "Customer Id has been copied to clipboard"
                 },
                 "datetime": {
                     "date-from": "Date from",
@@ -265,7 +329,8 @@ export default angular.module('thingsboard.locale', [])
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
                     "display-title": "Display dashboard title",
                     "title-color": "Title color",
-                    "display-device-selection": "Display device selection",
+                    "display-dashboards-selection": "Display dashboards selection",
+                    "display-entities-selection": "Display entities selection",
                     "display-dashboard-timewindow": "Display timewindow",
                     "display-dashboard-export": "Display export",
                     "import": "Import dashboard",
@@ -291,7 +356,29 @@ export default angular.module('thingsboard.locale', [])
                     "public": "Public",
                     "public-link": "Public link",
                     "copy-public-link": "Copy public link",
-                    "public-link-copied-message": "Dashboard public link has been copied to clipboard"
+                    "public-link-copied-message": "Dashboard public link has been copied to clipboard",
+                    "manage-states": "Manage dashboard states",
+                    "states": "Dashboard states",
+                    "search-states": "Search dashboard states",
+                    "selected-states": "{ count, select, 1 {1 dashboard state} other {# dashboard states} } selected",
+                    "edit-state": "Edit dashboard state",
+                    "delete-state": "Delete dashboard state",
+                    "add-state": "Add dashboard state",
+                    "state": "Dashboard state",
+                    "state-name": "Name",
+                    "state-name-required": "Dashboard state name is required.",
+                    "state-name-exists": "Dashboard state with the same name is already exists.",
+                    "state-id": "State Id",
+                    "state-id-required": "Dashboard state id is required.",
+                    "state-id-exists": "Dashboard state with the same id is already exists.",
+                    "invalid-state-id-format": "Only alphanumeric characters and underscore are allowed.",
+                    "is-root-state": "Root state",
+                    "delete-state-title": "Delete dashboard state",
+                    "delete-state-text": "Are you sure you want delete dashboard state with name '{{stateName}}'?",
+                    "show-details": "Show details",
+                    "hide-details": "Hide details",
+                    "select-state": "Select target state",
+                    "state-controller": "State controller"
                 },
                 "datakey": {
                     "settings": "Settings",
@@ -303,10 +390,10 @@ export default angular.module('thingsboard.locale', [])
                     "configuration": "Data key configuration",
                     "timeseries": "Timeseries",
                     "attributes": "Attributes",
-                    "timeseries-required": "Device timeseries is required.",
-                    "timeseries-or-attributes-required": "Device timeseries/attributes is required.",
+                    "timeseries-required": "Entity timeseries are required.",
+                    "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
                     "function-types": "Function types",
-                    "function-types-required": "Function types is required."
+                    "function-types-required": "Function types are required."
                 },
                 "datasource": {
                     "type": "Datasource type",
@@ -411,6 +498,41 @@ export default angular.module('thingsboard.locale', [])
                     "unhandled-error-code": "Unhandled error code: {{errorCode}}",
                     "unknown-error": "Unknown error"
                 },
+                "entity": {
+                    "entity": "Entity",
+                    "entities": "Entities",
+                    "aliases": "Entity aliases",
+                    "entity-alias": "Entity alias",
+                    "unable-delete-entity-alias-title": "Unable to delete entity alias",
+                    "unable-delete-entity-alias-text": "Entity alias '{{entityAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
+                    "duplicate-alias-error": "Duplicate alias found '{{alias}}'.<br>Entity aliases must be unique whithin the dashboard.",
+                    "configure-alias": "Configure '{{alias}}' alias",
+                    "alias": "Alias",
+                    "alias-required": "Entity alias is required.",
+                    "remove-alias": "Remove entity alias",
+                    "add-alias": "Add entity alias",
+                    "entity-list": "Entity list",
+                    "no-entities-matching": "No entities matching '{{entity}}' were found.",
+                    "name-starts-with": "Name starts with",
+                    "use-entity-name-filter": "Use filter",
+                    "entity-list-empty": "No entities selected.",
+                    "entity-name-filter-required": "Entity name filter is required.",
+                    "entity-name-filter-no-entity-matched": "No entities starting with '{{entity}}' were found.",
+                    "type": "Type",
+                    "type-device": "Device",
+                    "type-asset": "Asset",
+                    "type-rule": "Rule",
+                    "type-plugin": "Plugin",
+                    "type-tenant": "Tenant",
+                    "type-customer": "Customer",
+                    "select-entities": "Select entities",
+                    "no-aliases-found": "No aliases found.",
+                    "no-alias-matching": "'{{alias}}' not found.",
+                    "create-new-alias": "Create a new one!",
+                    "no-keys-found": "No keys found.",
+                    "no-key-matching": "'{{key}}' not found.",
+                    "create-new-key": "Create a new one!"
+                },
                 "event": {
                     "event-type": "Event type",
                     "type-alarm": "Alarm",
@@ -474,6 +596,15 @@ export default angular.module('thingsboard.locale', [])
                 "js-func": {
                     "no-return-error": "Function must return value!",
                     "return-type-mismatch": "Function must return value of '{{type}}' type!"
+                },
+                "layout": {
+                    "layout": "Layout",
+                    "manage": "Manage layouts",
+                    "settings": "Layout settings",
+                    "color": "Color",
+                    "main": "Main",
+                    "right": "Right",
+                    "select": "Select target layout"
                 },
                 "legend": {
                     "position": "Legend position",
@@ -541,7 +672,9 @@ export default angular.module('thingsboard.locale', [])
                     "export-failed-error": "Unable to export plugin: {{error}}",
                     "create-new-plugin": "Create new plugin",
                     "plugin-file": "Plugin file",
-                    "invalid-plugin-file-error": "Unable to import plugin: Invalid plugin data structure."
+                    "invalid-plugin-file-error": "Unable to import plugin: Invalid plugin data structure.",
+                    "copyId": "Copy plugin Id",
+                    "idCopiedMessage": "Plugin Id has been copied to clipboard"
                 },
                 "position": {
                     "top": "Top",
@@ -604,7 +737,9 @@ export default angular.module('thingsboard.locale', [])
                     "export-failed-error": "Unable to export rule: {{error}}",
                     "create-new-rule": "Create new rule",
                     "rule-file": "Rule file",
-                    "invalid-rule-file-error": "Unable to import rule: Invalid rule data structure."
+                    "invalid-rule-file-error": "Unable to import rule: Invalid rule data structure.",
+                    "copyId": "Copy rule Id",
+                    "idCopiedMessage": "Rule Id has been copied to clipboard"
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"
@@ -626,7 +761,11 @@ export default angular.module('thingsboard.locale', [])
                     "delete-tenants-text": "Be careful, after the confirmation all selected tenants will be removed and all related data will become unrecoverable.",
                     "title": "Title",
                     "title-required": "Title is required.",
-                    "description": "Description"
+                    "description": "Description",
+                    "details": "Details",
+                    "events": "Events",
+                    "copyId": "Copy tenant Id",
+                    "idCopiedMessage": "Tenant Id has been copied to clipboard"
                 },
                 "timeinterval": {
                     "seconds-interval": "{ seconds, select, 1 {1 second} other {# seconds} }",
@@ -810,7 +949,10 @@ export default angular.module('thingsboard.locale', [])
                 "language": {
                     "language": "Language",
                     "en_US": "English",
-                    "ko_KR": "Korean"
+                    "ko_KR": "Korean",
+                    "zh_CN": "Chinese",
+                    "ru_RU": "Russian",
+                    "es_ES": "Spanish"
                 }
             }
         }

@@ -20,9 +20,9 @@ cp ../../dao/src/main/resources/schema.cql schema.cql
 cp ../../dao/src/main/resources/demo-data.cql demo-data.cql
 cp ../../dao/src/main/resources/system-data.cql system-data.cql
 
-docker build -t thingsboard/thingsboard-db-schema:1.2.2 -t thingsboard/thingsboard-db-schema:latest .
+docker build -t thingsboard/thingsboard-db-schema:1.2.3 -t thingsboard/thingsboard-db-schema:latest .
 
 docker login
 
-docker push thingsboard/thingsboard-db-schema:1.2.2
+docker push thingsboard/thingsboard-db-schema:1.2.3
 docker push thingsboard/thingsboard-db-schema:latest

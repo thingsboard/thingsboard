@@ -26,7 +26,9 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 public interface DashboardService {
     
     public Dashboard findDashboardById(DashboardId dashboardId);
-    
+
+    public DashboardInfo findDashboardInfoById(DashboardId dashboardId);
+
     public Dashboard saveDashboard(Dashboard dashboard);
     
     public Dashboard assignDashboardToCustomer(DashboardId dashboardId, CustomerId customerId);

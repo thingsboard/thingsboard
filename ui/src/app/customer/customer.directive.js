@@ -20,12 +20,16 @@ import customerFieldsetTemplate from './customer-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function CustomerDirective($compile, $templateCache) {
+export default function CustomerDirective($compile, $templateCache, $translate, toast) {
     var linker = function (scope, element) {
         var template = $templateCache.get(customerFieldsetTemplate);
         element.html(template);
 
         scope.isPublic = false;
+
+        scope.onCustomerIdCopied = function() {
+            toast.showSuccess($translate.instant('customer.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
+        };
 
         scope.$watch('customer', function(newVal) {
             if (newVal) {
@@ -48,6 +52,7 @@ export default function CustomerDirective($compile, $templateCache) {
             isEdit: '=',
             theForm: '=',
             onManageUsers: '&',
+            onManageAssets: '&',
             onManageDevices: '&',
             onManageDashboards: '&',
             onDeleteCustomer: '&'
