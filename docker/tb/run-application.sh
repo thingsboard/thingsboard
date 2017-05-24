@@ -21,12 +21,12 @@ dpkg -i /root/thingsboard.deb
 reachable=0
 while [ $reachable -eq 0 ];
 do
-  echo "tb-cassandra-schema container is still in progress. waiting until it completed..."
+  echo "$TB_CASSANDRA_SCHEMA_URL container is still in progress. waiting until it completed..."
   sleep 3
-  ping -q -c 1 tb-cassandra-schema > /dev/null 2>&1
+  ping -q -c 1 $TB_CASSANDRA_SCHEMA_URL > /dev/null 2>&1
   if [ "$?" -ne 0 ];
   then
-    echo "tb-cassandra-schema container completed!"
+    echo "$TB_CASSANDRA_SCHEMA_URL container completed!"
     reachable=1
   fi
 done

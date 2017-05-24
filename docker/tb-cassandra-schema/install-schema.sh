@@ -18,7 +18,7 @@
 
 until nmap $CASSANDRA_URL -p 9042 | grep "9042/tcp open"
 do
-  echo "Wait for Cassandra..."
+  echo "Wait for $CASSANDRA_URL..."
   sleep 10
 done
 
