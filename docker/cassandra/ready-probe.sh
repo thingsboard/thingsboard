@@ -15,17 +15,14 @@
 # limitations under the License.
 #
 
-
-command='docker-compose -f docker-compose.yml -f docker-compose.static.yml'
-
-echo "stopping images.."
-$command stop
-
-echo "removing stopped images.."
-$command rm -f
-
-echo "building images.."
-$command build
-
-echo "starting cassandra, zookeeper, thingsboard-db-schema images..."
-$command up -d db zk thingsboard-db-schema
+if [[ $(nodetool status | grep $POD_IP) == *"UN"* ]]; then
+  if [[ $DEBUG ]]; then
+    echo "UN";
+  fi
+  exit 0;
+else
+  if [[ $DEBUG ]]; then
+    echo "Not Up";
+  fi
+  exit 1;
+fi

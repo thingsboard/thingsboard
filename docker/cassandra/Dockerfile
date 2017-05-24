@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -15,14 +14,8 @@
 # limitations under the License.
 #
 
+FROM cassandra:3.9
 
-cp ../../dao/src/main/resources/schema.cql schema.cql
-cp ../../dao/src/main/resources/demo-data.cql demo-data.cql
-cp ../../dao/src/main/resources/system-data.cql system-data.cql
+COPY ready-probe.sh /
 
-docker build -t thingsboard/thingsboard-db-schema:1.2.3 -t thingsboard/thingsboard-db-schema:latest .
-
-docker login
-
-docker push thingsboard/thingsboard-db-schema:1.2.3
-docker push thingsboard/thingsboard-db-schema:latest
+CMD ["cassandra", "-f"]

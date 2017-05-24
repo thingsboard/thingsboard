@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -15,17 +14,26 @@
 # limitations under the License.
 #
 
-
-command='docker-compose -f docker-compose.yml -f docker-compose.random.yml'
-
-echo "stopping images.."
-$command stop
-
-echo "removing stopped images.."
-$command rm -f
-
-echo "building images.."
-$command build
-
-echo "starting images..."
-$command up -d
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tb-db-schema
+spec:
+  containers:
+  - name: tb-db-schema
+    imagePullPolicy: Always
+    image: thingsboard/thingsboard-db-schema:k8stest
+    env:
+    - name: SKIP_SCHEMA_CREATION
+      value: "false"
+    - name: SKIP_SYSTEM_DATA
+      value: "false"
+    - name : SKIP_DEMO_DATA
+      value: "false"
+    - name : CASSANDRA_URL
+      value: "cassandra-headless"
+    command:
+    - sh
+    - -c
+    - ./install_schema.sh
+  restartPolicy: Never

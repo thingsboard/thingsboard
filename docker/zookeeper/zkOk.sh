@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -15,12 +15,14 @@
 # limitations under the License.
 #
 
+# zkOk.sh uses the ruok ZooKeeper four letter work to determine if the instance
+# is health. The $? variable will be set to 0 if server responds that it is 
+# healthy, or 1 if the server fails to respond.
 
-cp ../../application/target/thingsboard.deb thingsboard.deb
-
-docker build -t thingsboard/application:1.2.3 -t thingsboard/application:latest .
-
-docker login
-
-docker push thingsboard/application:1.2.3
-docker push thingsboard/application:latest
+ZK_CLIENT_PORT=${ZK_CLIENT_PORT:-2181}
+OK=$(echo ruok | nc 127.0.0.1 $ZK_CLIENT_PORT)
+if [ "$OK" == "imok" ]; then
+	exit 0
+else
+	exit 1
+fi

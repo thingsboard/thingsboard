@@ -16,7 +16,7 @@
 #
 
 
-until nmap db -p 9042 | grep "9042/tcp open"
+until nmap $CASSANDRA_URL -p 9042 | grep "9042/tcp open"
 do
   echo "Wait for Cassandra..."
   sleep 10
@@ -24,7 +24,7 @@ done
 
 if [ "$SKIP_SCHEMA_CREATION" == "false" ]; then
     echo "Creating 'Thingsboard' keyspace..."
-    cqlsh db -f /root/schema.cql
+    cqlsh $CASSANDRA_URL -f /root/schema.cql
     if [ "$?" -eq 0 ]; then
         echo "'Thingsboard' keyspace was successfully created!"
     else
@@ -34,7 +34,7 @@ fi
 
 if [ "$SKIP_SYSTEM_DATA" == "false" ]; then
     echo "Adding system data..."
-    cqlsh db -f /root/system-data.cql
+    cqlsh $CASSANDRA_URL -f /root/system-data.cql
     if [ "$?" -eq 0 ]; then
         echo "System data was successfully added!"
     else
@@ -44,7 +44,7 @@ fi
 
 if [ "$SKIP_DEMO_DATA" == "false" ]; then
     echo "Adding demo data..."
-    cqlsh db -f /root/demo-data.cql
+    cqlsh $CASSANDRA_URL -f /root/demo-data.cql
     if [ "$?" -eq 0 ]; then
         echo "Demo data was successfully added!"
     else
