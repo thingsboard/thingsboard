@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.plugin;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -28,6 +29,8 @@ public interface PluginService {
     PluginMetaData savePlugin(PluginMetaData plugin);
 
     PluginMetaData findPluginById(PluginId pluginId);
+
+    ListenableFuture<PluginMetaData> findPluginByIdAsync(PluginId pluginId);
 
     PluginMetaData findPluginByApiToken(String apiToken);
 

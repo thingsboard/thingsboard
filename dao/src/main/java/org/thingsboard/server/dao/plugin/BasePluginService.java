@@ -15,13 +15,14 @@
  */
 package org.thingsboard.server.dao.plugin;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.PluginId;
+import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -29,7 +30,9 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DatabaseException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -48,10 +51,11 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.convertDataList;
 import static org.thingsboard.server.dao.DaoUtil.getData;
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class BasePluginService implements PluginService {
+public class BasePluginService extends BaseEntityService implements PluginService {
 
     //TODO: move to a better place.
     public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
@@ -106,6 +110,13 @@ public class BasePluginService implements PluginService {
     public PluginMetaData findPluginById(PluginId pluginId) {
         Validator.validateId(pluginId, "Incorrect plugin id for search request.");
         return getData(pluginDao.findById(pluginId));
+    }
+
+    @Override
+    public ListenableFuture<PluginMetaData> findPluginByIdAsync(PluginId pluginId) {
+        validateId(pluginId, "Incorrect plugin id for search plugin request.");
+        ListenableFuture<PluginMetaDataEntity> pluginEntity = pluginDao.findByIdAsync(pluginId.getId());
+        return Futures.transform(pluginEntity, (com.google.common.base.Function<? super PluginMetaDataEntity, ? extends PluginMetaData>) input -> getData(input));
     }
 
     @Override
@@ -205,6 +216,7 @@ public class BasePluginService implements PluginService {
     @Override
     public void deletePluginById(PluginId pluginId) {
         Validator.validateId(pluginId, "Incorrect plugin id for delete request.");
+        deleteEntityRelations(pluginId);
         checkRulesAndDelete(pluginId.getId());
     }
 

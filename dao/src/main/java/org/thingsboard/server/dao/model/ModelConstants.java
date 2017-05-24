@@ -120,11 +120,38 @@ public class ModelConstants {
     public static final String DEVICE_TENANT_ID_PROPERTY = TENTANT_ID_PROPERTY;
     public static final String DEVICE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String DEVICE_NAME_PROPERTY = "name";
+    public static final String DEVICE_TYPE_PROPERTY = "type";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_and_search_text";
     public static final String DEVICE_BY_TENANT_AND_NAME_VIEW_NAME = "device_by_tenant_and_name";
+
+    /**
+     * Cassandra asset constants.
+     */
+    public static final String ASSET_COLUMN_FAMILY_NAME = "asset";
+    public static final String ASSET_TENANT_ID_PROPERTY = TENTANT_ID_PROPERTY;
+    public static final String ASSET_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String ASSET_NAME_PROPERTY = "name";
+    public static final String ASSET_TYPE_PROPERTY = "type";
+    public static final String ASSET_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
+    public static final String ASSET_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "asset_by_tenant_and_search_text";
+    public static final String ASSET_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "asset_by_customer_and_search_text";
+    public static final String ASSET_BY_TENANT_AND_NAME_VIEW_NAME = "asset_by_tenant_and_name";
+
+    /**
+     * Cassandra entity relation constants.
+     */
+    public static final String RELATION_COLUMN_FAMILY_NAME = "relation";
+    public static final String RELATION_FROM_ID_PROPERTY = "from_id";
+    public static final String RELATION_FROM_TYPE_PROPERTY = "from_type";
+    public static final String RELATION_TO_ID_PROPERTY = "to_id";
+    public static final String RELATION_TO_TYPE_PROPERTY = "to_type";
+    public static final String RELATION_TYPE_PROPERTY = "relation_type";
+
+    public static final String RELATION_REVERSE_VIEW_NAME = "reverse_relation";
 
 
     /**

@@ -37,10 +37,10 @@
                                       ng-model="vm.widgetConfig"
                                       widget-settings-schema="vm.settingsSchema"
                                       datakey-settings-schema="vm.dataKeySettingsSchema"
-                                      device-aliases="vm.aliasesInfo.deviceAliases"
+                                      entity-aliases="vm.aliasesInfo.entityAliases"
                                       functions-only="vm.functionsOnly"
-                                      fetch-device-keys="vm.fetchDeviceKeys(deviceAliasId, query, type)"
-                                      on-create-device-alias="vm.createDeviceAlias(event, alias)"
+                                      fetch-entity-keys="vm.fetchEntityKeys(entityAliasId, query, type)"
+                                      on-create-entity-alias="vm.createEntityAlias(event, alias, allowedEntityTypes)"
                                       the-form="theForm"></tb-widget-config>
                 </fieldset>
             </div>

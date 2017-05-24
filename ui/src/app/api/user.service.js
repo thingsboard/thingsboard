@@ -262,7 +262,13 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
 
         function fetchAllowedDashboardIds() {
             var pageLink = {limit: 100};
-            dashboardService.getCustomerDashboards(currentUser.customerId, pageLink).then(
+            var fetchDashboardsPromise;
+            if (currentUser.authority === 'TENANT_ADMIN') {
+                fetchDashboardsPromise = dashboardService.getTenantDashboards(pageLink);
+            } else {
+                fetchDashboardsPromise = dashboardService.getCustomerDashboards(currentUser.customerId, pageLink);
+            }
+            fetchDashboardsPromise.then(
                 function success(result) {
                     var dashboards = result.data;
                     for (var d=0;d<dashboards.length;d++) {
@@ -296,7 +302,8 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
                             if (userForceFullscreen()) {
                                 $rootScope.forceFullscreen = true;
                             }
-                            if ($rootScope.forceFullscreen && currentUser.authority === 'CUSTOMER_USER') {
+                            if ($rootScope.forceFullscreen && (currentUser.authority === 'TENANT_ADMIN' ||
+                                currentUser.authority === 'CUSTOMER_USER')) {
                                 fetchAllowedDashboardIds();
                             } else {
                                 deferred.resolve();
@@ -436,7 +443,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
 
     function forceDefaultPlace(to, params) {
         if (currentUser && isAuthenticated()) {
-            if (currentUser.authority === 'CUSTOMER_USER') {
+            if (currentUser.authority === 'TENANT_ADMIN' || currentUser.authority === 'CUSTOMER_USER') {
                 if ((userHasDefaultDashboard() && $rootScope.forceFullscreen) || isPublic()) {
                     if (to.name === 'home.profile') {
                         if (userHasProfile()) {
@@ -458,7 +465,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
     function gotoDefaultPlace(params) {
         if (currentUser && isAuthenticated()) {
             var place = 'home.links';
-            if (currentUser.authority === 'CUSTOMER_USER') {
+            if (currentUser.authority === 'TENANT_ADMIN' || currentUser.authority === 'CUSTOMER_USER') {
                 if (userHasDefaultDashboard()) {
                     place = 'home.dashboards.dashboard';
                     params = {dashboardId: currentUserDetails.additionalInfo.defaultDashboardId};

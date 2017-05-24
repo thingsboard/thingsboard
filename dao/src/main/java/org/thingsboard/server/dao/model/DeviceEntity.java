@@ -51,7 +51,10 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
 
     @Column(name = DEVICE_NAME_PROPERTY)
     private String name;
-    
+
+    @Column(name = DEVICE_TYPE_PROPERTY)
+    private String type;
+
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
     
@@ -73,6 +76,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
             this.customerId = device.getCustomerId().getId();
         }
         this.name = device.getName();
+        this.type = device.getType();
         this.additionalInfo = device.getAdditionalInfo();
     }
     
@@ -108,6 +112,14 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         this.name = name;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public JsonNode getAdditionalInfo() {
         return additionalInfo;
     }
@@ -138,6 +150,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
         result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
         return result;
     }
@@ -171,6 +184,11 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
                 return false;
         } else if (!name.equals(other.name))
             return false;
+        if (type == null) {
+            if (other.type != null)
+                return false;
+        } else if (!type.equals(other.type))
+            return false;
         if (tenantId == null) {
             if (other.tenantId != null)
                 return false;
@@ -190,6 +208,8 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         builder.append(customerId);
         builder.append(", name=");
         builder.append(name);
+        builder.append(", type=");
+        builder.append(type);
         builder.append(", additionalInfo=");
         builder.append(additionalInfo);
         builder.append("]");
@@ -207,6 +227,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
             device.setCustomerId(new CustomerId(customerId));
         }
         device.setName(name);
+        device.setType(type);
         device.setAdditionalInfo(additionalInfo);
         return device;
     }

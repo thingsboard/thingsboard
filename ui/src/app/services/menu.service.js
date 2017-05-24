@@ -189,6 +189,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'supervisor_account'
                         },
                         {
+                            name: 'asset.assets',
+                            type: 'link',
+                            state: 'home.assets',
+                            icon: 'domain'
+                        },
+                        {
                             name: 'device.devices',
                             type: 'link',
                             state: 'home.devices',
@@ -234,6 +240,16 @@ function Menu(userService, $state, $rootScope) {
                             ]
                         },
                             {
+                                name: 'asset.management',
+                                places: [
+                                    {
+                                        name: 'asset.assets',
+                                        icon: 'domain',
+                                        state: 'home.assets'
+                                    }
+                                ]
+                            },
+                            {
                                 name: 'device.management',
                                 places: [
                                     {
@@ -268,6 +284,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'home'
                         },
                         {
+                            name: 'asset.assets',
+                            type: 'link',
+                            state: 'home.assets',
+                            icon: 'domain'
+                        },
+                        {
                             name: 'device.devices',
                             type: 'link',
                             state: 'home.devices',
@@ -282,6 +304,16 @@ function Menu(userService, $state, $rootScope) {
 
                     homeSections =
                         [{
+                            name: 'asset.view-assets',
+                            places: [
+                                {
+                                    name: 'asset.assets',
+                                    icon: 'domain',
+                                    state: 'home.assets'
+                                }
+                            ]
+                        },
+                        {
                             name: 'device.view-devices',
                             places: [
                                 {

@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.device (
 	tenant_id timeuuid,
 	customer_id timeuuid,
 	name text,
+	type text,
 	search_text text,
 	additional_info text,
 	PRIMARY KEY (id, tenant_id, customer_id)
@@ -201,6 +202,56 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_credentials_by_credent
 	from thingsboard.device_credentials
 	WHERE credentials_id IS NOT NULL AND id IS NOT NULL
 	PRIMARY KEY ( credentials_id, id );
+
+
+CREATE TABLE IF NOT EXISTS thingsboard.asset (
+	id timeuuid,
+	tenant_id timeuuid,
+	customer_id timeuuid,
+	name text,
+	type text,
+	search_text text,
+	additional_info text,
+	PRIMARY KEY (id, tenant_id, customer_id)
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_tenant_and_name AS
+	SELECT *
+	from thingsboard.asset
+	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+	PRIMARY KEY ( tenant_id, name, id, customer_id)
+	WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_tenant_and_search_text AS
+	SELECT *
+	from thingsboard.asset
+	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+	PRIMARY KEY ( tenant_id, search_text, id, customer_id)
+	WITH CLUSTERING ORDER BY ( search_text ASC, id DESC, customer_id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_customer_and_search_text AS
+	SELECT *
+	from thingsboard.asset
+	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+	PRIMARY KEY ( customer_id, tenant_id, search_text, id )
+	WITH CLUSTERING ORDER BY ( tenant_id DESC, search_text ASC, id DESC );
+
+CREATE TABLE IF NOT EXISTS thingsboard.relation (
+	from_id timeuuid,
+	from_type text,
+	to_id timeuuid,
+	to_type text,
+	relation_type text,
+	additional_info text,
+	PRIMARY KEY ((from_id, from_type), relation_type, to_id, to_type)
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.reverse_relation AS
+SELECT *
+from thingsboard.relation
+WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+PRIMARY KEY ((to_id, to_type), relation_type, from_id, from_type)
+WITH CLUSTERING ORDER BY ( relation_type ASC, from_id ASC, from_type ASC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.widgets_bundle (
     id timeuuid,

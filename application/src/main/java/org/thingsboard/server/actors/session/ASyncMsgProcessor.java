@@ -116,7 +116,7 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     @Override
     public void processClusterEvent(ActorContext context, ClusterEventMsg msg) {
         if (pendingMap.size() > 0 || subscribedToAttributeUpdates || subscribedToRpcCommands) {
-            Optional<ServerAddress> newTargetServer = systemContext.getRoutingService().resolve(getDeviceId());
+            Optional<ServerAddress> newTargetServer = systemContext.getRoutingService().resolveById(getDeviceId());
             if (!newTargetServer.equals(currentTargetServer)) {
                 firstMsg = true;
                 currentTargetServer = newTargetServer;
