@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -28,6 +29,8 @@ public interface RuleService {
     RuleMetaData saveRule(RuleMetaData device);
 
     RuleMetaData findRuleById(RuleId ruleId);
+
+    ListenableFuture<RuleMetaData> findRuleByIdAsync(RuleId ruleId);
 
     List<RuleMetaData> findPluginRules(String pluginToken);
 

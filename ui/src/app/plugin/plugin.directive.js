@@ -22,7 +22,7 @@ import pluginFieldsetTemplate from './plugin-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function PluginDirective($compile, $templateCache, types, utils, userService, componentDescriptorService) {
+export default function PluginDirective($compile, $templateCache, $translate, types, toast, utils, userService, componentDescriptorService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(pluginFieldsetTemplate);
         element.html(template);
@@ -62,6 +62,10 @@ export default function PluginDirective($compile, $templateCache, types, utils, 
                 scope.plugin.configuration = angular.copy(scope.pluginConfiguration.data);
             }
         }, true);
+
+        scope.onPluginIdCopied = function() {
+            toast.showSuccess($translate.instant('plugin.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
+        };
 
         componentDescriptorService.getComponentDescriptorsByType(types.componentType.plugin).then(
             function success(components) {

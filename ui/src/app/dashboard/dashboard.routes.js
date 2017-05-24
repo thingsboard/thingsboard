@@ -66,7 +66,8 @@ export default function DashboardRoutes($stateProvider) {
             }
         })
         .state('home.dashboards.dashboard', {
-            url: '/:dashboardId',
+            url: '/:dashboardId?state',
+            reloadOnSearch: false,
             module: 'private',
             auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {
@@ -86,7 +87,8 @@ export default function DashboardRoutes($stateProvider) {
             }
         })
         .state('home.customers.dashboards.dashboard', {
-            url: '/:dashboardId',
+            url: '/:dashboardId?state',
+            reloadOnSearch: false,
             module: 'private',
             auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
             views: {

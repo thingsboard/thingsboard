@@ -19,4 +19,9 @@ package org.thingsboard.server.extensions.api.exception;
  * Created by ashvayka on 21.02.17.
  */
 public class UnauthorizedException extends Exception {
+
+    public UnauthorizedException(String message) {
+        super(message);
+    }
+
 }

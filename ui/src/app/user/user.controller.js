@@ -22,7 +22,7 @@ import userCard from './user-card.tpl.html';
 
 
 /*@ngInject*/
-export default function UserController(userService, toast, $scope, $controller, $state, $stateParams, $translate) {
+export default function UserController(userService, toast, $scope, $controller, $state, $stateParams, $translate, types) {
 
     var tenantId = $stateParams.tenantId;
     var customerId = $stateParams.customerId;
@@ -87,7 +87,10 @@ export default function UserController(userService, toast, $scope, $controller, 
             };
             saveUserFunction = function (user) {
                 user.authority = "TENANT_ADMIN";
-                user.tenantId = {id: tenantId};
+                user.tenantId = {
+                    entityType: types.entityType.tenant,
+                    id: tenantId
+                };
                 return userService.saveUser(user);
             };
             refreshUsersParamsFunction = function () {
@@ -100,7 +103,10 @@ export default function UserController(userService, toast, $scope, $controller, 
             };
             saveUserFunction = function (user) {
                 user.authority = "CUSTOMER_USER";
-                user.customerId = {id: customerId};
+                user.customerId = {
+                    entityType: types.entityType.customer,
+                    id: customerId
+                };
                 return userService.saveUser(user);
             };
             refreshUsersParamsFunction = function () {

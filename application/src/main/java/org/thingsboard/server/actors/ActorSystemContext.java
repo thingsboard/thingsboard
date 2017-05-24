@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -79,6 +80,9 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter private DeviceService deviceService;
+
+    @Autowired
+    @Getter private AssetService assetService;
 
     @Autowired
     @Getter private TenantService tenantService;

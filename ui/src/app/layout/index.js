@@ -31,12 +31,14 @@ import thingsboardDashboardAutocomplete from '../components/dashboard-autocomple
 
 import thingsboardUserMenu from './user-menu.directive';
 
+import thingsboardEntity from '../entity';
 import thingsboardTenant from '../tenant';
 import thingsboardCustomer from '../customer';
 import thingsboardUser from '../user';
 import thingsboardHomeLinks from '../home';
 import thingsboardAdmin from '../admin';
 import thingsboardProfile from '../profile';
+import thingsboardAsset from '../asset';
 import thingsboardDevice from '../device';
 import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
@@ -58,11 +60,13 @@ export default angular.module('thingsboard.home', [
     thingsboardMenu,
     thingsboardHomeLinks,
     thingsboardUserMenu,
+    thingsboardEntity,
     thingsboardTenant,
     thingsboardCustomer,
     thingsboardUser,
     thingsboardAdmin,
     thingsboardProfile,
+    thingsboardAsset,
     thingsboardDevice,
     thingsboardWidgetLibrary,
     thingsboardDashboard,

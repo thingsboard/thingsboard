@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -23,6 +24,19 @@ import java.util.List;
 import java.util.UUID;
 
 public class Validator {
+
+    /**
+     * This method validate <code>EntityId</code> entity id. If entity id is invalid than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param entityId          the entityId
+     * @param errorMessage the error message for exception
+     */
+    public static void validateEntityId(EntityId entityId, String errorMessage) {
+        if (entityId == null || entityId.getId() == null) {
+            throw new IncorrectParameterException(errorMessage);
+        }
+    }
 
     /**
      * This method validate <code>String</code> string. If string is invalid than throw

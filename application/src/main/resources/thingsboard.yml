@@ -66,8 +66,8 @@ plugins:
 
 # JWT Token parameters
 security.jwt:
-  token-expiration-time: "${JWT_TOKEN_EXPIRATION_TIME:900}" # Number of seconds (15 mins)
-  refresh-token-exp-time: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:3600}" # Seconds (1 hour)
+  token-expiration-time: "${JWT_TOKEN_EXPIRATION_TIME:9000000}" # Number of seconds (15 mins)
+  refresh-token-exp-time: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:36000000}" # Seconds (1 hour)
   token-issuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
   token-signing-key: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
 

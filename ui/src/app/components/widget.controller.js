@@ -21,8 +21,8 @@ import Subscription from '../api/subscription';
 
 /*@ngInject*/
 export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
-                                         datasourceService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
-                                         dashboardTimewindowApi, widget, aliasesInfo, widgetType) {
+                                         datasourceService, entityService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
+                                         dashboardTimewindowApi, widget, aliasesInfo, stateController, widgetType) {
 
     var vm = this;
 
@@ -83,10 +83,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
 
     //      type: "timeseries" or "latest" or "rpc"
-    /*      devicesSubscriptionInfo = [
+    /*      subscriptionInfo = [
             {
-                deviceId:   ""
-                deviceName: ""
+                entityType: ""
+                entityId:   ""
+                entityName: ""
                 timeseries: [{ name: "", label: "" }, ..]
                 attributes: [{ name: "", label: "" }, ..]
             }
@@ -130,7 +131,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         },
         utils: {
             formatValue: formatValue
-        }
+        },
+        stateController: stateController
     };
 
     var subscriptionContext = {
@@ -231,7 +233,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             }
         }
 
-        utils.createDatasoucesFromSubscriptionsInfo(subscriptionsInfo).then(
+        entityService.createDatasoucesFromSubscriptionsInfo(subscriptionsInfo).then(
             function (datasources) {
                 options.datasources = datasources;
                 var subscription = createSubscription(options, subscribe);
@@ -341,6 +343,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 },
                 onRpcSuccess: function(subscription) {
                     $scope.executingRpcRequest = subscription.executingRpcRequest;
+                    $scope.rpcErrorText = subscription.rpcErrorText;
+                    $scope.rpcRejection = subscription.rpcRejection;
                 },
                 onRpcFailed: function(subscription) {
                     $scope.executingRpcRequest = subscription.executingRpcRequest;
@@ -392,6 +396,14 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
         $scope.$on('mobileModeChanged', function (event, newIsMobile) {
             onMobileModeChanged(newIsMobile);
+        });
+
+        $scope.$on('entityAliasListChanged', function (event, aliasesInfo) {
+            subscriptionContext.aliasesInfo = aliasesInfo;
+            for (var id in widgetContext.subscriptions) {
+                var subscription = widgetContext.subscriptions[id];
+                subscription.onAliasesChanged();
+            }
         });
 
         $scope.$on("$destroy", function () {
