@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -154,12 +155,13 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, TimePageLink pageLink) {
-        Select.Where query = AbstractSearchTimeDao.buildQuery(RELATION_COLUMN_FAMILY_NAME,
+    public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, EntityType childType, TimePageLink pageLink) {
+        Select.Where query = AbstractSearchTimeDao.buildQuery(ModelConstants.RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME,
                 Arrays.asList(eq(ModelConstants.RELATION_FROM_ID_PROPERTY, from.getId()),
                         eq(ModelConstants.RELATION_FROM_TYPE_PROPERTY, from.getEntityType().name()),
-                        eq(ModelConstants.RELATION_TYPE_PROPERTY, relationType)),
-                QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY),
+                        eq(ModelConstants.RELATION_TYPE_PROPERTY, relationType),
+                        eq(ModelConstants.RELATION_TO_TYPE_PROPERTY, childType.name())),
+                Arrays.asList(QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY), QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)),
                 pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
         return getFuture(executeAsyncRead(query), rs -> getEntityRelations(rs));
     }

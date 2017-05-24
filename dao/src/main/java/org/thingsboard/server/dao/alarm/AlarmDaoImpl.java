@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -59,6 +60,10 @@ public class AlarmDaoImpl extends AbstractModelDao<AlarmEntity> implements Alarm
         return ALARM_COLUMN_FAMILY_NAME;
     }
 
+    protected boolean isDeleteOnSave() {
+        return false;
+    }
+
     @Override
     public AlarmEntity save(Alarm alarm) {
         log.debug("Save asset [{}] ", alarm);
@@ -92,7 +97,7 @@ public class AlarmDaoImpl extends AbstractModelDao<AlarmEntity> implements Alarm
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
         String relationType = query.getStatus() == null ? BaseAlarmService.ALARM_RELATION : BaseAlarmService.ALARM_RELATION_PREFIX + query.getStatus().name();
-        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, query.getPageLink());
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, EntityType.ALARM, query.getPageLink());
         return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<Alarm>>) input -> {
             List<ListenableFuture<Alarm>> alarmFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {

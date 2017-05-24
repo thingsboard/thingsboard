@@ -127,13 +127,17 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         log.debug("Save entity {}", entity);
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
-        } else {
+        } else if (isDeleteOnSave()) {
             removeById(entity.getId());
         }
         Statement saveStatement = getSaveQuery(entity);
         saveStatement.setConsistencyLevel(cluster.getDefaultWriteConsistencyLevel());
         ResultSet resultSet = executeWrite(saveStatement);
         return new EntityResultSet<>(resultSet, entity);
+    }
+
+    protected boolean isDeleteOnSave() {
+        return true;
     }
 
     public T save(T entity) {

@@ -271,6 +271,13 @@ CREATE TABLE IF NOT EXISTS thingsboard.relation (
 	PRIMARY KEY ((from_id, from_type), relation_type, to_id, to_type)
 ) WITH CLUSTERING ORDER BY ( relation_type ASC, to_id ASC, to_type ASC);
 
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.relation_by_type_and_child_type AS
+    SELECT *
+    from thingsboard.relation
+    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+    PRIMARY KEY ((from_id, from_type), relation_type, to_type, to_id)
+    WITH CLUSTERING ORDER BY ( relation_type ASC, from_type ASC, from_id ASC);
+
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.reverse_relation AS
     SELECT *
     from thingsboard.relation

@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,14 +97,76 @@ public class AlarmServiceTest extends AbstractServiceTest {
 
         Alarm fetched = alarmService.findAlarmById(created.getId()).get();
         Assert.assertEquals(created, fetched);
+    }
 
-//        TimePageData<Alarm> alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
-//                .affectedEntityId(parentId)
-//                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-//                        new TimePageLink(1, 0L, Long.MAX_VALUE, true)
-//                ).build()).get();
-//        Assert.assertNotNull(alarms.getData());
-//        Assert.assertEquals(1, alarms.getData().size());
-//        Assert.assertEquals(created, alarms.getData().get(0));
+    @Test
+    public void testFindAlarm() throws ExecutionException, InterruptedException {
+        AssetId parentId = new AssetId(UUIDs.timeBased());
+        AssetId childId = new AssetId(UUIDs.timeBased());
+
+        EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
+
+        Assert.assertTrue(relationService.saveRelation(relation).get());
+
+        long ts = System.currentTimeMillis();
+        Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
+                .type(TEST_ALARM)
+                .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
+                .startTs(ts).build();
+
+        Alarm created = alarmService.createOrUpdateAlarm(alarm);
+
+        // Check child relation
+        TimePageData<Alarm> alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
+                .affectedEntityId(childId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(1, 0L, System.currentTimeMillis(), true)
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        // Check parent relation
+        alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
+                .affectedEntityId(parentId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(1, 0L, System.currentTimeMillis(), true)
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        alarmService.ackAlarm(created.getId(), System.currentTimeMillis()).get();
+        created = alarmService.findAlarmById(created.getId()).get();
+
+        alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
+                .affectedEntityId(childId)
+                .status(AlarmStatus.ACTIVE_ACK).pageLink(
+                        new TimePageLink(1, 0L, System.currentTimeMillis(), true)
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        // Check not existing relation
+        alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
+                .affectedEntityId(childId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(1, 0L, System.currentTimeMillis(), true)
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(0, alarms.getData().size());
+
+        alarmService.clearAlarm(created.getId(), System.currentTimeMillis()).get();
+        created = alarmService.findAlarmById(created.getId()).get();
+
+        alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
+                .affectedEntityId(childId)
+                .status(AlarmStatus.CLEARED_ACK).pageLink(
+                        new TimePageLink(1, 0L, System.currentTimeMillis(), true)
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
     }
 }

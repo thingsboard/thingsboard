@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,8 +41,12 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.*;
@@ -63,6 +67,21 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
 
     @Autowired
     private RelationService relationService;
+
+    protected ExecutorService readResultsProcessingExecutor;
+
+    @PostConstruct
+    public void startExecutor() {
+        readResultsProcessingExecutor = Executors.newCachedThreadPool();
+    }
+
+    @PreDestroy
+    public void stopExecutor() {
+        if (readResultsProcessingExecutor != null) {
+            readResultsProcessingExecutor.shutdownNow();
+        }
+    }
+
 
     @Override
     public Alarm createOrUpdateAlarm(Alarm alarm) {
@@ -85,6 +104,8 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
                     createRelation(new EntityRelation(parentId, saved.getId(), ALARM_RELATION));
                     createRelation(new EntityRelation(parentId, saved.getId(), ALARM_RELATION_PREFIX + saved.getStatus().name()));
                 }
+                createRelation(new EntityRelation(alarm.getOriginator(), saved.getId(), ALARM_RELATION));
+                createRelation(new EntityRelation(alarm.getOriginator(), saved.getId(), ALARM_RELATION_PREFIX + saved.getStatus().name()));
                 return saved;
             } else {
                 log.debug("Alarm before merge: {}", alarm);
@@ -218,6 +239,8 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
                 deleteRelation(new EntityRelation(parentId, alarm.getId(), ALARM_RELATION_PREFIX + oldStatus.name()));
                 createRelation(new EntityRelation(parentId, alarm.getId(), ALARM_RELATION_PREFIX + newStatus.name()));
             }
+            deleteRelation(new EntityRelation(alarm.getOriginator(), alarm.getId(), ALARM_RELATION_PREFIX + oldStatus.name()));
+            createRelation(new EntityRelation(alarm.getOriginator(), alarm.getId(), ALARM_RELATION_PREFIX + newStatus.name()));
         } catch (ExecutionException | InterruptedException e) {
             log.warn("[{}] Failed to update relations. Old status: [{}], New status: [{}]", alarm.getId(), oldStatus, newStatus);
             throw new RuntimeException(e);
@@ -227,7 +250,7 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
     private ListenableFuture<Boolean> getAndUpdate(AlarmId alarmId, Function<Alarm, Boolean> function) {
         validateId(alarmId, "Alarm id should be specified!");
         ListenableFuture<Alarm> entity = alarmDao.findAlarmByIdAsync(alarmId.getId());
-        return Futures.transform(entity, function);
+        return Futures.transform(entity, function, readResultsProcessingExecutor);
     }
 
     private DataValidator<Alarm> alarmDataValidator =
