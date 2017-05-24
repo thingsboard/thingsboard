@@ -1,6 +1,6 @@
 VERSION=k8stest
 PROJECT=thingsboard
-APP=thingsboard-db-schema
+APP=tb-cassandra-schema
 
 build:
 	cp ../../dao/src/main/resources/schema.cql .

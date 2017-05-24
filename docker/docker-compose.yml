@@ -17,26 +17,27 @@
 version: '2'
 
 services:
-  thingsboard:
-    image: "thingsboard/application:1.2.3"
+  tb:
+    image: "thingsboard/application:k8stest"
     ports:
       - "8080:8080"
-      - "1883:1883"
+      - "1884:1883"
       - "5683:5683/udp"
     env_file:
-      - thingsboard.env
-    entrypoint: ./run_thingsboard.sh
-  thingsboard-db-schema:
-    image: "thingsboard/thingsboard-db-schema:1.2.3"
+      - tb.env
+    entrypoint: ./run-application.sh
+  tb-cassandra-schema:
+    image: "thingsboard/tb-cassandra-schema:k8stest"
     environment:
       - SKIP_SCHEMA_CREATION=${SKIP_SCHEMA_CREATION}
       - SKIP_SYSTEM_DATA=${SKIP_SYSTEM_DATA}
       - SKIP_DEMO_DATA=${SKIP_DEMO_DATA}
-    entrypoint: ./install_schema.sh
-  db:
-    image: "cassandra:3.9"
+      - CASSANDRA_URL=${CASSANDRA_URL}
+    entrypoint: ./install-schema.sh
+  cassandra:
+    image: "thingsboard/cassandra:k8stest"
     volumes:
       - "${CASSANDRA_DATA_DIR}:/var/lib/cassandra"
   zk:
-    image: "zookeeper:3.4.9"
+    image: "thingsboard/zk:k8stest"
     restart: always

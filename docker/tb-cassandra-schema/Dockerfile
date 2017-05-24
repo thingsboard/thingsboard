@@ -16,12 +16,12 @@
 
 FROM cassandra:3.9
 
-ADD install_schema.sh /root/install_schema.sh
+ADD install-schema.sh /root/install-schema.sh
 
 RUN apt-get update \
         && apt-get install -y nmap
 
-RUN chmod +x /root/install_schema.sh
+RUN chmod +x /root/install-schema.sh
 
 ADD schema.cql /root/schema.cql
 ADD demo-data.cql /root/demo-data.cql

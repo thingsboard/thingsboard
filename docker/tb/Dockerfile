@@ -14,26 +14,11 @@
 # limitations under the License.
 #
 
-apiVersion: v1
-kind: Pod
-metadata:
-  name: tb-db-schema
-spec:
-  containers:
-  - name: tb-db-schema
-    imagePullPolicy: Always
-    image: thingsboard/thingsboard-db-schema:k8stest
-    env:
-    - name: SKIP_SCHEMA_CREATION
-      value: "false"
-    - name: SKIP_SYSTEM_DATA
-      value: "false"
-    - name : SKIP_DEMO_DATA
-      value: "false"
-    - name : CASSANDRA_URL
-      value: "cassandra-headless"
-    command:
-    - sh
-    - -c
-    - ./install_schema.sh
-  restartPolicy: Never
+FROM openjdk:8-jre
+
+ADD run-application.sh /root/run-application.sh
+ADD thingsboard.deb /root/thingsboard.deb
+
+RUN chmod +x /root/run-application.sh
+
+WORKDIR /root

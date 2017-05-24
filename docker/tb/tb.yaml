@@ -112,7 +112,7 @@ spec:
         command:
         - sh
         - -c
-        - ./run_thingsboard.sh
+        - ./run-application.sh
         livenessProbe:
           httpGet:
             path: /login

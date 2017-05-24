@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -15,14 +14,26 @@
 # limitations under the License.
 #
 
-# zkOk.sh uses the ruok ZooKeeper four letter work to determine if the instance
-# is health. The $? variable will be set to 0 if server responds that it is 
-# healthy, or 1 if the server fails to respond.
-
-ZK_CLIENT_PORT=${ZK_CLIENT_PORT:-2181}
-OK=$(echo ruok | nc 127.0.0.1 $ZK_CLIENT_PORT)
-if [ "$OK" == "imok" ]; then
-	exit 0
-else
-	exit 1
-fi
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tb-cassandra-schema
+spec:
+  containers:
+  - name: tb-cassandra-schema
+    imagePullPolicy: Always
+    image: thingsboard/tb-cassandra-schema:k8stest
+    env:
+    - name: SKIP_SCHEMA_CREATION
+      value: "false"
+    - name: SKIP_SYSTEM_DATA
+      value: "false"
+    - name : SKIP_DEMO_DATA
+      value: "false"
+    - name : CASSANDRA_URL
+      value: "cassandra-headless"
+    command:
+    - sh
+    - -c
+    - ./install-schema.sh
+  restartPolicy: Never

@@ -55,7 +55,7 @@ RUN set -x \
 	&& rm -rf /var/lib/apt/lists/*
 
 #Copy configuration generator script to bin
-COPY zkGenConfig.sh zkOk.sh /opt/zookeeper/bin/
+COPY zk-gen-config.sh zk-ok.sh /opt/zookeeper/bin/
 
 # Create a user for the zookeeper process and configure file system ownership 
 # for nessecary directories and symlink the distribution as a user executable

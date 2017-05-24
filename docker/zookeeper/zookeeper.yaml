@@ -159,17 +159,17 @@ spec:
         command:
         - sh
         - -c
-        - zkGenConfig.sh && zkServer.sh start-foreground
+        - zk-gen-config.sh && zkServer.sh start-foreground
         readinessProbe:
           exec:
             command:
-            - "zkOk.sh"
+            - "zk-ok.sh"
           initialDelaySeconds: 15
           timeoutSeconds: 5
         livenessProbe:
           exec:
             command:
-            - "zkOk.sh"
+            - "zk-ok.sh"
           initialDelaySeconds: 15
           timeoutSeconds: 5
         volumeMounts:
