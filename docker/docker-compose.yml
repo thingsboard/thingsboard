@@ -20,8 +20,8 @@ services:
   thingsboard:
     image: "thingsboard/application:1.2.3"
     ports:
-      - "8080:8080"
-      - "1883:1883"
+      - "8443:8443"
+      - "1884:1883"
       - "5683:5683/udp"
     env_file:
       - thingsboard.env
