@@ -87,7 +87,7 @@ spec:
       containers:
       - name: zk
         imagePullPolicy: Always
-        image: thingsboard/zk:k8stest
+        image: thingsboard/zk:1.2.4
         ports:
         - containerPort: 2181
           name: client

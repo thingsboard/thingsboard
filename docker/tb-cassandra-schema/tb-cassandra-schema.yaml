@@ -22,7 +22,7 @@ spec:
   containers:
   - name: tb-cassandra-schema
     imagePullPolicy: Always
-    image: thingsboard/tb-cassandra-schema:k8stest
+    image: thingsboard/tb-cassandra-schema:1.2.4
     env:
     - name: SKIP_SCHEMA_CREATION
       value: "false"

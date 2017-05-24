@@ -18,16 +18,16 @@ version: '2'
 
 services:
   tb:
-    image: "thingsboard/application:k8stest"
+    image: "thingsboard/application:1.2.4"
     ports:
       - "8080:8080"
-      - "1884:1883"
+      - "1883:1883"
       - "5683:5683/udp"
     env_file:
       - tb.env
     entrypoint: ./run-application.sh
   tb-cassandra-schema:
-    image: "thingsboard/tb-cassandra-schema:k8stest"
+    image: "thingsboard/tb-cassandra-schema:1.2.4"
     environment:
       - SKIP_SCHEMA_CREATION=${SKIP_SCHEMA_CREATION}
       - SKIP_SYSTEM_DATA=${SKIP_SYSTEM_DATA}

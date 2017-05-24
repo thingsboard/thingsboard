@@ -1,4 +1,4 @@
-VERSION=k8stest
+VERSION=1.2.4
 PROJECT=thingsboard
 APP=zk
 
