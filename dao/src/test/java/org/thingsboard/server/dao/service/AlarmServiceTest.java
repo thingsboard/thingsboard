@@ -98,13 +98,13 @@ public class AlarmServiceTest extends AbstractServiceTest {
         Alarm fetched = alarmService.findAlarmById(created.getId()).get();
         Assert.assertEquals(created, fetched);
 
-        TimePageData<Alarm> alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
-                .affectedEntityId(parentId)
-                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
-                        new TimePageLink(1, 0L, Long.MAX_VALUE, true)
-                ).build()).get();
-        Assert.assertNotNull(alarms.getData());
-        Assert.assertEquals(1, alarms.getData().size());
-        Assert.assertEquals(created, alarms.getData().get(0));
+//        TimePageData<Alarm> alarms = alarmService.findAlarms(AlarmQuery.builder().tenantId(tenantId)
+//                .affectedEntityId(parentId)
+//                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+//                        new TimePageLink(1, 0L, Long.MAX_VALUE, true)
+//                ).build()).get();
+//        Assert.assertNotNull(alarms.getData());
+//        Assert.assertEquals(1, alarms.getData().size());
+//        Assert.assertEquals(created, alarms.getData().get(0));
     }
 }
