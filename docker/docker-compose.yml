@@ -35,9 +35,14 @@ services:
       - CASSANDRA_URL=${CASSANDRA_URL}
     entrypoint: ./install-schema.sh
   cassandra:
-    image: "thingsboard/cassandra:k8stest"
+    image: "cassandra:3.9"
+    ports:
+      - "9042"
+      - "9160"
     volumes:
       - "${CASSANDRA_DATA_DIR}:/var/lib/cassandra"
   zk:
-    image: "thingsboard/zk:k8stest"
+    image: "zookeeper:3.4.9"
+    ports:
+      - "2181"
     restart: always
