@@ -49,7 +49,7 @@ export default function AppConfig($provide,
     $translateProvider.useSanitizeValueStrategy('sce');
     $translateProvider.preferredLanguage('en_US');
     $translateProvider.useLocalStorage();
-    $translateProvider.useMissingTranslationHandlerLog();
+    $translateProvider.useMissingTranslationHandler('tbMissingTranslationHandler');
     $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
 
     addLocaleKorean(locales);

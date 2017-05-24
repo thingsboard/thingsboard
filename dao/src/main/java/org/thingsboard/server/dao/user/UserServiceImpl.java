@@ -35,20 +35,19 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.*;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends BaseEntityService implements UserService {
 
     @Autowired
     private UserDao userDao;
@@ -169,6 +168,7 @@ public class UserServiceImpl implements UserService {
         validateId(userId, "Incorrect userId " + userId);
         UserCredentialsEntity userCredentialsEntity = userCredentialsDao.findByUserId(userId.getId());
         userCredentialsDao.removeById(userCredentialsEntity.getId());
+        deleteEntityRelations(userId);
         userDao.removeById(userId.getId());
     }
 

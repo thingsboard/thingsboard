@@ -53,7 +53,15 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
                     promise = $q.when({data: []});
                 }
             } else {
-                promise = dashboardService.getTenantDashboards(pageLink);
+                if (userService.getAuthority() === 'SYS_ADMIN') {
+                    if (scope.tenantId) {
+                        promise = dashboardService.getTenantDashboardsByTenantId(scope.tenantId, pageLink);
+                    } else {
+                        promise = $q.when({data: []});
+                    }
+                } else {
+                    promise = dashboardService.getTenantDashboards(pageLink);
+                }
             }
 
             promise.then(function success(result) {
@@ -76,7 +84,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
 
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
-                dashboardService.getDashboard(ngModelCtrl.$viewValue).then(
+                dashboardService.getDashboardInfo(ngModelCtrl.$viewValue).then(
                     function success(dashboard) {
                         scope.dashboard = dashboard;
                     },
@@ -117,6 +125,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
         link: linker,
         scope: {
             dashboardsScope: '@',
+            tenantId: '=',
             customerId: '=',
             theForm: '=?',
             tbRequired: '=?',

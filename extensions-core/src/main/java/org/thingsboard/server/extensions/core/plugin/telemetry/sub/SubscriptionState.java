@@ -16,9 +16,8 @@
 package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 
@@ -30,7 +29,7 @@ public class SubscriptionState {
 
     @Getter private final String wsSessionId;
     @Getter private final int subscriptionId;
-    @Getter private final DeviceId deviceId;
+    @Getter private final EntityId entityId;
     @Getter private final SubscriptionType type;
     @Getter private final boolean allKeys;
     @Getter private final Map<String, Long> keyStates;
@@ -44,7 +43,7 @@ public class SubscriptionState {
 
         if (subscriptionId != that.subscriptionId) return false;
         if (wsSessionId != null ? !wsSessionId.equals(that.wsSessionId) : that.wsSessionId != null) return false;
-        if (deviceId != null ? !deviceId.equals(that.deviceId) : that.deviceId != null) return false;
+        if (entityId != null ? !entityId.equals(that.entityId) : that.entityId != null) return false;
         return type == that.type;
     }
 
@@ -52,7 +51,7 @@ public class SubscriptionState {
     public int hashCode() {
         int result = wsSessionId != null ? wsSessionId.hashCode() : 0;
         result = 31 * result + subscriptionId;
-        result = 31 * result + (deviceId != null ? deviceId.hashCode() : 0);
+        result = 31 * result + (entityId != null ? entityId.hashCode() : 0);
         result = 31 * result + (type != null ? type.hashCode() : 0);
         return result;
     }
@@ -61,7 +60,7 @@ public class SubscriptionState {
     public String toString() {
         return "SubscriptionState{" +
                 "type=" + type +
-                ", deviceId=" + deviceId +
+                ", entityId=" + entityId +
                 ", subscriptionId=" + subscriptionId +
                 ", wsSessionId='" + wsSessionId + '\'' +
                 '}';

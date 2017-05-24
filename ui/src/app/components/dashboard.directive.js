@@ -51,7 +51,9 @@ function Dashboard() {
         scope: true,
         bindToController: {
             widgets: '=',
+            widgetLayouts: '=?',
             aliasesInfo: '=',
+            stateController: '=',
             dashboardTimewindow: '=?',
             columns: '=',
             margins: '=',
@@ -73,7 +75,8 @@ function Dashboard() {
             onInit: '&?',
             onInitFailed: '&?',
             dashboardStyle: '=?',
-            dashboardClass: '=?'
+            dashboardClass: '=?',
+            ignoreLoading: '=?'
         },
         controller: DashboardController,
         controllerAs: 'vm',
@@ -82,7 +85,7 @@ function Dashboard() {
 }
 
 /*@ngInject*/
-function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, timeService, types) {
+function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, timeService, types, utils) {
 
     var highlightedMode = false;
     var highlightedWidget = null;
@@ -132,14 +135,26 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
 
     updateMobileOpts();
 
+    vm.widgetLayoutInfo = {
+    };
+
     vm.widgetItemMap = {
-        sizeX: 'vm.widgetSizeX(widget)',
-        sizeY: 'vm.widgetSizeY(widget)',
-        row: 'widget.row',
-        col: 'widget.col',
+        sizeX: 'vm.widgetLayoutInfo[widget.id].sizeX',
+        sizeY: 'vm.widgetLayoutInfo[widget.id].sizeY',
+        row: 'vm.widgetLayoutInfo[widget.id].row',
+        col: 'vm.widgetLayoutInfo[widget.id].col',
         minSizeY: 'widget.minSizeY',
         maxSizeY: 'widget.maxSizeY'
     };
+
+    /*vm.widgetItemMap = {
+        sizeX: 'vm.widgetSizeX(widget)',
+        sizeY: 'vm.widgetSizeY(widget)',
+        row: 'vm.widgetRow(widget)',
+        col: 'vm.widgetCol(widget)',
+        minSizeY: 'widget.minSizeY',
+        maxSizeY: 'widget.maxSizeY'
+    };*/
 
     vm.isWidgetExpanded = false;
     vm.isHighlighted = isHighlighted;
@@ -156,6 +171,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
 
     vm.widgetSizeX = widgetSizeX;
     vm.widgetSizeY = widgetSizeY;
+    vm.widgetRow = widgetRow;
+    vm.widgetCol = widgetCol;
     vm.widgetColor = widgetColor;
     vm.widgetBackgroundColor = widgetBackgroundColor;
     vm.widgetPadding = widgetPadding;
@@ -173,6 +190,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     vm.openWidgetContextMenu = openWidgetContextMenu;
 
     vm.getEventGridPosition = getEventGridPosition;
+    vm.reload = reload;
 
     vm.contextMenuItems = [];
     vm.contextMenuEvent = null;
@@ -198,6 +216,45 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
             }, 0);
         }
     };
+
+    $scope.$watchCollection('vm.widgets', function () {
+        var ids = [];
+        for (var i=0;i<vm.widgets.length;i++) {
+            var widget = vm.widgets[i];
+            if (!widget.id) {
+                widget.id = utils.guid();
+            }
+            ids.push(widget.id);
+            var layoutInfoObject = vm.widgetLayoutInfo[widget.id];
+            if (!layoutInfoObject) {
+                layoutInfoObject = {
+                    widget: widget
+                };
+                Object.defineProperty(layoutInfoObject, 'sizeX', {
+                    get: function() { return widgetSizeX(this.widget) },
+                    set: function(newSizeX) { setWidgetSizeX(this.widget, newSizeX)}
+                });
+                Object.defineProperty(layoutInfoObject, 'sizeY', {
+                    get: function() { return widgetSizeY(this.widget) },
+                    set: function(newSizeY) { setWidgetSizeY(this.widget, newSizeY)}
+                });
+                Object.defineProperty(layoutInfoObject, 'row', {
+                    get: function() { return widgetRow(this.widget) },
+                    set: function(newRow) { setWidgetRow(this.widget, newRow)}
+                });
+                Object.defineProperty(layoutInfoObject, 'col', {
+                    get: function() { return widgetCol(this.widget) },
+                    set: function(newCol) { setWidgetCol(this.widget, newCol)}
+                });
+                vm.widgetLayoutInfo[widget.id] = layoutInfoObject;
+            }
+        }
+        for (var widgetId in vm.widgetLayoutInfo) {
+            if (ids.indexOf(widgetId) === -1) {
+                delete vm.widgetLayoutInfo[widgetId];
+            }
+        }
+    });
 
     //TODO: widgets visibility
     /*gridsterParent.scroll(function () {
@@ -272,13 +329,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
     });
 
-    $scope.$watch('vm.aliasesInfo.deviceAliases', function () {
-        $scope.$broadcast('deviceAliasListChanged', vm.aliasesInfo);
+    $scope.$watch('vm.aliasesInfo.entityAliases', function () {
+        $scope.$broadcast('entityAliasListChanged', vm.aliasesInfo);
     }, true);
 
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {
         if (checkIsLocalGridsterElement(theGridster)) {
             vm.gridster = theGridster;
+            vm.isResizing = false;
             //TODO: widgets visibility
             //updateVisibleRect(false, true);
         }
@@ -302,20 +360,22 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         }
     });
 
+    function widgetOrder(widget) {
+        var order;
+        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+            order = vm.widgetLayouts[widget.id].mobileOrder;
+        } else if (widget.config.mobileOrder) {
+            order = widget.config.mobileOrder;
+        } else {
+            order = widget.row;
+        }
+        return order;
+    }
+
     $scope.$on('widgetPositionChanged', function () {
         vm.widgets.sort(function (widget1, widget2) {
-            var row1;
-            var row2;
-            if (angular.isDefined(widget1.config.mobileOrder)) {
-                row1 = widget1.config.mobileOrder;
-            } else {
-                row1 = widget1.row;
-            }
-            if (angular.isDefined(widget2.config.mobileOrder)) {
-                row2 = widget2.config.mobileOrder;
-            } else {
-                row2 = widget2.row;
-            }
+            var row1 = widgetOrder(widget1);
+            var row2 = widgetOrder(widget2);
             var res = row1 - row2;
             if (res === 0) {
                 res = widget1.col - widget2.col;
@@ -325,6 +385,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     });
 
     loadStDiff();
+
+    function reload() {
+        loadStDiff();
+    }
 
     function loadStDiff() {
         if (vm.getStDiff) {
@@ -568,18 +632,89 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function widgetSizeX(widget) {
-        return widget.sizeX;
+        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+            return vm.widgetLayouts[widget.id].sizeX;
+        } else {
+            return widget.sizeX;
+        }
+    }
+
+    function setWidgetSizeX(widget, sizeX) {
+        if (!vm.gridsterOpts.isMobile) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].sizeX = sizeX;
+            } else {
+                widget.sizeX = sizeX;
+            }
+        }
     }
 
     function widgetSizeY(widget) {
         if (vm.gridsterOpts.isMobile) {
-            if (widget.config.mobileHeight) {
-                return widget.config.mobileHeight;
+            var mobileHeight;
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                mobileHeight = vm.widgetLayouts[widget.id].mobileHeight;
+            }
+            if (!mobileHeight && widget.config.mobileHeight) {
+                mobileHeight = widget.config.mobileHeight;
+            }
+            if (mobileHeight) {
+                return mobileHeight;
             } else {
                 return widget.sizeY * 24 / vm.gridsterOpts.columns;
             }
         } else {
-            return widget.sizeY;
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                return vm.widgetLayouts[widget.id].sizeY;
+            } else {
+                return widget.sizeY;
+            }
+        }
+    }
+
+    function setWidgetSizeY(widget, sizeY) {
+        if (!vm.gridsterOpts.isMobile) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].sizeY = sizeY;
+            } else {
+                widget.sizeY = sizeY;
+            }
+        }
+    }
+
+    function widgetRow(widget) {
+        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+            return vm.widgetLayouts[widget.id].row;
+        } else {
+            return widget.row;
+        }
+    }
+
+    function setWidgetRow(widget, row) {
+        if (!vm.gridsterOpts.isMobile) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].row = row;
+            } else {
+                widget.row = row;
+            }
+        }
+    }
+
+    function widgetCol(widget) {
+        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+            return vm.widgetLayouts[widget.id].col;
+        } else {
+            return widget.col;
+        }
+    }
+
+    function setWidgetCol(widget, col) {
+        if (!vm.gridsterOpts.isMobile) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].col = col;
+            } else {
+                widget.col = col;
+            }
         }
     }
 
@@ -653,7 +788,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
             var maxRows = vm.gridsterOpts.maxRows;
             for (var i = 0; i < vm.widgets.length; i++) {
                 var w = vm.widgets[i];
-                var bottom = w.row + w.sizeY;
+                var bottom = widgetRow(w) + widgetSizeY(w);
                 maxRows = Math.max(maxRows, bottom);
             }
             vm.gridsterOpts.maxRows = Math.max(maxRows, vm.gridsterOpts.maxRows);
@@ -662,7 +797,11 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
 
     function dashboardLoaded() {
         $timeout(function () {
-            $scope.$watch('vm.dashboardTimewindow', function () {
+            if (vm.dashboardTimewindowWatch) {
+                vm.dashboardTimewindowWatch();
+                vm.dashboardTimewindowWatch = null;
+            }
+            vm.dashboardTimewindowWatch = $scope.$watch('vm.dashboardTimewindow', function () {
                 $scope.$broadcast('dashboardTimewindowChanged', vm.dashboardTimewindow);
             }, true);
             adoptMaxRows();
@@ -678,7 +817,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function loading() {
-        return $rootScope.loading;
+        return !vm.ignoreLoading && $rootScope.loading;
     }
 
 }

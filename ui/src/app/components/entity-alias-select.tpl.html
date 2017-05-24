@@ -1,0 +1,53 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section layout='column'>
+    <md-autocomplete id="entity-autocomplete"
+                     md-input-name="entity_alias"
+                     ng-required="tbRequired"
+                     md-no-cache="true"
+                     ng-model="entityAlias"
+                     md-selected-item="entityAlias"
+                     md-search-text="entityAliasSearchText"
+                     md-items="item in entityAliasSearch(entityAliasSearchText)"
+                     md-item-text="item.alias"
+                     tb-keydown="entityAliasEnter($event)"
+                     tb-keypress="entityAliasEnter($event)"
+                     md-min-length="0"
+                     placeholder="{{ 'entity.entity-alias' | translate }}"
+                     md-menu-class="tb-entity-alias-autocomplete">
+        <md-item-template>
+            <span md-highlight-text="entityAliasSearchText" md-highlight-flags="^i">{{item.alias}}</span>
+        </md-item-template>
+        <md-not-found>
+            <div class="tb-not-found">
+                <div class="tb-no-entries" ng-if="!textIsNotEmpty(entityAliasSearchText)">
+                    <span translate>entity.no-aliases-found</span>
+                </div>
+                <div ng-if="textIsNotEmpty(entityAliasSearchText)">
+                    <span translate translate-values='{ alias: "{{entityAliasSearchText | truncate:true:6:&apos;...&apos;}}" }'>entity.no-alias-matching</span>
+                    <span>
+                        <a translate ng-click="createEntityAlias($event, entityAliasSearchText)">entity.create-new-alias</a>
+                    </span>
+                </div>
+            </div>
+        </md-not-found>
+    </md-autocomplete>
+    <div class="tb-error-messages" ng-messages="ngModelCtrl.$error" role="alert">
+        <div translate ng-message="entityAlias" class="tb-error-message">entity.alias-required</div>
+    </div>
+</section>

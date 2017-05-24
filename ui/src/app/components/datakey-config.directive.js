@@ -108,9 +108,9 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
         }, true);
 
         scope.keysSearch = function (searchText) {
-            if (scope.deviceAlias) {
+            if (scope.entityAlias) {
                 var deferred = $q.defer();
-                scope.fetchDeviceKeys({deviceAliasId: scope.deviceAlias.id, query: searchText, type: scope.model.type})
+                scope.fetchEntityKeys({entityAliasId: scope.entityAlias.id, query: searchText, type: scope.model.type})
                     .then(function (keys) {
                         keys.push(searchText);
                         deferred.resolve(keys);
@@ -130,8 +130,8 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
         restrict: 'E',
         require: '^ngModel',
         scope: {
-            deviceAlias: '=',
-            fetchDeviceKeys: '&',
+            entityAlias: '=',
+            fetchEntityKeys: '&',
             datakeySettingsSchema: '='
         },
         link: linker

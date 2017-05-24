@@ -21,7 +21,7 @@ import tenantCard from './tenant-card.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function TenantController(tenantService, $state, $stateParams, $translate) {
+export default function TenantController(tenantService, $state, $stateParams, $translate, types) {
 
     var tenantActionsList = [
         {
@@ -43,6 +43,8 @@ export default function TenantController(tenantService, $state, $stateParams, $t
     ];
 
     var vm = this;
+
+    vm.types = types;
 
     vm.tenantGridConfig = {
 

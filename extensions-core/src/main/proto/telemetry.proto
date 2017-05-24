@@ -22,10 +22,11 @@ option java_outer_classname = "TelemetryPluginProtos";
 message SubscriptionProto {
   string sessionId = 1;
   int32 subscriptionId = 2;
-  string deviceId = 3;
-  string type = 4;
-  bool allKeys = 5;
-  repeated SubscriptionKetStateProto keyStates = 6;
+  string entityType = 3;
+  string entityId = 4;
+  string type = 5;
+  bool allKeys = 6;
+  repeated SubscriptionKetStateProto keyStates = 7;
 }
 
 message SubscriptionUpdateProto {
@@ -37,9 +38,16 @@ message SubscriptionUpdateProto {
 }
 
 message AttributeUpdateProto {
-    string deviceId = 1;
-    string scope = 2;
-    repeated AttributeUpdateValueListProto data = 3;
+    string entityType = 1;
+    string entityId = 2;
+    string scope = 3;
+    repeated KeyValueProto data = 4;
+}
+
+message TimeseriesUpdateProto {
+    string entityType = 1;
+    string entityId = 2;
+    repeated KeyValueProto data = 4;
 }
 
 message SessionCloseProto {
@@ -62,7 +70,7 @@ message SubscriptionUpdateValueListProto {
     repeated string value = 3;
 }
 
-message AttributeUpdateValueListProto {
+message KeyValueProto {
     string key = 1;
     int64 ts = 2;
     int32 valueType = 3;

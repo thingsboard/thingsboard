@@ -280,8 +280,11 @@ $previewSize: 100px;
   overflow: hidden;
   label {
     width: 100%;
-    font-size: 24px;
+    font-size: 16px;
     text-align: center;
+    @media (min-width: $layout-breakpoint-sm) {
+      font-size: 24px;
+    }
   }
 }
 
@@ -362,6 +365,19 @@ md-tabs.tb-headless {
   max-width: 240px;
   span {
     padding: 10px 10px 20px 10px;
+    font-size: 18px;
+    font-weight: 400;
+    white-space: normal;
+    line-height: 18px;
+  }
+}
+
+.md-button.tb-layout-button {
+  width: 100%;
+  height: 100%;
+  max-width: 240px;
+  span {
+    padding: 40px;
     font-size: 18px;
     font-weight: 400;
     white-space: normal;
