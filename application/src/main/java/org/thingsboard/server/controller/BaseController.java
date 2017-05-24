@@ -307,7 +307,7 @@ public abstract class BaseController {
         }
     }
 
-    private void checkDevice(Device device) throws ThingsboardException {
+    protected void checkDevice(Device device) throws ThingsboardException {
         checkNotNull(device);
         checkTenantId(device.getTenantId());
         if (device.getCustomerId() != null && !device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
@@ -380,14 +380,26 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             Dashboard dashboard = dashboardService.findDashboardById(dashboardId);
-            checkDashboard(dashboard);
+            checkDashboard(dashboard, true);
             return dashboard;
         } catch (Exception e) {
             throw handleException(e, false);
         }
     }
 
-    private void checkDashboard(Dashboard dashboard) throws ThingsboardException {
+    DashboardInfo checkDashboardInfoId(DashboardId dashboardId) throws ThingsboardException {
+        try {
+            validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+            DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(dashboardId);
+            SecurityUser authUser = getCurrentUser();
+            checkDashboard(dashboardInfo, authUser.getAuthority() != Authority.SYS_ADMIN);
+            return dashboardInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    private void checkDashboard(DashboardInfo dashboard, boolean checkCustomerId) throws ThingsboardException {
         checkNotNull(dashboard);
         checkTenantId(dashboard.getTenantId());
         SecurityUser authUser = getCurrentUser();
@@ -397,7 +409,8 @@ public abstract class BaseController {
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
         }
-        if (dashboard.getCustomerId() != null && !dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+        if (checkCustomerId &&
+                dashboard.getCustomerId() != null && !dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
             checkCustomerId(dashboard.getCustomerId());
         }
     }

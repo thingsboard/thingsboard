@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+import ThingsboardMissingTranslateHandler from './translate-handler';
+
 export default angular.module('thingsboard.locale', [])
+    .factory('tbMissingTranslationHandler', ThingsboardMissingTranslateHandler)
     .constant('locales',
         {
             'en_US': {
@@ -62,6 +65,8 @@ export default angular.module('thingsboard.locale', [])
                     "undo": "Undo",
                     "copy": "Copy",
                     "paste": "Paste",
+                    "copy-reference": "Copy reference",
+                    "paste-reference": "Paste reference",
                     "import": "Import",
                     "export": "Export",
                     "share-via": "Share via {{provider}}"
@@ -324,6 +329,7 @@ export default angular.module('thingsboard.locale', [])
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
                     "display-title": "Display dashboard title",
                     "title-color": "Title color",
+                    "display-dashboards-selection": "Display dashboards selection",
                     "display-entities-selection": "Display entities selection",
                     "display-dashboard-timewindow": "Display timewindow",
                     "display-dashboard-export": "Display export",
@@ -350,7 +356,29 @@ export default angular.module('thingsboard.locale', [])
                     "public": "Public",
                     "public-link": "Public link",
                     "copy-public-link": "Copy public link",
-                    "public-link-copied-message": "Dashboard public link has been copied to clipboard"
+                    "public-link-copied-message": "Dashboard public link has been copied to clipboard",
+                    "manage-states": "Manage dashboard states",
+                    "states": "Dashboard states",
+                    "search-states": "Search dashboard states",
+                    "selected-states": "{ count, select, 1 {1 dashboard state} other {# dashboard states} } selected",
+                    "edit-state": "Edit dashboard state",
+                    "delete-state": "Delete dashboard state",
+                    "add-state": "Add dashboard state",
+                    "state": "Dashboard state",
+                    "state-name": "Name",
+                    "state-name-required": "Dashboard state name is required.",
+                    "state-name-exists": "Dashboard state with the same name is already exists.",
+                    "state-id": "State Id",
+                    "state-id-required": "Dashboard state id is required.",
+                    "state-id-exists": "Dashboard state with the same id is already exists.",
+                    "invalid-state-id-format": "Only alphanumeric characters and underscore are allowed.",
+                    "is-root-state": "Root state",
+                    "delete-state-title": "Delete dashboard state",
+                    "delete-state-text": "Are you sure you want delete dashboard state with name '{{stateName}}'?",
+                    "show-details": "Show details",
+                    "hide-details": "Hide details",
+                    "select-state": "Select target state",
+                    "state-controller": "State controller"
                 },
                 "datakey": {
                     "settings": "Settings",
@@ -568,6 +596,15 @@ export default angular.module('thingsboard.locale', [])
                 "js-func": {
                     "no-return-error": "Function must return value!",
                     "return-type-mismatch": "Function must return value of '{{type}}' type!"
+                },
+                "layout": {
+                    "layout": "Layout",
+                    "manage": "Manage layouts",
+                    "settings": "Layout settings",
+                    "color": "Color",
+                    "main": "Main",
+                    "right": "Right",
+                    "select": "Select target layout"
                 },
                 "legend": {
                     "position": "Legend position",

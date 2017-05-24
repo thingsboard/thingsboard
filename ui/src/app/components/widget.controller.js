@@ -22,7 +22,7 @@ import Subscription from '../api/subscription';
 /*@ngInject*/
 export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
                                          datasourceService, entityService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
-                                         dashboardTimewindowApi, widget, aliasesInfo, widgetType) {
+                                         dashboardTimewindowApi, widget, aliasesInfo, stateController, widgetType) {
 
     var vm = this;
 
@@ -131,7 +131,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         },
         utils: {
             formatValue: formatValue
-        }
+        },
+        stateController: stateController
     };
 
     var subscriptionContext = {

@@ -100,6 +100,14 @@ export default angular.module('thingsboard.types', [])
                 tenant: "TENANT",
                 customer: "CUSTOMER"
             },
+            entitySearchDirection: {
+                from: "FROM",
+                to: "TO"
+            },
+            entityRelationType: {
+                contains: "Contains",
+                manages: "Manages"
+            },
             eventType: {
                 alarm: {
                     value: "ALARM",
@@ -199,6 +207,9 @@ export default angular.module('thingsboard.types', [])
             systemBundleAlias: {
                 charts: "charts",
                 cards: "cards"
+            },
+            translate: {
+                dashboardStatePrefix: "dashboardState.state."
             }
         }
     ).name;

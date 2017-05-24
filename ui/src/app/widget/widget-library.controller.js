@@ -87,7 +87,7 @@ export default function WidgetLibraryController($scope, $rootScope, $q, widgetSe
                                     var sizeX = 8;
                                     var sizeY = Math.floor(widgetTypeInfo.sizeY);
                                     var widget = {
-                                        id: widgetType.id,
+                                        typeId: widgetType.id,
                                         isSystemType: isSystem,
                                         bundleAlias: bundleAlias,
                                         typeAlias: widgetTypeInfo.alias,
@@ -158,7 +158,7 @@ export default function WidgetLibraryController($scope, $rootScope, $q, widgetSe
         }
         if (widget) {
             $state.go('home.widgets-bundles.widget-types.widget-type',
-                {widgetTypeId: widget.id.id});
+                {widgetTypeId: widget.typeId.id});
         } else {
             $mdDialog.show({
                 controller: 'SelectWidgetTypeController',
@@ -177,7 +177,7 @@ export default function WidgetLibraryController($scope, $rootScope, $q, widgetSe
 
     function exportWidgetType(event, widget) {
         event.stopPropagation();
-        importExport.exportWidgetType(widget.id.id);
+        importExport.exportWidgetType(widget.typeId.id);
     }
 
     function importWidgetType($event) {

@@ -41,6 +41,19 @@ public class DashboardController extends BaseController {
         return System.currentTimeMillis();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/dashboard/info/{dashboardId}", method = RequestMethod.GET)
+    @ResponseBody
+    public DashboardInfo getDashboardInfoById(@PathVariable("dashboardId") String strDashboardId) throws ThingsboardException {
+        checkParameter("dashboardId", strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            return checkDashboardInfoId(dashboardId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/dashboard/{dashboardId}", method = RequestMethod.GET)
     @ResponseBody
@@ -127,6 +140,25 @@ public class DashboardController extends BaseController {
             Dashboard dashboard = checkDashboardId(dashboardId);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
             return checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, publicCustomer.getId()));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/tenant/{tenantId}/dashboards", params = { "limit" }, method = RequestMethod.GET)
+    @ResponseBody
+    public TextPageData<DashboardInfo> getTenantDashboards(
+            @PathVariable("tenantId") String strTenantId,
+            @RequestParam int limit,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String idOffset,
+            @RequestParam(required = false) String textOffset) throws ThingsboardException {
+        try {
+            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            checkTenantId(tenantId);
+            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
+            return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
         } catch (Exception e) {
             throw handleException(e);
         }

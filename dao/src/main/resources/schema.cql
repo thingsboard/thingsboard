@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.device (
 	tenant_id timeuuid,
 	customer_id timeuuid,
 	name text,
+	type text,
 	search_text text,
 	additional_info text,
 	PRIMARY KEY (id, tenant_id, customer_id)
@@ -271,11 +272,11 @@ CREATE TABLE IF NOT EXISTS thingsboard.relation (
 ) WITH CLUSTERING ORDER BY ( relation_type ASC, to_id ASC, to_type ASC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.reverse_relation AS
-SELECT *
-from thingsboard.relation
-WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
-PRIMARY KEY ((to_id, to_type), relation_type, from_id, from_type)
-WITH CLUSTERING ORDER BY ( relation_type ASC, from_id ASC, from_type ASC);
+    SELECT *
+    from thingsboard.relation
+    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+    PRIMARY KEY ((to_id, to_type), relation_type, from_id, from_type)
+    WITH CLUSTERING ORDER BY ( relation_type ASC, from_id ASC, from_type ASC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.widgets_bundle (
     id timeuuid,

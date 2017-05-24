@@ -16,7 +16,7 @@
 
 -->
 <md-dialog aria-label="{{ 'attribute.add-widget-to-dashboard' | translate }}" style="min-width: 400px;">
-    <form name="theForm" ng-submit="vm.add()">
+    <form name="theForm" ng-submit="vm.add($event)">
         <md-toolbar>
             <div class="md-toolbar-tools">
                 <h2 translate>attribute.add-widget-to-dashboard</h2>

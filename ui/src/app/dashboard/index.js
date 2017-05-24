@@ -16,7 +16,6 @@
 import './dashboard.scss';
 
 import uiRouter from 'angular-ui-router';
-import gridster from 'angular-gridster';
 
 import thingsboardGrid from '../components/grid.directive';
 import thingsboardApiWidget from '../api/widget.service';
@@ -26,6 +25,7 @@ import thingsboardApiCustomer from '../api/customer.service';
 import thingsboardDetailsSidenav from '../components/details-sidenav.directive';
 import thingsboardWidgetConfig from '../components/widget-config.directive';
 import thingsboardDashboardSelect from '../components/dashboard-select.directive';
+import thingsboardRelatedEntityAutocomplete from '../components/related-entity-autocomplete.directive';
 import thingsboardDashboard from '../components/dashboard.directive';
 import thingsboardExpandFullscreen from '../components/expand-fullscreen.directive';
 import thingsboardWidgetsBundleSelect from '../components/widgets-bundle-select.directive';
@@ -33,6 +33,8 @@ import thingsboardSocialsharePanel from '../components/socialshare-panel.directi
 import thingsboardTypes from '../common/types.constant';
 import thingsboardItemBuffer from '../services/item-buffer.service';
 import thingsboardImportExport from '../import-export';
+import dashboardLayouts from './layouts';
+import dashboardStates from './states';
 
 import DashboardRoutes from './dashboard.routes';
 import {DashboardsController, DashboardCardController, MakeDashboardPublicDialogController} from './dashboards.controller';
@@ -46,7 +48,6 @@ import EditWidgetDirective from './edit-widget.directive';
 
 export default angular.module('thingsboard.dashboard', [
     uiRouter,
-    gridster.name,
     thingsboardTypes,
     thingsboardItemBuffer,
     thingsboardImportExport,
@@ -58,10 +59,13 @@ export default angular.module('thingsboard.dashboard', [
     thingsboardDetailsSidenav,
     thingsboardWidgetConfig,
     thingsboardDashboardSelect,
+    thingsboardRelatedEntityAutocomplete,
     thingsboardDashboard,
     thingsboardExpandFullscreen,
     thingsboardWidgetsBundleSelect,
-    thingsboardSocialsharePanel
+    thingsboardSocialsharePanel,
+    dashboardLayouts,
+    dashboardStates
 ])
     .config(DashboardRoutes)
     .controller('DashboardsController', DashboardsController)

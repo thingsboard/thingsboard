@@ -24,19 +24,18 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.device.DeviceSearchQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
-import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -234,6 +233,30 @@ public class DeviceController extends BaseController {
                 devices = deviceService.findDevicesByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, deviceIds);
             }
             return checkNotNull(devices.get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/devices", method = RequestMethod.POST)
+    @ResponseBody
+    public List<Device> findByQuery(@RequestBody DeviceSearchQuery query) throws ThingsboardException {
+        checkNotNull(query);
+        checkNotNull(query.getParameters());
+        checkNotNull(query.getDeviceTypes());
+        checkEntityId(query.getParameters().getEntityId());
+        try {
+            List<Device> devices = checkNotNull(deviceService.findDevicesByQuery(query).get());
+            devices = devices.stream().filter(device -> {
+                try {
+                    checkDevice(device);
+                    return true;
+                } catch (ThingsboardException e) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+            return devices;
         } catch (Exception e) {
             throw handleException(e);
         }

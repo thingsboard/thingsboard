@@ -34,7 +34,10 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
                     scope.widget.isSystemType).then(
                     function(widgetInfo) {
                         scope.$applyAsync(function(scope) {
-                            scope.widgetConfig = scope.widget.config;
+                            scope.widgetConfig = {
+                                config: scope.widget.config,
+                                layout: scope.widgetLayout
+                            };
                             var settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
                             var dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
                             scope.isDataEnabled = !widgetInfo.useCustomDatasources;
@@ -55,6 +58,12 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
                         });
                     }
                 );
+            }
+        });
+
+        scope.$watch('widgetLayout', function () {
+            if (scope.widgetLayout && scope.widgetConfig) {
+                scope.widgetConfig.layout = scope.widgetLayout;
             }
         });
 
@@ -117,6 +126,7 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
             dashboard: '=',
             aliasesInfo: '=',
             widget: '=',
+            widgetLayout: '=',
             theForm: '='
         }
     };

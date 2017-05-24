@@ -40,7 +40,8 @@ function DeviceService($http, $q, attributeService, customerService, types) {
         saveDeviceAttributes: saveDeviceAttributes,
         deleteDeviceAttributes: deleteDeviceAttributes,
         sendOneWayRpcCommand: sendOneWayRpcCommand,
-        sendTwoWayRpcCommand: sendTwoWayRpcCommand
+        sendTwoWayRpcCommand: sendTwoWayRpcCommand,
+        findByQuery: findByQuery
     }
 
     return service;
@@ -266,6 +267,21 @@ function DeviceService($http, $q, attributeService, customerService, types) {
             deferred.resolve(response.data);
         }, function fail(rejection) {
             deferred.reject(rejection);
+        });
+        return deferred.promise;
+    }
+
+    function findByQuery(query, ignoreErrors, config) {
+        var deferred = $q.defer();
+        var url = '/api/devices';
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.post(url, query, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }

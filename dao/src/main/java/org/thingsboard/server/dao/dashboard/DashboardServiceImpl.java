@@ -65,6 +65,14 @@ public class DashboardServiceImpl extends BaseEntityService implements Dashboard
     }
 
     @Override
+    public DashboardInfo findDashboardInfoById(DashboardId dashboardId) {
+        log.trace("Executing findDashboardInfoById [{}]", dashboardId);
+        Validator.validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+        DashboardInfoEntity dashboardInfoEntity = dashboardInfoDao.findById(dashboardId.getId());
+        return getData(dashboardInfoEntity);
+    }
+
+    @Override
     public Dashboard saveDashboard(Dashboard dashboard) {
         log.trace("Executing saveDashboard [{}]", dashboard);
         dashboardValidator.validate(dashboard);
