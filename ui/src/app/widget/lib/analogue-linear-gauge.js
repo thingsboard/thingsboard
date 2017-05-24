@@ -41,8 +41,7 @@ export default class TbAnalogueLinearGauge {
 
         var valueInt = settings.valueInt || 3;
 
-        var valueDec = (angular.isDefined(settings.valueDec) && settings.valueDec !== null)
-            ? settings.valueDec : ctx.decimals;
+        var valueDec = getValueDec(settings);
 
         step = parseFloat(parseFloat(step).toFixed(valueDec));
 
@@ -74,6 +73,32 @@ export default class TbAnalogueLinearGauge {
         var progressColorStart = tinycolor(keyColor).setAlpha(0.05).toRgbString();
         var progressColorEnd = tinycolor(keyColor).darken().toRgbString();
 
+        function getUnits(settings) {
+            var dataKey;
+            if (ctx.data && ctx.data[0]) {
+                dataKey = ctx.data[0].dataKey;
+            }
+            if (dataKey && dataKey.units && dataKey.units.length) {
+                return dataKey.units;
+            } else {
+                return angular.isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units;
+            }
+        }
+
+        function getValueDec(settings) {
+            var dataKey;
+            if (ctx.data && ctx.data[0]) {
+                dataKey = ctx.data[0].dataKey;
+            }
+            if (dataKey && angular.isDefined(dataKey.decimals)) {
+                return dataKey.decimals;
+            } else {
+                return (angular.isDefined(settings.valueDec) && settings.valueDec !== null)
+                    ? settings.valueDec : ctx.decimals;
+            }
+        }
+
+
         function getFontFamily(fontSettings) {
             var family = fontSettings && fontSettings.family ? fontSettings.family : 'Roboto';
             if (family === 'RobotoDraft') {
@@ -92,7 +117,7 @@ export default class TbAnalogueLinearGauge {
             maxValue: maxValue,
             majorTicks: majorTicks,
             minorTicks: settings.minorTicks || 2,
-            units: angular.isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units,
+            units: getUnits(settings),
             title: ((settings.showUnitTitle !== false) ?
                 (settings.unitTitle && settings.unitTitle.length > 0 ?
                     settings.unitTitle : dataKey.label) : ''),

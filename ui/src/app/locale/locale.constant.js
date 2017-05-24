@@ -385,6 +385,8 @@ export default angular.module('thingsboard.locale', [])
                     "advanced": "Advanced",
                     "label": "Label",
                     "color": "Color",
+                    "units": "Special symbol to show next to value",
+                    "decimals": "Number of digits after floating point",
                     "data-generation-func": "Data generation function",
                     "use-data-post-processing-func": "Use data post-processing function",
                     "configuration": "Data key configuration",
