@@ -83,11 +83,11 @@ spec:
           - name: CASSANDRA_SEEDS
             value: "cassandra-0.cassandra-headless.default.svc.cluster.local"
           - name: CASSANDRA_CLUSTER_NAME
-            value: "K8Demo"
+            value: "Thingsboard-Cluster"
           - name: CASSANDRA_DC
-            value: "DC1-K8Demo"
+            value: "DC1-Thingsboard-Cluster"
           - name: CASSANDRA_RACK
-            value: "Rack1-K8Demo"
+            value: "Rack-Thingsboard-Cluster"
           - name: CASSANDRA_AUTO_BOOTSTRAP
             value: "false"
           - name: POD_IP
