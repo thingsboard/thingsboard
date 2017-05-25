@@ -29,9 +29,9 @@ services:
   tb-cassandra-schema:
     image: "thingsboard/tb-cassandra-schema:1.2.4"
     environment:
-      - SKIP_SCHEMA_CREATION=${SKIP_SCHEMA_CREATION}
-      - SKIP_SYSTEM_DATA=${SKIP_SYSTEM_DATA}
-      - SKIP_DEMO_DATA=${SKIP_DEMO_DATA}
+      - CREATE_SCHEMA=${CREATE_SCHEMA}
+      - ADD_SYSTEM_DATA=${ADD_SYSTEM_DATA}
+      - ADD_DEMO_DATA=${ADD_DEMO_DATA}
       - CASSANDRA_URL=${CASSANDRA_URL}
     entrypoint: ./install-schema.sh
   cassandra:

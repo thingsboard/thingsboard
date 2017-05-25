@@ -24,11 +24,11 @@ spec:
     imagePullPolicy: Always
     image: thingsboard/tb-cassandra-schema:1.2.4
     env:
-    - name: SKIP_SCHEMA_CREATION
+    - name: CREATE_SCHEMA
       value: "false"
-    - name: SKIP_SYSTEM_DATA
+    - name: ADD_SYSTEM_DATA
       value: "false"
-    - name : SKIP_DEMO_DATA
+    - name : ADD_DEMO_DATA
       value: "false"
     - name : CASSANDRA_URL
       value: "cassandra-headless"

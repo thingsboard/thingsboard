@@ -35,7 +35,7 @@ kind: ConfigMap
 metadata:
   name: zk-config
 data:
-  ensemble: "zk-0;zk-1"
+  ensemble: "zk-0;zk-1;zk-2"
   replicas: "3"
   jvm.heap: "500m"
   tick: "2000"
@@ -56,7 +56,7 @@ spec:
   selector:
     matchLabels:
       app: zk
-  minAvailable: 2
+  minAvailable: 3
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -64,7 +64,7 @@ metadata:
   name: zk
 spec:
   serviceName: zk-headless
-  replicas: 2
+  replicas: 3
   template:
     metadata:
       labels:

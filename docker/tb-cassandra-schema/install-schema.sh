@@ -22,7 +22,7 @@ do
   sleep 10
 done
 
-if [ "$SKIP_SCHEMA_CREATION" == "false" ]; then
+if [ "$CREATE_SCHEMA" == "true" ]; then
     echo "Creating 'Thingsboard' keyspace..."
     cqlsh $CASSANDRA_URL -f /root/schema.cql
     if [ "$?" -eq 0 ]; then
@@ -32,7 +32,7 @@ if [ "$SKIP_SCHEMA_CREATION" == "false" ]; then
     fi
 fi
 
-if [ "$SKIP_SYSTEM_DATA" == "false" ]; then
+if [ "$ADD_SYSTEM_DATA" == "true" ]; then
     echo "Adding system data..."
     cqlsh $CASSANDRA_URL -f /root/system-data.cql
     if [ "$?" -eq 0 ]; then
@@ -42,7 +42,7 @@ if [ "$SKIP_SYSTEM_DATA" == "false" ]; then
     fi
 fi
 
-if [ "$SKIP_DEMO_DATA" == "false" ]; then
+if [ "$ADD_DEMO_DATA" == "true" ]; then
     echo "Adding demo data..."
     cqlsh $CASSANDRA_URL -f /root/demo-data.cql
     if [ "$?" -eq 0 ]; then
