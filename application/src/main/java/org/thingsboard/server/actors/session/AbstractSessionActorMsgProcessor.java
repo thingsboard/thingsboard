@@ -81,13 +81,13 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
     }
 
     protected Optional<ServerAddress> forwardToAppActor(ActorContext ctx, ToDeviceActorMsg toForward) {
-        Optional<ServerAddress> address = systemContext.getRoutingService().resolve(toForward.getDeviceId());
+        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(toForward.getDeviceId());
         forwardToAppActor(ctx, toForward, address);
         return address;
     }
 
     protected Optional<ServerAddress> forwardToAppActorIfAdressChanged(ActorContext ctx, ToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
-        Optional<ServerAddress> newAddress = systemContext.getRoutingService().resolve(toForward.getDeviceId());
+        Optional<ServerAddress> newAddress = systemContext.getRoutingService().resolveById(toForward.getDeviceId());
         if (!newAddress.equals(oldAddress)) {
             if (newAddress.isPresent()) {
                 systemContext.getRpcService().tell(newAddress.get(),

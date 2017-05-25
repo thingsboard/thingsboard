@@ -28,6 +28,16 @@
            ng-show="!isEdit && !isReadOnly"
            class="md-raised md-primary">{{ 'rule.delete' | translate }}</md-button>
 
+<div layout="row">
+    <md-button ngclipboard data-clipboard-action="copy"
+               ngclipboard-success="onRuleIdCopied(e)"
+               data-clipboard-text="{{rule.id.id}}" ng-show="!isEdit"
+               class="md-raised">
+        <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+        <span translate>rule.copyId</span>
+    </md-button>
+</div>
+
 <md-content class="md-padding tb-rule" layout="column">
     <fieldset ng-disabled="loading || !isEdit || isReadOnly">
         <md-input-container class="md-block">

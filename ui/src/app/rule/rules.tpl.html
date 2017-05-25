@@ -31,6 +31,23 @@
                                on-export-rule="vm.exportRule(event, vm.grid.detailsConfig.currentItem)"
                                on-delete-rule="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-rule>
         </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'attribute.attributes' | translate }}">
+            <tb-attribute-table flex
+                                entity-id="vm.grid.operatingItem().id.id"
+                                entity-type="{{vm.types.entityType.rule}}"
+                                entity-name="vm.grid.operatingItem().name"
+                                default-attribute-scope="{{vm.types.attributesScope.server.value}}">
+            </tb-attribute-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'attribute.latest-telemetry' | translate }}">
+            <tb-attribute-table flex
+                                entity-id="vm.grid.operatingItem().id.id"
+                                entity-type="{{vm.types.entityType.rule}}"
+                                entity-name="vm.grid.operatingItem().name"
+                                default-attribute-scope="{{vm.types.latestTelemetry.value}}"
+                                disable-attribute-scope-selection="true">
+            </tb-attribute-table>
+        </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'rule.events' | translate }}">
             <tb-event-table flex entity-type="vm.types.entityType.rule"
                             entity-id="vm.grid.operatingItem().id.id"

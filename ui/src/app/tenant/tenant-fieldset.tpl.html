@@ -18,6 +18,16 @@
 <md-button ng-click="onManageUsers({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'tenant.manage-tenant-admins' | translate }}</md-button>
 <md-button ng-click="onDeleteTenant({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{ 'tenant.delete' | translate }}</md-button>
 
+<div layout="row">
+	<md-button ngclipboard data-clipboard-action="copy"
+			   ngclipboard-success="onTenantIdCopied(e)"
+			   data-clipboard-text="{{tenant.id.id}}" ng-show="!isEdit"
+			   class="md-raised">
+		<md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+		<span translate>tenant.copyId</span>
+	</md-button>
+</div>
+
 <md-content class="md-padding" layout="column">
 	<fieldset ng-disabled="loading || !isEdit">
 		<md-input-container class="md-block">

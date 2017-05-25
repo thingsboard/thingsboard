@@ -45,7 +45,7 @@ function Legend($compile, $templateCache, types) {
             scope.legendConfig.position === types.position.top.value;
 
         scope.toggleHideData = function(index) {
-            scope.legendData.data[index].hidden = !scope.legendData.data[index].hidden;
+            scope.legendData.keys[index].dataKey.hidden = !scope.legendData.keys[index].dataKey.hidden;
         }
 
         $compile(element.contents())(scope);

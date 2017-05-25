@@ -53,4 +53,7 @@ public interface DeviceService {
     ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds);
 
     void unassignCustomerDevices(TenantId tenantId, CustomerId customerId);
+
+    ListenableFuture<List<Device>> findDevicesByQuery(DeviceSearchQuery query);
+
 }

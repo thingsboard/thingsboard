@@ -79,7 +79,7 @@ export default angular.module('thingsboard.types', [])
             },
             datasourceType: {
                 function: "function",
-                device: "device"
+                entity: "entity"
             },
             dataKeyType: {
                 timeseries: "timeseries",
@@ -93,11 +93,20 @@ export default angular.module('thingsboard.types', [])
                 plugin: "PLUGIN"
             },
             entityType: {
-                tenant: "TENANT",
                 device: "DEVICE",
-                customer: "CUSTOMER",
+                asset: "ASSET",
                 rule: "RULE",
-                plugin: "PLUGIN"
+                plugin: "PLUGIN",
+                tenant: "TENANT",
+                customer: "CUSTOMER"
+            },
+            entitySearchDirection: {
+                from: "FROM",
+                to: "TO"
+            },
+            entityRelationType: {
+                contains: "Contains",
+                manages: "Manages"
             },
             eventType: {
                 alarm: {
@@ -122,7 +131,7 @@ export default angular.module('thingsboard.types', [])
                 name: "attribute.scope-latest-telemetry",
                 clientSide: true
             },
-            deviceAttributesScope: {
+            attributesScope: {
                 client: {
                     value: "CLIENT_SCOPE",
                     name: "attribute.scope-client",
@@ -198,6 +207,9 @@ export default angular.module('thingsboard.types', [])
             systemBundleAlias: {
                 charts: "charts",
                 cards: "cards"
+            },
+            translate: {
+                dashboardStatePrefix: "dashboardState.state."
             }
         }
     ).name;

@@ -25,8 +25,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
 import org.thingsboard.server.common.data.id.PluginId;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.plugin.PluginService;
+import org.thingsboard.server.dao.rule.RuleService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
@@ -46,7 +51,12 @@ public final class SharedPluginProcessingContext {
     final ActorRef currentActor;
     final ActorSystemContext systemContext;
     final PluginWebSocketMsgEndpoint msgEndpoint;
+    final AssetService assetService;
     final DeviceService deviceService;
+    final RuleService ruleService;
+    final PluginService pluginService;
+    final CustomerService customerService;
+    final TenantService tenantService;
     final TimeseriesService tsService;
     final AttributesService attributesService;
     final ClusterRpcService rpcService;
@@ -65,9 +75,14 @@ public final class SharedPluginProcessingContext {
         this.msgEndpoint = sysContext.getWsMsgEndpoint();
         this.tsService = sysContext.getTsService();
         this.attributesService = sysContext.getAttributesService();
+        this.assetService = sysContext.getAssetService();
         this.deviceService = sysContext.getDeviceService();
         this.rpcService = sysContext.getRpcService();
         this.routingService = sysContext.getRoutingService();
+        this.ruleService = sysContext.getRuleService();
+        this.pluginService = sysContext.getPluginService();
+        this.customerService = sysContext.getCustomerService();
+        this.tenantService = sysContext.getTenantService();
     }
 
     public PluginId getPluginId() {
@@ -89,7 +104,7 @@ public final class SharedPluginProcessingContext {
     }
 
     private <T> void forward(DeviceId deviceId, T msg, BiConsumer<ServerAddress, T> rpcFunction) {
-        Optional<ServerAddress> instance = routingService.resolve(deviceId);
+        Optional<ServerAddress> instance = routingService.resolveById(deviceId);
         if (instance.isPresent()) {
             log.trace("[{}] Forwarding msg {} to remote device actor!", pluginId, msg);
             rpcFunction.accept(instance.get(), msg);

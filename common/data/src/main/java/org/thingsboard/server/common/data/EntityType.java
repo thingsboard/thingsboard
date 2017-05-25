@@ -19,5 +19,5 @@ package org.thingsboard.server.common.data;
  * @author Andrew Shvayka
  */
 public enum EntityType {
-    TENANT, DEVICE, CUSTOMER, RULE, PLUGIN
+    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM
 }

@@ -17,11 +17,16 @@ package org.thingsboard.server.dao.tenant;
 
 import static org.thingsboard.server.dao.DaoUtil.convertDataList;
 import static org.thingsboard.server.dao.DaoUtil.getData;
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 import java.util.List;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -29,15 +34,15 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.model.CustomerEntity;
 import org.thingsboard.server.dao.model.TenantEntity;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.user.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
@@ -45,19 +50,19 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 @Service
 @Slf4j
-public class TenantServiceImpl implements TenantService {
-    
+public class TenantServiceImpl extends BaseEntityService implements TenantService {
+
     private static final String DEFAULT_TENANT_REGION = "Global";
 
     @Autowired
     private TenantDao tenantDao;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private CustomerService customerService;
-    
+
     @Autowired
     private DeviceService deviceService;
 
@@ -72,13 +77,21 @@ public class TenantServiceImpl implements TenantService {
 
     @Autowired
     private PluginService pluginService;
-    
+
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         TenantEntity tenantEntity = tenantDao.findById(tenantId.getId());
         return getData(tenantEntity);
+    }
+
+    @Override
+    public ListenableFuture<Tenant> findTenantByIdAsync(TenantId tenantId) {
+        log.trace("Executing TenantIdAsync [{}]", tenantId);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        ListenableFuture<TenantEntity> tenantEntity = tenantDao.findByIdAsync(tenantId.getId());
+        return Futures.transform(tenantEntity, (Function<? super TenantEntity, ? extends Tenant>) input -> getData(input));
     }
 
     @Override
@@ -102,6 +115,7 @@ public class TenantServiceImpl implements TenantService {
         ruleService.deleteRulesByTenantId(tenantId);
         pluginService.deletePluginsByTenantId(tenantId);
         tenantDao.removeById(tenantId.getId());
+        deleteEntityRelations(tenantId);
     }
 
     @Override
@@ -131,10 +145,10 @@ public class TenantServiceImpl implements TenantService {
                     }
                 }
     };
-    
+
     private PaginatedRemover<String, TenantEntity> tenantsRemover =
             new PaginatedRemover<String, TenantEntity>() {
-        
+
         @Override
         protected List<TenantEntity> findEntities(String region, TextPageLink pageLink) {
             return tenantDao.findTenantsByRegion(region, pageLink);

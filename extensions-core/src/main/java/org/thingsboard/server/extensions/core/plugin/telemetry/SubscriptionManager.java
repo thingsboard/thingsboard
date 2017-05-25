@@ -19,6 +19,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
@@ -39,7 +40,7 @@ import java.util.function.Function;
 @Slf4j
 public class SubscriptionManager {
 
-    private final Map<DeviceId, Set<Subscription>> subscriptionsByDeviceId = new HashMap<>();
+    private final Map<EntityId, Set<Subscription>> subscriptionsByEntityId = new HashMap<>();
 
     private final Map<String, Map<Integer, Subscription>> subscriptionsByWsSessionId = new HashMap<>();
 
@@ -48,28 +49,28 @@ public class SubscriptionManager {
     @Setter
     private TelemetryRpcMsgHandler rpcHandler;
 
-    public void addLocalWsSubscription(PluginContext ctx, String sessionId, DeviceId deviceId, SubscriptionState sub) {
-        Optional<ServerAddress> server = ctx.resolve(deviceId);
+    public void addLocalWsSubscription(PluginContext ctx, String sessionId, EntityId entityId, SubscriptionState sub) {
+        Optional<ServerAddress> server = ctx.resolve(entityId);
         Subscription subscription;
         if (server.isPresent()) {
             ServerAddress address = server.get();
-            log.trace("[{}] Forwarding subscription [{}] for device [{}] to [{}]", sessionId, sub.getSubscriptionId(), deviceId, address);
+            log.trace("[{}] Forwarding subscription [{}] for device [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId, address);
             subscription = new Subscription(sub, true, address);
             rpcHandler.onNewSubscription(ctx, address, sessionId, subscription);
         } else {
-            log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), deviceId);
+            log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), entityId);
             subscription = new Subscription(sub, true);
         }
-        registerSubscription(sessionId, deviceId, subscription);
+        registerSubscription(sessionId, entityId, subscription);
     }
 
     public void addRemoteWsSubscription(PluginContext ctx, ServerAddress address, String sessionId, Subscription subscription) {
-        DeviceId deviceId = subscription.getDeviceId();
-        log.trace("[{}] Registering remote subscription [{}] for device [{}] to [{}]", sessionId, subscription.getSubscriptionId(), deviceId, address);
-        registerSubscription(sessionId, deviceId, subscription);
+        EntityId entityId = subscription.getEntityId();
+        log.trace("[{}] Registering remote subscription [{}] for device [{}] to [{}]", sessionId, subscription.getSubscriptionId(), entityId, address);
+        registerSubscription(sessionId, entityId, subscription);
         if (subscription.getType() == SubscriptionType.ATTRIBUTES) {
             final Map<String, Long> keyStates = subscription.getKeyStates();
-            ctx.loadAttributes(deviceId, DataConstants.CLIENT_SCOPE, keyStates.keySet(), new PluginCallback<List<AttributeKvEntry>>() {
+            ctx.loadAttributes(entityId, DataConstants.CLIENT_SCOPE, keyStates.keySet(), new PluginCallback<List<AttributeKvEntry>>() {
                 @Override
                 public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
                     List<TsKvEntry> missedUpdates = new ArrayList<>();
@@ -95,7 +96,7 @@ public class SubscriptionManager {
                 queries.add(new BaseTsKvQuery(e.getKey(), e.getValue() + 1L, curTs));
             });
 
-            ctx.loadTimeseries(deviceId, queries, new PluginCallback<List<TsKvEntry>>() {
+            ctx.loadTimeseries(entityId, queries, new PluginCallback<List<TsKvEntry>>() {
                 @Override
                 public void onSuccess(PluginContext ctx, List<TsKvEntry> missedUpdates) {
                     if (!missedUpdates.isEmpty()) {
@@ -112,11 +113,11 @@ public class SubscriptionManager {
 
     }
 
-    private void registerSubscription(String sessionId, DeviceId deviceId, Subscription subscription) {
-        Set<Subscription> deviceSubscriptions = subscriptionsByDeviceId.get(subscription.getDeviceId());
+    private void registerSubscription(String sessionId, EntityId entityId, Subscription subscription) {
+        Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(subscription.getEntityId());
         if (deviceSubscriptions == null) {
             deviceSubscriptions = new HashSet<>();
-            subscriptionsByDeviceId.put(deviceId, deviceSubscriptions);
+            subscriptionsByEntityId.put(entityId, deviceSubscriptions);
         }
         deviceSubscriptions.add(subscription);
         Map<Integer, Subscription> sessionSubscriptions = subscriptionsByWsSessionId.get(sessionId);
@@ -133,7 +134,7 @@ public class SubscriptionManager {
         if (sessionSubscriptions != null) {
             Subscription subscription = sessionSubscriptions.remove(subscriptionId);
             if (subscription != null) {
-                DeviceId deviceId = subscription.getDeviceId();
+                EntityId entityId = subscription.getEntityId();
                 if (subscription.isLocal() && subscription.getServer() != null) {
                     rpcHandler.onSubscriptionClose(ctx, subscription.getServer(), sessionId, subscription.getSubscriptionId());
                 }
@@ -143,13 +144,13 @@ public class SubscriptionManager {
                 } else {
                     log.debug("[{}] Removed session subscription.", sessionId);
                 }
-                Set<Subscription> deviceSubscriptions = subscriptionsByDeviceId.get(deviceId);
+                Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
                 if (deviceSubscriptions != null) {
                     boolean result = deviceSubscriptions.remove(subscription);
                     if (result) {
                         if (deviceSubscriptions.size() == 0) {
                             log.debug("[{}] Removed last subscription for particular device.", sessionId);
-                            subscriptionsByDeviceId.remove(deviceId);
+                            subscriptionsByEntityId.remove(entityId);
                         } else {
                             log.debug("[{}] Removed device subscription.", sessionId);
                         }
@@ -167,8 +168,8 @@ public class SubscriptionManager {
         }
     }
 
-    public void onLocalSubscriptionUpdate(PluginContext ctx, DeviceId deviceId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f) {
-        Set<Subscription> deviceSubscriptions = subscriptionsByDeviceId.get(deviceId);
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f) {
+        Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
         if (deviceSubscriptions != null) {
             deviceSubscriptions.stream().filter(s -> type == s.getType()).forEach(s -> {
                 String sessionId = s.getWsSessionId();
@@ -184,7 +185,7 @@ public class SubscriptionManager {
                 }
             });
         } else {
-            log.debug("[{}] No device subscriptions to process!", deviceId);
+            log.debug("[{}] No device subscriptions to process!", entityId);
         }
     }
 
@@ -197,10 +198,10 @@ public class SubscriptionManager {
         }
     }
 
-    public void onAttributesUpdateFromServer(PluginContext ctx, DeviceId deviceId, String scope, List<AttributeKvEntry> attributes) {
-        Optional<ServerAddress> serverAddress = ctx.resolve(deviceId);
+    public void onAttributesUpdateFromServer(PluginContext ctx, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+        Optional<ServerAddress> serverAddress = ctx.resolve(entityId);
         if (!serverAddress.isPresent()) {
-            onLocalSubscriptionUpdate(ctx, deviceId, SubscriptionType.ATTRIBUTES, s -> {
+            onLocalSubscriptionUpdate(ctx, entityId, SubscriptionType.ATTRIBUTES, s -> {
                 List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
                 for (AttributeKvEntry kv : attributes) {
                     if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {
@@ -210,7 +211,24 @@ public class SubscriptionManager {
                 return subscriptionUpdate;
             });
         } else {
-            rpcHandler.onAttributesUpdate(ctx, serverAddress.get(), deviceId, scope, attributes);
+            rpcHandler.onAttributesUpdate(ctx, serverAddress.get(), entityId, scope, attributes);
+        }
+    }
+
+    public void onTimeseriesUpdateFromServer(PluginContext ctx, EntityId entityId, List<TsKvEntry> entries) {
+        Optional<ServerAddress> serverAddress = ctx.resolve(entityId);
+        if (!serverAddress.isPresent()) {
+            onLocalSubscriptionUpdate(ctx, entityId, SubscriptionType.TIMESERIES, s -> {
+                List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
+                for (TsKvEntry kv : entries) {
+                    if (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey()))) {
+                        subscriptionUpdate.add(kv);
+                    }
+                }
+                return subscriptionUpdate;
+            });
+        } else {
+            rpcHandler.onTimeseriesUpdate(ctx, serverAddress.get(), entityId, entries);
         }
     }
 
@@ -243,11 +261,11 @@ public class SubscriptionManager {
             int sessionSubscriptionSize = sessionSubscriptions.size();
 
             for (Subscription subscription : sessionSubscriptions.values()) {
-                DeviceId deviceId = subscription.getDeviceId();
-                Set<Subscription> deviceSubscriptions = subscriptionsByDeviceId.get(deviceId);
+                EntityId entityId = subscription.getEntityId();
+                Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
                 deviceSubscriptions.remove(subscription);
                 if (deviceSubscriptions.isEmpty()) {
-                    subscriptionsByDeviceId.remove(deviceId);
+                    subscriptionsByEntityId.remove(entityId);
                 }
             }
             subscriptionsByWsSessionId.remove(sessionId);
@@ -272,9 +290,9 @@ public class SubscriptionManager {
 
     public void onClusterUpdate(PluginContext ctx) {
         log.trace("Processing cluster onUpdate msg!");
-        Iterator<Map.Entry<DeviceId, Set<Subscription>>> deviceIterator = subscriptionsByDeviceId.entrySet().iterator();
+        Iterator<Map.Entry<EntityId, Set<Subscription>>> deviceIterator = subscriptionsByEntityId.entrySet().iterator();
         while (deviceIterator.hasNext()) {
-            Map.Entry<DeviceId, Set<Subscription>> e = deviceIterator.next();
+            Map.Entry<EntityId, Set<Subscription>> e = deviceIterator.next();
             Set<Subscription> subscriptions = e.getValue();
             Optional<ServerAddress> newAddressOptional = ctx.resolve(e.getKey());
             if (newAddressOptional.isPresent()) {
@@ -317,6 +335,6 @@ public class SubscriptionManager {
 
     public void clear() {
         subscriptionsByWsSessionId.clear();
-        subscriptionsByDeviceId.clear();
+        subscriptionsByEntityId.clear();
     }
 }

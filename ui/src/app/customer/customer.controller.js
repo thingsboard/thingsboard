@@ -21,7 +21,7 @@ import customerCard from './customer-card.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function CustomerController(customerService, $state, $stateParams, $translate) {
+export default function CustomerController(customerService, $state, $stateParams, $translate, types) {
 
     var customerActionsList = [
         {
@@ -34,6 +34,20 @@ export default function CustomerController(customerService, $state, $stateParams
             isEnabled: function(customer) {
                 return customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
             }
+        },
+        {
+            onAction: function ($event, item) {
+                openCustomerAssets($event, item);
+            },
+            name: function() { return $translate.instant('asset.assets') },
+            details: function(customer) {
+                if (customer && customer.additionalInfo && customer.additionalInfo.isPublic) {
+                    return $translate.instant('customer.manage-public-assets')
+                } else {
+                    return $translate.instant('customer.manage-customer-assets')
+                }
+            },
+            icon: "domain"
         },
         {
             onAction: function ($event, item) {
@@ -77,6 +91,8 @@ export default function CustomerController(customerService, $state, $stateParams
     ];
 
     var vm = this;
+
+    vm.types = types;
 
     vm.customerGridConfig = {
 
@@ -128,6 +144,7 @@ export default function CustomerController(customerService, $state, $stateParams
     }
 
     vm.openCustomerUsers = openCustomerUsers;
+    vm.openCustomerAssets = openCustomerAssets;
     vm.openCustomerDevices = openCustomerDevices;
     vm.openCustomerDashboards = openCustomerDashboards;
 
@@ -176,6 +193,13 @@ export default function CustomerController(customerService, $state, $stateParams
             $event.stopPropagation();
         }
         $state.go('home.customers.users', {customerId: customer.id.id});
+    }
+
+    function openCustomerAssets($event, customer) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        $state.go('home.customers.assets', {customerId: customer.id.id});
     }
 
     function openCustomerDevices($event, customer) {

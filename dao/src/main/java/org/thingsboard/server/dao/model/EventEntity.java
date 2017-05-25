@@ -35,7 +35,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
  */
 @Data
 @NoArgsConstructor
-@Table(name = DEVICE_COLUMN_FAMILY_NAME)
+@Table(name = EVENT_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 
     @Transient
@@ -98,23 +98,7 @@ public class EventEntity implements BaseEntity<Event> {
         Event event = new Event(new EventId(id));
         event.setCreatedTime(UUIDs.unixTimestamp(id));
         event.setTenantId(new TenantId(tenantId));
-        switch (entityType) {
-            case TENANT:
-                event.setEntityId(new TenantId(entityId));
-                break;
-            case DEVICE:
-                event.setEntityId(new DeviceId(entityId));
-                break;
-            case CUSTOMER:
-                event.setEntityId(new CustomerId(entityId));
-                break;
-            case RULE:
-                event.setEntityId(new RuleId(entityId));
-                break;
-            case PLUGIN:
-                event.setEntityId(new PluginId(entityId));
-                break;
-        }
+        event.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         event.setBody(body);
         event.setType(eventType);
         event.setUid(eventUId);
