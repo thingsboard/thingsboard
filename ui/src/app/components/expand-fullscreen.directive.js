@@ -24,7 +24,7 @@ export default angular.module('thingsboard.directives.expandFullscreen', [])
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-function ExpandFullscreen($compile, $document) {
+function ExpandFullscreen($compile, $document, $timeout) {
 
     var uniqueId = 1;
     var linker = function (scope, element, attrs) {
@@ -97,10 +97,6 @@ function ExpandFullscreen($compile, $document) {
             scope.expanded = !scope.expanded;
         }
 
-        var expandButton = null;
-        if (attrs.expandButtonId) {
-            expandButton = $('#' + attrs.expandButtonId, element)[0];
-        }
         var buttonSize;
         if (attrs.expandButtonSize) {
             buttonSize = attrs.expandButtonSize;
@@ -115,27 +111,38 @@ function ExpandFullscreen($compile, $document) {
             'options=\'{"easing": "circ-in-out", "duration": 375, "rotation": "none"}\'>' +
             '</ng-md-icon>';
 
-        if (expandButton) {
-            expandButton = angular.element(expandButton);
-            if (scope.hideExpandButton()) {
-                expandButton.remove();
-            } else {
-                expandButton.attr('md-ink-ripple', 'false');
-                expandButton.append(html);
+        if (attrs.expandButtonId) {
+            $timeout(function() {
+               var expandButton = $('#' + attrs.expandButtonId, element)[0];
+                renderExpandButton(expandButton);
+            });
+        } else {
+            renderExpandButton();
+        }
 
-                $compile(expandButton.contents())(scope);
+        function renderExpandButton(expandButton) {
+            if (expandButton) {
+                expandButton = angular.element(expandButton);
+                if (scope.hideExpandButton()) {
+                    expandButton.remove();
+                } else {
+                    expandButton.attr('md-ink-ripple', 'false');
+                    expandButton.append(html);
 
-                expandButton.on("click", scope.toggleExpand);
+                    $compile(expandButton.contents())(scope);
+
+                    expandButton.on("click", scope.toggleExpand);
+                }
+            } else if (!scope.hideExpandButton()) {
+                var button = angular.element('<md-button class="tb-fullscreen-button-style tb-fullscreen-button-pos md-icon-button" ' +
+                    'md-ink-ripple="false" ng-click="toggleExpand($event)">' +
+                    html +
+                    '</md-button>');
+
+                $compile(button)(scope);
+
+                element.prepend(button);
             }
-        } else if (!scope.hideExpandButton()) {
-            var button = angular.element('<md-button class="tb-fullscreen-button-style tb-fullscreen-button-pos md-icon-button" ' +
-                'md-ink-ripple="false" ng-click="toggleExpand($event)">' +
-                html +
-                '</md-button>');
-
-            $compile(button)(scope);
-
-            element.prepend(button);
         }
     }
 

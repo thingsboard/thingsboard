@@ -328,6 +328,7 @@ export default angular.module('thingsboard.locale', [])
                     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
                     "display-title": "Display dashboard title",
+                    "toolbar-always-open": "Keep toolbar opened",
                     "title-color": "Title color",
                     "display-dashboards-selection": "Display dashboards selection",
                     "display-entities-selection": "Display entities selection",
