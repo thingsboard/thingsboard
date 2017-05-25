@@ -983,8 +983,11 @@ export default function DashboardController(types, dashboardUtils, widgetService
                 if (revert) {
                     vm.dashboard = vm.prevDashboard;
                     vm.dashboardConfiguration = vm.dashboard.configuration;
+                    vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
                     openDashboardState(vm.prevDashboardState);
                     entityAliasesUpdated();
+                } else {
+                    vm.dashboard.configuration.timewindow = vm.dashboardCtx.dashboardTimewindow;
                 }
             }
         }

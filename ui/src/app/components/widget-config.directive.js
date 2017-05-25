@@ -355,10 +355,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             var matches = false;
             do {
                 matches = false;
-                if (value.datasources) {
-                    for (var d in value.datasources) {
-                        var datasource = value.datasources[d];
-                        for (var k in datasource.dataKeys) {
+                if (value.config.datasources) {
+                    for (var d=0;d<value.config.datasources.length;d++) {
+                        var datasource = value.config.datasources[d];
+                        for (var k=0;k<datasource.dataKeys.length;k++) {
                             var dataKey = datasource.dataKeys[k];
                             if (dataKey.label === label) {
                                 i++;
@@ -375,9 +375,9 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
         scope.genNextColor = function () {
             var i = 0;
             var value = ngModelCtrl.$viewValue;
-            if (value.datasources) {
-                for (var d in value.datasources) {
-                    var datasource = value.datasources[d];
+            if (value.config.datasources) {
+                for (var d=0;d<value.config.datasources.length;d++) {
+                    var datasource = value.config.datasources[d];
                     i += datasource.dataKeys.length;
                 }
             }
