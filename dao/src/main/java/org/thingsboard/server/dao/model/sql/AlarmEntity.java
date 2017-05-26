@@ -58,9 +58,11 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
     @Column(name = ALARM_TYPE_PROPERTY)
     private String type;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ALARM_SEVERITY_PROPERTY)
     private AlarmSeverity severity;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ALARM_STATUS_PROPERTY)
     private AlarmStatus status;
 

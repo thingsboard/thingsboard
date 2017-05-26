@@ -56,6 +56,7 @@ public class UserEntity implements SearchTextEntity<User> {
     @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.USER_AUTHORITY_PROPERTY)
     private Authority authority;
 

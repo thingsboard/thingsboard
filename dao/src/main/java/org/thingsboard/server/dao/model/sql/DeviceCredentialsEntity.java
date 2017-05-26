@@ -16,11 +16,8 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+
+import javax.persistence.*;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -45,7 +42,8 @@ public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentia
     
     @Column(name = ModelConstants.DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY)
     private UUID deviceId;
-    
+
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_TYPE_PROPERTY)
     private DeviceCredentialsType credentialsType;
 

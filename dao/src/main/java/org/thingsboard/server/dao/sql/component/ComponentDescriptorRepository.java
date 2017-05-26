@@ -39,22 +39,22 @@ public interface ComponentDescriptorRepository extends CrudRepository<ComponentD
     @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
             "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
             "ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByTypeFirstPage(int limit, int type, String textSearch);
+    List<ComponentDescriptorEntity> findByTypeFirstPage(int limit, String type, String textSearch);
 
     @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
             "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
             "AND ID > ?4 ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByTypeNextPage(int limit, int type, String textSearch, UUID idOffset);
+    List<ComponentDescriptorEntity> findByTypeNextPage(int limit, String type, String textSearch, UUID idOffset);
 
     @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
             "AND SCOPE = ?3 AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?4, '%')) " +
             "ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByScopeAndTypeFirstPage(int limit, int type, int scope, String textSearch);
+    List<ComponentDescriptorEntity> findByScopeAndTypeFirstPage(int limit, String type, String scope, String textSearch);
 
     @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
             "AND SCOPE = ?3 AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?4, '%')) " +
             "AND ID > ?5 ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByScopeAndTypeNextPage(int limit, int type, int scope, String textSearch, UUID idOffset);
+    List<ComponentDescriptorEntity> findByScopeAndTypeNextPage(int limit, String type, String scope, String textSearch, UUID idOffset);
 
     void deleteByClazz(String clazz);
 }

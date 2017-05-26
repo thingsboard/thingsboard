@@ -15,11 +15,8 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -50,9 +47,11 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY)
     private ComponentType type;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_SCOPE_PROPERTY)
     private ComponentScope scope;
 

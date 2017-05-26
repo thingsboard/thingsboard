@@ -78,10 +78,10 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     public List<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
         if (pageLink.getIdOffset() == null) {
             return DaoUtil.convertDataList(componentDescriptorRepository.findByTypeFirstPage(pageLink.getLimit(),
-                    type.ordinal(), pageLink.getTextSearch()));
+                    type.toString(), pageLink.getTextSearch()));
         } else {
             return DaoUtil.convertDataList(componentDescriptorRepository.findByTypeNextPage(pageLink.getLimit(),
-                    type.ordinal(), pageLink.getTextSearch(), pageLink.getIdOffset()));
+                    type.toString(), pageLink.getTextSearch(), pageLink.getIdOffset()));
         }
     }
 
@@ -89,10 +89,10 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         if (pageLink.getIdOffset() == null) {
             return DaoUtil.convertDataList(componentDescriptorRepository.findByScopeAndTypeFirstPage(pageLink.getLimit(),
-                    type.ordinal(), scope.ordinal(), pageLink.getTextSearch()));
+                    type.toString(), scope.toString(), pageLink.getTextSearch()));
         } else {
             return DaoUtil.convertDataList(componentDescriptorRepository.findByScopeAndTypeNextPage(pageLink.getLimit(),
-                    type.ordinal(), scope.ordinal(), pageLink.getTextSearch(), pageLink.getIdOffset()));
+                    type.toString(), scope.toString(), pageLink.getTextSearch(), pageLink.getIdOffset()));
         }
     }
 

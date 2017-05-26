@@ -32,22 +32,22 @@ public interface UserRepository extends CrudRepository<UserEntity, UUID> {
     UserEntity findByEmail(String email);
 
     @Query(nativeQuery = true, value = "SELECT * FROM TB_USER WHERE TENANT_ID = ?2 " +
-            "AND CUSTOMER_ID IS NULL AND AUTHORITY = 1 " +
+            "AND CUSTOMER_ID IS NULL AND AUTHORITY = 'TENANT_ADMIN' " +
             "ORDER BY ID LIMIT ?1")
     List<UserEntity> findTenantAdminsFirstPage(int limit, UUID tenantId);
 
     @Query(nativeQuery = true, value = "SELECT * FROM TB_USER WHERE TENANT_ID = ?2 " +
-            "AND CUSTOMER_ID IS NULL AND AUTHORITY = 1 " +
+            "AND CUSTOMER_ID IS NULL AND AUTHORITY = 'TENANT_ADMIN' " +
             "AND ID > ?3 ORDER BY ID LIMIT ?1")
     List<UserEntity> findTenantAdminsNextPage(int limit, UUID tenantId, UUID idOffset);
 
     @Query(nativeQuery = true, value = "SELECT * FROM TB_USER WHERE TENANT_ID = ?2 " +
-            "AND CUSTOMER_ID = ?3 AND AUTHORITY = 2 " +
+            "AND CUSTOMER_ID = ?3 AND AUTHORITY = 'CUSTOMER_USER' " +
             "ORDER BY ID LIMIT ?1")
     List<UserEntity> findCustomerUsersFirstPage(int limit, UUID tenantId, UUID customerId);
 
     @Query(nativeQuery = true, value = "SELECT * FROM TB_USER WHERE TENANT_ID = ?2 " +
-            "AND CUSTOMER_ID = ?3 AND AUTHORITY = 2 " +
+            "AND CUSTOMER_ID = ?3 AND AUTHORITY = 'CUSTOMER_USER' " +
             "AND ID > ?4 ORDER BY ID LIMIT ?1")
     List<UserEntity> findCustomerUsersNextPage(int limit, UUID tenantId, UUID customerId, UUID idOffset);
 

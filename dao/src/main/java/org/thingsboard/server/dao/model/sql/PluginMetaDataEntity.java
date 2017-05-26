@@ -16,11 +16,9 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+
+import javax.persistence.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -66,6 +64,7 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     @Column(name = ModelConstants.PLUGIN_ACCESS_PROPERTY)
     private boolean publicAccess;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.PLUGIN_STATE_PROPERTY)
     private ComponentLifecycleState state;
 

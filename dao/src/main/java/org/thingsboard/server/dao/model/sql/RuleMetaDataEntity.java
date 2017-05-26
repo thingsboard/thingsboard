@@ -17,11 +17,7 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,27 +49,38 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
     @Id
     @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
+
     @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY)
     private UUID tenantId;
+
     @Column(name = ModelConstants.RULE_NAME_PROPERTY)
     private String name;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.RULE_STATE_PROPERTY)
     private ComponentLifecycleState state;
+
     @Column(name = ModelConstants.RULE_WEIGHT_PROPERTY)
     private int weight;
+
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
+
     @Column(name = ModelConstants.RULE_PLUGIN_TOKEN_PROPERTY)
     private String pluginToken;
+
     @Type(type = "jsonb")
     @Column(name = ModelConstants.RULE_FILTERS, columnDefinition = "jsonb")
     private JsonNode filters;
+
     @Type(type = "jsonb")
     @Column(name = ModelConstants.RULE_PROCESSOR, columnDefinition = "jsonb")
     private JsonNode processor;
+
     @Type(type = "jsonb")
     @Column(name = ModelConstants.RULE_ACTION, columnDefinition = "jsonb")
     private JsonNode action;
+
     @Type(type = "jsonb")
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
     private JsonNode additionalInfo;

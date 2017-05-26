@@ -113,7 +113,6 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         userDao.save(user);
         assertEquals(6, userDao.find().size());
         User savedUser = userDao.findByEmail("user@thingsboard.org");
-        //User savedUser = userDao.findById(UUID.fromString("cd481534-27cc-11e7-93ae-92361f002671"));
         assertNotNull(savedUser);
         assertEquals(additionalInfo, savedUser.getAdditionalInfo().toString());
     }

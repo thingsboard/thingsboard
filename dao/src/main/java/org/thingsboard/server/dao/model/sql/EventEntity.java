@@ -16,11 +16,9 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+
+import javax.persistence.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -56,6 +54,7 @@ public class EventEntity implements BaseEntity<Event> {
     @Column(name = EVENT_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = EVENT_ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
