@@ -149,66 +149,73 @@ VALUES (
 
 /** Demo device **/
 
-INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text)
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, type, name, search_text)
 VALUES (
 	minTimeuuid ( '2016-11-01 01:02:05+0000' ),
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	minTimeuuid ( '2016-11-01 01:02:03+0000' ),
+	'default',
 	'Test Device A1',
 	'test device a1'
 );
 
-INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text)
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, type, name, search_text)
 VALUES (
 	minTimeuuid ( '2016-11-01 01:02:05+0001' ),
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	minTimeuuid ( '2016-11-01 01:02:03+0000' ),
+	'default',
 	'Test Device A2',
 	'test device a2'
 );
 
-INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text)
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, type, name, search_text)
 VALUES (
 	minTimeuuid ( '2016-11-01 01:02:05+0002' ),
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	minTimeuuid ( '2016-11-01 01:02:03+0000' ),
+	'default',
 	'Test Device A3',
 	'test device a3'
 );
 
-INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text)
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, type, name, search_text)
 VALUES (
 	minTimeuuid ( '2016-11-01 01:02:05+0003' ),
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	minTimeuuid ( '2016-11-01 01:02:03+0001' ),
+	'default',
 	'Test Device B1',
 	'test device b1'
 );
 
-INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text)
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, type, name, search_text)
 VALUES (
 	minTimeuuid ( '2016-11-01 01:02:05+0004' ),
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	minTimeuuid ( '2016-11-01 01:02:03+0002' ),
+	'default',
 	'Test Device C1',
 	'test device c1'
 );
 
-INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text, additional_info)
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, type, name, search_text, additional_info)
 VALUES (
 	c8f1a6f0-b993-11e6-8a04-9ff4e1b7933c,
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	minTimeuuid ( 0 ),
+	'default',
 	'DHT11 Demo Device',
 	'dht11 demo device',
 	'{"description":"Demo device that is used in sample applications that upload data from DHT11 temperature and humidity sensor"}'
 );
 
-INSERT INTO thingsboard.device ( id, tenant_id, customer_id, name, search_text, additional_info)
+INSERT INTO thingsboard.device ( id, tenant_id, customer_id, type, name, search_text, additional_info)
 VALUES (
 	c8f1a6f0-b993-11e6-8a04-9ff4e1b7933d,
 	minTimeuuid ( '2016-11-01 01:02:01+0000' ),
 	minTimeuuid ( 0 ),
+	'default',
 	'Raspberry Pi Demo Device',
 	'raspberry pi demo device',
 	'{"description":"Demo device that is used in Raspberry Pi GPIO control sample application"}'

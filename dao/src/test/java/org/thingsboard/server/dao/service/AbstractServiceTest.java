@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -86,6 +87,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected DeviceService deviceService;
+
+    @Autowired
+    protected AssetService assetService;
 
     @Autowired
     protected DeviceCredentialsService deviceCredentialsService;
