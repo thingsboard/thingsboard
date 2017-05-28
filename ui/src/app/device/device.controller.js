@@ -48,7 +48,8 @@ export function DeviceCardController(types) {
 
 
 /*@ngInject*/
-export function DeviceController(userService, deviceService, customerService, $state, $stateParams, $document, $mdDialog, $q, $translate, types) {
+export function DeviceController($rootScope, userService, deviceService, customerService, $state, $stateParams,
+                                 $document, $mdDialog, $q, $translate, types) {
 
     var customerId = $stateParams.customerId;
 
@@ -131,8 +132,8 @@ export function DeviceController(userService, deviceService, customerService, $s
         }
 
         if (vm.devicesScope === 'tenant') {
-            fetchDevicesFunction = function (pageLink) {
-                return deviceService.getTenantDevices(pageLink, true);
+            fetchDevicesFunction = function (pageLink, deviceType) {
+                return deviceService.getTenantDevices(pageLink, true, null, deviceType);
             };
             deleteDeviceFunction = function (deviceId) {
                 return deviceService.deleteDevice(deviceId);
@@ -242,8 +243,8 @@ export function DeviceController(userService, deviceService, customerService, $s
 
 
         } else if (vm.devicesScope === 'customer' || vm.devicesScope === 'customer_user') {
-            fetchDevicesFunction = function (pageLink) {
-                return deviceService.getCustomerDevices(customerId, pageLink, true);
+            fetchDevicesFunction = function (pageLink, deviceType) {
+                return deviceService.getCustomerDevices(customerId, pageLink, true, null, deviceType);
             };
             deleteDeviceFunction = function (deviceId) {
                 return deviceService.unassignDeviceFromCustomer(deviceId);
@@ -368,6 +369,7 @@ export function DeviceController(userService, deviceService, customerService, $s
         var deferred = $q.defer();
         deviceService.saveDevice(device).then(
             function success(savedDevice) {
+                $rootScope.$broadcast('deviceSaved');
                 var devices = [ savedDevice ];
                 customerService.applyAssignedCustomersInfo(devices).then(
                     function success(items) {

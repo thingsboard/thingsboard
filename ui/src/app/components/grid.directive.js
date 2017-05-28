@@ -197,7 +197,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         },
 
         getLength: function () {
-            if (vm.items.hasNext) {
+            if (vm.items.hasNext && !vm.items.pending) {
                 return vm.items.rowData.length + pageSize;
             } else {
                 return vm.items.rowData.length;
@@ -206,7 +206,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
 
         fetchMoreItems_: function () {
             if (vm.items.hasNext && !vm.items.pending) {
-                var promise = vm.fetchItemsFunc(vm.items.nextPageLink);
+                var promise = vm.fetchItemsFunc(vm.items.nextPageLink, $scope.searchConfig.searchEntitySubtype);
                 if (promise) {
                     vm.items.pending = true;
                     promise.then(
@@ -433,6 +433,10 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         reload();
     });
 
+    $scope.$on('searchEntitySubtypeUpdated', function () {
+        reload();
+    });
+
     vm.onGridInited(vm);
 
     vm.itemRows.getItemAtIndex(pageSize);
@@ -441,18 +445,16 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         if (vm.items && vm.items.pending) {
             vm.items.reloadPending = true;
         } else {
-            vm.items = {
-                data: [],
-                rowData: [],
-                nextPageLink: {
-                    limit: pageSize,
-                    textSearch: $scope.searchConfig.searchText
-                },
-                selections: {},
-                selectedCount: 0,
-                hasNext: true,
-                pending: false
+            vm.items.data.length = 0;
+            vm.items.rowData.length = 0;
+            vm.items.nextPageLink = {
+                limit: pageSize,
+                textSearch: $scope.searchConfig.searchText
             };
+            vm.items.selections = {};
+            vm.items.selectedCount = 0;
+            vm.items.hasNext = true;
+            vm.items.pending = false;
             vm.detailsConfig.isDetailsOpen = false;
             vm.items.reloadPending = false;
             vm.itemRows.getItemAtIndex(pageSize);

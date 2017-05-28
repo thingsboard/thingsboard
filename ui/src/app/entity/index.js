@@ -16,6 +16,8 @@
 
 import EntityAliasesController from './entity-aliases.controller';
 import EntityTypeSelectDirective from './entity-type-select.directive';
+import EntitySubtypeSelectDirective from './entity-subtype-select.directive';
+import EntitySubtypeAutocompleteDirective from './entity-subtype-autocomplete.directive';
 import EntityFilterDirective from './entity-filter.directive';
 import AliasesEntitySelectPanelController from './aliases-entity-select-panel.controller';
 import AliasesEntitySelectDirective from './aliases-entity-select.directive';
@@ -29,6 +31,8 @@ export default angular.module('thingsboard.entity', [])
     .controller('AddAttributeDialogController', AddAttributeDialogController)
     .controller('AddWidgetToDashboardDialogController', AddWidgetToDashboardDialogController)
     .directive('tbEntityTypeSelect', EntityTypeSelectDirective)
+    .directive('tbEntitySubtypeSelect', EntitySubtypeSelectDirective)
+    .directive('tbEntitySubtypeAutocomplete', EntitySubtypeAutocompleteDirective)
     .directive('tbEntityFilter', EntityFilterDirective)
     .directive('tbAliasesEntitySelect', AliasesEntitySelectDirective)
     .directive('tbAttributeTable', AttributeTableDirective)

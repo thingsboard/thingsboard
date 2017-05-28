@@ -56,13 +56,13 @@
                 <div translate ng-message="required">asset.name-required</div>
             </div>
         </md-input-container>
-        <md-input-container class="md-block">
-            <label translate>asset.type</label>
-            <input required name="type" ng-model="asset.type">
-            <div ng-messages="theForm.name.$error">
-                <div translate ng-message="required">asset.type-required</div>
-            </div>
-        </md-input-container>
+        <tb-entity-subtype-autocomplete
+                ng-disabled="loading || !isEdit"
+                tb-required="true"
+                the-form="theForm"
+                ng-model="asset.type"
+                entity-type="types.entityType.asset">
+        </tb-entity-subtype-autocomplete>
         <md-input-container class="md-block">
             <label translate>asset.description</label>
             <textarea ng-model="asset.additionalInfo.description" rows="2"></textarea>

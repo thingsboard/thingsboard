@@ -24,9 +24,8 @@
         <md-virtual-repeat-container ng-show="vm.hasData()" tb-scope-element="repeatContainer" id="tb-vertical-container" md-top-index="vm.topIndex" flex>
             <div class="md-padding" layout="column">
                 <section layout="row"  md-virtual-repeat="rowItem in vm.itemRows" md-on-demand md-item-size="vm.itemHeight">
-                    <div flex ng-repeat="n in [] | range:vm.columns" ng-style="{'height':vm.itemHeight+'px'}">
-                        <md-card ng-if="rowItem[n]"
-                                 ng-class="{'tb-current-item': vm.isCurrentItem(rowItem[n])}"
+                    <div flex ng-repeat="n in [] | range:vm.columns" ng-style="{'height':vm.itemHeight+'px'}" ng-if="rowItem[n]">
+                        <md-card ng-class="{'tb-current-item': vm.isCurrentItem(rowItem[n])}"
                                  class="repeated-item tb-card-item" ng-style="{'height':(vm.itemHeight-16)+'px','cursor':'pointer'}"
                                  ng-click="vm.clickItemFunc($event, rowItem[n])">
                             <section layout="row" layout-wrap>
@@ -43,7 +42,7 @@
                                 </md-card-title>
                             </section>
                             <md-card-content flex>
-                                <tb-grid-card-content grid-ctl="vm" parent-ctl="vm.parentCtl" item-controller="vm.itemCardController" item-template="vm.itemCardTemplate" item="rowItem[n]"></tb-grid-card-content>
+                                <tb-grid-card-content flex grid-ctl="vm" parent-ctl="vm.parentCtl" item-controller="vm.itemCardController" item-template="vm.itemCardTemplate" item="rowItem[n]"></tb-grid-card-content>
                             </md-card-content>
                             <md-card-actions layout="row" layout-align="end end">
                                 <md-button ng-if="action.isEnabled(rowItem[n])" ng-disabled="loading" class="md-icon-button md-primary" ng-repeat="action in vm.actionsList"
@@ -55,6 +54,8 @@
                                 </md-button>
                             </md-card-actions>
                         </md-card>
+                    </div>
+                    <div flex ng-repeat="n in [] | range:vm.columns" ng-style="{'height':vm.itemHeight+'px'}" ng-if="!rowItem[n]">
                     </div>
                 </section>
             </div>
