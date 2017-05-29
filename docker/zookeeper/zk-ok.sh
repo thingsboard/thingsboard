@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -14,17 +15,14 @@
 # limitations under the License.
 #
 
-FROM cassandra:3.9
+# zk-ok.sh uses the ruok ZooKeeper four letter work to determine if the instance
+# is health. The $? variable will be set to 0 if server responds that it is 
+# healthy, or 1 if the server fails to respond.
 
-ADD install_schema.sh /root/install_schema.sh
-
-RUN apt-get update \
-        && apt-get install -y nmap
-
-RUN chmod +x /root/install_schema.sh
-
-ADD schema.cql /root/schema.cql
-ADD demo-data.cql /root/demo-data.cql
-ADD system-data.cql /root/system-data.cql
-
-WORKDIR /root
+ZK_CLIENT_PORT=${ZK_CLIENT_PORT:-2181}
+OK=$(echo ruok | nc 127.0.0.1 $ZK_CLIENT_PORT)
+if [ "$OK" == "imok" ]; then
+	exit 0
+else
+	exit 1
+fi
