@@ -98,7 +98,10 @@ export default angular.module('thingsboard.types', [])
                 rule: "RULE",
                 plugin: "PLUGIN",
                 tenant: "TENANT",
-                customer: "CUSTOMER"
+                customer: "CUSTOMER",
+                user: "USER",
+                dashboard: "DASHBOARD",
+                alarm: "ALARM"
             },
             entitySearchDirection: {
                 from: "FROM",

@@ -110,7 +110,7 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
                 entityAlias.changed = false;
             }
             if (!entityAlias.changed && entity && entityAlias.entityType) {
-                entityAlias.alias = entityService.entityName(entityAlias.entityType, entity);
+                entityAlias.alias = entity.name;
             }
         }
     }

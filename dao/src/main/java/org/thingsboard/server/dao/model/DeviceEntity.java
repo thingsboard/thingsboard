@@ -49,11 +49,12 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     @Column(name = DEVICE_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
-    @Column(name = DEVICE_NAME_PROPERTY)
-    private String name;
-
+    @PartitionKey(value = 3)
     @Column(name = DEVICE_TYPE_PROPERTY)
     private String type;
+
+    @Column(name = DEVICE_NAME_PROPERTY)
+    private String name;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;

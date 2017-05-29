@@ -15,13 +15,14 @@
  */
 package org.thingsboard.server.common.data.plugin;
 
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class PluginMetaData extends SearchTextBased<PluginId> {
+public class PluginMetaData extends SearchTextBased<PluginId> implements HasName {
 
     private static final long serialVersionUID = 1L;
 
@@ -75,6 +76,7 @@ public class PluginMetaData extends SearchTextBased<PluginId> {
         this.tenantId = tenantId;
     }
 
+    @Override
     public String getName() {
         return name;
     }

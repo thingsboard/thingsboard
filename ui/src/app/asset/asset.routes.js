@@ -20,7 +20,7 @@ import assetsTemplate from './assets.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function AssetRoutes($stateProvider) {
+export default function AssetRoutes($stateProvider, types) {
     $stateProvider
         .state('home.assets', {
             url: '/assets',
@@ -37,6 +37,8 @@ export default function AssetRoutes($stateProvider) {
             data: {
                 assetsType: 'tenant',
                 searchEnabled: true,
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.asset,
                 pageTitle: 'asset.assets'
             },
             ncyBreadcrumb: {
@@ -58,6 +60,8 @@ export default function AssetRoutes($stateProvider) {
             data: {
                 assetsType: 'customer',
                 searchEnabled: true,
+                searchByEntitySubtype: true,
+                searchEntityType: types.entityType.asset,
                 pageTitle: 'customer.assets'
             },
             ncyBreadcrumb: {

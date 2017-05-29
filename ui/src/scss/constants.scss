@@ -20,10 +20,12 @@
 $gray: #eee;
 
 $primary-palette-color: 'indigo';
+$default: '500';
 $hue-1: '300';
 $hue-2: '800';
 $hue-3: 'a100';
 
+$primary-default: #305680; //material-color($primary-palette-color, $default);
 $primary-hue-1: material-color($primary-palette-color, $hue-1);
 $primary-hue-2: material-color($primary-palette-color, $hue-2);
 $primary-hue-3: rgb(207, 216, 220);

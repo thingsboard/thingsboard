@@ -28,6 +28,10 @@ import java.util.Optional;
  */
 public interface AlarmService {
 
+    Alarm findAlarmById(AlarmId alarmId);
+
+    ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
+
     Optional<Alarm> saveIfNotExists(Alarm alarm);
 
     ListenableFuture<Boolean> updateAlarm(Alarm alarm);

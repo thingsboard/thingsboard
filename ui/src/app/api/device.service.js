@@ -41,12 +41,13 @@ function DeviceService($http, $q, attributeService, customerService, types) {
         deleteDeviceAttributes: deleteDeviceAttributes,
         sendOneWayRpcCommand: sendOneWayRpcCommand,
         sendTwoWayRpcCommand: sendTwoWayRpcCommand,
-        findByQuery: findByQuery
+        findByQuery: findByQuery,
+        getDeviceTypes: getDeviceTypes
     }
 
     return service;
 
-    function getTenantDevices(pageLink, applyCustomersInfo, config) {
+    function getTenantDevices(pageLink, applyCustomersInfo, config, type) {
         var deferred = $q.defer();
         var url = '/api/tenant/devices?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -57,6 +58,9 @@ function DeviceService($http, $q, attributeService, customerService, types) {
         }
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
             if (applyCustomersInfo) {
@@ -78,7 +82,7 @@ function DeviceService($http, $q, attributeService, customerService, types) {
         return deferred.promise;
     }
 
-    function getCustomerDevices(customerId, pageLink, applyCustomersInfo, config) {
+    function getCustomerDevices(customerId, pageLink, applyCustomersInfo, config, type) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/devices?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -89,6 +93,9 @@ function DeviceService($http, $q, attributeService, customerService, types) {
         }
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
             if (applyCustomersInfo) {
@@ -279,6 +286,17 @@ function DeviceService($http, $q, attributeService, customerService, types) {
         }
         config = Object.assign(config, { ignoreErrors: ignoreErrors });
         $http.post(url, query, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getDeviceTypes() {
+        var deferred = $q.defer();
+        var url = '/api/device/types';
+        $http.get(url).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

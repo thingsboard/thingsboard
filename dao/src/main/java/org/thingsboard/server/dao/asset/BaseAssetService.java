@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -34,12 +35,9 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.AssetEntity;
-import org.thingsboard.server.dao.model.CustomerEntity;
-import org.thingsboard.server.dao.model.TenantEntity;
-import org.thingsboard.server.dao.relation.EntityRelationsQuery;
+import org.thingsboard.server.dao.model.*;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -57,7 +55,7 @@ import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
-public class BaseAssetService extends BaseEntityService implements AssetService {
+public class BaseAssetService extends AbstractEntityService implements AssetService {
 
     @Autowired
     private AssetDao assetDao;
@@ -132,7 +130,18 @@ public class BaseAssetService extends BaseEntityService implements AssetService 
         validatePageLink(pageLink, "Incorrect page link " + pageLink);
         List<AssetEntity> assetEntities = assetDao.findAssetsByTenantId(tenantId.getId(), pageLink);
         List<Asset> assets = convertDataList(assetEntities);
-        return new TextPageData<Asset>(assets, pageLink);
+        return new TextPageData<>(assets, pageLink);
+    }
+
+    @Override
+    public TextPageData<Asset> findAssetsByTenantIdAndType(TenantId tenantId, String type, TextPageLink pageLink) {
+        log.trace("Executing findAssetsByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        List<AssetEntity> assetEntities = assetDao.findAssetsByTenantIdAndType(tenantId.getId(), type, pageLink);
+        List<Asset> assets = convertDataList(assetEntities);
+        return new TextPageData<>(assets, pageLink);
     }
 
     @Override
@@ -159,7 +168,19 @@ public class BaseAssetService extends BaseEntityService implements AssetService 
         validatePageLink(pageLink, "Incorrect page link " + pageLink);
         List<AssetEntity> assetEntities = assetDao.findAssetsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
         List<Asset> assets = convertDataList(assetEntities);
-        return new TextPageData<Asset>(assets, pageLink);
+        return new TextPageData<>(assets, pageLink);
+    }
+
+    @Override
+    public TextPageData<Asset> findAssetsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, TextPageLink pageLink) {
+        log.trace("Executing findAssetsByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}], type [{}], pageLink [{}]", tenantId, customerId, type, pageLink);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(customerId, "Incorrect customerId " + customerId);
+        validateString(type, "Incorrect type " + type);
+        validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        List<AssetEntity> assetEntities = assetDao.findAssetsByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
+        List<Asset> assets = convertDataList(assetEntities);
+        return new TextPageData<>(assets, pageLink);
     }
 
     @Override
@@ -207,6 +228,25 @@ public class BaseAssetService extends BaseEntityService implements AssetService 
         return assets;
     }
 
+    @Override
+    public ListenableFuture<List<TenantAssetType>> findAssetTypesByTenantId(TenantId tenantId) {
+        log.trace("Executing findAssetTypesByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        ListenableFuture<List<TenantAssetTypeEntity>> tenantAssetTypeEntities = assetDao.findTenantAssetTypesAsync();
+        ListenableFuture<List<TenantAssetType>> tenantAssetTypes = Futures.transform(tenantAssetTypeEntities,
+                (Function<List<TenantAssetTypeEntity>, List<TenantAssetType>>) assetTypeEntities -> {
+                    List<TenantAssetType> assetTypes = new ArrayList<>();
+                    for (TenantAssetTypeEntity assetTypeEntity : assetTypeEntities) {
+                        if (assetTypeEntity.getTenantId().equals(tenantId.getId())) {
+                            assetTypes.add(assetTypeEntity.toTenantAssetType());
+                        }
+                    }
+                    assetTypes.sort((TenantAssetType o1, TenantAssetType o2) -> o1.getType().compareTo(o2.getType()));
+                    return assetTypes;
+                });
+        return tenantAssetTypes;
+    }
+
     private DataValidator<Asset> assetValidator =
             new DataValidator<Asset>() {
 
@@ -232,6 +272,9 @@ public class BaseAssetService extends BaseEntityService implements AssetService 
 
                 @Override
                 protected void validateDataImpl(Asset asset) {
+                    if (StringUtils.isEmpty(asset.getType())) {
+                        throw new DataValidationException("Asset type should be specified!");
+                    }
                     if (StringUtils.isEmpty(asset.getName())) {
                         throw new DataValidationException("Asset name should be specified!");
                     }

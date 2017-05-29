@@ -41,6 +41,9 @@
                             </md-select>
                         </md-input-container>
                         <div layout="row" layout-align="start center">
+                            <md-checkbox flex aria-label="{{ 'dashboard.toolbar-always-open' | translate }}"
+                                         ng-model="vm.settings.toolbarAlwaysOpen">{{ 'dashboard.toolbar-always-open' | translate }}
+                            </md-checkbox>
                             <md-checkbox flex aria-label="{{ 'dashboard.display-title' | translate }}"
                                          ng-model="vm.settings.showTitle">{{ 'dashboard.display-title' | translate }}
                             </md-checkbox>

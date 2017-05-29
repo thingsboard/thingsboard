@@ -31,17 +31,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.AssetEntity;
 import org.thingsboard.server.dao.model.CustomerEntity;
 import org.thingsboard.server.dao.model.TenantEntity;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -53,7 +51,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
 @Service
 @Slf4j
-public class CustomerServiceImpl extends BaseEntityService implements CustomerService {
+public class CustomerServiceImpl extends AbstractEntityService implements CustomerService {
 
     private static final String PUBLIC_CUSTOMER_TITLE = "Public";
 
