@@ -175,6 +175,7 @@ public class ModelConstants {
     public static final String RELATION_TO_ID_PROPERTY = "to_id";
     public static final String RELATION_TO_TYPE_PROPERTY = "to_type";
     public static final String RELATION_TYPE_PROPERTY = "relation_type";
+    public static final String RELATION_TYPE_GROUP_PROPERTY = "relation_type_group";
 
     public static final String RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME = "relation_by_type_and_child_type";
     public static final String RELATION_REVERSE_VIEW_NAME = "reverse_relation";

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -60,10 +61,10 @@ public class BaseRelationService implements RelationService {
     private EntityService entityService;
 
     @Override
-    public ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType) {
-        log.trace("Executing checkRelation [{}][{}][{}]", from, to, relationType);
-        validate(from, to, relationType);
-        return relationDao.checkRelation(from, to, relationType);
+    public ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing checkRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        validate(from, to, relationType, typeGroup);
+        return relationDao.checkRelation(from, to, relationType, typeGroup);
     }
 
     @Override
@@ -81,23 +82,28 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType) {
-        log.trace("Executing deleteRelation [{}][{}][{}]", from, to, relationType);
-        validate(from, to, relationType);
-        return relationDao.deleteRelation(from, to, relationType);
+    public ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing deleteRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        validate(from, to, relationType, typeGroup);
+        return relationDao.deleteRelation(from, to, relationType, typeGroup);
     }
 
     @Override
     public ListenableFuture<Boolean> deleteEntityRelations(EntityId entity) {
         log.trace("Executing deleteEntityRelations [{}]", entity);
         validate(entity);
-        ListenableFuture<List<EntityRelation>> inboundRelations = relationDao.findAllByTo(entity);
-        ListenableFuture<List<Boolean>> inboundDeletions = Futures.transform(inboundRelations, new AsyncFunction<List<EntityRelation>, List<Boolean>>() {
+        List<ListenableFuture<List<EntityRelation>>> inboundRelationsList = new ArrayList<>();
+        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
+            inboundRelationsList.add(relationDao.findAllByTo(entity, typeGroup));
+        }
+        Futures.allAsList(inboundRelationsList);
+        ListenableFuture<List<List<EntityRelation>>> inboundRelations = Futures.allAsList(inboundRelationsList);
+        ListenableFuture<List<Boolean>> inboundDeletions = Futures.transform(inboundRelations, new AsyncFunction<List<List<EntityRelation>>, List<Boolean>>() {
             @Override
-            public ListenableFuture<List<Boolean>> apply(List<EntityRelation> relations) throws Exception {
+            public ListenableFuture<List<Boolean>> apply(List<List<EntityRelation>> relations) throws Exception {
                 List<ListenableFuture<Boolean>> results = new ArrayList<>();
-                for (EntityRelation relation : relations) {
-                    results.add(relationDao.deleteRelation(relation));
+                for (List<EntityRelation> relationList : relations) {
+                    relationList.stream().forEach(relation -> results.add(relationDao.deleteRelation(relation)));
                 }
                 return Futures.allAsList(results);
             }
@@ -111,17 +117,19 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findByFrom(EntityId from) {
-        log.trace("Executing findByFrom [{}]", from);
+    public ListenableFuture<List<EntityRelation>> findByFrom(EntityId from, RelationTypeGroup typeGroup) {
+        log.trace("Executing findByFrom [{}][{}]", from, typeGroup);
         validate(from);
-        return relationDao.findAllByFrom(from);
+        validateTypeGroup(typeGroup);
+        return relationDao.findAllByFrom(from, typeGroup);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelationInfo>> findInfoByFrom(EntityId from) {
-        log.trace("Executing findInfoByFrom [{}]", from);
+    public ListenableFuture<List<EntityRelationInfo>> findInfoByFrom(EntityId from, RelationTypeGroup typeGroup) {
+        log.trace("Executing findInfoByFrom [{}][{}]", from, typeGroup);
         validate(from);
-        ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByFrom(from);
+        validateTypeGroup(typeGroup);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByFrom(from, typeGroup);
         ListenableFuture<List<EntityRelationInfo>> relationsInfo = Futures.transform(relations,
                 (AsyncFunction<List<EntityRelation>, List<EntityRelationInfo>>) relations1 -> {
             List<ListenableFuture<EntityRelationInfo>> futures = new ArrayList<>();
@@ -143,26 +151,29 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType) {
-        log.trace("Executing findByFromAndType [{}][{}]", from, relationType);
+    public ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing findByFromAndType [{}][{}][{}]", from, relationType, typeGroup);
         validate(from);
         validateType(relationType);
-        return relationDao.findAllByFromAndType(from, relationType);
+        validateTypeGroup(typeGroup);
+        return relationDao.findAllByFromAndType(from, relationType, typeGroup);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findByTo(EntityId to) {
-        log.trace("Executing findByTo [{}]", to);
+    public ListenableFuture<List<EntityRelation>> findByTo(EntityId to, RelationTypeGroup typeGroup) {
+        log.trace("Executing findByTo [{}][{}]", to, typeGroup);
         validate(to);
-        return relationDao.findAllByTo(to);
+        validateTypeGroup(typeGroup);
+        return relationDao.findAllByTo(to, typeGroup);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findByToAndType(EntityId to, String relationType) {
-        log.trace("Executing findByToAndType [{}][{}]", to, relationType);
+    public ListenableFuture<List<EntityRelation>> findByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing findByToAndType [{}][{}][{}]", to, relationType, typeGroup);
         validate(to);
         validateType(relationType);
-        return relationDao.findAllByToAndType(to, relationType);
+        validateTypeGroup(typeGroup);
+        return relationDao.findAllByToAndType(to, relationType, typeGroup);
     }
 
     @Override
@@ -204,11 +215,12 @@ public class BaseRelationService implements RelationService {
         if (relation == null) {
             throw new DataValidationException("Relation type should be specified!");
         }
-        validate(relation.getFrom(), relation.getTo(), relation.getType());
+        validate(relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
     }
 
-    protected void validate(EntityId from, EntityId to, String type) {
+    protected void validate(EntityId from, EntityId to, String type, RelationTypeGroup typeGroup) {
         validateType(type);
+        validateTypeGroup(typeGroup);
         if (from == null) {
             throw new DataValidationException("Relation should contain from entity!");
         }
@@ -220,6 +232,12 @@ public class BaseRelationService implements RelationService {
     private void validateType(String type) {
         if (StringUtils.isEmpty(type)) {
             throw new DataValidationException("Relation type should be specified!");
+        }
+    }
+
+    private void validateTypeGroup(RelationTypeGroup typeGroup) {
+        if (typeGroup == null) {
+            throw new DataValidationException("Relation type group should be specified!");
         }
     }
 
@@ -294,9 +312,9 @@ public class BaseRelationService implements RelationService {
     private ListenableFuture<List<EntityRelation>> findRelations(final EntityId rootId, final EntitySearchDirection direction) {
         ListenableFuture<List<EntityRelation>> relations;
         if (direction == EntitySearchDirection.FROM) {
-            relations = findByFrom(rootId);
+            relations = findByFrom(rootId, RelationTypeGroup.COMMON);
         } else {
-            relations = findByTo(rootId);
+            relations = findByTo(rootId, RelationTypeGroup.COMMON);
         }
         return relations;
     }

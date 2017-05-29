@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -60,6 +62,7 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     }
 
     @Override
+    @JsonProperty(access = Access.READ_ONLY)
     public String getName() {
         return title;
     }

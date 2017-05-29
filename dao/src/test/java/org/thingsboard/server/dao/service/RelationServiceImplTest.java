@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.EntityRelationsQuery;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
@@ -55,13 +56,13 @@ public class RelationServiceImplTest extends AbstractServiceTest {
 
         Assert.assertTrue(saveRelation(relation));
 
-        Assert.assertTrue(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE).get());
+        Assert.assertTrue(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
-        Assert.assertFalse(relationService.checkRelation(parentId, childId, "NOT_EXISTING_TYPE").get());
+        Assert.assertFalse(relationService.checkRelation(parentId, childId, "NOT_EXISTING_TYPE", RelationTypeGroup.COMMON).get());
 
-        Assert.assertFalse(relationService.checkRelation(childId, parentId, EntityRelation.CONTAINS_TYPE).get());
+        Assert.assertFalse(relationService.checkRelation(childId, parentId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
-        Assert.assertFalse(relationService.checkRelation(childId, parentId, "NOT_EXISTING_TYPE").get());
+        Assert.assertFalse(relationService.checkRelation(childId, parentId, "NOT_EXISTING_TYPE", RelationTypeGroup.COMMON).get());
     }
 
     @Test
@@ -78,11 +79,11 @@ public class RelationServiceImplTest extends AbstractServiceTest {
 
         Assert.assertTrue(relationService.deleteRelation(relationA).get());
 
-        Assert.assertFalse(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE).get());
+        Assert.assertFalse(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
-        Assert.assertTrue(relationService.checkRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE).get());
+        Assert.assertTrue(relationService.checkRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
-        Assert.assertTrue(relationService.deleteRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE).get());
+        Assert.assertTrue(relationService.deleteRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
     }
 
     @Test
@@ -99,9 +100,9 @@ public class RelationServiceImplTest extends AbstractServiceTest {
 
         Assert.assertTrue(relationService.deleteEntityRelations(childId).get());
 
-        Assert.assertFalse(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE).get());
+        Assert.assertFalse(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
-        Assert.assertFalse(relationService.checkRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE).get());
+        Assert.assertFalse(relationService.checkRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
     }
 
     @Test
@@ -123,7 +124,7 @@ public class RelationServiceImplTest extends AbstractServiceTest {
         saveRelation(relationB1);
         saveRelation(relationB2);
 
-        List<EntityRelation> relations = relationService.findByFrom(parentA).get();
+        List<EntityRelation> relations = relationService.findByFrom(parentA, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(2, relations.size());
         for (EntityRelation relation : relations) {
             Assert.assertEquals(EntityRelation.CONTAINS_TYPE, relation.getType());
@@ -131,13 +132,13 @@ public class RelationServiceImplTest extends AbstractServiceTest {
             Assert.assertTrue(childA.equals(relation.getTo()) || childB.equals(relation.getTo()));
         }
 
-        relations = relationService.findByFromAndType(parentA, EntityRelation.CONTAINS_TYPE).get();
+        relations = relationService.findByFromAndType(parentA, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(2, relations.size());
 
-        relations = relationService.findByFromAndType(parentA, EntityRelation.MANAGES_TYPE).get();
+        relations = relationService.findByFromAndType(parentA, EntityRelation.MANAGES_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(0, relations.size());
 
-        relations = relationService.findByFrom(parentB).get();
+        relations = relationService.findByFrom(parentB, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(2, relations.size());
         for (EntityRelation relation : relations) {
             Assert.assertEquals(EntityRelation.MANAGES_TYPE, relation.getType());
@@ -145,10 +146,10 @@ public class RelationServiceImplTest extends AbstractServiceTest {
             Assert.assertTrue(childA.equals(relation.getTo()) || childB.equals(relation.getTo()));
         }
 
-        relations = relationService.findByFromAndType(parentB, EntityRelation.CONTAINS_TYPE).get();
+        relations = relationService.findByFromAndType(parentB, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(0, relations.size());
 
-        relations = relationService.findByFromAndType(parentB, EntityRelation.CONTAINS_TYPE).get();
+        relations = relationService.findByFromAndType(parentB, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(0, relations.size());
     }
 
@@ -178,26 +179,26 @@ public class RelationServiceImplTest extends AbstractServiceTest {
         // Data propagation to views is async
         Thread.sleep(3000);
 
-        List<EntityRelation> relations = relationService.findByTo(childA).get();
+        List<EntityRelation> relations = relationService.findByTo(childA, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(2, relations.size());
         for (EntityRelation relation : relations) {
             Assert.assertEquals(childA, relation.getTo());
             Assert.assertTrue(parentA.equals(relation.getFrom()) || parentB.equals(relation.getFrom()));
         }
 
-        relations = relationService.findByToAndType(childA, EntityRelation.CONTAINS_TYPE).get();
+        relations = relationService.findByToAndType(childA, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(1, relations.size());
 
-        relations = relationService.findByToAndType(childB, EntityRelation.MANAGES_TYPE).get();
+        relations = relationService.findByToAndType(childB, EntityRelation.MANAGES_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(1, relations.size());
 
-        relations = relationService.findByToAndType(parentA, EntityRelation.MANAGES_TYPE).get();
+        relations = relationService.findByToAndType(parentA, EntityRelation.MANAGES_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(0, relations.size());
 
-        relations = relationService.findByToAndType(parentB, EntityRelation.MANAGES_TYPE).get();
+        relations = relationService.findByToAndType(parentB, EntityRelation.MANAGES_TYPE, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(0, relations.size());
 
-        relations = relationService.findByTo(childB).get();
+        relations = relationService.findByTo(childB, RelationTypeGroup.COMMON).get();
         Assert.assertEquals(2, relations.size());
         for (EntityRelation relation : relations) {
             Assert.assertEquals(childB, relation.getTo());

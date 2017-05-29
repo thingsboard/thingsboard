@@ -29,9 +29,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.AbstractAsyncDao;
 import org.thingsboard.server.dao.AbstractSearchTimeDao;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.type.RelationTypeGroupCodec;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -54,11 +56,14 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
             ModelConstants.RELATION_FROM_TYPE_PROPERTY + "," +
             ModelConstants.RELATION_TO_ID_PROPERTY + "," +
             ModelConstants.RELATION_TO_TYPE_PROPERTY + "," +
+            ModelConstants.RELATION_TYPE_GROUP_PROPERTY + "," +
             ModelConstants.RELATION_TYPE_PROPERTY + "," +
             ModelConstants.ADDITIONAL_INFO_PROPERTY;
     public static final String FROM = " FROM ";
     public static final String WHERE = " WHERE ";
     public static final String AND = " AND ";
+
+    private static final RelationTypeGroupCodec relationTypeGroupCodec = new RelationTypeGroupCodec();
 
     private PreparedStatement saveStmt;
     private PreparedStatement findAllByFromStmt;
@@ -75,43 +80,52 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByFrom(EntityId from) {
-        BoundStatement stmt = getFindAllByFromStmt().bind().setUUID(0, from.getId()).setString(1, from.getEntityType().name());
+    public ListenableFuture<List<EntityRelation>> findAllByFrom(EntityId from, RelationTypeGroup typeGroup) {
+        BoundStatement stmt = getFindAllByFromStmt().bind()
+                .setUUID(0, from.getId())
+                .setString(1, from.getEntityType().name())
+                .set(2, typeGroup, relationTypeGroupCodec);
         return executeAsyncRead(from, stmt);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByFromAndType(EntityId from, String relationType) {
+    public ListenableFuture<List<EntityRelation>> findAllByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getFindAllByFromAndTypeStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
-                .setString(2, relationType);
+                .set(2, typeGroup, relationTypeGroupCodec)
+                .setString(3, relationType);
         return executeAsyncRead(from, stmt);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByTo(EntityId to) {
-        BoundStatement stmt = getFindAllByToStmt().bind().setUUID(0, to.getId()).setString(1, to.getEntityType().name());
+    public ListenableFuture<List<EntityRelation>> findAllByTo(EntityId to, RelationTypeGroup typeGroup) {
+        BoundStatement stmt = getFindAllByToStmt().bind()
+                .setUUID(0, to.getId())
+                .setString(1, to.getEntityType().name())
+                .set(2, typeGroup, relationTypeGroupCodec);
         return executeAsyncRead(to, stmt);
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findAllByToAndType(EntityId to, String relationType) {
+    public ListenableFuture<List<EntityRelation>> findAllByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getFindAllByToAndTypeStmt().bind()
                 .setUUID(0, to.getId())
                 .setString(1, to.getEntityType().name())
-                .setString(2, relationType);
+                .set(2, typeGroup, relationTypeGroupCodec)
+                .setString(3, relationType);
         return executeAsyncRead(to, stmt);
     }
 
     @Override
-    public ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType) {
+    public ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getCheckRelationStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
                 .setUUID(2, to.getId())
                 .setString(3, to.getEntityType().name())
-                .setString(4, relationType);
+                .set(4, typeGroup, relationTypeGroupCodec)
+                .setString(5, relationType);
         return getFuture(executeAsyncRead(stmt), rs -> rs != null ? rs.one() != null : false);
     }
 
@@ -122,25 +136,27 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                 .setString(1, relation.getFrom().getEntityType().name())
                 .setUUID(2, relation.getTo().getId())
                 .setString(3, relation.getTo().getEntityType().name())
-                .setString(4, relation.getType())
-                .set(5, relation.getAdditionalInfo(), JsonNode.class);
+                .set(4, relation.getTypeGroup(), relationTypeGroupCodec)
+                .setString(5, relation.getType())
+                .set(6, relation.getAdditionalInfo(), JsonNode.class);
         ResultSetFuture future = executeAsyncWrite(stmt);
         return getBooleanListenableFuture(future);
     }
 
     @Override
     public ListenableFuture<Boolean> deleteRelation(EntityRelation relation) {
-        return deleteRelation(relation.getFrom(), relation.getTo(), relation.getType());
+        return deleteRelation(relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType) {
+    public ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getDeleteStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
                 .setUUID(2, to.getId())
                 .setString(3, to.getEntityType().name())
-                .setString(4, relationType);
+                .set(4, typeGroup, relationTypeGroupCodec)
+                .setString(5, relationType);
         ResultSetFuture future = executeAsyncWrite(stmt);
         return getBooleanListenableFuture(future);
     }
@@ -155,13 +171,16 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
     }
 
     @Override
-    public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, EntityType childType, TimePageLink pageLink) {
+    public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
         Select.Where query = AbstractSearchTimeDao.buildQuery(ModelConstants.RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME,
                 Arrays.asList(eq(ModelConstants.RELATION_FROM_ID_PROPERTY, from.getId()),
                         eq(ModelConstants.RELATION_FROM_TYPE_PROPERTY, from.getEntityType().name()),
+                        eq(ModelConstants.RELATION_TYPE_GROUP_PROPERTY, typeGroup.name()),
                         eq(ModelConstants.RELATION_TYPE_PROPERTY, relationType),
                         eq(ModelConstants.RELATION_TO_TYPE_PROPERTY, childType.name())),
-                Arrays.asList(QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY), QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)),
+                Arrays.asList(QueryBuilder.asc(ModelConstants.RELATION_TYPE_GROUP_PROPERTY),
+                        QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY),
+                        QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)),
                 pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
         return getFuture(executeAsyncRead(query), rs -> getEntityRelations(rs));
     }
@@ -173,9 +192,10 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                     "," + ModelConstants.RELATION_FROM_TYPE_PROPERTY +
                     "," + ModelConstants.RELATION_TO_ID_PROPERTY +
                     "," + ModelConstants.RELATION_TO_TYPE_PROPERTY +
+                    "," + ModelConstants.RELATION_TYPE_GROUP_PROPERTY +
                     "," + ModelConstants.RELATION_TYPE_PROPERTY +
                     "," + ModelConstants.ADDITIONAL_INFO_PROPERTY + ")" +
-                    " VALUES(?, ?, ?, ?, ?, ?)");
+                    " VALUES(?, ?, ?, ?, ?, ?, ?)");
         }
         return saveStmt;
     }
@@ -187,6 +207,7 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                     AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ?" +
                     AND + ModelConstants.RELATION_TO_ID_PROPERTY + " = ?" +
                     AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ?" +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ?" +
                     AND + ModelConstants.RELATION_TYPE_PROPERTY + " = ?");
         }
         return deleteStmt;
@@ -206,7 +227,8 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
             findAllByFromStmt = getSession().prepare(SELECT_COLUMNS + " " +
                     FROM + ModelConstants.RELATION_COLUMN_FAMILY_NAME + " " +
                     WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ? ");
+                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ? " +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? ");
         }
         return findAllByFromStmt;
     }
@@ -217,17 +239,20 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                     FROM + ModelConstants.RELATION_COLUMN_FAMILY_NAME + " " +
                     WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + " = ? " +
                     AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ? " +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? " +
                     AND + ModelConstants.RELATION_TYPE_PROPERTY + " = ? ");
         }
         return findAllByFromAndTypeStmt;
     }
+
 
     private PreparedStatement getFindAllByToStmt() {
         if (findAllByToStmt == null) {
             findAllByToStmt = getSession().prepare(SELECT_COLUMNS + " " +
                     FROM + ModelConstants.RELATION_REVERSE_VIEW_NAME + " " +
                     WHERE + ModelConstants.RELATION_TO_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ? ");
+                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ? " +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? ");
         }
         return findAllByToStmt;
     }
@@ -238,10 +263,12 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                     FROM + ModelConstants.RELATION_REVERSE_VIEW_NAME + " " +
                     WHERE + ModelConstants.RELATION_TO_ID_PROPERTY + " = ? " +
                     AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ? " +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? " +
                     AND + ModelConstants.RELATION_TYPE_PROPERTY + " = ? ");
         }
         return findAllByToAndTypeStmt;
     }
+
 
     private PreparedStatement getCheckRelationStmt() {
         if (checkRelationStmt == null) {
@@ -251,6 +278,7 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                     AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ? " +
                     AND + ModelConstants.RELATION_TO_ID_PROPERTY + " = ? " +
                     AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ? " +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? " +
                     AND + ModelConstants.RELATION_TYPE_PROPERTY + " = ? ");
         }
         return checkRelationStmt;
@@ -292,6 +320,7 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
 
     private EntityRelation getEntityRelation(Row row) {
         EntityRelation relation = new EntityRelation();
+        relation.setTypeGroup(row.get(ModelConstants.RELATION_TYPE_GROUP_PROPERTY, relationTypeGroupCodec));
         relation.setType(row.getString(ModelConstants.RELATION_TYPE_PROPERTY));
         relation.setAdditionalInfo(row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY, JsonNode.class));
         relation.setFrom(toEntity(row, ModelConstants.RELATION_FROM_ID_PROPERTY, ModelConstants.RELATION_FROM_TYPE_PROPERTY));

@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.AbstractModelDao;
 import org.thingsboard.server.dao.AbstractSearchTimeDao;
 import org.thingsboard.server.dao.model.AlarmEntity;
@@ -97,7 +98,7 @@ public class AlarmDaoImpl extends AbstractModelDao<AlarmEntity> implements Alarm
         log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
         EntityId affectedEntity = query.getAffectedEntityId();
         String relationType = query.getStatus() == null ? BaseAlarmService.ALARM_RELATION : BaseAlarmService.ALARM_RELATION_PREFIX + query.getStatus().name();
-        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, EntityType.ALARM, query.getPageLink());
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
         return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<Alarm>>) input -> {
             List<ListenableFuture<Alarm>> alarmFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {

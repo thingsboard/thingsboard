@@ -70,7 +70,7 @@ export default function EntitySubtypeSelect($compile, $templateCache, $translate
         };
 
         function loadSubTypes() {
-            scope.entitySubtypes.length = 0;
+            scope.entitySubtypes = [];
             var entitySubtypesPromise;
             if (scope.entityType == types.entityType.asset) {
                 entitySubtypesPromise = assetService.getAssetTypes();

@@ -307,24 +307,25 @@ CREATE TABLE IF NOT EXISTS thingsboard.relation (
 	from_type text,
 	to_id timeuuid,
 	to_type text,
+	relation_type_group text,
 	relation_type text,
 	additional_info text,
-	PRIMARY KEY ((from_id, from_type), relation_type, to_id, to_type)
-) WITH CLUSTERING ORDER BY ( relation_type ASC, to_id ASC, to_type ASC);
+	PRIMARY KEY ((from_id, from_type), relation_type_group, relation_type, to_id, to_type)
+) WITH CLUSTERING ORDER BY ( relation_type_group ASC, relation_type ASC, to_id ASC, to_type ASC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.relation_by_type_and_child_type AS
     SELECT *
     from thingsboard.relation
-    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
-    PRIMARY KEY ((from_id, from_type), relation_type, to_type, to_id)
-    WITH CLUSTERING ORDER BY ( relation_type ASC, to_type ASC, to_id DESC);
+    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type_group IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+    PRIMARY KEY ((from_id, from_type), relation_type_group, relation_type, to_type, to_id)
+    WITH CLUSTERING ORDER BY ( relation_type_group ASC, relation_type ASC, to_type ASC, to_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.reverse_relation AS
     SELECT *
     from thingsboard.relation
-    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
-    PRIMARY KEY ((to_id, to_type), relation_type, from_id, from_type)
-    WITH CLUSTERING ORDER BY ( relation_type ASC, from_id ASC, from_type ASC);
+    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type_group IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+    PRIMARY KEY ((to_id, to_type), relation_type_group, relation_type, from_id, from_type)
+    WITH CLUSTERING ORDER BY ( relation_type_group ASC, relation_type ASC, from_id ASC, from_type ASC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.widgets_bundle (
     id timeuuid,

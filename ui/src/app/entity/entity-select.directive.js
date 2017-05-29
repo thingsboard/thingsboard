@@ -29,7 +29,7 @@ export default function EntitySelect($compile, $templateCache) {
         element.html(template);
 
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
-        scope.model = null;
+        scope.model = {};
 
         scope.updateView = function () {
             if (!scope.disabled) {
@@ -50,11 +50,11 @@ export default function EntitySelect($compile, $templateCache) {
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
-                scope.model = {};
                 scope.model.entityType = value.entityType;
                 scope.model.entityId = value.id;
             } else {
-                scope.model = null;
+                scope.model.entityType = null;
+                scope.model.entityId = null;
             }
         }
 
