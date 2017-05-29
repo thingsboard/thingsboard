@@ -17,8 +17,10 @@ package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +50,16 @@ public interface DeviceDao extends Dao<Device> {
     List<Device> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
+     * Find devices by tenantId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    List<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
+
+    /**
      * Find devices by tenantId and devices Ids.
      *
      * @param tenantId the tenantId
@@ -67,6 +79,18 @@ public interface DeviceDao extends Dao<Device> {
     List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
 
     /**
+     * Find devices by tenantId, customerId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
+
+
+    /**
      * Find devices by tenantId, customerId and devices Ids.
      *
      * @param tenantId the tenantId
@@ -84,4 +108,11 @@ public interface DeviceDao extends Dao<Device> {
      * @return the optional device object
      */
     Optional<Device> findDevicesByTenantIdAndName(UUID tenantId, String name);
+
+    /**
+     * Find tenants device types.
+     *
+     * @return the list of tenant device type objects
+     */
+    ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync();
 }

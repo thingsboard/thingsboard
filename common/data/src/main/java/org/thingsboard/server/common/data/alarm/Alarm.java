@@ -15,12 +15,13 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -30,7 +31,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @Data
 @Builder
 @AllArgsConstructor
-public class Alarm extends BaseData<AlarmId> {
+public class Alarm extends BaseData<AlarmId> implements HasName {
 
     private TenantId tenantId;
     private String type;
@@ -52,4 +53,9 @@ public class Alarm extends BaseData<AlarmId> {
         super(id);
     }
 
+    @Override
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getName() {
+        return type;
+    }
 }

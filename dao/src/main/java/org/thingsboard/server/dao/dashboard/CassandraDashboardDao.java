@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
@@ -23,6 +24,7 @@ import org.thingsboard.server.dao.model.nosql.DashboardEntity;
 import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME;
 
 @Component
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class CassandraDashboardDao extends CassandraAbstractSearchTextDao<DashboardEntity, Dashboard> implements DashboardDao {
 
     @Override

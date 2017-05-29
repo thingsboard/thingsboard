@@ -126,6 +126,7 @@ export default class Subscription {
                         dataKey: dataKey,
                         dataIndex: dataIndex++
                     };
+                    legendKey.dataKey.hidden = false;
                     this.legendData.keys.push(legendKey);
                     var legendKeyData = {
                         min: null,
@@ -146,11 +147,11 @@ export default class Subscription {
             this.legendData.keys = this.ctx.$filter('orderBy')(this.legendData.keys, '+label');
             registration = this.ctx.$scope.$watch(
                 function() {
-                    return subscription.legendData.data;
+                    return subscription.legendData.keys;
                 },
                 function (newValue, oldValue) {
                     for(var i = 0; i < newValue.length; i++) {
-                        if(newValue[i].hidden != oldValue[i].hidden) {
+                        if(newValue[i].dataKey.hidden != oldValue[i].dataKey.hidden) {
                             subscription.updateDataVisibility(i);
                         }
                     }
@@ -307,7 +308,7 @@ export default class Subscription {
     }
 
     updateDataVisibility(index) {
-        var hidden = this.legendData.data[index].hidden;
+        var hidden = this.legendData.keys[index].dataKey.hidden;
         if (hidden) {
             this.hiddenData[index].data = this.data[index].data;
             this.data[index].data = [];
@@ -418,7 +419,7 @@ export default class Subscription {
         this.notifyDataLoaded();
         var update = true;
         var currentData;
-        if (this.displayLegend && this.legendData.data[datasourceIndex + dataKeyIndex].hidden) {
+        if (this.displayLegend && this.legendData.keys[datasourceIndex + dataKeyIndex].dataKey.hidden) {
             currentData = this.hiddenData[datasourceIndex + dataKeyIndex];
         } else {
             currentData = this.data[datasourceIndex + dataKeyIndex];
@@ -445,18 +446,21 @@ export default class Subscription {
     }
 
     updateLegend(dataIndex, data, apply) {
+        var dataKey = this.legendData.keys[dataIndex].dataKey;
+        var decimals = angular.isDefined(dataKey.decimals) ? dataKey.decimals : this.decimals;
+        var units = dataKey.units && dataKey.units.length ? dataKey.units : this.units;
         var legendKeyData = this.legendData.data[dataIndex];
         if (this.legendConfig.showMin) {
-            legendKeyData.min = this.ctx.widgetUtils.formatValue(calculateMin(data), this.decimals, this.units);
+            legendKeyData.min = this.ctx.widgetUtils.formatValue(calculateMin(data), decimals, units);
         }
         if (this.legendConfig.showMax) {
-            legendKeyData.max = this.ctx.widgetUtils.formatValue(calculateMax(data), this.decimals, this.units);
+            legendKeyData.max = this.ctx.widgetUtils.formatValue(calculateMax(data), decimals, units);
         }
         if (this.legendConfig.showAvg) {
-            legendKeyData.avg = this.ctx.widgetUtils.formatValue(calculateAvg(data), this.decimals, this.units);
+            legendKeyData.avg = this.ctx.widgetUtils.formatValue(calculateAvg(data), decimals, units);
         }
         if (this.legendConfig.showTotal) {
-            legendKeyData.total = this.ctx.widgetUtils.formatValue(calculateTotal(data), this.decimals, this.units);
+            legendKeyData.total = this.ctx.widgetUtils.formatValue(calculateTotal(data), decimals, units);
         }
         this.callbacks.legendDataUpdated(this, apply !== false);
     }

@@ -24,15 +24,19 @@ export default angular.module('thingsboard.itembuffer', [angularStorage])
     .name;
 
 /*@ngInject*/
-function ItemBuffer(bufferStore, types, dashboardUtils) {
+function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
 
     const WIDGET_ITEM = "widget_item";
+    const WIDGET_REFERENCE = "widget_reference";
 
     var service = {
         prepareWidgetItem: prepareWidgetItem,
         copyWidget: copyWidget,
+        copyWidgetReference: copyWidgetReference,
         hasWidget: hasWidget,
+        canPasteWidgetReference: canPasteWidgetReference,
         pasteWidget: pasteWidget,
+        pasteWidgetReference: pasteWidgetReference,
         addWidgetToDashboard: addWidgetToDashboard
     }
 
@@ -66,16 +70,42 @@ function ItemBuffer(bufferStore, types, dashboardUtils) {
         };
     }
 
-    function prepareWidgetItem(dashboard, widget) {
+    function getOriginalColumns(dashboard, sourceState, sourceLayout) {
+        var originalColumns = 24;
+        var gridSettings = null;
+        var state = dashboard.configuration.states[sourceState];
+        var layoutCount = Object.keys(state.layouts).length;
+        if (state) {
+            var layout = state.layouts[sourceLayout];
+            if (layout) {
+                gridSettings = layout.gridSettings;
+
+            }
+        }
+        if (gridSettings &&
+            gridSettings.columns) {
+            originalColumns = gridSettings.columns;
+        }
+        originalColumns = originalColumns * layoutCount;
+        return originalColumns;
+    }
+
+    function getOriginalSize(dashboard, sourceState, sourceLayout, widget) {
+        var layout = dashboard.configuration.states[sourceState].layouts[sourceLayout];
+        var widgetLayout = layout.widgets[widget.id];
+        return {
+            sizeX: widgetLayout.sizeX,
+            sizeY: widgetLayout.sizeY
+        }
+    }
+
+    function prepareWidgetItem(dashboard, sourceState, sourceLayout, widget) {
         var aliasesInfo = {
             datasourceAliases: {},
             targetDeviceAliases: {}
         };
-        var originalColumns = 24;
-        if (dashboard.configuration.gridSettings &&
-            dashboard.configuration.gridSettings.columns) {
-            originalColumns = dashboard.configuration.gridSettings.columns;
-        }
+        var originalColumns = getOriginalColumns(dashboard, sourceState, sourceLayout);
+        var originalSize = getOriginalSize(dashboard, sourceState, sourceLayout, widget);
         if (widget.config && dashboard.configuration
             && dashboard.configuration.entityAliases) {
             var entityAlias;
@@ -105,37 +135,113 @@ function ItemBuffer(bufferStore, types, dashboardUtils) {
         return {
             widget: widget,
             aliasesInfo: aliasesInfo,
+            originalSize: originalSize,
             originalColumns: originalColumns
-        }
+        };
     }
 
-    function copyWidget(dashboard, widget) {
-        var widgetItem = prepareWidgetItem(dashboard, widget);
+    function prepareWidgetReference(dashboard, sourceState, sourceLayout, widget) {
+        var originalColumns = getOriginalColumns(dashboard, sourceState, sourceLayout);
+        var originalSize = getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+
+        return {
+            dashboardId: dashboard.id.id,
+            sourceState: sourceState,
+            sourceLayout: sourceLayout,
+            widgetId: widget.id,
+            originalSize: originalSize,
+            originalColumns: originalColumns
+        };
+    }
+
+    function copyWidget(dashboard, sourceState, sourceLayout, widget) {
+        var widgetItem = prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
         bufferStore.set(WIDGET_ITEM, angular.toJson(widgetItem));
+    }
+
+    function copyWidgetReference(dashboard, sourceState, sourceLayout, widget) {
+        var widgetReference = prepareWidgetReference(dashboard, sourceState, sourceLayout, widget);
+        bufferStore.set(WIDGET_REFERENCE, angular.toJson(widgetReference));
     }
 
     function hasWidget() {
         return bufferStore.get(WIDGET_ITEM);
     }
 
-    function pasteWidget(targetDashboard, position, onAliasesUpdate) {
+    function canPasteWidgetReference(dashboard, state, layout) {
+        var widgetReferenceJson = bufferStore.get(WIDGET_REFERENCE);
+        if (widgetReferenceJson) {
+            var widgetReference = angular.fromJson(widgetReferenceJson);
+            if (widgetReference.dashboardId === dashboard.id.id) {
+                if ((widgetReference.sourceState != state || widgetReference.sourceLayout != layout)
+                    && dashboard.configuration.widgets[widgetReference.widgetId]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function pasteWidgetReference(targetDashboard, targetState, targetLayout, position) {
+        var deferred = $q.defer();
+        var widgetReferenceJson = bufferStore.get(WIDGET_REFERENCE);
+        if (widgetReferenceJson) {
+            var widgetReference = angular.fromJson(widgetReferenceJson);
+            var widget = targetDashboard.configuration.widgets[widgetReference.widgetId];
+            if (widget) {
+                var originalColumns = widgetReference.originalColumns;
+                var originalSize = widgetReference.originalSize;
+                var targetRow = -1;
+                var targetColumn = -1;
+                if (position) {
+                    targetRow = position.row;
+                    targetColumn = position.column;
+                }
+                addWidgetToDashboard(targetDashboard, targetState, targetLayout, widget, null,
+                    null, originalColumns, originalSize, targetRow, targetColumn).then(
+                    function () {
+                        deferred.resolve(widget);
+                    }
+                );
+            } else {
+                deferred.reject();
+            }
+        } else {
+            deferred.reject();
+        }
+        return deferred.promise;
+    }
+
+    function pasteWidget(targetDashboard, targetState, targetLayout, position, onAliasesUpdateFunction) {
+        var deferred = $q.defer();
         var widgetItemJson = bufferStore.get(WIDGET_ITEM);
         if (widgetItemJson) {
             var widgetItem = angular.fromJson(widgetItemJson);
             var widget = widgetItem.widget;
             var aliasesInfo = widgetItem.aliasesInfo;
             var originalColumns = widgetItem.originalColumns;
+            var originalSize = widgetItem.originalSize;
             var targetRow = -1;
             var targetColumn = -1;
             if (position) {
                 targetRow = position.row;
                 targetColumn = position.column;
             }
-            addWidgetToDashboard(targetDashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns, targetRow, targetColumn);
+            widget.id = utils.guid();
+            addWidgetToDashboard(targetDashboard, targetState, targetLayout, widget, aliasesInfo,
+                onAliasesUpdateFunction, originalColumns, originalSize, targetRow, targetColumn).then(
+                    function () {
+                        deferred.resolve(widget);
+                    }
+            );
+        } else {
+            deferred.reject();
         }
+        return deferred.promise;
     }
 
-    function addWidgetToDashboard(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns, row, column) {
+    function addWidgetToDashboard(dashboard, targetState, targetLayout, widget, aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, row, column) {
+        var deferred = $q.defer();
         var theDashboard;
         if (dashboard) {
             theDashboard = dashboard;
@@ -145,42 +251,28 @@ function ItemBuffer(bufferStore, types, dashboardUtils) {
 
         theDashboard = dashboardUtils.validateAndUpdateDashboard(theDashboard);
 
-        var newEntityAliases = updateAliases(theDashboard, widget, aliasesInfo);
-
-        var targetColumns = 24;
-        if (theDashboard.configuration.gridSettings &&
-            theDashboard.configuration.gridSettings.columns) {
-            targetColumns = theDashboard.configuration.gridSettings.columns;
+        var callAliasUpdateFunction = false;
+        if (aliasesInfo) {
+            var newEntityAliases = updateAliases(theDashboard, widget, aliasesInfo);
+            var aliasesUpdated = !angular.equals(newEntityAliases, theDashboard.configuration.entityAliases);
+            if (aliasesUpdated) {
+                theDashboard.configuration.entityAliases = newEntityAliases;
+                if (onAliasesUpdateFunction) {
+                    callAliasUpdateFunction = true;
+                }
+            }
         }
-        if (targetColumns != originalColumns) {
-            var ratio = targetColumns / originalColumns;
-            widget.sizeX *= ratio;
-            widget.sizeY *= ratio;
-        }
-        if (row > -1 && column > - 1) {
-            widget.row = row;
-            widget.col = column;
+        dashboardUtils.addWidgetToLayout(theDashboard, targetState, targetLayout, widget, originalColumns, originalSize, row, column);
+        if (callAliasUpdateFunction) {
+            onAliasesUpdateFunction().then(
+                function() {
+                    deferred.resolve(theDashboard);
+                }
+            );
         } else {
-            row = 0;
-            for (var w in theDashboard.configuration.widgets) {
-                var existingWidget = theDashboard.configuration.widgets[w];
-                var wRow = existingWidget.row ? existingWidget.row : 0;
-                var wSizeY = existingWidget.sizeY ? existingWidget.sizeY : 1;
-                var bottom = wRow + wSizeY;
-                row = Math.max(row, bottom);
-            }
-            widget.row = row;
-            widget.col = 0;
+            deferred.resolve(theDashboard);
         }
-        var aliasesUpdated = !angular.equals(newEntityAliases, theDashboard.configuration.entityAliases);
-        if (aliasesUpdated) {
-            theDashboard.configuration.entityAliases = newEntityAliases;
-            if (onAliasesUpdate) {
-                onAliasesUpdate();
-            }
-        }
-        theDashboard.configuration.widgets.push(widget);
-        return theDashboard;
+        return deferred.promise;
     }
 
     function updateAliases(dashboard, widget, aliasesInfo) {
@@ -242,6 +334,4 @@ function ItemBuffer(bufferStore, types, dashboardUtils) {
         }
         return newAlias;
     }
-
-
 }

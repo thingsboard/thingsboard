@@ -20,18 +20,23 @@ export default angular.module('thingsboard.api.entity', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function EntityService($http, $q, userService, deviceService,
+function EntityService($http, $q, $filter, $translate, $log, userService, deviceService,
                        assetService, tenantService, customerService,
-                       ruleService, pluginService, types, utils) {
+                       ruleService, pluginService, dashboardService, entityRelationService, attributeService, types, utils) {
     var service = {
         getEntity: getEntity,
         getEntities: getEntities,
         getEntitiesByNameFilter: getEntitiesByNameFilter,
-        entityName: entityName,
         processEntityAliases: processEntityAliases,
         getEntityKeys: getEntityKeys,
         checkEntityAlias: checkEntityAlias,
-        createDatasoucesFromSubscriptionsInfo: createDatasoucesFromSubscriptionsInfo
+        createDatasoucesFromSubscriptionsInfo: createDatasoucesFromSubscriptionsInfo,
+        getRelatedEntities: getRelatedEntities,
+        saveRelatedEntity: saveRelatedEntity,
+        getRelatedEntity: getRelatedEntity,
+        deleteRelatedEntity: deleteRelatedEntity,
+        moveEntity: moveEntity,
+        copyEntity: copyEntity
     };
 
     return service;
@@ -57,6 +62,15 @@ function EntityService($http, $q, userService, deviceService,
             case types.entityType.plugin:
                 promise = pluginService.getPlugin(entityId);
                 break;
+            case types.entityType.dashboard:
+                promise = dashboardService.getDashboardInfo(entityId);
+                break;
+            case types.entityType.user:
+                promise = userService.getUser(entityId);
+                break;
+            case types.entityType.alarm:
+                $log.error('Get Alarm Entity is not implemented!');
+                break;
         }
         return promise;
     }
@@ -64,14 +78,18 @@ function EntityService($http, $q, userService, deviceService,
     function getEntity(entityType, entityId, config) {
         var deferred = $q.defer();
         var promise = getEntityPromise(entityType, entityId, config);
-        promise.then(
-            function success(result) {
-                deferred.resolve(result);
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
+        if (promise) {
+            promise.then(
+                function success(result) {
+                    deferred.resolve(result);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } else {
+            deferred.reject();
+        }
         return deferred.promise;
     }
 
@@ -124,6 +142,15 @@ function EntityService($http, $q, userService, deviceService,
             case types.entityType.plugin:
                 promise = getEntitiesByIdsPromise(pluginService.getPlugin, entityIds);
                 break;
+            case types.entityType.dashboard:
+                promise = getEntitiesByIdsPromise(dashboardService.getDashboardInfo, entityIds);
+                break;
+            case types.entityType.user:
+                promise = getEntitiesByIdsPromise(userService.getUser, entityIds);
+                break;
+            case types.entityType.alarm:
+                $log.error('Get Alarm Entity is not implemented!');
+                break;
         }
         return promise;
     }
@@ -131,34 +158,38 @@ function EntityService($http, $q, userService, deviceService,
     function getEntities(entityType, entityIds, config) {
         var deferred = $q.defer();
         var promise = getEntitiesPromise(entityType, entityIds, config);
-        promise.then(
-            function success(result) {
-                deferred.resolve(result);
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
+        if (promise) {
+            promise.then(
+                function success(result) {
+                    deferred.resolve(result);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } else {
+            deferred.reject();
+        }
         return deferred.promise;
     }
 
-    function getEntitiesByPageLinkPromise(entityType, pageLink, config) {
+    function getEntitiesByPageLinkPromise(entityType, pageLink, config, subType) {
         var promise;
         var user = userService.getCurrentUser();
         var customerId = user.customerId;
         switch (entityType) {
             case types.entityType.device:
                 if (user.authority === 'CUSTOMER_USER') {
-                    promise = deviceService.getCustomerDevices(customerId, pageLink, false, config);
+                    promise = deviceService.getCustomerDevices(customerId, pageLink, false, config, subType);
                 } else {
-                    promise = deviceService.getTenantDevices(pageLink, false, config);
+                    promise = deviceService.getTenantDevices(pageLink, false, config, subType);
                 }
                 break;
             case types.entityType.asset:
                 if (user.authority === 'CUSTOMER_USER') {
-                    promise = assetService.getCustomerAssets(customerId, pageLink, false, config);
+                    promise = assetService.getCustomerAssets(customerId, pageLink, false, config, subType);
                 } else {
-                    promise = assetService.getTenantAssets(pageLink, false, config);
+                    promise = assetService.getTenantAssets(pageLink, false, config, subType);
                 }
                 break;
             case types.entityType.tenant:
@@ -173,48 +204,48 @@ function EntityService($http, $q, userService, deviceService,
             case types.entityType.plugin:
                 promise = pluginService.getAllPlugins(pageLink);
                 break;
+            case types.entityType.dashboard:
+                if (user.authority === 'CUSTOMER_USER') {
+                    promise = dashboardService.getCustomerDashboards(customerId, pageLink);
+                } else {
+                    promise = dashboardService.getTenantDashboards(pageLink);
+                }
+                break;
+            case types.entityType.user:
+                $log.error('Get User Entities is not implemented!');
+                break;
+            case types.entityType.alarm:
+                $log.error('Get Alarm Entities is not implemented!');
+                break;
         }
         return promise;
     }
 
-    function getEntitiesByNameFilter(entityType, entityNameFilter, limit, config) {
+    function getEntitiesByNameFilter(entityType, entityNameFilter, limit, config, subType) {
         var deferred = $q.defer();
         var pageLink = {limit: limit, textSearch: entityNameFilter};
-        var promise = getEntitiesByPageLinkPromise(entityType, pageLink, config);
-        promise.then(
-            function success(result) {
-                if (result.data && result.data.length > 0) {
-                    deferred.resolve(result.data);
-                } else {
+        var promise = getEntitiesByPageLinkPromise(entityType, pageLink, config, subType);
+        if (promise) {
+            promise.then(
+                function success(result) {
+                    if (result.data && result.data.length > 0) {
+                        deferred.resolve(result.data);
+                    } else {
+                        deferred.resolve(null);
+                    }
+                },
+                function fail() {
                     deferred.resolve(null);
                 }
-            },
-            function fail() {
-                deferred.resolve(null);
-            }
-        );
+            );
+        } else {
+            deferred.resolve(null);
+        }
         return deferred.promise;
     }
 
-    function entityName(entityType, entity) {
-        var name = '';
-        switch (entityType) {
-            case types.entityType.device:
-            case types.entityType.asset:
-            case types.entityType.rule:
-            case types.entityType.plugin:
-                name = entity.name;
-                break;
-            case types.entityType.tenant:
-            case types.entityType.customer:
-                name = entity.title;
-                break;
-        }
-        return name;
-    }
-
     function entityToEntityInfo(entityType, entity) {
-        return { name: entityName(entityType, entity), entityType: entityType, id: entity.id.id };
+        return { name: entity.name, entityType: entityType, id: entity.id.id };
     }
 
     function entitiesToEntitiesInfo(entityType, entities) {
@@ -471,6 +502,323 @@ function EntityService($http, $q, userService, deviceService,
             var keyInfo = keyInfos[i];
             var dataKey = utils.createKey(keyInfo, type, datasources);
             datasource.dataKeys.push(dataKey);
+        }
+    }
+
+    function getRelatedEntities(rootEntityId, entityType, entitySubTypes, maxLevel, keys, typeTranslatePrefix) {
+        var deferred = $q.defer();
+
+        var entitySearchQuery = constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel);
+        if (!entitySearchQuery) {
+            deferred.reject();
+        } else {
+            var findByQueryPromise;
+            if (entityType == types.entityType.asset) {
+                findByQueryPromise = assetService.findByQuery(entitySearchQuery, true, {ignoreLoading: true});
+            } else if (entityType == types.entityType.device) {
+                findByQueryPromise = deviceService.findByQuery(entitySearchQuery, true, {ignoreLoading: true});
+            }
+            findByQueryPromise.then(
+                function success(entities) {
+                    var entitiesTasks = [];
+                    for (var i=0;i<entities.length;i++) {
+                        var entity = entities[i];
+                        var entityPromise = constructEntity(entity, keys, typeTranslatePrefix);
+                        entitiesTasks.push(entityPromise);
+                    }
+                    $q.all(entitiesTasks).then(
+                        function success(entities) {
+                            deferred.resolve(entities);
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    function saveRelatedEntity(relatedEntity, parentEntityId, keys) {
+        var deferred = $q.defer();
+        if (relatedEntity.id.id) {
+            updateRelatedEntity(relatedEntity, keys, deferred);
+        } else {
+            addRelatedEntity(relatedEntity, parentEntityId, keys, deferred);
+        }
+        return deferred.promise;
+    }
+
+    function getRelatedEntity(entityId, keys, typeTranslatePrefix) {
+        var deferred = $q.defer();
+        getEntityPromise(entityId.entityType, entityId.id, {ignoreLoading: true}).then(
+            function success(entity) {
+                constructEntity(entity, keys, typeTranslatePrefix).then(
+                    function success(relatedEntity) {
+                        deferred.resolve(relatedEntity);
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function deleteEntityPromise(entityId) {
+        if (entityId.entityType == types.entityType.asset) {
+            return assetService.deleteAsset(entityId.id);
+        } else if (entityId.entityType == types.entityType.device) {
+            return deviceService.deleteDevice(entityId.id);
+        }
+    }
+
+    function deleteRelatedEntity(entityId, deleteRelatedEntityTypes) {
+        var deferred = $q.defer();
+        if (deleteRelatedEntityTypes) {
+            var deleteRelatedEntitiesTasks = [];
+            entityRelationService.findByFrom(entityId.id, entityId.entityType).then(
+                function success(entityRelations) {
+                    for (var i=0;i<entityRelations.length;i++) {
+                        var entityRelation = entityRelations[i];
+                        var relationEntityId = entityRelation.to;
+                        if (deleteRelatedEntityTypes.length == 0 || deleteRelatedEntityTypes.indexOf(relationEntityId.entityType) > -1) {
+                            var deleteRelatedEntityPromise = deleteRelatedEntity(relationEntityId, deleteRelatedEntityTypes);
+                            deleteRelatedEntitiesTasks.push(deleteRelatedEntityPromise);
+                        }
+                    }
+                    deleteRelatedEntitiesTasks.push(deleteEntityPromise(entityId));
+                    $q.all(deleteRelatedEntitiesTasks).then(
+                        function success() {
+                            deferred.resolve();
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            )
+        } else {
+            deleteEntityPromise(entityId).then(
+                function success() {
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    function moveEntity(entityId, prevParentId, targetParentId) {
+        var deferred = $q.defer();
+        entityRelationService.deleteRelation(prevParentId.id, prevParentId.entityType,
+            types.entityRelationType.contains, entityId.id, entityId.entityType).then(
+            function success() {
+                var relation = {
+                    from: targetParentId,
+                    to: entityId,
+                    type: types.entityRelationType.contains
+                };
+                entityRelationService.saveRelation(relation).then(
+                    function success() {
+                        deferred.resolve();
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function copyEntity(entity, targetParentId, keys) {
+        var deferred = $q.defer();
+        if (!entity.id && !entity.id.id) {
+            deferred.reject();
+        } else {
+            getRelatedEntity(entity.id, keys).then(
+                function success(relatedEntity) {
+                    delete relatedEntity.id.id;
+                    relatedEntity.name = entity.name;
+                    saveRelatedEntity(relatedEntity, targetParentId, keys).then(
+                        function success(savedEntity) {
+                            deferred.resolve(savedEntity);
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    function saveEntityPromise(entity) {
+        var entityType = entity.id.entityType;
+        if (!entity.id.id) {
+            delete entity.id;
+        }
+        if (entityType == types.entityType.asset) {
+            return assetService.saveAsset(entity);
+        } else if (entityType == types.entityType.device) {
+            return deviceService.saveDevice(entity);
+        }
+    }
+
+    function addRelatedEntity(relatedEntity, parentEntityId, keys, deferred) {
+        var entity = {};
+        entity.id = relatedEntity.id;
+        entity.name = relatedEntity.name;
+        entity.type = relatedEntity.type;
+        saveEntityPromise(entity).then(
+            function success(entity) {
+                relatedEntity.id = entity.id;
+                var relation = {
+                    from: parentEntityId,
+                    to: relatedEntity.id,
+                    type: types.entityRelationType.contains
+                };
+                entityRelationService.saveRelation(relation).then(
+                    function success() {
+                        updateEntity(entity, relatedEntity, keys, deferred);
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+    }
+
+    function updateRelatedEntity(relatedEntity, keys, deferred) {
+        getEntityPromise(relatedEntity.id.entityType, relatedEntity.id.id, {ignoreLoading: true}).then(
+            function success(entity) {
+                updateEntity(entity, relatedEntity, keys, deferred);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+    }
+
+    function updateEntity(entity, relatedEntity, keys, deferred) {
+        if (!angular.equals(entity.name, relatedEntity.name) || !angular.equals(entity.type, relatedEntity.type)) {
+            entity.name = relatedEntity.name;
+            entity.type = relatedEntity.type;
+            saveEntityPromise(entity).then(
+                function success (entity) {
+                    updateEntityAttributes(entity, relatedEntity, keys, deferred);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } else {
+            updateEntityAttributes(entity, relatedEntity, keys, deferred);
+        }
+    }
+
+    function updateEntityAttributes(entity, relatedEntity, keys, deferred) {
+        var attributes = [];
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            attributes.push({key: key, value: relatedEntity[key]});
+        }
+        attributeService.saveEntityAttributes(entity.id.entityType, entity.id.id, types.attributesScope.server.value, attributes)
+            .then(
+                function success() {
+                    deferred.resolve(relatedEntity);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+    }
+
+    function constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel) {
+
+        var searchQuery = {
+            parameters: {
+                rootId: rootEntityId.id,
+                rootType: rootEntityId.entityType,
+                direction: types.entitySearchDirection.from
+            },
+            relationType: types.entityRelationType.contains
+        };
+
+        if (maxLevel) {
+            searchQuery.parameters.maxLevel = maxLevel;
+        } else {
+            searchQuery.parameters.maxLevel = 1;
+        }
+
+        if (entityType == types.entityType.asset) {
+            searchQuery.assetTypes = entitySubTypes;
+        } else if (entityType == types.entityType.device) {
+            searchQuery.deviceTypes = entitySubTypes;
+        } else {
+            return null; //Not supported
+        }
+
+        return searchQuery;
+    }
+
+    function constructEntity(entity, keys, typeTranslatePrefix) {
+        var deferred = $q.defer();
+        if (typeTranslatePrefix) {
+            entity.typeName = $translate.instant(typeTranslatePrefix+'.'+entity.type);
+        } else {
+            entity.typeName = entity.type;
+        }
+        attributeService.getEntityAttributesValues(entity.id.entityType, entity.id.id,
+            types.attributesScope.server.value, keys.join(','),
+            {ignoreLoading: true}).then(
+            function success(attributes) {
+                if (attributes && attributes.length > 0) {
+                    for (var i=0;i<keys.length;i++) {
+                        var key = keys[i];
+                        entity[key] = getAttributeValue(attributes, key);
+                    }
+                }
+                deferred.resolve(entity);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function getAttributeValue(attributes, key) {
+        var foundAttributes = $filter('filter')(attributes, {key: key}, true);
+        if (foundAttributes.length > 0) {
+            return foundAttributes[0].value;
+        } else {
+            return null;
         }
     }
 

@@ -76,6 +76,8 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
                 scope.model.name = ngModelCtrl.$viewValue.name;
                 scope.model.label = ngModelCtrl.$viewValue.label;
                 scope.model.color = ngModelCtrl.$viewValue.color;
+                scope.model.units = ngModelCtrl.$viewValue.units;
+                scope.model.decimals = ngModelCtrl.$viewValue.decimals;
                 scope.model.funcBody = ngModelCtrl.$viewValue.funcBody;
                 scope.model.postFuncBody = ngModelCtrl.$viewValue.postFuncBody;
                 scope.model.usePostProcessing = scope.model.postFuncBody ? true : false;
@@ -97,6 +99,8 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
                 value.name = scope.model.name;
                 value.label = scope.model.label;
                 value.color = scope.model.color;
+                value.units = scope.model.units;
+                value.decimals = scope.model.decimals;
                 value.funcBody = scope.model.funcBody;
                 if (!scope.model.postFuncBody) {
                     delete value.postFuncBody;

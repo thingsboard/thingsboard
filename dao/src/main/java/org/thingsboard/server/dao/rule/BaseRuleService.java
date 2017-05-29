@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DatabaseException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -52,7 +52,7 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @Slf4j
-public class BaseRuleService extends BaseEntityService implements RuleService {
+public class BaseRuleService extends AbstractEntityService implements RuleService {
 
     private final TenantId systemTenantId = new TenantId(NULL_UUID);
 
@@ -243,7 +243,6 @@ public class BaseRuleService extends BaseEntityService implements RuleService {
     @Override
     public void activateRuleById(RuleId ruleId) {
         updateLifeCycleState(ruleId, ComponentLifecycleState.ACTIVE);
-
     }
 
     @Override

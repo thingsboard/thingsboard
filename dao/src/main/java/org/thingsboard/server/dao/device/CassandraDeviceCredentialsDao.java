@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.device;
 
 import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
@@ -31,6 +32,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class CassandraDeviceCredentialsDao extends CassandraAbstractModelDao<DeviceCredentialsEntity, DeviceCredentials> implements DeviceCredentialsDao {
 
     @Override

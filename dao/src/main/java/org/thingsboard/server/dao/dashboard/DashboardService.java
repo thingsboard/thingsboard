@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -26,6 +27,12 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 public interface DashboardService {
     
     Dashboard findDashboardById(DashboardId dashboardId);
+
+    ListenableFuture<Dashboard> findDashboardByIdAsync(DashboardId dashboardId);
+
+    DashboardInfo findDashboardInfoById(DashboardId dashboardId);
+
+    ListenableFuture<DashboardInfo> findDashboardInfoByIdAsync(DashboardId dashboardId);
 
     Dashboard saveDashboard(Dashboard dashboard);
 

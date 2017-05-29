@@ -24,6 +24,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
@@ -31,6 +32,8 @@ import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
@@ -63,5 +66,17 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                 alarmRepository.findLatestByOriginatorAndType(tenantId.getId(), originator.getId(),
                 originator.getEntityType().ordinal(), type)));
         return listenableFuture;
+    }
+
+    @Override
+    public ListenableFuture<Alarm> findAlarmByIdAsync(UUID key) {
+        //TODO: Implement
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<List<Alarm>> findAlarms(AlarmQuery query) {
+        //TODO: Implement
+        return null;
     }
 }

@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
@@ -97,5 +98,23 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     public Optional<Device> findDevicesByTenantIdAndName(UUID tenantId, String name) {
         Device device = DaoUtil.getData(deviceRepository.findByTenantIdAndName(tenantId, name));
         return Optional.ofNullable(device);
+    }
+
+    @Override
+    public List<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
+        //TODO
+        return null;
+    }
+
+    @Override
+    public List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
+        //TODO
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync() {
+        //TODO
+        return null;
     }
 }

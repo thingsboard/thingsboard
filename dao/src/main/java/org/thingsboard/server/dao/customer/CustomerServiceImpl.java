@@ -16,9 +16,11 @@
 package org.thingsboard.server.dao.customer;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,7 +36,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -42,27 +44,28 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
+
 @Service
 @Slf4j
-public class CustomerServiceImpl extends BaseEntityService implements CustomerService {
+public class CustomerServiceImpl extends AbstractEntityService implements CustomerService {
 
     private static final String PUBLIC_CUSTOMER_TITLE = "Public";
 
     @Autowired
     private CustomerDao customerDao;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private TenantDao tenantDao;
-    
+
     @Autowired
     private DeviceService deviceService;
-    
+
     @Autowired
     private DashboardService dashboardService;
-    
+
     @Override
     public Customer findCustomerById(CustomerId customerId) {
         log.trace("Executing findCustomerById [{}]", customerId);
@@ -134,7 +137,7 @@ public class CustomerServiceImpl extends BaseEntityService implements CustomerSe
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         customersByTenantRemover.removeEntitites(tenantId);
     }
-    
+
     private DataValidator<Customer> customerValidator =
             new DataValidator<Customer>() {
 
@@ -178,19 +181,19 @@ public class CustomerServiceImpl extends BaseEntityService implements CustomerSe
                         }
                     }
                 }
-    };
+            };
 
     private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
             new PaginatedRemover<TenantId, Customer>() {
-        
-        @Override
-        protected List<Customer> findEntities(TenantId id, TextPageLink pageLink) {
-            return customerDao.findCustomersByTenantId(id.getId(), pageLink);
-        }
 
-        @Override
-        protected void removeEntity(Customer entity) {
-            deleteCustomer(new CustomerId(entity.getUuidId()));
-        }
-    };
+                @Override
+                protected List<Customer> findEntities(TenantId id, TextPageLink pageLink) {
+                    return customerDao.findCustomersByTenantId(id.getId(), pageLink);
+                }
+
+                @Override
+                protected void removeEntity(Customer entity) {
+                    deleteCustomer(new CustomerId(entity.getUuidId()));
+                }
+            };
 }

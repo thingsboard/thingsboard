@@ -17,24 +17,32 @@
 version: '2'
 
 services:
-  thingsboard:
-    image: "thingsboard/application:1.2.2"
+  tb:
+    image: "thingsboard/application:1.2.4"
     ports:
       - "8080:8080"
       - "1883:1883"
       - "5683:5683/udp"
     env_file:
-      - thingsboard.env
-    entrypoint: ./run_thingsboard.sh
-  thingsboard-db-schema:
-    image: "thingsboard/thingsboard-db-schema:1.2.2"
-    env_file:
-      - thingsboard-db-schema.env
-    entrypoint: ./install_schema.sh
-  db:
+      - tb.env
+    entrypoint: ./run-application.sh
+  tb-cassandra-schema:
+    image: "thingsboard/tb-cassandra-schema:1.2.4"
+    environment:
+      - CREATE_SCHEMA=${CREATE_SCHEMA}
+      - ADD_SYSTEM_DATA=${ADD_SYSTEM_DATA}
+      - ADD_DEMO_DATA=${ADD_DEMO_DATA}
+      - CASSANDRA_URL=${CASSANDRA_URL}
+    entrypoint: ./install-schema.sh
+  cassandra:
     image: "cassandra:3.9"
+    ports:
+      - "9042"
+      - "9160"
     volumes:
       - "${CASSANDRA_DATA_DIR}:/var/lib/cassandra"
   zk:
     image: "zookeeper:3.4.9"
+    ports:
+      - "2181"
     restart: always

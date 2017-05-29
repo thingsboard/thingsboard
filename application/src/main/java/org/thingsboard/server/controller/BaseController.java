@@ -23,6 +23,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -34,6 +36,7 @@ import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -80,6 +83,9 @@ public abstract class BaseController {
 
     @Autowired
     protected AssetService assetService;
+
+    @Autowired
+    protected AlarmService alarmService;
 
     @Autowired
     protected DeviceCredentialsService deviceCredentialsService;
@@ -305,7 +311,7 @@ public abstract class BaseController {
         }
     }
 
-    private void checkDevice(Device device) throws ThingsboardException {
+    protected void checkDevice(Device device) throws ThingsboardException {
         checkNotNull(device);
         checkTenantId(device.getTenantId());
         if (device.getCustomerId() != null && !device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
@@ -330,6 +336,22 @@ public abstract class BaseController {
         if (asset.getCustomerId() != null && !asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
             checkCustomerId(asset.getCustomerId());
         }
+    }
+
+    Alarm checkAlarmId(AlarmId alarmId) throws ThingsboardException {
+        try {
+            validateId(alarmId, "Incorrect alarmId " + alarmId);
+            Alarm alarm = alarmService.findAlarmByIdAsync(alarmId).get();
+            checkAlarm(alarm);
+            return alarm;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    protected void checkAlarm(Alarm alarm) throws ThingsboardException {
+        checkNotNull(alarm);
+        checkTenantId(alarm.getTenantId());
     }
 
     WidgetsBundle checkWidgetsBundleId(WidgetsBundleId widgetsBundleId, boolean modify) throws ThingsboardException {
@@ -378,14 +400,26 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             Dashboard dashboard = dashboardService.findDashboardById(dashboardId);
-            checkDashboard(dashboard);
+            checkDashboard(dashboard, true);
             return dashboard;
         } catch (Exception e) {
             throw handleException(e, false);
         }
     }
 
-    private void checkDashboard(Dashboard dashboard) throws ThingsboardException {
+    DashboardInfo checkDashboardInfoId(DashboardId dashboardId) throws ThingsboardException {
+        try {
+            validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+            DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(dashboardId);
+            SecurityUser authUser = getCurrentUser();
+            checkDashboard(dashboardInfo, authUser.getAuthority() != Authority.SYS_ADMIN);
+            return dashboardInfo;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    private void checkDashboard(DashboardInfo dashboard, boolean checkCustomerId) throws ThingsboardException {
         checkNotNull(dashboard);
         checkTenantId(dashboard.getTenantId());
         SecurityUser authUser = getCurrentUser();
@@ -395,7 +429,8 @@ public abstract class BaseController {
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
         }
-        if (dashboard.getCustomerId() != null && !dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+        if (checkCustomerId &&
+                dashboard.getCustomerId() != null && !dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
             checkCustomerId(dashboard.getCustomerId());
         }
     }

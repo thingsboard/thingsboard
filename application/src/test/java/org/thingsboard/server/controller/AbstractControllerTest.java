@@ -98,13 +98,15 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @IntegrationTest("server.port:0")
 public abstract class AbstractControllerTest {
 
+    protected static final String TEST_TENANT_NAME = "TEST TENANT";
+
     protected static final String SYS_ADMIN_EMAIL = "sysadmin@thingsboard.org";
     private static final String SYS_ADMIN_PASSWORD = "sysadmin";
     
-    protected static final String TENANT_ADMIN_EMAIL = "tenant@thingsboard.org";
+    protected static final String TENANT_ADMIN_EMAIL = "testtenant@thingsboard.org";
     private static final String TENANT_ADMIN_PASSWORD = "tenant";
 
-    protected static final String CUSTOMER_USER_EMAIL = "customer@thingsboard.org";
+    protected static final String CUSTOMER_USER_EMAIL = "testcustomer@thingsboard.org";
     private static final String CUSTOMER_USER_PASSWORD = "customer";
     
     protected MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
@@ -147,7 +149,7 @@ public abstract class AbstractControllerTest {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
-        tenant.setTitle("Tenant");
+        tenant.setTitle(TEST_TENANT_NAME);
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();

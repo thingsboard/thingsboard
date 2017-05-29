@@ -45,7 +45,6 @@ public class ServiceCacheConfiguration {
     @Value("${cache.device_credentials.time_to_live}")
     private Integer cacheDeviceCredentialsTTL;
 
-
     @Value("${zk.enabled}")
     private boolean zkEnabled;
     @Value("${zk.url}")

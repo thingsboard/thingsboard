@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.rule;
 
 import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -36,6 +37,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class CassandraBaseRuleDao extends CassandraAbstractSearchTextDao<RuleMetaDataEntity, RuleMetaData> implements RuleDao {
 
     @Override

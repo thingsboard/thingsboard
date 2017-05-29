@@ -41,7 +41,7 @@ import java.security.cert.X509Certificate;
  */
 @Slf4j
 @Component("MqttSslHandlerProvider")
-@ConditionalOnProperty(prefix = "mqtt.ssl", value = "key-store", havingValue = "", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "mqtt.ssl", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class MqttSslHandlerProvider {
 
     public static final String TLS = "TLS";

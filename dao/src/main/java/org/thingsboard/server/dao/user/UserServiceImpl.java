@@ -15,6 +15,15 @@
  */
 package org.thingsboard.server.dao.user;
 
+import static org.thingsboard.server.dao.DaoUtil.getData;
+import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
+import static org.thingsboard.server.dao.service.Validator.validateString;
+
+import java.util.List;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,7 +40,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -45,7 +54,7 @@ import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
-public class UserServiceImpl extends BaseEntityService implements UserService {
+public class UserServiceImpl extends AbstractEntityService implements UserService {
 
     private static final int DEFAULT_TOKEN_LENGTH = 30;
 
@@ -74,6 +83,13 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		validateId(userId, "Incorrect userId " + userId);
 		return userDao.findById(userId.getId());
 	}
+
+    @Override
+    public ListenableFuture<User> findUserByIdAsync(UserId userId) {
+        log.trace("Executing findUserByIdAsync [{}]", userId);
+        validateId(userId, "Incorrect userId " + userId);
+        return userDao.findByIdAsync(userId.getId());
+    }
 
     @Override
     public User saveUser(User user) {

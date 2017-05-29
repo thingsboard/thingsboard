@@ -15,16 +15,25 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.mapping.Result;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
 import org.thingsboard.server.dao.model.nosql.DeviceEntity;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -32,6 +41,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEntity, Device> implements DeviceDao {
 
     @Override
@@ -51,6 +61,16 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
                 Collections.singletonList(eq(DEVICE_TENANT_ID_PROPERTY, tenantId)), pageLink);
 
         log.trace("Found devices [{}] by tenantId [{}] and pageLink [{}]", deviceEntities, tenantId, pageLink);
+        return DaoUtil.convertDataList(deviceEntities);
+    }
+
+    @Override
+    public List<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
+        log.debug("Try to find devices by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
+                        eq(DEVICE_TENANT_ID_PROPERTY, tenantId)), pageLink);
+        log.trace("Found devices [{}] by tenantId [{}], type [{}] and pageLink [{}]", deviceEntities, tenantId, type, pageLink);
         return DaoUtil.convertDataList(deviceEntities);
     }
 
@@ -77,6 +97,19 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     }
 
     @Override
+    public List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
+        log.debug("Try to find devices by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
+                        eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
+                        eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
+                pageLink);
+
+        log.trace("Found devices [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, type, pageLink);
+        return DaoUtil.convertDataList(deviceEntities);
+    }
+
+    @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds) {
         log.debug("Try to find devices by tenantId [{}], customerId [{}] and device Ids [{}]", tenantId, customerId, deviceIds);
         Select select = select().from(getColumnFamilyName());
@@ -94,6 +127,39 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(DEVICE_NAME_PROPERTY, deviceName));
         return Optional.ofNullable(DaoUtil.getData(findOneByStatement(query)));
+    }
+
+    @Override
+    public ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync() {
+        Select statement = select().distinct().column(DEVICE_TYPE_PROPERTY).column(DEVICE_TENANT_ID_PROPERTY).from(DEVICE_TYPES_BY_TENANT_VIEW_NAME);
+        statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+        ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+        ListenableFuture<List<TenantDeviceTypeEntity>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<TenantDeviceTypeEntity>>() {
+            @Nullable
+            @Override
+            public List<TenantDeviceTypeEntity> apply(@Nullable ResultSet resultSet) {
+                Result<TenantDeviceTypeEntity> result = cluster.getMapper(TenantDeviceTypeEntity.class).map(resultSet);
+                if (result != null) {
+                    return result.all();
+                } else {
+                    return Collections.emptyList();
+                }
+            }
+        });
+        return Futures.transform(result, new Function<List<TenantDeviceTypeEntity>, List<TenantDeviceType>>() {
+            @Nullable
+            @Override
+            public List<TenantDeviceType> apply(@Nullable List<TenantDeviceTypeEntity> entityList) {
+                List<TenantDeviceType> list = Collections.emptyList();
+                if (entityList != null && !entityList.isEmpty()) {
+                    list = new ArrayList<>();
+                    for (TenantDeviceTypeEntity object : entityList) {
+                        list.add(object.toTenantDeviceType());
+                    }
+                }
+                return list;
+            }
+        });
     }
 
 }

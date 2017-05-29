@@ -19,10 +19,22 @@ export default angular.module('thingsboard.dashboardUtils', [])
     .name;
 
 /*@ngInject*/
-function DashboardUtils(types, timeService) {
+function DashboardUtils(types, utils, timeService) {
 
     var service = {
-        validateAndUpdateDashboard: validateAndUpdateDashboard
+        validateAndUpdateDashboard: validateAndUpdateDashboard,
+        getRootStateId: getRootStateId,
+        createSingleWidgetDashboard: createSingleWidgetDashboard,
+        getStateLayoutsData: getStateLayoutsData,
+        createDefaultState: createDefaultState,
+        createDefaultLayoutData: createDefaultLayoutData,
+        setLayouts: setLayouts,
+        updateLayoutSettings: updateLayoutSettings,
+        addWidgetToLayout: addWidgetToLayout,
+        removeWidgetFromLayout: removeWidgetFromLayout,
+        isSingleLayoutDashboard: isSingleLayoutDashboard,
+        removeUnusedWidgets: removeUnusedWidgets,
+        getWidgetsArray: getWidgetsArray
     };
 
     return service;
@@ -69,39 +81,358 @@ function DashboardUtils(types, timeService) {
             widget.config.datasources = [];
         }
         widget.config.datasources.forEach(function(datasource) {
-             if (datasource.type === 'device') {
-                 datasource.type = types.datasourceType.entity;
-             }
-             if (datasource.deviceAliasId) {
-                 datasource.entityAliasId = datasource.deviceAliasId;
-                 delete datasource.deviceAliasId;
-             }
+            if (datasource.type === 'device') {
+                datasource.type = types.datasourceType.entity;
+            }
+            if (datasource.deviceAliasId) {
+                datasource.entityAliasId = datasource.deviceAliasId;
+                delete datasource.deviceAliasId;
+            }
         });
+        return widget;
+    }
+
+    function createDefaultLayoutData() {
+        return {
+            widgets: {},
+            gridSettings: {
+                backgroundColor: '#eeeeee',
+                color: 'rgba(0,0,0,0.870588)',
+                columns: 24,
+                margins: [10, 10],
+                backgroundSizeMode: '100%'
+            }
+        };
+    }
+
+    function createDefaultLayouts() {
+        return {
+            'main': createDefaultLayoutData()
+        };
+    }
+
+    function createDefaultState(name, root) {
+        return {
+            name: name,
+            root: root,
+            layouts: createDefaultLayouts()
+        }
     }
 
     function validateAndUpdateDashboard(dashboard) {
         if (!dashboard.configuration) {
-            dashboard.configuration = {
-                widgets: [],
-                entityAliases: {}
-            };
+            dashboard.configuration = {};
         }
         if (angular.isUndefined(dashboard.configuration.widgets)) {
-            dashboard.configuration.widgets = [];
+            dashboard.configuration.widgets = {};
+        } else if (angular.isArray(dashboard.configuration.widgets)) {
+            var widgetsMap = {};
+            dashboard.configuration.widgets.forEach(function (widget) {
+                if (!widget.id) {
+                    widget.id = utils.guid();
+                }
+                widgetsMap[widget.id] = validateAndUpdateWidget(widget);
+            });
+            dashboard.configuration.widgets = widgetsMap;
         }
-        dashboard.configuration.widgets.forEach(function(widget) {
-            validateAndUpdateWidget(widget);
-        });
-        if (angular.isUndefined(dashboard.configuration.timewindow)) {
-            dashboard.configuration.timewindow = timeService.defaultTimewindow();
-        }
-        if (angular.isDefined(dashboard.configuration.gridSettings)) {
-            if (angular.isDefined(dashboard.configuration.gridSettings.showDevicesSelect)) {
-                dashboard.configuration.gridSettings.showEntitiesSelect = dashboard.configuration.gridSettings.showDevicesSelect;
-                delete dashboard.configuration.gridSettings.showDevicesSelect;
+        if (angular.isUndefined(dashboard.configuration.states)) {
+            dashboard.configuration.states = {
+                'default': createDefaultState('Default', true)
+            };
+
+            var mainLayout = dashboard.configuration.states['default'].layouts['main'];
+            for (var id in dashboard.configuration.widgets) {
+                var widget = dashboard.configuration.widgets[id];
+                mainLayout.widgets[id] = {
+                    sizeX: widget.sizeX,
+                    sizeY: widget.sizeY,
+                    row: widget.row,
+                    col: widget.col,
+                };
+            }
+        } else {
+            var states = dashboard.configuration.states;
+            var rootFound = false;
+            for (var stateId in states) {
+                var state = states[stateId];
+                if (angular.isUndefined(state.root)) {
+                    state.root = false;
+                } else if (state.root) {
+                    rootFound = true;
+                }
+            }
+            if (!rootFound) {
+                var firstStateId = Object.keys(states)[0];
+                states[firstStateId].root = true;
             }
         }
         dashboard.configuration = validateAndUpdateEntityAliases(dashboard.configuration);
+
+        if (angular.isUndefined(dashboard.configuration.timewindow)) {
+            dashboard.configuration.timewindow = timeService.defaultTimewindow();
+        }
+        if (angular.isUndefined(dashboard.configuration.settings)) {
+            dashboard.configuration.settings = {};
+            dashboard.configuration.settings.stateControllerId = 'default';
+            dashboard.configuration.settings.showTitle = true;
+            dashboard.configuration.settings.showDashboardsSelect = true;
+            dashboard.configuration.settings.showEntitiesSelect = true;
+            dashboard.configuration.settings.showDashboardTimewindow = true;
+            dashboard.configuration.settings.showDashboardExport = true;
+            dashboard.configuration.settings.toolbarAlwaysOpen = false;
+        } else {
+            if (angular.isUndefined(dashboard.configuration.settings.stateControllerId)) {
+                dashboard.configuration.settings.stateControllerId = 'default';
+            }
+        }
+        if (angular.isDefined(dashboard.configuration.gridSettings)) {
+            var gridSettings = dashboard.configuration.gridSettings;
+            if (angular.isDefined(gridSettings.showTitle)) {
+                dashboard.configuration.settings.showTitle = gridSettings.showTitle;
+                delete gridSettings.showTitle;
+            }
+            if (angular.isDefined(gridSettings.titleColor)) {
+                dashboard.configuration.settings.titleColor = gridSettings.titleColor;
+                delete gridSettings.titleColor;
+            }
+            if (angular.isDefined(gridSettings.showDevicesSelect)) {
+                dashboard.configuration.settings.showEntitiesSelect = gridSettings.showDevicesSelect;
+                delete gridSettings.showDevicesSelect;
+            }
+            if (angular.isDefined(gridSettings.showEntitiesSelect)) {
+                dashboard.configuration.settings.showEntitiesSelect = gridSettings.showEntitiesSelect;
+                delete gridSettings.showEntitiesSelect;
+            }
+            if (angular.isDefined(gridSettings.showDashboardTimewindow)) {
+                dashboard.configuration.settings.showDashboardTimewindow = gridSettings.showDashboardTimewindow;
+                delete gridSettings.showDashboardTimewindow;
+            }
+            if (angular.isDefined(gridSettings.showDashboardExport)) {
+                dashboard.configuration.settings.showDashboardExport = gridSettings.showDashboardExport;
+                delete gridSettings.showDashboardExport;
+            }
+            dashboard.configuration.states['default'].layouts['main'].gridSettings = gridSettings;
+            delete dashboard.configuration.gridSettings;
+        }
         return dashboard;
+    }
+
+    function getRootStateId(states) {
+        for (var stateId in states) {
+            var state = states[stateId];
+            if (state.root) {
+                return stateId;
+            }
+        }
+        return Object.keys(states)[0];
+    }
+
+    function createSingleWidgetDashboard(widget) {
+        if (!widget.id) {
+            widget.id = utils.guid();
+        }
+        var dashboard = {};
+        dashboard = validateAndUpdateDashboard(dashboard);
+        dashboard.configuration.widgets[widget.id] = widget;
+        dashboard.configuration.states['default'].layouts['main'].widgets[widget.id] = {
+            sizeX: widget.sizeX,
+            sizeY: widget.sizeY,
+            row: widget.row,
+            col: widget.col,
+        };
+        return dashboard;
+    }
+
+    function getStateLayoutsData(dashboard, targetState) {
+        var dashboardConfiguration = dashboard.configuration;
+        var states = dashboardConfiguration.states;
+        var state = states[targetState];
+        if (state) {
+            var allWidgets = dashboardConfiguration.widgets;
+            var result = {};
+            for (var l in state.layouts) {
+                var layout = state.layouts[l];
+                if (layout) {
+                    result[l] = {
+                        widgets: [],
+                        widgetLayouts: {},
+                        gridSettings: {}
+                    }
+                    for (var id in layout.widgets) {
+                        result[l].widgets.push(allWidgets[id]);
+                    }
+                    result[l].widgetLayouts = layout.widgets;
+                    result[l].gridSettings = layout.gridSettings;
+                }
+            }
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    function setLayouts(dashboard, targetState, newLayouts) {
+        var dashboardConfiguration = dashboard.configuration;
+        var states = dashboardConfiguration.states;
+        var state = states[targetState];
+        var addedCount = 0;
+        var removedCount = 0;
+        for (var l in state.layouts) {
+            if (!newLayouts[l]) {
+                removedCount++;
+            }
+        }
+        for (l in newLayouts) {
+            if (!state.layouts[l]) {
+                addedCount++;
+            }
+        }
+        state.layouts = newLayouts;
+        var layoutsCount = Object.keys(state.layouts).length;
+        var newColumns;
+        if (addedCount) {
+            for (l in state.layouts) {
+                newColumns = state.layouts[l].gridSettings.columns * (layoutsCount - addedCount) / layoutsCount;
+                state.layouts[l].gridSettings.columns = newColumns;
+            }
+        }
+        if (removedCount) {
+            for (l in state.layouts) {
+                newColumns = state.layouts[l].gridSettings.columns * (layoutsCount + removedCount) / layoutsCount;
+                state.layouts[l].gridSettings.columns = newColumns;
+            }
+        }
+        removeUnusedWidgets(dashboard);
+    }
+
+    function updateLayoutSettings(layout, gridSettings) {
+        var prevGridSettings = layout.gridSettings;
+        var prevColumns = prevGridSettings ? prevGridSettings.columns : 24;
+        var ratio = gridSettings.columns / prevColumns;
+        layout.gridSettings = gridSettings;
+        for (var w in layout.widgets) {
+            var widget = layout.widgets[w];
+            widget.sizeX = Math.round(widget.sizeX * ratio);
+            widget.sizeY = Math.round(widget.sizeY * ratio);
+            widget.col = Math.round(widget.col * ratio);
+            widget.row = Math.round(widget.row * ratio);
+        }
+    }
+
+    function addWidgetToLayout(dashboard, targetState, targetLayout, widget, originalColumns, originalSize, row, column) {
+        var dashboardConfiguration = dashboard.configuration;
+        var states = dashboardConfiguration.states;
+        var state = states[targetState];
+        var layout = state.layouts[targetLayout];
+        var layoutCount = Object.keys(state.layouts).length;
+        if (!widget.id) {
+            widget.id = utils.guid();
+        }
+        if (!dashboardConfiguration.widgets[widget.id]) {
+            dashboardConfiguration.widgets[widget.id] = widget;
+        }
+        var widgetLayout = {
+            sizeX: originalSize ? originalSize.sizeX : widget.sizeX,
+            sizeY: originalSize ? originalSize.sizeY : widget.sizeY,
+            mobileOrder: widget.config.mobileOrder,
+            mobileHeight: widget.config.mobileHeight
+        };
+
+        if (angular.isUndefined(originalColumns)) {
+            originalColumns = 24;
+        }
+
+        var gridSettings = layout.gridSettings;
+        var columns = 24;
+        if (gridSettings && gridSettings.columns) {
+            columns = gridSettings.columns;
+        }
+
+        columns = columns * layoutCount;
+
+        if (columns != originalColumns) {
+            var ratio = columns / originalColumns;
+            widgetLayout.sizeX *= ratio;
+            widgetLayout.sizeY *= ratio;
+        }
+
+        if (row > -1 && column > - 1) {
+            widgetLayout.row = row;
+            widgetLayout.col = column;
+        } else {
+            row = 0;
+            for (var w in layout.widgets) {
+                var existingLayout = layout.widgets[w];
+                var wRow = existingLayout.row ? existingLayout.row : 0;
+                var wSizeY = existingLayout.sizeY ? existingLayout.sizeY : 1;
+                var bottom = wRow + wSizeY;
+                row = Math.max(row, bottom);
+            }
+            widgetLayout.row = row;
+            widgetLayout.col = 0;
+        }
+
+        layout.widgets[widget.id] = widgetLayout;
+    }
+
+    function removeWidgetFromLayout(dashboard, targetState, targetLayout, widgetId) {
+        var dashboardConfiguration = dashboard.configuration;
+        var states = dashboardConfiguration.states;
+        var state = states[targetState];
+        var layout = state.layouts[targetLayout];
+        delete layout.widgets[widgetId];
+        removeUnusedWidgets(dashboard);
+    }
+
+    function isSingleLayoutDashboard(dashboard) {
+        var dashboardConfiguration = dashboard.configuration;
+        var states = dashboardConfiguration.states;
+        var stateKeys = Object.keys(states);
+        if (stateKeys.length === 1) {
+            var state = states[stateKeys[0]];
+            var layouts = state.layouts;
+            var layoutKeys = Object.keys(layouts);
+            if (layoutKeys.length === 1) {
+                return {
+                    state: stateKeys[0],
+                    layout: layoutKeys[0]
+                }
+            }
+        }
+        return null;
+    }
+
+    function removeUnusedWidgets(dashboard) {
+        var dashboardConfiguration = dashboard.configuration;
+        var states = dashboardConfiguration.states;
+        var widgets = dashboardConfiguration.widgets;
+        for (var widgetId in widgets) {
+            var found = false;
+            for (var s in states) {
+                var state = states[s];
+                for (var l in state.layouts) {
+                    var layout = state.layouts[l];
+                    if (layout.widgets[widgetId]) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                delete dashboardConfiguration.widgets[widgetId];
+            }
+
+        }
+    }
+
+    function getWidgetsArray(dashboard) {
+        var widgetsArray = [];
+        var dashboardConfiguration = dashboard.configuration;
+        var widgets = dashboardConfiguration.widgets;
+        for (var widgetId in widgets) {
+            var widget = widgets[widgetId];
+            widgetsArray.push(widget);
+        }
+        return widgetsArray;
     }
 }

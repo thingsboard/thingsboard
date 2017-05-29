@@ -23,6 +23,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_TENANT_ID
 import java.util.Optional;
 import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -38,6 +39,7 @@ import java.util.UUID;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 @Component
 @Slf4j
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class CassandraCustomerDao extends CassandraAbstractSearchTextDao<CustomerEntity, Customer> implements CustomerDao {
 
     @Override

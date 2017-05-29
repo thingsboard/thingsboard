@@ -152,35 +152,57 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.customer_by_tenant_and_search
 	WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );
 
 CREATE TABLE IF NOT EXISTS thingsboard.device (
-	id timeuuid,
-	tenant_id timeuuid,
-	customer_id timeuuid,
-	name text,
-	search_text text,
-	additional_info text,
-	PRIMARY KEY (id, tenant_id, customer_id)
+    id timeuuid,
+    tenant_id timeuuid,
+    customer_id timeuuid,
+    name text,
+    type text,
+    search_text text,
+    additional_info text,
+    PRIMARY KEY (id, tenant_id, customer_id, type)
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_tenant_and_name AS
-	SELECT *
-	from thingsboard.device
-	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( tenant_id, name, id, customer_id)
-	WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
+    SELECT *
+    from thingsboard.device
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, name, id, customer_id, type)
+    WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_tenant_and_search_text AS
-	SELECT *
-	from thingsboard.device
-	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( tenant_id, search_text, id, customer_id)
-	WITH CLUSTERING ORDER BY ( search_text ASC, id DESC, customer_id DESC);
+    SELECT *
+    from thingsboard.device
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, search_text, id, customer_id, type)
+    WITH CLUSTERING ORDER BY ( search_text ASC, id DESC, customer_id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_tenant_by_type_and_search_text AS
+    SELECT *
+    from thingsboard.device
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, type, search_text, id, customer_id)
+    WITH CLUSTERING ORDER BY ( type ASC, search_text ASC, id DESC, customer_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_customer_and_search_text AS
-	SELECT *
-	from thingsboard.device
-	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( customer_id, tenant_id, search_text, id )
-	WITH CLUSTERING ORDER BY ( tenant_id DESC, search_text ASC, id DESC );
+    SELECT *
+    from thingsboard.device
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( customer_id, tenant_id, search_text, id, type )
+    WITH CLUSTERING ORDER BY ( tenant_id DESC, search_text ASC, id DESC );
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_customer_by_type_and_search_text AS
+    SELECT *
+    from thingsboard.device
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( customer_id, tenant_id, type, search_text, id )
+    WITH CLUSTERING ORDER BY ( tenant_id DESC, type ASC, search_text ASC, id DESC );
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_types_by_tenant AS
+    SELECT *
+    from thingsboard.device
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( (type, tenant_id), id, customer_id)
+    WITH CLUSTERING ORDER BY ( id ASC, customer_id DESC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.device_credentials (
 	id timeuuid PRIMARY KEY,
@@ -202,38 +224,58 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_credentials_by_credent
 	WHERE credentials_id IS NOT NULL AND id IS NOT NULL
 	PRIMARY KEY ( credentials_id, id );
 
-
 CREATE TABLE IF NOT EXISTS thingsboard.asset (
-	id timeuuid,
-	tenant_id timeuuid,
-	customer_id timeuuid,
-	name text,
-	type text,
-	search_text text,
-	additional_info text,
-	PRIMARY KEY (id, tenant_id, customer_id)
+    id timeuuid,
+    tenant_id timeuuid,
+    customer_id timeuuid,
+    name text,
+    type text,
+    search_text text,
+    additional_info text,
+    PRIMARY KEY (id, tenant_id, customer_id, type)
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_tenant_and_name AS
-	SELECT *
-	from thingsboard.asset
-	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( tenant_id, name, id, customer_id)
-	WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
+    SELECT *
+    from thingsboard.asset
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, name, id, customer_id, type)
+    WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_tenant_and_search_text AS
-	SELECT *
-	from thingsboard.asset
-	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( tenant_id, search_text, id, customer_id)
-	WITH CLUSTERING ORDER BY ( search_text ASC, id DESC, customer_id DESC);
+    SELECT *
+    from thingsboard.asset
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, search_text, id, customer_id, type)
+    WITH CLUSTERING ORDER BY ( search_text ASC, id DESC, customer_id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_tenant_by_type_and_search_text AS
+    SELECT *
+    from thingsboard.asset
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, type, search_text, id, customer_id)
+    WITH CLUSTERING ORDER BY ( type ASC, search_text ASC, id DESC, customer_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_customer_and_search_text AS
-	SELECT *
-	from thingsboard.asset
-	WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
-	PRIMARY KEY ( customer_id, tenant_id, search_text, id )
-	WITH CLUSTERING ORDER BY ( tenant_id DESC, search_text ASC, id DESC );
+    SELECT *
+    from thingsboard.asset
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( customer_id, tenant_id, search_text, id, type )
+    WITH CLUSTERING ORDER BY ( tenant_id DESC, search_text ASC, id DESC );
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_customer_by_type_and_search_text AS
+    SELECT *
+    from thingsboard.asset
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( customer_id, tenant_id, type, search_text, id )
+    WITH CLUSTERING ORDER BY ( tenant_id DESC, type ASC, search_text ASC, id DESC );
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_types_by_tenant AS
+    SELECT *
+    from thingsboard.asset
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( (type, tenant_id), id, customer_id)
+    WITH CLUSTERING ORDER BY ( id ASC, customer_id DESC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.alarm (
 	id timeuuid,
@@ -265,17 +307,25 @@ CREATE TABLE IF NOT EXISTS thingsboard.relation (
 	from_type text,
 	to_id timeuuid,
 	to_type text,
+	relation_type_group text,
 	relation_type text,
 	additional_info text,
-	PRIMARY KEY ((from_id, from_type), relation_type, to_id, to_type)
-);
+	PRIMARY KEY ((from_id, from_type), relation_type_group, relation_type, to_id, to_type)
+) WITH CLUSTERING ORDER BY ( relation_type_group ASC, relation_type ASC, to_id ASC, to_type ASC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.relation_by_type_and_child_type AS
+    SELECT *
+    from thingsboard.relation
+    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type_group IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+    PRIMARY KEY ((from_id, from_type), relation_type_group, relation_type, to_type, to_id)
+    WITH CLUSTERING ORDER BY ( relation_type_group ASC, relation_type ASC, to_type ASC, to_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.reverse_relation AS
-SELECT *
-from thingsboard.relation
-WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
-PRIMARY KEY ((to_id, to_type), relation_type, from_id, from_type)
-WITH CLUSTERING ORDER BY ( relation_type ASC, from_id ASC, from_type ASC);
+    SELECT *
+    from thingsboard.relation
+    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type_group IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+    PRIMARY KEY ((to_id, to_type), relation_type_group, relation_type, from_id, from_type)
+    WITH CLUSTERING ORDER BY ( relation_type_group ASC, relation_type ASC, from_id ASC, from_type ASC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.widgets_bundle (
     id timeuuid,

@@ -25,6 +25,7 @@ export default function AssetDirective($compile, $templateCache, toast, $transla
         var template = $templateCache.get(assetFieldsetTemplate);
         element.html(template);
 
+        scope.types = types;
         scope.isAssignedToCustomer = false;
         scope.isPublic = false;
         scope.assignedCustomer = null;

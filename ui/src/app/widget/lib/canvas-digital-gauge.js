@@ -54,10 +54,13 @@ export default class TbCanvasDigitalGauge {
             this.localSettings.levelColors = settings.levelColors.slice();
         }
 
-        this.localSettings.decimals = (angular.isDefined(settings.decimals) && settings.decimals !== null)
-            ? settings.decimals : ctx.decimals;
+        this.localSettings.decimals = angular.isDefined(dataKey.decimals) ? dataKey.decimals :
+            ((angular.isDefined(settings.decimals) && settings.decimals !== null)
+            ? settings.decimals : ctx.decimals);
 
-        this.localSettings.units = angular.isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units;
+        this.localSettings.units = dataKey.units && dataKey.units.length ? dataKey.units :
+            (angular.isDefined(settings.units) && settings.units.length > 0 ? settings.units : ctx.units);
+
         this.localSettings.hideValue = settings.showValue !== true;
         this.localSettings.hideMinMax = settings.showMinMax !== true;
 

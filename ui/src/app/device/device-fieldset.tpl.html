@@ -66,6 +66,13 @@
 	      		<div translate ng-message="required">device.name-required</div>
 	    	</div>				
 		</md-input-container>
+        <tb-entity-subtype-autocomplete
+                ng-disabled="loading || !isEdit"
+                tb-required="true"
+                the-form="theForm"
+                ng-model="device.type"
+                entity-type="types.entityType.device">
+        </tb-entity-subtype-autocomplete>
         <md-input-container class="md-block">
             <md-checkbox ng-disabled="loading || !isEdit" flex aria-label="{{ 'device.is-gateway' | translate }}"
                          ng-model="device.additionalInfo.gateway">{{ 'device.is-gateway' | translate }}

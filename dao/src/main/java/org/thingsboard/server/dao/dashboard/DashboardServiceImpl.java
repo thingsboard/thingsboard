@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -39,9 +40,11 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
 
+import static org.thingsboard.server.dao.service.Validator.validateId;
+
 @Service
 @Slf4j
-public class DashboardServiceImpl extends BaseEntityService implements DashboardService {
+public class DashboardServiceImpl extends AbstractEntityService implements DashboardService {
 
     @Autowired
     private DashboardDao dashboardDao;
@@ -60,6 +63,27 @@ public class DashboardServiceImpl extends BaseEntityService implements Dashboard
         log.trace("Executing findDashboardById [{}]", dashboardId);
         Validator.validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
         return dashboardDao.findById(dashboardId.getId());
+    }
+
+    @Override
+    public ListenableFuture<Dashboard> findDashboardByIdAsync(DashboardId dashboardId) {
+        log.trace("Executing findDashboardByIdAsync [{}]", dashboardId);
+        validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+        return dashboardDao.findByIdAsync(dashboardId.getId());
+    }
+
+    @Override
+    public DashboardInfo findDashboardInfoById(DashboardId dashboardId) {
+        log.trace("Executing findDashboardInfoById [{}]", dashboardId);
+        Validator.validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+        return dashboardInfoDao.findById(dashboardId.getId());
+    }
+
+    @Override
+    public ListenableFuture<DashboardInfo> findDashboardInfoByIdAsync(DashboardId dashboardId) {
+        log.trace("Executing findDashboardInfoByIdAsync [{}]", dashboardId);
+        validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+        return dashboardInfoDao.findByIdAsync(dashboardId.getId());
     }
 
     @Override
