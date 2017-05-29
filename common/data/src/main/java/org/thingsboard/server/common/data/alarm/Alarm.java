@@ -16,27 +16,42 @@
 package org.thingsboard.server.common.data.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 /**
  * Created by ashvayka on 11.05.17.
  */
 @Data
+@Builder
+@AllArgsConstructor
 public class Alarm extends BaseData<AlarmId> implements HasName {
 
-    private long startTs;
-    private long endTs;
-    private long ackTs;
-    private long clearTs;
+    private TenantId tenantId;
     private String type;
     private EntityId originator;
     private AlarmSeverity severity;
     private AlarmStatus status;
+    private long startTs;
+    private long endTs;
+    private long ackTs;
+    private long clearTs;
     private JsonNode details;
     private boolean propagate;
+
+    public Alarm() {
+        super();
+    }
+
+    public Alarm(AlarmId id) {
+        super(id);
+    }
 
     @Override
     public String getName() {

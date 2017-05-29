@@ -21,24 +21,18 @@ import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.page.TimePageData;
 
-import java.util.Optional;
-
 /**
  * Created by ashvayka on 11.05.17.
  */
 public interface AlarmService {
 
-    Alarm findAlarmById(AlarmId alarmId);
+    Alarm createOrUpdateAlarm(Alarm alarm);
+
+    ListenableFuture<Boolean> ackAlarm(AlarmId alarmId, long ackTs);
+
+    ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long ackTs);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
-
-    Optional<Alarm> saveIfNotExists(Alarm alarm);
-
-    ListenableFuture<Boolean> updateAlarm(Alarm alarm);
-
-    ListenableFuture<Boolean> ackAlarm(Alarm alarm);
-
-    ListenableFuture<Boolean> clearAlarm(AlarmId alarmId);
 
     ListenableFuture<TimePageData<Alarm>> findAlarms(AlarmQuery query);
 

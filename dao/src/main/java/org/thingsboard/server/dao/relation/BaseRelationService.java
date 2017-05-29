@@ -171,8 +171,7 @@ public class BaseRelationService implements RelationService {
         RelationsSearchParameters params = query.getParameters();
         final List<EntityTypeFilter> filters = query.getFilters();
         if (filters == null || filters.isEmpty()) {
-            log.warn("Failed to query relations. Filters are not set [{}]", query);
-            throw new RuntimeException("Filters are not set!");
+            log.debug("Filters are not set [{}]", query);
         }
 
         int maxLvl = params.getMaxLevel() > 0 ? params.getMaxLevel() : Integer.MAX_VALUE;
@@ -182,10 +181,14 @@ public class BaseRelationService implements RelationService {
             return Futures.transform(relationSet, (Function<Set<EntityRelation>, List<EntityRelation>>) input -> {
                 List<EntityRelation> relations = new ArrayList<>();
                 for (EntityRelation relation : input) {
-                    for (EntityTypeFilter filter : filters) {
-                        if (match(filter, relation, params.getDirection())) {
-                            relations.add(relation);
-                            break;
+                    if (filters == null || filters.isEmpty()) {
+                        relations.add(relation);
+                    } else {
+                        for (EntityTypeFilter filter : filters) {
+                            if (match(filter, relation, params.getDirection())) {
+                                relations.add(relation);
+                                break;
+                            }
                         }
                     }
                 }
@@ -254,7 +257,8 @@ public class BaseRelationService implements RelationService {
         }
     }
 
-    private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final EntityId rootId, final EntitySearchDirection direction, int lvl, final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
+    private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final EntityId rootId, final EntitySearchDirection direction, int lvl,
+                                                                           final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
         }

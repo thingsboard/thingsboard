@@ -22,4 +22,12 @@ public enum AlarmStatus {
 
     ACTIVE_UNACK, ACTIVE_ACK, CLEARED_UNACK, CLEARED_ACK;
 
+    public boolean isAck() {
+        return this == ACTIVE_ACK || this == CLEARED_ACK;
+    }
+
+    public boolean isCleared() {
+        return this == CLEARED_ACK || this == CLEARED_UNACK;
+    }
+
 }

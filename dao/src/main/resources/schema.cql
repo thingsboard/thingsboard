@@ -277,6 +277,31 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_types_by_tenant AS
     PRIMARY KEY ( (type, tenant_id), id, customer_id)
     WITH CLUSTERING ORDER BY ( id ASC, customer_id DESC);
 
+CREATE TABLE IF NOT EXISTS thingsboard.alarm (
+	id timeuuid,
+	tenant_id timeuuid,
+	type text,
+	originator_id timeuuid,
+	originator_type text,
+    severity text,
+    status text,
+	start_ts bigint,
+	end_ts bigint,
+	ack_ts bigint,
+	clear_ts bigint,
+	details text,
+	propagate boolean,
+	PRIMARY KEY ((tenant_id, originator_id, originator_type), type, id)
+) WITH CLUSTERING ORDER BY ( type ASC, id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.alarm_by_id AS
+    SELECT *
+    from thingsboard.alarm
+    WHERE tenant_id IS NOT NULL AND originator_id IS NOT NULL AND originator_type IS NOT NULL AND type IS NOT NULL
+    AND type IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (id, tenant_id, originator_id, originator_type, type)
+    WITH CLUSTERING ORDER BY ( tenant_id ASC, originator_id ASC, originator_type ASC, type ASC);
+
 CREATE TABLE IF NOT EXISTS thingsboard.relation (
 	from_id timeuuid,
 	from_type text,
@@ -285,7 +310,14 @@ CREATE TABLE IF NOT EXISTS thingsboard.relation (
 	relation_type text,
 	additional_info text,
 	PRIMARY KEY ((from_id, from_type), relation_type, to_id, to_type)
-);
+) WITH CLUSTERING ORDER BY ( relation_type ASC, to_id ASC, to_type ASC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.relation_by_type_and_child_type AS
+    SELECT *
+    from thingsboard.relation
+    WHERE from_id IS NOT NULL AND from_type IS NOT NULL AND relation_type IS NOT NULL AND to_id IS NOT NULL AND to_type IS NOT NULL
+    PRIMARY KEY ((from_id, from_type), relation_type, to_type, to_id)
+    WITH CLUSTERING ORDER BY ( relation_type ASC, to_type ASC, to_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.reverse_relation AS
     SELECT *
