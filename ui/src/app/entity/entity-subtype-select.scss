@@ -13,38 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../scss/constants';
 
-$md-light: rgba(255, 255, 255, 100%);
-$md-edit-icon-fill: #757575;
-
-md-toolbar.md-table-toolbar.alternate {
-  .md-toolbar-tools {
-      md-icon {
-        color: $md-light;
-      }
-  }
-}
-
-.md-table {
-  .md-cell {
-    ng-md-icon {
-      fill: $md-edit-icon-fill;
-      float: right;
-      height: 16px;
-    }
-  }
-}
-
-.widgets-carousel {
-  position: relative;
-  margin: 0px;
-
-  min-height: 150px !important;
-
-  tb-dashboard {
-    #gridster-parent {
-      padding: 0 7px;
-    }
-  }
+md-select.tb-entity-subtype-select {
+  min-width: 200px;
 }

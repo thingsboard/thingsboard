@@ -36,7 +36,8 @@ function EntityService($http, $q, $filter, $translate, userService, deviceServic
         saveRelatedEntity: saveRelatedEntity,
         getRelatedEntity: getRelatedEntity,
         deleteRelatedEntity: deleteRelatedEntity,
-        moveEntity: moveEntity
+        moveEntity: moveEntity,
+        copyEntity: copyEntity
     };
 
     return service;
@@ -623,6 +624,32 @@ function EntityService($http, $q, $filter, $translate, userService, deviceServic
                 deferred.reject();
             }
         );
+        return deferred.promise;
+    }
+
+    function copyEntity(entity, targetParentId, keys) {
+        var deferred = $q.defer();
+        if (!entity.id && !entity.id.id) {
+            deferred.reject();
+        } else {
+            getRelatedEntity(entity.id, keys).then(
+                function success(relatedEntity) {
+                    delete relatedEntity.id.id;
+                    relatedEntity.name = entity.name;
+                    saveRelatedEntity(relatedEntity, targetParentId, keys).then(
+                        function success(savedEntity) {
+                            deferred.resolve(savedEntity);
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
         return deferred.promise;
     }
 

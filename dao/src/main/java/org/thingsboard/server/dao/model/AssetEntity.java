@@ -49,11 +49,12 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
     @Column(name = ASSET_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
-    @Column(name = ASSET_NAME_PROPERTY)
-    private String name;
-
+    @PartitionKey(value = 3)
     @Column(name = ASSET_TYPE_PROPERTY)
     private String type;
+
+    @Column(name = ASSET_NAME_PROPERTY)
+    private String name;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;

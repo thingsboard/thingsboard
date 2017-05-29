@@ -47,6 +47,7 @@ public class HttpDeviceApiTest extends AbstractControllerTest {
         loginTenantAdmin();
         device = new Device();
         device.setName("My device");
+        device.setType("default");
         device = doPost("/api/device", device, Device.class);
 
         deviceCredentials =

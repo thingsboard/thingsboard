@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -166,13 +167,18 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public TextPageData<Device> getTenantDevices(
             @RequestParam int limit,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
             @RequestParam(required = false) String textOffset) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            return checkNotNull(deviceService.findDevicesByTenantId(tenantId, pageLink));
+            if (type != null && type.trim().length()>0) {
+                return checkNotNull(deviceService.findDevicesByTenantIdAndType(tenantId, type, pageLink));
+            } else {
+                return checkNotNull(deviceService.findDevicesByTenantId(tenantId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -197,6 +203,7 @@ public class DeviceController extends BaseController {
     public TextPageData<Device> getCustomerDevices(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int limit,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
             @RequestParam(required = false) String textOffset) throws ThingsboardException {
@@ -206,7 +213,11 @@ public class DeviceController extends BaseController {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId);
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            if (type != null && type.trim().length()>0) {
+                return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+            } else {
+                return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -261,4 +272,19 @@ public class DeviceController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/device/types", method = RequestMethod.GET)
+    @ResponseBody
+    public List<TenantDeviceType> getDeviceTypes() throws ThingsboardException {
+        try {
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            ListenableFuture<List<TenantDeviceType>> deviceTypes = deviceService.findDeviceTypesByTenantId(tenantId);
+            return checkNotNull(deviceTypes.get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
 }

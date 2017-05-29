@@ -160,10 +160,6 @@ export default function AppConfig($provide,
             indigoTheme();
         }
 
-        $mdThemingProvider.theme('tb-search-input', 'default')
-            .primaryPalette('tb-primary')
-            .backgroundPalette('tb-primary');
-
         $mdThemingProvider.setDefaultTheme('default');
         //$mdThemingProvider.alwaysWatchTheme(true);
     }

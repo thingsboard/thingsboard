@@ -32,7 +32,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -42,6 +41,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -88,6 +88,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected DeviceService deviceService;
+
+    @Autowired
+    protected AssetService assetService;
 
     @Autowired
     protected DeviceCredentialsService deviceCredentialsService;

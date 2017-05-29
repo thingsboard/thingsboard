@@ -45,6 +45,7 @@ import AddDashboardsToCustomerController from './add-dashboards-to-customer.cont
 import AddWidgetController from './add-widget.controller';
 import DashboardDirective from './dashboard.directive';
 import EditWidgetDirective from './edit-widget.directive';
+import DashboardToolbar from './dashboard-toolbar.directive';
 
 export default angular.module('thingsboard.dashboard', [
     uiRouter,
@@ -78,4 +79,5 @@ export default angular.module('thingsboard.dashboard', [
     .controller('AddWidgetController', AddWidgetController)
     .directive('tbDashboardDetails', DashboardDirective)
     .directive('tbEditWidget', EditWidgetDirective)
+    .directive('tbDashboardToolbar', DashboardToolbar)
     .name;

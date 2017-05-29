@@ -179,6 +179,7 @@ function DashboardUtils(types, utils, timeService) {
             dashboard.configuration.settings.showEntitiesSelect = true;
             dashboard.configuration.settings.showDashboardTimewindow = true;
             dashboard.configuration.settings.showDashboardExport = true;
+            dashboard.configuration.settings.toolbarAlwaysOpen = false;
         } else {
             if (angular.isUndefined(dashboard.configuration.settings.stateControllerId)) {
                 dashboard.configuration.settings.stateControllerId = 'default';

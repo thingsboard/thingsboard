@@ -15,8 +15,14 @@
     limitations under the License.
 
 -->
-<div flex layout="column" style="margin-top: -10px;">
-    <div flex style="text-transform: uppercase; padding-bottom: 10px;">{{vm.item.type}}</div>
-    <div class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'asset.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
-    <div class="tb-small" ng-show="vm.isPublic()">{{'asset.public' | translate}}</div>
-</div>
+<md-input-container>
+    <label ng-if="showLabel">{{ entitySubtypeTitle | translate }}</label>
+    <md-select name="subType" ng-model="entitySubtype" class="tb-entity-subtype-select" aria-label="{{ entitySubtypeTitle | translate }}">
+        <md-option ng-repeat="subType in entitySubtypes" ng-value="subType">
+            {{ subTypeName(subType) }}
+        </md-option>
+    </md-select>
+    <div ng-messages="theForm.subType.$error">
+        <div ng-message="required" translate>{{ entitySubtypeRequiredText }}</div>
+    </div>
+</md-input-container>

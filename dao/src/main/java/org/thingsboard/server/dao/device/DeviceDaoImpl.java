@@ -22,7 +22,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import java.util.*;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.mapping.Result;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,6 +37,9 @@ import org.thingsboard.server.dao.AbstractSearchTextDao;
 import org.thingsboard.server.dao.model.DeviceEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
+
+import javax.annotation.Nullable;
 
 @Component
 @Slf4j
@@ -64,6 +72,16 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
     }
 
     @Override
+    public List<DeviceEntity> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
+        log.debug("Try to find devices by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
+                              eq(DEVICE_TENANT_ID_PROPERTY, tenantId)), pageLink);
+        log.trace("Found devices [{}] by tenantId [{}], type [{}] and pageLink [{}]", deviceEntities, tenantId, type, pageLink);
+        return deviceEntities;
+    }
+
+    @Override
     public ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds) {
         log.debug("Try to find devices by tenantId [{}] and device Ids [{}]", tenantId, deviceIds);
         Select select = select().from(getColumnFamilyName());
@@ -75,13 +93,26 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
 
     @Override
     public List<DeviceEntity> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        log.debug("Try to find devices by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
+        log.debug("Try to find devices by tenantId [{}], customerId [{}] and pageLink [{}]", tenantId, customerId, pageLink);
         List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
                         eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
 
         log.trace("Found devices [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, pageLink);
+        return deviceEntities;
+    }
+
+    @Override
+    public List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
+        log.debug("Try to find devices by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
+        List<DeviceEntity> deviceEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+                Arrays.asList(eq(DEVICE_TYPE_PROPERTY, type),
+                              eq(DEVICE_CUSTOMER_ID_PROPERTY, customerId),
+                              eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
+                pageLink);
+
+        log.trace("Found devices [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", deviceEntities, tenantId, customerId, type, pageLink);
         return deviceEntities;
     }
 
@@ -103,6 +134,26 @@ public class DeviceDaoImpl extends AbstractSearchTextDao<DeviceEntity> implement
         query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(DEVICE_NAME_PROPERTY, deviceName));
         return Optional.ofNullable(findOneByStatement(query));
+    }
+
+    @Override
+    public ListenableFuture<List<TenantDeviceTypeEntity>> findTenantDeviceTypesAsync() {
+        Select statement = select().distinct().column(DEVICE_TYPE_PROPERTY).column(DEVICE_TENANT_ID_PROPERTY).from(DEVICE_TYPES_BY_TENANT_VIEW_NAME);
+        statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+        ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+        ListenableFuture<List<TenantDeviceTypeEntity>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<TenantDeviceTypeEntity>>() {
+            @Nullable
+            @Override
+            public List<TenantDeviceTypeEntity> apply(@Nullable ResultSet resultSet) {
+                Result<TenantDeviceTypeEntity> result = cluster.getMapper(TenantDeviceTypeEntity.class).map(resultSet);
+                if (result != null) {
+                    return result.all();
+                } else {
+                    return Collections.emptyList();
+                }
+            }
+        });
+        return result;
     }
 
 }

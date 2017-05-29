@@ -15,7 +15,12 @@
  */
 package org.thingsboard.server.dao.asset;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.mapping.Result;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,7 +28,9 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.AbstractSearchTextDao;
 import org.thingsboard.server.dao.model.AssetEntity;
+import org.thingsboard.server.dao.model.TenantAssetTypeEntity;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -60,6 +67,16 @@ public class AssetDaoImpl extends AbstractSearchTextDao<AssetEntity> implements 
     }
 
     @Override
+    public List<AssetEntity> findAssetsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
+        log.debug("Try to find assets by tenantId [{}], type [{}] and pageLink [{}]", tenantId, type, pageLink);
+        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+                Arrays.asList(eq(ASSET_TYPE_PROPERTY, type),
+                        eq(ASSET_TENANT_ID_PROPERTY, tenantId)), pageLink);
+        log.trace("Found assets [{}] by tenantId [{}], type [{}] and pageLink [{}]", assetEntities, tenantId, type, pageLink);
+        return assetEntities;
+    }
+
+    @Override
     public ListenableFuture<List<AssetEntity>> findAssetsByTenantIdAndIdsAsync(UUID tenantId, List<UUID> assetIds) {
         log.debug("Try to find assets by tenantId [{}] and asset Ids [{}]", tenantId, assetIds);
         Select select = select().from(getColumnFamilyName());
@@ -82,6 +99,19 @@ public class AssetDaoImpl extends AbstractSearchTextDao<AssetEntity> implements 
     }
 
     @Override
+    public List<AssetEntity> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
+        log.debug("Try to find assets by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", tenantId, customerId, type, pageLink);
+        List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
+                Arrays.asList(eq(ASSET_TYPE_PROPERTY, type),
+                        eq(ASSET_CUSTOMER_ID_PROPERTY, customerId),
+                        eq(ASSET_TENANT_ID_PROPERTY, tenantId)),
+                pageLink);
+
+        log.trace("Found assets [{}] by tenantId [{}], customerId [{}], type [{}] and pageLink [{}]", assetEntities, tenantId, customerId, type, pageLink);
+        return assetEntities;
+    }
+
+    @Override
     public ListenableFuture<List<AssetEntity>> findAssetsByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> assetIds) {
         log.debug("Try to find assets by tenantId [{}], customerId [{}] and asset Ids [{}]", tenantId, customerId, assetIds);
         Select select = select().from(getColumnFamilyName());
@@ -99,6 +129,26 @@ public class AssetDaoImpl extends AbstractSearchTextDao<AssetEntity> implements 
         query.and(eq(ASSET_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ASSET_NAME_PROPERTY, assetName));
         return Optional.ofNullable(findOneByStatement(query));
+    }
+
+    @Override
+    public ListenableFuture<List<TenantAssetTypeEntity>> findTenantAssetTypesAsync() {
+        Select statement = select().distinct().column(ASSET_TYPE_PROPERTY).column(ASSET_TENANT_ID_PROPERTY).from(ASSET_TYPES_BY_TENANT_VIEW_NAME);
+        statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+        ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+        ListenableFuture<List<TenantAssetTypeEntity>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<TenantAssetTypeEntity>>() {
+            @Nullable
+            @Override
+            public List<TenantAssetTypeEntity> apply(@Nullable ResultSet resultSet) {
+                Result<TenantAssetTypeEntity> result = cluster.getMapper(TenantAssetTypeEntity.class).map(resultSet);
+                if (result != null) {
+                    return result.all();
+                } else {
+                    return Collections.emptyList();
+                }
+            }
+        });
+        return result;
     }
 
 }

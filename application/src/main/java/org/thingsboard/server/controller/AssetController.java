@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -136,13 +137,18 @@ public class AssetController extends BaseController {
     @ResponseBody
     public TextPageData<Asset> getTenantAssets(
             @RequestParam int limit,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
             @RequestParam(required = false) String textOffset) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            return checkNotNull(assetService.findAssetsByTenantId(tenantId, pageLink));
+            if (type != null && type.trim().length()>0) {
+                return checkNotNull(assetService.findAssetsByTenantIdAndType(tenantId, type, pageLink));
+            } else {
+                return checkNotNull(assetService.findAssetsByTenantId(tenantId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -167,6 +173,7 @@ public class AssetController extends BaseController {
     public TextPageData<Asset> getCustomerAssets(
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int limit,
+            @RequestParam(required = false) String type,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
             @RequestParam(required = false) String textOffset) throws ThingsboardException {
@@ -176,7 +183,11 @@ public class AssetController extends BaseController {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId);
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            return checkNotNull(assetService.findAssetsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            if (type != null && type.trim().length()>0) {
+                return checkNotNull(assetService.findAssetsByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
+            } else {
+                return checkNotNull(assetService.findAssetsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -227,6 +238,20 @@ public class AssetController extends BaseController {
                 }
             }).collect(Collectors.toList());
             return assets;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/asset/types", method = RequestMethod.GET)
+    @ResponseBody
+    public List<TenantAssetType> getAssetTypes() throws ThingsboardException {
+        try {
+            SecurityUser user = getCurrentUser();
+            TenantId tenantId = user.getTenantId();
+            ListenableFuture<List<TenantAssetType>> assetTypes = assetService.findAssetTypesByTenantId(tenantId);
+            return checkNotNull(assetTypes.get());
         } catch (Exception e) {
             throw handleException(e);
         }

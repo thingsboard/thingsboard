@@ -24,10 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -83,6 +80,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testSaveDevice() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
         Assert.assertNotNull(savedDevice);
@@ -114,16 +112,49 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testFindDeviceById() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId().toString(), Device.class);
         Assert.assertNotNull(foundDevice);
         Assert.assertEquals(savedDevice, foundDevice);
+    }
+
+    @Test
+    public void testFindDeviceTypesByTenantId() throws Exception {
+        List<Device> devices = new ArrayList<>();
+        for (int i=0;i<3;i++) {
+            Device device = new Device();
+            device.setName("My device B"+i);
+            device.setType("typeB");
+            devices.add(doPost("/api/device", device, Device.class));
+        }
+        for (int i=0;i<7;i++) {
+            Device device = new Device();
+            device.setName("My device C"+i);
+            device.setType("typeC");
+            devices.add(doPost("/api/device", device, Device.class));
+        }
+        for (int i=0;i<9;i++) {
+            Device device = new Device();
+            device.setName("My device A"+i);
+            device.setType("typeA");
+            devices.add(doPost("/api/device", device, Device.class));
+        }
+        List<TenantDeviceType> deviceTypes = doGetTyped("/api/device/types",
+                new TypeReference<List<TenantDeviceType>>(){});
+
+        Assert.assertNotNull(deviceTypes);
+        Assert.assertEquals(3, deviceTypes.size());
+        Assert.assertEquals("typeA", deviceTypes.get(0).getType());
+        Assert.assertEquals("typeB", deviceTypes.get(1).getType());
+        Assert.assertEquals("typeC", deviceTypes.get(2).getType());
     }
     
     @Test
     public void testDeleteDevice() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
         doDelete("/api/device/"+savedDevice.getId().getId().toString())
@@ -132,10 +163,20 @@ public class DeviceControllerTest extends AbstractControllerTest {
         doGet("/api/device/"+savedDevice.getId().getId().toString())
         .andExpect(status().isNotFound());
     }
-    
+
+    @Test
+    public void testSaveDeviceWithEmptyType() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        doPost("/api/device", device)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Device type should be specified")));
+    }
+
     @Test
     public void testSaveDeviceWithEmptyName() throws Exception {
         Device device = new Device();
+        device.setType("default");
         doPost("/api/device", device)
         .andExpect(status().isBadRequest())
         .andExpect(statusReason(containsString("Device name should be specified")));
@@ -145,6 +186,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testAssignUnassignDeviceToCustomer() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
         Customer customer = new Customer();
@@ -170,6 +212,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testAssignDeviceToNonExistentCustomer() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
         doPost("/api/customer/" + UUIDs.timeBased().toString() 
@@ -203,6 +246,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
         doPost("/api/customer/" + savedCustomer.getId().getId().toString()
@@ -219,6 +263,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testFindDeviceCredentialsByDeviceId() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class); 
@@ -229,6 +274,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testSaveDeviceCredentials() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class); 
@@ -255,6 +301,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testSaveDeviceCredentialsWithEmptyCredentialsType() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
@@ -268,6 +315,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testSaveDeviceCredentialsWithEmptyCredentialsId() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
@@ -281,6 +329,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testSaveNonExistentDeviceCredentials() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
@@ -298,6 +347,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testSaveDeviceCredentialsWithNonExistentDevice() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
@@ -307,9 +357,10 @@ public class DeviceControllerTest extends AbstractControllerTest {
     }
     
     @Test
-    public void testSaveDeviceCredentialsWithInvalidCredemtialsIdLength() throws Exception {
+    public void testSaveDeviceCredentialsWithInvalidCredentialsIdLength() throws Exception {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         DeviceCredentials deviceCredentials = 
                 doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
@@ -325,6 +376,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         for (int i=0;i<178;i++) {
             Device device = new Device();
             device.setName("Device"+i);
+            device.setType("default");
             devices.add(doPost("/api/device", device, Device.class));
         }
         List<Device> loadedDevices = new ArrayList<>();
@@ -355,6 +407,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
             String name = title1+suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
+            device.setType("default");
             devicesTitle1.add(doPost("/api/device", device, Device.class));
         }
         String title2 = "Device title 2";
@@ -365,6 +418,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
             String name = title2+suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
+            device.setType("default");
             devicesTitle2.add(doPost("/api/device", device, Device.class));
         }
         
@@ -423,6 +477,89 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
+
+    @Test
+    public void testFindTenantDevicesByType() throws Exception {
+        String title1 = "Device title 1";
+        String type1 = "typeA";
+        List<Device> devicesType1 = new ArrayList<>();
+        for (int i=0;i<143;i++) {
+            Device device = new Device();
+            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String name = title1+suffix;
+            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
+            device.setName(name);
+            device.setType(type1);
+            devicesType1.add(doPost("/api/device", device, Device.class));
+        }
+        String title2 = "Device title 2";
+        String type2 = "typeB";
+        List<Device> devicesType2 = new ArrayList<>();
+        for (int i=0;i<75;i++) {
+            Device device = new Device();
+            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String name = title2+suffix;
+            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
+            device.setName(name);
+            device.setType(type2);
+            devicesType2.add(doPost("/api/device", device, Device.class));
+        }
+
+        List<Device> loadedDevicesType1 = new ArrayList<>();
+        TextPageLink pageLink = new TextPageLink(15);
+        TextPageData<Device> pageData = null;
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenant/devices?type={type}&",
+                    new TypeReference<TextPageData<Device>>(){}, pageLink, type1);
+            loadedDevicesType1.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageData.getNextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(devicesType1, idComparator);
+        Collections.sort(loadedDevicesType1, idComparator);
+
+        Assert.assertEquals(devicesType1, loadedDevicesType1);
+
+        List<Device> loadedDevicesType2 = new ArrayList<>();
+        pageLink = new TextPageLink(4);
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenant/devices?type={type}&",
+                    new TypeReference<TextPageData<Device>>(){}, pageLink, type2);
+            loadedDevicesType2.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageData.getNextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(devicesType2, idComparator);
+        Collections.sort(loadedDevicesType2, idComparator);
+
+        Assert.assertEquals(devicesType2, loadedDevicesType2);
+
+        for (Device device : loadedDevicesType1) {
+            doDelete("/api/device/"+device.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
+
+        pageLink = new TextPageLink(4);
+        pageData = doGetTypedWithPageLink("/api/tenant/devices?type={type}&",
+                new TypeReference<TextPageData<Device>>(){}, pageLink, type1);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(0, pageData.getData().size());
+
+        for (Device device : loadedDevicesType2) {
+            doDelete("/api/device/"+device.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
+
+        pageLink = new TextPageLink(4);
+        pageData = doGetTypedWithPageLink("/api/tenant/devices?type={type}&",
+                new TypeReference<TextPageData<Device>>(){}, pageLink, type2);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(0, pageData.getData().size());
+    }
     
     @Test
     public void testFindCustomerDevices() throws Exception {
@@ -435,6 +572,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         for (int i=0;i<128;i++) {
             Device device = new Device();
             device.setName("Device"+i);
+            device.setType("default");
             device = doPost("/api/device", device, Device.class);
             devices.add(doPost("/api/customer/" + customerId.getId().toString() 
                             + "/device/" + device.getId().getId().toString(), Device.class));
@@ -473,6 +611,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
             String name = title1+suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
+            device.setType("default");
             device = doPost("/api/device", device, Device.class);
             devicesTitle1.add(doPost("/api/customer/" + customerId.getId().toString() 
                     + "/device/" + device.getId().getId().toString(), Device.class));
@@ -485,6 +624,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
             String name = title2+suffix;
             name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
             device.setName(name);
+            device.setType("default");
             device = doPost("/api/device", device, Device.class);
             devicesTitle2.add(doPost("/api/customer/" + customerId.getId().toString() 
                     + "/device/" + device.getId().getId().toString(), Device.class));
@@ -542,6 +682,98 @@ public class DeviceControllerTest extends AbstractControllerTest {
         pageLink = new TextPageLink(4, title2);
         pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?", 
                 new TypeReference<TextPageData<Device>>(){}, pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testFindCustomerDevicesByType() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("Test customer");
+        customer = doPost("/api/customer", customer, Customer.class);
+        CustomerId customerId = customer.getId();
+
+        String title1 = "Device title 1";
+        String type1 = "typeC";
+        List<Device> devicesType1 = new ArrayList<>();
+        for (int i=0;i<125;i++) {
+            Device device = new Device();
+            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String name = title1+suffix;
+            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
+            device.setName(name);
+            device.setType(type1);
+            device = doPost("/api/device", device, Device.class);
+            devicesType1.add(doPost("/api/customer/" + customerId.getId().toString()
+                    + "/device/" + device.getId().getId().toString(), Device.class));
+        }
+        String title2 = "Device title 2";
+        String type2 = "typeD";
+        List<Device> devicesType2 = new ArrayList<>();
+        for (int i=0;i<143;i++) {
+            Device device = new Device();
+            String suffix = RandomStringUtils.randomAlphanumeric(15);
+            String name = title2+suffix;
+            name = i % 2 == 0 ? name.toLowerCase() : name.toUpperCase();
+            device.setName(name);
+            device.setType(type2);
+            device = doPost("/api/device", device, Device.class);
+            devicesType2.add(doPost("/api/customer/" + customerId.getId().toString()
+                    + "/device/" + device.getId().getId().toString(), Device.class));
+        }
+
+        List<Device> loadedDevicesType1 = new ArrayList<>();
+        TextPageLink pageLink = new TextPageLink(15);
+        TextPageData<Device> pageData = null;
+        do {
+            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?type={type}&",
+                    new TypeReference<TextPageData<Device>>(){}, pageLink, type1);
+            loadedDevicesType1.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageData.getNextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(devicesType1, idComparator);
+        Collections.sort(loadedDevicesType1, idComparator);
+
+        Assert.assertEquals(devicesType1, loadedDevicesType1);
+
+        List<Device> loadedDevicesType2 = new ArrayList<>();
+        pageLink = new TextPageLink(4);
+        do {
+            pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?type={type}&",
+                    new TypeReference<TextPageData<Device>>(){}, pageLink, type2);
+            loadedDevicesType2.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageData.getNextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(devicesType2, idComparator);
+        Collections.sort(loadedDevicesType2, idComparator);
+
+        Assert.assertEquals(devicesType2, loadedDevicesType2);
+
+        for (Device device : loadedDevicesType1) {
+            doDelete("/api/customer/device/" + device.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
+
+        pageLink = new TextPageLink(4);
+        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?type={type}&",
+                new TypeReference<TextPageData<Device>>(){}, pageLink, type1);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertEquals(0, pageData.getData().size());
+
+        for (Device device : loadedDevicesType2) {
+            doDelete("/api/customer/device/" + device.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
+
+        pageLink = new TextPageLink(4);
+        pageData = doGetTypedWithPageLink("/api/customer/" + customerId.getId().toString() + "/devices?type={type}&",
+                new TypeReference<TextPageData<Device>>(){}, pageLink, type2);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
     }
