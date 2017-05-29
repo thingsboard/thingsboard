@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.*;
@@ -54,7 +55,7 @@ import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
-public class BaseAlarmService extends BaseEntityService implements AlarmService {
+public class BaseAlarmService extends AbstractEntityService implements AlarmService {
 
     public static final String ALARM_RELATION_PREFIX = "ALARM_";
     public static final String ALARM_RELATION = "ALARM_ANY";
@@ -190,7 +191,7 @@ public class BaseAlarmService extends BaseEntityService implements AlarmService 
     }
 
     @Override
-    public ListenableFuture<Alarm> findAlarmById(AlarmId alarmId) {
+    public ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId) {
         log.trace("Executing findAlarmById [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
         return alarmDao.findAlarmByIdAsync(alarmId.getId());

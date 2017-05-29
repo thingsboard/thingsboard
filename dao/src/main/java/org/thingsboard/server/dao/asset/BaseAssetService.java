@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.*;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
@@ -55,7 +55,7 @@ import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
-public class BaseAssetService extends BaseEntityService implements AssetService {
+public class BaseAssetService extends AbstractEntityService implements AssetService {
 
     @Autowired
     private AssetDao assetDao;

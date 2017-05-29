@@ -33,7 +33,7 @@
                         md-min-length="0"
                         placeholder="{{ 'entity.entity-list' | translate }}">
                         <md-item-template>
-                            <span md-highlight-text="entitySearchText" md-highlight-flags="^i">{{itemName(item)}}</span>
+                            <span md-highlight-text="entitySearchText" md-highlight-flags="^i">{{item.name}}</span>
                         </md-item-template>
                         <md-not-found>
                             <span translate translate-values='{ entity: entitySearchText }'>entity.no-entities-matching</span>

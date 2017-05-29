@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.dao.relation.EntityRelationsQuery;
 import org.thingsboard.server.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardException;
@@ -122,6 +123,21 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId);
         try {
             return checkNotNull(relationService.findByFrom(entityId).get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {"fromId", "fromType"})
+    @ResponseBody
+    public List<EntityRelationInfo> findInfoByFrom(@RequestParam("fromId") String strFromId, @RequestParam("fromType") String strFromType) throws ThingsboardException {
+        checkParameter("fromId", strFromId);
+        checkParameter("fromType", strFromType);
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
+        checkEntityId(entityId);
+        try {
+            return checkNotNull(relationService.findInfoByFrom(entityId).get());
         } catch (Exception e) {
             throw handleException(e);
         }

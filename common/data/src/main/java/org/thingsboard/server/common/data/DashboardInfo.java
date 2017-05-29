@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public class DashboardInfo extends SearchTextBased<DashboardId> {
+public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName {
 
     private TenantId tenantId;
     private CustomerId customerId;
@@ -62,6 +62,11 @@ public class DashboardInfo extends SearchTextBased<DashboardId> {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    @Override
+    public String getName() {
+        return title;
     }
 
     @Override

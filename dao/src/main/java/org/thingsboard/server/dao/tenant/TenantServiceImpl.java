@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -34,9 +33,8 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.CustomerEntity;
 import org.thingsboard.server.dao.model.TenantEntity;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
@@ -50,7 +48,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 @Service
 @Slf4j
-public class TenantServiceImpl extends BaseEntityService implements TenantService {
+public class TenantServiceImpl extends AbstractEntityService implements TenantService {
 
     private static final String DEFAULT_TENANT_REGION = "Global";
 

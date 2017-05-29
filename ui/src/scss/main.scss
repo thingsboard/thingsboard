@@ -261,6 +261,45 @@ pre.tb-highlight {
   font-size: 16px;
 }
 
+.tb-data-table {
+  md-toolbar {
+    z-index: 0;
+  }
+  span.no-data-found {
+    position: relative;
+    height: calc(100% - 57px);
+    text-transform: uppercase;
+    display: flex;
+  }
+  table.md-table {
+    tbody {
+      tr {
+        td {
+          &.tb-action-cell {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 72px;
+            max-width: 72px;
+            width: 72px;
+            .md-button {
+              &.md-icon-button {
+                margin: 0;
+                padding: 6px;
+                width: 36px;
+                height: 36px;
+              }
+            }
+            .tb-spacer {
+              padding-left: 38px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 
 /***********************
  * Flow

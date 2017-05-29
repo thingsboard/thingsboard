@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -15,12 +14,17 @@
 # limitations under the License.
 #
 
+FROM cassandra:3.9
 
-cp ../../application/target/thingsboard.deb thingsboard.deb
+ADD install-schema.sh /root/install-schema.sh
 
-docker build -t thingsboard/application:1.2.3 -t thingsboard/application:latest .
+RUN apt-get update \
+        && apt-get install -y nmap
 
-docker login
+RUN chmod +x /root/install-schema.sh
 
-docker push thingsboard/application:1.2.3
-docker push thingsboard/application:latest
+ADD schema.cql /root/schema.cql
+ADD demo-data.cql /root/demo-data.cql
+ADD system-data.cql /root/system-data.cql
+
+WORKDIR /root

@@ -343,7 +343,7 @@ public abstract class BaseController {
     Alarm checkAlarmId(AlarmId alarmId) throws ThingsboardException {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
-            Alarm alarm = alarmService.findAlarmById(alarmId).get();
+            Alarm alarm = alarmService.findAlarmByIdAsync(alarmId).get();
             checkAlarm(alarm);
             return alarm;
         } catch (Exception e) {

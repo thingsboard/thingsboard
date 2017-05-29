@@ -23,7 +23,7 @@ import entityTypeSelectTemplate from './entity-type-select.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntityTypeSelect($compile, $templateCache, userService, types) {
+export default function EntityTypeSelect($compile, $templateCache, utils, userService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entityTypeSelectTemplate);
@@ -51,10 +51,12 @@ export default function EntityTypeSelect($compile, $templateCache, userService, 
                 scope.entityTypes.customer = types.entityType.customer;
                 scope.entityTypes.rule = types.entityType.rule;
                 scope.entityTypes.plugin = types.entityType.plugin;
+                scope.entityTypes.dashboard = types.entityType.dashboard;
                 break;
             case 'CUSTOMER_USER':
                 scope.entityTypes.device = types.entityType.device;
                 scope.entityTypes.asset = types.entityType.asset;
+                scope.entityTypes.dashboard = types.entityType.dashboard;
                 break;
         }
 
@@ -67,20 +69,7 @@ export default function EntityTypeSelect($compile, $templateCache, userService, 
         }
 
         scope.typeName = function(type) {
-            switch (type) {
-                case types.entityType.device:
-                    return 'entity.type-device';
-                case types.entityType.asset:
-                    return 'entity.type-asset';
-                case types.entityType.rule:
-                    return 'entity.type-rule';
-                case types.entityType.plugin:
-                    return 'entity.type-plugin';
-                case types.entityType.tenant:
-                    return 'entity.type-tenant';
-                case types.entityType.customer:
-                    return 'entity.type-customer';
-            }
+            return utils.entityTypeName(type);
         }
 
         scope.updateValidity = function () {

@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Device extends SearchTextBased<DeviceId> {
+public class Device extends SearchTextBased<DeviceId> implements HasName {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -64,6 +64,7 @@ public class Device extends SearchTextBased<DeviceId> {
         this.customerId = customerId;
     }
 
+    @Override
     public String getName() {
         return name;
     }

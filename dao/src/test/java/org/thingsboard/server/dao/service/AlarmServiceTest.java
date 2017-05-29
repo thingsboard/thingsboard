@@ -95,7 +95,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0L, created.getAckTs());
         Assert.assertEquals(0L, created.getClearTs());
 
-        Alarm fetched = alarmService.findAlarmById(created.getId()).get();
+        Alarm fetched = alarmService.findAlarmByIdAsync(created.getId()).get();
         Assert.assertEquals(created, fetched);
     }
 
@@ -137,7 +137,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(created, alarms.getData().get(0));
 
         alarmService.ackAlarm(created.getId(), System.currentTimeMillis()).get();
-        created = alarmService.findAlarmById(created.getId()).get();
+        created = alarmService.findAlarmByIdAsync(created.getId()).get();
 
         alarms = alarmService.findAlarms(AlarmQuery.builder()
                 .affectedEntityId(childId)
@@ -158,7 +158,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, alarms.getData().size());
 
         alarmService.clearAlarm(created.getId(), System.currentTimeMillis()).get();
-        created = alarmService.findAlarmById(created.getId()).get();
+        created = alarmService.findAlarmByIdAsync(created.getId()).get();
 
         alarms = alarmService.findAlarms(AlarmQuery.builder()
                 .affectedEntityId(childId)

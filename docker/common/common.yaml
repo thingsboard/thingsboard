@@ -14,11 +14,20 @@
 # limitations under the License.
 #
 
-FROM openjdk:8-jre
-
-ADD run_thingsboard.sh /root/run_thingsboard.sh
-ADD thingsboard.deb /root/thingsboard.deb
-
-RUN chmod +x /root/run_thingsboard.sh
-
-WORKDIR /root
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: StorageClass
+metadata:
+  name: slow
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-standard
+---
+apiVersion: storage.k8s.io/v1beta1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
+---

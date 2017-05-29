@@ -32,7 +32,7 @@ public interface AlarmService {
 
     ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long ackTs);
 
-    ListenableFuture<Alarm> findAlarmById(AlarmId alarmId);
+    ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
 
     ListenableFuture<TimePageData<Alarm>> findAlarms(AlarmQuery query);
 

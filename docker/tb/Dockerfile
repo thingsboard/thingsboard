@@ -14,13 +14,11 @@
 # limitations under the License.
 #
 
-version: '2'
+FROM openjdk:8-jre
 
-services:
-  db:
-    ports:
-      - "9042"
-      - "9160"
-  zk:
-    ports:
-      - "2181"
+ADD run-application.sh /root/run-application.sh
+ADD thingsboard.deb /root/thingsboard.deb
+
+RUN chmod +x /root/run-application.sh
+
+WORKDIR /root
