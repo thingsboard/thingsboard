@@ -18,13 +18,14 @@ package org.thingsboard.server.common.data.alarm;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.EntityId;
 
 /**
  * Created by ashvayka on 11.05.17.
  */
 @Data
-public class Alarm extends BaseData<AlarmId> {
+public class Alarm extends BaseData<AlarmId> implements HasName {
 
     private long startTs;
     private long endTs;
@@ -37,4 +38,8 @@ public class Alarm extends BaseData<AlarmId> {
     private JsonNode details;
     private boolean propagate;
 
+    @Override
+    public String getName() {
+        return type;
+    }
 }

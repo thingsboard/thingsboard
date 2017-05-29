@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -23,23 +25,42 @@ import org.thingsboard.server.common.data.page.TimePageData;
 
 import java.util.Optional;
 
-/**
- * Created by ashvayka on 11.05.17.
- */
-public interface AlarmService {
+@Service
+@Slf4j
+public class BaseAlarmService implements AlarmService {
 
-    Alarm findAlarmById(AlarmId alarmId);
+    @Override
+    public Alarm findAlarmById(AlarmId alarmId) {
+        return null;
+    }
 
-    ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
+    @Override
+    public ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId) {
+        return null;
+    }
 
-    Optional<Alarm> saveIfNotExists(Alarm alarm);
+    @Override
+    public Optional<Alarm> saveIfNotExists(Alarm alarm) {
+        return null;
+    }
 
-    ListenableFuture<Boolean> updateAlarm(Alarm alarm);
+    @Override
+    public ListenableFuture<Boolean> updateAlarm(Alarm alarm) {
+        return null;
+    }
 
-    ListenableFuture<Boolean> ackAlarm(Alarm alarm);
+    @Override
+    public ListenableFuture<Boolean> ackAlarm(Alarm alarm) {
+        return null;
+    }
 
-    ListenableFuture<Boolean> clearAlarm(AlarmId alarmId);
+    @Override
+    public ListenableFuture<Boolean> clearAlarm(AlarmId alarmId) {
+        return null;
+    }
 
-    ListenableFuture<TimePageData<Alarm>> findAlarms(AlarmQuery query);
-
+    @Override
+    public ListenableFuture<TimePageData<Alarm>> findAlarms(AlarmQuery query) {
+        return null;
+    }
 }

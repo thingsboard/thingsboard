@@ -47,11 +47,11 @@ public class EntityRelation {
         this.additionalInfo = additionalInfo;
     }
 
-    public EntityRelation(EntityRelation device) {
-        this.from = device.getFrom();
-        this.to = device.getTo();
-        this.type = device.getType();
-        this.additionalInfo = device.getAdditionalInfo();
+    public EntityRelation(EntityRelation entityRelation) {
+        this.from = entityRelation.getFrom();
+        this.to = entityRelation.getTo();
+        this.type = entityRelation.getType();
+        this.additionalInfo = entityRelation.getAdditionalInfo();
     }
 
     public EntityId getFrom() {

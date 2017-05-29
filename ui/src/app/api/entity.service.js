@@ -20,14 +20,13 @@ export default angular.module('thingsboard.api.entity', [thingsboardTypes])
     .name;
 
 /*@ngInject*/
-function EntityService($http, $q, $filter, $translate, userService, deviceService,
+function EntityService($http, $q, $filter, $translate, $log, userService, deviceService,
                        assetService, tenantService, customerService,
-                       ruleService, pluginService, entityRelationService, attributeService, types, utils) {
+                       ruleService, pluginService, dashboardService, entityRelationService, attributeService, types, utils) {
     var service = {
         getEntity: getEntity,
         getEntities: getEntities,
         getEntitiesByNameFilter: getEntitiesByNameFilter,
-        entityName: entityName,
         processEntityAliases: processEntityAliases,
         getEntityKeys: getEntityKeys,
         checkEntityAlias: checkEntityAlias,
@@ -62,6 +61,15 @@ function EntityService($http, $q, $filter, $translate, userService, deviceServic
                 break;
             case types.entityType.plugin:
                 promise = pluginService.getPlugin(entityId);
+                break;
+            case types.entityType.dashboard:
+                promise = dashboardService.getDashboardInfo(entityId);
+                break;
+            case types.entityType.user:
+                promise = userService.getUser(entityId);
+                break;
+            case types.entityType.alarm:
+                $log.error('Get Alarm Entity is not implemented!');
                 break;
         }
         return promise;
@@ -134,6 +142,15 @@ function EntityService($http, $q, $filter, $translate, userService, deviceServic
             case types.entityType.plugin:
                 promise = getEntitiesByIdsPromise(pluginService.getPlugin, entityIds);
                 break;
+            case types.entityType.dashboard:
+                promise = getEntitiesByIdsPromise(dashboardService.getDashboardInfo, entityIds);
+                break;
+            case types.entityType.user:
+                promise = getEntitiesByIdsPromise(userService.getUser, entityIds);
+                break;
+            case types.entityType.alarm:
+                $log.error('Get Alarm Entity is not implemented!');
+                break;
         }
         return promise;
     }
@@ -141,34 +158,38 @@ function EntityService($http, $q, $filter, $translate, userService, deviceServic
     function getEntities(entityType, entityIds, config) {
         var deferred = $q.defer();
         var promise = getEntitiesPromise(entityType, entityIds, config);
-        promise.then(
-            function success(result) {
-                deferred.resolve(result);
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
+        if (promise) {
+            promise.then(
+                function success(result) {
+                    deferred.resolve(result);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } else {
+            deferred.reject();
+        }
         return deferred.promise;
     }
 
-    function getEntitiesByPageLinkPromise(entityType, pageLink, config) {
+    function getEntitiesByPageLinkPromise(entityType, pageLink, config, subType) {
         var promise;
         var user = userService.getCurrentUser();
         var customerId = user.customerId;
         switch (entityType) {
             case types.entityType.device:
                 if (user.authority === 'CUSTOMER_USER') {
-                    promise = deviceService.getCustomerDevices(customerId, pageLink, false, config);
+                    promise = deviceService.getCustomerDevices(customerId, pageLink, false, config, subType);
                 } else {
-                    promise = deviceService.getTenantDevices(pageLink, false, config);
+                    promise = deviceService.getTenantDevices(pageLink, false, config, subType);
                 }
                 break;
             case types.entityType.asset:
                 if (user.authority === 'CUSTOMER_USER') {
-                    promise = assetService.getCustomerAssets(customerId, pageLink, false, config);
+                    promise = assetService.getCustomerAssets(customerId, pageLink, false, config, subType);
                 } else {
-                    promise = assetService.getTenantAssets(pageLink, false, config);
+                    promise = assetService.getTenantAssets(pageLink, false, config, subType);
                 }
                 break;
             case types.entityType.tenant:
@@ -183,48 +204,48 @@ function EntityService($http, $q, $filter, $translate, userService, deviceServic
             case types.entityType.plugin:
                 promise = pluginService.getAllPlugins(pageLink);
                 break;
+            case types.entityType.dashboard:
+                if (user.authority === 'CUSTOMER_USER') {
+                    promise = dashboardService.getCustomerDashboards(customerId, pageLink);
+                } else {
+                    promise = dashboardService.getTenantDashboards(pageLink);
+                }
+                break;
+            case types.entityType.user:
+                $log.error('Get User Entities is not implemented!');
+                break;
+            case types.entityType.alarm:
+                $log.error('Get Alarm Entities is not implemented!');
+                break;
         }
         return promise;
     }
 
-    function getEntitiesByNameFilter(entityType, entityNameFilter, limit, config) {
+    function getEntitiesByNameFilter(entityType, entityNameFilter, limit, config, subType) {
         var deferred = $q.defer();
         var pageLink = {limit: limit, textSearch: entityNameFilter};
-        var promise = getEntitiesByPageLinkPromise(entityType, pageLink, config);
-        promise.then(
-            function success(result) {
-                if (result.data && result.data.length > 0) {
-                    deferred.resolve(result.data);
-                } else {
+        var promise = getEntitiesByPageLinkPromise(entityType, pageLink, config, subType);
+        if (promise) {
+            promise.then(
+                function success(result) {
+                    if (result.data && result.data.length > 0) {
+                        deferred.resolve(result.data);
+                    } else {
+                        deferred.resolve(null);
+                    }
+                },
+                function fail() {
                     deferred.resolve(null);
                 }
-            },
-            function fail() {
-                deferred.resolve(null);
-            }
-        );
+            );
+        } else {
+            deferred.resolve(null);
+        }
         return deferred.promise;
     }
 
-    function entityName(entityType, entity) {
-        var name = '';
-        switch (entityType) {
-            case types.entityType.device:
-            case types.entityType.asset:
-            case types.entityType.rule:
-            case types.entityType.plugin:
-                name = entity.name;
-                break;
-            case types.entityType.tenant:
-            case types.entityType.customer:
-                name = entity.title;
-                break;
-        }
-        return name;
-    }
-
     function entityToEntityInfo(entityType, entity) {
-        return { name: entityName(entityType, entity), entityType: entityType, id: entity.id.id };
+        return { name: entity.name, entityType: entityType, id: entity.id.id };
     }
 
     function entitiesToEntitiesInfo(entityType, entities) {

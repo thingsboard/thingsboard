@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.security.Authority;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class User extends SearchTextBased<UserId> {
+public class User extends SearchTextBased<UserId> implements HasName {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -75,6 +75,11 @@ public class User extends SearchTextBased<UserId> {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    @Override
+    public String getName() {
+        return email;
     }
 
     public Authority getAuthority() {

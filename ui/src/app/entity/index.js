@@ -18,12 +18,15 @@ import EntityAliasesController from './entity-aliases.controller';
 import EntityTypeSelectDirective from './entity-type-select.directive';
 import EntitySubtypeSelectDirective from './entity-subtype-select.directive';
 import EntitySubtypeAutocompleteDirective from './entity-subtype-autocomplete.directive';
+import EntityAutocompleteDirective from './entity-autocomplete.directive';
+import EntitySelectDirective from './entity-select.directive';
 import EntityFilterDirective from './entity-filter.directive';
 import AliasesEntitySelectPanelController from './aliases-entity-select-panel.controller';
 import AliasesEntitySelectDirective from './aliases-entity-select.directive';
 import AddAttributeDialogController from './attribute/add-attribute-dialog.controller';
 import AddWidgetToDashboardDialogController from './attribute/add-widget-to-dashboard-dialog.controller';
 import AttributeTableDirective from './attribute/attribute-table.directive';
+import RelationTableDirective from './relation/relation-table.directive';
 
 export default angular.module('thingsboard.entity', [])
     .controller('EntityAliasesController', EntityAliasesController)
@@ -33,7 +36,10 @@ export default angular.module('thingsboard.entity', [])
     .directive('tbEntityTypeSelect', EntityTypeSelectDirective)
     .directive('tbEntitySubtypeSelect', EntitySubtypeSelectDirective)
     .directive('tbEntitySubtypeAutocomplete', EntitySubtypeAutocompleteDirective)
+    .directive('tbEntityAutocomplete', EntityAutocompleteDirective)
+    .directive('tbEntitySelect', EntitySelectDirective)
     .directive('tbEntityFilter', EntityFilterDirective)
     .directive('tbAliasesEntitySelect', AliasesEntitySelectDirective)
     .directive('tbAttributeTable', AttributeTableDirective)
+    .directive('tbRelationTable', RelationTableDirective)
     .name;

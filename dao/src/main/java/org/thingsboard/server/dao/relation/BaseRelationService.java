@@ -23,9 +23,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationInfo;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.plugin.PluginService;
+import org.thingsboard.server.dao.rule.RuleService;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -40,6 +55,9 @@ public class BaseRelationService implements RelationService {
 
     @Autowired
     private RelationDao relationDao;
+
+    @Autowired
+    private EntityService entityService;
 
     @Override
     public ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType) {
@@ -97,6 +115,31 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing findByFrom [{}]", from);
         validate(from);
         return relationDao.findAllByFrom(from);
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelationInfo>> findInfoByFrom(EntityId from) {
+        log.trace("Executing findInfoByFrom [{}]", from);
+        validate(from);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByFrom(from);
+        ListenableFuture<List<EntityRelationInfo>> relationsInfo = Futures.transform(relations,
+                (AsyncFunction<List<EntityRelation>, List<EntityRelationInfo>>) relations1 -> {
+            List<ListenableFuture<EntityRelationInfo>> futures = new ArrayList<>();
+                    relations1.stream().forEach(relation -> futures.add(fetchRelationInfoAsync(relation)));
+            return Futures.successfulAsList(futures);
+        });
+        return relationsInfo;
+    }
+
+    private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(EntityRelation relation) {
+        ListenableFuture<String> entityName = entityService.fetchEntityNameAsync(relation.getTo());
+        ListenableFuture<EntityRelationInfo> entityRelationInfo =
+                Futures.transform(entityName, (Function<String, EntityRelationInfo>) entityName1 -> {
+                            EntityRelationInfo entityRelationInfo1 = new EntityRelationInfo(relation);
+                            entityRelationInfo1.setToName(entityName1);
+                            return entityRelationInfo1;
+                        });
+        return entityRelationInfo;
     }
 
     @Override

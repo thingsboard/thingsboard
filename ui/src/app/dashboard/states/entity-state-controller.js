@@ -109,7 +109,7 @@ export default function EntityStateController($scope, $location, $state, $stateP
         if (params && params.entityId && params.entityId.id && params.entityId.entityType) {
             entityService.getEntity(params.entityId.entityType, params.entityId.id, {ignoreLoading: true, ignoreErrors: true}).then(
                 function success(entity) {
-                    var entityName = entityService.entityName(params.entityId.entityType, entity);
+                    var entityName = entity.name;
                     deferred.resolve(entityName);
                 },
                 function fail() {

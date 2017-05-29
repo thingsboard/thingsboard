@@ -37,7 +37,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.CustomerEntity;
 import org.thingsboard.server.dao.model.DeviceEntity;
@@ -58,7 +58,7 @@ import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
-public class DeviceServiceImpl extends BaseEntityService implements DeviceService {
+public class DeviceServiceImpl extends AbstractEntityService implements DeviceService {
 
     @Autowired
     private DeviceDao deviceDao;

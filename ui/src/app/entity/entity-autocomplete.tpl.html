@@ -17,27 +17,29 @@
 -->
 <md-autocomplete ng-required="tbRequired"
                  ng-disabled="disabled"
-                 md-input-name="dashboard"
-                 ng-model="dashboard"
-                 md-selected-item="dashboard"
-                 md-search-text="dashboardSearchText"
-                 md-search-text-change="dashboardSearchTextChanged()"
-                 md-items="item in fetchDashboards(dashboardSearchText)"
-                 md-item-text="item.title"
+                 md-no-cache="true"
+                 md-input-name="entity"
+                 ng-model="entity"
+                 md-selected-item="entity"
+                 md-search-text="entitySearchText"
+                 md-search-text-change="entitySearchTextChanged()"
+                 md-items="item in fetchEntities(entitySearchText)"
+                 md-item-text="item.name"
                  md-min-length="0"
-                 placeholder="{{ 'dashboard.select-dashboard' | translate }}"
-                 md-menu-class="tb-dashboard-autocomplete">
+                 md-floating-label="{{ entityText | translate }}"
+                 md-select-on-match="true"
+                 md-menu-class="tb-entity-autocomplete">
     <md-item-template>
-        <div class="tb-dashboard-item">
-            <span md-highlight-text="dashboardSearchText" md-highlight-flags="^i">{{item.title}}</span>
+        <div class="tb-entity-item">
+            <span md-highlight-text="entitySearchText" md-highlight-flags="^i">{{item.name}}</span>
         </div>
     </md-item-template>
     <md-not-found>
         <div class="tb-not-found">
-            <span translate translate-values='{ entity: dashboardSearchText }'>dashboard.no-dashboards-matching</span>
+            <span translate translate-values='{ entity: entitySearchText }'>{{ noEntitiesMatchingText }}</span>
         </div>
     </md-not-found>
-    <div ng-messages="theForm.dashboard.$error">
-        <div translate ng-message="required">dashboard.dashboard-required</div>
+    <div ng-messages="theForm.entity.$error">
+        <div translate ng-message="required">{{ entityRequiredText }}</div>
     </div>
 </md-autocomplete>
