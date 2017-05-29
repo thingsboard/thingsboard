@@ -148,6 +148,25 @@ public class ModelConstants {
     public static final String ASSET_TYPES_BY_TENANT_VIEW_NAME = "asset_types_by_tenant";
 
     /**
+     * Cassandra alarm constants.
+     */
+    public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
+    public static final String ALARM_TENANT_ID_PROPERTY = TENTANT_ID_PROPERTY;
+    public static final String ALARM_TYPE_PROPERTY = "type";
+    public static final String ALARM_DETAILS_PROPERTY = "details";
+    public static final String ALARM_ORIGINATOR_ID_PROPERTY = "originator_id";
+    public static final String ALARM_ORIGINATOR_TYPE_PROPERTY = "originator_type";
+    public static final String ALARM_SEVERITY_PROPERTY = "severity";
+    public static final String ALARM_STATUS_PROPERTY = "status";
+    public static final String ALARM_START_TS_PROPERTY = "start_ts";
+    public static final String ALARM_END_TS_PROPERTY = "end_ts";
+    public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
+    public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
+    public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
+
+    public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
+
+    /**
      * Cassandra entity relation constants.
      */
     public static final String RELATION_COLUMN_FAMILY_NAME = "relation";
@@ -157,6 +176,7 @@ public class ModelConstants {
     public static final String RELATION_TO_TYPE_PROPERTY = "to_type";
     public static final String RELATION_TYPE_PROPERTY = "relation_type";
 
+    public static final String RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME = "relation_by_type_and_child_type";
     public static final String RELATION_REVERSE_VIEW_NAME = "reverse_relation";
 
 

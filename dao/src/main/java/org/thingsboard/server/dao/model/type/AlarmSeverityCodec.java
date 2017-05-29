@@ -13,25 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm;
+package org.thingsboard.server.dao.model.type;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.dao.alarm.AlarmService;
 
-/**
- * Created by ashvayka on 11.05.17.
- */
-@Data
-@Builder
-@AllArgsConstructor
-public class AlarmQuery {
+public class AlarmSeverityCodec extends EnumNameCodec<AlarmSeverity> {
 
-    private EntityId affectedEntityId;
-    private TimePageLink pageLink;
-    private AlarmStatus status;
+    public AlarmSeverityCodec() {
+        super(AlarmSeverity.class);
+    }
 
 }

@@ -16,7 +16,9 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 
 import java.util.List;
@@ -43,5 +45,7 @@ public interface RelationDao {
     ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType);
 
     ListenableFuture<Boolean> deleteOutboundRelations(EntityId entity);
+
+    ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, EntityType toType, TimePageLink pageLink);
 
 }
