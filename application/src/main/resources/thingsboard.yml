@@ -227,7 +227,20 @@ spring.mvc.cors:
 # SQL DAO Configuration
 sql:
   enabled: "${SQL_ENABLED:false}"
+
+spring:
+  data:
+    jpa:
+      repositories:
+        enabled: "false"
+  jpa:
+    show-sql: "false"
+    generate-ddl: "false"
+    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+    hibernate:
+      ddl-auto: "none"
   datasource:
-    url: "${SQL_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
-    username: "${SQL_DATASOURCE_USERNAME:postgres}"
-    password: "${SQL_DATASOURCE_PASSWORD:postgres}"         
+    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"

@@ -63,17 +63,6 @@ function CustomerService($http, $q, types) {
         return deferred.promise;
     }
 
-    function getCustomerTitle(customerId) {
-        var deferred = $q.defer();
-        var url = '/api/customer/' + customerId + '/title';
-        $http.get(url, null).then(function success(response) {
-            deferred.resolve(response.data);
-        }, function fail(response) {
-            deferred.reject(response.data);
-        });
-        return deferred.promise;
-    }
-
     function getShortCustomerInfo(customerId) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/shortInfo';

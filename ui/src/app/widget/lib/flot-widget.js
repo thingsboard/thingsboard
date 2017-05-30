@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 import $ from 'jquery';
 import tinycolor from 'tinycolor2';
 import moment from 'moment';
@@ -33,12 +33,6 @@ export default class TbFlot {
         this.ctx = ctx;
         this.chartType = chartType || 'line';
         var settings = ctx.settings;
-
-            if (this.chartType === 'line' && settings.smoothLines && !series.points.show) {
-                series.curvedLines = {
-                    apply: true
-                }
-            }
 
         ctx.tooltip = $('#flot-series-tooltip');
         if (ctx.tooltip.length === 0) {

@@ -561,7 +561,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         }
     }
 
-            var dataIndex = 0;
     //TODO: widgets visibility
     /*function updateVisibility(forceRedraw) {
         if (visibleRect) {

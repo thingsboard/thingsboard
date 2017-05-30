@@ -202,10 +202,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         onResetTimewindow: function() {
             $timeout(function() {
                 if (vm.originalDashboardTimewindow) {
-                $timeout(function() {
                     vm.dashboardTimewindow = angular.copy(vm.originalDashboardTimewindow);
                     vm.originalDashboardTimewindow = null;
-                }, 0);
                 }
             }, 0);
         },
