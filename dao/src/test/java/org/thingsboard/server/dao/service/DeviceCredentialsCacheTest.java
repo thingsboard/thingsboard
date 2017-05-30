@@ -15,13 +15,9 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.hazelcast.core.HazelcastInstance;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +52,7 @@ public class DeviceCredentialsCacheTest extends AbstractServiceTest {
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    private UUID deviceId = UUIDs.timeBased();
+    private UUID deviceId = UUID.randomUUID();
 
     @Before
     public void setup() throws Exception {
@@ -115,7 +111,7 @@ public class DeviceCredentialsCacheTest extends AbstractServiceTest {
 
         when(deviceCredentialsDao.findByDeviceId(deviceId)).thenReturn(createDummyDeviceCredentialsEntity(CREDENTIALS_ID_1));
 
-        UUID deviceCredentialsId = UUIDs.timeBased();
+        UUID deviceCredentialsId = UUID.randomUUID();
         when(deviceCredentialsDao.findById(deviceCredentialsId)).thenReturn(createDummyDeviceCredentialsEntity(CREDENTIALS_ID_1));
         when(deviceService.findDeviceById(new DeviceId(deviceId))).thenReturn(new Device());
 
@@ -140,7 +136,7 @@ public class DeviceCredentialsCacheTest extends AbstractServiceTest {
     }
 
     private DeviceCredentials createDummyDeviceCredentialsEntity(String deviceCredentialsId) {
-        DeviceCredentials result = new DeviceCredentials(new DeviceCredentialsId(UUIDs.timeBased()));
+        DeviceCredentials result = new DeviceCredentials(new DeviceCredentialsId(UUID.randomUUID()));
         result.setCredentialsId(deviceCredentialsId);
         return result;
     }

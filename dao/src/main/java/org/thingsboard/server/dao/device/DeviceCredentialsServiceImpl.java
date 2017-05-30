@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.device;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
@@ -28,6 +30,7 @@ import org.thingsboard.server.dao.EncryptionUtil;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -49,6 +52,7 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     }
 
     @Override
+    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, unless="#result == null")
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
@@ -56,6 +60,7 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     }
 
     @Override
+    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator="previousDeviceCredentialsId", beforeInvocation = true)
     public DeviceCredentials updateDeviceCredentials(DeviceCredentials deviceCredentials) {
         return saveOrUpdare(deviceCredentials);
     }
@@ -82,6 +87,7 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
     }
 
     @Override
+    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key="#deviceCredentials.credentialsId")
     public void deleteDeviceCredentials(DeviceCredentials deviceCredentials) {
         log.trace("Executing deleteDeviceCredentials [{}]", deviceCredentials);
         deviceCredentialsDao.removeById(deviceCredentials.getUuidId());
