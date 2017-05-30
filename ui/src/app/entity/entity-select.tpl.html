@@ -17,6 +17,9 @@
 -->
 <div layout='row' class="tb-entity-select">
     <tb-entity-type-select style="min-width: 100px;"
+                           the-form="theForm"
+                           ng-disabled="disabled"
+                           tb-required="tbRequired"
                            ng-model="model.entityType">
     </tb-entity-type-select>
     <tb-entity-autocomplete flex ng-if="model.entityType"

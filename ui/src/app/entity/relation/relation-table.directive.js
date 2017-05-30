@@ -45,13 +45,17 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
 
     let vm = this;
 
+    vm.types = types;
+
+    vm.direction = vm.types.entitySearchDirection.from;
+
     vm.relations = [];
     vm.relationsCount = 0;
     vm.allRelations = [];
     vm.selectedRelations = [];
 
     vm.query = {
-        order: 'typeName',
+        order: 'type',
         limit: 5,
         page: 1,
         search: null
@@ -62,14 +66,18 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
     vm.onReorder = onReorder;
     vm.onPaginate = onPaginate;
     vm.addRelation = addRelation;
-    vm.editRelation = editRelation;
     vm.deleteRelation = deleteRelation;
     vm.deleteRelations = deleteRelations;
     vm.reloadRelations = reloadRelations;
     vm.updateRelations = updateRelations;
 
-
     $scope.$watch("vm.entityId", function(newVal, prevVal) {
+        if (newVal && !angular.equals(newVal, prevVal)) {
+            reloadRelations();
+        }
+    });
+
+    $scope.$watch("vm.direction", function(newVal, prevVal) {
         if (newVal && !angular.equals(newVal, prevVal)) {
             reloadRelations();
         }
@@ -102,7 +110,7 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
         if ($event) {
             $event.stopPropagation();
         }
-        var from = {
+        var entityId = {
             id: vm.entityId,
             entityType: vm.entityType
         };
@@ -111,7 +119,7 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
             controllerAs: 'vm',
             templateUrl: addRelationTemplate,
             parent: angular.element($document[0].body),
-            locals: { from: from },
+            locals: { direction: vm.direction, entityId: entityId },
             fullscreen: true,
             targetEvent: $event
         }).then(function () {
@@ -120,36 +128,100 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
         });
     }
 
-    function editRelation($event, /*relation*/) {
+    function deleteRelation($event, relation) {
         if ($event) {
             $event.stopPropagation();
         }
-        //TODO:
-    }
+        if (relation) {
+            var title;
+            var content;
+            if (vm.direction == vm.types.entitySearchDirection.from) {
+                title = $translate.instant('relation.delete-to-relation-title', {entityName: relation.toName});
+                content = $translate.instant('relation.delete-to-relation-text', {entityName: relation.toName});
+            } else {
+                title = $translate.instant('relation.delete-from-relation-title', {entityName: relation.fromName});
+                content = $translate.instant('relation.delete-from-relation-text', {entityName: relation.fromName});
+            }
 
-    function deleteRelation($event, /*relation*/) {
-        if ($event) {
-            $event.stopPropagation();
+            var confirm = $mdDialog.confirm()
+                .targetEvent($event)
+                .title(title)
+                .htmlContent(content)
+                .ariaLabel(title)
+                .cancel($translate.instant('action.no'))
+                .ok($translate.instant('action.yes'));
+            $mdDialog.show(confirm).then(function () {
+                entityRelationService.deleteRelation(
+                    relation.from.id,
+                    relation.from.entityType,
+                    relation.type,
+                    relation.to.id,
+                    relation.to.entityType).then(
+                    function success() {
+                        reloadRelations();
+                    }
+                );
+            });
         }
-        //TODO:
     }
 
     function deleteRelations($event) {
         if ($event) {
             $event.stopPropagation();
         }
-        //TODO:
+        if (vm.selectedRelations && vm.selectedRelations.length > 0) {
+            var title;
+            var content;
+            if (vm.direction == vm.types.entitySearchDirection.from) {
+                title = $translate.instant('relation.delete-to-relations-title', {count: vm.selectedRelations.length}, 'messageformat');
+                content = $translate.instant('relation.delete-to-relations-text');
+            } else {
+                title = $translate.instant('relation.delete-from-relations-title', {count: vm.selectedRelations.length}, 'messageformat');
+                content = $translate.instant('relation.delete-from-relations-text');
+            }
+            var confirm = $mdDialog.confirm()
+                .targetEvent($event)
+                .title(title)
+                .htmlContent(content)
+                .ariaLabel(title)
+                .cancel($translate.instant('action.no'))
+                .ok($translate.instant('action.yes'));
+            $mdDialog.show(confirm).then(function () {
+                var tasks = [];
+                for (var i=0;i<vm.selectedRelations.length;i++) {
+                    var relation = vm.selectedRelations[i];
+                    tasks.push( entityRelationService.deleteRelation(
+                        relation.from.id,
+                        relation.from.entityType,
+                        relation.type,
+                        relation.to.id,
+                        relation.to.entityType));
+                }
+                $q.all(tasks).then(function () {
+                    reloadRelations();
+                });
+
+            });
+        }
     }
 
     function reloadRelations () {
         vm.allRelations.length = 0;
         vm.relations.length = 0;
-        vm.relationsPromise = entityRelationService.findInfoByFrom(vm.entityId, vm.entityType);
+        vm.relationsPromise;
+        if (vm.direction == vm.types.entitySearchDirection.from) {
+            vm.relationsPromise = entityRelationService.findInfoByFrom(vm.entityId, vm.entityType);
+        } else {
+            vm.relationsPromise = entityRelationService.findInfoByTo(vm.entityId, vm.entityType);
+        }
         vm.relationsPromise.then(
             function success(allRelations) {
                 allRelations.forEach(function(relation) {
-                    relation.typeName = $translate.instant('relation.relation-type.' + relation.type);
-                    relation.toEntityTypeName = $translate.instant(utils.entityTypeName(relation.to.entityType));
+                    if (vm.direction == vm.types.entitySearchDirection.from) {
+                        relation.toEntityTypeName = $translate.instant(utils.entityTypeName(relation.to.entityType));
+                    } else {
+                        relation.fromEntityTypeName = $translate.instant(utils.entityTypeName(relation.from.entityType));
+                    }
                 });
                 vm.allRelations = allRelations;
                 vm.selectedRelations = [];

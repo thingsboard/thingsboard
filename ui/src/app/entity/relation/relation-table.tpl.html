@@ -16,11 +16,22 @@
 
 -->
 <md-content flex class="md-padding tb-absolute-fill tb-relation-table tb-data-table" layout="column">
+    <section layout="row">
+        <md-input-container class="md-block" style="width: 200px;">
+            <label translate>relation.direction</label>
+            <md-select ng-model="vm.direction" ng-disabled="loading">
+                <md-option ng-repeat="direction in vm.types.entitySearchDirection" ng-value="direction">
+                    {{ ('relation.search-direction.' + direction) | translate}}
+                </md-option>
+            </md-select>
+        </md-input-container>
+    </section>
     <div layout="column" class="md-whiteframe-z1">
         <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedRelations.length
                                                                  && vm.query.search === null">
             <div class="md-toolbar-tools">
-                <span translate>relation.entity-relations</span>
+                <span>{{(vm.direction == vm.types.entitySearchDirection.from ?
+                    'relation.from-relations' : 'relation.to-relations') | translate}}</span>
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="vm.addRelation($event)">
                     <md-icon>add</md-icon>
@@ -66,7 +77,7 @@
         <md-toolbar class="md-table-toolbar alternate" ng-show="vm.selectedRelations.length">
             <div class="md-toolbar-tools">
                 <span translate
-                      translate-values="{count: selectedRelations.length}"
+                      translate-values="{count: vm.selectedRelations.length}"
                       translate-interpolation="messageformat">relation.selected-relations</span>
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="vm.deleteRelations($event)">
@@ -81,25 +92,26 @@
             <table md-table md-row-select multiple="" ng-model="vm.selectedRelations" md-progress="vm.relationsDeferred.promise">
                 <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
-                    <th md-column md-order-by="typeName"><span translate>relation.type</span></th>
-                    <th md-column md-order-by="toEntityTypeName"><span translate>relation.to-entity-type</span></th>
-                    <th md-column md-order-by="toName"><span translate>relation.to-entity-name</span></th>
+                    <th md-column md-order-by="type"><span translate>relation.type</span></th>
+                    <th md-column ng-if="vm.direction == vm.types.entitySearchDirection.from"
+                        md-order-by="toEntityTypeName"><span translate>relation.to-entity-type</span></th>
+                    <th md-column ng-if="vm.direction == vm.types.entitySearchDirection.to"
+                        md-order-by="fromEntityTypeName"><span translate>relation.from-entity-type</span></th>
+                    <th md-column ng-if="vm.direction == vm.types.entitySearchDirection.from"
+                        md-order-by="toName"><span translate>relation.to-entity-name</span></th>
+                    <th md-column ng-if="vm.direction == vm.types.entitySearchDirection.to"
+                        md-order-by="fromName"><span translate>relation.from-entity-name</span></th>
                     <th md-column><span>&nbsp</span></th>
                 </tr>
                 </thead>
                 <tbody md-body>
                 <tr md-row md-select="relation" md-select-id="relation" md-auto-select ng-repeat="relation in vm.relations">
-                    <td md-cell>{{ relation.typeName }}</td>
-                    <td md-cell>{{ relation.toEntityTypeName }}</td>
-                    <td md-cell>{{ relation.toName }}</td>
+                    <td md-cell>{{ relation.type }}</td>
+                    <td md-cell ng-if="vm.direction == vm.types.entitySearchDirection.from">{{ relation.toEntityTypeName  }}</td>
+                    <td md-cell ng-if="vm.direction == vm.types.entitySearchDirection.to">{{ relation.fromEntityTypeName  }}</td>
+                    <td md-cell ng-if="vm.direction == vm.types.entitySearchDirection.from">{{ relation.toName }}</td>
+                    <td md-cell ng-if="vm.direction == vm.types.entitySearchDirection.to">{{ relation.fromName }}</td>
                     <td md-cell class="tb-action-cell">
-                        <md-button class="md-icon-button" aria-label="{{ 'action.edit' | translate }}"
-                                   ng-click="vm.editRelation($event, relation)">
-                            <md-icon aria-label="{{ 'action.edit' | translate }}" class="material-icons">edit</md-icon>
-                            <md-tooltip md-direction="top">
-                                {{ 'relation.edit' | translate }}
-                            </md-tooltip>
-                        </md-button>
                         <md-button class="md-icon-button" aria-label="{{ 'action.delete' | translate }}" ng-click="vm.deleteRelation($event, relation)">
                             <md-icon aria-label="{{ 'action.delete' | translate }}" class="material-icons">delete</md-icon>
                             <md-tooltip md-direction="top">

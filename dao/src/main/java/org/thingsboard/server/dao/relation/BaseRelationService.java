@@ -23,29 +23,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.plugin.PluginService;
-import org.thingsboard.server.dao.rule.RuleService;
-import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 /**
  * Created by ashvayka on 28.04.17.
@@ -133,21 +121,14 @@ public class BaseRelationService implements RelationService {
         ListenableFuture<List<EntityRelationInfo>> relationsInfo = Futures.transform(relations,
                 (AsyncFunction<List<EntityRelation>, List<EntityRelationInfo>>) relations1 -> {
             List<ListenableFuture<EntityRelationInfo>> futures = new ArrayList<>();
-                    relations1.stream().forEach(relation -> futures.add(fetchRelationInfoAsync(relation)));
-            return Futures.successfulAsList(futures);
+                    relations1.stream().forEach(relation ->
+                            futures.add(fetchRelationInfoAsync(relation,
+                                    relation2 -> relation2.getTo(),
+                                    (EntityRelationInfo relationInfo, String entityName) -> relationInfo.setToName(entityName)))
+                    );
+                    return Futures.successfulAsList(futures);
         });
         return relationsInfo;
-    }
-
-    private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(EntityRelation relation) {
-        ListenableFuture<String> entityName = entityService.fetchEntityNameAsync(relation.getTo());
-        ListenableFuture<EntityRelationInfo> entityRelationInfo =
-                Futures.transform(entityName, (Function<String, EntityRelationInfo>) entityName1 -> {
-                            EntityRelationInfo entityRelationInfo1 = new EntityRelationInfo(relation);
-                            entityRelationInfo1.setToName(entityName1);
-                            return entityRelationInfo1;
-                        });
-        return entityRelationInfo;
     }
 
     @Override
@@ -165,6 +146,38 @@ public class BaseRelationService implements RelationService {
         validate(to);
         validateTypeGroup(typeGroup);
         return relationDao.findAllByTo(to, typeGroup);
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelationInfo>> findInfoByTo(EntityId to, RelationTypeGroup typeGroup) {
+        log.trace("Executing findInfoByTo [{}][{}]", to, typeGroup);
+        validate(to);
+        validateTypeGroup(typeGroup);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findAllByTo(to, typeGroup);
+        ListenableFuture<List<EntityRelationInfo>> relationsInfo = Futures.transform(relations,
+                (AsyncFunction<List<EntityRelation>, List<EntityRelationInfo>>) relations1 -> {
+                    List<ListenableFuture<EntityRelationInfo>> futures = new ArrayList<>();
+                    relations1.stream().forEach(relation ->
+                        futures.add(fetchRelationInfoAsync(relation,
+                                relation2 -> relation2.getFrom(),
+                                (EntityRelationInfo relationInfo, String entityName) -> relationInfo.setFromName(entityName)))
+                    );
+                    return Futures.successfulAsList(futures);
+                });
+        return relationsInfo;
+    }
+
+    private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(EntityRelation relation,
+                                                                        Function<EntityRelation, EntityId> entityIdGetter,
+                                                                        BiConsumer<EntityRelationInfo, String> entityNameSetter) {
+        ListenableFuture<String> entityName = entityService.fetchEntityNameAsync(entityIdGetter.apply(relation));
+        ListenableFuture<EntityRelationInfo> entityRelationInfo =
+                Futures.transform(entityName, (Function<String, EntityRelationInfo>) entityName1 -> {
+                    EntityRelationInfo entityRelationInfo1 = new EntityRelationInfo(relation);
+                    entityNameSetter.accept(entityRelationInfo1, entityName1);
+                    return entityRelationInfo1;
+                });
+        return entityRelationInfo;
     }
 
     @Override

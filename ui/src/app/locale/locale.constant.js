@@ -544,6 +544,7 @@ export default angular.module('thingsboard.locale', [])
                     "entity-name-filter-no-entity-matched": "No entities starting with '{{entity}}' were found.",
                     "all-subtypes": "All",
                     "type": "Type",
+                    "type-required": "Entity type is required.",
                     "type-device": "Device",
                     "type-asset": "Asset",
                     "type-rule": "Rule",
@@ -718,19 +719,33 @@ export default angular.module('thingsboard.locale', [])
                 },
                 "relation": {
                     "relations": "Relations",
-                    "entity-relations": "Entity relations",
+                    "direction": "Direction",
+                    "search-direction": {
+                        "FROM": "From",
+                        "TO": "To"
+                    },
+                    "from-relations": "Outbound relations",
+                    "to-relations": "Inbound relations",
                     "selected-relations": "{ count, select, 1 {1 relation} other {# relations} } selected",
                     "type": "Type",
-                    "to-entity-type": "Entity type",
-                    "to-entity-name": "Entity name",
-                    "edit": "Edit relation",
+                    "to-entity-type": "To entity type",
+                    "to-entity-name": "To entity name",
+                    "from-entity-type": "From entity type",
+                    "from-entity-name": "From entity name",
+                    "to-entity": "To entity",
+                    "from-entity": "From entity",
                     "delete": "Delete relation",
                     "relation-type": "Relation type",
-                    "relation-types": {
-                        "Contains": "Contains",
-                        "Manages": "Manages"
-                    },
-                    "add": "Add relation"
+                    "relation-type-required": "Relation type is required.",
+                    "add": "Add relation",
+                    "delete-to-relation-title": "Are you sure you want to delete relation to the entity '{{entityName}}'?",
+                    "delete-to-relation-text": "Be careful, after the confirmation the entity '{{entityName}}' will be unrelated from the current entity.",
+                    "delete-to-relations-title": "Are you sure you want to delete { count, select, 1 {1 relation} other {# relations} }?",
+                    "delete-to-relations-text": "Be careful, after the confirmation all selected relations will be removed and corresponding entities will be unrelated from the current entity.",
+                    "delete-from-relation-title": "Are you sure you want to delete relation from the entity '{{entityName}}'?",
+                    "delete-from-relation-text": "Be careful, after the confirmation current entity will be unrelated from the entity '{{entityName}}'.",
+                    "delete-from-relations-title": "Are you sure you want to delete { count, select, 1 {1 relation} other {# relations} }?",
+                    "delete-from-relations-text": "Be careful, after the confirmation all selected relations will be removed and current entity will be unrelated from the corresponding entities."
                 },
                 "rule": {
                     "rule": "Rule",

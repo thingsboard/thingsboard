@@ -27,6 +27,7 @@ import AddAttributeDialogController from './attribute/add-attribute-dialog.contr
 import AddWidgetToDashboardDialogController from './attribute/add-widget-to-dashboard-dialog.controller';
 import AttributeTableDirective from './attribute/attribute-table.directive';
 import RelationTableDirective from './relation/relation-table.directive';
+import RelationTypeAutocompleteDirective from './relation/relation-type-autocomplete.directive';
 
 export default angular.module('thingsboard.entity', [])
     .controller('EntityAliasesController', EntityAliasesController)
@@ -42,4 +43,5 @@ export default angular.module('thingsboard.entity', [])
     .directive('tbAliasesEntitySelect', AliasesEntitySelectDirective)
     .directive('tbAttributeTable', AttributeTableDirective)
     .directive('tbRelationTable', RelationTableDirective)
+    .directive('tbRelationTypeAutocomplete', RelationTypeAutocompleteDirective)
     .name;
