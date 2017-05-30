@@ -104,11 +104,18 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
 
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
-        return null;
+        if (pageLink.getIdOffset() == null) {
+            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdAndTypeFirstPage(pageLink.getLimit(), tenantId,
+                    customerId, type, pageLink.getTextSearch()));
+        } else {
+            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdAndTypeNextPage(pageLink.getLimit(), tenantId,
+                    customerId, type, pageLink.getTextSearch(), pageLink.getIdOffset()));
+        }
     }
 
     @Override
     public ListenableFuture<List<TenantAssetType>> findTenantAssetTypesAsync() {
-        return null;
+        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        return service.submit(() -> assetRepository.findTenantAssetTypes());
     }
 }

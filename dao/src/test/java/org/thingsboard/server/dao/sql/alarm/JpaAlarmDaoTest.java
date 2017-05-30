@@ -71,6 +71,11 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(alarm2Id, alarm.getId().getId());
     }
 
+    @Test
+    public void testFindAlarmByIdAsync() {
+        // TODO: implement
+    }
+
     private void saveAlarm(UUID id, UUID tenantId, UUID deviceId, String type) {
         Alarm alarm = new Alarm();
         alarm.setId(new AlarmId(id));

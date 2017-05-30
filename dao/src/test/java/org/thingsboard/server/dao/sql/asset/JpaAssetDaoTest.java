@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
@@ -56,7 +58,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
             UUID assetId = UUIDs.timeBased();
             UUID tenantId = i % 2 == 0 ? tenantId1 : tenantId2;
             UUID customerId = i % 2 == 0 ? customerId1 : customerId2;
-            saveAsset(assetId, tenantId, customerId, "ASSET_" + i);
+            saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
         }
         assertEquals(60, assetDao.find().size());
 
@@ -83,7 +85,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
             UUID assetId = UUIDs.timeBased();
             UUID tenantId = i % 2 == 0 ? tenantId1 : tenantId2;
             UUID customerId = i % 2 == 0 ? customerId1 : customerId2;
-            saveAsset(assetId, tenantId, customerId, "ASSET_" + i);
+            saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
         }
 
         TextPageLink pageLink1 = new TextPageLink(20, "ASSET_");
@@ -106,7 +108,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         List<UUID> searchIds = new ArrayList<>();
         for (int i = 0; i < 30; i++) {
             UUID assetId = UUIDs.timeBased();
-            saveAsset(assetId, tenantId, customerId, "ASSET_" + i);
+            saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
             if (i % 3 == 0) {
                 searchIds.add(assetId);
             }
@@ -128,7 +130,7 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         for (int i = 0; i < 30; i++) {
             UUID assetId = UUIDs.timeBased();
             UUID customerId = i%2 == 0 ? customerId1 : customerId2;
-            saveAsset(assetId, tenantId, customerId, "ASSET_" + i);
+            saveAsset(assetId, tenantId, customerId, "ASSET_" + i, "TYPE_1");
             if (i % 3 == 0) {
                 searchIds.add(assetId);
             }
@@ -150,8 +152,8 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         UUID customerId1 = UUIDs.timeBased();
         UUID customerId2 = UUIDs.timeBased();
         String name = "TEST_ASSET";
-        saveAsset(assetId1, tenantId1, customerId1, name);
-        saveAsset(assetId2, tenantId2, customerId2, name);
+        saveAsset(assetId1, tenantId1, customerId1, name, "TYPE_1");
+        saveAsset(assetId2, tenantId2, customerId2, name, "TYPE_1");
 
         Optional<Asset> assetOpt1 = assetDao.findAssetsByTenantIdAndName(tenantId2, name);
         assertTrue("Optional expected to be non-empty", assetOpt1.isPresent());
@@ -161,13 +163,61 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         assertFalse("Optional expected to be empty", assetOpt2.isPresent());
     }
 
-    private void saveAsset(UUID id, UUID tenantId, UUID customerId, String name) {
+    @Test
+    public void testFindAssetsByTenantIdAndType() {
+        // TODO: implement
+    }
+
+    @Test
+    public void testFindAssetsByTenantIdAndCustomerIdAndType() {
+        // TODO: implement
+    }
+
+    @Test
+    public void testFindTenantAssetTypesAsync() throws ExecutionException, InterruptedException {
+        UUID assetId1 = UUIDs.timeBased();
+        UUID assetId2 = UUIDs.timeBased();
+        UUID tenantId1 = UUIDs.timeBased();
+        UUID tenantId2 = UUIDs.timeBased();
+        UUID customerId1 = UUIDs.timeBased();
+        UUID customerId2 = UUIDs.timeBased();
+        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_1", "TYPE_1");
+        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_2", "TYPE_1");
+        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_3", "TYPE_2");
+        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_4", "TYPE_3");
+        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_5", "TYPE_3");
+        saveAsset(UUIDs.timeBased(), tenantId1, customerId1, "TEST_ASSET_6", "TYPE_3");
+
+        saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_7", "TYPE_4");
+        saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_8", "TYPE_1");
+        saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_9", "TYPE_1");
+
+        ListenableFuture<List<TenantAssetType>> tenantAssetTypesFuture = assetDao.findTenantAssetTypesAsync();
+        List<TenantAssetType> tenantAssetTypes = tenantAssetTypesFuture.get();
+        assertNotNull(tenantAssetTypes);
+        List<TenantAssetType> tenant1Types = tenantAssetTypes.stream().filter(t -> t.getTenantId().getId().equals(tenantId1)).collect(Collectors.toList());
+        List<TenantAssetType> tenant2Types = tenantAssetTypes.stream().filter(t -> t.getTenantId().getId().equals(tenantId2)).collect(Collectors.toList());
+
+        assertEquals(3, tenant1Types.size());
+        assertTrue(tenant1Types.stream().anyMatch(t -> t.getType().equals("TYPE_1")));
+        assertTrue(tenant1Types.stream().anyMatch(t -> t.getType().equals("TYPE_2")));
+        assertTrue(tenant1Types.stream().anyMatch(t -> t.getType().equals("TYPE_3")));
+        assertFalse(tenant1Types.stream().anyMatch(t -> t.getType().equals("TYPE_4")));
+
+        assertEquals(2, tenant2Types.size());
+        assertTrue(tenant2Types.stream().anyMatch(t -> t.getType().equals("TYPE_1")));
+        assertTrue(tenant2Types.stream().anyMatch(t -> t.getType().equals("TYPE_4")));
+        assertFalse(tenant2Types.stream().anyMatch(t -> t.getType().equals("TYPE_2")));
+        assertFalse(tenant2Types.stream().anyMatch(t -> t.getType().equals("TYPE_3")));
+    }
+
+    private void saveAsset(UUID id, UUID tenantId, UUID customerId, String name, String type) {
         Asset asset = new Asset();
         asset.setId(new AssetId(id));
         asset.setTenantId(new TenantId(tenantId));
         asset.setCustomerId(new CustomerId(customerId));
         asset.setName(name);
-
+        asset.setType(type);
         assetDao.save(asset);
     }
 }

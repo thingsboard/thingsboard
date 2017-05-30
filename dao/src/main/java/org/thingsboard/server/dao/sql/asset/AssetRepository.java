@@ -19,6 +19,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 
 import java.util.List;
@@ -58,4 +59,19 @@ public interface AssetRepository extends CrudRepository<AssetEntity, UUID> {
     List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(UUID tenantId, UUID customerId, List<UUID> assetIds);
 
     AssetEntity findByTenantIdAndName(UUID tenantId, String name);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = ?2 " +
+            "AND CUSTOMER_ID = ?3 AND TYPE = ?4 " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?5, '%')) " +
+            "ORDER BY ID LIMIT ?1")
+    List<AssetEntity> findByTenantIdAndCustomerIdAndTypeFirstPage(int limit, UUID tenantId, UUID customerId, String type, String textSearch);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = ?2 " +
+            "AND CUSTOMER_ID = ?3 AND TYPE = ?4 " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?5, '%')) " +
+            "AND ID > ?6 ORDER BY ID LIMIT ?1")
+    List<AssetEntity> findByTenantIdAndCustomerIdAndTypeNextPage(int limit, UUID tenantId, UUID customerId, String type, String textSearch, UUID idOffset);
+
+    @Query(value = "SELECT NEW org.thingsboard.server.common.data.asset.TenantAssetType(a.type, a.tenantId) FROM AssetEntity a GROUP BY a.tenantId, a.type")
+    List<TenantAssetType> findTenantAssetTypes();
 }
