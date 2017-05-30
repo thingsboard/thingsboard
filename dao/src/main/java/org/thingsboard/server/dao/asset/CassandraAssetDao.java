@@ -55,12 +55,6 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
     }
 
     @Override
-    public Asset save(Asset asset) {
-        log.debug("Save asset [{}] ", asset);
-        return save(asset);
-    }
-
-    @Override
     public List<Asset> findAssetsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find assets by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<AssetEntity> assetEntities = findPageWithTextSearch(ASSET_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,

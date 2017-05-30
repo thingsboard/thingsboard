@@ -226,7 +226,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 (Function<List<TenantAssetType>, List<TenantAssetType>>) assetTypeEntities -> {
                     List<TenantAssetType> assetTypes = new ArrayList<>();
                     for (TenantAssetType assetType : assetTypeEntities) {
-                        if (assetType.getTenantId().equals(tenantId.getId())) {
+                        if (assetType.getTenantId().equals(tenantId)) {
                             assetTypes.add(assetType);
                         }
                     }
@@ -252,7 +252,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 protected void validateUpdate(Asset asset) {
                     assetDao.findAssetsByTenantIdAndName(asset.getTenantId().getId(), asset.getName()).ifPresent(
                             d -> {
-                                if (!d.getId().equals(asset.getUuidId())) {
+                                if (!d.getId().equals(asset.getId())) {
                                     throw new DataValidationException("Asset with such name already exists!");
                                 }
                             }
@@ -282,7 +282,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                         if (customer == null) {
                             throw new DataValidationException("Can't assign asset to non-existent customer!");
                         }
-                        if (!customer.getTenantId().equals(asset.getTenantId().getId())) {
+                        if (!customer.getTenantId().equals(asset.getTenantId())) {
                             throw new DataValidationException("Can't assign asset to customer from different tenant!");
                         }
                     }

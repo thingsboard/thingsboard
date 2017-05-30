@@ -246,7 +246,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             (Function<List<TenantDeviceType>, List<TenantDeviceType>>) deviceTypeEntities -> {
                 List<TenantDeviceType> deviceTypes = new ArrayList<>();
                 for (TenantDeviceType deviceType : deviceTypeEntities) {
-                    if (deviceType.getTenantId().equals(tenantId.getId())) {
+                    if (deviceType.getTenantId().equals(tenantId)) {
                         deviceTypes.add(deviceType);
                     }
                 }

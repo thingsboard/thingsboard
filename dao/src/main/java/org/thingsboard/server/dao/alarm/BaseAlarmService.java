@@ -193,7 +193,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId) {
         log.trace("Executing findAlarmById [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
-        return alarmDao.findByIdAsync(alarmId.getId());
+        return alarmDao.findAlarmByIdAsync(alarmId.getId());
     }
 
     @Override
