@@ -21,13 +21,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Device extends SearchTextBased<DeviceId> {
+public class Device extends SearchTextBased<DeviceId> implements HasName {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
     private TenantId tenantId;
     private CustomerId customerId;
     private String name;
+    private String type;
     private JsonNode additionalInfo;
 
     public Device() {
@@ -43,6 +44,7 @@ public class Device extends SearchTextBased<DeviceId> {
         this.tenantId = device.getTenantId();
         this.customerId = device.getCustomerId();
         this.name = device.getName();
+        this.type = device.getType();
         this.additionalInfo = device.getAdditionalInfo();
     }
 
@@ -62,12 +64,21 @@ public class Device extends SearchTextBased<DeviceId> {
         this.customerId = customerId;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public JsonNode getAdditionalInfo() {
@@ -90,6 +101,7 @@ public class Device extends SearchTextBased<DeviceId> {
         result = prime * result + ((additionalInfo == null) ? 0 : additionalInfo.hashCode());
         result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
         result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
         return result;
     }
@@ -118,6 +130,11 @@ public class Device extends SearchTextBased<DeviceId> {
                 return false;
         } else if (!name.equals(other.name))
             return false;
+        if (type == null) {
+            if (other.type != null)
+                return false;
+        } else if (!type.equals(other.type))
+            return false;
         if (tenantId == null) {
             if (other.tenantId != null)
                 return false;
@@ -135,6 +152,8 @@ public class Device extends SearchTextBased<DeviceId> {
         builder.append(customerId);
         builder.append(", name=");
         builder.append(name);
+        builder.append(", type=");
+        builder.append(type);
         builder.append(", additionalInfo=");
         builder.append(additionalInfo);
         builder.append(", createdTime=");

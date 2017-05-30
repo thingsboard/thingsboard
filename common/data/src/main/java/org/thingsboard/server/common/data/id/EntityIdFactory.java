@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.id;
 
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.AlarmId;
 
 import java.util.UUID;
 
@@ -50,6 +51,8 @@ public class EntityIdFactory {
                 return new DeviceId(uuid);
             case ASSET:
                 return new AssetId(uuid);
+            case ALARM:
+                return new AlarmId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }

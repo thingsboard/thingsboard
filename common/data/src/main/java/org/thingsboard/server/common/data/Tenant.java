@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Tenant extends ContactBased<TenantId>{
+public class Tenant extends ContactBased<TenantId> implements HasName {
 
     private static final long serialVersionUID = 8057243243859922101L;
     
@@ -48,6 +49,12 @@ public class Tenant extends ContactBased<TenantId>{
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    @Override
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getName() {
+        return title;
     }
 
     public String getRegion() {

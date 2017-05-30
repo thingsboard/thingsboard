@@ -48,6 +48,16 @@
 		    md-color-history="false">
 		</div>    
 	</div>
+	<div layout="row" layout-align="start center">
+		<md-input-container flex>
+			<label translate>datakey.units</label>
+			<input name="units" ng-model="model.units">
+		</md-input-container>
+		<md-input-container flex>
+			<label translate>datakey.decimals</label>
+			<input name="decimals" ng-model="model.decimals" type="number" min="0" max="15" step="1" ng-pattern="/^\d*$/">
+		</md-input-container>
+	</div>
 	<section layout="column" ng-if="model.type === types.dataKeyType.function">
 		<span translate>datakey.data-generation-func</span>
 		<br/>

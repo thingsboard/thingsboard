@@ -32,14 +32,6 @@ export default function EntityFilterDirective($compile, $templateCache, $q, enti
 
         scope.ngModelCtrl = ngModelCtrl;
 
-        scope.itemName = function(item) {
-            if (item) {
-                return entityService.entityName(scope.entityType, item);
-            } else {
-                return '';
-            }
-        }
-
         scope.fetchEntities = function(searchText, limit) {
             var deferred = $q.defer();
             entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit).then(function success(result) {

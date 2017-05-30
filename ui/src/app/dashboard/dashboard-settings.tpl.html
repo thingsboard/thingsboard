@@ -19,7 +19,7 @@
     <form name="theForm" ng-submit="vm.save()">
         <md-toolbar>
             <div class="md-toolbar-tools">
-                <h2 translate>dashboard.settings</h2>
+                <h2 translate>{{vm.settings ? 'dashboard.settings' : 'layout.settings'}}</h2>
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="vm.cancel()">
                     <ng-md-icon icon="close" aria-label="{{ 'dialog.close' | translate }}"></ng-md-icon>
@@ -31,15 +31,56 @@
         <md-dialog-content>
             <div class="md-dialog-content">
                 <fieldset ng-disabled="loading">
-                    <div layout="row" layout-align="start center">
-                        <md-checkbox flex aria-label="{{ 'dashboard.display-title' | translate }}"
-                                     ng-model="vm.gridSettings.showTitle">{{ 'dashboard.display-title' | translate }}
-                        </md-checkbox>
+                    <div ng-show="vm.settings">
+                       <md-input-container class="md-block">
+                            <label translate>dashboard.state-controller</label>
+                            <md-select aria-label="{{ 'dashboard.state-controller' | translate }}" ng-model="vm.settings.stateControllerId">
+                                <md-option ng-repeat="(stateControllerId, stateController) in vm.stateControllers" ng-value="stateControllerId">
+                                    {{stateControllerId}}
+                                </md-option>
+                            </md-select>
+                        </md-input-container>
+                        <div layout="row" layout-align="start center">
+                            <md-checkbox flex aria-label="{{ 'dashboard.toolbar-always-open' | translate }}"
+                                         ng-model="vm.settings.toolbarAlwaysOpen">{{ 'dashboard.toolbar-always-open' | translate }}
+                            </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-title' | translate }}"
+                                         ng-model="vm.settings.showTitle">{{ 'dashboard.display-title' | translate }}
+                            </md-checkbox>
+                            <div flex
+                                 ng-required="false"
+                                 md-color-picker
+                                 ng-model="vm.settings.titleColor"
+                                 label="{{ 'dashboard.title-color' | translate }}"
+                                 icon="format_color_fill"
+                                 default="rgba(0, 0, 0, 0.870588)"
+                                 md-color-clear-button="false"
+                                 open-on-input="true"
+                                 md-color-generic-palette="false"
+                                 md-color-history="false"
+                            ></div>
+                        </div>
+                        <div layout="row" layout-align="start center">
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboards-selection' | translate }}"
+                                         ng-model="vm.settings.showDashboardsSelect">{{ 'dashboard.display-dashboards-selection' | translate }}
+                            </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-entities-selection' | translate }}"
+                                         ng-model="vm.settings.showEntitiesSelect">{{ 'dashboard.display-entities-selection' | translate }}
+                            </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-timewindow' | translate }}"
+                                         ng-model="vm.settings.showDashboardTimewindow">{{ 'dashboard.display-dashboard-timewindow' | translate }}
+                            </md-checkbox>
+                            <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-export' | translate }}"
+                                         ng-model="vm.settings.showDashboardExport">{{ 'dashboard.display-dashboard-export' | translate }}
+                            </md-checkbox>
+                        </div>
+                    </div>
+                    <div ng-show="vm.gridSettings">
                         <div flex
                              ng-required="false"
                              md-color-picker
-                             ng-model="vm.gridSettings.titleColor"
-                             label="{{ 'dashboard.title-color' | translate }}"
+                             ng-model="vm.gridSettings.color"
+                             label="{{ 'layout.color' | translate }}"
                              icon="format_color_fill"
                              default="rgba(0, 0, 0, 0.870588)"
                              md-color-clear-button="false"
@@ -47,98 +88,87 @@
                              md-color-generic-palette="false"
                              md-color-history="false"
                         ></div>
-                    </div>
-                    <div layout="row" layout-align="start center">
-                        <md-checkbox flex aria-label="{{ 'dashboard.display-entities-selection' | translate }}"
-                                     ng-model="vm.gridSettings.showEntitiesSelect">{{ 'dashboard.display-entities-selection' | translate }}
-                        </md-checkbox>
-                        <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-timewindow' | translate }}"
-                                     ng-model="vm.gridSettings.showDashboardTimewindow">{{ 'dashboard.display-dashboard-timewindow' | translate }}
-                        </md-checkbox>
-                        <md-checkbox flex aria-label="{{ 'dashboard.display-dashboard-export' | translate }}"
-                                     ng-model="vm.gridSettings.showDashboardExport">{{ 'dashboard.display-dashboard-export' | translate }}
-                        </md-checkbox>
-                    </div>
-                    <md-input-container class="md-block">
-                        <label translate>dashboard.columns-count</label>
-                        <input required type="number" step="any" name="columns" ng-model="vm.gridSettings.columns" min="10"
-                               max="1000" />
-                        <div ng-messages="theForm.columns.$error" multiple md-auto-hide="false">
-                            <div ng-message="required" translate>dashboard.columns-count-required</div>
-                            <div ng-message="min" translate>dashboard.min-columns-count-message</div>
-                            <div ng-message="max">dashboard.max-columns-count-message</div>
-                        </div>
-                    </md-input-container>
-                    <small translate>dashboard.widgets-margins</small>
-                    <div flex layout="row">
-                        <md-input-container flex class="md-block">
-                            <label translate>dashboard.horizontal-margin</label>
-                            <input required type="number" step="any" name="hMargin" ng-model="vm.hMargin" min="0"
-                                   max="50" />
-                            <div ng-messages="theForm.hMargin.$error" multiple md-auto-hide="false">
-                                <div ng-message="required" translate>dashboard.horizontal-margin-required</div>
-                                <div ng-message="min" translate>dashboard.min-horizontal-margin-message</div>
-                                <div ng-message="max" translate>dashboard.max-horizontal-margin-message</div>
+                        <md-input-container class="md-block">
+                            <label translate>dashboard.columns-count</label>
+                            <input ng-required="vm.gridSettings" type="number" step="any" name="columns" ng-model="vm.gridSettings.columns" min="10"
+                                   max="1000" />
+                            <div ng-messages="theForm.columns.$error" multiple md-auto-hide="false">
+                                <div ng-message="required" translate>dashboard.columns-count-required</div>
+                                <div ng-message="min" translate>dashboard.min-columns-count-message</div>
+                                <div ng-message="max">dashboard.max-columns-count-message</div>
                             </div>
                         </md-input-container>
-                        <md-input-container flex class="md-block">
-                            <label translate>dashboard.vertical-margin</label>
-                            <input required type="number" step="any" name="vMargin" ng-model="vm.vMargin" min="0"
-                                   max="50" />
-                            <div ng-messages="theForm.vMargin.$error" multiple md-auto-hide="false">
-                                <div ng-message="required" translate>dashboard.vertical-margin-required</div>
-                                <div ng-message="min" translate>dashboard.min-vertical-margin-message</div>
-                                <div ng-message="max" translate>dashboard.max-vertical-margin-message</div>
-                            </div>
-                        </md-input-container>
-                    </div>
-                    <div flex
-                         ng-required="false"
-                         md-color-picker
-                         ng-model="vm.gridSettings.backgroundColor"
-                         label="{{ 'dashboard.background-color' | translate }}"
-                         icon="format_color_fill"
-                         default="rgba(0,0,0,0)"
-                         md-color-clear-button="false"
-                         open-on-input="true"
-                         md-color-generic-palette="false"
-                         md-color-history="false"
-                    ></div>
-                    <div class="tb-container">
-                        <label class="tb-label" translate>dashboard.background-image</label>
-                        <div flow-init="{singleFile:true}"
-                             flow-file-added="vm.imageAdded( $file )" class="tb-image-select-container">
-                            <div class="tb-image-preview-container">
-                                <div ng-show="!vm.gridSettings.backgroundImageUrl" translate>dashboard.no-image</div>
-                                <img ng-show="vm.gridSettings.backgroundImageUrl" class="tb-image-preview" src="{{vm.gridSettings.backgroundImageUrl}}" />
-                            </div>
-                            <div class="tb-image-clear-container">
-                                <md-button ng-click="vm.clearImage()"
-                                           class="tb-image-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
-                                    <md-tooltip md-direction="top">
-                                        {{ 'action.remove' | translate }}
-                                    </md-tooltip>
-                                    <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">
-                                        close
-                                    </md-icon>
-                                </md-button>
-                            </div>
-                            <div class="alert tb-flow-drop" flow-drop>
-                                <label for="select" translate>dashboard.drop-image</label>
-                                <input class="file-input" flow-btn flow-attrs="{accept:'image/*'}" id="select">
+                        <small translate>dashboard.widgets-margins</small>
+                        <div flex layout="row">
+                            <md-input-container flex class="md-block">
+                                <label translate>dashboard.horizontal-margin</label>
+                                <input ng-required="vm.gridSettings" type="number" step="any" name="hMargin" ng-model="vm.hMargin" min="0"
+                                       max="50" />
+                                <div ng-messages="theForm.hMargin.$error" multiple md-auto-hide="false">
+                                    <div ng-message="required" translate>dashboard.horizontal-margin-required</div>
+                                    <div ng-message="min" translate>dashboard.min-horizontal-margin-message</div>
+                                    <div ng-message="max" translate>dashboard.max-horizontal-margin-message</div>
+                                </div>
+                            </md-input-container>
+                            <md-input-container flex class="md-block">
+                                <label translate>dashboard.vertical-margin</label>
+                                <input ng-required="vm.gridSettings" type="number" step="any" name="vMargin" ng-model="vm.vMargin" min="0"
+                                       max="50" />
+                                <div ng-messages="theForm.vMargin.$error" multiple md-auto-hide="false">
+                                    <div ng-message="required" translate>dashboard.vertical-margin-required</div>
+                                    <div ng-message="min" translate>dashboard.min-vertical-margin-message</div>
+                                    <div ng-message="max" translate>dashboard.max-vertical-margin-message</div>
+                                </div>
+                            </md-input-container>
+                        </div>
+                        <div flex
+                             ng-required="false"
+                             md-color-picker
+                             ng-model="vm.gridSettings.backgroundColor"
+                             label="{{ 'dashboard.background-color' | translate }}"
+                             icon="format_color_fill"
+                             default="rgba(0,0,0,0)"
+                             md-color-clear-button="false"
+                             open-on-input="true"
+                             md-color-generic-palette="false"
+                             md-color-history="false"
+                        ></div>
+                        <div class="tb-container">
+                            <label class="tb-label" translate>dashboard.background-image</label>
+                            <div flow-init="{singleFile:true}"
+                                 flow-file-added="vm.imageAdded( $file )" class="tb-image-select-container">
+                                <div class="tb-image-preview-container">
+                                    <div ng-show="!vm.gridSettings.backgroundImageUrl" translate>dashboard.no-image</div>
+                                    <img ng-show="vm.gridSettings.backgroundImageUrl" class="tb-image-preview" src="{{vm.gridSettings.backgroundImageUrl}}" />
+                                </div>
+                                <div class="tb-image-clear-container">
+                                    <md-button ng-click="vm.clearImage()"
+                                               class="tb-image-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
+                                        <md-tooltip md-direction="top">
+                                            {{ 'action.remove' | translate }}
+                                        </md-tooltip>
+                                        <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">
+                                            close
+                                        </md-icon>
+                                    </md-button>
+                                </div>
+                                <div class="alert tb-flow-drop" flow-drop>
+                                    <label for="select" translate>dashboard.drop-image</label>
+                                    <input class="file-input" flow-btn flow-attrs="{accept:'image/*'}" id="select">
+                                </div>
                             </div>
                         </div>
+                        <md-input-container class="md-block">
+                            <label translate>dashboard.background-size-mode</label>
+                            <md-select ng-model="vm.gridSettings.backgroundSizeMode" placeholder="{{ 'dashboard.background-size-mode' | translate }}">
+                                <md-option value="100%">Fit width</md-option>
+                                <md-option value="auto 100%">Fit height</md-option>
+                                <md-option value="cover">Cover</md-option>
+                                <md-option value="contain">Contain</md-option>
+                                <md-option value="auto">Original size</md-option>
+                            </md-select>
+                        </md-input-container>
                     </div>
-                    <md-input-container class="md-block">
-                        <label translate>dashboard.background-size-mode</label>
-                        <md-select ng-model="vm.gridSettings.backgroundSizeMode" placeholder="{{ 'dashboard.background-size-mode' | translate }}">
-                            <md-option value="100%">Fit width</md-option>
-                            <md-option value="auto 100%">Fit height</md-option>
-                            <md-option value="cover">Cover</md-option>
-                            <md-option value="contain">Contain</md-option>
-                            <md-option value="auto">Original size</md-option>
-                        </md-select>
-                    </md-input-container>
                 </fieldset>
             </div>
         </md-dialog-content>

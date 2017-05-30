@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.dashboard;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -33,6 +34,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<DashboardInfoEntity, DashboardInfo> implements DashboardInfoDao {
 
     @Override

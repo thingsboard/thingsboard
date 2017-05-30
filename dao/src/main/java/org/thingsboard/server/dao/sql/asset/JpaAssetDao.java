@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.asset.AssetDao;
@@ -94,5 +95,27 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     public Optional<Asset> findAssetsByTenantIdAndName(UUID tenantId, String name) {
         Asset asset = DaoUtil.getData(assetRepository.findByTenantIdAndName(tenantId, name));
         return Optional.ofNullable(asset);
+    }
+
+    @Override
+    public List<Asset> findAssetsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
+        return null;
+    }
+
+    @Override
+    public List<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
+        if (pageLink.getIdOffset() == null) {
+            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdAndTypeFirstPage(pageLink.getLimit(), tenantId,
+                    customerId, type, pageLink.getTextSearch()));
+        } else {
+            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdAndTypeNextPage(pageLink.getLimit(), tenantId,
+                    customerId, type, pageLink.getTextSearch(), pageLink.getIdOffset()));
+        }
+    }
+
+    @Override
+    public ListenableFuture<List<TenantAssetType>> findTenantAssetTypesAsync() {
+        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        return service.submit(() -> assetRepository.findTenantAssetTypes());
     }
 }

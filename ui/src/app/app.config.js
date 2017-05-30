@@ -49,7 +49,7 @@ export default function AppConfig($provide,
     $translateProvider.useSanitizeValueStrategy('sce');
     $translateProvider.preferredLanguage('en_US');
     $translateProvider.useLocalStorage();
-    $translateProvider.useMissingTranslationHandlerLog();
+    $translateProvider.useMissingTranslationHandler('tbMissingTranslationHandler');
     $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
 
     addLocaleKorean(locales);
@@ -159,10 +159,6 @@ export default function AppConfig($provide,
         } else {
             indigoTheme();
         }
-
-        $mdThemingProvider.theme('tb-search-input', 'default')
-            .primaryPalette('tb-primary')
-            .backgroundPalette('tb-primary');
 
         $mdThemingProvider.setDefaultTheme('default');
         //$mdThemingProvider.alwaysWatchTheme(true);

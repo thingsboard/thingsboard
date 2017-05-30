@@ -1,0 +1,33 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="entity-state-controller">
+    <div ng-if="!vm.dashboardCtrl.isMobile || vm.stateObject.length===1" layout="row" layout-align="start center">
+        <div layout="row" layout-align="start center" ng-repeat="state in vm.stateObject track by $index">
+            <span class='state-divider' ng-if="$index"> > </span>
+            <span class='state-entry' ng-style="{fontWeight: $last ? 'bold' : 'normal',
+                             cursor: $last ? 'default' : 'pointer'}" ng-click="vm.navigatePrevState($index)">
+                {{vm.getStateName($index)}}
+            </span>
+        </div>
+    </div>
+    <md-select ng-if="vm.dashboardCtrl.isMobile && vm.stateObject.length > 1" aria-label="{{ 'dashboard.state' | translate }}" ng-model="vm.selectedStateIndex">
+        <md-option ng-repeat="state in vm.stateObject track by $index" ng-value="$index">
+            {{vm.getStateName($index)}}
+        </md-option>
+    </md-select>
+</div>

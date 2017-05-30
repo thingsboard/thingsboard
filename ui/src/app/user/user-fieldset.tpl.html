@@ -43,10 +43,19 @@
             <label translate>user.description</label>
             <textarea ng-model="user.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
-        <section class="tb-default-dashboard" flex layout="column" ng-show="isCustomerUser()">
+        <section class="tb-default-dashboard" flex layout="column">
             <span class="tb-default-dashboard-label" ng-class="{'tb-disabled-label': loading || !isEdit}" translate>user.default-dashboard</span>
             <section flex layout="column" layout-gt-sm="row">
-                <tb-dashboard-autocomplete flex
+                <tb-dashboard-autocomplete ng-if="isTenantAdmin()"
+                                           flex
+                                           ng-disabled="loading || !isEdit"
+                                           the-form="theForm"
+                                           ng-model="user.additionalInfo.defaultDashboardId"
+                                           tenant-id="user.tenantId.id"
+                                           select-first-dashboard="false">
+                </tb-dashboard-autocomplete>
+                <tb-dashboard-autocomplete ng-if="isCustomerUser()"
+                                     flex
                                      ng-disabled="loading || !isEdit"
                                      the-form="theForm"
                                      ng-model="user.additionalInfo.defaultDashboardId"

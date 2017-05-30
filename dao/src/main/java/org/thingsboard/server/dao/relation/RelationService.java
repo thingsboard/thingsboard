@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.relation;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationInfo;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
 import java.util.List;
 
@@ -26,23 +28,25 @@ import java.util.List;
  */
 public interface RelationService {
 
-    ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType);
+    ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<Boolean> saveRelation(EntityRelation relation);
 
     ListenableFuture<Boolean> deleteRelation(EntityRelation relation);
 
-    ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType);
+    ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<Boolean> deleteEntityRelations(EntityId entity);
 
-    ListenableFuture<List<EntityRelation>> findByFrom(EntityId from);
+    ListenableFuture<List<EntityRelation>> findByFrom(EntityId from, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType);
+    ListenableFuture<List<EntityRelationInfo>> findInfoByFrom(EntityId from, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findByTo(EntityId to);
+    ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findByToAndType(EntityId to, String relationType);
+    ListenableFuture<List<EntityRelation>> findByTo(EntityId to, RelationTypeGroup typeGroup);
+
+    ListenableFuture<List<EntityRelation>> findByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelation>> findByQuery(EntityRelationsQuery query);
 

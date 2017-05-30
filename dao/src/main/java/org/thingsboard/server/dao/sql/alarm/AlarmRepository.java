@@ -27,7 +27,7 @@ import java.util.UUID;
  * Created by Valerii Sosliuk on 5/21/2017.
  */
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
-public interface AlarmRepository extends CrudRepository<AlarmEntity, Alarm> {
+public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
 
     @Query(nativeQuery = true, value = "SELECT * FROM ALARM WHERE TENANT_ID = ?1 AND ORIGINATOR_ID = ?2 " +
             "AND ?3 = ?3 AND TYPE = ?4 ORDER BY ID DESC LIMIT 1")

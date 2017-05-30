@@ -332,8 +332,8 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
 
     // Widget functions
 
-    function exportWidget(dashboard, widget) {
-        var widgetItem = itembuffer.prepareWidgetItem(dashboard, widget);
+    function exportWidget(dashboard, sourceState, sourceLayout, widget) {
+        var widgetItem = itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
         var name = widgetItem.widget.config.title;
         name = name.toLowerCase().replace(/\W/g,"_");
         exportToPc(prepareExport(widgetItem), name + '.json');
@@ -355,6 +355,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 }
             }
         }
+        return aliasesInfo;
     }
 
     function prepareEntityAlias(aliasInfo) {
@@ -379,21 +380,24 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             entityType = aliasInfo.entityType;
         }
         return {
-            alias: aliasInfo.aliasName,
+            aliasName: aliasInfo.aliasName,
             entityType: entityType,
             entityFilter: entityFilter
         };
     }
 
-    function importWidget($event, dashboard, onAliasesUpdate) {
+    function importWidget($event, dashboard, targetState, targetLayoutFunction, onAliasesUpdateFunction) {
+        var deferred = $q.defer();
         openImportDialog($event, 'dashboard.import-widget', 'dashboard.widget-file').then(
             function success(widgetItem) {
                 if (!validateImportedWidget(widgetItem)) {
                     toast.showError($translate.instant('dashboard.invalid-widget-file-error'));
+                    deferred.reject();
                 } else {
                     var widget = widgetItem.widget;
                     var aliasesInfo = prepareAliasesInfo(widgetItem.aliasesInfo);
                     var originalColumns = widgetItem.originalColumns;
+                    var originalSize = widgetItem.originalSize;
 
                     var datasourceAliases = aliasesInfo.datasourceAliases;
                     var targetDeviceAliases = aliasesInfo.targetDeviceAliases;
@@ -439,25 +443,34 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                                                         targetDeviceAliases[datasourceIndex].entityFilter = entityAlias.entityFilter;
                                                     }
                                                 }
-                                                addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
+                                                addImportedWidget(dashboard, targetState, targetLayoutFunction, $event, widget,
+                                                    aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, deferred);
                                             },
-                                            function fail() {}
+                                            function fail() {
+                                                deferred.reject();
+                                            }
                                         );
                                     } else {
-                                        addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
+                                        addImportedWidget(dashboard, targetState, targetLayoutFunction, $event, widget,
+                                            aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, deferred);
                                     }
                                 }
                             );
                         } else {
-                            addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
+                            addImportedWidget(dashboard, targetState, targetLayoutFunction, $event, widget,
+                                aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, deferred);
                         }
                     } else {
-                        addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns);
+                        addImportedWidget(dashboard, targetState, targetLayoutFunction, $event, widget,
+                            aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, deferred);
                     }
                 }
             },
-            function fail() {}
+            function fail() {
+                deferred.reject();
+            }
         );
+        return deferred.promise;
     }
 
     function validateImportedWidget(widgetItem) {
@@ -476,8 +489,26 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return true;
     }
 
-    function addImportedWidget(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns) {
-        itembuffer.addWidgetToDashboard(dashboard, widget, aliasesInfo, onAliasesUpdate, originalColumns, -1, -1);
+    function addImportedWidget(dashboard, targetState, targetLayoutFunction, event, widget,
+                               aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, deferred) {
+        targetLayoutFunction(event).then(
+            function success(targetLayout) {
+                itembuffer.addWidgetToDashboard(dashboard, targetState, targetLayout, widget,
+                    aliasesInfo, onAliasesUpdateFunction, originalColumns, originalSize, -1, -1).then(
+                        function() {
+                            deferred.resolve(
+                                {
+                                    widget: widget,
+                                    layoutId: targetLayout
+                                }
+                            );
+                        }
+                );
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
     }
 
     // Dashboard functions

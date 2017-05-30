@@ -31,7 +31,8 @@ function AssetService($http, $q, customerService, userService) {
         getTenantAssets: getTenantAssets,
         getCustomerAssets: getCustomerAssets,
         findByQuery: findByQuery,
-        fetchAssetsByNameFilter: fetchAssetsByNameFilter
+        fetchAssetsByNameFilter: fetchAssetsByNameFilter,
+        getAssetTypes: getAssetTypes
     }
 
     return service;
@@ -152,7 +153,7 @@ function AssetService($http, $q, customerService, userService) {
         return deferred.promise;
     }
 
-    function getTenantAssets(pageLink, applyCustomersInfo, config) {
+    function getTenantAssets(pageLink, applyCustomersInfo, config, type) {
         var deferred = $q.defer();
         var url = '/api/tenant/assets?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -163,6 +164,9 @@ function AssetService($http, $q, customerService, userService) {
         }
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
             if (applyCustomersInfo) {
@@ -184,7 +188,7 @@ function AssetService($http, $q, customerService, userService) {
         return deferred.promise;
     }
 
-    function getCustomerAssets(customerId, pageLink, applyCustomersInfo, config) {
+    function getCustomerAssets(customerId, pageLink, applyCustomersInfo, config, type) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/assets?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -195,6 +199,9 @@ function AssetService($http, $q, customerService, userService) {
         }
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
+        }
+        if (angular.isDefined(type) && type.length) {
+            url += '&type=' + type;
         }
         $http.get(url, config).then(function success(response) {
             if (applyCustomersInfo) {
@@ -255,6 +262,17 @@ function AssetService($http, $q, customerService, userService) {
                 deferred.resolve(null);
             }
         );
+        return deferred.promise;
+    }
+
+    function getAssetTypes() {
+        var deferred = $q.defer();
+        var url = '/api/asset/types';
+        $http.get(url).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
         return deferred.promise;
     }
 

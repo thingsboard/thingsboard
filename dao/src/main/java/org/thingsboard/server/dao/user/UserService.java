@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.user;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,8 +28,10 @@ public interface UserService {
 	
 	User findUserById(UserId userId);
 
+	ListenableFuture<User> findUserByIdAsync(UserId userId);
+
 	User findUserByEmail(String email);
-	
+
 	User saveUser(User user);
 
 	UserCredentials findUserCredentialsByUserId(UserId userId);

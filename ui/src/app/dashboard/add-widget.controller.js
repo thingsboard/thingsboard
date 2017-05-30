@@ -37,7 +37,13 @@ export default function AddWidgetController($scope, widgetService, entityService
     vm.fetchEntityKeys = fetchEntityKeys;
     vm.createEntityAlias = createEntityAlias;
 
-    vm.widgetConfig = vm.widget.config;
+    vm.widgetConfig = {
+        config: vm.widget.config,
+        layout: {}
+    };
+
+    vm.widgetConfig.layout.mobileOrder = vm.widget.config.mobileOrder;
+    vm.widgetConfig.layout.mobileHeight = vm.widget.config.mobileHeight;
 
     var settingsSchema = vm.widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
     var dataKeySettingsSchema = vm.widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
@@ -85,7 +91,9 @@ export default function AddWidgetController($scope, widgetService, entityService
     function add () {
         if ($scope.theForm.$valid) {
             $scope.theForm.$setPristine();
-            vm.widget.config = vm.widgetConfig;
+            vm.widget.config = vm.widgetConfig.config;
+            vm.widget.config.mobileOrder = vm.widgetConfig.layout.mobileOrder;
+            vm.widget.config.mobileHeight = vm.widgetConfig.layout.mobileHeight;
             $mdDialog.hide({widget: vm.widget, aliasesInfo: vm.aliasesInfo});
         }
     }

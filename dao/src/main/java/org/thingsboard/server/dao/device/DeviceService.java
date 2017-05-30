@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -44,13 +45,22 @@ public interface DeviceService {
 
     TextPageData<Device> findDevicesByTenantId(TenantId tenantId, TextPageLink pageLink);
 
+    TextPageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, TextPageLink pageLink);
+
     ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds);
 
     void deleteDevicesByTenantId(TenantId tenantId);
 
     TextPageData<Device> findDevicesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 
+    TextPageData<Device> findDevicesByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, TextPageLink pageLink);
+
     ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds);
 
     void unassignCustomerDevices(TenantId tenantId, CustomerId customerId);
+
+    ListenableFuture<List<Device>> findDevicesByQuery(DeviceSearchQuery query);
+
+    ListenableFuture<List<TenantDeviceType>> findDeviceTypesByTenantId(TenantId tenantId);
+
 }

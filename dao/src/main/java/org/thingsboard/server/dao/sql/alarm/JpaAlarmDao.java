@@ -15,22 +15,30 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
+import org.thingsboard.server.dao.alarm.BaseAlarmService;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
@@ -38,12 +46,16 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
  */
+@Slf4j
 @Component
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements AlarmDao {
 
     @Autowired
     private AlarmRepository alarmRepository;
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class getEntityClass() {
@@ -59,9 +71,28 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Transactional(propagation = REQUIRES_NEW)
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-        ListenableFuture<Alarm> listenableFuture = service.submit(() -> DaoUtil.getData(
+        return service.submit(() -> DaoUtil.getData(
                 alarmRepository.findLatestByOriginatorAndType(tenantId.getId(), originator.getId(),
                 originator.getEntityType().ordinal(), type)));
-        return listenableFuture;
+    }
+
+    @Override
+    public ListenableFuture<Alarm> findAlarmByIdAsync(UUID key) {
+        return findByIdAsync(key);
+    }
+
+    @Override
+    public ListenableFuture<List<Alarm>> findAlarms(AlarmQuery query) {
+        log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
+        EntityId affectedEntity = query.getAffectedEntityId();
+        String relationType = query.getStatus() == null ? BaseAlarmService.ALARM_RELATION : BaseAlarmService.ALARM_RELATION_PREFIX + query.getStatus().name();
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
+        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<Alarm>>) input -> {
+            List<ListenableFuture<Alarm>> alarmFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                alarmFutures.add(findAlarmByIdAsync(relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(alarmFutures);
+        });
     }
 }

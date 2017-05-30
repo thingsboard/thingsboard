@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+import ThingsboardMissingTranslateHandler from './translate-handler';
+
 export default angular.module('thingsboard.locale', [])
+    .factory('tbMissingTranslationHandler', ThingsboardMissingTranslateHandler)
     .constant('locales',
         {
             'en_US': {
@@ -62,6 +65,8 @@ export default angular.module('thingsboard.locale', [])
                     "undo": "Undo",
                     "copy": "Copy",
                     "paste": "Paste",
+                    "copy-reference": "Copy reference",
+                    "paste-reference": "Paste reference",
                     "import": "Import",
                     "export": "Export",
                     "share-via": "Share via {{provider}}"
@@ -101,6 +106,12 @@ export default angular.module('thingsboard.locale', [])
                     "enable-tls": "Enable TLS",
                     "send-test-mail": "Send test mail"
                 },
+                "alarm": {
+                    "alarm": "Alarm",
+                    "select-alarm": "Select alarm",
+                    "no-alarms-matching": "No alarms matching '{{entity}}' were found.",
+                    "alarm-required": "Alarm is required"
+                },
                 "asset": {
                     "asset": "Asset",
                     "assets": "Assets",
@@ -119,6 +130,9 @@ export default angular.module('thingsboard.locale', [])
                     "unassign-from-customer": "Unassign from customer",
                     "delete": "Delete asset",
                     "asset-public": "Asset is public",
+                    "asset-type": "Asset type",
+                    "asset-type-required": "Asset type is required.",
+                    "select-asset-type": "Select asset type",
                     "name": "Name",
                     "name-required": "Name is required.",
                     "description": "Description",
@@ -149,7 +163,10 @@ export default angular.module('thingsboard.locale', [])
                     "unassign-assets-title": "Are you sure you want to unassign { count, select, 1 {1 asset} other {# assets} }?",
                     "unassign-assets-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the customer.",
                     "copyId": "Copy asset Id",
-                    "idCopiedMessage": "Asset Id has been copied to clipboard"
+                    "idCopiedMessage": "Asset Id has been copied to clipboard",
+                    "select-asset": "Select asset",
+                    "no-assets-matching": "No assets matching '{{entity}}' were found.",
+                    "asset-required": "Asset is required"
                 },
                 "attribute": {
                     "attributes": "Attributes",
@@ -161,6 +178,7 @@ export default angular.module('thingsboard.locale', [])
                     "scope-shared": "Shared attributes",
                     "add": "Add attribute",
                     "key": "Key",
+                    "last-update-time": "Last update time",
                     "key-required": "Attribute key is required.",
                     "value": "Value",
                     "value-required": "Attribute value is required.",
@@ -202,6 +220,7 @@ export default angular.module('thingsboard.locale', [])
                     "enter-search": "Enter search"
                 },
                 "customer": {
+                    "customer": "Customer",
                     "customers": "Customers",
                     "management": "Customer management",
                     "dashboard": "Customer Dashboard",
@@ -238,7 +257,10 @@ export default angular.module('thingsboard.locale', [])
                     "details": "Details",
                     "events": "Events",
                     "copyId": "Copy customer Id",
-                    "idCopiedMessage": "Customer Id has been copied to clipboard"
+                    "idCopiedMessage": "Customer Id has been copied to clipboard",
+                    "select-customer": "Select customer",
+                    "no-customers-matching": "No customers matching '{{entity}}' were found.",
+                    "customer-required": "Customer is required"
                 },
                 "datetime": {
                     "date-from": "Date from",
@@ -296,7 +318,7 @@ export default angular.module('thingsboard.locale', [])
                     "socialshare-text": "'{{dashboardTitle}}' powered by ThingsBoard",
                     "socialshare-title": "'{{dashboardTitle}}' powered by ThingsBoard",
                     "select-dashboard": "Select dashboard",
-                    "no-dashboards-matching": "No dashboards matching '{{dashboard}}' were found.",
+                    "no-dashboards-matching": "No dashboards matching '{{entity}}' were found.",
                     "dashboard-required": "Dashboard is required.",
                     "select-existing": "Select existing dashboard",
                     "create-new": "Create new dashboard",
@@ -323,7 +345,9 @@ export default angular.module('thingsboard.locale', [])
                     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
                     "display-title": "Display dashboard title",
+                    "toolbar-always-open": "Keep toolbar opened",
                     "title-color": "Title color",
+                    "display-dashboards-selection": "Display dashboards selection",
                     "display-entities-selection": "Display entities selection",
                     "display-dashboard-timewindow": "Display timewindow",
                     "display-dashboard-export": "Display export",
@@ -350,13 +374,37 @@ export default angular.module('thingsboard.locale', [])
                     "public": "Public",
                     "public-link": "Public link",
                     "copy-public-link": "Copy public link",
-                    "public-link-copied-message": "Dashboard public link has been copied to clipboard"
+                    "public-link-copied-message": "Dashboard public link has been copied to clipboard",
+                    "manage-states": "Manage dashboard states",
+                    "states": "Dashboard states",
+                    "search-states": "Search dashboard states",
+                    "selected-states": "{ count, select, 1 {1 dashboard state} other {# dashboard states} } selected",
+                    "edit-state": "Edit dashboard state",
+                    "delete-state": "Delete dashboard state",
+                    "add-state": "Add dashboard state",
+                    "state": "Dashboard state",
+                    "state-name": "Name",
+                    "state-name-required": "Dashboard state name is required.",
+                    "state-name-exists": "Dashboard state with the same name is already exists.",
+                    "state-id": "State Id",
+                    "state-id-required": "Dashboard state id is required.",
+                    "state-id-exists": "Dashboard state with the same id is already exists.",
+                    "invalid-state-id-format": "Only alphanumeric characters and underscore are allowed.",
+                    "is-root-state": "Root state",
+                    "delete-state-title": "Delete dashboard state",
+                    "delete-state-text": "Are you sure you want delete dashboard state with name '{{stateName}}'?",
+                    "show-details": "Show details",
+                    "hide-details": "Hide details",
+                    "select-state": "Select target state",
+                    "state-controller": "State controller"
                 },
                 "datakey": {
                     "settings": "Settings",
                     "advanced": "Advanced",
                     "label": "Label",
                     "color": "Color",
+                    "units": "Special symbol to show next to value",
+                    "decimals": "Number of digits after floating point",
                     "data-generation-func": "Data generation function",
                     "use-data-post-processing-func": "Use data post-processing function",
                     "configuration": "Data key configuration",
@@ -391,7 +439,7 @@ export default angular.module('thingsboard.locale', [])
                     "create-new-key": "Create a new one!",
                     "duplicate-alias-error": "Duplicate alias found '{{alias}}'.<br>Device aliases must be unique whithin the dashboard.",
                     "configure-alias": "Configure '{{alias}}' alias",
-                    "no-devices-matching": "No devices matching '{{device}}' were found.",
+                    "no-devices-matching": "No devices matching '{{entity}}' were found.",
                     "alias": "Alias",
                     "alias-required": "Device alias is required.",
                     "remove-alias": "Remove device alias",
@@ -446,6 +494,9 @@ export default angular.module('thingsboard.locale', [])
                     "rsa-key-required": "RSA public key is required.",
                     "secret": "Secret",
                     "secret-required": "Secret is required.",
+                    "device-type": "Device type",
+                    "device-type-required": "Device type is required.",
+                    "select-device-type": "Select device type",
                     "name": "Name",
                     "name-required": "Name is required.",
                     "description": "Description",
@@ -460,7 +511,8 @@ export default angular.module('thingsboard.locale', [])
                     "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
                     "is-gateway": "Is gateway",
                     "public": "Public",
-                    "device-public": "Device is public"
+                    "device-public": "Device is public",
+                    "select-device": "Select device"
                 },
                 "dialog": {
                     "close": "Close dialog"
@@ -490,6 +542,7 @@ export default angular.module('thingsboard.locale', [])
                     "entity-list-empty": "No entities selected.",
                     "entity-name-filter-required": "Entity name filter is required.",
                     "entity-name-filter-no-entity-matched": "No entities starting with '{{entity}}' were found.",
+                    "all-subtypes": "All",
                     "type": "Type",
                     "type-device": "Device",
                     "type-asset": "Asset",
@@ -497,6 +550,9 @@ export default angular.module('thingsboard.locale', [])
                     "type-plugin": "Plugin",
                     "type-tenant": "Tenant",
                     "type-customer": "Customer",
+                    "type-user": "User",
+                    "type-dashboard": "Dashboard",
+                    "type-alarm": "Alarm",
                     "select-entities": "Select entities",
                     "no-aliases-found": "No aliases found.",
                     "no-alias-matching": "'{{alias}}' not found.",
@@ -569,6 +625,15 @@ export default angular.module('thingsboard.locale', [])
                     "no-return-error": "Function must return value!",
                     "return-type-mismatch": "Function must return value of '{{type}}' type!"
                 },
+                "layout": {
+                    "layout": "Layout",
+                    "manage": "Manage layouts",
+                    "settings": "Layout settings",
+                    "color": "Color",
+                    "main": "Main",
+                    "right": "Right",
+                    "select": "Select target layout"
+                },
                 "legend": {
                     "position": "Legend position",
                     "show-max": "Show max value",
@@ -625,7 +690,7 @@ export default angular.module('thingsboard.locale', [])
                     "system": "System",
                     "select-plugin": "Select plugin",
                     "plugin": "Plugin",
-                    "no-plugins-matching": "No plugins matching '{{plugin}}' were found.",
+                    "no-plugins-matching": "No plugins matching '{{entity}}' were found.",
                     "plugin-required": "Plugin is required.",
                     "plugin-require-match": "Please select an existing plugin.",
                     "events": "Events",
@@ -638,6 +703,7 @@ export default angular.module('thingsboard.locale', [])
                     "invalid-plugin-file-error": "Unable to import plugin: Invalid plugin data structure.",
                     "copyId": "Copy plugin Id",
                     "idCopiedMessage": "Plugin Id has been copied to clipboard"
+
                 },
                 "position": {
                     "top": "Top",
@@ -650,7 +716,24 @@ export default angular.module('thingsboard.locale', [])
                     "change-password": "Change Password",
                     "current-password": "Current password"
                 },
+                "relation": {
+                    "relations": "Relations",
+                    "entity-relations": "Entity relations",
+                    "selected-relations": "{ count, select, 1 {1 relation} other {# relations} } selected",
+                    "type": "Type",
+                    "to-entity-type": "Entity type",
+                    "to-entity-name": "Entity name",
+                    "edit": "Edit relation",
+                    "delete": "Delete relation",
+                    "relation-type": "Relation type",
+                    "relation-types": {
+                        "Contains": "Contains",
+                        "Manages": "Manages"
+                    },
+                    "add": "Add relation"
+                },
                 "rule": {
+                    "rule": "Rule",
                     "rules": "Rules",
                     "delete": "Delete rule",
                     "activate": "Activate rule",
@@ -702,12 +785,16 @@ export default angular.module('thingsboard.locale', [])
                     "rule-file": "Rule file",
                     "invalid-rule-file-error": "Unable to import rule: Invalid rule data structure.",
                     "copyId": "Copy rule Id",
-                    "idCopiedMessage": "Rule Id has been copied to clipboard"
+                    "idCopiedMessage": "Rule Id has been copied to clipboard",
+                    "select-rule": "Select rule",
+                    "no-rules-matching": "No rules matching '{{entity}}' were found.",
+                    "rule-required": "Rule is required"
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"
                 },
                 "tenant": {
+                    "tenant": "Tenant",
                     "tenants": "Tenants",
                     "management": "Tenant management",
                     "add": "Add Tenant",
@@ -728,7 +815,10 @@ export default angular.module('thingsboard.locale', [])
                     "details": "Details",
                     "events": "Events",
                     "copyId": "Copy tenant Id",
-                    "idCopiedMessage": "Tenant Id has been copied to clipboard"
+                    "idCopiedMessage": "Tenant Id has been copied to clipboard",
+                    "select-tenant": "Select tenant",
+                    "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
+                    "tenant-required": "Tenant is required"
                 },
                 "timeinterval": {
                     "seconds-interval": "{ seconds, select, 1 {1 second} other {# seconds} }",
@@ -756,6 +846,7 @@ export default angular.module('thingsboard.locale', [])
                     "time-period": "Time period"
                 },
                 "user": {
+                    "user": "User",
                     "users": "Users",
                     "customer-users": "Customer Users",
                     "tenant-admins": "Tenant Admins",
@@ -781,7 +872,10 @@ export default angular.module('thingsboard.locale', [])
                     "last-name": "Last Name",
                     "description": "Description",
                     "default-dashboard": "Default dashboard",
-                    "always-fullscreen": "Always fullscreen"
+                    "always-fullscreen": "Always fullscreen",
+                    "select-user": "Select user",
+                    "no-users-matching": "No users matching '{{entity}}' were found.",
+                    "user-required": "User is required"
                 },
                 "value": {
                     "type": "Value type",

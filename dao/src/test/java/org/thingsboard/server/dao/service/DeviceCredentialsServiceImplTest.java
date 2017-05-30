@@ -58,6 +58,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
     public void testSaveDeviceCredentialsWithEmptyDevice() {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
@@ -73,6 +74,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
     public void testSaveDeviceCredentialsWithEmptyCredentialsType() {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
@@ -88,6 +90,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
     public void testSaveDeviceCredentialsWithEmptyCredentialsId() {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
@@ -103,6 +106,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
     public void testSaveNonExistentDeviceCredentials() {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
@@ -122,6 +126,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
     public void testSaveDeviceCredentialsWithNonExistentDevice() {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
@@ -137,6 +142,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
     public void testSaveDeviceCredentialsWithInvalidCredemtialsIdLength() {
         Device device = new Device();
         device.setName("My device");
+        device.setType("default");
         device.setTenantId(tenantId);
         device = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
@@ -153,6 +159,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getId());
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
@@ -166,6 +173,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getId());
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
@@ -181,6 +189,7 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
         Device device = new Device();
         device.setTenantId(tenantId);
         device.setName("My device");
+        device.setType("default");
         Device savedDevice = deviceService.saveDevice(device);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(savedDevice.getId());
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());

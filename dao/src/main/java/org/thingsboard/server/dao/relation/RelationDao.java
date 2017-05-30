@@ -16,8 +16,11 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
 import java.util.List;
 
@@ -26,22 +29,24 @@ import java.util.List;
  */
 public interface RelationDao {
 
-    ListenableFuture<List<EntityRelation>> findAllByFrom(EntityId from);
+    ListenableFuture<List<EntityRelation>> findAllByFrom(EntityId from, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findAllByFromAndType(EntityId from, String relationType);
+    ListenableFuture<List<EntityRelation>> findAllByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findAllByTo(EntityId to);
+    ListenableFuture<List<EntityRelation>> findAllByTo(EntityId to, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findAllByToAndType(EntityId to, String relationType);
+    ListenableFuture<List<EntityRelation>> findAllByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType);
+    ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<Boolean> saveRelation(EntityRelation relation);
 
     ListenableFuture<Boolean> deleteRelation(EntityRelation relation);
 
-    ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType);
+    ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<Boolean> deleteOutboundRelations(EntityId entity);
+
+    ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType toType, TimePageLink pageLink);
 
 }

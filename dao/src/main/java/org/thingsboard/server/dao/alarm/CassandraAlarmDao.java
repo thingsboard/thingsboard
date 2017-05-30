@@ -17,16 +17,27 @@ package org.thingsboard.server.dao.alarm;
 
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
-import org.thingsboard.server.dao.model.nosql.AlarmEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.nosql.AlarmEntity;
+import org.thingsboard.server.dao.relation.RelationDao;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -35,7 +46,11 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Alarm> implements AlarmDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<AlarmEntity> getColumnFamilyClass() {
@@ -45,6 +60,10 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
     @Override
     protected String getColumnFamilyName() {
         return ALARM_COLUMN_FAMILY_NAME;
+    }
+
+    protected boolean isDeleteOnSave() {
+        return false;
     }
 
     @Override
@@ -64,5 +83,25 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
         query.limit(1);
         query.orderBy(QueryBuilder.asc(ModelConstants.ALARM_TYPE_PROPERTY), QueryBuilder.desc(ModelConstants.ID_PROPERTY));
         return findOneByStatementAsync(query);
+    }
+
+    @Override
+    public ListenableFuture<List<Alarm>> findAlarms(AlarmQuery query) {
+        log.trace("Try to find alarms by entity [{}], status [{}] and pageLink [{}]", query.getAffectedEntityId(), query.getStatus(), query.getPageLink());
+        EntityId affectedEntity = query.getAffectedEntityId();
+        String relationType = query.getStatus() == null ? BaseAlarmService.ALARM_RELATION : BaseAlarmService.ALARM_RELATION_PREFIX + query.getStatus().name();
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
+        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<Alarm>>) input -> {
+            List<ListenableFuture<Alarm>> alarmFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                alarmFutures.add(findAlarmByIdAsync(relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(alarmFutures);
+        });
+    }
+
+    @Override
+    public ListenableFuture<Alarm> findAlarmByIdAsync(UUID key) {
+        return findByIdAsync(key);
     }
 }

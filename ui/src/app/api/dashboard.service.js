@@ -24,6 +24,8 @@ function DashboardService($http, $q, $location, customerService) {
         getCustomerDashboards: getCustomerDashboards,
         getServerTimeDiff: getServerTimeDiff,
         getDashboard: getDashboard,
+        getDashboardInfo: getDashboardInfo,
+        getTenantDashboardsByTenantId: getTenantDashboardsByTenantId,
         getTenantDashboards: getTenantDashboards,
         deleteDashboard: deleteDashboard,
         saveDashboard: saveDashboard,
@@ -33,6 +35,26 @@ function DashboardService($http, $q, $location, customerService) {
     }
 
     return service;
+
+    function getTenantDashboardsByTenantId(tenantId, pageLink) {
+        var deferred = $q.defer();
+        var url = '/api/tenant/' + tenantId + '/dashboards?limit=' + pageLink.limit;
+        if (angular.isDefined(pageLink.textSearch)) {
+            url += '&textSearch=' + pageLink.textSearch;
+        }
+        if (angular.isDefined(pageLink.idOffset)) {
+            url += '&idOffset=' + pageLink.idOffset;
+        }
+        if (angular.isDefined(pageLink.textOffset)) {
+            url += '&textOffset=' + pageLink.textOffset;
+        }
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
 
     function getTenantDashboards(pageLink) {
         var deferred = $q.defer();
@@ -94,7 +116,7 @@ function DashboardService($http, $q, $location, customerService) {
         var deferred = $q.defer();
         var url = '/api/dashboard/serverTime';
         var ct1 = Date.now();
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, { ignoreLoading: true }).then(function success(response) {
             var ct2 = Date.now();
             var st = response.data;
             var stDiff = Math.ceil(st - (ct1+ct2)/2);
@@ -108,6 +130,17 @@ function DashboardService($http, $q, $location, customerService) {
     function getDashboard(dashboardId) {
         var deferred = $q.defer();
         var url = '/api/dashboard/' + dashboardId;
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getDashboardInfo(dashboardId) {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/info/' + dashboardId;
         $http.get(url, null).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {

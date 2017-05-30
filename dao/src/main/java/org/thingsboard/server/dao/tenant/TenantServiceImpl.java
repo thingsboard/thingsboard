@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
@@ -43,7 +43,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class TenantServiceImpl extends BaseEntityService implements TenantService {
+public class TenantServiceImpl extends AbstractEntityService implements TenantService {
 
     private static final String DEFAULT_TENANT_REGION = "Global";
 

@@ -16,12 +16,13 @@
 package org.thingsboard.server.common.data.asset;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public class Asset extends SearchTextBased<AssetId> {
+public class Asset extends SearchTextBased<AssetId> implements HasName {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -64,6 +65,7 @@ public class Asset extends SearchTextBased<AssetId> {
         this.customerId = customerId;
     }
 
+    @Override
     public String getName() {
         return name;
     }
