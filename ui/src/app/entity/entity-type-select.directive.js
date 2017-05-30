@@ -29,6 +29,8 @@ export default function EntityTypeSelect($compile, $templateCache, utils, userSe
         var template = $templateCache.get(entityTypeSelectTemplate);
         element.html(template);
 
+        scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
+
         if (angular.isDefined(attrs.hideLabel)) {
             scope.showLabel = false;
         } else {
@@ -103,6 +105,9 @@ export default function EntityTypeSelect($compile, $templateCache, utils, userSe
         require: "^ngModel",
         link: linker,
         scope: {
+            theForm: '=?',
+            tbRequired: '=?',
+            disabled:'=ngDisabled',
             allowedEntityTypes: "=?"
         }
     };

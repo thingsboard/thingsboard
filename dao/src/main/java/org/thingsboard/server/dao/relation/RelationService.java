@@ -46,6 +46,8 @@ public interface RelationService {
 
     ListenableFuture<List<EntityRelation>> findByTo(EntityId to, RelationTypeGroup typeGroup);
 
+    ListenableFuture<List<EntityRelationInfo>> findInfoByTo(EntityId to, RelationTypeGroup typeGroup);
+
     ListenableFuture<List<EntityRelation>> findByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelation>> findByQuery(EntityRelationsQuery query);

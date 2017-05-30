@@ -20,6 +20,7 @@ public class EntityRelationInfo extends EntityRelation {
 
     private static final long serialVersionUID = 2807343097519543363L;
 
+    private String fromName;
     private String toName;
 
     public EntityRelationInfo() {
@@ -28,6 +29,14 @@ public class EntityRelationInfo extends EntityRelation {
 
     public EntityRelationInfo(EntityRelation entityRelation) {
         super(entityRelation);
+    }
+
+    public String getFromName() {
+        return fromName;
+    }
+
+    public void setFromName(String fromName) {
+        this.fromName = fromName;
     }
 
     public String getToName() {

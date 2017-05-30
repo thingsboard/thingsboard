@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 /*@ngInject*/
-export default function AddRelationDialogController($scope, $mdDialog, types, entityRelationService, from) {
+export default function AddRelationDialogController($scope, $mdDialog, types, entityRelationService, direction, entityId) {
 
     var vm = this;
 
     vm.types = types;
+    vm.direction = direction;
+    vm.targetEntityId = {};
 
     vm.relation = {};
-    vm.relation.from = from;
+    if (vm.direction == vm.types.entitySearchDirection.from) {
+        vm.relation.from = entityId;
+    } else {
+        vm.relation.to = entityId;
+    }
     vm.relation.type = types.entityRelationType.contains;
 
     vm.add = add;
@@ -32,6 +38,11 @@ export default function AddRelationDialogController($scope, $mdDialog, types, en
     }
 
     function add() {
+        if (vm.direction == vm.types.entitySearchDirection.from) {
+            vm.relation.to = vm.targetEntityId;
+        } else {
+            vm.relation.from = vm.targetEntityId;
+        }
         $scope.theForm.$setPristine();
         entityRelationService.saveRelation(vm.relation).then(
             function success() {

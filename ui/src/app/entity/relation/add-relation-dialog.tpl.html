@@ -32,19 +32,16 @@
             <div class="md-dialog-content">
                 <md-content class="md-padding" layout="column">
                     <fieldset ng-disabled="loading">
-                        <md-input-container class="md-block">
-                            <label translate>relation.relation-type</label>
-                            <md-select required ng-model="vm.relation.type" ng-disabled="loading">
-                                <md-option ng-repeat="type in vm.types.entityRelationType" ng-value="type">
-                                    <span>{{('relation.relation-types.' + type) | translate}}</span>
-                                </md-option>
-                            </md-select>
-                        </md-input-container>
-                        <span class="tb-small">{{'entity.entity' | translate }}</span>
+                        <tb-relation-type-autocomplete ng-model="vm.relation.type"
+                                                       tb-required="true"
+                                                       ng-disabled="loading">
+                        </tb-relation-type-autocomplete>
+                        <small>{{(vm.direction == vm.types.entitySearchDirection.from ?
+                            'relation.to-entity' : 'relation.from-entity') | translate}}</small>
                         <tb-entity-select flex
                             the-form="theForm"
                             tb-required="true"
-                            ng-model="vm.relation.to">
+                            ng-model="vm.targetEntityId">
                         </tb-entity-select>
                     </fieldset>
                 </md-content>

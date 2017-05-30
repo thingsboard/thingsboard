@@ -436,6 +436,7 @@ md-tabs.tb-headless {
  ***********************/
 
 section.tb-header-buttons {
+  pointer-events: none;
   position: absolute;
   right: 0px;
   top: 86px;
