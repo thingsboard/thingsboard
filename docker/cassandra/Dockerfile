@@ -14,26 +14,10 @@
 # limitations under the License.
 #
 
-apiVersion: v1
-kind: Pod
-metadata:
-  name: tb-cassandra-schema
-spec:
-  containers:
-  - name: tb-cassandra-schema
-    imagePullPolicy: Always
-    image: thingsboard/tb-cassandra-schema:1.2.4
-    env:
-    - name: CREATE_SCHEMA
-      value: "true"
-    - name: ADD_SYSTEM_DATA
-      value: "true"
-    - name : ADD_DEMO_DATA
-      value: "true"
-    - name : CASSANDRA_URL
-      value: "cassandra-headless"
-    command:
-    - sh
-    - -c
-    - ./install-schema.sh
-  restartPolicy: Never
+FROM cassandra:3.9
+
+ADD ready-probe.sh /ready-probe.sh
+
+RUN chmod +x /ready-probe.sh
+
+CMD ["cassandra", "-f"]
