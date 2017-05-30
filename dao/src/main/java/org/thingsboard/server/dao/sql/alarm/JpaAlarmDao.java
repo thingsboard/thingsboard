@@ -58,12 +58,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     private RelationDao relationDao;
 
     @Override
-    protected Class getEntityClass() {
+    protected Class<AlarmEntity> getEntityClass() {
         return AlarmEntity.class;
     }
 
     @Override
-    protected CrudRepository getCrudRepository() {
+    protected CrudRepository<AlarmEntity, UUID> getCrudRepository() {
         return alarmRepository;
     }
 

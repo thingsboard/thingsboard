@@ -46,12 +46,12 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     private AssetRepository assetRepository;
 
     @Override
-    protected Class getEntityClass() {
+    protected Class<AssetEntity> getEntityClass() {
         return AssetEntity.class;
     }
 
     @Override
-    protected CrudRepository getCrudRepository() {
+    protected CrudRepository<AssetEntity, UUID> getCrudRepository() {
         return assetRepository;
     }
 
