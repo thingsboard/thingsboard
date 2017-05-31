@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -14,26 +15,14 @@
 # limitations under the License.
 #
 
-apiVersion: v1
-kind: Pod
-metadata:
-  name: tb-cassandra-schema
-spec:
-  containers:
-  - name: tb-cassandra-schema
-    imagePullPolicy: Always
-    image: thingsboard/tb-cassandra-schema:1.2.4
-    env:
-    - name: CREATE_SCHEMA
-      value: "true"
-    - name: ADD_SYSTEM_DATA
-      value: "true"
-    - name : ADD_DEMO_DATA
-      value: "true"
-    - name : CASSANDRA_URL
-      value: "cassandra-headless"
-    command:
-    - sh
-    - -c
-    - ./install-schema.sh
-  restartPolicy: Never
+if [[ $(nodetool status | grep $POD_IP) == *"UN"* ]]; then
+  if [[ $DEBUG ]]; then
+    echo "UN";
+  fi
+  exit 0;
+else
+  if [[ $DEBUG ]]; then
+    echo "Not Up";
+  fi
+  exit 1;
+fi
