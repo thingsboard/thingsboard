@@ -66,9 +66,13 @@ public class DefaultMailService implements MailService {
     @Override
     public void updateMailConfiguration() {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey("mail");
-        JsonNode jsonConfig = settings.getJsonValue();
-        mailSender = createMailSender(jsonConfig);
-        mailFrom = jsonConfig.get("mailFrom").asText();
+        if (settings != null) {
+            JsonNode jsonConfig = settings.getJsonValue();
+            mailSender = createMailSender(jsonConfig);
+            mailFrom = jsonConfig.get("mailFrom").asText();
+        } else {
+            throw new IncorrectParameterException("Failed to date mail configuration. Settings not found!");
+        }
     }
     
     private JavaMailSenderImpl createMailSender(JsonNode jsonConfig) {

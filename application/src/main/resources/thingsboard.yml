@@ -232,13 +232,13 @@ spring:
   data:
     jpa:
       repositories:
-        enabled: "false"
+        enabled: "true"
   jpa:
     show-sql: "false"
-    generate-ddl: "false"
+    generate-ddl: "true"
     database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     hibernate:
-      ddl-auto: "none"
+      ddl-auto: "create"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"

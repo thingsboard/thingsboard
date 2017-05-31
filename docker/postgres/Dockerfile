@@ -14,16 +14,8 @@
 # limitations under the License.
 #
 
-version: '2'
+FROM postgres:9.6
 
-services:
-  cassandra:
-    ports:
-      - "9042:9042"
-      - "9160:9160"
-  zk:
-    ports:
-      - "2181:2181"
-  postgres:
-    ports:
-      - "5432:5432"
+ADD init-user-db.sh /docker-entrypoint-initdb.d/init-user-db.sh
+
+CMD ["postgres"]

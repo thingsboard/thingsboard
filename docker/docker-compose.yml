@@ -46,3 +46,11 @@ services:
     ports:
       - "2181"
     restart: always
+  postgres:
+    image: "thingsboard/postgres:1.2.4"
+    ports:
+    - "5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - "${POSTGRES_DATA_DIR}:/var/lib/postgresql/data"

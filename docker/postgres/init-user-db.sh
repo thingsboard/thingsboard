@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -14,16 +15,8 @@
 # limitations under the License.
 #
 
-version: '2'
+set -e
 
-services:
-  cassandra:
-    ports:
-      - "9042:9042"
-      - "9160:9160"
-  zk:
-    ports:
-      - "2181:2181"
-  postgres:
-    ports:
-      - "5432:5432"
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+    CREATE DATABASE thingsboard;
+EOSQL

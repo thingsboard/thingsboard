@@ -484,6 +484,10 @@
                         <groupId>dom4j</groupId>
                         <artifactId>dom4j</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>antlr</groupId>
+                        <artifactId>antlr</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>

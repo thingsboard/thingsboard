@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.settings;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.AdminSettingsEntity;
@@ -27,9 +30,9 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ADMIN_SETTINGS_COLUMN_FAMILY_NAME;
 
-/**
- * Created by Valerii Sosliuk on 5/6/2017.
- */
+@Component
+@Slf4j
+@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
 public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, AdminSettings> implements AdminSettingsDao{
 
     @Autowired

@@ -1,6 +1,6 @@
 VERSION=1.2.4
 PROJECT=thingsboard
-APP=zk
+APP=postgres
 
 build:
 	docker build --pull -t ${PROJECT}/${APP}:${VERSION} -t ${PROJECT}/${APP}:latest .

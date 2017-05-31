@@ -57,11 +57,14 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
 
     @Override
     public Optional<ComponentDescriptor> saveIfNotExist(ComponentDescriptor component) {
-        boolean exists = componentDescriptorRepository.findOne(component.getId().getId()) != null;
-        if (exists) {
-            return Optional.empty();
+        if (component.getId() == null) {
+            component.setId(new ComponentDescriptorId(UUID.randomUUID()));
         }
-        return Optional.of(save(component));
+        boolean exists = componentDescriptorRepository.findOne(component.getId().getId()) != null;
+        if (!exists) {
+            return Optional.of(save(component));
+        }
+        return Optional.empty();
     }
 
     @Override
