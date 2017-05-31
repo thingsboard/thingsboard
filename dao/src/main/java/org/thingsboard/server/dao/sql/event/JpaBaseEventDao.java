@@ -28,6 +28,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.event.EventDao;
@@ -44,7 +45,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.springframework.data.jpa.domain.Specifications.where;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -73,6 +73,10 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
 
     @Override
     public Event save(Event event) {
+        log.debug("Save event [{}] ", event);
+        if (event.getId() == null) {
+            event.setId(new EventId(UUIDs.timeBased()));
+        }
         if (StringUtils.isEmpty(event.getUid())) {
             event.setUid(event.getId().toString());
         }

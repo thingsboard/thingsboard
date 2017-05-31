@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
+import com.datastax.driver.core.utils.UUIDs;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
@@ -26,7 +27,6 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.component.ComponentDescriptorDao;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
@@ -58,7 +58,7 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     @Override
     public Optional<ComponentDescriptor> saveIfNotExist(ComponentDescriptor component) {
         if (component.getId() == null) {
-            component.setId(new ComponentDescriptorId(UUID.randomUUID()));
+            component.setId(new ComponentDescriptorId(UUIDs.timeBased()));
         }
         boolean exists = componentDescriptorRepository.findOne(component.getId().getId()) != null;
         if (!exists) {

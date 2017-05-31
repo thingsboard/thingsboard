@@ -37,8 +37,8 @@ public class DaoTestSuite {
     @ClassRule
     public static CustomCassandraCQLUnit cassandraUnit =
             new CustomCassandraCQLUnit(
-                    Arrays.asList(new ClassPathCQLDataSet("schema.cql", false, false),
-                                  new ClassPathCQLDataSet("system-data.cql", false, false),
+                    Arrays.asList(new ClassPathCQLDataSet("cassandra/schema.cql", false, false),
+                                  new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
                                   new ClassPathCQLDataSet("system-test.cql", false, false)),
                     "cassandra-test.yaml", 30000l);
 

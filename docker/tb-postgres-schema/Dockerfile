@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -15,8 +14,14 @@
 # limitations under the License.
 #
 
-set -e
+FROM postgres:9.6
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-    CREATE DATABASE thingsboard;
-EOSQL
+ADD install-schema.sh /install-schema.sh
+
+RUN apt-get update \
+        && apt-get install -y nmap \
+        && chmod +x /install-schema.sh
+
+ADD schema.sql /schema.sql
+ADD system-data.sql /system-data.sql
+ADD demo-data.sql /demo-data.sql

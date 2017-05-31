@@ -47,10 +47,23 @@ services:
       - "2181"
     restart: always
   postgres:
-    image: "thingsboard/postgres:1.2.4"
+    image: "postgres:9.6"
     ports:
     - "5432"
     environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - "${POSTGRES_DATA_DIR}:/var/lib/postgresql/data"
+  tb-postgres-schema:
+    image: "thingsboard/tb-postgres-schema:1.2.4"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - CREATE_SCHEMA=${CREATE_SCHEMA}
+      - ADD_SYSTEM_DATA=${ADD_SYSTEM_DATA}
+      - ADD_DEMO_DATA=${ADD_DEMO_DATA}
+    entrypoint: /install-schema.sh

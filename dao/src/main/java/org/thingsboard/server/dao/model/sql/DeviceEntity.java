@@ -57,6 +57,9 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
 
+    @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
+    private String type;
+
     @Column(name = ModelConstants.DEVICE_NAME_PROPERTY)
     private String name;
     
