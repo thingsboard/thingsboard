@@ -59,6 +59,12 @@ export default angular.module('thingsboard.types', [])
                     name: "aggregation.none"
                 }
             },
+            alarmStatus: {
+                activeUnack: "ACTIVE_UNACK",
+                activeAck: "ACTIVE_ACK",
+                clearedUnack: "CLEARED_UNACK",
+                clearedAck: "CLEARED_ACK"
+            },
             position: {
                 top: {
                     value: "top",
