@@ -107,7 +107,7 @@ public interface DeviceDao extends Dao<Device> {
      * @param name the device name
      * @return the optional device object
      */
-    Optional<Device> findDevicesByTenantIdAndName(UUID tenantId, String name);
+    Optional<Device> findDeviceByTenantIdAndName(UUID tenantId, String name);
 
     /**
      * Find tenants device types.

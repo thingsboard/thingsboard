@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -88,7 +87,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     public Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findDeviceByTenantIdAndName [{}][{}]", tenantId, name);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        Optional<Device> deviceOpt = deviceDao.findDevicesByTenantIdAndName(tenantId.getId(), name);
+        Optional<Device> deviceOpt = deviceDao.findDeviceByTenantIdAndName(tenantId.getId(), name);
         if (deviceOpt.isPresent()) {
             return Optional.of(deviceOpt.get());
         } else {
@@ -261,7 +260,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateCreate(Device device) {
-                    deviceDao.findDevicesByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
+                    deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
                             d -> {
                                 throw new DataValidationException("Device with such name already exists!");
                             }
@@ -270,7 +269,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
                 @Override
                 protected void validateUpdate(Device device) {
-                    deviceDao.findDevicesByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
+                    deviceDao.findDeviceByTenantIdAndName(device.getTenantId().getId(), device.getName()).ifPresent(
                             d -> {
                                 if (!d.getUuidId().equals(device.getUuidId())) {
                                     throw new DataValidationException("Device with such name already exists!");

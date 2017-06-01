@@ -121,7 +121,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     }
 
     @Override
-    public Optional<Device> findDevicesByTenantIdAndName(UUID tenantId, String deviceName) {
+    public Optional<Device> findDeviceByTenantIdAndName(UUID tenantId, String deviceName) {
         Select select = select().from(DEVICE_BY_TENANT_AND_NAME_VIEW_NAME);
         Select.Where query = select.where();
         query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));

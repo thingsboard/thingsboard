@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 
-import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -59,13 +59,13 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Override
     public List<Device> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(deviceRepository.findByTenantIdFirstPage(
-                    pageLink.getLimit(), tenantId, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(deviceRepository.findByTenantIdNextPage(
-                    pageLink.getLimit(), tenantId, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(
+                deviceRepository.findByTenantId(
+                        pageLink.getLimit(),
+                        tenantId,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset())
+        );
     }
 
     @Override
@@ -77,13 +77,14 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(deviceRepository.findByTenantIdAndCustomerIdFirstPage(pageLink.getLimit(),
-                    tenantId, customerId, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(deviceRepository.findByTenantIdAndCustomerIdNextPage(pageLink.getLimit(),
-                    tenantId, customerId, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(
+                deviceRepository.findByTenantIdAndCustomerId(
+                        pageLink.getLimit(),
+                        tenantId,
+                        customerId,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset())
+        );
     }
 
     @Override
@@ -94,22 +95,34 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    // Probably findDevice, not findDevices?
-    public Optional<Device> findDevicesByTenantIdAndName(UUID tenantId, String name) {
+    public Optional<Device> findDeviceByTenantIdAndName(UUID tenantId, String name) {
         Device device = DaoUtil.getData(deviceRepository.findByTenantIdAndName(tenantId, name));
         return Optional.ofNullable(device);
     }
 
     @Override
     public List<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
-        //TODO
-        return null;
+        return DaoUtil.convertDataList(
+                deviceRepository.findByTenantIdAndType(
+                        pageLink.getLimit(),
+                        tenantId,
+                        type,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset())
+        );
     }
 
     @Override
     public List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
-        //TODO
-        return null;
+        return DaoUtil.convertDataList(
+                deviceRepository.findByTenantIdAndCustomerIdAndType(
+                        pageLink.getLimit(),
+                        tenantId,
+                        customerId,
+                        type,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset())
+        );
     }
 
     @Override

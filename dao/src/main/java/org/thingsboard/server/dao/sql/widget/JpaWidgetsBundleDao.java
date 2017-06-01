@@ -56,7 +56,6 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return DaoUtil.getData(widgetsBundleRepository.findWidgetsBundleByTenantIdAndAlias(tenantId, alias));
     }
 
-
     @Override
     public List<WidgetsBundle> findSystemWidgetsBundles(TextPageLink pageLink) {
         if (pageLink.getIdOffset() == null) {
