@@ -23,14 +23,13 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/23/2017.
@@ -62,10 +61,10 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
     public List<WidgetsBundle> findSystemWidgetsBundles(TextPageLink pageLink) {
         if (pageLink.getIdOffset() == null) {
             return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesFirstPage(pageLink.getLimit(),
-                    pageLink.getTextSearch()));
+                    pageLink.getTextSearch(), NULL_UUID));
         } else {
             return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesNextPage(pageLink.getLimit(),
-                    pageLink.getTextSearch(), pageLink.getIdOffset()));
+                    pageLink.getTextSearch(), pageLink.getIdOffset(), NULL_UUID));
         }
     }
 

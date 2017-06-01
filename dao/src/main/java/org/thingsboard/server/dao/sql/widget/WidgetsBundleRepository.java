@@ -31,15 +31,15 @@ public interface WidgetsBundleRepository extends CrudRepository<WidgetsBundleEnt
 
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID IS NULL " +
+    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID = ?3 " +
             "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?2, '%')) " +
             "ORDER BY ID LIMIT ?1")
-    List<WidgetsBundleEntity> findSystemWidgetsBundlesFirstPage(Integer limit, String searchText);
+    List<WidgetsBundleEntity> findSystemWidgetsBundlesFirstPage(Integer limit, String searchText, UUID tenantId);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID IS NULL " +
+    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID = ?4 " +
             "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?2, '%')) " +
             "AND ID > ?3 ORDER BY ID LIMIT ?1")
-    List<WidgetsBundleEntity> findSystemWidgetsBundlesNextPage(Integer limit, String searchText, UUID idOffset);
+    List<WidgetsBundleEntity> findSystemWidgetsBundlesNextPage(Integer limit, String searchText, UUID idOffset, UUID tenantId);
 
     @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID = ?2 " +
             "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +

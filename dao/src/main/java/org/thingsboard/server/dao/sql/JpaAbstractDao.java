@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -61,6 +62,9 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
             ((SearchTextEntity) entity).setSearchText(((SearchTextEntity) entity).getSearchTextSource().toLowerCase());
         }
         log.debug("Saving entity {}", entity);
+        if (entity.getId() == null) {
+            entity.setId(UUIDs.timeBased());
+        }
         entity = getCrudRepository().save(entity);
         return DaoUtil.getData(entity);
     }
