@@ -48,6 +48,8 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
         return false;
     }
 
+    protected ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+
     @Override
     @Transactional(propagation = REQUIRES_NEW)
     public D save(D domain) {
@@ -80,7 +82,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     @Override
     public ListenableFuture<D> findByIdAsync(UUID key) {
         log.debug("Get entity by key async {}", key);
-        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         ListenableFuture<D> listenableFuture = service.submit(() -> DaoUtil.getData(getCrudRepository().findOne(key)));
         return listenableFuture;
     }

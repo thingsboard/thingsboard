@@ -70,7 +70,6 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     @Transactional(propagation = REQUIRES_NEW)
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         return service.submit(() -> DaoUtil.getData(
                 alarmRepository.findLatestByOriginatorAndType(tenantId.getId(), originator.getId(),
                 originator.getEntityType().ordinal(), type)));

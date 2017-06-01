@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
 
 import java.util.List;
@@ -70,6 +71,9 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, UUID> {
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
                                                           @Param("idOffset") UUID idOffset);
+
+    @Query(nativeQuery = true, value = "SELECT DISTINCT TYPE, TENANT_ID FROM DEVICE")
+    List<TenantDeviceType> findTenantDeviceTypes();
 
     DeviceEntity findByTenantIdAndName(UUID tenantId, String name);
 

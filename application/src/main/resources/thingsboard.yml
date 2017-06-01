@@ -107,7 +107,7 @@ coap:
 
 # Cassandra driver configuration parameters
 cassandra:
-  enabled: "${CASSANDRA_ENABLED:false}"
+  enabled: "${CASSANDRA_ENABLED:true}"
   # Thingsboard cluster name
   cluster_name: "${CASSANDRA_CLUSTER_NAME:Thingsboard Cluster}"
   # Thingsboard keyspace name
@@ -226,7 +226,7 @@ spring.mvc.cors:
          
 # SQL DAO Configuration
 sql:
-  enabled: "${SQL_ENABLED:true}"
+  enabled: "${SQL_ENABLED:false}"
 
 spring:
   data:
@@ -244,3 +244,6 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
