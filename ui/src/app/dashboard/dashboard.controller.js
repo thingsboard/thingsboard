@@ -369,7 +369,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
         }
     }
 
-    function openDashboardState(state) {
+    function openDashboardState(state, openRightLayout) {
         var layoutsData = dashboardUtils.getStateLayoutsData(vm.dashboard, state);
         if (layoutsData) {
             vm.dashboardCtx.state = state;
@@ -387,7 +387,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
                     layoutVisibilityChanged = !vm.isMobile;
                 }
             }
-            vm.isRightLayoutOpened = false;
+            vm.isRightLayoutOpened = openRightLayout ? true : false;
             updateLayouts(layoutVisibilityChanged);
         }
 
