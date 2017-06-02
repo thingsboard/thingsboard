@@ -22,15 +22,15 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TenantDeviceType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
+import org.thingsboard.server.dao.model.sql.TenantDeviceTypeProjection;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -121,6 +121,17 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Override
     public ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync() {
-        return service.submit(() -> deviceRepository.findTenantDeviceTypes());
+        return service.submit(() -> convertTenantDeviceTypeToDto(deviceRepository.findTenantDeviceTypes()));
+    }
+
+    private List<TenantDeviceType> convertTenantDeviceTypeToDto(List<TenantDeviceTypeProjection> resultSet) {
+        List<TenantDeviceType> list = Collections.emptyList();
+        if (resultSet != null && !resultSet.isEmpty()) {
+            list = new ArrayList<>();
+            for (TenantDeviceTypeProjection object : resultSet) {
+                list.add(new TenantDeviceType(object.getType(), new TenantId(UUID.fromString(object.getTenantId()))));
+            }
+        }
+        return list;
     }
 }

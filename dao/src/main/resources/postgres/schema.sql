@@ -51,6 +51,18 @@ CREATE TABLE IF NOT EXISTS alarm (
 );
 ALTER TABLE alarm OWNER TO postgres;
 
+CREATE TABLE IF NOT EXISTS relation (
+    from_id uuid,
+    from_type character varying(255),
+    to_id uuid,
+    to_type character varying(255),
+    relation_type_group character varying(255),
+    relation_type character varying(255),
+    additional_info jsonb,
+    CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
+);
+ALTER TABLE relation OWNER TO postgres;
+
 CREATE TABLE IF NOT EXISTS asset (
     id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
     additional_info jsonb,

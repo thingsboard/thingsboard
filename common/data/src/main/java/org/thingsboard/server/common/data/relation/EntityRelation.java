@@ -18,8 +18,6 @@ package org.thingsboard.server.common.data.relation;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.Objects;
-
 public class EntityRelation {
 
     private static final long serialVersionUID = 2807343040519543363L;
