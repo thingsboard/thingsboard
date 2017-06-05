@@ -1,0 +1,114 @@
+/**
+ * Copyright © 2016-2017 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "~compass-sass-mixins/lib/compass";
+@import '../../scss/constants';
+
+tb-dashboard-toolbar {
+  md-fab-toolbar {
+    &.md-is-open {
+      md-fab-trigger {
+        .md-button {
+          &.md-fab {
+            opacity: 1;
+            @include transition(opacity .3s cubic-bezier(.55,0,.55,.2));
+            .md-fab-toolbar-background {
+                background-color: $primary-default !important;
+            }
+          }
+        }
+      }
+    }
+    md-fab-trigger {
+      .md-button {
+        &.md-fab {
+          line-height: 36px;
+          width: 36px;
+          height: 36px;
+          margin: 4px 0 0 4px;
+          opacity: 0.5;
+          @include transition(opacity .3s cubic-bezier(.55,0,.55,.2) .2s);
+          md-icon {
+            position: absolute;
+            top: 25%;
+            margin: 0;
+            line-height: 18px;
+            height: 18px;
+            width: 18px;
+            min-height: 18px;
+            min-width: 18px;
+          }
+        }
+      }
+    }
+    &.is-fullscreen {
+      &.md-is-open {
+        md-fab-trigger {
+          .md-button {
+            &.md-fab {
+              .md-fab-toolbar-background {
+                  transition-delay: 0ms !important;
+                  transition-duration: 0ms !important;
+              }
+            }
+          }
+        }
+      }
+      .md-fab-toolbar-wrapper {
+        height: 64px;
+        md-toolbar {
+          min-height: 64px;
+          height: 64px;
+        }
+      }
+    }
+    .md-fab-toolbar-wrapper {
+      height: 50px;
+      md-toolbar {
+        min-height: 50px;
+        height: 50px;
+        md-fab-actions {
+          font-size: 16px;
+          margin-top: 0px;
+          .close-action {
+            margin-right: -18px;
+          }
+          .md-fab-action-item {
+            width: 100%;
+            height: 46px;
+            .tb-dashboard-action-panels {
+              height: 46px;
+              flex-direction: row-reverse;
+              .tb-dashboard-action-panel {
+                height: 46px;
+                flex-direction: row-reverse;
+                div {
+                  height: 46px;
+                }
+                md-select {
+                  pointer-events: all;
+                }
+                tb-states-component {
+                  pointer-events: all;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

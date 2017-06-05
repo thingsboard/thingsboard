@@ -130,7 +130,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         Assert.assertEquals(tenants, loadedTenants);
         
         for (Tenant tenant : loadedTenants) {
-            if (!tenant.getTitle().equals("Tenant")) {
+            if (!tenant.getTitle().equals(TEST_TENANT_NAME)) {
                 doDelete("/api/tenant/"+tenant.getId().getId().toString())
                 .andExpect(status().isOk());        
             }

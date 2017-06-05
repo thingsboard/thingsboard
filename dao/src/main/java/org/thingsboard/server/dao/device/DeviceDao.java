@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.model.DeviceEntity;
+import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
 
 /**
  * The Interface DeviceDao.
@@ -49,6 +50,16 @@ public interface DeviceDao extends Dao<DeviceEntity> {
     List<DeviceEntity> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
+     * Find devices by tenantId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    List<DeviceEntity> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
+
+    /**
      * Find devices by tenantId and devices Ids.
      *
      * @param tenantId the tenantId
@@ -68,6 +79,18 @@ public interface DeviceDao extends Dao<DeviceEntity> {
     List<DeviceEntity> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
 
     /**
+     * Find devices by tenantId, customerId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of device objects
+     */
+    List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
+
+
+    /**
      * Find devices by tenantId, customerId and devices Ids.
      *
      * @param tenantId the tenantId
@@ -85,4 +108,11 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @return the optional device object
      */
     Optional<DeviceEntity> findDevicesByTenantIdAndName(UUID tenantId, String name);
+
+    /**
+     * Find tenants device types.
+     *
+     * @return the list of tenant device type objects
+     */
+    ListenableFuture<List<TenantDeviceTypeEntity>> findTenantDeviceTypesAsync();
 }

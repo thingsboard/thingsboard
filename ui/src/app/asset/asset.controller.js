@@ -47,7 +47,8 @@ export function AssetCardController(types) {
 
 
 /*@ngInject*/
-export function AssetController(userService, assetService, customerService, $state, $stateParams, $document, $mdDialog, $q, $translate, types) {
+export function AssetController($rootScope, userService, assetService, customerService, $state, $stateParams,
+                                $document, $mdDialog, $q, $translate, types) {
 
     var customerId = $stateParams.customerId;
 
@@ -129,8 +130,8 @@ export function AssetController(userService, assetService, customerService, $sta
         }
 
         if (vm.assetsScope === 'tenant') {
-            fetchAssetsFunction = function (pageLink) {
-                return assetService.getTenantAssets(pageLink, true);
+            fetchAssetsFunction = function (pageLink, assetType) {
+                return assetService.getTenantAssets(pageLink, true, null, assetType);
             };
             deleteAssetFunction = function (assetId) {
                 return assetService.deleteAsset(assetId);
@@ -229,8 +230,8 @@ export function AssetController(userService, assetService, customerService, $sta
 
 
         } else if (vm.assetsScope === 'customer' || vm.assetsScope === 'customer_user') {
-            fetchAssetsFunction = function (pageLink) {
-                return assetService.getCustomerAssets(customerId, pageLink, true);
+            fetchAssetsFunction = function (pageLink, assetType) {
+                return assetService.getCustomerAssets(customerId, pageLink, true, null, assetType);
             };
             deleteAssetFunction = function (assetId) {
                 return assetService.unassignAssetFromCustomer(assetId);
@@ -333,6 +334,7 @@ export function AssetController(userService, assetService, customerService, $sta
         var deferred = $q.defer();
         assetService.saveAsset(asset).then(
             function success(savedAsset) {
+                $rootScope.$broadcast('assetSaved');
                 var assets = [ savedAsset ];
                 customerService.applyAssignedCustomersInfo(assets).then(
                     function success(items) {

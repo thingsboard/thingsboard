@@ -16,12 +16,11 @@
 package org.thingsboard.server.dao.asset;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.model.AssetEntity;
-import org.thingsboard.server.dao.model.DeviceEntity;
+import org.thingsboard.server.dao.model.TenantAssetTypeEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +50,16 @@ public interface AssetDao extends Dao<AssetEntity> {
     List<AssetEntity> findAssetsByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
+     * Find assets by tenantId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of asset objects
+     */
+    List<AssetEntity> findAssetsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
+
+    /**
      * Find assets by tenantId and assets Ids.
      *
      * @param tenantId the tenantId
@@ -70,6 +79,17 @@ public interface AssetDao extends Dao<AssetEntity> {
     List<AssetEntity> findAssetsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
 
     /**
+     * Find assets by tenantId, customerId, type and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param type the type
+     * @param pageLink the page link
+     * @return the list of asset objects
+     */
+    List<AssetEntity> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
+
+    /**
      * Find assets by tenantId, customerId and assets Ids.
      *
      * @param tenantId the tenantId
@@ -87,4 +107,12 @@ public interface AssetDao extends Dao<AssetEntity> {
      * @return the optional asset object
      */
     Optional<AssetEntity> findAssetsByTenantIdAndName(UUID tenantId, String name);
+
+    /**
+     * Find tenants asset types.
+     *
+     * @return the list of tenant asset type objects
+     */
+    ListenableFuture<List<TenantAssetTypeEntity>> findTenantAssetTypesAsync();
+
 }

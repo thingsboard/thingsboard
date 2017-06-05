@@ -63,7 +63,7 @@
                         {{ 'action.search' | translate }}
                     </md-tooltip>
                 </md-button>
-                <md-input-container md-theme="tb-search-input" flex>
+                <md-input-container flex>
                     <label>&nbsp;</label>
                     <input ng-model="query.search" placeholder="{{ 'common.enter-search' | translate }}"/>
                 </md-input-container>
@@ -128,9 +128,9 @@
             <table md-table md-row-select multiple="" ng-model="selectedAttributes" md-progress="attributesDeferred.promise">
                 <thead md-head md-order="query.order" md-on-reorder="onReorder">
                     <tr md-row>
-                        <th md-column md-order-by="lastUpdateTs"><span>Last update time</span></th>
-                        <th md-column md-order-by="key"><span>Key</span></th>
-                        <th md-column>Value</th>
+                        <th md-column md-order-by="lastUpdateTs"><span translate>attribute.last-update-time</span></th>
+                        <th md-column md-order-by="key"><span translate>attribute.key</span></th>
+                        <th md-column><span translate>attribute.value</span></th>
                     </tr>
                 </thead>
                 <tbody md-body>

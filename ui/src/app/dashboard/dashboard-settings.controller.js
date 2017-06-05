@@ -57,6 +57,10 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
         if (angular.isUndefined(vm.settings.showDashboardExport)) {
             vm.settings.showDashboardExport = true;
         }
+
+        if (angular.isUndefined(vm.settings.toolbarAlwaysOpen)) {
+            vm.settings.toolbarAlwaysOpen = false;
+        }
     }
 
     if (vm.gridSettings) {

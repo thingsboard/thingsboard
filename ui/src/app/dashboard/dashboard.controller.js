@@ -63,7 +63,9 @@ export default function DashboardController(types, dashboardUtils, widgetService
     }
 
     Object.defineProperty(vm, 'toolbarOpened', {
-        get: function() { return !vm.widgetEditMode && ($scope.forceFullscreen || vm.isToolbarOpened || vm.isEdit || vm.showRightLayoutSwitch()); },
+        get: function() {
+            return !vm.widgetEditMode &&
+                (toolbarAlwaysOpen() || $scope.forceFullscreen || vm.isToolbarOpened || vm.isEdit || vm.showRightLayoutSwitch()); },
         set: function() { }
     });
 
@@ -103,8 +105,10 @@ export default function DashboardController(types, dashboardUtils, widgetService
     }
 
     vm.showCloseToolbar = function() {
-        return !$scope.forceFullscreen && !vm.isEdit && !vm.showRightLayoutSwitch();
+        return !vm.toolbarAlwaysOpen() && !$scope.forceFullscreen && !vm.isEdit && !vm.showRightLayoutSwitch();
     }
+
+    vm.toolbarAlwaysOpen = toolbarAlwaysOpen;
 
     vm.showRightLayoutSwitch = function() {
         return vm.isMobile && vm.layouts.right.show;
@@ -365,7 +369,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
         }
     }
 
-    function openDashboardState(state) {
+    function openDashboardState(state, openRightLayout) {
         var layoutsData = dashboardUtils.getStateLayoutsData(vm.dashboard, state);
         if (layoutsData) {
             vm.dashboardCtx.state = state;
@@ -383,7 +387,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
                     layoutVisibilityChanged = !vm.isMobile;
                 }
             }
-            vm.isRightLayoutOpened = false;
+            vm.isRightLayoutOpened = openRightLayout ? true : false;
             updateLayouts(layoutVisibilityChanged);
         }
 
@@ -736,6 +740,15 @@ export default function DashboardController(types, dashboardUtils, widgetService
             }
         }
         return link;
+    }
+
+    function toolbarAlwaysOpen() {
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.toolbarAlwaysOpen)) {
+            return vm.dashboard.configuration.settings.toolbarAlwaysOpen;
+        } else {
+            return false;
+        }
     }
 
     function displayTitle() {

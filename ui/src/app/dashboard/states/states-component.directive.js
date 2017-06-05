@@ -29,15 +29,15 @@ export default function StatesComponent($compile, $templateCache, $controller, s
 
             var stateController = scope.dashboardCtrl.dashboardCtx.stateController;
 
-            stateController.openState = function(id, params) {
+            stateController.openState = function(id, params, openRightLayout) {
                 if (scope.statesController) {
-                    scope.statesController.openState(id, params);
+                    scope.statesController.openState(id, params, openRightLayout);
                 }
             }
 
-            stateController.updateState = function(id, params) {
+            stateController.updateState = function(id, params, openRightLayout) {
                 if (scope.statesController) {
-                    scope.statesController.updateState(id, params);
+                    scope.statesController.updateState(id, params, openRightLayout);
                 }
             }
 
@@ -60,6 +60,14 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                     return scope.statesController.getStateParams();
                 } else {
                     return {};
+                }
+            }
+
+            stateController.getStateParamsByStateId = function(id) {
+                if (scope.statesController) {
+                    return scope.statesController.getStateParamsByStateId(id);
+                } else {
+                    return null;
                 }
             }
         }

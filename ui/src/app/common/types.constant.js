@@ -59,6 +59,12 @@ export default angular.module('thingsboard.types', [])
                     name: "aggregation.none"
                 }
             },
+            alarmStatus: {
+                activeUnack: "ACTIVE_UNACK",
+                activeAck: "ACTIVE_ACK",
+                clearedUnack: "CLEARED_UNACK",
+                clearedAck: "CLEARED_ACK"
+            },
             position: {
                 top: {
                     value: "top",
@@ -98,7 +104,10 @@ export default angular.module('thingsboard.types', [])
                 rule: "RULE",
                 plugin: "PLUGIN",
                 tenant: "TENANT",
-                customer: "CUSTOMER"
+                customer: "CUSTOMER",
+                user: "USER",
+                dashboard: "DASHBOARD",
+                alarm: "ALARM"
             },
             entitySearchDirection: {
                 from: "FROM",

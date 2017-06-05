@@ -30,6 +30,7 @@ public class EntityRelation {
     private EntityId from;
     private EntityId to;
     private String type;
+    private RelationTypeGroup typeGroup;
     private JsonNode additionalInfo;
 
     public EntityRelation() {
@@ -37,21 +38,27 @@ public class EntityRelation {
     }
 
     public EntityRelation(EntityId from, EntityId to, String type) {
-        this(from, to, type, null);
+        this(from, to, type, RelationTypeGroup.COMMON);
     }
 
-    public EntityRelation(EntityId from, EntityId to, String type, JsonNode additionalInfo) {
+    public EntityRelation(EntityId from, EntityId to, String type, RelationTypeGroup typeGroup) {
+        this(from, to, type, typeGroup, null);
+    }
+
+    public EntityRelation(EntityId from, EntityId to, String type, RelationTypeGroup typeGroup, JsonNode additionalInfo) {
         this.from = from;
         this.to = to;
         this.type = type;
+        this.typeGroup = typeGroup;
         this.additionalInfo = additionalInfo;
     }
 
-    public EntityRelation(EntityRelation device) {
-        this.from = device.getFrom();
-        this.to = device.getTo();
-        this.type = device.getType();
-        this.additionalInfo = device.getAdditionalInfo();
+    public EntityRelation(EntityRelation entityRelation) {
+        this.from = entityRelation.getFrom();
+        this.to = entityRelation.getTo();
+        this.type = entityRelation.getType();
+        this.typeGroup = entityRelation.getTypeGroup();
+        this.additionalInfo = entityRelation.getAdditionalInfo();
     }
 
     public EntityId getFrom() {
@@ -78,6 +85,14 @@ public class EntityRelation {
         this.type = type;
     }
 
+    public RelationTypeGroup getTypeGroup() {
+        return typeGroup;
+    }
+
+    public void setTypeGroup(RelationTypeGroup typeGroup) {
+        this.typeGroup = typeGroup;
+    }
+
     public JsonNode getAdditionalInfo() {
         return additionalInfo;
     }
@@ -90,14 +105,22 @@ public class EntityRelation {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        EntityRelation relation = (EntityRelation) o;
-        return Objects.equals(from, relation.from) &&
-                Objects.equals(to, relation.to) &&
-                Objects.equals(type, relation.type);
+
+        EntityRelation that = (EntityRelation) o;
+
+        if (from != null ? !from.equals(that.from) : that.from != null) return false;
+        if (to != null ? !to.equals(that.to) : that.to != null) return false;
+        if (type != null ? !type.equals(that.type) : that.type != null) return false;
+        return typeGroup == that.typeGroup;
+
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(from, to, type);
+        int result = from != null ? from.hashCode() : 0;
+        result = 31 * result + (to != null ? to.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (typeGroup != null ? typeGroup.hashCode() : 0);
+        return result;
     }
 }

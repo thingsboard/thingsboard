@@ -23,6 +23,9 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 
 import java.util.List;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +38,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.entity.BaseEntityService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.*;
@@ -47,7 +50,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class UserServiceImpl extends BaseEntityService implements UserService {
+public class UserServiceImpl extends AbstractEntityService implements UserService {
 
     @Autowired
     private UserDao userDao;
@@ -76,6 +79,14 @@ public class UserServiceImpl extends BaseEntityService implements UserService {
 		UserEntity userEntity = userDao.findById(userId.getId());
 		return getData(userEntity);
 	}
+
+    @Override
+    public ListenableFuture<User> findUserByIdAsync(UserId userId) {
+        log.trace("Executing findUserByIdAsync [{}]", userId);
+        validateId(userId, "Incorrect userId " + userId);
+        ListenableFuture<UserEntity> userEntity = userDao.findByIdAsync(userId.getId());
+        return Futures.transform(userEntity, (Function<? super UserEntity, ? extends User>) input -> getData(input));
+    }
 
     @Override
     public User saveUser(User user) {

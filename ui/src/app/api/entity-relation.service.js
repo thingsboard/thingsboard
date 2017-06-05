@@ -25,8 +25,10 @@ function EntityRelationService($http, $q) {
         deleteRelation: deleteRelation,
         deleteRelations: deleteRelations,
         findByFrom: findByFrom,
+        findInfoByFrom: findInfoByFrom,
         findByFromAndType: findByFromAndType,
         findByTo: findByTo,
+        findInfoByTo: findInfoByTo,
         findByToAndType: findByToAndType,
         findByQuery: findByQuery
     }
@@ -84,6 +86,18 @@ function EntityRelationService($http, $q) {
         return deferred.promise;
     }
 
+    function findInfoByFrom(fromId, fromType) {
+        var deferred = $q.defer();
+        var url = '/api/relations/info?fromId=' + fromId;
+        url += '&fromType=' + fromType;
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
     function findByFromAndType(fromId, fromType, relationType) {
         var deferred = $q.defer();
         var url = '/api/relations?fromId=' + fromId;
@@ -100,6 +114,18 @@ function EntityRelationService($http, $q) {
     function findByTo(toId, toType) {
         var deferred = $q.defer();
         var url = '/api/relations?toId=' + toId;
+        url += '&toType=' + toType;
+        $http.get(url, null).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function findInfoByTo(toId, toType) {
+        var deferred = $q.defer();
+        var url = '/api/relations/info?toId=' + toId;
         url += '&toType=' + toType;
         $http.get(url, null).then(function success(response) {
             deferred.resolve(response.data);

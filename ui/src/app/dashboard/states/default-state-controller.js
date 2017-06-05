@@ -26,12 +26,13 @@ export default function DefaultStateController($scope, $location, $state, $state
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
+    vm.getStateParamsByStateId = getStateParamsByStateId;
 
     vm.getStateName = getStateName;
 
     vm.displayStateSelection = displayStateSelection;
 
-    function openState(id, params) {
+    function openState(id, params, openRightLayout) {
         if (vm.states && vm.states[id]) {
             if (!params) {
                 params = {};
@@ -42,11 +43,11 @@ export default function DefaultStateController($scope, $location, $state, $state
             }
             //append new state
             vm.stateObject[0] = newState;
-            gotoState(vm.stateObject[0].id, true);
+            gotoState(vm.stateObject[0].id, true, openRightLayout);
         }
     }
 
-    function updateState(id, params) {
+    function updateState(id, params, openRightLayout) {
         if (vm.states && vm.states[id]) {
             if (!params) {
                 params = {};
@@ -57,7 +58,7 @@ export default function DefaultStateController($scope, $location, $state, $state
             }
             //replace with new state
             vm.stateObject[0] = newState;
-            gotoState(vm.stateObject[0].id, true);
+            gotoState(vm.stateObject[0].id, true, openRightLayout);
         }
     }
 
@@ -74,6 +75,24 @@ export default function DefaultStateController($scope, $location, $state, $state
 
     function getStateParams() {
         return vm.stateObject[vm.stateObject.length-1].params;
+    }
+
+    function getStateParamsByStateId(stateId) {
+        var stateObj = getStateObjById(stateId);
+        if (stateObj) {
+            return stateObj.params;
+        } else {
+            return null;
+        }
+    }
+
+    function getStateObjById(id) {
+        for (var i=0; i < vm.stateObject.length; i++) {
+            if (vm.stateObject[i].id === id) {
+                return vm.stateObject[i];
+            }
+        }
+        return null;
     }
 
     function getStateName(id, state) {
@@ -161,9 +180,9 @@ export default function DefaultStateController($scope, $location, $state, $state
         }, true);
     }
 
-    function gotoState(stateId, update) {
+    function gotoState(stateId, update, openRightLayout) {
         if (vm.dashboardCtrl.dashboardCtx.state != stateId) {
-            vm.dashboardCtrl.openDashboardState(stateId);
+            vm.dashboardCtrl.openDashboardState(stateId, openRightLayout);
             if (update) {
                 updateLocation();
             }

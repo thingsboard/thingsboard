@@ -127,13 +127,17 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         log.debug("Save entity {}", entity);
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
-        } else {
+        } else if (isDeleteOnSave()) {
             removeById(entity.getId());
         }
         Statement saveStatement = getSaveQuery(entity);
         saveStatement.setConsistencyLevel(cluster.getDefaultWriteConsistencyLevel());
         ResultSet resultSet = executeWrite(saveStatement);
         return new EntityResultSet<>(resultSet, entity);
+    }
+
+    protected boolean isDeleteOnSave() {
+        return true;
     }
 
     public T save(T entity) {
@@ -161,9 +165,18 @@ public abstract class AbstractModelDao<T extends BaseEntity<?>> extends Abstract
         return getSession().execute(delete);
     }
 
-
     public List<T> find() {
         log.debug("Get all entities from column family {}", getColumnFamilyName());
         return findListByStatement(QueryBuilder.select().all().from(getColumnFamilyName()).setConsistencyLevel(cluster.getDefaultReadConsistencyLevel()));
+    }
+
+    protected static <T> Function<BaseEntity<T>, T> toDataFunction() {
+        return new Function<BaseEntity<T>, T>() {
+            @Nullable
+            @Override
+            public T apply(@Nullable BaseEntity<T> entity) {
+                return entity != null ? entity.toData() : null;
+            }
+        };
     }
 }

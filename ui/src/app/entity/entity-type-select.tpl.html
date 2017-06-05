@@ -17,9 +17,13 @@
 -->
 <md-input-container>
     <label ng-if="showLabel">{{ 'entity.type' | translate }}</label>
-    <md-select ng-model="entityType" class="tb-entity-type-select" aria-label="{{ 'entity.type' | translate }}">
+    <md-select ng-required="tbRequired" ng-disabled="disabled" name="entityType"
+               ng-model="entityType" class="tb-entity-type-select" aria-label="{{ 'entity.type' | translate }}">
         <md-option ng-repeat="type in entityTypes" ng-value="type">
             {{typeName(type) | translate}}
         </md-option>
     </md-select>
+    <div ng-messages="theForm.entityType.$error">
+        <div ng-message="required" translate>entity.type-required</div>
+    </div>
 </md-input-container>

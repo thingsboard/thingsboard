@@ -182,7 +182,7 @@ public class UserControllerTest extends AbstractControllerTest {
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
         
-        String email = "tenant@thingsboard.org";
+        String email = TENANT_ADMIN_EMAIL;
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setTenantId(savedTenant.getId());

@@ -48,15 +48,9 @@ function UserMenuController($scope, userService, $translate, $state) {
     var dashboardUser = userService.getCurrentUser();
 
     vm.authorityName = authorityName;
-    vm.displaySearchMode = displaySearchMode;
     vm.logout = logout;
     vm.openProfile = openProfile;
     vm.userDisplayName = userDisplayName;
-
-    function displaySearchMode() {
-        return $scope.searchConfig.searchEnabled &&
-            $scope.searchConfig.showSearch;
-    }
 
     function authorityName() {
         var name = "user.anonymous";

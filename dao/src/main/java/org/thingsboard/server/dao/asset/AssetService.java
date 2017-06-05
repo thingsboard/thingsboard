@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.asset;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,7 +35,7 @@ public interface AssetService {
 
     Optional<Asset> findAssetByTenantIdAndName(TenantId tenantId, String name);
 
-    Asset saveAsset(Asset device);
+    Asset saveAsset(Asset asset);
 
     Asset assignAssetToCustomer(AssetId assetId, CustomerId customerId);
 
@@ -44,11 +45,15 @@ public interface AssetService {
 
     TextPageData<Asset> findAssetsByTenantId(TenantId tenantId, TextPageLink pageLink);
 
+    TextPageData<Asset> findAssetsByTenantIdAndType(TenantId tenantId, String type, TextPageLink pageLink);
+
     ListenableFuture<List<Asset>> findAssetsByTenantIdAndIdsAsync(TenantId tenantId, List<AssetId> assetIds);
 
     void deleteAssetsByTenantId(TenantId tenantId);
 
     TextPageData<Asset> findAssetsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    TextPageData<Asset> findAssetsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, TextPageLink pageLink);
 
     ListenableFuture<List<Asset>> findAssetsByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<AssetId> assetIds);
 
@@ -56,4 +61,5 @@ public interface AssetService {
 
     ListenableFuture<List<Asset>> findAssetsByQuery(AssetSearchQuery query);
 
+    ListenableFuture<List<TenantAssetType>> findAssetTypesByTenantId(TenantId tenantId);
 }
