@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.alarm;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 
@@ -27,7 +27,7 @@ import java.util.UUID;
  * Created by Valerii Sosliuk on 5/21/2017.
  */
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
-public interface AlarmRepository extends PagingAndSortingRepository<AlarmEntity, UUID> {
+public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
 
     @Query(nativeQuery = true, value = "SELECT * FROM ALARM WHERE TENANT_ID = :tenantId AND ORIGINATOR_ID = :originatorId " +
             "AND ORIGINATOR_TYPE = :entityType AND TYPE = :alarmType ORDER BY TYPE ASC, ID DESC LIMIT 1")
