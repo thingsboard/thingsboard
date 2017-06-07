@@ -140,10 +140,10 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     }
 
     vm.mainLayoutHeight = function() {
-        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'main') {
+        if (!vm.isEditingWidget || vm.editingLayoutCtx.id === 'main') {
             return '100%';
         } else {
-            return 'auto';
+            return '0px';
         }
     }
 
@@ -156,10 +156,10 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     }
 
     vm.rightLayoutHeight = function() {
-        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'right') {
+        if (!vm.isEditingWidget || vm.editingLayoutCtx.id === 'right') {
             return '100%';
         } else {
-            return 'auto';
+            return '0px';
         }
     }
 
