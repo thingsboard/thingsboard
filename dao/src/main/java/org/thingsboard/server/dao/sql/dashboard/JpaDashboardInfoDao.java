@@ -29,7 +29,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -53,23 +53,22 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
 
     @Override
     public List<DashboardInfo> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(dashboardInfoRepository.findByTenantIdFirstPage(
-                    pageLink.getLimit(), tenantId, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(dashboardInfoRepository.findByTenantIdNextPage(
-                    pageLink.getLimit(), tenantId, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(dashboardInfoRepository
+                .findByTenantId(
+                        pageLink.getLimit(),
+                        tenantId,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override
     public List<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(dashboardInfoRepository.findByTenantIdAndCustomerIdFirstPage(
-                    pageLink.getLimit(), tenantId, customerId, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(dashboardInfoRepository.findByTenantIdAndCustomerIdNextPage(
-                    pageLink.getLimit(), tenantId, customerId, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(dashboardInfoRepository
+                .findByTenantIdAndCustomerId(
+                        pageLink.getLimit(),
+                        tenantId,
+                        customerId,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 }

@@ -34,13 +34,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
 @Component
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<ComponentDescriptorEntity, ComponentDescriptor>
-    implements ComponentDescriptorDao {
+        implements ComponentDescriptorDao {
 
     @Autowired
     private ComponentDescriptorRepository componentDescriptorRepository;
@@ -79,24 +81,23 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
 
     @Override
     public List<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(componentDescriptorRepository.findByTypeFirstPage(pageLink.getLimit(),
-                    type.toString(), pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(componentDescriptorRepository.findByTypeNextPage(pageLink.getLimit(),
-                    type.toString(), pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(componentDescriptorRepository
+                .findByType(
+                        pageLink.getLimit(),
+                        type.toString(),
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override
     public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(componentDescriptorRepository.findByScopeAndTypeFirstPage(pageLink.getLimit(),
-                    type.toString(), scope.toString(), pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(componentDescriptorRepository.findByScopeAndTypeNextPage(pageLink.getLimit(),
-                    type.toString(), scope.toString(), pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(componentDescriptorRepository
+                .findByScopeAndType(
+                        pageLink.getLimit(),
+                        type.toString(),
+                        scope.toString(),
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override

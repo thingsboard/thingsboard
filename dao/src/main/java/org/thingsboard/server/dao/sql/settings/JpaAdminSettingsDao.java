@@ -28,8 +28,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ADMIN_SETTINGS_COLUMN_FAMILY_NAME;
-
 @Component
 @Slf4j
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")

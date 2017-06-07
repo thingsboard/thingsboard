@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
-import org.thingsboard.server.dao.model.sql.TenantDeviceTypeProjection;
+import org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.*;
@@ -121,15 +121,15 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
 
     @Override
     public ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync() {
-        return service.submit(() -> convertTenantDeviceTypeToDto(deviceRepository.findTenantDeviceTypes()));
+        return service.submit(() -> convertTenantDeviceTypeEntityToDto(deviceRepository.findTenantDeviceTypes()));
     }
 
-    private List<TenantDeviceType> convertTenantDeviceTypeToDto(List<TenantDeviceTypeProjection> resultSet) {
+    private List<TenantDeviceType> convertTenantDeviceTypeEntityToDto(List<TenantDeviceTypeEntity> entities) {
         List<TenantDeviceType> list = Collections.emptyList();
-        if (resultSet != null && !resultSet.isEmpty()) {
+        if (entities != null && !entities.isEmpty()) {
             list = new ArrayList<>();
-            for (TenantDeviceTypeProjection object : resultSet) {
-                list.add(new TenantDeviceType(object.getType(), new TenantId(UUID.fromString(object.getTenantId()))));
+            for (TenantDeviceTypeEntity entity : entities) {
+                list.add(new TenantDeviceType(entity.getType(), new TenantId(entity.getTenantId())));
             }
         }
         return list;

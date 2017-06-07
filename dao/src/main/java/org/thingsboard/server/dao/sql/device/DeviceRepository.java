@@ -19,11 +19,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
-import org.thingsboard.server.dao.model.sql.TenantDeviceTypeProjection;
+import org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,12 +72,8 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, UUID> {
                                                           @Param("textSearch") String textSearch,
                                                           @Param("idOffset") UUID idOffset);
 
-    // TODO: CAST was used because in other case when you try convert directly UUID field to UUID java object error throwed:
-    // org.hibernate.MappingException: No Dialect mapping for JDBC type: 1111
-    // I suppose that Spring Projection doesn't support correct mapping for this type of column
-    // and only Entity at the moment supports UUID
-    @Query(value = "SELECT DISTINCT CAST(TENANT_ID as VARCHAR) as tenantId, TYPE as type FROM DEVICE", nativeQuery = true)
-    List<TenantDeviceTypeProjection> findTenantDeviceTypes();
+    @Query(value = "SELECT DISTINCT NEW org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity(d.tenantId, d.type) FROM DeviceEntity d")
+    List<TenantDeviceTypeEntity> findTenantDeviceTypes();
 
     DeviceEntity findByTenantIdAndName(UUID tenantId, String name);
 

@@ -18,13 +18,9 @@ package org.thingsboard.server.dao.sql.component;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.plugin.ComponentScope;
-import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.dao.model.ToData;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,25 +32,22 @@ public interface ComponentDescriptorRepository extends CrudRepository<ComponentD
 
     ComponentDescriptorEntity findByClazz(String clazz);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByTypeFirstPage(int limit, String type, String textSearch);
+    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = :type " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    List<ComponentDescriptorEntity> findByType(@Param("limit") int limit,
+                                               @Param("type") String type,
+                                               @Param("textSearch") String textSearch,
+                                               @Param("idOffset") UUID idOffset);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "AND ID > ?4 ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByTypeNextPage(int limit, String type, String textSearch, UUID idOffset);
-
-    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
-            "AND SCOPE = ?3 AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?4, '%')) " +
-            "ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByScopeAndTypeFirstPage(int limit, String type, String scope, String textSearch);
-
-    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = ?2 " +
-            "AND SCOPE = ?3 AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?4, '%')) " +
-            "AND ID > ?5 ORDER BY ID LIMIT ?1")
-    List<ComponentDescriptorEntity> findByScopeAndTypeNextPage(int limit, String type, String scope, String textSearch, UUID idOffset);
+    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = :type " +
+            "AND SCOPE = :scope AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    List<ComponentDescriptorEntity> findByScopeAndType(@Param("limit") int limit,
+                                                       @Param("type") String type,
+                                                       @Param("scope") String scope,
+                                                       @Param("textSearch") String textSearch,
+                                                       @Param("idOffset") UUID idOffset);
 
     void deleteByClazz(String clazz);
 }

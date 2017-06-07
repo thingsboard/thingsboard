@@ -18,9 +18,8 @@ package org.thingsboard.server.dao.sql.plugin;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.PluginMetaDataEntity;
-import org.thingsboard.server.dao.model.sql.RuleMetaDataEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,23 +32,20 @@ public interface PluginMetaDataRepository extends CrudRepository<PluginMetaDataE
 
     PluginMetaDataEntity findByApiToken(String apiToken);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE TENANT_ID = ?2 " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "ORDER BY ID LIMIT ?1")
-    List<PluginMetaDataEntity> findByTenantIdAndPageLinkFirstPage(int limit, UUID tenantId, String textSearch);
+    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE TENANT_ID = :tenantId " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    List<PluginMetaDataEntity> findByTenantIdAndPageLink(@Param("limit") int limit,
+                                                         @Param("tenantId") UUID tenantId,
+                                                         @Param("textSearch") String textSearch,
+                                                         @Param("idOffset") UUID idOffset);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE TENANT_ID = ?2 " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "AND ID > ?4 ORDER BY ID LIMIT ?1")
-    List<PluginMetaDataEntity> findByTenantIdAndPageLinkNextPage(int limit, UUID tenantId, String textSearch, UUID idOffset);
-
-    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE (TENANT_ID = ?2 OR TENANT_ID IS NULL) " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "ORDER BY ID LIMIT ?1")
-    List<PluginMetaDataEntity> findAllTenantPluginsByTenantIdFirstPage(int limit, UUID tenantId, String textSearch);
-
-    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE (TENANT_ID = ?2 OR TENANT_ID IS NULL) " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "AND ID > ?4 ORDER BY ID LIMIT ?1")
-    List<PluginMetaDataEntity> findAllTenantPluginsByTenantIdNextPage(int limit, UUID tenantId, String textSearch, UUID idOffset);
+    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE TENANT_ID IN (:tenantId, :nullTenantId) " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    List<PluginMetaDataEntity> findAllTenantPluginsByTenantId(@Param("limit") int limit,
+                                                              @Param("tenantId") UUID tenantId,
+                                                              @Param("nullTenantId") UUID nullTenantId,
+                                                              @Param("textSearch") String textSearch,
+                                                              @Param("idOffset") UUID idOffset);
 }

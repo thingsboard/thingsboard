@@ -58,34 +58,35 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
 
     @Override
     public List<WidgetsBundle> findSystemWidgetsBundles(TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesFirstPage(pageLink.getLimit(),
-                    pageLink.getTextSearch(), NULL_UUID));
-        } else {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesNextPage(pageLink.getLimit(),
-                    pageLink.getTextSearch(), pageLink.getIdOffset(), NULL_UUID));
-        }
+        return DaoUtil.convertDataList(
+                widgetsBundleRepository
+                        .findSystemWidgetsBundles(
+                                pageLink.getLimit(),
+                                NULL_UUID,
+                                pageLink.getTextSearch(),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override
     public List<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findTenantWidgetsBundlesByTenantIdFirstPage(pageLink.getLimit(),
-                    tenantId, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findTenantWidgetsBundlesByTenantIdNextPage(pageLink.getLimit(),
-                    tenantId, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(
+                widgetsBundleRepository
+                        .findTenantWidgetsBundlesByTenantId(
+                                pageLink.getLimit(),
+                                tenantId,
+                                pageLink.getTextSearch(),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override
     public List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findAllTenantWidgetsBundlesByTenantIdFirstPage(pageLink.getLimit(),
-                    tenantId, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(widgetsBundleRepository.findAllTenantWidgetsBundlesByTenantIdNextPage(pageLink.getLimit(),
-                    tenantId, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(
+                widgetsBundleRepository
+                        .findAllTenantWidgetsBundlesByTenantId(
+                                pageLink.getLimit(),
+                                tenantId,
+                                NULL_UUID,
+                                pageLink.getTextSearch(),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 }

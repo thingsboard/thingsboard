@@ -22,13 +22,14 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserDao;
 
 import java.util.List;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * @author Valerii Sosliuk
@@ -57,20 +58,22 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
 
     @Override
     public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(userRepository.findTenantAdminsFirstPage(pageLink.getLimit(), tenantId));
-        } else {
-            return DaoUtil.convertDataList(userRepository.findTenantAdminsNextPage(pageLink.getLimit(), tenantId, pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(
+                userRepository
+                        .findTenantAdmins(
+                                pageLink.getLimit(),
+                                tenantId,
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override
     public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(userRepository.findCustomerUsersFirstPage(pageLink.getLimit(), tenantId, customerId));
-        } else {
-            return DaoUtil.convertDataList(userRepository.findCustomerUsersNextPage(pageLink.getLimit(), tenantId,
-                    customerId, pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(
+                userRepository
+                        .findCustomerUsers(
+                                pageLink.getLimit(),
+                                tenantId,
+                                customerId,
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 }

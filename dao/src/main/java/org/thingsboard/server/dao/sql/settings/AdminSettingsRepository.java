@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.sql.settings;
 
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.model.sql.AdminSettingsEntity;
 
 import java.util.UUID;
