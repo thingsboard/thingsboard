@@ -37,7 +37,7 @@
                               ng-switch-when="entity"
                               ng-required="model.type === types.datasourceType.entity"
                               widget-type="widgetType"
-                              entity-aliases="entityAliases"
+                              alias-controller="aliasController"
                               generate-data-key="generateDataKey({chip: chip, type: type})"
                               fetch-entity-keys="fetchEntityKeys({entityAliasId: entityAliasId, query: query, type: type})"
                               on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias})">

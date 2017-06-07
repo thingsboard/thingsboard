@@ -32,20 +32,15 @@
 			<div class="md-dialog-content">
 				<fieldset ng-disabled="loading">
 					<div ng-show="vm.isSingleEntityAlias" layout="row">
-						<tb-entity-type-select style="min-width: 100px;"
-											   ng-model="vm.singleEntityAlias.entityType"
-											   allowed-entity-types="vm.allowedEntityTypes">
-						</tb-entity-type-select>
-						<tb-entity-filter flex entity-type="vm.singleEntityAlias.entityType" ng-model="vm.singleEntityAlias.entityFilter">
+						<tb-entity-filter flex allowed-entity-types="vm.allowedEntityTypes" ng-model="vm.singleEntityAlias.filter">
 						</tb-entity-filter>
 					</div>
 					<div ng-show="!vm.isSingleEntityAlias" flex layout="row" layout-align="start center">
 						<span flex="5"></span>
 						<div flex layout="row" layout-align="start center"
 							 style="padding: 0 0 0 10px; margin: 5px;">
-							<span translate flex="20" style="min-width: 100px;">entity.alias</span>
-							<span translate flex="20" style="min-width: 100px;">entity.type</span>
-							<span translate flex="60" style="min-width: 190px; padding-left: 10px;">entity.entities</span>
+							<span translate flex="20" style="min-width: 150px;">entity.alias</span>
+							<span translate flex="80" style="min-width: 240px; padding-left: 10px;">alias.entity-filter</span>
 							<span style="min-width: 40px;"></span>
 						</div>
 					</div>
@@ -53,23 +48,17 @@
 						<div ng-form name="aliasForm" flex layout="row" layout-align="start center" ng-repeat="entityAlias in vm.entityAliases track by $index">
 							<span flex="5">{{$index + 1}}.</span>
 							<div class="md-whiteframe-4dp tb-alias" flex layout="row" layout-align="start center">
-								<md-input-container flex="20" style="min-width: 100px;" md-no-float class="md-block">
+								<md-input-container flex="20" style="min-width: 150px;" md-no-float class="md-block">
 									<input required ng-change="entityAlias.changed=true" name="alias" placeholder="{{ 'entity.alias' | translate }}" ng-model="entityAlias.alias">
 									<div ng-messages="aliasForm.alias.$error">
 										<div translate ng-message="required">entity.alias-required</div>
 									</div>
 								</md-input-container>
-								<section flex="20" layout="column" style="min-width: 100px;" >
-									<tb-entity-type-select hide-label style="padding-left: 10px;"
-													  ng-model="entityAlias.entityType"
-													  allowed-entity-types="vm.allowedEntityTypes">
-									</tb-entity-type-select>
-								</section>
-								<section flex="60" layout="column">
+								<section flex="80" layout="column">
 									<tb-entity-filter style="padding-left: 10px;"
-													  entity-type="entityAlias.entityType"
-													  ng-model="entityAlias.entityFilter"
-													  on-matching-entity-change="vm.onFilterEntityChanged(entity, entityAlias)">
+													  allowed-entity-types="vm.allowedEntityTypes"
+													  ng-model="entityAlias.filter"
+													  on-matching-entity-change="vm.onFilterEntityChanged(entity, stateEntity, entityAlias)">
 									</tb-entity-filter>
 								</section>
 								<md-button ng-disabled="loading" class="md-icon-button md-primary" style="min-width: 40px;"

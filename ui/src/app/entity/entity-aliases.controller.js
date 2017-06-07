@@ -85,32 +85,29 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
 
         for (aliasId in config.entityAliases) {
             var entityAlias = config.entityAliases[aliasId];
-            var result = {id: aliasId, alias: entityAlias.alias, entityType: entityAlias.entityType, entityFilter: entityAlias.entityFilter, changed: true};
+            var result = {id: aliasId, alias: entityAlias.alias, filter: entityAlias.filter, changed: true};
             checkEntityAlias(result);
             vm.entityAliases.push(result);
         }
     }
 
     function checkEntityAlias(entityAlias) {
-        if (!entityAlias.entityType) {
-            entityAlias.entityType = types.entityType.device;
-        }
-        if (!entityAlias.entityFilter || entityAlias.entityFilter == null) {
-            entityAlias.entityFilter = {
-                useFilter: false,
-                entityNameFilter: '',
-                entityList: [],
-            };
+        if (!entityAlias.filter || entityAlias.filter == null) {
+            entityAlias.filter = {};
         }
     }
 
-    function onFilterEntityChanged(entity, entityAlias) {
+    function onFilterEntityChanged(entity, stateEntity, entityAlias) {
         if (entityAlias) {
             if (!entityAlias.alias || entityAlias.alias.length == 0) {
                 entityAlias.changed = false;
             }
-            if (!entityAlias.changed && entity && entityAlias.entityType) {
-                entityAlias.alias = entity.name;
+            if (!entityAlias.changed && entityAlias.filter && entityAlias.filter.type) {
+                if (stateEntity) {
+                    entityAlias.alias =  $translate.instant('alias.state-entity');
+                } else {
+                    entityAlias.alias = entity.name;
+                }
             }
         }
     }
@@ -121,8 +118,7 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
             aliasId = Math.max(vm.entityAliases[a].id, aliasId);
         }
         aliasId++;
-        var entityAlias = {id: aliasId, alias: '', entityType: types.entityType.device,
-            entityFilter: {useFilter: false, entityNameFilter: '', entityList: []}, changed: false};
+        var entityAlias = {id: aliasId, alias: '', filter: {}, changed: false};
         vm.entityAliases.push(entityAlias);
     }
 
@@ -160,15 +156,6 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
         $mdDialog.cancel();
     }
 
-    function cleanupEntityFilter(entityFilter) {
-        if (entityFilter.useFilter) {
-            entityFilter.entityList = [];
-        } else {
-            entityFilter.entityNameFilter = '';
-        }
-        return entityFilter;
-    }
-
     function save() {
 
         var entityAliases = {};
@@ -181,7 +168,6 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
 
         if (vm.isSingleEntityAlias) {
             maxAliasId = 0;
-            vm.singleEntityAlias.entityFilter = cleanupEntityFilter(vm.singleEntityAlias.entityFilter);
             for (i = 0; i < vm.entityAliases.length; i ++) {
                 aliasId = vm.entityAliases[i].id;
                 alias = vm.entityAliases[i].alias;
@@ -199,7 +185,7 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
                 alias = vm.entityAliases[i].alias;
                 if (!uniqueAliasList[alias]) {
                     uniqueAliasList[alias] = alias;
-                    entityAliases[aliasId] = {alias: alias, entityType: vm.entityAliases[i].entityType, entityFilter: cleanupEntityFilter(vm.entityAliases[i].entityFilter)};
+                    entityAliases[aliasId] = {id: aliasId, alias: alias, filter: vm.entityAliases[i].filter};
                 } else {
                     valid = false;
                     break;

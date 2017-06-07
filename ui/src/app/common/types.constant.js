@@ -65,6 +65,36 @@ export default angular.module('thingsboard.types', [])
                 clearedUnack: "CLEARED_UNACK",
                 clearedAck: "CLEARED_ACK"
             },
+            aliasFilterType: {
+                entityList: {
+                    value: 'entityList',
+                    name: 'alias.filter-type-entity-list'
+                },
+                entityName: {
+                    value: 'entityName',
+                    name: 'alias.filter-type-entity-name'
+                },
+                assetType: {
+                    value: 'assetType',
+                    name: 'alias.filter-type-asset-type'
+                },
+                deviceType: {
+                    value: 'deviceType',
+                    name: 'alias.filter-type-device-type'
+                },
+                relationsQuery: {
+                    value: 'relationsQuery',
+                    name: 'alias.filter-type-relations-query'
+                },
+                assetSearchQuery: {
+                    value: 'assetSearchQuery',
+                    name: 'alias.filter-type-asset-search-query'
+                },
+                deviceSearchQuery: {
+                    value: 'deviceSearchQuery',
+                    name: 'alias.filter-type-device-search-query'
+                }
+            },
             position: {
                 top: {
                     value: "top",

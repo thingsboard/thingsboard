@@ -264,14 +264,9 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
         }
         dashboardUtils.addWidgetToLayout(theDashboard, targetState, targetLayout, widget, originalColumns, originalSize, row, column);
         if (callAliasUpdateFunction) {
-            onAliasesUpdateFunction().then(
-                function() {
-                    deferred.resolve(theDashboard);
-                }
-            );
-        } else {
-            deferred.resolve(theDashboard);
+            onAliasesUpdateFunction();
         }
+        deferred.resolve(theDashboard);
         return deferred.promise;
     }
 

@@ -40,37 +40,73 @@ function DashboardUtils(types, utils, timeService) {
     return service;
 
     function validateAndUpdateEntityAliases(configuration) {
+        var aliasId, entityAlias;
         if (angular.isUndefined(configuration.entityAliases)) {
             configuration.entityAliases = {};
             if (configuration.deviceAliases) {
                 var deviceAliases = configuration.deviceAliases;
-                for (var aliasId in deviceAliases) {
+                for (aliasId in deviceAliases) {
                     var deviceAlias = deviceAliases[aliasId];
-                    var alias = deviceAlias.alias;
-                    var entityFilter = {
-                        useFilter: false,
-                        entityNameFilter: '',
-                        entityList: []
-                    }
-                    if (deviceAlias.deviceFilter) {
-                        entityFilter.useFilter = deviceAlias.deviceFilter.useFilter;
-                        entityFilter.entityNameFilter = deviceAlias.deviceFilter.deviceNameFilter;
-                        entityFilter.entityList = deviceAlias.deviceFilter.deviceList;
-                    } else if (deviceAlias.deviceId) {
-                        entityFilter.entityList = [deviceAlias.deviceId];
-                    }
-                    var entityAlias = {
-                        id: aliasId,
-                        alias: alias,
-                        entityType: types.entityType.device,
-                        entityFilter: entityFilter
-                    };
+                    entityAlias = validateAndUpdateDeviceAlias(aliasId, deviceAlias);
                     configuration.entityAliases[aliasId] = entityAlias;
                 }
                 delete configuration.deviceAliases;
             }
+        } else {
+            var entityAliases = configuration.entityAliases;
+            for (aliasId in entityAliases) {
+                entityAlias = entityAliases[aliasId];
+                entityAliases[aliasId] = validateAndUpdateEntityAlias(entityAlias);
+            }
         }
         return configuration;
+    }
+
+    function validateAndUpdateDeviceAlias(aliasId, deviceAlias) {
+        var alias = deviceAlias.alias;
+        var entityAlias = {
+            id: aliasId,
+            alias: alias,
+            filter: {
+                type: null,
+                entityType: types.entityType.device,
+                resolveMultiple: false
+            },
+        }
+        if (deviceAlias.deviceFilter) {
+            entityAlias.filter.type =
+                deviceAlias.deviceFilter.useFilter ? types.aliasFilterType.entityName.value : types.aliasFilterType.entityList.value;
+            if (entityAlias.filter.type == types.aliasFilterType.entityList.value) {
+                entityAlias.filter.entityList = deviceAlias.deviceFilter.deviceList;
+                entityAlias.filter.stateEntity = false;
+            } else {
+                entityAlias.filter.entityNameFilter = deviceAlias.deviceFilter.deviceNameFilter;
+            }
+        } else {
+            entityAlias.filter.type = types.aliasFilterType.entityList.value;
+            entityAlias.filter.entityList = [deviceAlias.deviceId];
+            entityAlias.filter.stateEntity = false;
+        }
+        return entityAlias;
+    }
+
+    function validateAndUpdateEntityAlias(entityAlias) {
+        if (!entityAlias.filter) {
+            entityAlias.filter = {
+                type: entityAlias.entityFilter.useFilter ? types.aliasFilterType.entityName.value : types.aliasFilterType.entityList.value,
+                entityType: entityAlias.entityType,
+                resolveMultiple: false
+            }
+            if (entityAlias.filter.type == types.aliasFilterType.entityList.value) {
+                entityAlias.filter.entityList = entityAlias.entityFilter.entityList;
+                entityAlias.filter.stateEntity = false;
+            } else {
+                entityAlias.filter.entityNameFilter = entityAlias.entityFilter.entityNameFilter;
+            }
+            delete entityAlias.entityType;
+            delete entityAlias.entityFilter;
+        }
+        return entityAlias;
     }
 
     function validateAndUpdateWidget(widget) {

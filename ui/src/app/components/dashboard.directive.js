@@ -52,7 +52,7 @@ function Dashboard() {
         bindToController: {
             widgets: '=',
             widgetLayouts: '=?',
-            aliasesInfo: '=',
+            aliasController: '=',
             stateController: '=',
             dashboardTimewindow: '=?',
             columns: '=',
@@ -328,10 +328,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         vm.gridsterOpts.draggable.enabled = vm.isEdit;
         $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
     });
-
-    $scope.$watch('vm.aliasesInfo.entityAliases', function () {
-        $scope.$broadcast('entityAliasListChanged', vm.aliasesInfo);
-    }, true);
 
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {
         if (checkIsLocalGridsterElement(theGridster)) {

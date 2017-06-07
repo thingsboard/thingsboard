@@ -15,17 +15,30 @@
  */
 
 /*@ngInject*/
-export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, types, entityAliases, entityAliasesInfo, onEntityAliasesUpdate) {
+export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, types, aliasController, onEntityAliasesUpdate) {
 
     var vm = this;
     vm._mdPanelRef = mdPanelRef;
-    vm.entityAliases = entityAliases;
-    vm.entityAliasesInfo = entityAliasesInfo;
+    vm.aliasController = aliasController;
     vm.onEntityAliasesUpdate = onEntityAliasesUpdate;
+    vm.entityAliases = {};
+    vm.entityAliasesInfo = {};
 
-    $scope.$watch('vm.entityAliases', function () {
-        if (onEntityAliasesUpdate) {
-            onEntityAliasesUpdate(vm.entityAliases);
+    vm.currentAliasEntityChanged = currentAliasEntityChanged;
+
+    var allEntityAliases = vm.aliasController.getEntityAliases();
+    for (var aliasId in allEntityAliases) {
+        var aliasInfo = vm.aliasController.getInstantAliasInfo(aliasId);
+        if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity) {
+            vm.entityAliasesInfo[aliasId] = angular.copy(aliasInfo);
         }
-    }, true);
+    }
+
+    function currentAliasEntityChanged(aliasId, currentEntity) {
+        vm.aliasController.updateCurrentAliasEntity(aliasId, currentEntity);
+        if (onEntityAliasesUpdate) {
+            onEntityAliasesUpdate();
+        }
+    }
+
 }

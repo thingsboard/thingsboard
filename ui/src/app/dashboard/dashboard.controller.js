@@ -24,8 +24,10 @@ import selectTargetLayoutTemplate from './layouts/select-target-layout.tpl.html'
 
 /* eslint-enable import/no-unresolved, import/default */
 
+import AliasController from '../api/alias-controller';
+
 /*@ngInject*/
-export default function DashboardController(types, dashboardUtils, widgetService, userService,
+export default function DashboardController(types, utils, dashboardUtils, widgetService, userService,
                                             dashboardService, timeService, entityService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $element, $state, $stateParams, $mdDialog, $mdMedia, $timeout, $document, $q, $translate, $filter) {
 
@@ -349,7 +351,13 @@ export default function DashboardController(types, dashboardUtils, widgetService
             dashboardService.getDashboard($stateParams.dashboardId)
                 .then(function success(dashboard) {
                     vm.dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
-                    entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
+                    vm.dashboardConfiguration = vm.dashboard.configuration;
+                    vm.dashboardCtx.dashboard = vm.dashboard;
+                    vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+                    vm.dashboardCtx.aliasController = new AliasController($scope, $q, $filter, utils,
+                        types, entityService, vm.dashboardCtx.stateController, vm.dashboardConfiguration.entityAliases);
+
+                   /* entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
                         .then(
                             function(resolution) {
                                 if (resolution.error && !isTenantAdmin()) {
@@ -362,7 +370,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
                                     vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
                                 }
                             }
-                        );
+                        );*/
                 }, function fail() {
                     vm.configurationError = true;
                 });
@@ -373,6 +381,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
         var layoutsData = dashboardUtils.getStateLayoutsData(vm.dashboard, state);
         if (layoutsData) {
             vm.dashboardCtx.state = state;
+            vm.dashboardCtx.aliasController.dashboardStateChanged();
             var layoutVisibilityChanged = false;
             for (var l in vm.layouts) {
                 var layout = vm.layouts[l];
@@ -916,7 +925,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
                         templateUrl: addWidgetTemplate,
                         locals: {
                             dashboard: vm.dashboard,
-                            aliasesInfo: vm.dashboardCtx.aliasesInfo,
+                            aliasController: vm.dashboardCtx.aliasController,
                             widget: newWidget,
                             widgetInfo: widgetTypeInfo
                         },
@@ -930,10 +939,8 @@ export default function DashboardController(types, dashboardUtils, widgetService
                         }
                     }).then(function (result) {
                         var widget = result.widget;
-                        vm.dashboardCtx.aliasesInfo = result.aliasesInfo;
                         addWidget(widget);
-                    }, function (rejection) {
-                        vm.dashboardCtx.aliasesInfo = rejection.aliasesInfo;
+                    }, function () {
                     });
                 }
             }
@@ -1025,7 +1032,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
         notifyDashboardUpdated();
     }
 
-    function showAliasesResolutionError(error) {
+/*    function showAliasesResolutionError(error) {
         var alert = $mdDialog.alert()
             .parent(angular.element($document[0].body))
             .clickOutsideToClose(true)
@@ -1037,20 +1044,10 @@ export default function DashboardController(types, dashboardUtils, widgetService
         alert._options.fullscreen = true;
 
         $mdDialog.show(alert);
-    }
+    }*/
 
     function entityAliasesUpdated() {
-        var deferred = $q.defer();
-        entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
-            .then(
-                function(resolution) {
-                    if (resolution.aliasesInfo) {
-                        vm.dashboardCtx.aliasesInfo = resolution.aliasesInfo;
-                    }
-                   deferred.resolve();
-                }
-            );
-        return deferred.promise;
+        vm.dashboardCtx.aliasController.updateEntityAliases(vm.dashboard.configuration.entityAliases);
     }
 
     function notifyDashboardUpdated() {

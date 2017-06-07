@@ -17,7 +17,7 @@
 -->
 <section layout='column' class="tb-entity-filter">
     <section layout='row'>
-        <section layout="column" flex ng-show="!model.useFilter">
+        <!--section layout="column" flex ng-show="!model.useFilter">
             <md-chips flex
                       id="entity_list_chips"
                       ng-required="!useFilter"
@@ -51,17 +51,44 @@
                 <label translate>entity.name-starts-with</label>
                 <input ng-model="model.entityNameFilter" aria-label="{{ 'entity.name-starts-with' | translate }}">
             </md-input-container>
+        </section-->
+        <section layout="row" flex layout-align="start center">
+            <div flex ng-if="model.type">{{ types.aliasFilterType[model.type].name | translate }}</div>
+            <md-button ng-if="model.type" ng-disabled="loading" class="md-icon-button md-primary"
+                       style="min-width: 40px;"
+                       ng-click="editFilter($event)"
+                       aria-label="{{ 'alias.edit-entity-filter' | translate }}">
+                <md-tooltip md-direction="top">
+                    {{ 'alias.edit-entity-filter' | translate }}
+                </md-tooltip>
+                <md-icon aria-label="{{ 'alias.edit-entity-filter' | translate }}"
+                         class="material-icons">
+                    edit
+                </md-icon>
+            </md-button>
+            <div ng-if="!model.type" layout="row" layout-align="center start">
+                <md-button ng-disabled="loading" class="md-primary md-raised"
+                           ng-click="createFilter($event)"
+                           aria-label="{{ 'alias.create-entity-filter' | translate }}">
+                    <md-icon aria-label="{{ 'alias.create-entity-filter' | translate }}"
+                             class="material-icons">
+                        add
+                    </md-icon>
+                    {{ 'alias.create-entity-filter' | translate }}
+                </md-button>
+            </div>
         </section>
         <section class="tb-filter-switch" layout="column" layout-align="center center">
-            <label class="tb-small filter-label" translate>entity.use-entity-name-filter</label>
-            <md-switch class="filter-switch" ng-model="model.useFilter" aria-label="use-filter-switcher">
+            <label class="tb-small filter-label" translate>alias.resolve-multiple</label>
+            <md-switch class="filter-switch" ng-model="model.resolveMultiple" aria-label="resolve-multiple-switcher">
             </md-switch>
         </section>
     </section>
     <div class="tb-error-messages" ng-messages="ngModelCtrl.$error" role="alert">
-        <div translate ng-message="entityList" class="tb-error-message">entity.entity-list-empty</div>
+        <div translate ng-message="filter" class="tb-error-message">alias.entity-filter-required</div>
+        <!--div translate ng-message="entityList" class="tb-error-message">entity.entity-list-empty</div>
         <div translate ng-message="entityNameFilter" class="tb-error-message">entity.entity-name-filter-required</div>
         <div translate translate-values='{ entity: model.entityNameFilter }' ng-message="entityNameFilterEntityMatch"
-             class="tb-error-message">entity.entity-name-filter-no-entity-matched</div>
+             class="tb-error-message">entity.entity-name-filter-no-entity-matched</div-->
     </div>
 </section>

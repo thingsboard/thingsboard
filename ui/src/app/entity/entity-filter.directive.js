@@ -17,13 +17,16 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import entityFilterTemplate from './entity-filter.tpl.html';
+import entityFilterDialogTemplate from './entity-filter-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
+
+import EntityFilterDialogController from './entity-filter-dialog.controller';
 
 import './entity-filter.scss';
 
 /*@ngInject*/
-export default function EntityFilterDirective($compile, $templateCache, $q, entityService) {
+export default function EntityFilterDirective($compile, $templateCache, $q, $document, $mdDialog, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -31,8 +34,9 @@ export default function EntityFilterDirective($compile, $templateCache, $q, enti
         element.html(template);
 
         scope.ngModelCtrl = ngModelCtrl;
+        scope.types = types;
 
-        scope.fetchEntities = function(searchText, limit) {
+     /*   scope.fetchEntities = function(searchText, limit) {
             var deferred = $q.defer();
             entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit).then(function success(result) {
                 if (result) {
@@ -44,13 +48,13 @@ export default function EntityFilterDirective($compile, $templateCache, $q, enti
                 deferred.reject();
             });
             return deferred.promise;
-        }
+        }*/
 
         scope.updateValidity = function() {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
-                var valid;
-                if (value.useFilter) {
+                ngModelCtrl.$setValidity('filter', value.type ? true : false);
+                /*if (value.useFilter) {
                     ngModelCtrl.$setValidity('entityList', true);
                     if (angular.isDefined(value.entityNameFilter) && value.entityNameFilter.length > 0) {
                         ngModelCtrl.$setValidity('entityNameFilter', true);
@@ -64,18 +68,22 @@ export default function EntityFilterDirective($compile, $templateCache, $q, enti
                     ngModelCtrl.$setValidity('entityNameFilterDeviceMatch', true);
                     valid = angular.isDefined(value.entityList) && value.entityList.length > 0;
                     ngModelCtrl.$setValidity('entityList', valid);
-                }
+                }*/
+
             }
         }
 
         ngModelCtrl.$render = function () {
-            destroyWatchers();
-            scope.model = {
-                useFilter: false,
-                entityList: [],
-                entityNameFilter: ''
-            }
+            //destroyWatchers();
             if (ngModelCtrl.$viewValue) {
+                scope.model = angular.copy(ngModelCtrl.$viewValue);
+            } else {
+                scope.model = {
+                    type: null,
+                    resolveMultiple: false
+                }
+            }
+           /* if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 var model = scope.model;
                 model.useFilter = value.useFilter === true ? true: false;
@@ -96,10 +104,52 @@ export default function EntityFilterDirective($compile, $templateCache, $q, enti
                         }
                     }
                 )
-            }
+            }*/
         }
 
-        function updateMatchingEntity() {
+        scope.$watch('model.resolveMultiple', function () {
+            if (ngModelCtrl.$viewValue) {
+                var value = ngModelCtrl.$viewValue;
+                value.resolveMultiple = scope.model.resolveMultiple;
+                ngModelCtrl.$setViewValue(value);
+                scope.updateValidity();
+            }
+        });
+
+        scope.editFilter = function($event) {
+            openEntityFilterDialog($event, false);
+        }
+
+        scope.createFilter = function($event) {
+            openEntityFilterDialog($event, true);
+        }
+
+        function openEntityFilterDialog($event, isAdd) {
+            $mdDialog.show({
+                controller: EntityFilterDialogController,
+                controllerAs: 'vm',
+                templateUrl: entityFilterDialogTemplate,
+                locals: {
+                    isAdd: isAdd,
+                    allowedEntityTypes: scope.allowedEntityTypes,
+                    filter: angular.copy(scope.model)
+                },
+                parent: angular.element($document[0].body),
+                fullscreen: true,
+                skipHide: true,
+                targetEvent: $event
+            }).then(function (result) {
+                scope.model = result.filter;
+                ngModelCtrl.$setViewValue(result.filter);
+                scope.updateValidity();
+                if (scope.onMatchingEntityChange) {
+                    scope.onMatchingEntityChange({entity: result.entity, stateEntity: result.stateEntity});
+                }
+            }, function () {
+            });
+        }
+
+  /*      function updateMatchingEntity() {
             if (scope.model.useFilter) {
                 scope.model.matchingEntity = scope.model.matchingFilterEntity;
             } else {
@@ -206,7 +256,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, enti
                     }
                 }
             });
-        }
+        }*/
 
         $compile(element.contents())(scope);
 
@@ -217,8 +267,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, enti
         require: "^ngModel",
         link: linker,
         scope: {
-            entityType: '=',
-            isEdit: '=',
+            allowedEntityTypes: '=?',
             onMatchingEntityChange: '&'
         }
     };

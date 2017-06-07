@@ -76,7 +76,7 @@ function Datasource($compile, $templateCache, types) {
         restrict: "E",
         require: "^ngModel",
         scope: {
-            entityAliases: '=',
+            aliasController: '=',
             widgetType: '=',
             functionsOnly: '=',
             datakeySettingsSchema: '=',

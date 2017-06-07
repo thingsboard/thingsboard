@@ -19,6 +19,7 @@ import EntityTypeSelectDirective from './entity-type-select.directive';
 import EntitySubtypeSelectDirective from './entity-subtype-select.directive';
 import EntitySubtypeAutocompleteDirective from './entity-subtype-autocomplete.directive';
 import EntityAutocompleteDirective from './entity-autocomplete.directive';
+import EntityListDirective from './entity-list.directive';
 import EntitySelectDirective from './entity-select.directive';
 import EntityFilterDirective from './entity-filter.directive';
 import AliasesEntitySelectPanelController from './aliases-entity-select-panel.controller';
@@ -38,6 +39,7 @@ export default angular.module('thingsboard.entity', [])
     .directive('tbEntitySubtypeSelect', EntitySubtypeSelectDirective)
     .directive('tbEntitySubtypeAutocomplete', EntitySubtypeAutocompleteDirective)
     .directive('tbEntityAutocomplete', EntityAutocompleteDirective)
+    .directive('tbEntityList', EntityListDirective)
     .directive('tbEntitySelect', EntitySelectDirective)
     .directive('tbEntityFilter', EntityFilterDirective)
     .directive('tbAliasesEntitySelect', AliasesEntitySelectDirective)

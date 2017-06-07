@@ -68,18 +68,34 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
         });
 
         scope.fetchEntityKeys = function (entityAliasId, query, type) {
-            var entityAlias = scope.aliasesInfo.entityAliases[entityAliasId];
-            if (entityAlias && entityAlias.entityId) {
-                return entityService.getEntityKeys(entityAlias.entityType, entityAlias.entityId, query, type);
-            } else {
-                return $q.when([]);
-            }
+            var deferred = $q.defer();
+            scope.aliasController.getAliasInfo(entityAliasId).then(
+                function success(aliasInfo) {
+                    var entity = aliasInfo.currentEntity;
+                    if (entity) {
+                        entityService.getEntityKeys(entity.entityType, entity.id, query, type).then(
+                            function success(keys) {
+                                deferred.resolve(keys);
+                            },
+                            function fail() {
+                                deferred.resolve([]);
+                            }
+                        );
+                    } else {
+                        deferred.resolve([]);
+                    }
+                },
+                function fail() {
+                    deferred.resolve([]);
+                }
+            );
+            return deferred.promise;
         };
 
         scope.createEntityAlias = function (event, alias, allowedEntityTypes) {
 
             var deferred = $q.defer();
-            var singleEntityAlias = {id: null, alias: alias, entityType: types.entityType.device, entityFilter: null};
+            var singleEntityAlias = {id: null, alias: alias, filter: {}};
 
             $mdDialog.show({
                 controller: 'EntityAliasesController',
@@ -99,16 +115,9 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
                 skipHide: true,
                 targetEvent: event
             }).then(function (singleEntityAlias) {
-                scope.dashboard.configuration.entityAliases[singleEntityAlias.id] =
-                            { alias: singleEntityAlias.alias, entityType: singleEntityAlias.entityType, entityFilter: singleEntityAlias.entityFilter };
-                entityService.processEntityAliases(scope.dashboard.configuration.entityAliases).then(
-                    function(resolution) {
-                        if (!resolution.error) {
-                            scope.aliasesInfo = resolution.aliasesInfo;
-                        }
-                        deferred.resolve(singleEntityAlias);
-                    }
-                );
+                scope.dashboard.configuration.entityAliases[singleEntityAlias.id] = singleEntityAlias;
+                scope.aliasController.updateEntityAliases(scope.dashboard.configuration.entityAliases);
+                deferred.resolve(singleEntityAlias);
             }, function () {
                 deferred.reject();
             });
@@ -124,7 +133,7 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
         link: linker,
         scope: {
             dashboard: '=',
-            aliasesInfo: '=',
+            aliasController: '=',
             widget: '=',
             widgetLayout: '=',
             theForm: '='

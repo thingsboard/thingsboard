@@ -27,10 +27,13 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         getEntity: getEntity,
         getEntities: getEntities,
         getEntitiesByNameFilter: getEntitiesByNameFilter,
-        processEntityAliases: processEntityAliases,
+        resolveAlias: resolveAlias,
+        resolveAliasFilter: resolveAliasFilter,
+        filterAliasByEntityTypes: filterAliasByEntityTypes,
+        //processEntityAliases: processEntityAliases,
         getEntityKeys: getEntityKeys,
         checkEntityAlias: checkEntityAlias,
-        createDatasoucesFromSubscriptionsInfo: createDatasoucesFromSubscriptionsInfo,
+        createDatasourcesFromSubscriptionsInfo: createDatasourcesFromSubscriptionsInfo,
         getRelatedEntities: getRelatedEntities,
         saveRelatedEntity: saveRelatedEntity,
         getRelatedEntity: getRelatedEntity,
@@ -244,81 +247,151 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return deferred.promise;
     }
 
-    function entityToEntityInfo(entityType, entity) {
-        return { name: entity.name, entityType: entityType, id: entity.id.id };
+    function entityToEntityInfo(entity) {
+        return { name: entity.name, entityType: entity.id.entityType, id: entity.id.id };
     }
 
-    function entitiesToEntitiesInfo(entityType, entities) {
+    function entitiesToEntitiesInfo(entities) {
         var entitiesInfo = [];
         for (var d = 0; d < entities.length; d++) {
-            entitiesInfo.push(entityToEntityInfo(entityType, entities[d]));
+            entitiesInfo.push(entityToEntityInfo(entities[d]));
         }
         return entitiesInfo;
     }
 
-    function processEntityAlias(index, aliasIds, entityAliases, resolution, deferred) {
+    function resolveAliasFilter(filter, stateParams) {
+        var deferred = $q.defer();
+        var result = {
+            entities: [],
+            stateEntity: false
+        };
+        switch (filter.type) {
+            case types.aliasFilterType.entityList.value:
+                if (filter.stateEntity) {
+                    result.stateEntity = true;
+                    if (stateParams && stateParams.entityId) {
+                        getEntity(stateParams.entityId.entityType, stateParams.entityId.id).then(
+                            function success(entity) {
+                                result.entities = [entity];
+                                deferred.resolve(result);
+                            },
+                            function fail() {
+                                deferred.reject();
+                            }
+                        );
+                    } else {
+                        deferred.resolve(result);
+                    }
+                } else {
+                    getEntities(filter.entityType, filter.entityList).then(
+                        function success(entities) {
+                            if (entities && entities.length) {
+                                result.entities = entities;
+                                deferred.resolve(result);
+                            } else {
+                                deferred.reject();
+                            }
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                }
+                break;
+            case types.aliasFilterType.entityName.value:
+                getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, 100).then(
+                    function success(entities) {
+                        if (entities && entities.length) {
+                            result.entities = entities;
+                            deferred.resolve(result);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                break;
+            //TODO:
+        }
+        return deferred.promise;
+    }
+
+    function resolveAlias(entityAlias, stateParams) {
+        var deferred = $q.defer();
+        var filter = entityAlias.filter;
+        resolveAliasFilter(filter, stateParams).then(
+            function (result) {
+                var entities = result.entities;
+                var aliasInfo = {
+                    alias: entityAlias.alias,
+                    resolveMultiple: filter.resolveMultiple
+                };
+                var resolvedEntities = entitiesToEntitiesInfo(entities);
+                aliasInfo.resolvedEntities = resolvedEntities;
+                aliasInfo.currentEntity = null;
+                if (aliasInfo.resolvedEntities.length) {
+                    aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
+                }
+                deferred.resolve(aliasInfo);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function filterAliasByEntityTypes(entityAlias, entityTypes) {
+        var filter = entityAlias.filter;
+        switch (filter.type) {
+            case types.aliasFilterType.entityList.value:
+                if (filter.stateEntity) {
+                    return true;
+                } else {
+                    return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+                }
+            case types.aliasFilterType.entityName.value:
+                return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+        }
+        //TODO:
+        return false;
+    }
+
+    /*function processEntityAlias(index, aliasIds, entityAliases, stateParams, resolution, deferred) {
         if (index < aliasIds.length) {
             var aliasId = aliasIds[index];
             var entityAlias = entityAliases[aliasId];
             var alias = entityAlias.alias;
-            var entityFilter = entityAlias.entityFilter;
-            if (entityFilter.useFilter) {
-                var entityNameFilter = entityFilter.entityNameFilter;
-                getEntitiesByNameFilter(entityAlias.entityType, entityNameFilter, 100).then(
-                    function(entities) {
-                        if (entities && entities != null) {
-                            var resolvedAlias = {alias: alias, entityType: entityAlias.entityType, entityId: entities[0].id.id};
-                            resolution.aliasesInfo.entityAliases[aliasId] = resolvedAlias;
-                            resolution.aliasesInfo.entityAliasesInfo[aliasId] = entitiesToEntitiesInfo(entityAlias.entityType, entities);
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
-                        } else {
-                            if (!resolution.error) {
-                                resolution.error = 'dashboard.invalid-aliases-config';
-                            }
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
-                        }
-                    });
-            } else {
-                var entityList = entityFilter.entityList;
-                getEntities(entityAlias.entityType, entityList).then(
-                    function success(entities) {
-                        if (entities && entities.length > 0) {
-                            var resolvedAlias = {alias: alias, entityType: entityAlias.entityType, entityId: entities[0].id.id};
-                            resolution.aliasesInfo.entityAliases[aliasId] = resolvedAlias;
-                            resolution.aliasesInfo.entityAliasesInfo[aliasId] = entitiesToEntitiesInfo(entityAlias.entityType, entities);
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
-                        } else {
-                            if (!resolution.error) {
-                                resolution.error = 'dashboard.invalid-aliases-config';
-                            }
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
-                        }
-                    },
-                    function fail() {
+            var filter = entityAlias.filter;
+            resolveAliasFilter(filter, stateParams).then(
+                function (entities) {
+                    if (entities && entities.length) {
+                        var entity = entities[0];
+                        var resolvedAlias = {alias: alias, entityType: entity.id.entityType, entityId: entity.id.id};
+                        resolution.aliasesInfo.entityAliases[aliasId] = resolvedAlias;
+                        resolution.aliasesInfo.entityAliasesInfo[aliasId] = entitiesToEntitiesInfo(entities);
+                        index++;
+                        processEntityAlias(index, aliasIds, entityAliases, stateParams, resolution, deferred);
+                    } else {
                         if (!resolution.error) {
                             resolution.error = 'dashboard.invalid-aliases-config';
                         }
                         index++;
-                        processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
+                        processEntityAlias(index, aliasIds, entityAliases, stateParams, resolution, deferred);
                     }
-                );
-            }
+                }
+            );
         } else {
             deferred.resolve(resolution);
         }
-    }
+    }*/
 
-    function processEntityAliases(entityAliases) {
+    /*function processEntityAliases(entityAliases, stateParams) {
         var deferred = $q.defer();
         var resolution = {
-            aliasesInfo: {
-                entityAliases: {},
-                entityAliasesInfo: {}
-            }
+            aliasesInfo: {}
         };
         var aliasIds = [];
         if (entityAliases) {
@@ -326,9 +399,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 aliasIds.push(aliasId);
             }
         }
-        processEntityAlias(0, aliasIds, entityAliases, resolution, deferred);
+        processEntityAlias(0, aliasIds, entityAliases, stateParams, resolution, deferred);
         return deferred.promise;
-    }
+    }*/
 
     function getEntityKeys(entityType, entityId, query, type) {
         var deferred = $q.defer();
@@ -354,8 +427,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 }
             }
             deferred.resolve(result);
-        }, function fail(response) {
-            deferred.reject(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }
@@ -387,7 +460,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return deferred.promise;
     }
 
-    function createDatasoucesFromSubscriptionsInfo(subscriptionsInfo) {
+    function createDatasourcesFromSubscriptionsInfo(subscriptionsInfo) {
         var deferred = $q.defer();
         var datasources = [];
         processSubscriptionsInfo(0, subscriptionsInfo, datasources, deferred);
