@@ -78,6 +78,7 @@ public class GatewaySessionCtx {
                 Device newDevice = new Device();
                 newDevice.setTenantId(gateway.getTenantId());
                 newDevice.setName(deviceName);
+                newDevice.setType("default");
                 return deviceService.saveDevice(newDevice);
             });
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
