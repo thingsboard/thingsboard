@@ -28,12 +28,13 @@ export default function EntityStateController($scope, $location, $state, $stateP
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
+    vm.getStateParamsByStateId = getStateParamsByStateId;
 
     vm.getStateName = getStateName;
 
     vm.selectedStateIndex = -1;
 
-    function openState(id, params) {
+    function openState(id, params, openRightLayout) {
         if (vm.states && vm.states[id]) {
             resolveEntity(params).then(
                 function success(entityName) {
@@ -45,13 +46,13 @@ export default function EntityStateController($scope, $location, $state, $stateP
                     //append new state
                     vm.stateObject.push(newState);
                     vm.selectedStateIndex = vm.stateObject.length-1;
-                    gotoState(vm.stateObject[vm.stateObject.length-1].id, true);
+                    gotoState(vm.stateObject[vm.stateObject.length-1].id, true, openRightLayout);
                 }
             );
         }
     }
 
-    function updateState(id, params) {
+    function updateState(id, params, openRightLayout) {
         if (vm.states && vm.states[id]) {
             resolveEntity(params).then(
                 function success(entityName) {
@@ -62,7 +63,7 @@ export default function EntityStateController($scope, $location, $state, $stateP
                     }
                     //replace with new state
                     vm.stateObject[vm.stateObject.length - 1] = newState;
-                    gotoState(vm.stateObject[vm.stateObject.length - 1].id, true);
+                    gotoState(vm.stateObject[vm.stateObject.length - 1].id, true, openRightLayout);
                 }
             );
         }
@@ -82,6 +83,24 @@ export default function EntityStateController($scope, $location, $state, $stateP
 
     function getStateParams() {
         return vm.stateObject[vm.stateObject.length-1].params;
+    }
+
+    function getStateParamsByStateId(stateId) {
+        var stateObj = getStateObjById(stateId);
+        if (stateObj) {
+            return stateObj.params;
+        } else {
+            return null;
+        }
+    }
+
+    function getStateObjById(id) {
+        for (var i=0; i < vm.stateObject.length; i++) {
+            if (vm.stateObject[i].id === id) {
+                return vm.stateObject[i];
+            }
+        }
+        return null;
     }
 
     function getStateName(index) {
@@ -223,9 +242,9 @@ export default function EntityStateController($scope, $location, $state, $stateP
         });
     }
 
-    function gotoState(stateId, update) {
+    function gotoState(stateId, update, openRightLayout) {
         if (vm.dashboardCtrl.dashboardCtx.state != stateId) {
-            vm.dashboardCtrl.openDashboardState(stateId);
+            vm.dashboardCtrl.openDashboardState(stateId, openRightLayout);
             if (update) {
                 updateLocation();
             }

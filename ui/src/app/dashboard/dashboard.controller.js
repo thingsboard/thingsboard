@@ -138,10 +138,10 @@ export default function DashboardController(types, dashboardUtils, widgetService
     }
 
     vm.mainLayoutHeight = function() {
-        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'main') {
+        if (!vm.isEditingWidget || vm.editingLayoutCtx.id === 'main') {
             return '100%';
         } else {
-            return 'auto';
+            return '0px';
         }
     }
 
@@ -154,10 +154,10 @@ export default function DashboardController(types, dashboardUtils, widgetService
     }
 
     vm.rightLayoutHeight = function() {
-        if (vm.isEditingWidget && vm.editingLayoutCtx.id === 'right') {
+        if (!vm.isEditingWidget || vm.editingLayoutCtx.id === 'right') {
             return '100%';
         } else {
-            return 'auto';
+            return '0px';
         }
     }
 
@@ -369,7 +369,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
         }
     }
 
-    function openDashboardState(state) {
+    function openDashboardState(state, openRightLayout) {
         var layoutsData = dashboardUtils.getStateLayoutsData(vm.dashboard, state);
         if (layoutsData) {
             vm.dashboardCtx.state = state;
@@ -387,7 +387,7 @@ export default function DashboardController(types, dashboardUtils, widgetService
                     layoutVisibilityChanged = !vm.isMobile;
                 }
             }
-            vm.isRightLayoutOpened = false;
+            vm.isRightLayoutOpened = openRightLayout ? true : false;
             updateLayouts(layoutVisibilityChanged);
         }
 

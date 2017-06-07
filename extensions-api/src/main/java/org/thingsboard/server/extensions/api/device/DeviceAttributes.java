@@ -91,4 +91,13 @@ public class DeviceAttributes {
         }
         return map;
     }
+
+    @Override
+    public String toString() {
+        return "DeviceAttributes{" +
+                "clientSideAttributesMap=" + clientSideAttributesMap +
+                ", serverPrivateAttributesMap=" + serverPrivateAttributesMap +
+                ", serverPublicAttributesMap=" + serverPublicAttributesMap +
+                '}';
+    }
 }

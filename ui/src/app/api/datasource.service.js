@@ -595,8 +595,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                             }
                             series = [time, value];
                             data.push(series);
-                            update = true;
                         }
+                        update = true;
                     }
                     if (update) {
                         datasourceData[datasourceKey].data = data;

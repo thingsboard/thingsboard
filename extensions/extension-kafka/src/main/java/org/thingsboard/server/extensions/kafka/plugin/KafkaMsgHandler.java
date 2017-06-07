@@ -16,6 +16,7 @@
 package org.thingsboard.server.extensions.kafka.plugin;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.thingsboard.server.common.data.id.RuleId;
@@ -30,6 +31,7 @@ import org.thingsboard.server.extensions.kafka.action.KafkaActionMsg;
 import org.thingsboard.server.extensions.kafka.action.KafkaActionPayload;
 
 @RequiredArgsConstructor
+@Slf4j
 public class KafkaMsgHandler implements RuleMsgHandler {
 
     private final Producer<?, String> producer;
@@ -40,7 +42,7 @@ public class KafkaMsgHandler implements RuleMsgHandler {
             throw new RuleException("Unsupported message type " + msg.getClass().getName() + "!");
         }
         KafkaActionPayload payload = ((KafkaActionMsg) msg).getPayload();
-
+        log.debug("Processing kafka payload: {}", payload);
         try {
             producer.send(new ProducerRecord<>(payload.getTopic(), payload.getMsgBody()),
                     (metadata, e) -> {
