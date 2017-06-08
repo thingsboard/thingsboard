@@ -18,11 +18,9 @@ package org.thingsboard.server.dao.sql.rule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.ToData;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.RuleMetaDataEntity;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,23 +32,20 @@ public interface RuleMetaDataRepository extends CrudRepository<RuleMetaDataEntit
 
     List<RuleMetaDataEntity> findByPluginToken(String pluginToken);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE TENANT_ID = ?2 " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "ORDER BY ID LIMIT ?1")
-    List<RuleMetaDataEntity> findByTenantIdAndPageLinkFirstPage(int limit, UUID tenantId, String textSearch);
+    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE TENANT_ID = :tenantId " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    List<RuleMetaDataEntity> findByTenantIdAndPageLink(@Param("limit") int limit,
+                                                       @Param("tenantId") UUID tenantId,
+                                                       @Param("textSearch") String textSearch,
+                                                       @Param("idOffset") UUID idOffset);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE TENANT_ID = ?2 " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "AND ID > ?4 ORDER BY ID LIMIT ?1")
-    List<RuleMetaDataEntity> findByTenantIdAndPageLinkNextPage(int limit, UUID tenantId, String textSearch, UUID idOffset);
-
-    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE (TENANT_ID = ?2 OR TENANT_ID IS NULL) " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "ORDER BY ID LIMIT ?1")
-    List<RuleMetaDataEntity> findAllTenantRulesByTenantIdFirstPage(int limit, UUID tenantId, String textSearch);
-
-    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE (TENANT_ID = ?2 OR TENANT_ID IS NULL) " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(?3, '%')) " +
-            "AND ID > ?4 ORDER BY ID LIMIT ?1")
-    List<RuleMetaDataEntity> findAllTenantRulesByTenantIdNextPage(int limit, UUID tenantId, String textSearch, UUID idOffset);
+    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE TENANT_ID IN (:tenantId, :nullTenantId) " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    List<RuleMetaDataEntity> findAllTenantRulesByTenantId(@Param("limit") int limit,
+                                                          @Param("tenantId") UUID tenantId,
+                                                          @Param("nullTenantId") UUID nullTenantId,
+                                                          @Param("textSearch") String textSearch,
+                                                          @Param("idOffset") UUID idOffset);
 }

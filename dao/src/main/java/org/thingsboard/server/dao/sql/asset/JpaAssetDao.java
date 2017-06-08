@@ -16,8 +16,6 @@
 package org.thingsboard.server.dao.sql.asset;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
@@ -33,7 +31,8 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.Executors;
+
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -57,13 +56,12 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
 
     @Override
     public List<Asset> findAssetsByTenantId(UUID tenantId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(assetRepository.findByTenantIdFirstPage(pageLink.getLimit(), tenantId,
-                    pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(assetRepository.findByTenantIdNextPage(pageLink.getLimit(), tenantId,
-                    pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(assetRepository
+                .findByTenantId(
+                        pageLink.getLimit(),
+                        tenantId,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override
@@ -74,19 +72,19 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
 
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdFirstPage(pageLink.getLimit(), tenantId,
-                    customerId, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdNextPage(pageLink.getLimit(), tenantId,
-                    customerId, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(assetRepository
+                .findByTenantIdAndCustomerId(
+                        pageLink.getLimit(),
+                        tenantId,
+                        customerId,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override
     public ListenableFuture<List<Asset>> findAssetsByTenantIdAndCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> assetIds) {
         return service.submit(() ->
-                DaoUtil.convertDataList( assetRepository.findByTenantIdAndCustomerIdAndIdIn(tenantId, customerId, assetIds)));
+                DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdAndIdIn(tenantId, customerId, assetIds)));
     }
 
     @Override
@@ -102,13 +100,14 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
 
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
-        if (pageLink.getIdOffset() == null) {
-            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdAndTypeFirstPage(pageLink.getLimit(), tenantId,
-                    customerId, type, pageLink.getTextSearch()));
-        } else {
-            return DaoUtil.convertDataList(assetRepository.findByTenantIdAndCustomerIdAndTypeNextPage(pageLink.getLimit(), tenantId,
-                    customerId, type, pageLink.getTextSearch(), pageLink.getIdOffset()));
-        }
+        return DaoUtil.convertDataList(assetRepository
+                .findByTenantIdAndCustomerIdAndType(
+                        pageLink.getLimit(),
+                        tenantId,
+                        customerId,
+                        type,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
     }
 
     @Override

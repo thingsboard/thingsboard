@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({"org.thingsboard.server.controller.*Test"})
-public class ControllerTestSuite {
+public class CassandraControllerTestSuite {
 
     @ClassRule
     public static CustomCassandraCQLUnit cassandraUnit =
@@ -35,5 +35,4 @@ public class ControllerTestSuite {
                                          new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
                                          new ClassPathCQLDataSet("system-test.cql", false, false)),
                     "cassandra-test.yaml", 30000l);
-
 }

@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,10 +31,8 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 
 /**
@@ -111,8 +108,9 @@ public class JpaRelationDao implements RelationDao {
         RelationCompositeKey key = new RelationCompositeKey(relation);
         return executorService.submit(
                 () -> {
+                    boolean relationExistsBeforeDelete = relationRepository.exists(key);
                     relationRepository.delete(key);
-                    return !relationRepository.exists(key);
+                    return relationExistsBeforeDelete;
                 });
     }
 
@@ -127,9 +125,9 @@ public class JpaRelationDao implements RelationDao {
                         typeGroup.name());
         return executorService.submit(
                 () -> {
-                    boolean result = relationRepository.exists(key);
+                    boolean relationExistsBeforeDelete = relationRepository.exists(key);
                     relationRepository.delete(key);
-                    return result;
+                    return relationExistsBeforeDelete;
                 });
     }
 
@@ -141,16 +139,17 @@ public class JpaRelationDao implements RelationDao {
 
         return executorService.submit(
                 () -> {
-                    boolean result = relationRepository
+                    boolean relationExistsBeforeDelete = relationRepository
                             .findAllByFromIdAndFromType(relationEntity.getFromId(), relationEntity.getFromType())
                             .size() > 0;
                     relationRepository.delete(relationEntity);
-                    return result;
+                    return relationExistsBeforeDelete;
                 });
     }
 
     @Override
     public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
+// TODO:
 //        executorService.submit(() -> DaoUtil.convertDataList(
 //                relationRepository.findRelations(
 //                        to.getId(),

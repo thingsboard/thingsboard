@@ -17,7 +17,6 @@ package org.thingsboard.server.mqtt;
 
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationContextLoader;
 import org.springframework.context.annotation.ComponentScan;
@@ -46,7 +45,6 @@ import static org.junit.Assert.assertNotNull;
 @TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:thingsboard-test.properties"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
-@EnableAutoConfiguration
 @ComponentScan({"org.thingsboard.server"})
 @WebAppConfiguration
 @IntegrationTest("server.port:8080")

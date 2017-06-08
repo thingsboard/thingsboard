@@ -15,28 +15,13 @@
  */
 package org.thingsboard.server.dao.sql.relation;
 
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.CassandraAbstractSearchTimeDao;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
 public interface RelationRepository extends CrudRepository<RelationEntity, RelationCompositeKey> {
@@ -62,46 +47,19 @@ public interface RelationRepository extends CrudRepository<RelationEntity, Relat
     List<RelationEntity> findAllByFromIdAndFromType(UUID fromId,
                                                     String fromType);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM DEVICE WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<RelationEntity> findRelations(@Param("fromId") UUID fromId,
-                                       @Param("fromType") String fromType,
-                                       @Param("toType") String toType,
-                                       @Param("relationType") String relationType,
-                                       @Param("relationTypeGroup") String relationTypeGroup,
-                                       TimePageLink pageLink);
+//    @Query(nativeQuery = true, value = "SELECT * FROM RELATION WHERE FROM_ID = :fromId " +
+//            "AND FROM_TYPE = :fromType " +
+//            "AND TO_TYPE = :toType " +
+//            "AND RELATION_TYPE = :relationType " +
+//            "AND RELATION_TYPE_GROUP = :relationTypeGroup " +
+//            "AND ID > :idOffset ORDER BY RELATION_TYPE_GROUP ASC, RELATION_TYPE ASC, TO_TYPE ASC")
+//    List<RelationEntity> findRelations(@Param("fromId") UUID fromId,
+//                                       @Param("fromType") String fromType,
+//                                       @Param("toType") String toType,
+//                                       @Param("relationType") String relationType,
+//                                       @Param("relationTypeGroup") String relationTypeGroup,
+//                                       TimePageLink pageLink);
 
 
-//    Select.Where query = CassandraAbstractSearchTimeDao.buildQuery(ModelConstants.RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME,
-//            Arrays.asList(eq(ModelConstants.RELATION_FROM_ID_PROPERTY, from.getId()),
-//                    eq(ModelConstants.RELATION_FROM_TYPE_PROPERTY, from.getEntityType().name()),
-//                    eq(ModelConstants.RELATION_TYPE_GROUP_PROPERTY, typeGroup.name()),
-//                    eq(ModelConstants.RELATION_TYPE_PROPERTY, relationType),
-//                    eq(ModelConstants.RELATION_TO_TYPE_PROPERTY, childType.name())),
-//            Arrays.asList(QueryBuilder.asc(ModelConstants.RELATION_TYPE_GROUP_PROPERTY),
-//                    QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY),
-//                    QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)),
 //            pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
 }
-
-//    private UUID fromId;
-//    private String fromType;
-//    private UUID toId;
-//    private String toType;
-//    private String relationTypeGroup;
-//    private String relationType;
-//
-//
-//    ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
-//
-//    ListenableFuture<Boolean> saveRelation(EntityRelation relation);
-//
-//    ListenableFuture<Boolean> deleteRelation(EntityRelation relation);
-//
-//    ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
-//
-//    ListenableFuture<Boolean> deleteOutboundRelations(EntityId entity);
-//
-//    ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType toType, TimePageLink pageLink);

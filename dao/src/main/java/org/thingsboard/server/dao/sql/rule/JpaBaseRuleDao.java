@@ -25,15 +25,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.RuleMetaDataEntity;
 import org.thingsboard.server.dao.rule.RuleDao;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/30/2017.
@@ -70,14 +70,13 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
     @Override
     public List<RuleMetaData> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
         log.debug("Try to find rules by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<RuleMetaDataEntity> entities;
-        if (pageLink.getIdOffset() == null) {
-            entities = ruleMetaDataRepository
-                    .findByTenantIdAndPageLinkFirstPage(pageLink.getLimit(), tenantId.getId(), pageLink.getTextSearch());
-        } else {
-            entities = ruleMetaDataRepository
-                    .findByTenantIdAndPageLinkNextPage(pageLink.getLimit(), tenantId.getId(), pageLink.getTextSearch(), pageLink.getIdOffset());
-        }
+        List<RuleMetaDataEntity> entities =
+                ruleMetaDataRepository
+                        .findByTenantIdAndPageLink(
+                                pageLink.getLimit(),
+                                tenantId.getId(),
+                                pageLink.getTextSearch(),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {
@@ -89,14 +88,15 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
     @Override
     public List<RuleMetaData> findAllTenantRulesByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find all tenant rules by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<RuleMetaDataEntity> entities;
-        if (pageLink.getIdOffset() == null) {
-            entities = ruleMetaDataRepository
-                    .findAllTenantRulesByTenantIdFirstPage(pageLink.getLimit(), tenantId, pageLink.getTextSearch());
-        } else {
-            entities = ruleMetaDataRepository
-                    .findAllTenantRulesByTenantIdNextPage(pageLink.getLimit(), tenantId, pageLink.getTextSearch(), pageLink.getIdOffset());
-        }
+        List<RuleMetaDataEntity> entities =
+                ruleMetaDataRepository
+                        .findAllTenantRulesByTenantId(
+                                pageLink.getLimit(),
+                                tenantId,
+                                NULL_UUID,
+                                pageLink.getTextSearch(),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
+
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {

@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.sql.alarm;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.common.data.alarm.Alarm;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 
 import java.util.UUID;
@@ -29,7 +29,10 @@ import java.util.UUID;
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
 public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM ALARM WHERE TENANT_ID = ?1 AND ORIGINATOR_ID = ?2 " +
-            "AND ?3 = ?3 AND TYPE = ?4 ORDER BY ID DESC LIMIT 1")
-    AlarmEntity findLatestByOriginatorAndType(UUID tenantId, UUID originatorId, int entityType, String alarmType);
+    @Query(nativeQuery = true, value = "SELECT * FROM ALARM WHERE TENANT_ID = :tenantId AND ORIGINATOR_ID = :originatorId " +
+            "AND ORIGINATOR_TYPE = :entityType AND TYPE = :alarmType ORDER BY TYPE ASC, ID DESC LIMIT 1")
+    AlarmEntity findLatestByOriginatorAndType(@Param("tenantId") UUID tenantId,
+                                              @Param("originatorId") UUID originatorId,
+                                              @Param("entityType") int entityType,
+                                              @Param("alarmType") String alarmType);
 }

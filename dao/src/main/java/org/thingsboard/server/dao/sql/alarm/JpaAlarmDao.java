@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
-import com.google.common.util.concurrent.*;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -39,7 +41,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
@@ -70,9 +71,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     @Transactional(propagation = REQUIRES_NEW)
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return service.submit(() -> DaoUtil.getData(
-                alarmRepository.findLatestByOriginatorAndType(tenantId.getId(), originator.getId(),
-                originator.getEntityType().ordinal(), type)));
+        return service.submit(() ->
+                DaoUtil.getData(alarmRepository.findLatestByOriginatorAndType(
+                        tenantId.getId(),
+                        originator.getId(),
+                        originator.getEntityType().ordinal(),
+                        type)));
     }
 
     @Override

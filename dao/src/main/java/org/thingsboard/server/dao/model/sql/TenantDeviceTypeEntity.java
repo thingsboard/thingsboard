@@ -15,9 +15,14 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-public interface TenantDeviceTypeProjection {
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-    String getTenantId();
+import java.util.UUID;
 
-    String getType();
+@AllArgsConstructor
+@Data
+public class TenantDeviceTypeEntity {
+    private UUID tenantId;
+    private String type;
 }

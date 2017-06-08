@@ -25,15 +25,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.PluginMetaDataEntity;
 import org.thingsboard.server.dao.plugin.PluginDao;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/1/2017.
@@ -93,15 +93,13 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
 
     @Override
     public List<PluginMetaData> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
-        log.debug("Try to find здгпшты by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<PluginMetaDataEntity> entities;
-        if (pageLink.getIdOffset() == null) {
-            entities = pluginMetaDataRepository
-                    .findByTenantIdAndPageLinkFirstPage(pageLink.getLimit(), tenantId.getId(), pageLink.getTextSearch());
-        } else {
-            entities = pluginMetaDataRepository
-                    .findByTenantIdAndPageLinkNextPage(pageLink.getLimit(), tenantId.getId(), pageLink.getTextSearch(), pageLink.getIdOffset());
-        }
+        log.debug("Try to find plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
+        List<PluginMetaDataEntity> entities = pluginMetaDataRepository
+                .findByTenantIdAndPageLink(
+                        pageLink.getLimit(),
+                        tenantId.getId(),
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {
@@ -113,14 +111,13 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
     @Override
     public List<PluginMetaData> findAllTenantPluginsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find all tenant plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<PluginMetaDataEntity> entities;
-        if (pageLink.getIdOffset() == null) {
-            entities = pluginMetaDataRepository
-                    .findAllTenantPluginsByTenantIdFirstPage(pageLink.getLimit(), tenantId, pageLink.getTextSearch());
-        } else {
-            entities = pluginMetaDataRepository
-                    .findAllTenantPluginsByTenantIdNextPage(pageLink.getLimit(), tenantId, pageLink.getTextSearch(), pageLink.getIdOffset());
-        }
+        List<PluginMetaDataEntity> entities = pluginMetaDataRepository
+                .findAllTenantPluginsByTenantId(
+                        pageLink.getLimit(),
+                        tenantId,
+                        NULL_UUID,
+                        pageLink.getTextSearch(),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {

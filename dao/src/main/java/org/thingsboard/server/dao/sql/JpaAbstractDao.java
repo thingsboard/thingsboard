@@ -82,8 +82,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     @Override
     public ListenableFuture<D> findByIdAsync(UUID key) {
         log.debug("Get entity by key async {}", key);
-        ListenableFuture<D> listenableFuture = service.submit(() -> DaoUtil.getData(getCrudRepository().findOne(key)));
-        return listenableFuture;
+        return service.submit(() -> DaoUtil.getData(getCrudRepository().findOne(key)));
     }
 
     @Override
