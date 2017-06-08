@@ -148,6 +148,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
             String[] pathParams = request.getPathParams();
             EntityId entityId;
             String scope;
+            long ttl = 0L;
             TelemetryFeature feature;
             if (pathParams.length == 2) {
                 entityId = DeviceId.fromString(pathParams[0]);
@@ -161,6 +162,11 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                 entityId = EntityIdFactory.getByTypeAndId(pathParams[0], pathParams[1]);
                 feature = TelemetryFeature.forName(pathParams[2].toUpperCase());
                 scope = pathParams[3];
+            } else if (pathParams.length == 5) {
+                entityId = EntityIdFactory.getByTypeAndId(pathParams[0], pathParams[1]);
+                feature = TelemetryFeature.forName(pathParams[2].toUpperCase());
+                scope = pathParams[3];
+                ttl = Long.parseLong(pathParams[4]);
             } else {
                 msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
                 return;
@@ -211,7 +217,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                         entries.add(new BasicTsKvEntry(entry.getKey(), kv));
                     }
                 }
-                ctx.saveTsData(entityId, entries, new PluginCallback<Void>() {
+                ctx.saveTsData(entityId, entries, ttl, new PluginCallback<Void>() {
                     @Override
                     public void onSuccess(PluginContext ctx, Void value) {
                         msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));

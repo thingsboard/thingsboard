@@ -44,6 +44,8 @@ public interface TimeseriesService {
 
     ListenableFuture<List<ResultSet>> save(EntityId entityId, List<TsKvEntry> tsKvEntry);
 
+    ListenableFuture<List<ResultSet>> save(EntityId entityId, List<TsKvEntry> tsKvEntry, long ttl);
+
     TsKvEntry convertResultToTsKvEntry(Row row);
 
     List<TsKvEntry> convertResultSetToTsKvEntryList(ResultSet rs);
