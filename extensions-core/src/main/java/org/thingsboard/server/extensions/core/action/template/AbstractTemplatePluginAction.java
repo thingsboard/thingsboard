@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.extensions.core.action.template;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -35,6 +36,7 @@ import java.util.Optional;
 /**
  * @author Andrew Shvayka
  */
+@Slf4j
 public abstract class AbstractTemplatePluginAction<T extends TemplateActionConfiguration> extends SimpleRuleLifecycleComponent implements PluginAction<T> {
     protected T configuration;
     protected Template template;
@@ -69,6 +71,7 @@ public abstract class AbstractTemplatePluginAction<T extends TemplateActionConfi
     }
 
     protected String getMsgBody(RuleContext ctx, ToDeviceActorMsg msg) {
+        log.trace("Creating context for: {} and payload {}", ctx.getDeviceAttributes(), msg.getPayload());
         VelocityContext context = VelocityUtils.createContext(ctx.getDeviceAttributes(), msg.getPayload());
         return VelocityUtils.merge(template, context);
     }

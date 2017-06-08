@@ -190,7 +190,7 @@ export default angular.module('thingsboard.locale', [])
                 "attribute": {
                     "attributes": "Attributes",
                     "latest-telemetry": "Latest telemetry",
-                    "attributes-scope": "Device attributes scope",
+                    "attributes-scope": "Entity attributes scope",
                     "scope-latest-telemetry": "Latest telemetry",
                     "scope-client": "Client attributes",
                     "scope-server": "Server attributes",

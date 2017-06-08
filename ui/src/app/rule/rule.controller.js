@@ -134,6 +134,8 @@ export default function RuleController(ruleService, userService, importExport, $
         vm.ruleGridConfig.topIndex = $stateParams.topIndex;
     }
 
+    vm.isRuleEditable = isRuleEditable;
+
     vm.activateRule = activateRule;
     vm.suspendRule = suspendRule;
     vm.exportRule = exportRule;

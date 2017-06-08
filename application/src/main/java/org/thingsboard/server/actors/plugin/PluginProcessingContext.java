@@ -326,7 +326,19 @@ public final class PluginProcessingContext implements PluginContext {
                             callback.onSuccess(this, Boolean.FALSE);
                         } else {
                             ListenableFuture<RuleMetaData> ruleFuture = pluginCtx.ruleService.findRuleByIdAsync(new RuleId(entityId.getId()));
-                            Futures.addCallback(ruleFuture, getCallback(callback, rule -> rule != null && rule.getTenantId().equals(ctx.getTenantId())));
+                            Futures.addCallback(ruleFuture, getCallback(callback, rule -> {
+                                if (rule == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (ctx.isTenantAdmin() && !rule.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isSystemAdmin() && !rule.getTenantId().isNullUid()) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
                         }
                         return;
                     case PLUGIN:
@@ -334,7 +346,19 @@ public final class PluginProcessingContext implements PluginContext {
                             callback.onSuccess(this, Boolean.FALSE);
                         } else {
                             ListenableFuture<PluginMetaData> pluginFuture = pluginCtx.pluginService.findPluginByIdAsync(new PluginId(entityId.getId()));
-                            Futures.addCallback(pluginFuture, getCallback(callback, plugin -> plugin != null && plugin.getTenantId().equals(ctx.getTenantId())));
+                            Futures.addCallback(pluginFuture, getCallback(callback, plugin -> {
+                                if (plugin == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (ctx.isTenantAdmin() && !plugin.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isSystemAdmin() && !plugin.getTenantId().isNullUid()) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
                         }
                         return;
                     case CUSTOMER:
