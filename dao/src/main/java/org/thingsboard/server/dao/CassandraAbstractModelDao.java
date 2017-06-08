@@ -47,8 +47,8 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
 
     protected abstract String getColumnFamilyName();
 
-    protected boolean isSearchTextDao() {
-        return false;
+    protected E updateSearchTextIfPresent(E entity) {
+        return entity;
     }
 
     protected Mapper<E> getMapper() {
@@ -153,9 +153,7 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
             log.error("Can't create entity for domain object {}", domain, e);
             throw new IllegalArgumentException("Can't create entity for domain object {" + domain + "}", e);
         }
-        if (isSearchTextDao()) {
-            ((SearchTextEntity) entity).setSearchText(((SearchTextEntity) entity).getSearchTextSource().toLowerCase());
-        }
+        entity = updateSearchTextIfPresent(entity);
         log.debug("Saving entity {}", entity);
         entity = saveWithResult(entity).getEntity();
         return DaoUtil.getData(entity);

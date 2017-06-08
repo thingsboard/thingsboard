@@ -34,8 +34,13 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 public abstract class CassandraAbstractSearchTextDao<E extends SearchTextEntity<D>, D> extends CassandraAbstractModelDao<E, D> {
 
     @Override
-    protected boolean isSearchTextDao() {
-        return true;
+    protected E updateSearchTextIfPresent(E entity) {
+        if (entity.getSearchTextSource() != null) {
+            entity.setSearchText(entity.getSearchTextSource().toLowerCase());
+        } else {
+            log.trace("Entity [{}] has null SearchTextSource", entity);
+        }
+        return entity;
     }
 
     protected List<E> findPageWithTextSearch(String searchView, List<Clause> clauses, TextPageLink pageLink) {

@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.relation;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
@@ -24,7 +25,8 @@ import java.util.List;
 import java.util.UUID;
 
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
-public interface RelationRepository extends CrudRepository<RelationEntity, RelationCompositeKey> {
+public interface RelationRepository
+        extends CrudRepository<RelationEntity, RelationCompositeKey>, JpaSpecificationExecutor<RelationEntity> {
 
     List<RelationEntity> findAllByFromIdAndFromTypeAndRelationTypeGroup(UUID fromId,
                                                                         String fromType,
@@ -46,20 +48,4 @@ public interface RelationRepository extends CrudRepository<RelationEntity, Relat
 
     List<RelationEntity> findAllByFromIdAndFromType(UUID fromId,
                                                     String fromType);
-
-//    @Query(nativeQuery = true, value = "SELECT * FROM RELATION WHERE FROM_ID = :fromId " +
-//            "AND FROM_TYPE = :fromType " +
-//            "AND TO_TYPE = :toType " +
-//            "AND RELATION_TYPE = :relationType " +
-//            "AND RELATION_TYPE_GROUP = :relationTypeGroup " +
-//            "AND ID > :idOffset ORDER BY RELATION_TYPE_GROUP ASC, RELATION_TYPE ASC, TO_TYPE ASC")
-//    List<RelationEntity> findRelations(@Param("fromId") UUID fromId,
-//                                       @Param("fromType") String fromType,
-//                                       @Param("toType") String toType,
-//                                       @Param("relationType") String relationType,
-//                                       @Param("relationTypeGroup") String relationTypeGroup,
-//                                       TimePageLink pageLink);
-
-
-//            pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
 }

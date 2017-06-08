@@ -21,6 +21,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,9 +36,19 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
+import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+
+import static org.springframework.data.domain.Sort.Direction.ASC;
+import static org.springframework.data.jpa.domain.Specifications.where;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 /**
  * Created by Valerii Sosliuk on 5/29/2017.
@@ -149,15 +164,43 @@ public class JpaRelationDao implements RelationDao {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
-// TODO:
-//        executorService.submit(() -> DaoUtil.convertDataList(
-//                relationRepository.findRelations(
-//                        to.getId(),
-//                        to.getEntityType().name(),
-//                        relationType,
-//                        typeGroup.name())));
-        return null;
+        Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<RelationEntity>getTimeSearchPageSpec(pageLink, RELATION_TO_ID_PROPERTY);
+        Specification<RelationEntity> fieldsSpec = getEntityFieldsSpec(from, relationType, typeGroup, childType);
+        Pageable pageable = new PageRequest(0, pageLink.getLimit(),
+                new Sort(
+                        new Order(ASC, RELATION_TYPE_GROUP_PROPERTY),
+                        new Order(ASC, RELATION_TYPE_PROPERTY),
+                        new Order(ASC, RELATION_TO_TYPE_PROPERTY))
+        );
+        return executorService.submit(() ->
+                DaoUtil.convertDataList(relationRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
     }
 
-
+    private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {
+        return new Specification<RelationEntity>() {
+            @Override
+            public Predicate toPredicate(Root<RelationEntity> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                if (from != null) {
+                    Predicate fromIdPredicate = criteriaBuilder.equal(root.get(RELATION_FROM_ID_PROPERTY), from.getId());
+                    predicates.add(fromIdPredicate);
+                    Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get(RELATION_FROM_TYPE_PROPERTY), from.getEntityType().name());
+                    predicates.add(fromEntityTypePredicate);
+                }
+                if (relationType != null) {
+                    Predicate relationTypePredicate = criteriaBuilder.equal(root.get(RELATION_TYPE_PROPERTY), relationType);
+                    predicates.add(relationTypePredicate);
+                }
+                if (typeGroup != null) {
+                    Predicate typeGroupPredicate = criteriaBuilder.equal(root.get(RELATION_TYPE_GROUP_PROPERTY), typeGroup);
+                    predicates.add(typeGroupPredicate);
+                }
+                if (childType != null) {
+                    Predicate childTypePredicate = criteriaBuilder.equal(root.get(RELATION_TO_TYPE_PROPERTY), childType.name());
+                    predicates.add(childTypePredicate);
+                }
+                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            }
+        };
+    }
 }
