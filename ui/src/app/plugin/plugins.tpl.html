@@ -19,7 +19,7 @@
     <details-buttons tb-help="vm.helpLinkIdForPlugin()" help-container-id="help-container">
         <div id="help-container"></div>
     </details-buttons>
-    <md-tabs ng-class="{'tb-headless': vm.grid.detailsConfig.isDetailsEditMode}"
+    <md-tabs ng-class="{'tb-headless': (vm.grid.detailsConfig.isDetailsEditMode || !vm.isPluginEditable(vm.grid.operatingItem()))}"
              id="tabs" md-border-bottom flex class="tb-absolute-fill">
         <md-tab label="{{ 'plugin.details' | translate }}">
             <tb-plugin plugin="vm.grid.operatingItem()"
@@ -31,7 +31,7 @@
                  on-export-plugin="vm.exportPlugin(event, vm.grid.detailsConfig.currentItem)"
                  on-delete-plugin="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-plugin>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'attribute.attributes' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isPluginEditable(vm.grid.operatingItem())" label="{{ 'attribute.attributes' | translate }}">
             <tb-attribute-table flex
                                 entity-id="vm.grid.operatingItem().id.id"
                                 entity-type="{{vm.types.entityType.plugin}}"
@@ -39,7 +39,7 @@
                                 default-attribute-scope="{{vm.types.attributesScope.server.value}}">
             </tb-attribute-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'attribute.latest-telemetry' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isPluginEditable(vm.grid.operatingItem())" label="{{ 'attribute.latest-telemetry' | translate }}">
             <tb-attribute-table flex
                                 entity-id="vm.grid.operatingItem().id.id"
                                 entity-type="{{vm.types.entityType.plugin}}"
@@ -48,7 +48,7 @@
                                 disable-attribute-scope-selection="true">
             </tb-attribute-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'plugin.events' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isPluginEditable(vm.grid.operatingItem())" label="{{ 'plugin.events' | translate }}">
             <tb-event-table flex entity-type="vm.types.entityType.plugin"
                             entity-id="vm.grid.operatingItem().id.id"
                             tenant-id="vm.grid.operatingItem().tenantId.id"
@@ -56,7 +56,7 @@
                             disabled-event-types="{{vm.types.eventType.alarm.value}}">
             </tb-event-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'relation.relations' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isPluginEditable(vm.grid.operatingItem())" label="{{ 'relation.relations' | translate }}">
             <tb-relation-table flex
                                entity-id="vm.grid.operatingItem().id.id"
                                entity-type="{{vm.types.entityType.plugin}}">
