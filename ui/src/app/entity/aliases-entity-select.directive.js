@@ -94,6 +94,14 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
             $mdPanel.open(config);
         }
 
+        scope.$on('entityAliasesChanged', function() {
+            scope.updateView();
+        });
+
+        scope.$on('entityAliasResolved', function() {
+            scope.updateView();
+        });
+
         scope.updateView = function () {
             updateDisplayValue();
         }

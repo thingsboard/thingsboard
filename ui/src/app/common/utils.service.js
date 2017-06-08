@@ -106,6 +106,7 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
         isDescriptorSchemaNotEmpty: isDescriptorSchemaNotEmpty,
         filterSearchTextEntities: filterSearchTextEntities,
         guid: guid,
+        cleanCopy: cleanCopy,
         isLocalUrl: isLocalUrl,
         validateDatasources: validateDatasources,
         createKey: createKey,
@@ -289,6 +290,16 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
         }
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
             s4() + '-' + s4() + s4() + s4();
+    }
+
+    function cleanCopy(object) {
+        var copy = angular.copy(object);
+        for (var prop in copy) {
+            if (prop && prop.startsWith('$$')) {
+                delete copy[prop];
+            }
+        }
+        return copy;
     }
 
     function genNextColor(datasources) {

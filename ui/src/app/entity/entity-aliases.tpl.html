@@ -28,23 +28,28 @@
 		</md-toolbar>
 		<md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
 		<span style="min-height: 5px;" flex="" ng-show="!loading"></span>
+		<div class="tb-aliases-header" ng-show="!vm.isSingleEntityAlias" flex layout="row" layout-align="start center">
+			<span flex="5"></span>
+			<div flex layout="row" layout-align="start center">
+				<span class="tb-header-label" translate flex="20" style="min-width: 150px;">entity.alias</span>
+				<div flex="80" layout="row" layout-align="start center" style="min-width: 240px; padding-left: 10px;">
+					<span class="tb-header-label" translate flex="70">alias.entity-filter</span>
+					<span class="tb-header-label" translate flex="30" style="padding-left: 10px;" >alias.resolve-multiple</span>
+				</div>
+				<span style="min-width: 40px; margin: 0 6px;"></span>
+			</div>
+		</div>
+		<md-divider ng-show="!vm.isSingleEntityAlias"></md-divider>
 		<md-dialog-content>
 			<div class="md-dialog-content">
 				<fieldset ng-disabled="loading">
 					<div ng-show="vm.isSingleEntityAlias" layout="row">
-						<tb-entity-filter flex allowed-entity-types="vm.allowedEntityTypes" ng-model="vm.singleEntityAlias.filter">
+						<tb-entity-filter flex
+										  allowed-entity-types="vm.allowedEntityTypes"
+										  ng-model="vm.singleEntityAlias.filter">
 						</tb-entity-filter>
 					</div>
-					<div ng-show="!vm.isSingleEntityAlias" flex layout="row" layout-align="start center">
-						<span flex="5"></span>
-						<div flex layout="row" layout-align="start center"
-							 style="padding: 0 0 0 10px; margin: 5px;">
-							<span translate flex="20" style="min-width: 150px;">entity.alias</span>
-							<span translate flex="80" style="min-width: 240px; padding-left: 10px;">alias.entity-filter</span>
-							<span style="min-width: 40px;"></span>
-						</div>
-					</div>
-					<div ng-show="!vm.isSingleEntityAlias" style="max-height: 500px; overflow: auto; padding-bottom: 20px;">
+					<div ng-show="!vm.isSingleEntityAlias" style="height: 100%; overflow: auto; padding-bottom: 20px;">
 						<div ng-form name="aliasForm" flex layout="row" layout-align="start center" ng-repeat="entityAlias in vm.entityAliases track by $index">
 							<span flex="5">{{$index + 1}}.</span>
 							<div class="md-whiteframe-4dp tb-alias" flex layout="row" layout-align="start center">
@@ -54,13 +59,12 @@
 										<div translate ng-message="required">entity.alias-required</div>
 									</div>
 								</md-input-container>
-								<section flex="80" layout="column">
-									<tb-entity-filter style="padding-left: 10px;"
-													  allowed-entity-types="vm.allowedEntityTypes"
-													  ng-model="entityAlias.filter"
-													  on-matching-entity-change="vm.onFilterEntityChanged(entity, stateEntity, entityAlias)">
-									</tb-entity-filter>
-								</section>
+								<tb-entity-filter flex="80" style="min-width: 240px; padding-left: 10px;"
+												  hide-labels
+												  allowed-entity-types="vm.allowedEntityTypes"
+												  ng-model="entityAlias.filter"
+												  on-matching-entity-change="vm.onFilterEntityChanged(entity, stateEntity, entityAlias)">
+								</tb-entity-filter>
 								<md-button ng-disabled="loading" class="md-icon-button md-primary" style="min-width: 40px;"
 										   ng-click="vm.removeAlias($event, entityAlias)" aria-label="{{ 'action.remove' | translate }}">
 									<md-tooltip md-direction="top">
@@ -73,18 +77,18 @@
 							</div>
 						</div>
 					</div>
-					<div ng-show="!vm.isSingleEntityAlias && !vm.disableAdd" style="padding-bottom: 10px;">
-						<md-button ng-disabled="loading" class="md-primary md-raised" ng-click="vm.addAlias($event)" aria-label="{{ 'action.add' | translate }}">
-							<md-tooltip md-direction="top">
-								{{ 'entity.add-alias' | translate }}
-							</md-tooltip>
-							<span translate>action.add</span>
-						</md-button>
-					</div>
 				</fieldset>
 			</div>
 		</md-dialog-content>
 		<md-dialog-actions layout="row">
+			<md-button ng-show="!vm.isSingleEntityAlias && !vm.disableAdd" ng-disabled="loading" class="md-primary md-raised"
+					   ng-click="vm.addAlias($event)"
+					   aria-label="{{ 'action.add' | translate }}">
+				<md-tooltip md-direction="top">
+					{{ 'entity.add-alias' | translate }}
+				</md-tooltip>
+				<span translate>action.add</span>
+			</md-button>
 			<span flex></span>
 			<md-button ng-disabled="loading || theForm.$invalid || !theForm.$dirty" type="submit" class="md-raised md-primary">
 				{{ 'action.save' | translate }}

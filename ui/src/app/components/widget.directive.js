@@ -28,7 +28,7 @@ export default angular.module('thingsboard.directives.widget', [thingsboardLegen
     .name;
 
 /*@ngInject*/
-function Widget($controller, $compile, types, widgetService) {
+function Widget($controller, widgetService) {
     return {
         scope: true,
         link: function (scope, elem, attrs) {
@@ -81,90 +81,9 @@ function Widget($controller, $compile, types, widgetService) {
 
                 elem.addClass(widgetNamespace);
 
-                var html = '<div class="tb-absolute-fill tb-widget-error" ng-if="widgetErrorData">' +
-                    '<span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>' +
-                    '</div>' +
-                    '<div class="tb-absolute-fill tb-widget-loading" ng-show="loadingData" layout="column" layout-align="center center">' +
-                    '<md-progress-circular md-mode="indeterminate" ng-disabled="!loadingData" class="md-accent" md-diameter="40"></md-progress-circular>' +
-                    '</div>';
-
-                scope.displayLegend = angular.isDefined(widget.config.showLegend) ?
-                    widget.config.showLegend : widget.type === types.widgetType.timeseries.value;
-
-
-                var containerHtml = '<div id="container">' + widgetInfo.templateHtml + '</div>';
-                if (scope.displayLegend) {
-                    scope.legendConfig = widget.config.legendConfig ||
-                        {
-                            position: types.position.bottom.value,
-                            showMin: false,
-                            showMax: false,
-                            showAvg: widget.type === types.widgetType.timeseries.value,
-                            showTotal: false
-                        };
-                    scope.legendData = {
-                        keys: [],
-                        data: []
-                    };
-
-                    var layoutType;
-                    if (scope.legendConfig.position === types.position.top.value ||
-                        scope.legendConfig.position === types.position.bottom.value) {
-                        layoutType = 'column';
-                    } else {
-                        layoutType = 'row';
-                    }
-
-                    var legendStyle;
-                    switch(scope.legendConfig.position) {
-                        case types.position.top.value:
-                            legendStyle = 'padding-bottom: 8px;';
-                            break;
-                        case types.position.bottom.value:
-                            legendStyle = 'padding-top: 8px;';
-                            break;
-                        case types.position.left.value:
-                            legendStyle = 'padding-right: 0px;';
-                            break;
-                        case types.position.right.value:
-                            legendStyle = 'padding-left: 0px;';
-                            break;
-                    }
-
-                    var legendHtml = '<tb-legend style="'+legendStyle+'" legend-config="legendConfig" legend-data="legendData"></tb-legend>';
-                    containerHtml = '<div flex id="widget-container">' + containerHtml + '</div>';
-                    html += '<div class="tb-absolute-fill" layout="'+layoutType+'">';
-                    if (scope.legendConfig.position === types.position.top.value ||
-                        scope.legendConfig.position === types.position.left.value) {
-                        html += legendHtml;
-                        html += containerHtml;
-                    } else {
-                        html += containerHtml;
-                        html += legendHtml;
-                    }
-                    html += '</div>';
-                } else {
-                    html += containerHtml;
-                }
-
-                //TODO:
-                /*if (progressElement) {
-                    progressScope.$destroy();
-                    progressScope = null;
-
-                    progressElement.remove();
-                    progressElement = null;
-                }*/
-
-                elem.html(html);
-
-                var containerElement = scope.displayLegend ? angular.element(elem[0].querySelector('#widget-container')) : elem;
-
-                $compile(elem.contents())(scope);
-
                 var widgetType = widgetService.getWidgetTypeFunction(widget.bundleAlias, widget.typeAlias, widget.isSystemType);
 
-                angular.extend(locals, {$scope: scope, $element: containerElement, widgetType: widgetType});
+                angular.extend(locals, {$scope: scope, $element: elem, widgetInfo: widgetInfo, widgetType: widgetType});
 
                 widgetController = $controller('WidgetController', locals);
 

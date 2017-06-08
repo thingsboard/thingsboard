@@ -100,6 +100,7 @@ export default class AliasController {
                             aliasCtrl.resolvedAliasesToStateEntities[aliasId] =
                                 aliasCtrl.stateController.getStateParams().entityId;
                         }
+                        aliasCtrl.$scope.$broadcast('entityAliasResolved', aliasId);
                         deferred.resolve(aliasInfo);
                     },
                     function fail() {
@@ -239,6 +240,9 @@ export default class AliasController {
                         datasource.name = name;
                         datasource.aliasName = name;
                         datasource.entityName = name;
+                     } else if (datasource.unresolvedStateEntity) {
+                        datasource.name = "Unresolved";
+                        datasource.entityName = "Unresolved";
                      }
                      datasource.dataKeys.forEach(function(dataKey) {
                          if (datasource.generated) {

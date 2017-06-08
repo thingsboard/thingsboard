@@ -23,8 +23,10 @@ function DashboardUtils(types, utils, timeService) {
 
     var service = {
         validateAndUpdateDashboard: validateAndUpdateDashboard,
+        validateAndUpdateWidget: validateAndUpdateWidget,
         getRootStateId: getRootStateId,
         createSingleWidgetDashboard: createSingleWidgetDashboard,
+        createSingleEntityFilter: createSingleEntityFilter,
         getStateLayoutsData: getStateLayoutsData,
         createDefaultState: createDefaultState,
         createDefaultLayoutData: createDefaultLayoutData,
@@ -39,7 +41,7 @@ function DashboardUtils(types, utils, timeService) {
 
     return service;
 
-    function validateAndUpdateEntityAliases(configuration) {
+    function validateAndUpdateEntityAliases(configuration, datasourcesByAliasId, targetDevicesByAliasId) {
         var aliasId, entityAlias;
         if (angular.isUndefined(configuration.entityAliases)) {
             configuration.entityAliases = {};
@@ -47,8 +49,8 @@ function DashboardUtils(types, utils, timeService) {
                 var deviceAliases = configuration.deviceAliases;
                 for (aliasId in deviceAliases) {
                     var deviceAlias = deviceAliases[aliasId];
-                    entityAlias = validateAndUpdateDeviceAlias(aliasId, deviceAlias);
-                    configuration.entityAliases[aliasId] = entityAlias;
+                    entityAlias = validateAndUpdateDeviceAlias(aliasId, deviceAlias, datasourcesByAliasId, targetDevicesByAliasId);
+                    configuration.entityAliases[entityAlias.id] = entityAlias;
                 }
                 delete configuration.deviceAliases;
             }
@@ -56,16 +58,43 @@ function DashboardUtils(types, utils, timeService) {
             var entityAliases = configuration.entityAliases;
             for (aliasId in entityAliases) {
                 entityAlias = entityAliases[aliasId];
-                entityAliases[aliasId] = validateAndUpdateEntityAlias(entityAlias);
-                if (!entityAliases[aliasId].id) {
-                    entityAliases[aliasId].id = aliasId;
+                entityAlias = validateAndUpdateEntityAlias(aliasId, entityAlias, datasourcesByAliasId, targetDevicesByAliasId);
+                if (aliasId != entityAlias.id) {
+                    delete entityAliases[aliasId];
                 }
+                entityAliases[entityAlias.id] = entityAlias;
             }
         }
         return configuration;
     }
 
-    function validateAndUpdateDeviceAlias(aliasId, deviceAlias) {
+    function validateAliasId(aliasId, datasourcesByAliasId, targetDevicesByAliasId) {
+        if (!aliasId || !angular.isString(aliasId) || aliasId.length != 36) {
+            var newAliasId = utils.guid();
+            var aliasDatasources = datasourcesByAliasId[aliasId];
+            if (aliasDatasources) {
+                aliasDatasources.forEach(
+                      function(datasource) {
+                          datasource.entityAliasId = newAliasId;
+                      }
+                );
+            }
+            var targetDeviceAliasIdsList = targetDevicesByAliasId[aliasId];
+            if (targetDeviceAliasIdsList) {
+                targetDeviceAliasIdsList.forEach(
+                    function(targetDeviceAliasIds) {
+                        targetDeviceAliasIds[0] = newAliasId;
+                    }
+                );
+            }
+            return newAliasId;
+        } else {
+            return aliasId;
+        }
+    }
+
+    function validateAndUpdateDeviceAlias(aliasId, deviceAlias, datasourcesByAliasId, targetDevicesByAliasId) {
+        aliasId = validateAliasId(aliasId, datasourcesByAliasId, targetDevicesByAliasId);
         var alias = deviceAlias.alias;
         var entityAlias = {
             id: aliasId,
@@ -93,7 +122,8 @@ function DashboardUtils(types, utils, timeService) {
         return entityAlias;
     }
 
-    function validateAndUpdateEntityAlias(entityAlias) {
+    function validateAndUpdateEntityAlias(aliasId, entityAlias, datasourcesByAliasId, targetDevicesByAliasId) {
+        entityAlias.id = validateAliasId(aliasId, datasourcesByAliasId, targetDevicesByAliasId);
         if (!entityAlias.filter) {
             entityAlias.filter = {
                 type: entityAlias.entityFilter.useFilter ? types.aliasFilterType.entityName.value : types.aliasFilterType.entityList.value,
@@ -206,12 +236,33 @@ function DashboardUtils(types, utils, timeService) {
             }
         }
 
-       /* var datasources = {};
+        var datasourcesByAliasId = {};
+        var targetDevicesByAliasId = {};
         for (var widgetId in dashboard.configuration.widgets) {
+            widget = dashboard.configuration.widgets[widgetId];
+            widget.config.datasources.forEach(function (datasource) {
+               if (datasource.entityAliasId) {
+                   var aliasId = datasource.entityAliasId;
+                   var aliasDatasources = datasourcesByAliasId[aliasId];
+                   if (!aliasDatasources) {
+                       aliasDatasources = [];
+                       datasourcesByAliasId[aliasId] = aliasDatasources;
+                   }
+                   aliasDatasources.push(datasource);
+               }
+            });
+            if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length) {
+                var aliasId = widget.config.targetDeviceAliasIds[0];
+                var targetDeviceAliasIdsList = targetDevicesByAliasId[aliasId];
+                if (!targetDeviceAliasIdsList) {
+                    targetDeviceAliasIdsList = [];
+                    targetDevicesByAliasId[aliasId] = targetDeviceAliasIdsList;
+                }
+                targetDeviceAliasIdsList.push(widget.config.targetDeviceAliasIds);
+            }
+        }
 
-        }*/
-
-        dashboard.configuration = validateAndUpdateEntityAliases(dashboard.configuration);
+        dashboard.configuration = validateAndUpdateEntityAliases(dashboard.configuration, datasourcesByAliasId, targetDevicesByAliasId);
 
         if (angular.isUndefined(dashboard.configuration.timewindow)) {
             dashboard.configuration.timewindow = timeService.defaultTimewindow();
@@ -286,6 +337,16 @@ function DashboardUtils(types, utils, timeService) {
             col: widget.col,
         };
         return dashboard;
+    }
+
+    function createSingleEntityFilter(entityType, entityId) {
+        return {
+            type: types.aliasFilterType.entityList.value,
+            stateEntity: false,
+            entityList: [entityId],
+            entityType: entityType,
+            resolveMultiple: false
+        };
     }
 
     function getStateLayoutsData(dashboard, targetState) {

@@ -35,46 +35,16 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
 
         scope.ngModelCtrl = ngModelCtrl;
         scope.types = types;
-
-     /*   scope.fetchEntities = function(searchText, limit) {
-            var deferred = $q.defer();
-            entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit).then(function success(result) {
-                if (result) {
-                    deferred.resolve(result);
-                } else {
-                    deferred.resolve([]);
-                }
-            }, function fail() {
-                deferred.reject();
-            });
-            return deferred.promise;
-        }*/
+        scope.hideLabels = angular.isDefined(attrs.hideLabels);
 
         scope.updateValidity = function() {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 ngModelCtrl.$setValidity('filter', value.type ? true : false);
-                /*if (value.useFilter) {
-                    ngModelCtrl.$setValidity('entityList', true);
-                    if (angular.isDefined(value.entityNameFilter) && value.entityNameFilter.length > 0) {
-                        ngModelCtrl.$setValidity('entityNameFilter', true);
-                        valid = angular.isDefined(scope.model.matchingFilterEntity) && scope.model.matchingFilterEntity != null;
-                        ngModelCtrl.$setValidity('entityNameFilterEntityMatch', valid);
-                    } else {
-                        ngModelCtrl.$setValidity('entityNameFilter', false);
-                    }
-                } else {
-                    ngModelCtrl.$setValidity('entityNameFilter', true);
-                    ngModelCtrl.$setValidity('entityNameFilterDeviceMatch', true);
-                    valid = angular.isDefined(value.entityList) && value.entityList.length > 0;
-                    ngModelCtrl.$setValidity('entityList', valid);
-                }*/
-
             }
         }
 
         ngModelCtrl.$render = function () {
-            //destroyWatchers();
             if (ngModelCtrl.$viewValue) {
                 scope.model = angular.copy(ngModelCtrl.$viewValue);
             } else {
@@ -83,28 +53,6 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                     resolveMultiple: false
                 }
             }
-           /* if (ngModelCtrl.$viewValue) {
-                var value = ngModelCtrl.$viewValue;
-                var model = scope.model;
-                model.useFilter = value.useFilter === true ? true: false;
-                model.entityList = [];
-                model.entityNameFilter = value.entityNameFilter || '';
-                processEntityNameFilter(model.entityNameFilter).then(
-                    function(entity) {
-                        scope.model.matchingFilterEntity = entity;
-                        if (value.entityList && value.entityList.length > 0) {
-                            entityService.getEntities(scope.entityType, value.entityList).then(function (entities) {
-                                model.entityList = entities;
-                                updateMatchingEntity();
-                                initWatchers();
-                            });
-                        } else {
-                            updateMatchingEntity();
-                            initWatchers();
-                        }
-                    }
-                )
-            }*/
         }
 
         scope.$watch('model.resolveMultiple', function () {
@@ -148,115 +96,6 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
             }, function () {
             });
         }
-
-  /*      function updateMatchingEntity() {
-            if (scope.model.useFilter) {
-                scope.model.matchingEntity = scope.model.matchingFilterEntity;
-            } else {
-                if (scope.model.entityList && scope.model.entityList.length > 0) {
-                    scope.model.matchingEntity = scope.model.entityList[0];
-                } else {
-                    scope.model.matchingEntity = null;
-                }
-            }
-        }
-
-        function processEntityNameFilter(entityNameFilter) {
-            var deferred = $q.defer();
-            if (angular.isDefined(entityNameFilter) && entityNameFilter.length > 0) {
-                scope.fetchEntities(entityNameFilter, 1).then(function (entities) {
-                    if (entities && entities.length > 0) {
-                        deferred.resolve(entities[0]);
-                    } else {
-                        deferred.resolve(null);
-                    }
-                });
-            } else {
-                deferred.resolve(null);
-            }
-            return deferred.promise;
-        }
-
-        function destroyWatchers() {
-            if (scope.entityTypeDeregistration) {
-                scope.entityTypeDeregistration();
-                scope.entityTypeDeregistration = null;
-            }
-            if (scope.entityListDeregistration) {
-                scope.entityListDeregistration();
-                scope.entityListDeregistration = null;
-            }
-            if (scope.useFilterDeregistration) {
-                scope.useFilterDeregistration();
-                scope.useFilterDeregistration = null;
-            }
-            if (scope.entityNameFilterDeregistration) {
-                scope.entityNameFilterDeregistration();
-                scope.entityNameFilterDeregistration = null;
-            }
-            if (scope.matchingEntityDeregistration) {
-                scope.matchingEntityDeregistration();
-                scope.matchingEntityDeregistration = null;
-            }
-        }
-
-        function initWatchers() {
-
-            scope.entityTypeDeregistration = scope.$watch('entityType', function (newEntityType, prevEntityType) {
-                if (!angular.equals(newEntityType, prevEntityType)) {
-                    scope.model.entityList = [];
-                    scope.model.entityNameFilter = '';
-                }
-            });
-
-            scope.entityListDeregistration = scope.$watch('model.entityList', function () {
-                if (ngModelCtrl.$viewValue) {
-                    var value = ngModelCtrl.$viewValue;
-                    value.entityList = [];
-                    if (scope.model.entityList && scope.model.entityList.length > 0) {
-                        for (var i=0;i<scope.model.entityList.length;i++) {
-                            value.entityList.push(scope.model.entityList[i].id.id);
-                        }
-                    }
-                    updateMatchingEntity();
-                    ngModelCtrl.$setViewValue(value);
-                    scope.updateValidity();
-                }
-            }, true);
-            scope.useFilterDeregistration = scope.$watch('model.useFilter', function () {
-                if (ngModelCtrl.$viewValue) {
-                    var value = ngModelCtrl.$viewValue;
-                    value.useFilter = scope.model.useFilter;
-                    updateMatchingEntity();
-                    ngModelCtrl.$setViewValue(value);
-                    scope.updateValidity();
-                }
-            });
-            scope.entityNameFilterDeregistration = scope.$watch('model.entityNameFilter', function (newNameFilter, prevNameFilter) {
-                if (ngModelCtrl.$viewValue) {
-                    if (!angular.equals(newNameFilter, prevNameFilter)) {
-                        var value = ngModelCtrl.$viewValue;
-                        value.entityNameFilter = scope.model.entityNameFilter;
-                        processEntityNameFilter(value.entityNameFilter).then(
-                            function(entity) {
-                                scope.model.matchingFilterEntity = entity;
-                                updateMatchingEntity();
-                                ngModelCtrl.$setViewValue(value);
-                                scope.updateValidity();
-                            }
-                        );
-                    }
-                }
-            });
-
-            scope.matchingEntityDeregistration = scope.$watch('model.matchingEntity', function (newMatchingEntity, prevMatchingEntity) {
-                if (!angular.equals(newMatchingEntity, prevMatchingEntity)) {
-                    if (scope.onMatchingEntityChange) {
-                        scope.onMatchingEntityChange({entity: newMatchingEntity});
-                    }
-                }
-            });
-        }*/
 
         $compile(element.contents())(scope);
 

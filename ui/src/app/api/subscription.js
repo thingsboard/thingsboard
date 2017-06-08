@@ -73,6 +73,15 @@ export default class Subscription {
 
             this.datasources = this.ctx.utils.validateDatasources(options.datasources);
             this.datasourceListeners = [];
+
+            /*
+             *   data = array of datasourceData
+             *   datasourceData = {
+             *   			tbDatasource,
+             *   			dataKey,     { name, config }
+             *   			data = array of [time, value]
+             *   }
+             */
             this.data = [];
             this.hiddenData = [];
             this.originalTimewindow = null;
@@ -543,39 +552,6 @@ export default class Subscription {
             var datasource = this.datasources[i];
             if (angular.isFunction(datasource))
                 continue;
-           /* var entityId = null;
-            var entityType = null;
-            if (datasource.type === this.ctx.types.datasourceType.entity) {
-                var aliasName = null;
-                var entityName = null;
-                if (datasource.entityId) {
-                    entityId = datasource.entityId;
-                    entityType = datasource.entityType;
-                    datasource.name = datasource.entityName;
-                    aliasName = datasource.entityName;
-                    entityName = datasource.entityName;
-                } else if (datasource.entityAliasId) {
-                    if (this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId]) {
-                        entityId = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].entityId;
-                        entityType = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].entityType;
-                        datasource.name = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].alias;
-                        aliasName = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].alias;
-                        entityName = '';
-                        var entitiesInfo = this.ctx.aliasesInfo.entityAliasesInfo[datasource.entityAliasId];
-                        for (var d = 0; d < entitiesInfo.length; d++) {
-                            if (entitiesInfo[d].id === entityId) {
-                                entityName = entitiesInfo[d].name;
-                                break;
-                            }
-                        }
-                    }
-                }
-            } else {
-                datasource.name = datasource.name || this.ctx.types.datasourceType.function;
-            }
-            for (var dk = 0; dk < datasource.dataKeys.length; dk++) {
-                updateDataKeyLabel(datasource.dataKeys[dk], datasource.name, entityName, aliasName);
-            }*/
 
             var subscription = this;
 
@@ -606,6 +582,10 @@ export default class Subscription {
 
             this.datasourceListeners.push(listener);
             this.ctx.datasourceService.subscribeToDatasource(listener);
+            if (datasource.unresolvedStateEntity) {
+                this.notifyDataLoaded();
+                this.onDataUpdated();
+            }
         }
     }
 
@@ -625,19 +605,6 @@ export default class Subscription {
         } else {
             return false;
         }
-        /*var deviceId = null;
-        if (this.ctx.aliasesInfo.entityAliases[this.targetDeviceAliasId]) {
-            deviceId = this.ctx.aliasesInfo.entityAliases[this.targetDeviceAliasId].entityId;
-        }
-        if (!angular.equals(deviceId, this.targetDeviceId)) {
-            this.targetDeviceId = deviceId;
-            if (this.targetDeviceId) {
-                this.rpcEnabled = true;
-            } else {
-                this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
-            }
-            this.callbacks.rpcStateChanged(this);
-        }*/
     }
 
     checkSubscriptions(aliasIds) {
@@ -650,29 +617,8 @@ export default class Subscription {
                     break;
                 }
             }
-            /*var entityId = null;
-            var entityType = null;
-            var aliasName = null;
-            if (listener.datasource.type === this.ctx.types.datasourceType.entity) {
-                if (listener.datasource.entityAliasId &&
-                    this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId]) {
-                    entityId = this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId].entityId;
-                    entityType = this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId].entityType;
-                    aliasName = this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId].alias;
-                }
-                if (!angular.equals(entityId, listener.entityId) ||
-                    !angular.equals(entityType, listener.entityType) ||
-                    !angular.equals(aliasName, listener.datasource.name)) {
-                    subscriptionsChanged = true;
-                    break;
-                }
-            }*/
         }
         return subscriptionsChanged;
-        /*if (subscriptionsChanged) {
-            this.unsubscribe();
-            this.subscribe();
-        }*/
     }
 
     destroy() {
@@ -690,29 +636,6 @@ export default class Subscription {
     }
 
 }
-
-/*const varsRegex = /\$\{([^\}]*)\}/g;
-
-function updateDataKeyLabel(dataKey, dsName, entityName, aliasName) {
-    var pattern = dataKey.pattern;
-    var label = dataKey.pattern;
-    var match = varsRegex.exec(pattern);
-    while (match !== null) {
-        var variable = match[0];
-        var variableName = match[1];
-        if (variableName === 'dsName') {
-            label = label.split(variable).join(dsName);
-        } else if (variableName === 'entityName') {
-            label = label.split(variable).join(entityName);
-        } else if (variableName === 'deviceName') {
-            label = label.split(variable).join(entityName);
-        } else if (variableName === 'aliasName') {
-            label = label.split(variable).join(aliasName);
-        }
-        match = varsRegex.exec(pattern);
-    }
-    dataKey.label = label;
-}*/
 
 function calculateMin(data) {
     if (data.length > 0) {

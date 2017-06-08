@@ -18,11 +18,20 @@
   .md-dialog-content {
     padding-bottom: 0px;
   }
-  .tb-alias {
-    padding: 10px 0 0 10px;
+  .tb-aliases-header {
+    min-height: 40px;
+    padding: 0 34px 0 34px;
     margin: 5px;
-    md-select.tb-entity-type-select {
-      padding-bottom: 24px;
+    .tb-header-label {
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.570588);
+    }
+  }
+  .tb-alias {
+    padding: 0 0 0 10px;
+    margin: 5px;
+    md-input-container {
+      margin: 0px;
     }
   }
 }

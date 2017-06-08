@@ -20,9 +20,9 @@ import Subscription from '../api/subscription';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
+export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
                                          datasourceService, entityService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
-                                         dashboardTimewindowApi, widget, aliasController, stateController, widgetType) {
+                                         dashboardTimewindowApi, widget, aliasController, stateController, widgetInfo, widgetType) {
 
     var vm = this;
 
@@ -42,20 +42,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     var cafs = {};
 
-    /*
-     *   data = array of datasourceData
-     *   datasourceData = {
-     *   			tbDatasource,
-     *   			dataKey,     { name, config }
-     *   			data = array of [time, value]
-     *   }
-     */
-
     var widgetContext = {
         inited: false,
         $scope: $scope,
-        $container: $('#container', $element),
-        $containerParent: $($element),
+        $container: null,
+        $containerParent: null,
         width: 0,
         height: 0,
         isEdit: isEdit,
@@ -82,30 +73,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             createSubscription: function(options, subscribe) {
                 return createSubscription(options, subscribe);
             },
-
-
-    //      type: "timeseries" or "latest" or "rpc"
-    /*      subscriptionInfo = [
-            {
-                entityType: ""
-                entityId:   ""
-                entityName: ""
-                timeseries: [{ name: "", label: "" }, ..]
-                attributes: [{ name: "", label: "" }, ..]
-            }
-    ..
-    ]*/
-
-    //      options = {
-    //        timeWindowConfig,
-    //        useDashboardTimewindow,
-    //        legendConfig,
-    //        decimals,
-    //        units,
-    //        callbacks [ onDataUpdated(subscription, apply) ]
-    //      }
-    //
-
             createSubscriptionFromInfo: function (type, subscriptionsInfo, options, useDefaultComponents, subscribe) {
                 return createSubscriptionFromInfo(type, subscriptionsInfo, options, useDefaultComponents, subscribe);
             },
@@ -210,21 +177,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             onInit();
         }
     );
-
-    /*
-            options = {
-                 type,
-                 targetDeviceAliasIds,  // RPC
-                 targetDeviceIds,       // RPC
-                 datasources,
-                 timeWindowConfig,
-                 useDashboardTimewindow,
-                 legendConfig,
-                 decimals,
-                 units,
-                 callbacks
-            }
-     */
 
     function createSubscriptionFromInfo(type, subscriptionsInfo, options, useDefaultComponents, subscribe) {
         var deferred = $q.defer();
@@ -400,14 +352,107 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         return deferred.promise;
     }
 
+    function configureWidgetElement() {
+
+        $scope.displayLegend = angular.isDefined(widget.config.showLegend) ?
+            widget.config.showLegend : widget.type === types.widgetType.timeseries.value;
+
+        if ($scope.displayLegend) {
+            $scope.legendConfig = widget.config.legendConfig ||
+                {
+                    position: types.position.bottom.value,
+                    showMin: false,
+                    showMax: false,
+                    showAvg: widget.type === types.widgetType.timeseries.value,
+                    showTotal: false
+                };
+            $scope.legendData = {
+                keys: [],
+                data: []
+            };
+        }
+
+        var html = '<div class="tb-absolute-fill tb-widget-error" ng-if="widgetErrorData">' +
+            '<span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>' +
+            '</div>' +
+            '<div class="tb-absolute-fill tb-widget-loading" ng-show="loadingData" layout="column" layout-align="center center">' +
+            '<md-progress-circular md-mode="indeterminate" ng-disabled="!loadingData" class="md-accent" md-diameter="40"></md-progress-circular>' +
+            '</div>';
+
+        var containerHtml = '<div id="container">' + widgetInfo.templateHtml + '</div>';
+        if ($scope.displayLegend) {
+            var layoutType;
+            if ($scope.legendConfig.position === types.position.top.value ||
+                $scope.legendConfig.position === types.position.bottom.value) {
+                layoutType = 'column';
+            } else {
+                layoutType = 'row';
+            }
+
+            var legendStyle;
+            switch($scope.legendConfig.position) {
+                case types.position.top.value:
+                    legendStyle = 'padding-bottom: 8px;';
+                    break;
+                case types.position.bottom.value:
+                    legendStyle = 'padding-top: 8px;';
+                    break;
+                case types.position.left.value:
+                    legendStyle = 'padding-right: 0px;';
+                    break;
+                case types.position.right.value:
+                    legendStyle = 'padding-left: 0px;';
+                    break;
+            }
+
+            var legendHtml = '<tb-legend style="'+legendStyle+'" legend-config="legendConfig" legend-data="legendData"></tb-legend>';
+            containerHtml = '<div flex id="widget-container">' + containerHtml + '</div>';
+            html += '<div class="tb-absolute-fill" layout="'+layoutType+'">';
+            if ($scope.legendConfig.position === types.position.top.value ||
+                $scope.legendConfig.position === types.position.left.value) {
+                html += legendHtml;
+                html += containerHtml;
+            } else {
+                html += containerHtml;
+                html += legendHtml;
+            }
+            html += '</div>';
+        } else {
+            html += containerHtml;
+        }
+
+        //TODO:
+        /*if (progressElement) {
+         progressScope.$destroy();
+         progressScope = null;
+
+         progressElement.remove();
+         progressElement = null;
+         }*/
+
+        $element.html(html);
+
+        var containerElement = $scope.displayLegend ? angular.element($element[0].querySelector('#widget-container')) : $element;
+        widgetContext.$container = $('#container', containerElement);
+        widgetContext.$containerParent = $(containerElement);
+
+        $compile($element.contents())($scope);
+
+        addResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
+    }
+
+    function destroyWidgetElement() {
+        removeResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
+        $element.html('');
+        widgetContext.$container = null;
+        widgetContext.$containerParent = null;
+    }
 
     function initialize() {
 
         $scope.$on('toggleDashboardEditMode', function (event, isEdit) {
             onEditModeChanged(isEdit);
         });
-
-        addResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
 
         $scope.$watch(function () {
             return widget.row + ',' + widget.col + ',' + widget.config.mobileOrder;
@@ -439,10 +484,10 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         });
 
         $scope.$on("$destroy", function () {
-            removeResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
             onDestroy();
         });
 
+        configureWidgetElement();
         var deferred = $q.defer();
         if (!vm.useCustomDatasources) {
             createDefaultSubscription().then(
@@ -465,6 +510,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function reInit() {
         onDestroy();
+        configureWidgetElement();
         if (!vm.useCustomDatasources) {
             createDefaultSubscription().then(
                 function success() {
@@ -636,6 +682,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 handleWidgetException(e);
             }
         }
+        destroyWidgetElement();
     }
 
     //TODO: widgets visibility

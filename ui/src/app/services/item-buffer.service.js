@@ -298,11 +298,7 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
         }
         if (!newAliasId) {
             var newAliasName = createEntityAliasName(entityAliases, aliasInfo.alias);
-            newAliasId = 0;
-            for (aliasId in entityAliases) {
-                newAliasId = Math.max(newAliasId, aliasId);
-            }
-            newAliasId++;
+            newAliasId = utils.guid();
             entityAliases[newAliasId] = {id: newAliasId, alias: newAliasName, filter: aliasInfo.filter};
         }
         return newAliasId;

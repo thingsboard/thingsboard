@@ -24,7 +24,7 @@ import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, types, dashboardUtils,
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, utils, types, dashboardUtils,
                                      entityService, dashboardService, pluginService, ruleService, widgetService, toast) {
 
 
@@ -415,6 +415,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     deferred.reject();
                 } else {
                     var widget = widgetItem.widget;
+                    widget = dashboardUtils.validateAndUpdateWidget(widget);
                     var aliasesInfo = prepareAliasesInfo(widgetItem.aliasesInfo);
                     var originalColumns = widgetItem.originalColumns;
                     var originalSize = widgetItem.originalSize;
@@ -425,22 +426,22 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                         var entityAliases = {};
                         var datasourceAliasesMap = {};
                         var targetDeviceAliasesMap = {};
-                        var aliasId = 1;
+                        var aliasId;
                         var datasourceIndex;
                         if (datasourceAliases) {
                             for (datasourceIndex in datasourceAliases) {
+                                aliasId = utils.guid();
                                 datasourceAliasesMap[aliasId] = datasourceIndex;
                                 entityAliases[aliasId] = datasourceAliases[datasourceIndex];
                                 entityAliases[aliasId].id = aliasId;
-                                aliasId++;
                             }
                         }
                         if (targetDeviceAliases) {
                             for (datasourceIndex in targetDeviceAliases) {
+                                aliasId = utils.guid();
                                 targetDeviceAliasesMap[aliasId] = datasourceIndex;
                                 entityAliases[aliasId] = targetDeviceAliases[datasourceIndex];
                                 entityAliases[aliasId].id = aliasId;
-                                aliasId++;
                             }
                         }
 

@@ -113,12 +113,7 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
     }
 
     function addAlias() {
-        var aliasId = 0;
-        for (var a in vm.entityAliases) {
-            aliasId = Math.max(vm.entityAliases[a].id, aliasId);
-        }
-        aliasId++;
-        var entityAlias = {id: aliasId, alias: '', filter: {}, changed: false};
+        var entityAlias = {id: utils.guid(), alias: '', filter: {}, changed: false};
         vm.entityAliases.push(entityAlias);
     }
 
@@ -162,23 +157,21 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
         var uniqueAliasList = {};
 
         var valid = true;
-        var aliasId, maxAliasId;
+        var aliasId;
         var alias;
         var i;
 
         if (vm.isSingleEntityAlias) {
-            maxAliasId = 0;
+            if (!vm.singleEntityAlias.id) {
+                vm.singleEntityAlias.id = utils.guid();
+            }
             for (i = 0; i < vm.entityAliases.length; i ++) {
-                aliasId = vm.entityAliases[i].id;
                 alias = vm.entityAliases[i].alias;
                 if (alias === vm.singleEntityAlias.alias) {
                     valid = false;
                     break;
                 }
-                maxAliasId = Math.max(aliasId, maxAliasId);
             }
-            maxAliasId++;
-            vm.singleEntityAlias.id = maxAliasId;
         } else {
             for (i = 0; i < vm.entityAliases.length; i++) {
                 aliasId = vm.entityAliases[i].id;

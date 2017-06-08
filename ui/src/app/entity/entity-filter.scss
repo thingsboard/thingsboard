@@ -14,18 +14,6 @@
  * limitations under the License.
  */
 .tb-entity-filter {
-  #entity_list_chips {
-    .md-chips {
-      padding-bottom: 1px;
-    }
-  }
-  .entity-name-filter-input {
-    margin-top: 10px;
-    margin-bottom: 0px;
-    .md-errors-spacer {
-      min-height: 0px;
-    }
-  }
   .tb-filter-switch {
     padding-left: 10px;
     .filter-switch {
@@ -39,7 +27,8 @@
     margin-top: -11px;
     height: 35px;
     .tb-error-message {
-      padding-left: 1px;
+      padding-left: 8px;
+      padding-top: 14px;
     }
   }
 }

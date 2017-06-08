@@ -22,7 +22,7 @@ import selectTargetLayoutTemplate from '../../dashboard/layouts/select-target-la
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function AddWidgetToDashboardDialogController($scope, $mdDialog, $state, $q, $document,
+export default function AddWidgetToDashboardDialogController($scope, $mdDialog, $state, $q, $document, dashboardUtils,
                                                              types, itembuffer, dashboardService, entityId, entityType, entityName, widget) {
 
     var vm = this;
@@ -126,15 +126,8 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
             targetDeviceAliases: {}
         };
         aliasesInfo.datasourceAliases[0] = {
-            id: 1,
             alias: entityName,
-            filter: {
-                type: types.aliasFilterType.entityList.value,
-                stateEntity: false,
-                entityList: [entityId],
-                entityType: entityType,
-                resolveMultiple: false
-            }
+            filter: dashboardUtils.createSingleEntityFilter(entityType, entityId)
         };
         itembuffer.addWidgetToDashboard(theDashboard, targetState, targetLayout, vm.widget, aliasesInfo, null, 48, null, -1, -1).then(
             function(theDashboard) {

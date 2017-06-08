@@ -21,8 +21,8 @@
             <div flex layout="row" ng-repeat="(aliasId, entityAliasInfo) in vm.entityAliasesInfo">
                 <md-input-container flex>
                     <label>{{entityAliasInfo.alias}}</label>
-                    <md-select ng-model="entityAliasInfo.currentEntity" ng-change="vm.currentAliasEntityChanged(aliasId, entityAliasInfo.currentEntity)">
-                        <md-option ng-repeat="resolvedEntity in entityAliasInfo.resolvedEntities" ng-value="resolvedEntity">
+                    <md-select ng-model="entityAliasInfo.selectedId" ng-change="vm.currentAliasEntityChanged(aliasId, entityAliasInfo.selectedId)">
+                        <md-option ng-repeat="resolvedEntity in entityAliasInfo.resolvedEntities" ng-value="resolvedEntity.id">
                             {{resolvedEntity.name}}
                         </md-option>
                     </md-select>

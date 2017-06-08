@@ -124,7 +124,7 @@ export default angular.module('thingsboard.locale', [])
                     "create-entity-filter": "Create entity filter",
                     "edit-entity-filter": "Edit entity filter",
                     "entity-filter-required": "Entity filter is required.",
-                    "resolve-multiple": "Multiple",
+                    "resolve-multiple": "Resolve as multiple entities",
                     "filter-type": "Filter type",
                     "filter-type-required": "Filter type is required.",
                     "use-state-entity": "Use state entity",
