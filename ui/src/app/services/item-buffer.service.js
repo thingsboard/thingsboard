@@ -46,16 +46,14 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
      aliasesInfo {
         datasourceAliases: {
             datasourceIndex: {
-                aliasName: "...",
-                entityType: "...",
-                entityFilter: "..."
+                alias: "...",
+                filter: "..."
             }
         }
         targetDeviceAliases: {
             targetDeviceAliasIndex: {
-                aliasName: "...",
-                entityType: "...",
-                entityFilter: "..."
+                alias: "...",
+                filter: "..."
             }
         }
         ....
@@ -64,9 +62,8 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
 
     function prepareAliasInfo(entityAlias) {
         return {
-            aliasName: entityAlias.alias,
-            entityType: entityAlias.entityType,
-            entityFilter: entityAlias.entityFilter
+            alias: entityAlias.alias,
+            filter: entityAlias.filter
         };
     }
 
@@ -288,8 +285,7 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
     }
 
     function isEntityAliasEqual(alias1, alias2) {
-        return alias1.entityType === alias2.entityType &&
-            angular.equals(alias1.entityFilter, alias2.entityFilter);
+        return angular.equals(alias1.filter, alias2.filter);
     }
 
     function getEntityAliasId(entityAliases, aliasInfo) {
@@ -301,13 +297,13 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
             }
         }
         if (!newAliasId) {
-            var newAliasName = createEntityAliasName(entityAliases, aliasInfo.aliasName);
+            var newAliasName = createEntityAliasName(entityAliases, aliasInfo.alias);
             newAliasId = 0;
             for (aliasId in entityAliases) {
                 newAliasId = Math.max(newAliasId, aliasId);
             }
             newAliasId++;
-            entityAliases[newAliasId] = {alias: newAliasName, entityType: aliasInfo.entityType, entityFilter: aliasInfo.entityFilter};
+            entityAliases[newAliasId] = {id: newAliasId, alias: newAliasName, filter: aliasInfo.filter};
         }
         return newAliasId;
     }

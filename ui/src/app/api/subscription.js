@@ -125,17 +125,22 @@ export default class Subscription {
 
     initDataSubscription() {
         var deferred = this.ctx.$q.defer();
-        var subscription = this;
-        this.ctx.aliasController.resolveDatasources(this.datasources).then(
-            function success(datasources) {
-                subscription.datasources = datasources;
-                subscription.configureData();
-                deferred.resolve();
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
+        if (!this.ctx.aliasController) {
+            this.configureData();
+            deferred.resolve();
+        } else {
+            var subscription = this;
+            this.ctx.aliasController.resolveDatasources(this.datasources).then(
+                function success(datasources) {
+                    subscription.datasources = datasources;
+                    subscription.configureData();
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
         return deferred.promise;
     }
 

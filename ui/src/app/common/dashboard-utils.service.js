@@ -57,6 +57,9 @@ function DashboardUtils(types, utils, timeService) {
             for (aliasId in entityAliases) {
                 entityAlias = entityAliases[aliasId];
                 entityAliases[aliasId] = validateAndUpdateEntityAlias(entityAlias);
+                if (!entityAliases[aliasId].id) {
+                    entityAliases[aliasId].id = aliasId;
+                }
             }
         }
         return configuration;
@@ -202,6 +205,12 @@ function DashboardUtils(types, utils, timeService) {
                 states[firstStateId].root = true;
             }
         }
+
+       /* var datasources = {};
+        for (var widgetId in dashboard.configuration.widgets) {
+
+        }*/
+
         dashboard.configuration = validateAndUpdateEntityAliases(dashboard.configuration);
 
         if (angular.isUndefined(dashboard.configuration.timewindow)) {

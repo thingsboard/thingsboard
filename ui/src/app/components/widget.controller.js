@@ -38,6 +38,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     var gridsterItemInited = false;
     var subscriptionInited = false;
+    var widgetSizeDetected = false;
 
     var cafs = {};
 
@@ -206,9 +207,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     initialize().then(
         function(){
-            if (checkSize()) {
-                onInit();
-            }
+            onInit();
         }
     );
 
@@ -488,10 +487,15 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         $scope.widgetErrorData = utils.processWidgetException(e);
     }
 
-    function onInit() {
-        if (!widgetContext.inited &&
-            subscriptionInited &&
-            gridsterItemInited) {
+    function isReady() {
+        return subscriptionInited && gridsterItemInited && widgetSizeDetected;
+    }
+
+    function onInit(skipSizeCheck) {
+        if (!skipSizeCheck) {
+            checkSize();
+        }
+        if (!widgetContext.inited && isReady()) {
             widgetContext.inited = true;
             try {
                 widgetTypeInstance.onInit();
@@ -516,6 +520,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 widgetContext.width = width;
                 widgetContext.height = height;
                 sizeChanged = true;
+                widgetSizeDetected = true;
             }
         }
         return sizeChanged;
@@ -536,7 +541,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     }
                 });
             } else {
-                onInit();
+                onInit(true);
             }
         }
     }
@@ -545,9 +550,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         if (item && item.gridster) {
             widgetContext.isMobile = item.gridster.isMobile;
             gridsterItemInited = true;
-            if (checkSize()) {
-                onInit();
-            }
+            onInit();
             // gridsterItemElement = $(item.$element);
             //updateVisibility();
         }

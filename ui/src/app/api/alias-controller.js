@@ -96,6 +96,7 @@ export default class AliasController {
                     function success(aliasInfo) {
                         aliasCtrl.resolvedAliases[aliasId] = aliasInfo;
                         if (entityAlias.filter.stateEntity) {
+                            aliasInfo.stateEntity = true;
                             aliasCtrl.resolvedAliasesToStateEntities[aliasId] =
                                 aliasCtrl.stateController.getStateParams().entityId;
                         }
@@ -120,12 +121,13 @@ export default class AliasController {
                     function success(aliasInfo) {
                         datasource.aliasName = aliasInfo.alias;
                         if (aliasInfo.resolveMultiple) {
+                            var newDatasource;
                             var resolvedEntities = aliasInfo.resolvedEntities;
                             if (resolvedEntities && resolvedEntities.length) {
                                 var datasources = [];
                                 for (var i=0;i<resolvedEntities.length;i++) {
                                     var resolvedEntity = resolvedEntities[i];
-                                    var newDatasource = angular.copy(datasource);
+                                    newDatasource = angular.copy(datasource);
                                     newDatasource.entityId = resolvedEntity.id;
                                     newDatasource.entityType = resolvedEntity.entityType;
                                     newDatasource.entityName = resolvedEntity.name;
@@ -135,15 +137,30 @@ export default class AliasController {
                                 }
                                 deferred.resolve(datasources);
                             } else {
-                                deferred.reject();
+                                if (aliasInfo.stateEntity) {
+                                    newDatasource = angular.copy(datasource);
+                                    newDatasource.unresolvedStateEntity = true;
+                                    deferred.resolve([newDatasource]);
+                                } else {
+                                    deferred.reject();
+                                }
                             }
                         } else {
                             var entity = aliasInfo.currentEntity;
-                            datasource.entityId = entity.id;
-                            datasource.entityType = entity.entityType;
-                            datasource.entityName = entity.name;
-                            datasource.name = entity.name;
-                            deferred.resolve([datasource]);
+                            if (entity) {
+                                datasource.entityId = entity.id;
+                                datasource.entityType = entity.entityType;
+                                datasource.entityName = entity.name;
+                                datasource.name = entity.name;
+                                deferred.resolve([datasource]);
+                            } else {
+                                if (aliasInfo.stateEntity) {
+                                    datasource.unresolvedStateEntity = true;
+                                    deferred.resolve([datasource]);
+                                } else {
+                                    deferred.reject();
+                                }
+                            }
                         }
                     },
                     function fail() {

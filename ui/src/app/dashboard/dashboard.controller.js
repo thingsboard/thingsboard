@@ -344,6 +344,8 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             vm.dashboardConfiguration = vm.dashboard.configuration;
             vm.dashboardCtx.dashboard = vm.dashboard;
             vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+            vm.dashboardCtx.aliasController = new AliasController($scope, $q, $filter, utils,
+                types, entityService, vm.dashboardCtx.stateController, vm.dashboardConfiguration.entityAliases);
             var parentScope = $window.parent.angular.element($window.frameElement).scope();
             parentScope.$root.$broadcast('widgetEditModeInited');
             parentScope.$root.$apply();

@@ -29,10 +29,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         getEntitiesByNameFilter: getEntitiesByNameFilter,
         resolveAlias: resolveAlias,
         resolveAliasFilter: resolveAliasFilter,
-        filterAliasByEntityTypes: filterAliasByEntityTypes,
-        //processEntityAliases: processEntityAliases,
-        getEntityKeys: getEntityKeys,
         checkEntityAlias: checkEntityAlias,
+        filterAliasByEntityTypes: filterAliasByEntityTypes,
+        getEntityKeys: getEntityKeys,
         createDatasourcesFromSubscriptionsInfo: createDatasourcesFromSubscriptionsInfo,
         getRelatedEntities: getRelatedEntities,
         saveRelatedEntity: saveRelatedEntity,
@@ -259,7 +258,32 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return entitiesInfo;
     }
 
-    function resolveAliasFilter(filter, stateParams) {
+    function resolveAlias(entityAlias, stateParams) {
+        var deferred = $q.defer();
+        var filter = entityAlias.filter;
+        resolveAliasFilter(filter, stateParams, 100).then(
+            function (result) {
+                var entities = result.entities;
+                var aliasInfo = {
+                    alias: entityAlias.alias,
+                    resolveMultiple: filter.resolveMultiple
+                };
+                var resolvedEntities = entitiesToEntitiesInfo(entities);
+                aliasInfo.resolvedEntities = resolvedEntities;
+                aliasInfo.currentEntity = null;
+                if (aliasInfo.resolvedEntities.length) {
+                    aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
+                }
+                deferred.resolve(aliasInfo);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function resolveAliasFilter(filter, stateParams, maxItems) {
         var deferred = $q.defer();
         var result = {
             entities: [],
@@ -299,7 +323,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 }
                 break;
             case types.aliasFilterType.entityName.value:
-                getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, 100).then(
+                getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems).then(
                     function success(entities) {
                         if (entities && entities.length) {
                             result.entities = entities;
@@ -318,31 +342,6 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return deferred.promise;
     }
 
-    function resolveAlias(entityAlias, stateParams) {
-        var deferred = $q.defer();
-        var filter = entityAlias.filter;
-        resolveAliasFilter(filter, stateParams).then(
-            function (result) {
-                var entities = result.entities;
-                var aliasInfo = {
-                    alias: entityAlias.alias,
-                    resolveMultiple: filter.resolveMultiple
-                };
-                var resolvedEntities = entitiesToEntitiesInfo(entities);
-                aliasInfo.resolvedEntities = resolvedEntities;
-                aliasInfo.currentEntity = null;
-                if (aliasInfo.resolvedEntities.length) {
-                    aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
-                }
-                deferred.resolve(aliasInfo);
-            },
-            function fail() {
-                deferred.reject();
-            }
-        );
-        return deferred.promise;
-    }
-
     function filterAliasByEntityTypes(entityAlias, entityTypes) {
         var filter = entityAlias.filter;
         switch (filter.type) {
@@ -357,6 +356,28 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
         //TODO:
         return false;
+    }
+
+    function checkEntityAlias(entityAlias) {
+        var deferred = $q.defer();
+        resolveAliasFilter(entityAlias.filter, null, 1).then(
+            function success(result) {
+                if (result.stateEntity) {
+                    deferred.resolve(true);
+                } else {
+                    var entities = result.entities;
+                    if (entities && entities.length) {
+                        deferred.resolve(true);
+                    } else {
+                        deferred.resolve(false);
+                    }
+                }
+            },
+            function fail() {
+                deferred.resolve(false);
+            }
+        );
+        return deferred.promise;
     }
 
     /*function processEntityAlias(index, aliasIds, entityAliases, stateParams, resolution, deferred) {
@@ -430,33 +451,6 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }, function fail() {
             deferred.reject();
         });
-        return deferred.promise;
-    }
-
-    function checkEntityAlias(entityAlias) {
-        var deferred = $q.defer();
-        var entityType = entityAlias.entityType;
-        var entityFilter = entityAlias.entityFilter;
-        var promise;
-        if (entityFilter.useFilter) {
-            var entityNameFilter = entityFilter.entityNameFilter;
-            promise = getEntitiesByNameFilter(entityType, entityNameFilter, 1);
-        } else {
-            var entityList = entityFilter.entityList;
-            promise = getEntities(entityType, entityList);
-        }
-        promise.then(
-            function success(entities) {
-                if (entities && entities.length > 0) {
-                    deferred.resolve(true);
-                } else {
-                    deferred.resolve(false);
-                }
-            },
-            function fail() {
-                deferred.resolve(false);
-            }
-        );
         return deferred.promise;
     }
 
