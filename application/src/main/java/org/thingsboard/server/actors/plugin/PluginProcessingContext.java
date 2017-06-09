@@ -93,8 +93,8 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<AttributeKvEntry> attributes, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<Void>> attrKvListFuture = pluginCtx.attributesService.save(entityId, scope, attributes);
-            Futures.addCallback(attrKvListFuture, getListCallback(callback, v -> {
+            ListenableFuture<List<Void>> futures = pluginCtx.attributesService.save(entityId, scope, attributes);
+            Futures.addCallback(futures, getListCallback(callback, v -> {
                 if (entityId.getEntityType() == EntityType.DEVICE) {
                     onDeviceAttributesChanged(tenantId, new DeviceId(entityId.getId()), scope, attributes);
                 }
@@ -106,8 +106,8 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void removeAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<Void>> future = pluginCtx.attributesService.removeAll(entityId, scope, keys);
-            Futures.addCallback(future, getCallback(callback, v -> null), executor);
+            ListenableFuture<List<Void>> futures = pluginCtx.attributesService.removeAll(entityId, scope, keys);
+            Futures.addCallback(futures, getCallback(callback, v -> null), executor);
             if (entityId.getEntityType() == EntityType.DEVICE) {
                 onDeviceAttributesDeleted(tenantId, new DeviceId(entityId.getId()), keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
             }

@@ -125,11 +125,7 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
             stmt.setToNull(8);
         }
         log.trace("Generated save stmt [{}] for entityId {} and attributeType {} and attribute", stmt, entityId, attributeType, attribute);
-        return getFuture(executeAsyncWrite(stmt), rs -> getAttributeKvEntryFromRs(rs));
-    }
-
-    private Void getAttributeKvEntryFromRs(ResultSet rs) {
-        return null;
+        return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
     @Override
@@ -148,7 +144,7 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
                 .and(eq(ATTRIBUTE_TYPE_COLUMN, attributeType))
                 .and(eq(ATTRIBUTE_KEY_COLUMN, key));
         log.debug("Remove request: {}", delete.toString());
-        return getFuture(getSession().executeAsync(delete), rs -> getAttributeKvEntryFromRs(rs));
+        return getFuture(getSession().executeAsync(delete), rs -> null);
     }
 
     private PreparedStatement getSaveStmt() {
