@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.attributes;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -30,7 +31,10 @@ import java.util.Optional;
 @Component
 @Slf4j
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
-public class JpaAttributesDao implements AttributesDao {
+public class JpaAttributeDao implements AttributesDao {
+
+    @Autowired
+    private AttributeKvRepository attributeKvRepository;
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey) {
