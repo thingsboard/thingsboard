@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.dao.AbstractAsyncDao;
-import org.thingsboard.server.dao.AbstractDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import javax.annotation.Nullable;
@@ -40,8 +39,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -64,8 +61,10 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
     private TsPartitionDate tsFormat;
 
     private PreparedStatement partitionInsertStmt;
+    private PreparedStatement partitionInsertTtlStmt;
     private PreparedStatement[] latestInsertStmts;
     private PreparedStatement[] saveStmts;
+    private PreparedStatement[] saveTtlStmts;
     private PreparedStatement[] fetchStmts;
     private PreparedStatement findLatestStmt;
     private PreparedStatement findAllLatestStmt;
@@ -255,15 +254,32 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
     }
 
     @Override
-    public ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry) {
+    public ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl) {
         DataType type = tsKvEntry.getDataType();
-        BoundStatement stmt = getSaveStmt(type).bind()
-                .setString(0, entityId.getEntityType().name())
+        BoundStatement stmt = (ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind();
+        stmt.setString(0, entityId.getEntityType().name())
                 .setUUID(1, entityId.getId())
                 .setString(2, tsKvEntry.getKey())
                 .setLong(3, partition)
                 .setLong(4, tsKvEntry.getTs());
         addValue(tsKvEntry, stmt, 5);
+        if (ttl > 0) {
+            stmt.setInt(6, (int) ttl);
+        }
+        return executeAsyncWrite(stmt);
+    }
+
+    @Override
+    public ResultSetFuture savePartition(EntityId entityId, long partition, String key, long ttl) {
+        log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
+        BoundStatement stmt = (ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind();
+        stmt = stmt.setString(0, entityId.getEntityType().name())
+                .setUUID(1, entityId.getId())
+                .setLong(2, partition)
+                .setString(3, key);
+        if (ttl > 0) {
+            stmt.setInt(4, (int) ttl);
+        }
         return executeAsyncWrite(stmt);
     }
 
@@ -277,16 +293,6 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
                 .setLong(3, tsKvEntry.getTs());
         addValue(tsKvEntry, stmt, 4);
         return executeAsyncWrite(stmt);
-    }
-
-    @Override
-    public ResultSetFuture savePartition(EntityId entityId, long partition, String key) {
-        log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
-        return executeAsyncWrite(getPartitionInsertStmt().bind()
-                .setString(0, entityId.getEntityType().name())
-                .setUUID(1, entityId.getId())
-                .setLong(2, partition)
-                .setString(3, key));
     }
 
     @Override
@@ -365,6 +371,23 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
         return saveStmts[dataType.ordinal()];
     }
 
+    private PreparedStatement getSaveTtlStmt(DataType dataType) {
+        if (saveTtlStmts == null) {
+            saveTtlStmts = new PreparedStatement[DataType.values().length];
+            for (DataType type : DataType.values()) {
+                saveTtlStmts[type.ordinal()] = getSession().prepare("INSERT INTO " + ModelConstants.TS_KV_CF +
+                        "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                        "," + ModelConstants.ENTITY_ID_COLUMN +
+                        "," + ModelConstants.KEY_COLUMN +
+                        "," + ModelConstants.PARTITION_COLUMN +
+                        "," + ModelConstants.TS_COLUMN +
+                        "," + getColumnName(type) + ")" +
+                        " VALUES(?, ?, ?, ?, ?, ?) USING TTL ?");
+            }
+        }
+        return saveTtlStmts[dataType.ordinal()];
+    }
+
     private PreparedStatement getFetchStmt(Aggregation aggType) {
         if (fetchStmts == null) {
             fetchStmts = new PreparedStatement[Aggregation.values().length];
@@ -417,6 +440,19 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
         }
         return partitionInsertStmt;
     }
+
+    private PreparedStatement getPartitionInsertTtlStmt() {
+        if (partitionInsertTtlStmt == null) {
+            partitionInsertTtlStmt = getSession().prepare("INSERT INTO " + ModelConstants.TS_KV_PARTITIONS_CF +
+                    "(" + ModelConstants.ENTITY_TYPE_COLUMN +
+                    "," + ModelConstants.ENTITY_ID_COLUMN +
+                    "," + ModelConstants.PARTITION_COLUMN +
+                    "," + ModelConstants.KEY_COLUMN + ")" +
+                    " VALUES(?, ?, ?, ?) USING TTL ?");
+        }
+        return partitionInsertTtlStmt;
+    }
+
 
     private PreparedStatement getFindLatestStmt() {
         if (findLatestStmt == null) {

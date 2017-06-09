@@ -168,11 +168,17 @@ public final class PluginProcessingContext implements PluginContext {
 
     @Override
     public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, final PluginCallback<Void> callback) {
+        saveTsData(entityId, entries, 0L, callback);
+    }
+
+    @Override
+    public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, long ttl, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entries);
+            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entries, ttl);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
+
 
     @Override
     public void loadTimeseries(final EntityId entityId, final List<TsKvQuery> queries, final PluginCallback<List<TsKvEntry>> callback) {
