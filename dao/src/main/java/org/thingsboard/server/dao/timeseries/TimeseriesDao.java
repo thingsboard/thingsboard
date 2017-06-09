@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author Andrew Shvayka
@@ -38,9 +37,9 @@ public interface TimeseriesDao {
 
     ResultSetFuture findAllLatest(EntityId entityId);
 
-    ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry);
+    ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl);
 
-    ResultSetFuture savePartition(EntityId entityId, long partition, String key);
+    ResultSetFuture savePartition(EntityId entityId, long partition, String key, long ttl);
 
     ResultSetFuture saveLatest(EntityId entityId, TsKvEntry tsKvEntry);
 

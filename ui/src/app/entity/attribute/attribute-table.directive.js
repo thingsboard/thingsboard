@@ -51,7 +51,6 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
         scope.types = types;
 
         scope.entityType = attrs.entityType;
-        scope.attributeScope = getAttributeScopeByValue(attrs.defaultAttributeScope);
 
         if (scope.entityType === types.entityType.device) {
             scope.attributeScopes = types.attributesScope;
@@ -60,8 +59,13 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.attributeScopes = {};
             scope.attributeScopes.server = types.attributesScope.server;
             scope.attributeScopeSelectionReadonly = true;
+        }
+
+        scope.attributeScope = getAttributeScopeByValue(attrs.defaultAttributeScope);
+
+        if (scope.entityType != types.entityType.device) {
             if (scope.attributeScope != types.latestTelemetry) {
-                scope.attributeScope = scope.attributeScopes.server.value;
+                scope.attributeScope = scope.attributeScopes.server;
             }
         }
 
@@ -81,8 +85,8 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             search: null
         };
 
-        scope.$watch("entityId", function(newVal, prevVal) {
-            if (newVal && !angular.equals(newVal, prevVal)) {
+        scope.$watch("entityId", function(newVal) {
+            if (newVal) {
                 scope.resetFilter();
                 scope.getEntityAttributes(false, true);
             }

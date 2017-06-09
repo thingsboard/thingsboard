@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.extensions.core.action.telemetry;
 
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.msg.core.GetAttributesRequest;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
@@ -23,7 +24,6 @@ import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.MsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Action;
-import org.thingsboard.server.extensions.api.component.EmptyComponentConfiguration;
 import org.thingsboard.server.extensions.api.plugins.PluginAction;
 import org.thingsboard.server.extensions.api.plugins.msg.*;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
@@ -31,11 +31,22 @@ import org.thingsboard.server.extensions.api.rules.RuleProcessingMetaData;
 import org.thingsboard.server.extensions.api.rules.SimpleRuleLifecycleComponent;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
-@Action(name = "Telemetry Plugin Action")
-public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implements PluginAction<EmptyComponentConfiguration> {
+@Action(name = "Telemetry Plugin Action", descriptor = "TelemetryPluginActionDescriptor.json", configuration = TelemetryPluginActionConfiguration.class)
+public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implements PluginAction<TelemetryPluginActionConfiguration> {
 
-    public void init(EmptyComponentConfiguration configuration) {
+    protected TelemetryPluginActionConfiguration configuration;
+    protected long ttl;
+
+    @Override
+    public void init(TelemetryPluginActionConfiguration configuration) {
+        this.configuration = configuration;
+        if (StringUtils.isEmpty(configuration.getTimeUnit()) || configuration.getTtlValue() == 0L) {
+            this.ttl = 0L;
+        } else {
+            this.ttl = TimeUnit.valueOf(configuration.getTimeUnit()).toSeconds(configuration.getTtlValue());
+        }
     }
 
     @Override
@@ -44,7 +55,7 @@ public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implemen
         if (msg.getMsgType() == MsgType.POST_TELEMETRY_REQUEST) {
             TelemetryUploadRequest payload = (TelemetryUploadRequest) msg;
             return Optional.of(new TelemetryUploadRequestRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),
-                    toDeviceActorMsg.getDeviceId(), payload));
+                    toDeviceActorMsg.getDeviceId(), payload, ttl));
         } else if (msg.getMsgType() == MsgType.POST_ATTRIBUTES_REQUEST) {
             UpdateAttributesRequest payload = (UpdateAttributesRequest) msg;
             return Optional.of(new UpdateAttributesRequestRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),

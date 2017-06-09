@@ -79,7 +79,9 @@ public interface PluginContext {
 
     void saveTsData(EntityId entityId, TsKvEntry entry, PluginCallback<Void> callback);
 
-    void saveTsData(EntityId entityId, List<TsKvEntry> entry, PluginCallback<Void> callback);
+    void saveTsData(EntityId entityId, List<TsKvEntry> entries, PluginCallback<Void> callback);
+
+    void saveTsData(EntityId deviceId, List<TsKvEntry> entries, long ttl, PluginCallback<Void> pluginCallback);
 
     void loadTimeseries(EntityId entityId, List<TsKvQuery> queries, PluginCallback<List<TsKvEntry>> callback);
 
@@ -106,4 +108,5 @@ public interface PluginContext {
     void loadAttributes(EntityId entityId, Collection<String> attributeTypes, Collection<String> attributeKeys, PluginCallback<List<AttributeKvEntry>> callback);
 
     void getCustomerDevices(TenantId tenantId, CustomerId customerId, int limit, PluginCallback<List<Device>> callback);
+
 }

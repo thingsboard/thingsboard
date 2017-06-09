@@ -166,11 +166,17 @@ public final class PluginProcessingContext implements PluginContext {
 
     @Override
     public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, final PluginCallback<Void> callback) {
+        saveTsData(entityId, entries, 0L, callback);
+    }
+
+    @Override
+    public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, long ttl, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entries);
+            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entries, ttl);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
+
 
     @Override
     public void loadTimeseries(final EntityId entityId, final List<TsKvQuery> queries, final PluginCallback<List<TsKvEntry>> callback) {
@@ -324,7 +330,19 @@ public final class PluginProcessingContext implements PluginContext {
                             callback.onSuccess(this, Boolean.FALSE);
                         } else {
                             ListenableFuture<RuleMetaData> ruleFuture = pluginCtx.ruleService.findRuleByIdAsync(new RuleId(entityId.getId()));
-                            Futures.addCallback(ruleFuture, getCallback(callback, rule -> rule != null && rule.getTenantId().equals(ctx.getTenantId())));
+                            Futures.addCallback(ruleFuture, getCallback(callback, rule -> {
+                                if (rule == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (ctx.isTenantAdmin() && !rule.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isSystemAdmin() && !rule.getTenantId().isNullUid()) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
                         }
                         return;
                     case PLUGIN:
@@ -332,7 +350,19 @@ public final class PluginProcessingContext implements PluginContext {
                             callback.onSuccess(this, Boolean.FALSE);
                         } else {
                             ListenableFuture<PluginMetaData> pluginFuture = pluginCtx.pluginService.findPluginByIdAsync(new PluginId(entityId.getId()));
-                            Futures.addCallback(pluginFuture, getCallback(callback, plugin -> plugin != null && plugin.getTenantId().equals(ctx.getTenantId())));
+                            Futures.addCallback(pluginFuture, getCallback(callback, plugin -> {
+                                if (plugin == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (ctx.isTenantAdmin() && !plugin.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isSystemAdmin() && !plugin.getTenantId().isNullUid()) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
                         }
                         return;
                     case CUSTOMER:

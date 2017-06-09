@@ -138,6 +138,8 @@ export default function PluginController(pluginService, userService, importExpor
         vm.pluginGridConfig.topIndex = $stateParams.topIndex;
     }
 
+    vm.isPluginEditable = isPluginEditable;
+
     vm.activatePlugin = activatePlugin;
     vm.suspendPlugin = suspendPlugin;
     vm.exportPlugin = exportPlugin;
