@@ -17,16 +17,13 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import entityFilterTemplate from './entity-filter.tpl.html';
-import entityFilterDialogTemplate from './entity-filter-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
-
-import EntityFilterDialogController from './entity-filter-dialog.controller';
 
 import './entity-filter.scss';
 
 /*@ngInject*/
-export default function EntityFilterDirective($compile, $templateCache, $q, $document, $mdDialog, types) {
+export default function EntityFilterDirective($compile, $templateCache, $q, $document, $mdDialog, types, entityService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -35,66 +32,59 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
 
         scope.ngModelCtrl = ngModelCtrl;
         scope.types = types;
-        scope.hideLabels = angular.isDefined(attrs.hideLabels);
+        scope.aliasFilterTypes = entityService.getAliasFilterTypesByEntityTypes(scope.allowedEntityTypes);
 
-        scope.updateValidity = function() {
-            if (ngModelCtrl.$viewValue) {
-                var value = ngModelCtrl.$viewValue;
-                ngModelCtrl.$setValidity('filter', value.type ? true : false);
+        scope.$watch('filter.type', function (newType, prevType) {
+            if (newType && newType != prevType) {
+                updateFilter();
             }
+        });
+
+        function updateFilter() {
+            var filter = {};
+            filter.type = scope.filter.type;
+            filter.resolveMultiple = scope.filter.resolveMultiple;
+            switch (filter.type) {
+                case types.aliasFilterType.entityList.value:
+                    filter.entityType = null;
+                    filter.entityList = [];
+                    break;
+                case types.aliasFilterType.entityName.value:
+                    filter.entityType = null;
+                    filter.entityNameFilter = '';
+                    break;
+                case types.aliasFilterType.stateEntity.value:
+                    break;
+                case types.aliasFilterType.assetType.value:
+                    filter.assetType = null;
+                    filter.assetNameFilter = '';
+                    break;
+                case types.aliasFilterType.deviceType.value:
+                    filter.deviceType = null;
+                    filter.deviceNameFilter = '';
+                    break;
+                //TODO: Alias filter
+            }
+            scope.filter = filter;
+        }
+
+        scope.$watch('filter', function () {
+            scope.updateView();
+        });
+
+        scope.updateView = function() {
+            ngModelCtrl.$setViewValue(scope.filter);
         }
 
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
-                scope.model = angular.copy(ngModelCtrl.$viewValue);
+                scope.filter = ngModelCtrl.$viewValue;
             } else {
-                scope.model = {
+                scope.filter = {
                     type: null,
                     resolveMultiple: false
                 }
             }
-        }
-
-        scope.$watch('model.resolveMultiple', function () {
-            if (ngModelCtrl.$viewValue) {
-                var value = ngModelCtrl.$viewValue;
-                value.resolveMultiple = scope.model.resolveMultiple;
-                ngModelCtrl.$setViewValue(value);
-                scope.updateValidity();
-            }
-        });
-
-        scope.editFilter = function($event) {
-            openEntityFilterDialog($event, false);
-        }
-
-        scope.createFilter = function($event) {
-            openEntityFilterDialog($event, true);
-        }
-
-        function openEntityFilterDialog($event, isAdd) {
-            $mdDialog.show({
-                controller: EntityFilterDialogController,
-                controllerAs: 'vm',
-                templateUrl: entityFilterDialogTemplate,
-                locals: {
-                    isAdd: isAdd,
-                    allowedEntityTypes: scope.allowedEntityTypes,
-                    filter: angular.copy(scope.model)
-                },
-                parent: angular.element($document[0].body),
-                fullscreen: true,
-                skipHide: true,
-                targetEvent: $event
-            }).then(function (result) {
-                scope.model = result.filter;
-                ngModelCtrl.$setViewValue(result.filter);
-                scope.updateValidity();
-                if (scope.onMatchingEntityChange) {
-                    scope.onMatchingEntityChange({entity: result.entity, stateEntity: result.stateEntity});
-                }
-            }, function () {
-            });
         }
 
         $compile(element.contents())(scope);
@@ -106,8 +96,8 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
         require: "^ngModel",
         link: linker,
         scope: {
-            allowedEntityTypes: '=?',
-            onMatchingEntityChange: '&'
+            theForm: '=',
+            allowedEntityTypes: '=?'
         }
     };
 

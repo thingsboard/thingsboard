@@ -95,8 +95,7 @@ export default class AliasController {
                 this.entityService.resolveAlias(entityAlias, this.stateController.getStateParams()).then(
                     function success(aliasInfo) {
                         aliasCtrl.resolvedAliases[aliasId] = aliasInfo;
-                        if (entityAlias.filter.stateEntity) {
-                            aliasInfo.stateEntity = true;
+                        if (aliasInfo.stateEntity) {
                             aliasCtrl.resolvedAliasesToStateEntities[aliasId] =
                                 aliasCtrl.stateController.getStateParams().entityId;
                         }

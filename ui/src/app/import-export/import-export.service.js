@@ -365,7 +365,6 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             alias = aliasInfo.aliasName;
             filter = {
                 type: types.aliasFilterType.entityList.value,
-                stateEntity: false,
                 entityType: types.entityType.device,
                 entityList: [aliasInfo.deviceId],
                 resolveMultiple: false
@@ -378,7 +377,6 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 resolveMultiple: false
             }
             if (filter.type == types.aliasFilterType.entityList.value) {
-                filter.stateEntity = false;
                 filter.entityList = aliasInfo.deviceFilter.deviceList
             } else {
                 filter.entityNameFilter = aliasInfo.deviceFilter.deviceNameFilter;
@@ -391,7 +389,6 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 resolveMultiple: false
             }
             if (filter.type == types.aliasFilterType.entityList.value) {
-                filter.stateEntity = false;
                 filter.entityList = aliasInfo.entityFilter.entityList;
             } else {
                 filter.entityNameFilter = aliasInfo.entityFilter.entityNameFilter;
@@ -662,8 +659,6 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     entityAliases: missingEntityAliases,
                     widgets: widgets,
                     isSingleWidget: isSingleWidget,
-                    isSingleEntityAlias: false,
-                    singleEntityAlias: null,
                     customTitle: customTitle,
                     disableAdd: true
                 }

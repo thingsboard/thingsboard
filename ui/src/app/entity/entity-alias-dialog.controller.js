@@ -14,22 +14,48 @@
  * limitations under the License.
  */
 
+import './entity-alias-dialog.scss';
+
 /*@ngInject*/
-export default function EntityFilterDialogController($scope, $mdDialog, $q, entityService, types, isAdd, allowedEntityTypes, filter) {
+export default function EntityAliasDialogController($scope, $mdDialog, $q, $filter, utils, entityService, types, isAdd, allowedEntityTypes, entityAliases, alias) {
 
     var vm = this;
 
     vm.types = types;
     vm.isAdd = isAdd;
     vm.allowedEntityTypes = allowedEntityTypes;
-    vm.filter = filter;
+    if (angular.isArray(entityAliases)) {
+        vm.entityAliases = entityAliases;
+    } else {
+        vm.entityAliases = [];
+        for (var aliasId in entityAliases) {
+            vm.entityAliases.push(entityAliases[aliasId]);
+        }
+    }
+    if (vm.isAdd && !alias) {
+        vm.alias = {
+            alias: '',
+            filter: {
+                resolveMultiple: false
+            }
+        };
+    } else {
+        vm.alias = alias;
+    }
 
     vm.cancel = cancel;
     vm.save = save;
 
-    $scope.$watch('vm.filter.type', function (newType, prevType) {
-        if (newType && newType != prevType) {
-            updateFilter();
+    $scope.$watch('vm.alias.alias', function (newAlias) {
+        if (newAlias) {
+            var valid = true;
+            var result = $filter('filter')(vm.entityAliases, {alias: newAlias}, true);
+            if (result && result.length) {
+                if (vm.isAdd || vm.alias.id != result[0].id) {
+                    valid = false;
+                }
+            }
+            $scope.theForm.aliasName.$setValidity('duplicateAliasName', valid);
         }
     });
 
@@ -39,32 +65,13 @@ export default function EntityFilterDialogController($scope, $mdDialog, $q, enti
         }
     });
 
-    function updateFilter() {
-        var filter = {};
-        filter.type = vm.filter.type;
-        filter.resolveMultiple = vm.filter.resolveMultiple;
-        switch (filter.type) {
-            case types.aliasFilterType.entityList.value:
-                filter.entityType = null;
-                filter.entityList = [];
-                filter.stateEntity = false;
-                break;
-            case types.aliasFilterType.entityName.value:
-                filter.entityType = null;
-                filter.entityNameFilter = '';
-                break;
-            //TODO:
-        }
-        vm.filter = filter;
-    }
-
     function validate() {
         var deferred = $q.defer();
         var validationResult = {
             entity: null,
             stateEntity: false
         }
-        entityService.resolveAliasFilter(vm.filter, null, 1).then(
+        entityService.resolveAliasFilter(vm.alias.filter, null, 1).then(
             function success(result) {
                 validationResult.stateEntity = result.stateEntity;
                 var entities = result.entities;
@@ -87,12 +94,11 @@ export default function EntityFilterDialogController($scope, $mdDialog, $q, enti
     function save() {
         $scope.theForm.$setPristine();
         validate().then(
-            function success(validationResult) {
-                $mdDialog.hide({
-                    filter: vm.filter,
-                    entity: validationResult.entity,
-                    stateEntity: validationResult.stateEntity
-                });
+            function success() {
+                if (vm.isAdd) {
+                    vm.alias.id = utils.guid();
+                }
+                $mdDialog.hide(vm.alias);
             },
             function fail() {
                 $scope.theForm.$setValidity('entityFilter', false);
@@ -101,4 +107,3 @@ export default function EntityFilterDialogController($scope, $mdDialog, $q, enti
     }
 
 }
-

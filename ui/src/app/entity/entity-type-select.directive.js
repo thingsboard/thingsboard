@@ -71,7 +71,7 @@ export default function EntityTypeSelect($compile, $templateCache, utils, userSe
         }
 
         scope.typeName = function(type) {
-            return utils.entityTypeName(type);
+            return type ? types.entityTypeTranslations[type].type : '';
         }
 
         scope.updateValidity = function () {

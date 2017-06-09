@@ -258,17 +258,17 @@ export default class Subscription {
                         } else {
                             subscription.rpcEnabled = subscription.ctx.$scope.widgetEditMode ? true : false;
                         }
-                        subscription.callbacks.rpcStateChanged(this);
+                        subscription.callbacks.rpcStateChanged(subscription);
                         deferred.resolve();
                     } else {
                         subscription.rpcEnabled = false;
-                        subscription.callbacks.rpcStateChanged(this);
+                        subscription.callbacks.rpcStateChanged(subscription);
                         deferred.resolve();
                     }
                 },
                 function fail () {
                     subscription.rpcEnabled = false;
-                    subscription.callbacks.rpcStateChanged(this);
+                    subscription.callbacks.rpcStateChanged(subscription);
                     deferred.resolve();
                 }
             );

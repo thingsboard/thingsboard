@@ -218,9 +218,9 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
             function success(allRelations) {
                 allRelations.forEach(function(relation) {
                     if (vm.direction == vm.types.entitySearchDirection.from) {
-                        relation.toEntityTypeName = $translate.instant(utils.entityTypeName(relation.to.entityType));
+                        relation.toEntityTypeName = $translate.instant(types.entityTypeTranslations[relation.to.entityType].type);
                     } else {
-                        relation.fromEntityTypeName = $translate.instant(utils.entityTypeName(relation.from.entityType));
+                        relation.fromEntityTypeName = $translate.instant(types.entityTypeTranslations[relation.from.entityType].type);
                     }
                 });
                 vm.allRelations = allRelations;

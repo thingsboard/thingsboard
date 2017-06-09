@@ -15,7 +15,7 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
+import entityAliasDialogTemplate from '../entity/entity-alias-dialog.tpl.html';
 import editWidgetTemplate from './edit-widget.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -98,17 +98,14 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
             var singleEntityAlias = {id: null, alias: alias, filter: {}};
 
             $mdDialog.show({
-                controller: 'EntityAliasesController',
+                controller: 'EntityAliasDialogController',
                 controllerAs: 'vm',
-                templateUrl: entityAliasesTemplate,
+                templateUrl: entityAliasDialogTemplate,
                 locals: {
-                    config: {
-                        entityAliases: angular.copy(scope.dashboard.configuration.entityAliases),
-                        widgets: null,
-                        isSingleEntityAlias: true,
-                        singleEntityAlias: singleEntityAlias,
-                        allowedEntityTypes: allowedEntityTypes
-                    }
+                    isAdd: true,
+                    allowedEntityTypes: allowedEntityTypes,
+                    entityAliases: scope.dashboard.configuration.entityAliases,
+                    alias: singleEntityAlias
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,

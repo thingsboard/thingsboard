@@ -15,6 +15,7 @@
  */
 
 import EntityAliasesController from './entity-aliases.controller';
+import EntityAliasDialogController from './entity-alias-dialog.controller';
 import EntityTypeSelectDirective from './entity-type-select.directive';
 import EntitySubtypeSelectDirective from './entity-subtype-select.directive';
 import EntitySubtypeAutocompleteDirective from './entity-subtype-autocomplete.directive';
@@ -22,6 +23,7 @@ import EntityAutocompleteDirective from './entity-autocomplete.directive';
 import EntityListDirective from './entity-list.directive';
 import EntitySelectDirective from './entity-select.directive';
 import EntityFilterDirective from './entity-filter.directive';
+import EntityFilterViewDirective from './entity-filter-view.directive';
 import AliasesEntitySelectPanelController from './aliases-entity-select-panel.controller';
 import AliasesEntitySelectDirective from './aliases-entity-select.directive';
 import AddAttributeDialogController from './attribute/add-attribute-dialog.controller';
@@ -32,6 +34,7 @@ import RelationTypeAutocompleteDirective from './relation/relation-type-autocomp
 
 export default angular.module('thingsboard.entity', [])
     .controller('EntityAliasesController', EntityAliasesController)
+    .controller('EntityAliasDialogController', EntityAliasDialogController)
     .controller('AliasesEntitySelectPanelController', AliasesEntitySelectPanelController)
     .controller('AddAttributeDialogController', AddAttributeDialogController)
     .controller('AddWidgetToDashboardDialogController', AddWidgetToDashboardDialogController)
@@ -42,6 +45,7 @@ export default angular.module('thingsboard.entity', [])
     .directive('tbEntityList', EntityListDirective)
     .directive('tbEntitySelect', EntitySelectDirective)
     .directive('tbEntityFilter', EntityFilterDirective)
+    .directive('tbEntityFilterView', EntityFilterViewDirective)
     .directive('tbAliasesEntitySelect', AliasesEntitySelectDirective)
     .directive('tbAttributeTable', AttributeTableDirective)
     .directive('tbRelationTable', RelationTableDirective)

@@ -110,14 +110,12 @@ function DashboardUtils(types, utils, timeService) {
                 deviceAlias.deviceFilter.useFilter ? types.aliasFilterType.entityName.value : types.aliasFilterType.entityList.value;
             if (entityAlias.filter.type == types.aliasFilterType.entityList.value) {
                 entityAlias.filter.entityList = deviceAlias.deviceFilter.deviceList;
-                entityAlias.filter.stateEntity = false;
             } else {
                 entityAlias.filter.entityNameFilter = deviceAlias.deviceFilter.deviceNameFilter;
             }
         } else {
             entityAlias.filter.type = types.aliasFilterType.entityList.value;
             entityAlias.filter.entityList = [deviceAlias.deviceId];
-            entityAlias.filter.stateEntity = false;
         }
         return entityAlias;
     }
@@ -132,7 +130,6 @@ function DashboardUtils(types, utils, timeService) {
             }
             if (entityAlias.filter.type == types.aliasFilterType.entityList.value) {
                 entityAlias.filter.entityList = entityAlias.entityFilter.entityList;
-                entityAlias.filter.stateEntity = false;
             } else {
                 entityAlias.filter.entityNameFilter = entityAlias.entityFilter.entityNameFilter;
             }
@@ -342,7 +339,6 @@ function DashboardUtils(types, utils, timeService) {
     function createSingleEntityFilter(entityType, entityId) {
         return {
             type: types.aliasFilterType.entityList.value,
-            stateEntity: false,
             entityList: [entityId],
             entityType: entityType,
             resolveMultiple: false
