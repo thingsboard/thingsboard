@@ -54,12 +54,12 @@ public class JpaTimeseriesDao implements TimeseriesDao {
     }
 
     @Override
-    public ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry) {
+    public ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl) {
         return null;
     }
 
     @Override
-    public ResultSetFuture savePartition(EntityId entityId, long partition, String key) {
+    public ResultSetFuture savePartition(EntityId entityId, long partition, String key, long ttl) {
         return null;
     }
 

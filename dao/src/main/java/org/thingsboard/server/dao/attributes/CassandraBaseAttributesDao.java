@@ -101,7 +101,7 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
     }
 
     @Override
-    public ResultSetFuture save(EntityId entityId, String attributeType, AttributeKvEntry attribute) {
+    public ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute) {
         BoundStatement stmt = getSaveStmt().bind();
         stmt.setString(0, entityId.getEntityType().name());
         stmt.setUUID(1, entityId.getId());
@@ -124,23 +124,31 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
         } else {
             stmt.setToNull(8);
         }
-        return executeAsyncWrite(stmt);
+        log.trace("Generated save stmt [{}] for entityId {} and attributeType {} and attribute", stmt, entityId, attributeType, attribute);
+        return getFuture(executeAsyncWrite(stmt), rs -> getAttributeKvEntryFromRs(rs));
+    }
+
+    private Void getAttributeKvEntryFromRs(ResultSet rs) {
+        return null;
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> removeAll(EntityId entityId, String attributeType, List<String> keys) {
-        List<ResultSetFuture> futures = keys.stream().map(key -> delete(entityId, attributeType, key)).collect(Collectors.toList());
+    public ListenableFuture<List<Void>> removeAll(EntityId entityId, String attributeType, List<String> keys) {
+        List<ListenableFuture<Void>> futures = keys
+                .stream()
+                .map(key -> delete(entityId, attributeType, key))
+                .collect(Collectors.toList());
         return Futures.allAsList(futures);
     }
 
-    private ResultSetFuture delete(EntityId entityId, String attributeType, String key) {
+    private ListenableFuture<Void> delete(EntityId entityId, String attributeType, String key) {
         Statement delete = QueryBuilder.delete().all().from(ModelConstants.ATTRIBUTES_KV_CF)
                 .where(eq(ENTITY_TYPE_COLUMN, entityId.getEntityType()))
                 .and(eq(ENTITY_ID_COLUMN, entityId.getId()))
                 .and(eq(ATTRIBUTE_TYPE_COLUMN, attributeType))
                 .and(eq(ATTRIBUTE_KEY_COLUMN, key));
         log.debug("Remove request: {}", delete.toString());
-        return getSession().executeAsync(delete);
+        return getFuture(getSession().executeAsync(delete), rs -> getAttributeKvEntryFromRs(rs));
     }
 
     private PreparedStatement getSaveStmt() {

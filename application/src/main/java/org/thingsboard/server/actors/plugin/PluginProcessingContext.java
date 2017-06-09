@@ -93,8 +93,8 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<AttributeKvEntry> attributes, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.attributesService.save(entityId, scope, attributes);
-            Futures.addCallback(rsListFuture, getListCallback(callback, v -> {
+            ListenableFuture<List<Void>> attrKvListFuture = pluginCtx.attributesService.save(entityId, scope, attributes);
+            Futures.addCallback(attrKvListFuture, getListCallback(callback, v -> {
                 if (entityId.getEntityType() == EntityType.DEVICE) {
                     onDeviceAttributesChanged(tenantId, new DeviceId(entityId.getId()), scope, attributes);
                 }
@@ -106,7 +106,7 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void removeAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> future = pluginCtx.attributesService.removeAll(entityId, scope, keys);
+            ListenableFuture<List<Void>> future = pluginCtx.attributesService.removeAll(entityId, scope, keys);
             Futures.addCallback(future, getCallback(callback, v -> null), executor);
             if (entityId.getEntityType() == EntityType.DEVICE) {
                 onDeviceAttributesDeleted(tenantId, new DeviceId(entityId.getId()), keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
@@ -235,10 +235,10 @@ public final class PluginProcessingContext implements PluginContext {
         pluginCtx.toDeviceActor(DeviceAttributesEventNotificationMsg.onUpdate(tenantId, deviceId, scope, values));
     }
 
-    private <T> FutureCallback<List<ResultSet>> getListCallback(final PluginCallback<T> callback, Function<List<ResultSet>, T> transformer) {
-        return new FutureCallback<List<ResultSet>>() {
+    private <T, R> FutureCallback<List<T>> getListCallback(final PluginCallback<R> callback, Function<List<T>, R> transformer) {
+        return new FutureCallback<List<T>>() {
             @Override
-            public void onSuccess(@Nullable List<ResultSet> result) {
+            public void onSuccess(@Nullable List<T> result) {
                 pluginCtx.self().tell(PluginCallbackMessage.onSuccess(callback, transformer.apply(result)), ActorRef.noSender());
             }
 

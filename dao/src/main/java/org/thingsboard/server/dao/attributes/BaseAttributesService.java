@@ -61,10 +61,10 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> save(EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<Void>> save(EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         attributes.forEach(attribute -> validate(attribute));
-        List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(attributes.size());
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(attributes.size());
         for (AttributeKvEntry attribute : attributes) {
             futures.add(attributesDao.save(entityId, scope, attribute));
         }
@@ -72,7 +72,7 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> removeAll(EntityId entityId, String scope, List<String> keys) {
+    public ListenableFuture<List<Void>> removeAll(EntityId entityId, String scope, List<String> keys) {
         validate(entityId, scope);
         return attributesDao.removeAll(entityId, scope, keys);
     }

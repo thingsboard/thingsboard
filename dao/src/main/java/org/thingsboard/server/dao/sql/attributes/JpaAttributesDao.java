@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.attributes;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -50,12 +48,12 @@ public class JpaAttributesDao implements AttributesDao {
     }
 
     @Override
-    public ResultSetFuture save(EntityId entityId, String attributeType, AttributeKvEntry attribute) {
+    public ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute) {
         return null;
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> removeAll(EntityId entityId, String scope, List<String> keys) {
+    public ListenableFuture<List<Void>> removeAll(EntityId entityId, String scope, List<String> keys) {
         return null;
     }
 }

@@ -66,7 +66,6 @@ public abstract class CassandraAbstractDao {
         return execute(statement, defaultWriteLevel);
     }
 
-
     protected ResultSetFuture executeAsyncRead(Statement statement) {
         return executeAsync(statement, defaultReadLevel);
     }

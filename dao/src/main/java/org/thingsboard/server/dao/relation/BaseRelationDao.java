@@ -298,16 +298,6 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         return getFuture(rsFuture, rs -> rs != null ? rs.wasApplied() : false);
     }
 
-    private <T> ListenableFuture<T> getFuture(ResultSetFuture future, java.util.function.Function<ResultSet, T> transformer) {
-        return Futures.transform(future, new Function<ResultSet, T>() {
-            @Nullable
-            @Override
-            public T apply(@Nullable ResultSet input) {
-                return transformer.apply(input);
-            }
-        }, readResultsProcessingExecutor);
-    }
-
     private List<EntityRelation> getEntityRelations(ResultSet rs) {
         List<Row> rows = rs.all();
         List<EntityRelation> entries = new ArrayList<>(rows.size());
