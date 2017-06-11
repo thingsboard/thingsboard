@@ -239,7 +239,7 @@ public class DefaultActorServiceTest {
         List<TsKvEntry> expected = new ArrayList<>();
         expected.add(new BasicTsKvEntry(ts, entry1));
         expected.add(new BasicTsKvEntry(ts, entry2));
-        verify(tsService, Mockito.timeout(5000)).save(deviceId, expected);
+        verify(tsService, Mockito.timeout(5000)).save(deviceId, expected, 0L);
     }
 
 }

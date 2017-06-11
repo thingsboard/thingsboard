@@ -103,7 +103,7 @@ public class RuleControllerTest extends AbstractControllerTest {
                 "\"name\":\"TelemetryFilter\", " +
                 "\"configuration\": {\"messageTypes\":[\"POST_TELEMETRY\",\"POST_ATTRIBUTES\",\"GET_ATTRIBUTES\"]}}]"));
         doPost("/api/rule", rule).andExpect(status().isBadRequest());
-        rule.setAction(mapper.readTree("{\"clazz\":\"org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction\", \"name\":\"TelemetryMsgConverterAction\", \"configuration\":{}}"));
+        rule.setAction(mapper.readTree("{\"clazz\":\"org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction\", \"name\":\"TelemetryMsgConverterAction\", \"configuration\":{\"timeUnit\":\"DAYS\", \"ttlValue\":1}}"));
 
         RuleMetaData savedRule = doPost("/api/rule", rule, RuleMetaData.class);
         Assert.assertNotNull(savedRule);
@@ -240,7 +240,8 @@ public class RuleControllerTest extends AbstractControllerTest {
         rule.setFilters(mapper.readTree("[{\"clazz\":\"org.thingsboard.server.extensions.core.filter.MsgTypeFilter\", " +
                 "\"name\":\"TelemetryFilter\", " +
                 "\"configuration\": {\"messageTypes\":[\"POST_TELEMETRY\",\"POST_ATTRIBUTES\",\"GET_ATTRIBUTES\"]}}]"));
-        rule.setAction(mapper.readTree("{\"clazz\":\"org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction\", \"name\":\"TelemetryMsgConverterAction\", \"configuration\":{}}"));
+        rule.setAction(mapper.readTree("{\"clazz\":\"org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction\", \"name\":\"TelemetryMsgConverterAction\", " +
+                "\"configuration\":{\"timeUnit\":\"DAYS\", \"ttlValue\":1}}"));
         return rule;
     }
 }
