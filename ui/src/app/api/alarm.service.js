@@ -91,7 +91,7 @@ function AlarmService($http, $q, $interval, $filter) {
         return deferred.promise;
     }
 
-    function getAlarms(entityType, entityId, pageLink, alarmStatus, ascOrder, config) {
+    function getAlarms(entityType, entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, ascOrder, config) {
         var deferred = $q.defer();
         var url = '/api/alarm/' + entityType + '/' + entityId + '?limit=' + pageLink.limit;
 
@@ -104,8 +104,14 @@ function AlarmService($http, $q, $interval, $filter) {
         if (angular.isDefined(pageLink.idOffset)) {
             url += '&offset=' + pageLink.idOffset;
         }
+        if (alarmSearchStatus) {
+            url += '&searchStatus=' + alarmSearchStatus;
+        }
         if (alarmStatus) {
             url += '&status=' + alarmStatus;
+        }
+        if (fetchOriginator) {
+            url += '&fetchOriginator=' + ((fetchOriginator===true) ? 'true' : 'false');
         }
         if (angular.isDefined(ascOrder) && ascOrder != null) {
             url += '&ascOrder=' + (ascOrder ? 'true' : 'false');
@@ -121,7 +127,8 @@ function AlarmService($http, $q, $interval, $filter) {
 
     function fetchAlarms(alarmsQuery, pageLink, deferred, alarmsList) {
         getAlarms(alarmsQuery.entityType, alarmsQuery.entityId,
-            pageLink, alarmsQuery.alarmStatus, false, {ignoreLoading: true}).then(
+            pageLink, alarmsQuery.alarmSearchStatus, alarmsQuery.alarmStatus,
+            alarmsQuery.fetchOriginator, false, {ignoreLoading: true}).then(
             function success(alarms) {
                 if (!alarmsList) {
                     alarmsList = [];
@@ -171,7 +178,9 @@ function AlarmService($http, $q, $interval, $filter) {
         var alarmsQuery = {
             entityType: entityType,
             entityId: entityId,
+            alarmSearchStatus: null,
             alarmStatus: alarmStatus,
+            fetchOriginator: false,
             interval: interval,
             limit: limit,
             onAlarms: onAlarms

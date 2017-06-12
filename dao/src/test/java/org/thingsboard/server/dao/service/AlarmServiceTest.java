@@ -22,10 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmQuery;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -117,7 +114,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
         Alarm created = alarmService.createOrUpdateAlarm(alarm);
 
         // Check child relation
-        TimePageData<Alarm> alarms = alarmService.findAlarms(AlarmQuery.builder()
+        TimePageData<AlarmInfo> alarms = alarmService.findAlarms(AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0L, System.currentTimeMillis(), false)

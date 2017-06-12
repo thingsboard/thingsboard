@@ -65,6 +65,13 @@ export default angular.module('thingsboard.types', [])
                 clearedUnack: "CLEARED_UNACK",
                 clearedAck: "CLEARED_ACK"
             },
+            alarmSearchStatus: {
+                any: "ANY",
+                active: "ACTIVE",
+                cleared: "CLEARED",
+                ack: "ACK",
+                unack: "UNACK"
+            },
             aliasFilterType: {
                 entityList: {
                     value: 'entityList',

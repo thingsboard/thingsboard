@@ -30,4 +30,13 @@ public enum AlarmStatus {
         return this == CLEARED_ACK || this == CLEARED_UNACK;
     }
 
+    public AlarmSearchStatus getClearSearchStatus() {
+        return this.isCleared() ? AlarmSearchStatus.CLEARED : AlarmSearchStatus.ACTIVE;
+    }
+
+    public AlarmSearchStatus getAckSearchStatus() {
+        return this.isAck() ? AlarmSearchStatus.ACK : AlarmSearchStatus.UNACK;
+    }
+
+
 }
