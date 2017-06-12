@@ -178,9 +178,14 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                         eq(ModelConstants.RELATION_TYPE_GROUP_PROPERTY, typeGroup.name()),
                         eq(ModelConstants.RELATION_TYPE_PROPERTY, relationType),
                         eq(ModelConstants.RELATION_TO_TYPE_PROPERTY, childType.name())),
-                Arrays.asList(QueryBuilder.asc(ModelConstants.RELATION_TYPE_GROUP_PROPERTY),
-                        QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY),
-                        QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)),
+                Arrays.asList(
+                        pageLink.isAscOrder() ? QueryBuilder.desc(ModelConstants.RELATION_TYPE_GROUP_PROPERTY) :
+                                QueryBuilder.asc(ModelConstants.RELATION_TYPE_GROUP_PROPERTY),
+                        pageLink.isAscOrder() ? QueryBuilder.desc(ModelConstants.RELATION_TYPE_PROPERTY) :
+                                QueryBuilder.asc(ModelConstants.RELATION_TYPE_PROPERTY),
+                        pageLink.isAscOrder() ? QueryBuilder.desc(ModelConstants.RELATION_TO_TYPE_PROPERTY) :
+                                QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)
+                ),
                 pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
         return getFuture(executeAsyncRead(query), rs -> getEntityRelations(rs));
     }

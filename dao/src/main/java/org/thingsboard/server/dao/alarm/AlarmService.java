@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.alarm;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.page.TimePageData;
 
@@ -34,6 +35,6 @@ public interface AlarmService {
 
     ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
 
-    ListenableFuture<TimePageData<Alarm>> findAlarms(AlarmQuery query);
+    ListenableFuture<TimePageData<AlarmInfo>> findAlarms(AlarmQuery query);
 
 }

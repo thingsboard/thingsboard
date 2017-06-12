@@ -53,6 +53,21 @@ public class Alarm extends BaseData<AlarmId> implements HasName {
         super(id);
     }
 
+    public Alarm(Alarm alarm) {
+        super(alarm.getId());
+        this.tenantId = alarm.getTenantId();
+        this.type = alarm.getType();
+        this.originator = alarm.getOriginator();
+        this.severity = alarm.getSeverity();
+        this.status = alarm.getStatus();
+        this.startTs = alarm.getStartTs();
+        this.endTs = alarm.getEndTs();
+        this.ackTs = alarm.getAckTs();
+        this.clearTs = alarm.getClearTs();
+        this.details = alarm.getDetails();
+        this.propagate = alarm.isPropagate();
+    }
+
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
