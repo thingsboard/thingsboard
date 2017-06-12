@@ -39,6 +39,9 @@ export default class Subscription {
         this.cafs = {};
         this.registrations = [];
 
+        var subscription = this;
+        var deferred = this.ctx.$q.defer();
+
         if (this.type === this.ctx.types.widgetType.rpc.value) {
             this.callbacks.rpcStateChanged = this.callbacks.rpcStateChanged || function(){};
             this.callbacks.onRpcSuccess = this.callbacks.onRpcSuccess || function(){};
@@ -56,7 +59,11 @@ export default class Subscription {
             this.rpcEnabled = false;
             this.executingRpcRequest = false;
             this.executingPromises = [];
-            this.initRpc();
+            this.initRpc().then(
+                function() {
+                    deferred.resolve(subscription);
+                }
+            );
         } else {
             this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || function(){};
             this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || function(){};
@@ -66,6 +73,15 @@ export default class Subscription {
 
             this.datasources = this.ctx.utils.validateDatasources(options.datasources);
             this.datasourceListeners = [];
+
+            /*
+             *   data = array of datasourceData
+             *   datasourceData = {
+             *   			tbDatasource,
+             *   			dataKey,     { name, config }
+             *   			data = array of [time, value]
+             *   }
+             */
             this.data = [];
             this.hiddenData = [];
             this.originalTimewindow = null;
@@ -103,11 +119,41 @@ export default class Subscription {
                 this.legendConfig.showMax === true ||
                 this.legendConfig.showAvg === true ||
                 this.legendConfig.showTotal === true);
-            this.initDataSubscription();
+            this.initDataSubscription().then(
+                function success() {
+                    deferred.resolve(subscription);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
         }
+
+        return deferred.promise;
     }
 
     initDataSubscription() {
+        var deferred = this.ctx.$q.defer();
+        if (!this.ctx.aliasController) {
+            this.configureData();
+            deferred.resolve();
+        } else {
+            var subscription = this;
+            this.ctx.aliasController.resolveDatasources(this.datasources).then(
+                function success(datasources) {
+                    subscription.datasources = datasources;
+                    subscription.configureData();
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    configureData() {
         var dataIndex = 0;
         for (var i = 0; i < this.datasources.length; i++) {
             var datasource = this.datasources[i];
@@ -199,21 +245,46 @@ export default class Subscription {
     }
 
     initRpc() {
+        var deferred = this.ctx.$q.defer();
         if (this.targetDeviceAliasIds && this.targetDeviceAliasIds.length > 0) {
             this.targetDeviceAliasId = this.targetDeviceAliasIds[0];
-            if (this.ctx.aliasesInfo.entityAliases[this.targetDeviceAliasId]) {
-                this.targetDeviceId = this.ctx.aliasesInfo.entityAliases[this.targetDeviceAliasId].entityId;
+            var subscription = this;
+            this.ctx.aliasController.getAliasInfo(this.targetDeviceAliasId).then(
+                function success(aliasInfo) {
+                    if (aliasInfo.currentEntity && aliasInfo.currentEntity.entityType == subscription.ctx.types.entityType.device) {
+                        subscription.targetDeviceId = aliasInfo.currentEntity.id;
+                        if (subscription.targetDeviceId) {
+                            subscription.rpcEnabled = true;
+                        } else {
+                            subscription.rpcEnabled = subscription.ctx.$scope.widgetEditMode ? true : false;
+                        }
+                        subscription.callbacks.rpcStateChanged(subscription);
+                        deferred.resolve();
+                    } else {
+                        subscription.rpcEnabled = false;
+                        subscription.callbacks.rpcStateChanged(subscription);
+                        deferred.resolve();
+                    }
+                },
+                function fail () {
+                    subscription.rpcEnabled = false;
+                    subscription.callbacks.rpcStateChanged(subscription);
+                    deferred.resolve();
+                }
+            );
+        } else  {
+            if (this.targetDeviceIds && this.targetDeviceIds.length > 0) {
+                this.targetDeviceId = this.targetDeviceIds[0];
             }
-        } else if (this.targetDeviceIds && this.targetDeviceIds.length > 0) {
-            this.targetDeviceId = this.targetDeviceIds[0];
+            if (this.targetDeviceId) {
+                this.rpcEnabled = true;
+            } else {
+                this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
+            }
+            this.callbacks.rpcStateChanged(this);
+            deferred.resolve();
         }
-
-        if (this.targetDeviceId) {
-            this.rpcEnabled = true;
-        } else {
-            this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
-        }
-        this.callbacks.rpcStateChanged(this);
+        return deferred.promise;
     }
 
     clearRpcError() {
@@ -319,11 +390,11 @@ export default class Subscription {
         this.onDataUpdated();
     }
 
-    onAliasesChanged() {
+    onAliasesChanged(aliasIds) {
         if (this.type === this.ctx.types.widgetType.rpc.value) {
-            this.checkRpcTarget();
+            return this.checkRpcTarget(aliasIds);
         } else {
-            this.checkSubscriptions();
+            return this.checkSubscriptions(aliasIds);
         }
     }
 
@@ -481,39 +552,6 @@ export default class Subscription {
             var datasource = this.datasources[i];
             if (angular.isFunction(datasource))
                 continue;
-            var entityId = null;
-            var entityType = null;
-            if (datasource.type === this.ctx.types.datasourceType.entity) {
-                var aliasName = null;
-                var entityName = null;
-                if (datasource.entityId) {
-                    entityId = datasource.entityId;
-                    entityType = datasource.entityType;
-                    datasource.name = datasource.entityName;
-                    aliasName = datasource.entityName;
-                    entityName = datasource.entityName;
-                } else if (datasource.entityAliasId) {
-                    if (this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId]) {
-                        entityId = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].entityId;
-                        entityType = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].entityType;
-                        datasource.name = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].alias;
-                        aliasName = this.ctx.aliasesInfo.entityAliases[datasource.entityAliasId].alias;
-                        entityName = '';
-                        var entitiesInfo = this.ctx.aliasesInfo.entityAliasesInfo[datasource.entityAliasId];
-                        for (var d = 0; d < entitiesInfo.length; d++) {
-                            if (entitiesInfo[d].id === entityId) {
-                                entityName = entitiesInfo[d].name;
-                                break;
-                            }
-                        }
-                    }
-                }
-            } else {
-                datasource.name = datasource.name || this.ctx.types.datasourceType.function;
-            }
-            for (var dk = 0; dk < datasource.dataKeys.length; dk++) {
-                updateDataKeyLabel(datasource.dataKeys[dk], datasource.name, entityName, aliasName);
-            }
 
             var subscription = this;
 
@@ -521,8 +559,8 @@ export default class Subscription {
                 subscriptionType: this.type,
                 subscriptionTimewindow: this.subscriptionTimewindow,
                 datasource: datasource,
-                entityType: entityType,
-                entityId: entityId,
+                entityType: datasource.entityType,
+                entityId: datasource.entityId,
                 dataUpdated: function (data, datasourceIndex, dataKeyIndex, apply) {
                     subscription.dataUpdated(data, datasourceIndex, dataKeyIndex, apply);
                 },
@@ -544,6 +582,10 @@ export default class Subscription {
 
             this.datasourceListeners.push(listener);
             this.ctx.datasourceService.subscribeToDatasource(listener);
+            if (datasource.unresolvedStateEntity) {
+                this.notifyDataLoaded();
+                this.onDataUpdated();
+            }
         }
     }
 
@@ -557,48 +599,26 @@ export default class Subscription {
         }
     }
 
-    checkRpcTarget() {
-        var deviceId = null;
-        if (this.ctx.aliasesInfo.entityAliases[this.targetDeviceAliasId]) {
-            deviceId = this.ctx.aliasesInfo.entityAliases[this.targetDeviceAliasId].entityId;
-        }
-        if (!angular.equals(deviceId, this.targetDeviceId)) {
-            this.targetDeviceId = deviceId;
-            if (this.targetDeviceId) {
-                this.rpcEnabled = true;
-            } else {
-                this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
-            }
-            this.callbacks.rpcStateChanged(this);
+    checkRpcTarget(aliasIds) {
+        if (aliasIds.indexOf(this.targetDeviceAliasId) > -1) {
+            return true;
+        } else {
+            return false;
         }
     }
 
-    checkSubscriptions() {
+    checkSubscriptions(aliasIds) {
         var subscriptionsChanged = false;
         for (var i = 0; i < this.datasourceListeners.length; i++) {
             var listener = this.datasourceListeners[i];
-            var entityId = null;
-            var entityType = null;
-            var aliasName = null;
-            if (listener.datasource.type === this.ctx.types.datasourceType.entity) {
-                if (listener.datasource.entityAliasId &&
-                    this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId]) {
-                    entityId = this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId].entityId;
-                    entityType = this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId].entityType;
-                    aliasName = this.ctx.aliasesInfo.entityAliases[listener.datasource.entityAliasId].alias;
-                }
-                if (!angular.equals(entityId, listener.entityId) ||
-                    !angular.equals(entityType, listener.entityType) ||
-                    !angular.equals(aliasName, listener.datasource.name)) {
+            if (listener.datasource.entityAliasId) {
+                if (aliasIds.indexOf(listener.datasource.entityAliasId) > -1) {
                     subscriptionsChanged = true;
                     break;
                 }
             }
         }
-        if (subscriptionsChanged) {
-            this.unsubscribe();
-            this.subscribe();
-        }
+        return subscriptionsChanged;
     }
 
     destroy() {
@@ -615,29 +635,6 @@ export default class Subscription {
         this.registrations = [];
     }
 
-}
-
-const varsRegex = /\$\{([^\}]*)\}/g;
-
-function updateDataKeyLabel(dataKey, dsName, entityName, aliasName) {
-    var pattern = dataKey.pattern;
-    var label = dataKey.pattern;
-    var match = varsRegex.exec(pattern);
-    while (match !== null) {
-        var variable = match[0];
-        var variableName = match[1];
-        if (variableName === 'dsName') {
-            label = label.split(variable).join(dsName);
-        } else if (variableName === 'entityName') {
-            label = label.split(variable).join(entityName);
-        } else if (variableName === 'deviceName') {
-            label = label.split(variable).join(entityName);
-        } else if (variableName === 'aliasName') {
-            label = label.split(variable).join(aliasName);
-        }
-        match = varsRegex.exec(pattern);
-    }
-    dataKey.label = label;
 }
 
 function calculateMin(data) {

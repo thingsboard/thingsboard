@@ -15,15 +15,10 @@
     limitations under the License.
 
 -->
-<fieldset ng-disabled="loading">
-	<tb-widget-config widget-type="widget.type"
-					  ng-model="widgetConfig"
-					  is-data-enabled="isDataEnabled"
-					  widget-settings-schema="settingsSchema"
-					  datakey-settings-schema="dataKeySettingsSchema"
-					  alias-controller="aliasController"
-					  functions-only="functionsOnly"
-					  fetch-entity-keys="fetchEntityKeys(entityAliasId, query, type)"
-					  on-create-entity-alias="createEntityAlias(event, alias, allowedEntityTypes)"
-					  the-form="theForm"></tb-widget-config>
-</fieldset>
+
+<div layout='column' class="tb-entity-filter-view">
+    <div ng-if="!filter || !filter.type" class="entity-filter-empty" translate>alias.no-entity-filter-specified</div>
+    <div ng-if="filter && filter.type" layout="column">
+        <div class="entity-filter-value">{{ filterDisplayValue }}</div>
+    </div>
+</div>

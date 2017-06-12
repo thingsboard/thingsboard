@@ -18,12 +18,12 @@
 <md-content flex layout="column">
     <section flex layout="column">
         <md-content flex class="md-padding" layout="column">
-            <div flex layout="row" ng-repeat="(aliasId, entityAlias) in vm.entityAliases">
+            <div flex layout="row" ng-repeat="(aliasId, entityAliasInfo) in vm.entityAliasesInfo">
                 <md-input-container flex>
-                    <label>{{entityAlias.alias}}</label>
-                    <md-select ng-model="vm.entityAliases[aliasId].entityId">
-                        <md-option ng-repeat="entityInfo in vm.entityAliasesInfo[aliasId]" ng-value="entityInfo.id">
-                            {{entityInfo.name}}
+                    <label>{{entityAliasInfo.alias}}</label>
+                    <md-select ng-model="entityAliasInfo.selectedId" ng-change="vm.currentAliasEntityChanged(aliasId, entityAliasInfo.selectedId)">
+                        <md-option ng-repeat="resolvedEntity in entityAliasInfo.resolvedEntities" ng-value="resolvedEntity.id">
+                            {{resolvedEntity.name}}
                         </md-option>
                     </md-select>
                 </md-input-container>

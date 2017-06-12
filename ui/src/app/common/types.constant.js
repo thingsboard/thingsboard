@@ -65,6 +65,40 @@ export default angular.module('thingsboard.types', [])
                 clearedUnack: "CLEARED_UNACK",
                 clearedAck: "CLEARED_ACK"
             },
+            aliasFilterType: {
+                entityList: {
+                    value: 'entityList',
+                    name: 'alias.filter-type-entity-list'
+                },
+                entityName: {
+                    value: 'entityName',
+                    name: 'alias.filter-type-entity-name'
+                },
+                stateEntity: {
+                    value: 'stateEntity',
+                    name: 'alias.filter-type-state-entity'
+                },
+                assetType: {
+                    value: 'assetType',
+                    name: 'alias.filter-type-asset-type'
+                },
+                deviceType: {
+                    value: 'deviceType',
+                    name: 'alias.filter-type-device-type'
+                },
+                relationsQuery: {
+                    value: 'relationsQuery',
+                    name: 'alias.filter-type-relations-query'
+                },
+                assetSearchQuery: {
+                    value: 'assetSearchQuery',
+                    name: 'alias.filter-type-asset-search-query'
+                },
+                deviceSearchQuery: {
+                    value: 'deviceSearchQuery',
+                    name: 'alias.filter-type-device-search-query'
+                }
+            },
             position: {
                 top: {
                     value: "top",
@@ -108,6 +142,62 @@ export default angular.module('thingsboard.types', [])
                 user: "USER",
                 dashboard: "DASHBOARD",
                 alarm: "ALARM"
+            },
+            entityTypeTranslations: {
+                "DEVICE": {
+                    type: 'entity.type-device',
+                    typePlural: 'entity.type-devices',
+                    list: 'entity.list-of-devices',
+                    nameStartsWith: 'entity.device-name-starts-with'
+                },
+                "ASSET": {
+                    type: 'entity.type-asset',
+                    typePlural: 'entity.type-assets',
+                    list: 'entity.list-of-assets',
+                    nameStartsWith: 'entity.asset-name-starts-with'
+                },
+                "RULE": {
+                    type: 'entity.type-rule',
+                    typePlural: 'entity.type-rules',
+                    list: 'entity.list-of-rules',
+                    nameStartsWith: 'entity.rule-name-starts-with'
+                },
+                "PLUGIN": {
+                    type: 'entity.type-plugin',
+                    typePlural: 'entity.type-plugins',
+                    list: 'entity.list-of-plugins',
+                    nameStartsWith: 'entity.plugin-name-starts-with'
+                },
+                "TENANT": {
+                    type: 'entity.type-tenant',
+                    typePlural: 'entity.type-tenants',
+                    list: 'entity.list-of-tenants',
+                    nameStartsWith: 'entity.tenant-name-starts-with'
+                },
+                "CUSTOMER": {
+                    type: 'entity.type-customer',
+                    typePlural: 'entity.type-customers',
+                    list: 'entity.list-of-customers',
+                    nameStartsWith: 'entity.customer-name-starts-with'
+                },
+                "USER": {
+                    type: 'entity.type-user',
+                    typePlural: 'entity.type-users',
+                    list: 'entity.list-of-users',
+                    nameStartsWith: 'entity.user-name-starts-with'
+                },
+                "DASHBOARD": {
+                    type: 'entity.type-dashboard',
+                    typePlural: 'entity.type-dashboards',
+                    list: 'entity.list-of-dashboards',
+                    nameStartsWith: 'entity.dashboard-name-starts-with'
+                },
+                "ALARM": {
+                    type: 'entity.type-alarm',
+                    typePlural: 'entity.type-alarms',
+                    list: 'entity.list-of-alarms',
+                    nameStartsWith: 'entity.alarm-name-starts-with'
+                }
             },
             entitySearchDirection: {
                 from: "FROM",

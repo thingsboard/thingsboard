@@ -103,10 +103,9 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 var entityAliasId = ngModelCtrl.$viewValue.entityAliasId;
-                if (scope.entityAliases[entityAliasId]) {
-                    scope.entityAlias = {id: entityAliasId, alias: scope.entityAliases[entityAliasId].alias,
-                        entityType: scope.entityAliases[entityAliasId].entityType,
-                        entityId: scope.entityAliases[entityAliasId].entityId};
+                var entityAliases = scope.aliasController.getEntityAliases();
+                if (entityAliases[entityAliasId]) {
+                    scope.entityAlias = entityAliases[entityAliasId];
                 } else {
                     scope.entityAlias = null;
                 }
@@ -182,7 +181,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     dataKey: angular.copy(dataKey),
                     dataKeySettingsSchema: scope.datakeySettingsSchema,
                     entityAlias: scope.entityAlias,
-                    entityAliases: scope.entityAliases
+                    aliasController: scope.aliasController
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,
@@ -236,7 +235,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         require: "^ngModel",
         scope: {
             widgetType: '=',
-            entityAliases: '=',
+            aliasController: '=',
             datakeySettingsSchema: '=',
             generateDataKey: '&',
             fetchEntityKeys: '&',

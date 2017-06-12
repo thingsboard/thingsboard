@@ -71,6 +71,13 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
             }
         }, true);
 
+        scope.$watch('datasourceName', function () {
+            if (ngModelCtrl.$viewValue) {
+                ngModelCtrl.$viewValue.name = scope.datasourceName;
+                scope.updateValidity();
+            }
+        });
+
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 var funcDataKeys = [];
@@ -78,6 +85,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                     funcDataKeys = funcDataKeys.concat(ngModelCtrl.$viewValue.dataKeys);
                 }
                 scope.funcDataKeys = funcDataKeys;
+                scope.datasourceName = ngModelCtrl.$viewValue.name;
             }
         };
 

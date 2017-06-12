@@ -29,6 +29,8 @@ export default function RelationTypeAutocomplete($compile, $templateCache, $q, $
         element.html(template);
 
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
+        scope.hideLabel = angular.isDefined(attrs.hideLabel) ? true : false;
+
         scope.relationType = null;
         scope.relationTypeSearchText = '';
         scope.relationTypes = [];

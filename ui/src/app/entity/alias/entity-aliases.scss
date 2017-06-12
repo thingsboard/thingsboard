@@ -14,23 +14,36 @@
  * limitations under the License.
  */
 
-.tb-entity-filter {
-
-  #relationsQueryFilter {
-    padding-top: 20px;
-    tb-entity-select {
-      min-height: 92px;
+.tb-aliases-dialog {
+  .md-dialog-content {
+    padding-bottom: 0px;
+    padding-top: 0px;
+  }
+  .tb-aliases-header {
+    min-height: 40px;
+    padding: 0 34px 0 34px;
+    margin: 5px;
+    .tb-header-label {
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.570588);
     }
   }
-
-  .tb-root-state-entity-switch {
-    padding-left: 10px;
-    .root-state-entity-switch {
-      margin: 0;
+  .tb-alias {
+    padding: 0 0 0 10px;
+    margin: 5px;
+    md-input-container {
+      margin: 0px;
     }
-    .root-state-entity-label {
-      margin: 5px 0;
+    .tb-resolve-multiple-switch {
+      padding-left: 10px;
+      .resolve-multiple-switch {
+        margin: 0;
+      }
+    }
+    .md-button {
+      &.md-icon-button {
+        margin: 0px;
+      }
     }
   }
-
 }

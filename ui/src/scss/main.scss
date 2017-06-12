@@ -236,6 +236,15 @@ div {
   }
 }
 
+.md-caption {
+  &.tb-required:after {
+    content: ' *';
+    font-size: 10px;
+    vertical-align: top;
+    color: rgba(0,0,0,0.54);
+  }
+}
+
 pre.tb-highlight {
   background-color: #f7f7f7;
   display: block;

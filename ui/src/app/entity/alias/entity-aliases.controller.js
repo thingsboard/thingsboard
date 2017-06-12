@@ -15,22 +15,27 @@
  */
 import './entity-aliases.scss';
 
+/* eslint-disable import/no-unresolved, import/default */
+
+import entityAliasDialogTemplate from './entity-alias-dialog.tpl.html';
+
+/* eslint-enable import/no-unresolved, import/default */
+
 /*@ngInject*/
 export default function EntityAliasesController(utils, entityService, toast, $scope, $mdDialog, $document, $q, $translate,
                                                   types, config) {
 
     var vm = this;
 
-    vm.isSingleEntityAlias = config.isSingleEntityAlias;
-    vm.singleEntityAlias = config.singleEntityAlias;
+    vm.types = types;
     vm.entityAliases = [];
     vm.title = config.customTitle ? config.customTitle : 'entity.aliases';
     vm.disableAdd = config.disableAdd;
     vm.aliasToWidgetsMap = {};
     vm.allowedEntityTypes = config.allowedEntityTypes;
 
-    vm.onFilterEntityChanged = onFilterEntityChanged;
     vm.addAlias = addAlias;
+    vm.editAlias = editAlias;
     vm.removeAlias = removeAlias;
 
     vm.cancel = cancel;
@@ -79,51 +84,61 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
             }
         }
 
-        if (vm.isSingleEntityAlias) {
-            checkEntityAlias(vm.singleEntityAlias);
-        }
-
         for (aliasId in config.entityAliases) {
             var entityAlias = config.entityAliases[aliasId];
-            var result = {id: aliasId, alias: entityAlias.alias, entityType: entityAlias.entityType, entityFilter: entityAlias.entityFilter, changed: true};
-            checkEntityAlias(result);
+            var filter = entityAlias.filter;
+            if (!filter) {
+                filter = {
+                    resolveMultiple: false
+                };
+            }
+            if (!filter.resolveMultiple) {
+                filter.resolveMultiple = false;
+            }
+            var result = {id: aliasId, alias: entityAlias.alias, filter: filter};
             vm.entityAliases.push(result);
         }
     }
 
-    function checkEntityAlias(entityAlias) {
-        if (!entityAlias.entityType) {
-            entityAlias.entityType = types.entityType.device;
-        }
-        if (!entityAlias.entityFilter || entityAlias.entityFilter == null) {
-            entityAlias.entityFilter = {
-                useFilter: false,
-                entityNameFilter: '',
-                entityList: [],
-            };
-        }
+    function addAlias($event) {
+        openAliasDialog($event);
     }
 
-    function onFilterEntityChanged(entity, entityAlias) {
-        if (entityAlias) {
-            if (!entityAlias.alias || entityAlias.alias.length == 0) {
-                entityAlias.changed = false;
-            }
-            if (!entityAlias.changed && entity && entityAlias.entityType) {
-                entityAlias.alias = entity.name;
-            }
-        }
+    function editAlias($event, entityAlias) {
+        openAliasDialog($event, entityAlias);
     }
 
-    function addAlias() {
-        var aliasId = 0;
-        for (var a in vm.entityAliases) {
-            aliasId = Math.max(vm.entityAliases[a].id, aliasId);
+    function openAliasDialog($event, entityAlias) {
+        var isAdd = entityAlias ? false : true;
+        var aliasIndex;
+        if (!isAdd) {
+            aliasIndex = vm.entityAliases.indexOf(entityAlias);
         }
-        aliasId++;
-        var entityAlias = {id: aliasId, alias: '', entityType: types.entityType.device,
-            entityFilter: {useFilter: false, entityNameFilter: '', entityList: []}, changed: false};
-        vm.entityAliases.push(entityAlias);
+        $mdDialog.show({
+            controller: 'EntityAliasDialogController',
+            controllerAs: 'vm',
+            templateUrl: entityAliasDialogTemplate,
+            locals: {
+                isAdd: isAdd,
+                allowedEntityTypes: vm.allowedEntityTypes,
+                entityAliases: vm.entityAliases,
+                alias: isAdd ? null : angular.copy(entityAlias)
+            },
+            parent: angular.element($document[0].body),
+            fullscreen: true,
+            skipHide: true,
+            targetEvent: $event
+        }).then(function (alias) {
+            if (isAdd) {
+                vm.entityAliases.push(alias);
+            } else {
+                vm.entityAliases[aliasIndex] = alias;
+            }
+            if ($scope.theForm) {
+                $scope.theForm.$setDirty();
+            }
+        }, function () {
+        });
     }
 
     function removeAlias($event, entityAlias) {
@@ -160,61 +175,36 @@ export default function EntityAliasesController(utils, entityService, toast, $sc
         $mdDialog.cancel();
     }
 
-    function cleanupEntityFilter(entityFilter) {
-        if (entityFilter.useFilter) {
-            entityFilter.entityList = [];
-        } else {
-            entityFilter.entityNameFilter = '';
-        }
-        return entityFilter;
-    }
-
     function save() {
 
         var entityAliases = {};
         var uniqueAliasList = {};
 
         var valid = true;
-        var aliasId, maxAliasId;
-        var alias;
-        var i;
+        var message, aliasId, alias, filter;
 
-        if (vm.isSingleEntityAlias) {
-            maxAliasId = 0;
-            vm.singleEntityAlias.entityFilter = cleanupEntityFilter(vm.singleEntityAlias.entityFilter);
-            for (i = 0; i < vm.entityAliases.length; i ++) {
-                aliasId = vm.entityAliases[i].id;
-                alias = vm.entityAliases[i].alias;
-                if (alias === vm.singleEntityAlias.alias) {
-                    valid = false;
-                    break;
-                }
-                maxAliasId = Math.max(aliasId, maxAliasId);
-            }
-            maxAliasId++;
-            vm.singleEntityAlias.id = maxAliasId;
-        } else {
-            for (i = 0; i < vm.entityAliases.length; i++) {
-                aliasId = vm.entityAliases[i].id;
-                alias = vm.entityAliases[i].alias;
-                if (!uniqueAliasList[alias]) {
-                    uniqueAliasList[alias] = alias;
-                    entityAliases[aliasId] = {alias: alias, entityType: vm.entityAliases[i].entityType, entityFilter: cleanupEntityFilter(vm.entityAliases[i].entityFilter)};
-                } else {
-                    valid = false;
-                    break;
-                }
+        for (var i = 0; i < vm.entityAliases.length; i++) {
+            aliasId = vm.entityAliases[i].id;
+            alias = vm.entityAliases[i].alias;
+            filter = vm.entityAliases[i].filter;
+            if (uniqueAliasList[alias]) {
+                valid = false;
+                message = $translate.instant('entity.duplicate-alias-error', {alias: alias});
+                break;
+            } else if (!filter || !filter.type) {
+                valid = false;
+                message = $translate.instant('entity.missing-entity-filter-error', {alias: alias});
+                break;
+            } else {
+                uniqueAliasList[alias] = alias;
+                entityAliases[aliasId] = {id: aliasId, alias: alias, filter: filter};
             }
         }
         if (valid) {
             $scope.theForm.$setPristine();
-            if (vm.isSingleEntityAlias) {
-                $mdDialog.hide(vm.singleEntityAlias);
-            } else {
-                $mdDialog.hide(entityAliases);
-            }
+            $mdDialog.hide(entityAliases);
         } else {
-            toast.showError($translate.instant('entity.duplicate-alias-error', {alias: alias}));
+            toast.showError(message);
         }
     }
 

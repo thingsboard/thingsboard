@@ -31,7 +31,7 @@ export default angular.module('thingsboard.directives.entityAliasSelect', [])
     .name;
 
 /*@ngInject*/
-function EntityAliasSelect($compile, $templateCache, $mdConstant) {
+function EntityAliasSelect($compile, $templateCache, $mdConstant, entityService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entityAliasSelectTemplate);
@@ -49,19 +49,18 @@ function EntityAliasSelect($compile, $templateCache, $mdConstant) {
             ngModelCtrl.$setValidity('entityAlias', valid);
         };
 
-        scope.$watch('entityAliases', function () {
+        scope.$watch('aliasController', function () {
             scope.entityAliasList = [];
-            for (var aliasId in scope.entityAliases) {
+            var entityAliases = scope.aliasController.getEntityAliases();
+            for (var aliasId in entityAliases) {
                 if (scope.allowedEntityTypes) {
-                    if (scope.allowedEntityTypes.indexOf(scope.entityAliases[aliasId].entityType) === -1) {
+                    if (!entityService.filterAliasByEntityTypes(entityAliases[aliasId], scope.allowedEntityTypes)) {
                         continue;
                     }
                 }
-                var entityAlias = {id: aliasId, alias: scope.entityAliases[aliasId].alias,
-                    entityType: scope.entityAliases[aliasId].entityType, entityId: scope.entityAliases[aliasId].entityId};
-                scope.entityAliasList.push(entityAlias);
+                scope.entityAliasList.push(entityAliases[aliasId]);
             }
-        }, true);
+        });
 
         scope.$watch('entityAlias', function () {
             scope.updateView();
@@ -141,7 +140,7 @@ function EntityAliasSelect($compile, $templateCache, $mdConstant) {
         link: linker,
         scope: {
             tbRequired: '=?',
-            entityAliases: '=',
+            aliasController: '=',
             allowedEntityTypes: '=?',
             onCreateEntityAlias: '&'
         }

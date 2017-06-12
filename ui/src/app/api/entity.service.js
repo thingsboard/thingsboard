@@ -27,10 +27,14 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         getEntity: getEntity,
         getEntities: getEntities,
         getEntitiesByNameFilter: getEntitiesByNameFilter,
-        processEntityAliases: processEntityAliases,
-        getEntityKeys: getEntityKeys,
+        resolveAlias: resolveAlias,
+        resolveAliasFilter: resolveAliasFilter,
         checkEntityAlias: checkEntityAlias,
-        createDatasoucesFromSubscriptionsInfo: createDatasoucesFromSubscriptionsInfo,
+        filterAliasByEntityTypes: filterAliasByEntityTypes,
+        getAliasFilterTypesByEntityTypes: getAliasFilterTypesByEntityTypes,
+        prepareAllowedEntityTypesList: prepareAllowedEntityTypesList,
+        getEntityKeys: getEntityKeys,
+        createDatasourcesFromSubscriptionsInfo: createDatasourcesFromSubscriptionsInfo,
         getRelatedEntities: getRelatedEntities,
         saveRelatedEntity: saveRelatedEntity,
         getRelatedEntity: getRelatedEntity,
@@ -173,6 +177,54 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return deferred.promise;
     }
 
+    function getSingleTenantByPageLinkPromise(pageLink) {
+        var user = userService.getCurrentUser();
+        var tenantId = user.tenantId;
+        var deferred = $q.defer();
+        tenantService.getTenant(tenantId).then(
+            function success(tenant) {
+                var tenantName = tenant.name;
+                var result = {
+                    data: [],
+                    nextPageLink: pageLink,
+                    hasNext: false
+                };
+                if (tenantName.toLowerCase().startsWith(pageLink.textSearch)) {
+                    result.data.push(tenant);
+                }
+                deferred.resolve(result);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function getSingleCustomerByPageLinkPromise(pageLink) {
+        var user = userService.getCurrentUser();
+        var customerId = user.customerId;
+        var deferred = $q.defer();
+        customerService.getCustomer(customerId).then(
+            function success(customer) {
+                var customerName = customer.name;
+                var result = {
+                    data: [],
+                    nextPageLink: pageLink,
+                    hasNext: false
+                };
+                if (customerName.toLowerCase().startsWith(pageLink.textSearch)) {
+                    result.data.push(customer);
+                }
+                deferred.resolve(result);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
     function getEntitiesByPageLinkPromise(entityType, pageLink, config, subType) {
         var promise;
         var user = userService.getCurrentUser();
@@ -193,10 +245,18 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 }
                 break;
             case types.entityType.tenant:
-                promise = tenantService.getTenants(pageLink);
+                if (user.authority === 'TENANT_ADMIN') {
+                    promise = getSingleTenantByPageLinkPromise(pageLink);
+                } else {
+                    promise = tenantService.getTenants(pageLink);
+                }
                 break;
             case types.entityType.customer:
-                promise = customerService.getCustomers(pageLink);
+                if (user.authority === 'CUSTOMER_USER') {
+                    promise = getSingleCustomerByPageLinkPromise(pageLink);
+                } else {
+                    promise = customerService.getCustomers(pageLink);
+                }
                 break;
             case types.entityType.rule:
                 promise = ruleService.getAllRules(pageLink);
@@ -221,17 +281,21 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return promise;
     }
 
-    function getEntitiesByNameFilter(entityType, entityNameFilter, limit, config, subType) {
-        var deferred = $q.defer();
-        var pageLink = {limit: limit, textSearch: entityNameFilter};
+    function getEntitiesByPageLink(entityType, pageLink, config, subType, data, deferred) {
         var promise = getEntitiesByPageLinkPromise(entityType, pageLink, config, subType);
         if (promise) {
             promise.then(
                 function success(result) {
-                    if (result.data && result.data.length > 0) {
-                        deferred.resolve(result.data);
+                    data = data.concat(result.data);
+                    if (result.hasNext) {
+                        pageLink = result.nextPageLink;
+                        getEntitiesByPageLink(entityType, pageLink, config, subType, data, deferred);
                     } else {
-                        deferred.resolve(null);
+                        if (data && data.length > 0) {
+                            deferred.resolve(data);
+                        } else {
+                            deferred.resolve(null);
+                        }
                     }
                 },
                 function fail() {
@@ -241,92 +305,418 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         } else {
             deferred.resolve(null);
         }
+    }
+
+    function getEntitiesByNameFilter(entityType, entityNameFilter, limit, config, subType) {
+        var deferred = $q.defer();
+        var pageLink = {limit: limit, textSearch: entityNameFilter};
+        if (limit == -1) { // all
+            var data = [];
+            pageLink.limit = 100;
+            getEntitiesByPageLink(entityType, pageLink, config, subType, data, deferred);
+        } else {
+            var promise = getEntitiesByPageLinkPromise(entityType, pageLink, config, subType);
+            if (promise) {
+                promise.then(
+                    function success(result) {
+                        if (result.data && result.data.length > 0) {
+                            deferred.resolve(result.data);
+                        } else {
+                            deferred.resolve(null);
+                        }
+                    },
+                    function fail() {
+                        deferred.resolve(null);
+                    }
+                );
+            } else {
+                deferred.resolve(null);
+            }
+        }
         return deferred.promise;
     }
 
-    function entityToEntityInfo(entityType, entity) {
-        return { name: entity.name, entityType: entityType, id: entity.id.id };
+    function entityToEntityInfo(entity) {
+        return { name: entity.name, entityType: entity.id.entityType, id: entity.id.id };
     }
 
-    function entitiesToEntitiesInfo(entityType, entities) {
+    function entityRelationInfoToEntityInfo(entityRelationInfo, direction) {
+        var entityId = direction == types.entitySearchDirection.from ? entityRelationInfo.to : entityRelationInfo.from;
+        var name = direction == types.entitySearchDirection.from ? entityRelationInfo.toName : entityRelationInfo.fromName;
+        return {
+            name: name,
+            entityType: entityId.entityType,
+            id: entityId.id
+        };
+    }
+
+    function entitiesToEntitiesInfo(entities) {
         var entitiesInfo = [];
         for (var d = 0; d < entities.length; d++) {
-            entitiesInfo.push(entityToEntityInfo(entityType, entities[d]));
+            entitiesInfo.push(entityToEntityInfo(entities[d]));
         }
         return entitiesInfo;
     }
 
-    function processEntityAlias(index, aliasIds, entityAliases, resolution, deferred) {
-        if (index < aliasIds.length) {
-            var aliasId = aliasIds[index];
-            var entityAlias = entityAliases[aliasId];
-            var alias = entityAlias.alias;
-            var entityFilter = entityAlias.entityFilter;
-            if (entityFilter.useFilter) {
-                var entityNameFilter = entityFilter.entityNameFilter;
-                getEntitiesByNameFilter(entityAlias.entityType, entityNameFilter, 100).then(
-                    function(entities) {
-                        if (entities && entities != null) {
-                            var resolvedAlias = {alias: alias, entityType: entityAlias.entityType, entityId: entities[0].id.id};
-                            resolution.aliasesInfo.entityAliases[aliasId] = resolvedAlias;
-                            resolution.aliasesInfo.entityAliasesInfo[aliasId] = entitiesToEntitiesInfo(entityAlias.entityType, entities);
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
-                        } else {
-                            if (!resolution.error) {
-                                resolution.error = 'dashboard.invalid-aliases-config';
-                            }
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
-                        }
-                    });
-            } else {
-                var entityList = entityFilter.entityList;
-                getEntities(entityAlias.entityType, entityList).then(
+    function entityRelationInfosToEntitiesInfo(entityRelations, direction) {
+        var entitiesInfo = [];
+        for (var d = 0; d < entityRelations.length; d++) {
+            entitiesInfo.push(entityRelationInfoToEntityInfo(entityRelations[d], direction));
+        }
+        return entitiesInfo;
+    }
+
+
+    function resolveAlias(entityAlias, stateParams) {
+        var deferred = $q.defer();
+        var filter = entityAlias.filter;
+        resolveAliasFilter(filter, stateParams, -1).then(
+            function (result) {
+                var aliasInfo = {
+                    alias: entityAlias.alias,
+                    stateEntity: result.stateEntity,
+                    resolveMultiple: filter.resolveMultiple
+                };
+                aliasInfo.resolvedEntities = result.entities;
+                aliasInfo.currentEntity = null;
+                if (aliasInfo.resolvedEntities.length) {
+                    aliasInfo.currentEntity = aliasInfo.resolvedEntities[0];
+                }
+                deferred.resolve(aliasInfo);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function resolveAliasFilter(filter, stateParams, maxItems) {
+        var deferred = $q.defer();
+        var result = {
+            entities: [],
+            stateEntity: false
+        };
+        switch (filter.type) {
+            case types.aliasFilterType.entityList.value:
+                getEntities(filter.entityType, filter.entityList).then(
                     function success(entities) {
-                        if (entities && entities.length > 0) {
-                            var resolvedAlias = {alias: alias, entityType: entityAlias.entityType, entityId: entities[0].id.id};
-                            resolution.aliasesInfo.entityAliases[aliasId] = resolvedAlias;
-                            resolution.aliasesInfo.entityAliasesInfo[aliasId] = entitiesToEntitiesInfo(entityAlias.entityType, entities);
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
+                        if (entities && entities.length) {
+                            result.entities = entitiesToEntitiesInfo(entities);
+                            deferred.resolve(result);
                         } else {
-                            if (!resolution.error) {
-                                resolution.error = 'dashboard.invalid-aliases-config';
-                            }
-                            index++;
-                            processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
+                            deferred.reject();
                         }
                     },
                     function fail() {
-                        if (!resolution.error) {
-                            resolution.error = 'dashboard.invalid-aliases-config';
-                        }
-                        index++;
-                        processEntityAlias(index, aliasIds, entityAliases, resolution, deferred);
+                        deferred.reject();
                     }
                 );
-            }
-        } else {
-            deferred.resolve(resolution);
+                break;
+            case types.aliasFilterType.entityName.value:
+                getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems).then(
+                    function success(entities) {
+                        if (entities && entities.length) {
+                            result.entities = entitiesToEntitiesInfo(entities);
+                            deferred.resolve(result);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                break;
+            case types.aliasFilterType.stateEntity.value:
+                result.stateEntity = true;
+                if (stateParams && stateParams.entityId) {
+                    getEntity(stateParams.entityId.entityType, stateParams.entityId.id).then(
+                        function success(entity) {
+                            result.entities = entitiesToEntitiesInfo([entity]);
+                            deferred.resolve(result);
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                } else {
+                    deferred.resolve(result);
+                }
+                break;
+            case types.aliasFilterType.assetType.value:
+                getEntitiesByNameFilter(types.entityType.asset, filter.assetNameFilter, maxItems, null, filter.assetType).then(
+                    function success(entities) {
+                        if (entities && entities.length) {
+                            result.entities = entitiesToEntitiesInfo(entities);
+                            deferred.resolve(result);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                break;
+            case types.aliasFilterType.deviceType.value:
+                getEntitiesByNameFilter(types.entityType.device, filter.deviceNameFilter, maxItems, null, filter.deviceType).then(
+                    function success(entities) {
+                        if (entities && entities.length) {
+                            result.entities = entitiesToEntitiesInfo(entities);
+                            deferred.resolve(result);
+                        } else {
+                            deferred.reject();
+                        }
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                break;
+            case types.aliasFilterType.relationsQuery.value:
+                result.stateEntity = filter.rootStateEntity;
+                var rootEntityType;
+                var rootEntityId;
+                if (result.stateEntity && stateParams && stateParams.entityId) {
+                    rootEntityType = stateParams.entityId.entityType;
+                    rootEntityId = stateParams.entityId.id;
+                } else if (!result.stateEntity) {
+                    rootEntityType = filter.rootEntity.entityType;
+                    rootEntityId = filter.rootEntity.id;
+                }
+                if (rootEntityType && rootEntityId) {
+                    var searchQuery = {
+                        parameters: {
+                            rootId: rootEntityId,
+                            rootType: rootEntityType,
+                            direction: filter.direction
+                        },
+                        filters: filter.filters
+                    };
+                    searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
+                    entityRelationService.findInfoByQuery(searchQuery).then(
+                        function success(allRelations) {
+                            if (allRelations && allRelations.length) {
+                                if (angular.isDefined(maxItems) && maxItems > 0) {
+                                    var limit = Math.min(allRelations.length, maxItems);
+                                    allRelations.length = limit;
+                                }
+                                result.entities = entityRelationInfosToEntitiesInfo(allRelations, filter.direction);
+                                deferred.resolve(result);
+                            } else {
+                                deferred.reject();
+                            }
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                } else {
+                    deferred.resolve(result);
+                }
+                break;
+            case types.aliasFilterType.assetSearchQuery.value:
+            case types.aliasFilterType.deviceSearchQuery.value:
+                result.stateEntity = filter.rootStateEntity;
+                if (result.stateEntity && stateParams && stateParams.entityId) {
+                    rootEntityType = stateParams.entityId.entityType;
+                    rootEntityId = stateParams.entityId.id;
+                } else if (!result.stateEntity) {
+                    rootEntityType = filter.rootEntity.entityType;
+                    rootEntityId = filter.rootEntity.id;
+                }
+                if (rootEntityType && rootEntityId) {
+                    searchQuery = {
+                        parameters: {
+                            rootId: rootEntityId,
+                            rootType: rootEntityType,
+                            direction: filter.direction
+                        },
+                        relationType: filter.relationType
+                    };
+                    searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
+                    var findByQueryPromise;
+                    if (filter.type == types.aliasFilterType.assetSearchQuery.value) {
+                        searchQuery.assetTypes = filter.assetTypes;
+                        findByQueryPromise = assetService.findByQuery(searchQuery, false);
+                    } else if (filter.type == types.aliasFilterType.deviceSearchQuery.value) {
+                        searchQuery.deviceTypes = filter.deviceTypes;
+                        findByQueryPromise = deviceService.findByQuery(searchQuery, false);
+                    }
+                    findByQueryPromise.then(
+                        function success(entities) {
+                            if (entities && entities.length) {
+                                if (angular.isDefined(maxItems) && maxItems > 0) {
+                                    var limit = Math.min(entities.length, maxItems);
+                                    entities.length = limit;
+                                }
+                                result.entities = entitiesToEntitiesInfo(entities);
+                                deferred.resolve(result);
+                            } else {
+                                deferred.reject();
+                            }
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                } else {
+                    deferred.resolve(result);
+                }
+                break;
         }
+        return deferred.promise;
     }
 
-    function processEntityAliases(entityAliases) {
-        var deferred = $q.defer();
-        var resolution = {
-            aliasesInfo: {
-                entityAliases: {},
-                entityAliasesInfo: {}
-            }
-        };
-        var aliasIds = [];
-        if (entityAliases) {
-            for (var aliasId in entityAliases) {
-                aliasIds.push(aliasId);
+    function filterAliasByEntityTypes(entityAlias, entityTypes) {
+        var filter = entityAlias.filter;
+        if (filterAliasFilterTypeByEntityTypes(filter.type, entityTypes)) {
+            switch (filter.type) {
+                case types.aliasFilterType.entityList.value:
+                    return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+                case types.aliasFilterType.entityName.value:
+                    return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
+                case types.aliasFilterType.stateEntity.value:
+                    return true;
+                case types.aliasFilterType.assetType.value:
+                    return entityTypes.indexOf(types.entityType.asset)  > -1 ? true : false;
+                case types.aliasFilterType.deviceType.value:
+                    return entityTypes.indexOf(types.entityType.device)  > -1 ? true : false;
+                case types.aliasFilterType.relationsQuery.value:
+                    if (filter.filters && filter.filters.length) {
+                        var match = false;
+                        for (var f=0;f<filter.filters.length;f++) {
+                            var relationFilter = filter.filters[f];
+                            if (relationFilter.entityTypes && relationFilter.entityTypes.length) {
+                                for (var et=0;et<relationFilter.entityTypes.length;et++) {
+                                    if (entityTypes.indexOf(relationFilter.entityTypes[et]) > -1) {
+                                        match = true;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                match = true;
+                                break;
+                            }
+                        }
+                        return match;
+                    } else {
+                        return true;
+                    }
+                case types.aliasFilterType.assetSearchQuery.value:
+                    return entityTypes.indexOf(types.entityType.asset)  > -1 ? true : false;
+                case types.aliasFilterType.deviceSearchQuery.value:
+                    return entityTypes.indexOf(types.entityType.device)  > -1 ? true : false;
             }
         }
-        processEntityAlias(0, aliasIds, entityAliases, resolution, deferred);
+        return false;
+    }
+
+    function filterAliasFilterTypeByEntityType(aliasFilterType, entityType) {
+        switch (aliasFilterType) {
+            case types.aliasFilterType.entityList.value:
+                return true;
+            case types.aliasFilterType.entityName.value:
+                return true;
+            case types.aliasFilterType.stateEntity.value:
+                return true;
+            case types.aliasFilterType.assetType.value:
+                return entityType === types.entityType.asset;
+            case types.aliasFilterType.deviceType.value:
+                return entityType === types.entityType.device;
+            case types.aliasFilterType.relationsQuery.value:
+                return true;
+            case types.aliasFilterType.assetSearchQuery.value:
+                return entityType === types.entityType.asset;
+            case types.aliasFilterType.deviceSearchQuery.value:
+                return entityType === types.entityType.device;
+        }
+        return false;
+    }
+
+    function filterAliasFilterTypeByEntityTypes(aliasFilterType, entityTypes) {
+        if (!entityTypes || !entityTypes.length) {
+            return true;
+        }
+        var valid = false;
+        entityTypes.forEach(function(entityType) {
+            valid = valid || filterAliasFilterTypeByEntityType(aliasFilterType, entityType);
+        });
+        return valid;
+    }
+
+    function getAliasFilterTypesByEntityTypes(entityTypes) {
+        var allAliasFilterTypes = types.aliasFilterType;
+        if (!entityTypes || !entityTypes.length) {
+            return allAliasFilterTypes;
+        }
+        var result = {};
+        for (var type in allAliasFilterTypes) {
+            var aliasFilterType = allAliasFilterTypes[type];
+            if (filterAliasFilterTypeByEntityTypes(aliasFilterType.value, entityTypes)) {
+                result[type] = aliasFilterType;
+            }
+        }
+        return result;
+    }
+
+    function prepareAllowedEntityTypesList(allowedEntityTypes) {
+        var authority = userService.getAuthority();
+        var entityTypes = {};
+        switch(authority) {
+            case 'SYS_ADMIN':
+                entityTypes.tenant = types.entityType.tenant;
+                entityTypes.rule = types.entityType.rule;
+                entityTypes.plugin = types.entityType.plugin;
+                break;
+            case 'TENANT_ADMIN':
+                entityTypes.device = types.entityType.device;
+                entityTypes.asset = types.entityType.asset;
+                entityTypes.tenant = types.entityType.tenant;
+                entityTypes.customer = types.entityType.customer;
+                entityTypes.rule = types.entityType.rule;
+                entityTypes.plugin = types.entityType.plugin;
+                entityTypes.dashboard = types.entityType.dashboard;
+                break;
+            case 'CUSTOMER_USER':
+                entityTypes.device = types.entityType.device;
+                entityTypes.asset = types.entityType.asset;
+                entityTypes.customer = types.entityType.customer;
+                entityTypes.dashboard = types.entityType.dashboard;
+                break;
+        }
+
+        if (allowedEntityTypes) {
+            for (var entityType in entityTypes) {
+                if (allowedEntityTypes.indexOf(entityTypes[entityType]) === -1) {
+                    delete entityTypes[entityType];
+                }
+            }
+        }
+        return entityTypes;
+    }
+
+
+    function checkEntityAlias(entityAlias) {
+        var deferred = $q.defer();
+        resolveAliasFilter(entityAlias.filter, null, 1).then(
+            function success(result) {
+                if (result.stateEntity) {
+                    deferred.resolve(true);
+                } else {
+                    var entities = result.entities;
+                    if (entities && entities.length) {
+                        deferred.resolve(true);
+                    } else {
+                        deferred.resolve(false);
+                    }
+                }
+            },
+            function fail() {
+                deferred.resolve(false);
+            }
+        );
         return deferred.promise;
     }
 
@@ -354,40 +744,13 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 }
             }
             deferred.resolve(result);
-        }, function fail(response) {
-            deferred.reject(response.data);
+        }, function fail() {
+            deferred.reject();
         });
         return deferred.promise;
     }
 
-    function checkEntityAlias(entityAlias) {
-        var deferred = $q.defer();
-        var entityType = entityAlias.entityType;
-        var entityFilter = entityAlias.entityFilter;
-        var promise;
-        if (entityFilter.useFilter) {
-            var entityNameFilter = entityFilter.entityNameFilter;
-            promise = getEntitiesByNameFilter(entityType, entityNameFilter, 1);
-        } else {
-            var entityList = entityFilter.entityList;
-            promise = getEntities(entityType, entityList);
-        }
-        promise.then(
-            function success(entities) {
-                if (entities && entities.length > 0) {
-                    deferred.resolve(true);
-                } else {
-                    deferred.resolve(false);
-                }
-            },
-            function fail() {
-                deferred.resolve(false);
-            }
-        );
-        return deferred.promise;
-    }
-
-    function createDatasoucesFromSubscriptionsInfo(subscriptionsInfo) {
+    function createDatasourcesFromSubscriptionsInfo(subscriptionsInfo) {
         var deferred = $q.defer();
         var datasources = [];
         processSubscriptionsInfo(0, subscriptionsInfo, datasources, deferred);

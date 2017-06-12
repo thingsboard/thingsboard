@@ -250,6 +250,21 @@ public class EntityRelationController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/relations/info", method = RequestMethod.POST)
+    @ResponseBody
+    public List<EntityRelationInfo> findInfoByQuery(@RequestBody EntityRelationsQuery query) throws ThingsboardException {
+        checkNotNull(query);
+        checkNotNull(query.getParameters());
+        checkNotNull(query.getFilters());
+        checkEntityId(query.getParameters().getEntityId());
+        try {
+            return checkNotNull(relationService.findInfoByQuery(query).get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     private RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {
         RelationTypeGroup result = defaultValue;
         if (strRelationTypeGroup != null && strRelationTypeGroup.trim().length()>0) {

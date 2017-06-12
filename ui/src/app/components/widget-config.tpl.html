@@ -60,7 +60,7 @@
                                          style="padding: 0 0 0 10px; margin: 5px;">
                                         <tb-datasource flex ng-model="datasource.value"
                                                        widget-type="widgetType"
-                                                       entity-aliases="entityAliases"
+                                                       alias-controller="aliasController"
                                                        functions-only="functionsOnly"
                                                        datakey-settings-schema="datakeySettingsSchema"
                                                        generate-data-key="generateDataKey(chip,type)"
@@ -104,7 +104,7 @@
                     <v-pane-content style="padding: 0 5px;">
                         <tb-entity-alias-select flex
                                                 tb-required="widgetType === types.widgetType.rpc.value && !widgetEditMode"
-                                                entity-aliases="entityAliases"
+                                                alias-controller="aliasController"
                                                 allowed-entity-types="[types.entityType.device]"
                                                 ng-model="targetDeviceAlias.value"
                                                 on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias, allowedEntityTypes: allowedEntityTypes})">

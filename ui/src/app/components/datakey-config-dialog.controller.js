@@ -20,14 +20,14 @@ export default angular.module('thingsboard.dialogs.datakeyConfigDialog', [things
     .name;
 
 /*@ngInject*/
-function DatakeyConfigDialogController($scope, $mdDialog, entityService, dataKey, dataKeySettingsSchema, entityAlias, entityAliases) {
+function DatakeyConfigDialogController($scope, $mdDialog, $q, entityService, dataKey, dataKeySettingsSchema, entityAlias, aliasController) {
 
     var vm = this;
 
     vm.dataKey = dataKey;
     vm.dataKeySettingsSchema = dataKeySettingsSchema;
     vm.entityAlias = entityAlias;
-    vm.entityAliases = entityAliases;
+    vm.aliasController = aliasController;
 
     vm.hide = function () {
         $mdDialog.hide();
@@ -38,12 +38,28 @@ function DatakeyConfigDialogController($scope, $mdDialog, entityService, dataKey
     };
 
     vm.fetchEntityKeys = function (entityAliasId, query, type) {
-        var alias = vm.entityAliases[entityAliasId];
-        if (alias) {
-            return entityService.getEntityKeys(alias.entityType, alias.entityId, query, type);
-        } else {
-            return [];
-        }
+        var deferred = $q.defer();
+        vm.aliasController.getAliasInfo(entityAliasId).then(
+            function success(aliasInfo) {
+                var entity = aliasInfo.currentEntity;
+                if (entity) {
+                    entityService.getEntityKeys(entity.entityType, entity.id, query, type).then(
+                        function success(keys) {
+                            deferred.resolve(keys);
+                        },
+                        function fail() {
+                            deferred.resolve([]);
+                        }
+                    );
+                } else {
+                    deferred.resolve([]);
+                }
+            },
+            function fail() {
+                deferred.resolve([]);
+            }
+        );
+        return deferred.promise;
     };
 
     vm.save = function () {

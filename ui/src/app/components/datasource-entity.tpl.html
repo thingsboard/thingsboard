@@ -18,7 +18,7 @@
 <section flex layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
 	   <tb-entity-alias-select
 							  tb-required="true"
-							  entity-aliases="entityAliases"
+							  alias-controller="aliasController"
 							  ng-model="entityAlias"
 							  on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias})">
 	   </tb-entity-alias-select>

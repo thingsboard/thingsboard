@@ -26,7 +26,7 @@
                  md-items="item in fetchRelationTypes(relationTypeSearchText)"
                  md-item-text="item"
                  md-min-length="0"
-                 md-floating-label="{{ 'relation.relation-type' | translate }}"
+                 md-floating-label="{{ tbRequired  ? ('relation.relation-type' | translate) : ( !relationType ? ('relation.any-relation-type' | translate) : ' ') }}"
                  md-select-on-match="true"
                  md-menu-class="tb-relation-type-autocomplete">
     <md-item-template>
