@@ -88,4 +88,146 @@
                    aria-label="{{ 'device.name-starts-with' | translate }}">
         </md-input-container>
     </section>
+    <section layout="column" ng-if="filter.type == types.aliasFilterType.relationsQuery.value" id="relationsQueryFilter">
+        <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
+        <div flex layout="row">
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="!filter.rootStateEntity"
+                              ng-disabled="filter.rootStateEntity"
+                              ng-model="filter.rootEntity">
+            </tb-entity-select>
+            <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
+                <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+                <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                           aria-label="{{ 'alias.root-state-entity' | translate }}">
+                </md-switch>
+            </section>
+        </div>
+        <div flex layout="row">
+            <md-input-container class="md-block" style="min-width: 100px;">
+                <label translate>relation.direction</label>
+                <md-select required ng-model="filter.direction">
+                    <md-option ng-repeat="direction in types.entitySearchDirection" ng-value="direction">
+                        {{ ('relation.search-direction.' + direction) | translate}}
+                    </md-option>
+                </md-select>
+            </md-input-container>
+            <md-input-container flex class="md-block">
+                <label translate>alias.max-relation-level</label>
+                <input name="maxRelationLevel"
+                       type="number"
+                       min="1"
+                       step="1"
+                       placeholder="{{ 'alias.unlimited-level' | translate }}"
+                       ng-model="filter.maxLevel"
+                       aria-label="{{ 'alias.max-relation-level' | translate }}">
+            </md-input-container>
+        </div>
+        <div class="md-caption" style="padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>relation.relation-filters</div>
+        <tb-relation-filters
+                ng-model="filter.filters"
+                allowed-entity-types="allowedEntityTypes">
+        </tb-relation-filters>
+    </section>
+    <section layout="column" ng-if="filter.type == types.aliasFilterType.assetSearchQuery.value" id="assetSearchQueryFilter">
+        <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
+        <div flex layout="row">
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="!filter.rootStateEntity"
+                              ng-disabled="filter.rootStateEntity"
+                              ng-model="filter.rootEntity">
+            </tb-entity-select>
+            <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
+                <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+                <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                           aria-label="{{ 'alias.root-state-entity' | translate }}">
+                </md-switch>
+            </section>
+        </div>
+        <div flex layout="row">
+            <md-input-container class="md-block" style="min-width: 100px;">
+                <label translate>relation.direction</label>
+                <md-select required ng-model="filter.direction">
+                    <md-option ng-repeat="direction in types.entitySearchDirection" ng-value="direction">
+                        {{ ('relation.search-direction.' + direction) | translate}}
+                    </md-option>
+                </md-select>
+            </md-input-container>
+            <md-input-container flex class="md-block">
+                <label translate>alias.max-relation-level</label>
+                <input name="maxRelationLevel"
+                       type="number"
+                       min="1"
+                       step="1"
+                       placeholder="{{ 'alias.unlimited-level' | translate }}"
+                       ng-model="filter.maxLevel"
+                       aria-label="{{ 'alias.max-relation-level' | translate }}">
+            </md-input-container>
+        </div>
+        <div class="md-caption" style="color: rgba(0,0,0,0.57);" translate>relation.relation-type</div>
+        <tb-relation-type-autocomplete flex
+                                       hide-label
+                                       the-form="theForm"
+                                       ng-model="filter.relationType"
+                                       tb-required="false">
+        </tb-relation-type-autocomplete>
+        <div class="md-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>asset.asset-types</div>
+        <tb-entity-subtype-list
+                tb-required="true"
+                entity-type="types.entityType.asset"
+                ng-model="filter.assetTypes">
+        </tb-entity-subtype-list>
+    </section>
+    <section layout="column" ng-if="filter.type == types.aliasFilterType.deviceSearchQuery.value" id="deviceSearchQueryFilter">
+        <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
+        <div flex layout="row">
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="!filter.rootStateEntity"
+                              ng-disabled="filter.rootStateEntity"
+                              ng-model="filter.rootEntity">
+            </tb-entity-select>
+            <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
+                <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+                <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                           aria-label="{{ 'alias.root-state-entity' | translate }}">
+                </md-switch>
+            </section>
+        </div>
+        <div flex layout="row">
+            <md-input-container class="md-block" style="min-width: 100px;">
+                <label translate>relation.direction</label>
+                <md-select required ng-model="filter.direction">
+                    <md-option ng-repeat="direction in types.entitySearchDirection" ng-value="direction">
+                        {{ ('relation.search-direction.' + direction) | translate}}
+                    </md-option>
+                </md-select>
+            </md-input-container>
+            <md-input-container flex class="md-block">
+                <label translate>alias.max-relation-level</label>
+                <input name="maxRelationLevel"
+                       type="number"
+                       min="1"
+                       step="1"
+                       placeholder="{{ 'alias.unlimited-level' | translate }}"
+                       ng-model="filter.maxLevel"
+                       aria-label="{{ 'alias.max-relation-level' | translate }}">
+            </md-input-container>
+        </div>
+        <div class="md-caption" style="color: rgba(0,0,0,0.57);" translate>relation.relation-type</div>
+        <tb-relation-type-autocomplete flex
+                                       hide-label
+                                       the-form="theForm"
+                                       ng-model="filter.relationType"
+                                       tb-required="false">
+        </tb-relation-type-autocomplete>
+        <div class="md-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>device.device-types</div>
+        <tb-entity-subtype-list
+                tb-required="true"
+                entity-type="types.entityType.device"
+                ng-model="filter.deviceTypes">
+        </tb-entity-subtype-list>
+    </section>
 </div>

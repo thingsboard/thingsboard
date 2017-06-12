@@ -63,7 +63,23 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                     filter.deviceType = null;
                     filter.deviceNameFilter = '';
                     break;
-                //TODO: Alias filter
+                case types.aliasFilterType.relationsQuery.value:
+                case types.aliasFilterType.assetSearchQuery.value:
+                case types.aliasFilterType.deviceSearchQuery.value:
+                    filter.rootStateEntity = false;
+                    filter.rootEntity = null;
+                    filter.direction = types.entitySearchDirection.from;
+                    filter.maxLevel = 1;
+                    if (filter.type === types.aliasFilterType.relationsQuery.value) {
+                        filter.filters = [];
+                    } else if (filter.type === types.aliasFilterType.assetSearchQuery.value) {
+                        filter.relationType = null;
+                        filter.assetTypes = [];
+                    } else if (filter.type === types.aliasFilterType.deviceSearchQuery.value) {
+                        filter.relationType = null;
+                        filter.deviceTypes = [];
+                    }
+                    break;
             }
             scope.filter = filter;
         }

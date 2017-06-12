@@ -16,7 +16,7 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import importDialogTemplate from './import-dialog.tpl.html';
-import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
+import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 

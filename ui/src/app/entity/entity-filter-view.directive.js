@@ -74,7 +74,106 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                             scope.filterDisplayValue = $translate.instant('alias.filter-type-device-type-description', {deviceType: deviceType});
                         }
                         break;
-                    //TODO: Alias filter
+                    case types.aliasFilterType.relationsQuery.value:
+                        var rootEntityText;
+                        var directionText;
+                        var allEntitiesText = $translate.instant('alias.all-entities');
+                        var anyRelationText = $translate.instant('alias.any-relation');
+                        if (scope.filter.rootStateEntity) {
+                            rootEntityText = $translate.instant('alias.state-entity');
+                        } else {
+                            rootEntityText = $translate.instant(types.entityTypeTranslations[scope.filter.rootEntity.entityType].type);
+                        }
+                        directionText = $translate.instant('relation.direction-type.' + scope.filter.direction);
+                        var relationFilters = scope.filter.filters;
+                        if (relationFilters && relationFilters.length) {
+                            var relationFiltersDisplayValues = [];
+                            relationFilters.forEach(function(relationFilter) {
+                                var entitiesText;
+                                if (relationFilter.entityTypes && relationFilter.entityTypes.length) {
+                                    var entitiesNamesList = [];
+                                    relationFilter.entityTypes.forEach(function(entityType) {
+                                        entitiesNamesList.push(
+                                            $translate.instant(types.entityTypeTranslations[entityType].typePlural)
+                                        );
+                                    });
+                                    entitiesText = entitiesNamesList.join(', ');
+                                } else {
+                                    entitiesText = allEntitiesText;
+                                }
+                                var relationTypeText;
+                                if (relationFilter.relationType && relationFilter.relationType.length) {
+                                    relationTypeText = "'" + relationFilter.relationType + "'";
+                                } else {
+                                    relationTypeText = anyRelationText;
+                                }
+                                var relationFilterDisplayValue = $translate.instant('alias.filter-type-relations-query-description',
+                                    {
+                                        entities: entitiesText,
+                                        relationType: relationTypeText,
+                                        direction: directionText,
+                                        rootEntity: rootEntityText
+                                    }
+                                );
+                                relationFiltersDisplayValues.push(relationFilterDisplayValue);
+                            });
+                            scope.filterDisplayValue = relationFiltersDisplayValues.join(', ');
+                        } else {
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-relations-query-description',
+                                {
+                                    entities: allEntitiesText,
+                                    relationType: anyRelationText,
+                                    direction: directionText,
+                                    rootEntity: rootEntityText
+                                }
+                            );
+                        }
+                        break;
+                    case types.aliasFilterType.assetSearchQuery.value:
+                    case types.aliasFilterType.deviceSearchQuery.value:
+                        allEntitiesText = $translate.instant('alias.all-entities');
+                        anyRelationText = $translate.instant('alias.any-relation');
+                        if (scope.filter.rootStateEntity) {
+                            rootEntityText = $translate.instant('alias.state-entity');
+                        } else {
+                            rootEntityText = $translate.instant(types.entityTypeTranslations[scope.filter.rootEntity.entityType].type);
+                        }
+                        directionText = $translate.instant('relation.direction-type.' + scope.filter.direction);
+                        var relationTypeText;
+                        if (scope.filter.relationType && scope.filter.relationType.length) {
+                            relationTypeText = "'" + scope.filter.relationType + "'";
+                        } else {
+                            relationTypeText = anyRelationText;
+                        }
+
+                        var translationValues = {
+                            relationType: relationTypeText,
+                            direction: directionText,
+                            rootEntity: rootEntityText
+                        }
+
+                        if (scope.filter.type == types.aliasFilterType.assetSearchQuery.value) {
+                            var assetTypesQuoted = [];
+                            scope.filter.assetTypes.forEach(function(assetType) {
+                                assetTypesQuoted.push("'"+assetType+"'");
+                            });
+                            var assetTypesText = assetTypesQuoted.join(', ');
+                            translationValues.assetTypes = assetTypesText;
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-asset-search-query-description',
+                                translationValues
+                            );
+                        } else {
+                            var deviceTypesQuoted = [];
+                            scope.filter.deviceTypes.forEach(function(deviceType) {
+                                deviceTypesQuoted.push("'"+deviceType+"'");
+                            });
+                            var deviceTypesText = deviceTypesQuoted.join(', ');
+                            translationValues.deviceTypes = deviceTypesText;
+                            scope.filterDisplayValue = $translate.instant('alias.filter-type-device-search-query-description',
+                                translationValues
+                            );
+                        }
+                        break;
                     default:
                         scope.filterDisplayValue = scope.filter.type;
                         break;

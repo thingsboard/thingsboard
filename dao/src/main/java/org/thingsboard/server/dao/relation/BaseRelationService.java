@@ -191,7 +191,7 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByQuery(EntityRelationsQuery query) {
-        log.trace("Executing findByQuery [{}][{}]", query);
+        log.trace("Executing findByQuery [{}]", query);
         RelationsSearchParameters params = query.getParameters();
         final List<EntityTypeFilter> filters = query.getFilters();
         if (filters == null || filters.isEmpty()) {
@@ -222,6 +222,30 @@ public class BaseRelationService implements RelationService {
             log.warn("Failed to query relations: [{}]", query, e);
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelationInfo>> findInfoByQuery(EntityRelationsQuery query) {
+        log.trace("Executing findInfoByQuery [{}]", query);
+        ListenableFuture<List<EntityRelation>> relations = findByQuery(query);
+        EntitySearchDirection direction = query.getParameters().getDirection();
+        ListenableFuture<List<EntityRelationInfo>> relationsInfo = Futures.transform(relations,
+                (AsyncFunction<List<EntityRelation>, List<EntityRelationInfo>>) relations1 -> {
+                    List<ListenableFuture<EntityRelationInfo>> futures = new ArrayList<>();
+                    relations1.stream().forEach(relation ->
+                            futures.add(fetchRelationInfoAsync(relation,
+                                    relation2 -> direction == EntitySearchDirection.FROM ? relation2.getTo() : relation2.getFrom(),
+                                    (EntityRelationInfo relationInfo, String entityName) -> {
+                                        if (direction == EntitySearchDirection.FROM) {
+                                            relationInfo.setToName(entityName);
+                                        } else {
+                                            relationInfo.setFromName(entityName);
+                                        }
+                                    }))
+                    );
+                    return Futures.successfulAsList(futures);
+                });
+        return relationsInfo;
     }
 
     protected void validate(EntityRelation relation) {

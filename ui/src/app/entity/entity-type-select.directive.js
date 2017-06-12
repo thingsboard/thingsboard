@@ -23,7 +23,7 @@ import entityTypeSelectTemplate from './entity-type-select.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntityTypeSelect($compile, $templateCache, utils, userService, types) {
+export default function EntityTypeSelect($compile, $templateCache, utils, entityService, userService, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entityTypeSelectTemplate);
@@ -39,36 +39,7 @@ export default function EntityTypeSelect($compile, $templateCache, utils, userSe
 
         scope.ngModelCtrl = ngModelCtrl;
 
-        var authority = userService.getAuthority();
-        scope.entityTypes = {};
-        switch(authority) {
-            case 'SYS_ADMIN':
-                scope.entityTypes.tenant = types.entityType.tenant;
-                scope.entityTypes.rule = types.entityType.rule;
-                scope.entityTypes.plugin = types.entityType.plugin;
-                break;
-            case 'TENANT_ADMIN':
-                scope.entityTypes.device = types.entityType.device;
-                scope.entityTypes.asset = types.entityType.asset;
-                scope.entityTypes.customer = types.entityType.customer;
-                scope.entityTypes.rule = types.entityType.rule;
-                scope.entityTypes.plugin = types.entityType.plugin;
-                scope.entityTypes.dashboard = types.entityType.dashboard;
-                break;
-            case 'CUSTOMER_USER':
-                scope.entityTypes.device = types.entityType.device;
-                scope.entityTypes.asset = types.entityType.asset;
-                scope.entityTypes.dashboard = types.entityType.dashboard;
-                break;
-        }
-
-        if (scope.allowedEntityTypes) {
-            for (var entityType in scope.entityTypes) {
-                if (scope.allowedEntityTypes.indexOf(scope.entityTypes[entityType]) === -1) {
-                    delete scope.entityTypes[entityType];
-                }
-            }
-        }
+        scope.entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes);
 
         scope.typeName = function(type) {
             return type ? types.entityTypeTranslations[type].type : '';

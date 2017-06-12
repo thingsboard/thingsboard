@@ -15,7 +15,7 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import entityAliasDialogTemplate from '../entity/entity-alias-dialog.tpl.html';
+import entityAliasDialogTemplate from '../entity/alias/entity-alias-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 

@@ -15,7 +15,7 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
+import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 import dashboardSettingsTemplate from './dashboard-settings.tpl.html';
 import manageDashboardLayoutsTemplate from './layouts/manage-dashboard-layouts.tpl.html';
 import manageDashboardStatesTemplate from './states/manage-dashboard-states.tpl.html';
