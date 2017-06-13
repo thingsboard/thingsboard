@@ -16,7 +16,6 @@
 import uiRouter from 'angular-ui-router';
 import thingsboardGrid from '../components/grid.directive';
 import thingsboardJsonForm from '../components/json-form.directive';
-import thingsboardEvent from '../event';
 import thingsboardApiPlugin from '../api/plugin.service';
 import thingsboardApiComponentDescriptor from '../api/component-descriptor.service';
 
@@ -28,7 +27,6 @@ export default angular.module('thingsboard.plugin', [
     uiRouter,
     thingsboardGrid,
     thingsboardJsonForm,
-    thingsboardEvent,
     thingsboardApiPlugin,
     thingsboardApiComponentDescriptor
 ])

@@ -15,7 +15,6 @@
  */
 import uiRouter from 'angular-ui-router';
 import thingsboardGrid from '../components/grid.directive';
-import thingsboardEvent from '../event';
 import thingsboardApiUser from '../api/user.service';
 import thingsboardApiAsset from '../api/asset.service';
 import thingsboardApiCustomer from '../api/customer.service';
@@ -29,7 +28,6 @@ import AssetDirective from './asset.directive';
 export default angular.module('thingsboard.asset', [
     uiRouter,
     thingsboardGrid,
-    thingsboardEvent,
     thingsboardApiUser,
     thingsboardApiAsset,
     thingsboardApiCustomer

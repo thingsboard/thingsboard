@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-entity-filter {
-  #entity_list_chips {
-    .md-chips {
-      padding-bottom: 1px;
+
+  #relationsQueryFilter {
+    padding-top: 20px;
+    tb-entity-select {
+      min-height: 92px;
     }
   }
-  .entity-name-filter-input {
-    margin-top: 10px;
-    margin-bottom: 0px;
-    .md-errors-spacer {
-      min-height: 0px;
-    }
-  }
-  .tb-filter-switch {
+
+  .tb-root-state-entity-switch {
     padding-left: 10px;
-    .filter-switch {
+    .root-state-entity-switch {
       margin: 0;
     }
-    .filter-label {
+    .root-state-entity-label {
       margin: 5px 0;
     }
   }
-  .tb-error-messages {
-    margin-top: -11px;
-    height: 35px;
-    .tb-error-message {
-      padding-left: 1px;
-    }
-  }
+
 }

@@ -20,7 +20,6 @@ import eventErrorDialogTemplate from './event-content-dialog.tpl.html';
 import eventRowLcEventTemplate from './event-row-lc-event.tpl.html';
 import eventRowStatsTemplate from './event-row-stats.tpl.html';
 import eventRowErrorTemplate from './event-row-error.tpl.html';
-import eventRowAlarmTemplate from './event-row-alarm.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -40,9 +39,6 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
                     break;
                 case types.eventType.error.value:
                     template = eventRowErrorTemplate;
-                    break;
-                case types.eventType.alarm.value:
-                    template = eventRowAlarmTemplate;
                     break;
             }
             return $templateCache.get(template);

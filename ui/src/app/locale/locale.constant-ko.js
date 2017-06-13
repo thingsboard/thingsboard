@@ -378,7 +378,6 @@ export default function addLocaleKorean(locales) {
         },
         "event": {
             "event-type": "이벤트 타입",
-            "type-alarm": "알람",
             "type-error": "에러",
             "type-lc-event": "주기적 이벤트",
             "type-stats": "통계",

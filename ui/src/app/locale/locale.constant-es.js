@@ -411,7 +411,6 @@
         },
         "event": {
               "event-type": "Tipo de evento",
-              "type-alarm": "Alarma",
               "type-error": "Error",
               "type-lc-event": "Ciclo de vida",
               "type-stats": "Estadísticas",

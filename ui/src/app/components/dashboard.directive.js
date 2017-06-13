@@ -52,7 +52,7 @@ function Dashboard() {
         bindToController: {
             widgets: '=',
             widgetLayouts: '=?',
-            aliasesInfo: '=',
+            aliasController: '=',
             stateController: '=',
             dashboardTimewindow: '=?',
             columns: '=',
@@ -85,7 +85,7 @@ function Dashboard() {
 }
 
 /*@ngInject*/
-function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, timeService, types, utils) {
+function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $mdUtil, timeService, types, utils) {
 
     var highlightedMode = false;
     var highlightedWidget = null;
@@ -328,10 +328,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         vm.gridsterOpts.draggable.enabled = vm.isEdit;
         $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
     });
-
-    $scope.$watch('vm.aliasesInfo.entityAliases', function () {
-        $scope.$broadcast('entityAliasListChanged', vm.aliasesInfo);
-    }, true);
 
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {
         if (checkIsLocalGridsterElement(theGridster)) {
@@ -796,7 +792,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function dashboardLoaded() {
-        $timeout(function () {
+        $mdUtil.nextTick(function () {
             if (vm.dashboardTimewindowWatch) {
                 vm.dashboardTimewindowWatch();
                 vm.dashboardTimewindowWatch = null;
@@ -806,14 +802,27 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
             }, true);
             adoptMaxRows();
             vm.dashboardLoading = false;
-            $timeout(function () {
-                var gridsterScope = gridsterElement.scope();
-                vm.gridster = gridsterScope.gridster;
-                if (vm.onInit) {
-                    vm.onInit({dashboard: vm});
+            if ($scope.gridsterScopeWatcher) {
+                $scope.gridsterScopeWatcher();
+            }
+            $scope.gridsterScopeWatcher = $scope.$watch(
+                function() {
+                    var hasScope = gridsterElement.scope() ? true : false;
+                    return hasScope;
+                },
+                function(hasScope) {
+                    if (hasScope) {
+                        $scope.gridsterScopeWatcher();
+                        $scope.gridsterScopeWatcher = null;
+                        var gridsterScope = gridsterElement.scope();
+                        vm.gridster = gridsterScope.gridster;
+                        if (vm.onInit) {
+                            vm.onInit({dashboard: vm});
+                        }
+                    }
                 }
-            }, 0, false);
-        }, 0, false);
+            );
+        });
     }
 
     function loading() {

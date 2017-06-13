@@ -20,9 +20,9 @@ import Subscription from '../api/subscription';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, tbRaf, types, utils, timeService,
+export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
                                          datasourceService, entityService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
-                                         dashboardTimewindowApi, widget, aliasesInfo, stateController, widgetType) {
+                                         dashboardTimewindowApi, widget, aliasController, stateController, widgetInfo, widgetType) {
 
     var vm = this;
 
@@ -37,23 +37,16 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     $scope.executingRpcRequest = false;
 
     var gridsterItemInited = false;
+    var subscriptionInited = false;
+    var widgetSizeDetected = false;
 
     var cafs = {};
-
-    /*
-     *   data = array of datasourceData
-     *   datasourceData = {
-     *   			tbDatasource,
-     *   			dataKey,     { name, config }
-     *   			data = array of [time, value]
-     *   }
-     */
 
     var widgetContext = {
         inited: false,
         $scope: $scope,
-        $container: $('#container', $element),
-        $containerParent: $($element),
+        $container: null,
+        $containerParent: null,
         width: 0,
         height: 0,
         isEdit: isEdit,
@@ -80,30 +73,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             createSubscription: function(options, subscribe) {
                 return createSubscription(options, subscribe);
             },
-
-
-    //      type: "timeseries" or "latest" or "rpc"
-    /*      subscriptionInfo = [
-            {
-                entityType: ""
-                entityId:   ""
-                entityName: ""
-                timeseries: [{ name: "", label: "" }, ..]
-                attributes: [{ name: "", label: "" }, ..]
-            }
-    ..
-    ]*/
-
-    //      options = {
-    //        timeWindowConfig,
-    //        useDashboardTimewindow,
-    //        legendConfig,
-    //        decimals,
-    //        units,
-    //        callbacks [ onDataUpdated(subscription, apply) ]
-    //      }
-    //
-
             createSubscriptionFromInfo: function (type, subscriptionsInfo, options, useDefaultComponents, subscribe) {
                 return createSubscriptionFromInfo(type, subscriptionsInfo, options, useDefaultComponents, subscribe);
             },
@@ -149,7 +118,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         dashboardTimewindowApi: dashboardTimewindowApi,
         types: types,
         stDiff: stDiff,
-        aliasesInfo: aliasesInfo
+        aliasController: aliasController
     };
 
     var widgetTypeInstance;
@@ -203,23 +172,11 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     vm.gridsterItemInitialized = gridsterItemInitialized;
 
-    initialize();
-
-
-    /*
-            options = {
-                 type,
-                 targetDeviceAliasIds,  // RPC
-                 targetDeviceIds,       // RPC
-                 datasources,
-                 timeWindowConfig,
-                 useDashboardTimewindow,
-                 legendConfig,
-                 decimals,
-                 units,
-                 callbacks
-            }
-     */
+    initialize().then(
+        function(){
+            onInit();
+        }
+    );
 
     function createSubscriptionFromInfo(type, subscriptionsInfo, options, useDefaultComponents, subscribe) {
         var deferred = $q.defer();
@@ -233,28 +190,42 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             }
         }
 
-        entityService.createDatasoucesFromSubscriptionsInfo(subscriptionsInfo).then(
+        entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo).then(
             function (datasources) {
                 options.datasources = datasources;
-                var subscription = createSubscription(options, subscribe);
-                if (useDefaultComponents) {
-                    defaultSubscriptionOptions(subscription, options);
-                }
-                deferred.resolve(subscription);
+                createSubscription(options, subscribe).then(
+                    function success(subscription) {
+                        if (useDefaultComponents) {
+                            defaultSubscriptionOptions(subscription, options);
+                        }
+                        deferred.resolve(subscription);
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
             }
         );
         return deferred.promise;
     }
 
     function createSubscription(options, subscribe) {
+        var deferred = $q.defer();
         options.dashboardTimewindow = dashboardTimewindow;
-        var subscription =
-            new Subscription(subscriptionContext, options);
-        widgetContext.subscriptions[subscription.id] = subscription;
-        if (subscribe) {
-            subscription.subscribe();
-        }
-        return subscription;
+        new Subscription(subscriptionContext, options).then(
+            function success(subscription) {
+                widgetContext.subscriptions[subscription.id] = subscription;
+                if (subscribe) {
+                    subscription.subscribe();
+                }
+                deferred.resolve(subscription);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+
+        return deferred.promise;
     }
 
     function defaultComponentsOptions(options) {
@@ -310,8 +281,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     }
 
     function createDefaultSubscription() {
-        var subscription;
         var options;
+        var deferred = $q.defer();
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             options = {
                 type: widget.type,
@@ -319,16 +290,23 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             };
             defaultComponentsOptions(options);
 
-            subscription = createSubscription(options);
+            createSubscription(options).then(
+                function success(subscription) {
+                    defaultSubscriptionOptions(subscription, options);
 
-            defaultSubscriptionOptions(subscription, options);
+                    // backward compatibility
 
-            // backward compatibility
-
-            widgetContext.datasources = subscription.datasources;
-            widgetContext.data = subscription.data;
-            widgetContext.hiddenData = subscription.hiddenData;
-            widgetContext.timeWindow = subscription.timeWindow;
+                    widgetContext.datasources = subscription.datasources;
+                    widgetContext.data = subscription.data;
+                    widgetContext.hiddenData = subscription.hiddenData;
+                    widgetContext.timeWindow = subscription.timeWindow;
+                    widgetContext.defaultSubscription = subscription;
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
 
         } else if (widget.type === types.widgetType.rpc.value) {
             $scope.loadingData = false;
@@ -356,29 +334,125 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     $scope.rpcRejection = null;
                 }
             }
-            subscription = createSubscription(options);
+            createSubscription(options).then(
+                function success(subscription) {
+                    widgetContext.defaultSubscription = subscription;
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
         } else if (widget.type === types.widgetType.static.value) {
             $scope.loadingData = false;
+            deferred.resolve();
+        } else {
+            deferred.resolve();
         }
-        if (subscription) {
-            widgetContext.defaultSubscription = subscription;
-        }
+        return deferred.promise;
     }
 
+    function configureWidgetElement() {
+
+        $scope.displayLegend = angular.isDefined(widget.config.showLegend) ?
+            widget.config.showLegend : widget.type === types.widgetType.timeseries.value;
+
+        if ($scope.displayLegend) {
+            $scope.legendConfig = widget.config.legendConfig ||
+                {
+                    position: types.position.bottom.value,
+                    showMin: false,
+                    showMax: false,
+                    showAvg: widget.type === types.widgetType.timeseries.value,
+                    showTotal: false
+                };
+            $scope.legendData = {
+                keys: [],
+                data: []
+            };
+        }
+
+        var html = '<div class="tb-absolute-fill tb-widget-error" ng-if="widgetErrorData">' +
+            '<span>Widget Error: {{ widgetErrorData.name + ": " + widgetErrorData.message}}</span>' +
+            '</div>' +
+            '<div class="tb-absolute-fill tb-widget-loading" ng-show="loadingData" layout="column" layout-align="center center">' +
+            '<md-progress-circular md-mode="indeterminate" ng-disabled="!loadingData" class="md-accent" md-diameter="40"></md-progress-circular>' +
+            '</div>';
+
+        var containerHtml = '<div id="container">' + widgetInfo.templateHtml + '</div>';
+        if ($scope.displayLegend) {
+            var layoutType;
+            if ($scope.legendConfig.position === types.position.top.value ||
+                $scope.legendConfig.position === types.position.bottom.value) {
+                layoutType = 'column';
+            } else {
+                layoutType = 'row';
+            }
+
+            var legendStyle;
+            switch($scope.legendConfig.position) {
+                case types.position.top.value:
+                    legendStyle = 'padding-bottom: 8px;';
+                    break;
+                case types.position.bottom.value:
+                    legendStyle = 'padding-top: 8px;';
+                    break;
+                case types.position.left.value:
+                    legendStyle = 'padding-right: 0px;';
+                    break;
+                case types.position.right.value:
+                    legendStyle = 'padding-left: 0px;';
+                    break;
+            }
+
+            var legendHtml = '<tb-legend style="'+legendStyle+'" legend-config="legendConfig" legend-data="legendData"></tb-legend>';
+            containerHtml = '<div flex id="widget-container">' + containerHtml + '</div>';
+            html += '<div class="tb-absolute-fill" layout="'+layoutType+'">';
+            if ($scope.legendConfig.position === types.position.top.value ||
+                $scope.legendConfig.position === types.position.left.value) {
+                html += legendHtml;
+                html += containerHtml;
+            } else {
+                html += containerHtml;
+                html += legendHtml;
+            }
+            html += '</div>';
+        } else {
+            html += containerHtml;
+        }
+
+        //TODO:
+        /*if (progressElement) {
+         progressScope.$destroy();
+         progressScope = null;
+
+         progressElement.remove();
+         progressElement = null;
+         }*/
+
+        $element.html(html);
+
+        var containerElement = $scope.displayLegend ? angular.element($element[0].querySelector('#widget-container')) : $element;
+        widgetContext.$container = $('#container', containerElement);
+        widgetContext.$containerParent = $(containerElement);
+
+        $compile($element.contents())($scope);
+
+        addResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
+    }
+
+    function destroyWidgetElement() {
+        removeResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
+        $element.html('');
+        widgetContext.$container = null;
+        widgetContext.$containerParent = null;
+    }
 
     function initialize() {
-
-        if (!vm.useCustomDatasources) {
-            createDefaultSubscription();
-        } else {
-            $scope.loadingData = false;
-        }
 
         $scope.$on('toggleDashboardEditMode', function (event, isEdit) {
             onEditModeChanged(isEdit);
         });
-
-        addResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
 
         $scope.$watch(function () {
             return widget.row + ',' + widget.col + ',' + widget.config.mobileOrder;
@@ -398,18 +472,60 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             onMobileModeChanged(newIsMobile);
         });
 
-        $scope.$on('entityAliasListChanged', function (event, aliasesInfo) {
-            subscriptionContext.aliasesInfo = aliasesInfo;
+        $scope.$on('entityAliasesChanged', function (event, aliasIds) {
+            var subscriptionChanged = false;
             for (var id in widgetContext.subscriptions) {
                 var subscription = widgetContext.subscriptions[id];
-                subscription.onAliasesChanged();
+                subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
+            }
+            if (subscriptionChanged && !vm.useCustomDatasources) {
+                reInit();
             }
         });
 
         $scope.$on("$destroy", function () {
-            removeResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
             onDestroy();
         });
+
+        configureWidgetElement();
+        var deferred = $q.defer();
+        if (!vm.useCustomDatasources) {
+            createDefaultSubscription().then(
+                function success() {
+                    subscriptionInited = true;
+                    deferred.resolve();
+                },
+                function fail() {
+                    subscriptionInited = true;
+                    deferred.reject();
+                }
+            );
+        } else {
+            $scope.loadingData = false;
+            subscriptionInited = true;
+            deferred.resolve();
+        }
+        return deferred.promise;
+    }
+
+    function reInit() {
+        onDestroy();
+        configureWidgetElement();
+        if (!vm.useCustomDatasources) {
+            createDefaultSubscription().then(
+                function success() {
+                    subscriptionInited = true;
+                    onInit();
+                },
+                function fail() {
+                    subscriptionInited = true;
+                    onInit();
+                }
+            );
+        } else {
+            subscriptionInited = true;
+            onInit();
+        }
     }
 
     function handleWidgetException(e) {
@@ -417,8 +533,15 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         $scope.widgetErrorData = utils.processWidgetException(e);
     }
 
-    function onInit() {
-        if (!widgetContext.inited) {
+    function isReady() {
+        return subscriptionInited && gridsterItemInited && widgetSizeDetected;
+    }
+
+    function onInit(skipSizeCheck) {
+        if (!skipSizeCheck) {
+            checkSize();
+        }
+        if (!widgetContext.inited && isReady()) {
             widgetContext.inited = true;
             try {
                 widgetTypeInstance.onInit();
@@ -443,6 +566,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 widgetContext.width = width;
                 widgetContext.height = height;
                 sizeChanged = true;
+                widgetSizeDetected = true;
             }
         }
         return sizeChanged;
@@ -462,8 +586,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                         handleWidgetException(e);
                     }
                 });
-            } else if (gridsterItemInited) {
-                onInit();
+            } else {
+                onInit(true);
             }
         }
     }
@@ -472,9 +596,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         if (item && item.gridster) {
             widgetContext.isMobile = item.gridster.isMobile;
             gridsterItemInited = true;
-            if (checkSize()) {
-                onInit();
-            }
+            onInit();
             // gridsterItemElement = $(item.$element);
             //updateVisibility();
         }
@@ -544,6 +666,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             var subscription = widgetContext.subscriptions[id];
             subscription.destroy();
         }
+        subscriptionInited = false;
         widgetContext.subscriptions = [];
         if (widgetContext.inited) {
             widgetContext.inited = false;
@@ -559,6 +682,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 handleWidgetException(e);
             }
         }
+        destroyWidgetElement();
     }
 
     //TODO: widgets visibility

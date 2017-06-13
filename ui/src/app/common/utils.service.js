@@ -106,10 +106,10 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
         isDescriptorSchemaNotEmpty: isDescriptorSchemaNotEmpty,
         filterSearchTextEntities: filterSearchTextEntities,
         guid: guid,
+        cleanCopy: cleanCopy,
         isLocalUrl: isLocalUrl,
         validateDatasources: validateDatasources,
-        createKey: createKey,
-        entityTypeName: entityTypeName
+        createKey: createKey
     }
 
     return service;
@@ -291,6 +291,16 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
             s4() + '-' + s4() + s4() + s4();
     }
 
+    function cleanCopy(object) {
+        var copy = angular.copy(object);
+        for (var prop in copy) {
+            if (prop && prop.startsWith('$$')) {
+                delete copy[prop];
+            }
+        }
+        return copy;
+    }
+
     function genNextColor(datasources) {
         var index = 0;
         if (datasources) {
@@ -345,29 +355,6 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
             _hash: Math.random()
         }
         return dataKey;
-    }
-
-    function entityTypeName (type) {
-        switch (type) {
-            case types.entityType.device:
-                return 'entity.type-device';
-            case types.entityType.asset:
-                return 'entity.type-asset';
-            case types.entityType.rule:
-                return 'entity.type-rule';
-            case types.entityType.plugin:
-                return 'entity.type-plugin';
-            case types.entityType.tenant:
-                return 'entity.type-tenant';
-            case types.entityType.customer:
-                return 'entity.type-customer';
-            case types.entityType.user:
-                return 'entity.type-user';
-            case types.entityType.dashboard:
-                return 'entity.type-dashboard';
-            case types.entityType.alarm:
-                return 'entity.type-alarm';
-        }
     }
 
 }

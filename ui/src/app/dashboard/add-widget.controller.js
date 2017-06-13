@@ -15,17 +15,18 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
+import entityAliasDialogTemplate from '../entity/alias/entity-alias-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function AddWidgetController($scope, widgetService, entityService, $mdDialog, $q, $document, types, dashboard, aliasesInfo, widget, widgetInfo) {
+export default function AddWidgetController($scope, widgetService, entityService, $mdDialog, $q, $document, types, dashboard,
+                                            aliasController, widget, widgetInfo) {
 
     var vm = this;
 
     vm.dashboard = dashboard;
-    vm.aliasesInfo = aliasesInfo;
+    vm.aliasController = aliasController;
     vm.widget = widget;
     vm.widgetInfo = widgetInfo;
 
@@ -85,7 +86,7 @@ export default function AddWidgetController($scope, widgetService, entityService
     }
 
     function cancel () {
-        $mdDialog.cancel({aliasesInfo: vm.aliasesInfo});
+        $mdDialog.cancel();
     }
 
     function add () {
@@ -94,52 +95,58 @@ export default function AddWidgetController($scope, widgetService, entityService
             vm.widget.config = vm.widgetConfig.config;
             vm.widget.config.mobileOrder = vm.widgetConfig.layout.mobileOrder;
             vm.widget.config.mobileHeight = vm.widgetConfig.layout.mobileHeight;
-            $mdDialog.hide({widget: vm.widget, aliasesInfo: vm.aliasesInfo});
+            $mdDialog.hide({widget: vm.widget});
         }
     }
 
     function fetchEntityKeys (entityAliasId, query, type) {
-        var entityAlias = vm.aliasesInfo.entityAliases[entityAliasId];
-        if (entityAlias && entityAlias.entityId) {
-            return entityService.getEntityKeys(entityAlias.entityType, entityAlias.entityId, query, type);
-        } else {
-            return $q.when([]);
-        }
+        var deferred = $q.defer();
+        vm.aliasController.getAliasInfo(entityAliasId).then(
+            function success(aliasInfo) {
+                var entity = aliasInfo.currentEntity;
+                if (entity) {
+                    entityService.getEntityKeys(entity.entityType, entity.id, query, type).then(
+                        function success(keys) {
+                            deferred.resolve(keys);
+                        },
+                        function fail() {
+                            deferred.resolve([]);
+                        }
+                    );
+                } else {
+                    deferred.resolve([]);
+                }
+            },
+            function fail() {
+                deferred.resolve([]);
+            }
+        );
+        return deferred.promise;
     }
 
     function createEntityAlias (event, alias, allowedEntityTypes) {
 
         var deferred = $q.defer();
-        var singleEntityAlias = {id: null, alias: alias, entityType: types.entityType.device, entityFilter: null};
+        var singleEntityAlias = {id: null, alias: alias, filter: {}};
 
         $mdDialog.show({
-            controller: 'EntityAliasesController',
+            controller: 'EntityAliasDialogController',
             controllerAs: 'vm',
-            templateUrl: entityAliasesTemplate,
+            templateUrl: entityAliasDialogTemplate,
             locals: {
-                config: {
-                    entityAliases: angular.copy(vm.dashboard.configuration.entityAliases),
-                    widgets: null,
-                    isSingleEntityAlias: true,
-                    singleEntityAlias: singleEntityAlias,
-                    allowedEntityTypes: allowedEntityTypes
-                }
+                isAdd: true,
+                allowedEntityTypes: allowedEntityTypes,
+                entityAliases: vm.dashboard.configuration.entityAliases,
+                alias: singleEntityAlias
             },
             parent: angular.element($document[0].body),
             fullscreen: true,
             skipHide: true,
             targetEvent: event
         }).then(function (singleEntityAlias) {
-            vm.dashboard.configuration.entityAliases[singleEntityAlias.id] =
-                { alias: singleEntityAlias.alias, entityType: singleEntityAlias.entityType, entityFilter: singleEntityAlias.entityFilter };
-            entityService.processEntityAliases(vm.dashboard.configuration.entityAliases).then(
-                function(resolution) {
-                    if (!resolution.error) {
-                        vm.aliasesInfo = resolution.aliasesInfo;
-                    }
-                    deferred.resolve(singleEntityAlias);
-                }
-            );
+            vm.dashboard.configuration.entityAliases[singleEntityAlias.id] = singleEntityAlias;
+            vm.aliasController.updateEntityAliases(vm.dashboard.configuration.entityAliases);
+            deferred.resolve(singleEntityAlias);
         }, function () {
             deferred.reject();
         });

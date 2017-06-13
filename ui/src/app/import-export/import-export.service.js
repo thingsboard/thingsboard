@@ -16,7 +16,7 @@
 /* eslint-disable import/no-unresolved, import/default */
 
 import importDialogTemplate from './import-dialog.tpl.html';
-import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
+import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -24,7 +24,7 @@ import entityAliasesTemplate from '../entity/entity-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, types, dashboardUtils,
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, utils, types, dashboardUtils,
                                      entityService, dashboardService, pluginService, ruleService, widgetService, toast) {
 
 
@@ -359,30 +359,47 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
     }
 
     function prepareEntityAlias(aliasInfo) {
-        var entityFilter;
-        var entityType;
+        var alias;
+        var filter;
         if (aliasInfo.deviceId) {
-            entityFilter = {
-                useFilter: false,
-                entityNameFilter: '',
-                entityList: [aliasInfo.deviceId]
-            }
-            entityType = types.entityType.device;
+            alias = aliasInfo.aliasName;
+            filter = {
+                type: types.aliasFilterType.entityList.value,
+                entityType: types.entityType.device,
+                entityList: [aliasInfo.deviceId],
+                resolveMultiple: false
+            };
         } else if (aliasInfo.deviceFilter) {
-            entityFilter = {
-                useFilter: aliasInfo.deviceFilter.useFilter,
-                entityNameFilter: aliasInfo.deviceFilter.deviceNameFilter,
-                entityList: aliasInfo.deviceFilter.deviceList
+            alias = aliasInfo.aliasName;
+            filter = {
+                type: aliasInfo.deviceFilter.useFilter ? types.aliasFilterType.entityName.value : types.aliasFilterType.entityList.value,
+                entityType: types.entityType.device,
+                resolveMultiple: false
             }
-            entityType = types.entityType.device;
+            if (filter.type == types.aliasFilterType.entityList.value) {
+                filter.entityList = aliasInfo.deviceFilter.deviceList
+            } else {
+                filter.entityNameFilter = aliasInfo.deviceFilter.deviceNameFilter;
+            }
+        } else if (aliasInfo.entityFilter) {
+            alias = aliasInfo.aliasName;
+            filter = {
+                type: aliasInfo.entityFilter.useFilter ? types.aliasFilterType.entityName.value : types.aliasFilterType.entityList.value,
+                entityType: aliasInfo.entityType,
+                resolveMultiple: false
+            }
+            if (filter.type == types.aliasFilterType.entityList.value) {
+                filter.entityList = aliasInfo.entityFilter.entityList;
+            } else {
+                filter.entityNameFilter = aliasInfo.entityFilter.entityNameFilter;
+            }
         } else {
-            entityFilter = aliasInfo.entityFilter;
-            entityType = aliasInfo.entityType;
+            alias = aliasInfo.alias;
+            filter = aliasInfo.filter;
         }
         return {
-            aliasName: aliasInfo.aliasName,
-            entityType: entityType,
-            entityFilter: entityFilter
+            alias: alias,
+            filter: filter
         };
     }
 
@@ -395,6 +412,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     deferred.reject();
                 } else {
                     var widget = widgetItem.widget;
+                    widget = dashboardUtils.validateAndUpdateWidget(widget);
                     var aliasesInfo = prepareAliasesInfo(widgetItem.aliasesInfo);
                     var originalColumns = widgetItem.originalColumns;
                     var originalSize = widgetItem.originalSize;
@@ -405,20 +423,22 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                         var entityAliases = {};
                         var datasourceAliasesMap = {};
                         var targetDeviceAliasesMap = {};
-                        var aliasId = 1;
+                        var aliasId;
                         var datasourceIndex;
                         if (datasourceAliases) {
                             for (datasourceIndex in datasourceAliases) {
+                                aliasId = utils.guid();
                                 datasourceAliasesMap[aliasId] = datasourceIndex;
                                 entityAliases[aliasId] = datasourceAliases[datasourceIndex];
-                                aliasId++;
+                                entityAliases[aliasId].id = aliasId;
                             }
                         }
                         if (targetDeviceAliases) {
                             for (datasourceIndex in targetDeviceAliases) {
+                                aliasId = utils.guid();
                                 targetDeviceAliasesMap[aliasId] = datasourceIndex;
                                 entityAliases[aliasId] = targetDeviceAliases[datasourceIndex];
-                                aliasId++;
+                                entityAliases[aliasId].id = aliasId;
                             }
                         }
 
@@ -435,12 +455,10 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                                                     var datasourceIndex;
                                                     if (datasourceAliasesMap[aliasId]) {
                                                         datasourceIndex = datasourceAliasesMap[aliasId];
-                                                        datasourceAliases[datasourceIndex].entityType = entityAlias.entityType;
-                                                        datasourceAliases[datasourceIndex].entityFilter = entityAlias.entityFilter;
+                                                        datasourceAliases[datasourceIndex] = entityAlias;
                                                     } else if (targetDeviceAliasesMap[aliasId]) {
                                                         datasourceIndex = targetDeviceAliasesMap[aliasId];
-                                                        targetDeviceAliases[datasourceIndex].entityType = entityAlias.entityType;
-                                                        targetDeviceAliases[datasourceIndex].entityFilter = entityAlias.entityFilter;
+                                                        targetDeviceAliases[datasourceIndex] = entityAlias;
                                                     }
                                                 }
                                                 addImportedWidget(dashboard, targetState, targetLayoutFunction, $event, widget,
@@ -622,7 +640,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     checkNextEntityAliasOrComplete(index, aliasIds, entityAliases, missingEntityAliases, deferred);
                 } else {
                     var missingEntityAlias = angular.copy(entityAlias);
-                    missingEntityAlias.entityFilter = null;
+                    missingEntityAlias.filter = null;
                     missingEntityAliases[aliasId] = missingEntityAlias;
                     checkNextEntityAliasOrComplete(index, aliasIds, entityAliases, missingEntityAliases, deferred);
                 }
@@ -641,8 +659,6 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                     entityAliases: missingEntityAliases,
                     widgets: widgets,
                     isSingleWidget: isSingleWidget,
-                    isSingleEntityAlias: false,
-                    singleEntityAlias: null,
                     customTitle: customTitle,
                     disableAdd: true
                 }

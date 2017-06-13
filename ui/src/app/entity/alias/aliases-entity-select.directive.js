@@ -29,7 +29,7 @@ import aliasesEntitySelectPanelTemplate from './aliases-entity-select-panel.tpl.
 /*@ngInject*/
 export default function AliasesEntitySelectDirective($compile, $templateCache, $mdMedia, types, $mdPanel, $document, $translate) {
 
-    var linker = function (scope, element, attrs, ngModelCtrl) {
+    var linker = function (scope, element, attrs) {
 
         /* tbAliasesEntitySelect (ng-model)
          * {
@@ -81,10 +81,8 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
                 position: position,
                 fullscreen: false,
                 locals: {
-                    'entityAliases': angular.copy(scope.model),
-                    'entityAliasesInfo': scope.entityAliasesInfo,
-                    'onEntityAliasesUpdate': function (entityAliases) {
-                        scope.model = entityAliases;
+                    'aliasController': scope.aliasController,
+                    'onEntityAliasesUpdate': function () {
                         scope.updateView();
                     }
                 },
@@ -96,41 +94,40 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
             $mdPanel.open(config);
         }
 
-        scope.updateView = function () {
-            var value = angular.copy(scope.model);
-            ngModelCtrl.$setViewValue(value);
-            updateDisplayValue();
-        }
+        scope.$on('entityAliasesChanged', function() {
+            scope.updateView();
+        });
 
-        ngModelCtrl.$render = function () {
-            if (ngModelCtrl.$viewValue) {
-                var value = ngModelCtrl.$viewValue;
-                scope.model = angular.copy(value);
-                updateDisplayValue();
-            }
+        scope.$on('entityAliasResolved', function() {
+            scope.updateView();
+        });
+
+        scope.updateView = function () {
+            updateDisplayValue();
         }
 
         function updateDisplayValue() {
             var displayValue;
             var singleValue = true;
             var currentAliasId;
-            for (var aliasId in scope.model) {
-                if (!currentAliasId) {
-                    currentAliasId = aliasId;
-                } else {
-                    singleValue = false;
-                    break;
+            var entityAliases = scope.aliasController.getEntityAliases();
+            for (var aliasId in entityAliases) {
+                var entityAlias = entityAliases[aliasId];
+                if (!entityAlias.filter.resolveMultiple) {
+                    var resolvedAlias = scope.aliasController.getInstantAliasInfo(aliasId);
+                    if (resolvedAlias && resolvedAlias.currentEntity) {
+                        if (!currentAliasId) {
+                            currentAliasId = aliasId;
+                        } else {
+                            singleValue = false;
+                            break;
+                        }
+                    }
                 }
             }
             if (singleValue && currentAliasId) {
-                var entityId = scope.model[currentAliasId].entityId;
-                var entitiesInfo = scope.entityAliasesInfo[currentAliasId];
-                for (var i=0;i<entitiesInfo.length;i++) {
-                    if (entitiesInfo[i].id === entityId) {
-                        displayValue = entitiesInfo[i].name;
-                        break;
-                    }
-                }
+                var aliasInfo = scope.aliasController.getInstantAliasInfo(currentAliasId);
+                displayValue = aliasInfo.currentEntity.name;
             } else {
                 displayValue = $translate.instant('entity.entities');
             }
@@ -142,9 +139,8 @@ export default function AliasesEntitySelectDirective($compile, $templateCache, $
 
     return {
         restrict: "E",
-        require: "^ngModel",
         scope: {
-            entityAliasesInfo:'='
+            aliasController:'='
         },
         link: linker
     };

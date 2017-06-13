@@ -32,6 +32,8 @@ public class AlarmQuery {
 
     private EntityId affectedEntityId;
     private TimePageLink pageLink;
+    private AlarmSearchStatus searchStatus;
     private AlarmStatus status;
+    private Boolean fetchOriginator;
 
 }

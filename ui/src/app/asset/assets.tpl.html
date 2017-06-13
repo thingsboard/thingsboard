@@ -48,11 +48,16 @@
                                 disable-attribute-scope-selection="true">
             </tb-attribute-table>
         </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'alarm.alarms' | translate }}">
+            <tb-alarm-table flex entity-type="vm.types.entityType.asset"
+                            entity-id="vm.grid.operatingItem().id.id">
+            </tb-alarm-table>
+        </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'asset.events' | translate }}">
             <tb-event-table flex entity-type="vm.types.entityType.asset"
                             entity-id="vm.grid.operatingItem().id.id"
                             tenant-id="vm.grid.operatingItem().tenantId.id"
-                            default-event-type="{{vm.types.eventType.alarm.value}}">
+                            default-event-type="{{vm.types.eventType.error.value}}">
             </tb-event-table>
         </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'relation.relations' | translate }}">

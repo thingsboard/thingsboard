@@ -114,6 +114,9 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
                 scope.selectEntitySubtypeText = 'asset.select-asset-type';
                 scope.entitySubtypeText = 'asset.asset-type';
                 scope.entitySubtypeRequiredText = 'asset.asset-type-required';
+                scope.$on('assetSaved', function() {
+                    scope.entitySubtypes = null;
+                });
             } else if (scope.entityType == types.entityType.device) {
                 scope.selectEntitySubtypeText = 'device.select-device-type';
                 scope.entitySubtypeText = 'device.device-type';

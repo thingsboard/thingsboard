@@ -15,14 +15,19 @@
     limitations under the License.
 
 -->
-<div class="tb-cell" flex="30">{{event.createdTime | date :  'yyyy-MM-dd HH:mm:ss'}}</div>
-<div class="tb-cell" flex="20">{{event.body.server}}</div>
-<div class="tb-cell" flex="20">
-    <md-button ng-if="event.body.body" class="md-icon-button md-primary"
-               ng-click="showContent($event, event.body.body, 'event.alarm')"
+<div class="tb-cell" flex="30">{{alarm.createdTime | date :  'yyyy-MM-dd HH:mm:ss'}}</div>
+<div class="tb-cell" flex="15">{{alarm.originatorName}}</div>
+<div class="tb-cell" flex="20">{{alarm.type}}</div>
+<div class="tb-cell tb-severity" flex="15" ng-class="types.alarmSeverity[alarm.severity].class">
+    {{ alarm ? (types.alarmSeverity[alarm.severity].name | translate) : '' }}
+</div>
+<div class="tb-cell" flex="20">{{ alarm ? (('alarm.display-status.' + alarm.status) | translate) : '' }}</div>
+<div class="tb-cell" flex="15">
+    <md-button class="md-icon-button md-primary"
+               ng-click="showAlarmDetails($event)"
                aria-label="{{ 'action.view' | translate }}">
         <md-tooltip md-direction="top">
-            {{ 'action.view' | translate }}
+            {{ 'alarm.details' | translate }}
         </md-tooltip>
         <md-icon aria-label="{{ 'action.view' | translate }}"
                  class="material-icons">

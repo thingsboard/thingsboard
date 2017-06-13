@@ -1,0 +1,67 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-relation-filters">
+    <div class="header" ng-show="relationFilters.length">
+        <div layout="row" layout-align="start center">
+            <span class="cell" style="width: 200px; min-width: 200px;" translate>relation.type</span>
+            <span class="cell" flex translate>entity.entity-types</span>
+            <span class="cell" style="width: 40px; min-width: 40px;">&nbsp</span>
+        </div>
+    </div>
+    <div class="body" ng-show="relationFilters.length">
+        <div class="row" ng-form name="relationFilterForm" flex layout="row" layout-align="start center" ng-repeat="filter in relationFilters track by $index">
+            <div class="md-whiteframe-1dp" flex layout="row" layout-align="start center">
+                <tb-relation-type-autocomplete class="cell" style="width: 200px; min-width: 200px;"
+                                               hide-label
+                                               the-form="relationFilterForm"
+                                               ng-model="filter.relationType"
+                                               tb-required="false">
+                </tb-relation-type-autocomplete>
+                <tb-entity-type-list class="cell" flex
+                        ng-model="filter.entityTypes"
+                        allowed-entity-types="allowedEntityTypes"
+                        tb-required="false">
+                </tb-entity-type-list>
+                <md-button ng-disabled="loading" class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"
+                           ng-click="removeFilter($event, filter)" aria-label="{{ 'action.remove' | translate }}">
+                    <md-tooltip md-direction="top">
+                        {{ 'relation.remove-relation-filter' | translate }}
+                    </md-tooltip>
+                    <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">
+                        close
+                    </md-icon>
+                </md-button>
+            </div>
+        </div>
+    </div>
+    <div class="any-filter" ng-show="!relationFilters.length">
+        <span layout-align="center center"
+              class="tb-prompt" translate>relation.any-relation</span>
+    </div>
+    <div>
+        <md-button ng-disabled="loading" class="md-primary md-raised" ng-click="addFilter($event)" aria-label="{{ 'action.add' | translate }}">
+            <md-tooltip md-direction="top">
+                {{ 'relation.add-relation-filter' | translate }}
+            </md-tooltip>
+            <md-icon aria-label="{{ 'action.add' | translate }}" class="material-icons">
+                add
+            </md-icon>
+            {{ 'action.add' | translate }}
+        </md-button>
+    </div>
+</div>

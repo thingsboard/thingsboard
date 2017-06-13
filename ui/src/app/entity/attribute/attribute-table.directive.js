@@ -26,10 +26,12 @@ import editAttributeValueTemplate from './edit-attribute-value.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 import EditAttributeValueController from './edit-attribute-value.controller';
+import AliasController from '../../api/alias-controller';
 
 /*@ngInject*/
 export default function AttributeTableDirective($compile, $templateCache, $rootScope, $q, $mdEditDialog, $mdDialog,
-                                                $document, $translate, $filter, utils, types, dashboardService, attributeService, widgetService) {
+                                                $mdUtil, $document, $translate, $filter, utils, types, dashboardUtils,
+                                                dashboardService, entityService, attributeService, widgetService) {
 
     var linker = function (scope, element, attrs) {
 
@@ -246,15 +248,19 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
         }
 
         scope.nextWidget = function() {
-            if (scope.widgetsCarousel.index < scope.widgetsList.length-1) {
-                scope.widgetsCarousel.index++;
-            }
+            $mdUtil.nextTick(function () {
+                if (scope.widgetsCarousel.index < scope.widgetsList.length - 1) {
+                    scope.widgetsCarousel.index++;
+                }
+            });
         }
 
         scope.prevWidget = function() {
-            if (scope.widgetsCarousel.index > 0) {
-                scope.widgetsCarousel.index--;
-            }
+            $mdUtil.nextTick(function () {
+                if (scope.widgetsCarousel.index > 0) {
+                    scope.widgetsCarousel.index--;
+                }
+            });
         }
 
         scope.enterWidgetMode = function() {
@@ -281,23 +287,28 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.firstBundle = true;
             scope.selectedWidgetsBundleAlias = types.systemBundleAlias.cards;
 
-            scope.aliasesInfo = {
-                entityAliases: {
-                    '1': {alias: scope.entityName, entityType: scope.entityType, entityId: scope.entityId}
-                },
-                entityAliasesInfo: {
-                    '1': [
-                        {name: scope.entityName, entityType: scope.entityType, id: scope.entityId}
-                    ]
+            var entityAlias = {
+                id: utils.guid(),
+                alias: scope.entityName,
+                filter: dashboardUtils.createSingleEntityFilter(scope.entityType, scope.entityId)
+            };
+            var entitiAliases = {};
+            entitiAliases[entityAlias.id] = entityAlias;
+
+            var stateController = {
+                getStateParams: function() {
+                    return {};
                 }
             };
+            scope.aliasController = new AliasController(scope, $q, $filter, utils,
+                types, entityService, stateController, entitiAliases);
 
             var dataKeyType = scope.attributeScope === types.latestTelemetry ?
                 types.dataKeyType.timeseries : types.dataKeyType.attribute;
 
             var datasource = {
                 type: types.datasourceType.entity,
-                entityAliasId: '1',
+                entityAliasId: entityAlias.id,
                 dataKeys: []
             }
             var i = 0;

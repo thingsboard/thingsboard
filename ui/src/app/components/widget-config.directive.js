@@ -128,13 +128,9 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                     } else if (scope.widgetType === types.widgetType.rpc.value && scope.isDataEnabled) {
                         if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
                             var aliasId = config.targetDeviceAliasIds[0];
-                            if (scope.entityAliases[aliasId]) {
-                                scope.targetDeviceAlias.value = {
-                                    id: aliasId,
-                                    alias: scope.entityAliases[aliasId].alias,
-                                    entityType: scope.entityAliases[aliasId].entityType,
-                                    entityId: scope.entityAliases[aliasId].entityId
-                                };
+                            var entityAliases = scope.aliasController.getEntityAliases();
+                            if (entityAliases[aliasId]) {
+                                scope.targetDeviceAlias.value = entityAliases[aliasId];
                             } else {
                                 scope.targetDeviceAlias.value = null;
                             }
@@ -395,7 +391,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             widgetType: '=',
             widgetSettingsSchema: '=',
             datakeySettingsSchema: '=',
-            entityAliases: '=',
+            aliasController: '=',
             functionsOnly: '=',
             fetchEntityKeys: '&',
             onCreateEntityAlias: '&',

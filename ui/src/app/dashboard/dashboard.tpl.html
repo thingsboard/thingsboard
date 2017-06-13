@@ -57,8 +57,7 @@
                     </tb-timewindow>
                     <tb-aliases-entity-select ng-show="!vm.isEdit && vm.displayEntitiesSelect()"
                                               tooltip-direction="bottom"
-                                              ng-model="vm.dashboardCtx.aliasesInfo.entityAliases"
-                                              entity-aliases-info="vm.dashboardCtx.aliasesInfo.entityAliasesInfo">
+                                              alias-controller="vm.dashboardCtx.aliasController">
                     </tb-aliases-entity-select>
                     <md-button ng-show="vm.isEdit" aria-label="{{ 'entity.aliases' | translate }}" class="md-icon-button"
                                ng-click="vm.openEntityAliases($event)">
@@ -179,7 +178,7 @@
             <form name="vm.widgetForm" ng-if="vm.isEditingWidget">
                 <tb-edit-widget
                         dashboard="vm.dashboard"
-                        aliases-info="vm.dashboardCtx.aliasesInfo"
+                        alias-controller="vm.dashboardCtx.aliasController"
                         widget="vm.editingWidget"
                         widget-layout="vm.editingWidgetLayout"
                         the-form="vm.widgetForm">

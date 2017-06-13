@@ -21,6 +21,7 @@ export default angular.module('thingsboard.api.alarm', [])
 function AlarmService($http, $q, $interval, $filter) {
     var service = {
         getAlarm: getAlarm,
+        getAlarmInfo: getAlarmInfo,
         saveAlarm: saveAlarm,
         ackAlarm: ackAlarm,
         clearAlarm: clearAlarm,
@@ -34,6 +35,21 @@ function AlarmService($http, $q, $interval, $filter) {
     function getAlarm(alarmId, ignoreErrors, config) {
         var deferred = $q.defer();
         var url = '/api/alarm/' + alarmId;
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getAlarmInfo(alarmId, ignoreErrors, config) {
+        var deferred = $q.defer();
+        var url = '/api/alarm/info/' + alarmId;
         if (!config) {
             config = {};
         }
@@ -91,7 +107,7 @@ function AlarmService($http, $q, $interval, $filter) {
         return deferred.promise;
     }
 
-    function getAlarms(entityType, entityId, pageLink, alarmStatus, ascOrder, config) {
+    function getAlarms(entityType, entityId, pageLink, alarmSearchStatus, alarmStatus, fetchOriginator, ascOrder, config) {
         var deferred = $q.defer();
         var url = '/api/alarm/' + entityType + '/' + entityId + '?limit=' + pageLink.limit;
 
@@ -104,8 +120,14 @@ function AlarmService($http, $q, $interval, $filter) {
         if (angular.isDefined(pageLink.idOffset)) {
             url += '&offset=' + pageLink.idOffset;
         }
+        if (alarmSearchStatus) {
+            url += '&searchStatus=' + alarmSearchStatus;
+        }
         if (alarmStatus) {
             url += '&status=' + alarmStatus;
+        }
+        if (fetchOriginator) {
+            url += '&fetchOriginator=' + ((fetchOriginator===true) ? 'true' : 'false');
         }
         if (angular.isDefined(ascOrder) && ascOrder != null) {
             url += '&ascOrder=' + (ascOrder ? 'true' : 'false');
@@ -121,7 +143,8 @@ function AlarmService($http, $q, $interval, $filter) {
 
     function fetchAlarms(alarmsQuery, pageLink, deferred, alarmsList) {
         getAlarms(alarmsQuery.entityType, alarmsQuery.entityId,
-            pageLink, alarmsQuery.alarmStatus, false, {ignoreLoading: true}).then(
+            pageLink, alarmsQuery.alarmSearchStatus, alarmsQuery.alarmStatus,
+            alarmsQuery.fetchOriginator, false, {ignoreLoading: true}).then(
             function success(alarms) {
                 if (!alarmsList) {
                     alarmsList = [];
@@ -171,7 +194,9 @@ function AlarmService($http, $q, $interval, $filter) {
         var alarmsQuery = {
             entityType: entityType,
             entityId: entityId,
+            alarmSearchStatus: null,
             alarmStatus: alarmStatus,
+            fetchOriginator: false,
             interval: interval,
             limit: limit,
             onAlarms: onAlarms

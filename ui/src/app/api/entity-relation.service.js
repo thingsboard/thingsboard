@@ -30,7 +30,8 @@ function EntityRelationService($http, $q) {
         findByTo: findByTo,
         findInfoByTo: findInfoByTo,
         findByToAndType: findByToAndType,
-        findByQuery: findByQuery
+        findByQuery: findByQuery,
+        findInfoByQuery: findInfoByQuery
     }
 
     return service;
@@ -151,6 +152,17 @@ function EntityRelationService($http, $q) {
     function findByQuery(query) {
         var deferred = $q.defer();
         var url = '/api/relations';
+        $http.post(url, query).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function findInfoByQuery(query) {
+        var deferred = $q.defer();
+        var url = '/api/relations/info';
         $http.post(url, query).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
