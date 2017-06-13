@@ -27,7 +27,7 @@
         </md-input-container>
         <tb-timewindow flex ng-model="timewindow" history-only as-button="true"></tb-timewindow>
     </section>
-    <md-list flex layout="column" class="md-whiteframe-z1 tb-table">
+    <md-list flex layout="column" class="md-whiteframe-z1 tb-event-table">
            <md-list class="tb-row tb-header" layout="row" tb-event-header event-type="{{eventType}}">
            </md-list>
         <md-progress-linear style="max-height: 0px;" md-mode="indeterminate" ng-disabled="!loading()"

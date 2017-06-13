@@ -72,6 +72,28 @@ export default angular.module('thingsboard.types', [])
                 ack: "ACK",
                 unack: "UNACK"
             },
+            alarmSeverity: {
+                "CRITICAL": {
+                    name: "alarm.severity-critical",
+                    class: "tb-critical"
+                },
+                "MAJOR": {
+                    name: "alarm.severity-major",
+                    class: "tb-major"
+                },
+                "MINOR": {
+                    name: "alarm.severity-minor",
+                    class: "tb-minor"
+                },
+                "WARNING": {
+                    name: "alarm.severity-warning",
+                    class: "tb-warning"
+                },
+                "INDETERMINATE": {
+                    name: "alarm.severity-indeterminate",
+                    class: "tb-indeterminate"
+                }
+            },
             aliasFilterType: {
                 entityList: {
                     value: 'entityList',
@@ -215,10 +237,6 @@ export default angular.module('thingsboard.types', [])
                 manages: "Manages"
             },
             eventType: {
-                alarm: {
-                    value: "ALARM",
-                    name: "event.type-alarm"
-                },
                 error: {
                     value: "ERROR",
                     name: "event.type-error"

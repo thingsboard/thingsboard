@@ -55,6 +55,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName {
 
     public Alarm(Alarm alarm) {
         super(alarm.getId());
+        this.createdTime = alarm.getCreatedTime();
         this.tenantId = alarm.getTenantId();
         this.type = alarm.getType();
         this.originator = alarm.getOriginator();

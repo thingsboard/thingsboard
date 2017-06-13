@@ -199,6 +199,23 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
+    public ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(AlarmId alarmId) {
+        log.trace("Executing findAlarmInfoByIdAsync [{}]", alarmId);
+        validateId(alarmId, "Incorrect alarmId " + alarmId);
+        return Futures.transform(alarmDao.findAlarmByIdAsync(alarmId.getId()),
+                (AsyncFunction<Alarm, AlarmInfo>) alarm1 -> {
+                AlarmInfo alarmInfo = new AlarmInfo(alarm1);
+                return Futures.transform(
+                    entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
+                        originatorName -> {
+                            alarmInfo.setOriginatorName(originatorName);
+                            return alarmInfo;
+                        }
+                );
+        });
+    }
+
+    @Override
     public ListenableFuture<TimePageData<AlarmInfo>> findAlarms(AlarmQuery query) {
         ListenableFuture<List<AlarmInfo>> alarms = alarmDao.findAlarms(query);
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {

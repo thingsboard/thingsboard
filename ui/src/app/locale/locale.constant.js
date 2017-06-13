@@ -108,9 +108,43 @@ export default angular.module('thingsboard.locale', [])
                 },
                 "alarm": {
                     "alarm": "Alarm",
+                    "alarms": "Alarms",
                     "select-alarm": "Select alarm",
                     "no-alarms-matching": "No alarms matching '{{entity}}' were found.",
-                    "alarm-required": "Alarm is required"
+                    "alarm-required": "Alarm is required",
+                    "alarm-status": "Alarm status",
+                    "search-status": {
+                        "ANY": "Any",
+                        "ACTIVE": "Active",
+                        "CLEARED": "Cleared",
+                        "ACK": "Acknowledged",
+                        "UNACK": "Unacknowledged"
+                    },
+                    "display-status": {
+                        "ACTIVE_UNACK": "Active Unacknowledged",
+                        "ACTIVE_ACK": "Active Acknowledged",
+                        "CLEARED_UNACK": "Cleared Unacknowledged",
+                        "CLEARED_ACK": "Cleared Acknowledged"
+                    },
+                    "no-alarms-prompt": "No alarms found",
+                    "created-time": "Created time",
+                    "type": "Type",
+                    "severity": "Severity",
+                    "originator": "Originator",
+                    "details": "Details",
+                    "status": "Status",
+                    "alarm-details": "Alarm details",
+                    "start-time": "Start time",
+                    "end-time": "End time",
+                    "ack-time": "Acknowledged time",
+                    "clear-time": "Cleared time",
+                    "severity-critical": "Critical",
+                    "severity-major": "Major",
+                    "severity-minor": "Minor",
+                    "severity-warning": "Warning",
+                    "severity-indeterminate": "Indeterminate",
+                    "acknowledge": "Acknowledge",
+                    "clear": "Clear"
                 },
                 "alias": {
                     "add": "Add alias",
@@ -647,7 +681,6 @@ export default angular.module('thingsboard.locale', [])
                 },
                 "event": {
                     "event-type": "Event type",
-                    "type-alarm": "Alarm",
                     "type-error": "Error",
                     "type-lc-event": "Lifecycle event",
                     "type-stats": "Statistics",

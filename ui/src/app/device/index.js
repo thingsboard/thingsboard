@@ -15,7 +15,6 @@
  */
 import uiRouter from 'angular-ui-router';
 import thingsboardGrid from '../components/grid.directive';
-import thingsboardEvent from '../event';
 import thingsboardApiUser from '../api/user.service';
 import thingsboardApiDevice from '../api/device.service';
 import thingsboardApiCustomer from '../api/customer.service';
@@ -30,7 +29,6 @@ import DeviceDirective from './device.directive';
 export default angular.module('thingsboard.device', [
     uiRouter,
     thingsboardGrid,
-    thingsboardEvent,
     thingsboardApiUser,
     thingsboardApiDevice,
     thingsboardApiCustomer

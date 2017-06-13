@@ -32,6 +32,8 @@ import thingsboardDashboardAutocomplete from '../components/dashboard-autocomple
 import thingsboardUserMenu from './user-menu.directive';
 
 import thingsboardEntity from '../entity';
+import thingsboardEvent from '../event';
+import thingsboardAlarm from '../alarm';
 import thingsboardTenant from '../tenant';
 import thingsboardCustomer from '../customer';
 import thingsboardUser from '../user';
@@ -61,6 +63,8 @@ export default angular.module('thingsboard.home', [
     thingsboardHomeLinks,
     thingsboardUserMenu,
     thingsboardEntity,
+    thingsboardEvent,
+    thingsboardAlarm,
     thingsboardTenant,
     thingsboardCustomer,
     thingsboardUser,

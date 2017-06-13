@@ -35,6 +35,8 @@ public interface AlarmService {
 
     ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
 
+    ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(AlarmId alarmId);
+
     ListenableFuture<TimePageData<AlarmInfo>> findAlarms(AlarmQuery query);
 
 }

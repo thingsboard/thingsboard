@@ -27,6 +27,7 @@ import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -346,6 +347,17 @@ public abstract class BaseController {
             Alarm alarm = alarmService.findAlarmByIdAsync(alarmId).get();
             checkAlarm(alarm);
             return alarm;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    AlarmInfo checkAlarmInfoId(AlarmId alarmId) throws ThingsboardException {
+        try {
+            validateId(alarmId, "Incorrect alarmId " + alarmId);
+            AlarmInfo alarmInfo = alarmService.findAlarmInfoByIdAsync(alarmId).get();
+            checkAlarm(alarmInfo);
+            return alarmInfo;
         } catch (Exception e) {
             throw handleException(e, false);
         }

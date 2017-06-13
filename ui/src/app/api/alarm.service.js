@@ -21,6 +21,7 @@ export default angular.module('thingsboard.api.alarm', [])
 function AlarmService($http, $q, $interval, $filter) {
     var service = {
         getAlarm: getAlarm,
+        getAlarmInfo: getAlarmInfo,
         saveAlarm: saveAlarm,
         ackAlarm: ackAlarm,
         clearAlarm: clearAlarm,
@@ -34,6 +35,21 @@ function AlarmService($http, $q, $interval, $filter) {
     function getAlarm(alarmId, ignoreErrors, config) {
         var deferred = $q.defer();
         var url = '/api/alarm/' + alarmId;
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getAlarmInfo(alarmId, ignoreErrors, config) {
+        var deferred = $q.defer();
+        var url = '/api/alarm/info/' + alarmId;
         if (!config) {
             config = {};
         }

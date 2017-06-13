@@ -62,7 +62,7 @@ export default function EventContentDialogController($mdDialog, content, title, 
             }
             newWidth = 8 * maxLineLength + 16;
         }
-        $('#tb-content', element).height(newHeight.toString() + "px")
+        $('#tb-event-content', element).height(newHeight.toString() + "px")
             .width(newWidth.toString() + "px");
         vm.editor.resize();
     }
