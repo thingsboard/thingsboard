@@ -106,8 +106,8 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
             List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
                 alarmFutures.add(Futures.transform(
-                        findAlarmByIdAsync(relation.getTo().getId()), (Function<Alarm, AlarmInfo>)
-                                alarm1 -> new AlarmInfo(alarm1)));
+                        findAlarmByIdAsync(relation.getTo().getId()),
+                        (Function<Alarm, AlarmInfo>) AlarmInfo::new));
             }
             return Futures.successfulAsList(alarmFutures);
         });
