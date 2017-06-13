@@ -309,6 +309,24 @@ pre.tb-highlight {
   }
 }
 
+.tb-severity {
+  font-weight: bold;
+  &.tb-critical {
+    color: red !important;
+  }
+  &.tb-major {
+    color: orange !important;
+  }
+  &.tb-minor {
+    color: #ffca3d !important;
+  }
+  &.tb-warning {
+    color: #abab00 !important;
+  }
+  &.tb-indeterminate {
+    color: green !important;
+  }
+}
 
 /***********************
  * Flow

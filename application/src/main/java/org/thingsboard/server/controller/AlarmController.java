@@ -58,6 +58,19 @@ public class AlarmController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/info/{alarmId}", method = RequestMethod.GET)
+    @ResponseBody
+    public AlarmInfo getAlarmInfoById(@PathVariable("alarmId") String strAlarmId) throws ThingsboardException {
+        checkParameter("alarmId", strAlarmId);
+        try {
+            AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+            return checkAlarmInfoId(alarmId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm", method = RequestMethod.POST)
     @ResponseBody
     public Alarm saveAlarm(@RequestBody Alarm alarm) throws ThingsboardException {

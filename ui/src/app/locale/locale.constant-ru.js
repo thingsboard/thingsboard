@@ -411,7 +411,6 @@ export default function addLocaleRussian(locales) {
         },
         "event": {
             "event-type": "Тип события",
-            "type-alarm": "Аварийное оповещение",
             "type-error": "Ошибка",
             "type-lc-event": "Событие жизненного цикла",
             "type-stats": "Статистика",

@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-md-list.tb-event-table {
-    padding: 0px;
 
-    md-list-item {
-      padding: 0px;
-    }
+.tb-alarm-container {
+  overflow-x: auto;
+}
+
+md-list.tb-alarm-table {
+  padding: 0px;
+  min-width: 700px;
+
+  md-list-item {
+    padding: 0px;
+  }
 
   .tb-row {
     height: 48px;
@@ -35,27 +41,27 @@ md-list.tb-event-table {
   }
 
   .tb-header {
-      .tb-cell {
-        color: rgba(0,0,0,.54);
-        font-size: 12px;
-        font-weight: 700;
-        white-space: nowrap;
-        background: none;
-      }
+    .tb-cell {
+      color: rgba(0,0,0,.54);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      background: none;
+    }
   }
 
   .tb-cell {
-      padding: 0 24px;
-      margin: auto 0;
-      color: rgba(0,0,0,.87);
-      font-size: 13px;
-      vertical-align: middle;
-      text-align: left;
-      overflow: hidden;
-      .md-button {
-        padding: 0;
-        margin: 0;
-      }
+    padding: 0 24px;
+    margin: auto 0;
+    color: rgba(0,0,0,.87);
+    font-size: 13px;
+    vertical-align: middle;
+    text-align: left;
+    overflow: hidden;
+    .md-button {
+      padding: 0;
+      margin: 0;
+    }
   }
 
   .tb-cell.tb-number {
@@ -64,7 +70,7 @@ md-list.tb-event-table {
 
 }
 
-#tb-event-content {
+#tb-alarm-content {
   min-width: 400px;
   min-height: 50px;
   width: 100%;

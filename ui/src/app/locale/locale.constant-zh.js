@@ -411,7 +411,6 @@ export default function addLocaleChinese(locales) {
         },
         "event" : {
             "event-type": "事件类型",
-            "type-alarm": "报警",
             "type-error": "错误",
             "type-lc-event": "生命周期事件",
             "type-stats": "类型统计",
