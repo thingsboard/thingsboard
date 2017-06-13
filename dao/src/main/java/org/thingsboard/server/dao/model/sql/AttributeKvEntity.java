@@ -16,21 +16,20 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.model.ToData;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.io.Serializable;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
 @Entity
-@Table(name = "attributes_kv")
-public class AttributeKvEntity implements ToData<AttributeKvEntry> {
+@Table(name = "attribute_kv")
+@IdClass(AttributeKvCompositeKey.class)
+public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable {
 
     @Id
     @Column(name = ENTITY_TYPE_COLUMN)
@@ -65,7 +64,16 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry> {
 
     @Override
     public AttributeKvEntry toData() {
-        // TODO - add implementation
-        return null;
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(attributeKey, strValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(attributeKey, booleanValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(attributeKey, doubleValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(attributeKey, longValue);
+        }
+        return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);
     }
 }

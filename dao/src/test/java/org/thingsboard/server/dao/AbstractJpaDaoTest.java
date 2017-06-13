@@ -37,6 +37,6 @@ import org.springframework.test.context.support.DirtiesContextTestExecutionListe
         DirtiesContextTestExecutionListener.class,
         DbUnitTestExecutionListener.class })
 @DbUnitConfiguration(databaseConnection = "dbUnitDatabaseConnection")
-public class AbstractJpaDaoTest extends AbstractTransactionalJUnit4SpringContextTests {
+public abstract class AbstractJpaDaoTest extends AbstractTransactionalJUnit4SpringContextTests {
 
 }

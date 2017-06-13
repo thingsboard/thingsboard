@@ -36,5 +36,5 @@ public interface AttributesDao {
 
     ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute);
 
-    ListenableFuture<List<Void>> removeAll(EntityId entityId, String scope, List<String> keys);
+    ListenableFuture<List<Void>> removeAll(EntityId entityId, String attributeType, List<String> keys);
 }

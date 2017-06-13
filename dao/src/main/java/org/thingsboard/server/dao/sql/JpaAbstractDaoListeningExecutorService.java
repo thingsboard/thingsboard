@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.dao.sql;
 
-import lombok.Data;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
-import java.io.Serializable;
-import java.util.UUID;
+import java.util.concurrent.Executors;
 
-@Data
-public class AttributesKvCompositeKey implements Serializable {
-    private String entityType;
-    private UUID entityId;
-    private String attributeType;
-    private String attributeKey;
+public abstract class JpaAbstractDaoListeningExecutorService {
+    protected ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
 }

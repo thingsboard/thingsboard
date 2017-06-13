@@ -16,8 +16,6 @@
 package org.thingsboard.server.dao.sql.relation;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,6 +34,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -44,7 +43,6 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.data.jpa.domain.Specifications.where;
@@ -56,16 +54,14 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
-public class JpaRelationDao implements RelationDao {
+public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService implements RelationDao {
 
     @Autowired
     private RelationRepository relationRepository;
 
-    private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-
     @Override
     public ListenableFuture<List<EntityRelation>> findAllByFrom(EntityId from, RelationTypeGroup typeGroup) {
-        return executorService.submit(() -> DaoUtil.convertDataList(
+        return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByFromIdAndFromTypeAndRelationTypeGroup(
                         from.getId(),
                         from.getEntityType().name(),
@@ -74,7 +70,7 @@ public class JpaRelationDao implements RelationDao {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findAllByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup) {
-        return executorService.submit(() -> DaoUtil.convertDataList(
+        return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByFromIdAndFromTypeAndRelationTypeAndRelationTypeGroup(
                         from.getId(),
                         from.getEntityType().name(),
@@ -84,7 +80,7 @@ public class JpaRelationDao implements RelationDao {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findAllByTo(EntityId to, RelationTypeGroup typeGroup) {
-        return executorService.submit(() -> DaoUtil.convertDataList(
+        return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByToIdAndToTypeAndRelationTypeGroup(
                         to.getId(),
                         to.getEntityType().name(),
@@ -93,7 +89,7 @@ public class JpaRelationDao implements RelationDao {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findAllByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        return executorService.submit(() -> DaoUtil.convertDataList(
+        return service.submit(() -> DaoUtil.convertDataList(
                 relationRepository.findAllByToIdAndToTypeAndRelationTypeAndRelationTypeGroup(
                         to.getId(),
                         to.getEntityType().name(),
@@ -110,18 +106,18 @@ public class JpaRelationDao implements RelationDao {
                         to.getEntityType().name(),
                         relationType,
                         typeGroup.name());
-        return executorService.submit(() -> relationRepository.findOne(key) != null);
+        return service.submit(() -> relationRepository.findOne(key) != null);
     }
 
     @Override
     public ListenableFuture<Boolean> saveRelation(EntityRelation relation) {
-        return executorService.submit(() -> relationRepository.save(new RelationEntity(relation)) != null);
+        return service.submit(() -> relationRepository.save(new RelationEntity(relation)) != null);
     }
 
     @Override
     public ListenableFuture<Boolean> deleteRelation(EntityRelation relation) {
         RelationCompositeKey key = new RelationCompositeKey(relation);
-        return executorService.submit(
+        return service.submit(
                 () -> {
                     boolean relationExistsBeforeDelete = relationRepository.exists(key);
                     relationRepository.delete(key);
@@ -138,7 +134,7 @@ public class JpaRelationDao implements RelationDao {
                         to.getEntityType().name(),
                         relationType,
                         typeGroup.name());
-        return executorService.submit(
+        return service.submit(
                 () -> {
                     boolean relationExistsBeforeDelete = relationRepository.exists(key);
                     relationRepository.delete(key);
@@ -152,7 +148,7 @@ public class JpaRelationDao implements RelationDao {
         relationEntity.setFromId(entity.getId());
         relationEntity.setFromType(entity.getEntityType().name());
 
-        return executorService.submit(
+        return service.submit(
                 () -> {
                     boolean relationExistsBeforeDelete = relationRepository
                             .findAllByFromIdAndFromType(relationEntity.getFromId(), relationEntity.getFromType())
@@ -172,7 +168,7 @@ public class JpaRelationDao implements RelationDao {
                         new Order(ASC, RELATION_TYPE_PROPERTY),
                         new Order(ASC, RELATION_TO_TYPE_PROPERTY))
         );
-        return executorService.submit(() ->
+        return service.submit(() ->
                 DaoUtil.convertDataList(relationRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
     }
 

@@ -23,7 +23,7 @@ import java.util.Properties;
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
  */
-public class JsonBinaryType   extends AbstractSingleColumnStandardBasicType<Object>
+public class JsonBinaryType extends AbstractSingleColumnStandardBasicType<Object>
         implements DynamicParameterizedType {
 
     public JsonBinaryType() {

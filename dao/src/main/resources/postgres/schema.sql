@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS asset (
 );
 ALTER TABLE asset OWNER TO postgres;
 
-CREATE TABLE IF NOT EXISTS attributes_kv (
+CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_type character varying(255),
   entity_id uuid,
   attribute_type character varying(255),
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS attributes_kv (
   long_v bigint,
   dbl_v double precision,
   last_update_ts bigint,
-  CONSTRAINT attributes_kv_unq_key UNIQUE (entity_type, entity_id, attribute_type, attribute_key)
+  CONSTRAINT attribute_kv_unq_key UNIQUE (entity_type, entity_id, attribute_type, attribute_key)
 );
 ALTER TABLE relation OWNER TO postgres;
 

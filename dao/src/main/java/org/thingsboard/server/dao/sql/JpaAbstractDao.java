@@ -38,7 +38,9 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
  * @author Valerii Sosliuk
  */
 @Slf4j
-public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<D> {
+public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
+        extends JpaAbstractDaoListeningExecutorService
+        implements Dao<D> {
 
     protected abstract Class<E> getEntityClass();
 
@@ -47,8 +49,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D> implements Dao<
     protected boolean isSearchTextDao() {
         return false;
     }
-
-    protected ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
 
     @Override
     @Transactional(propagation = REQUIRES_NEW)
