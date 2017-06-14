@@ -17,6 +17,8 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -32,10 +34,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Entity
 @Table(name = RELATION_COLUMN_FAMILY_NAME)
 @IdClass(RelationCompositeKey.class)
+@EqualsAndHashCode
+@ToString
 public final class RelationEntity implements ToData<EntityRelation> {
-
-    @Transient
-    private static final long serialVersionUID = -4089175869616037592L;
 
     @Id
     @Column(name = RELATION_FROM_ID_PROPERTY)
@@ -81,88 +82,6 @@ public final class RelationEntity implements ToData<EntityRelation> {
         this.relationType = relation.getType();
         this.relationTypeGroup = relation.getTypeGroup().name();
         this.additionalInfo = relation.getAdditionalInfo();
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((additionalInfo == null) ? 0 : additionalInfo.hashCode());
-        result = prime * result + ((toId == null) ? 0 : toId.hashCode());
-        result = prime * result + ((toType == null) ? 0 : toType.hashCode());
-        result = prime * result + ((fromId == null) ? 0 : fromId.hashCode());
-        result = prime * result + ((fromType == null) ? 0 : fromType.hashCode());
-        result = prime * result + ((relationType == null) ? 0 : relationType.hashCode());
-        result = prime * result + ((relationTypeGroup == null) ? 0 : relationTypeGroup.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        RelationEntity other = (RelationEntity) obj;
-        if (additionalInfo == null) {
-            if (other.additionalInfo != null)
-                return false;
-        } else if (!additionalInfo.equals(other.additionalInfo))
-            return false;
-        if (toId == null) {
-            if (other.toId != null)
-                return false;
-        } else if (!toId.equals(other.toId))
-            return false;
-        if (fromId == null) {
-            if (other.fromId != null)
-                return false;
-        } else if (!fromId.equals(other.fromId))
-            return false;
-        if (toType == null) {
-            if (other.toType != null)
-                return false;
-        } else if (!toType.equals(other.toType))
-            return false;
-        if (fromType == null) {
-            if (other.fromType != null)
-                return false;
-        } else if (!fromType.equals(other.fromType))
-            return false;
-        if (relationType == null) {
-            if (other.relationType != null)
-                return false;
-        } else if (!relationType.equals(other.relationType))
-            return false;
-        if (relationTypeGroup == null) {
-            if (other.relationTypeGroup != null)
-                return false;
-        } else if (!relationTypeGroup.equals(other.relationTypeGroup))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("AssetEntity [toId=");
-        builder.append(toId);
-        builder.append(", toType=");
-        builder.append(toType);
-        builder.append(", fromId=");
-        builder.append(fromId);
-        builder.append(", fromType=");
-        builder.append(fromType);
-        builder.append(", relationType=");
-        builder.append(relationType);
-        builder.append(", relationTypeGroup=");
-        builder.append(relationTypeGroup);
-        builder.append(", additionalInfo=");
-        builder.append(additionalInfo);
-        builder.append("]");
-        return builder.toString();
     }
 
     @Override

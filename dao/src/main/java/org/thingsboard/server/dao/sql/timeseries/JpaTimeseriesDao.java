@@ -15,13 +15,20 @@
  */
 package org.thingsboard.server.dao.sql.timeseries;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.sql.TsKvEntity;
+import org.thingsboard.server.dao.model.sql.TsKvLatestCompositeKey;
+import org.thingsboard.server.dao.model.sql.TsKvLatestEntity;
+import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 
 import java.util.List;
@@ -29,41 +36,80 @@ import java.util.List;
 @Component
 @Slf4j
 @ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
-public class JpaTimeseriesDao implements TimeseriesDao {
+public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService implements TimeseriesDao {
 
-    @Override
-    public long toPartitionTs(long ts) {
-        return 0;
-    }
+    @Autowired
+    private TsKvRepository tsKvRepository;
+
+    @Autowired
+    private TsKvLatestRepository tsKvLatestRepository;
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, List<TsKvQuery> queries) {
+       return null;
+    }
+
+    private ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, TsKvQuery query) {
         return null;
     }
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(EntityId entityId, String key) {
-        return null;
+        TsKvLatestCompositeKey compositeKey =
+                new TsKvLatestCompositeKey(
+                        entityId.getEntityType().name(),
+                        entityId.getId(),
+                        key);
+        return service.submit(() ->
+                DaoUtil.getData(tsKvLatestRepository.findOne(compositeKey)));
     }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId) {
-        return null;
+        return service.submit(() ->
+                DaoUtil.convertDataList(Lists.newArrayList(
+                        tsKvLatestRepository.findAllByEntityTypeAndEntityId(
+                                entityId.getEntityType().name(),
+                                entityId.getId()))));
     }
 
     @Override
-    public ListenableFuture<Void> save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl) {
-        return null;
+    public ListenableFuture<Void> save(EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        TsKvEntity entity = new TsKvEntity();
+        entity.setEntityType(entityId.getEntityType().name());
+        entity.setEntityId(entityId.getId());
+        entity.setTs(tsKvEntry.getTs());
+        entity.setKey(tsKvEntry.getKey());
+        entity.setStrValue(tsKvEntry.getStrValue().orElse(null));
+        entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
+        entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
+        entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        return service.submit(() -> {
+            tsKvRepository.save(entity);
+            return null;
+        });
     }
 
     @Override
-    public ListenableFuture<Void> savePartition(EntityId entityId, long partition, String key, long ttl) {
+    public ListenableFuture<Void> savePartition(EntityId entityId, long tsKvEntryTs, String key, long ttl) {
         return null;
     }
 
     @Override
     public ListenableFuture<Void> saveLatest(EntityId entityId, TsKvEntry tsKvEntry) {
-        return null;
+        TsKvLatestEntity latestEntity = new TsKvLatestEntity();
+        latestEntity.setEntityType(entityId.getEntityType().name());
+        latestEntity.setEntityId(entityId.getId());
+        latestEntity.setTs(tsKvEntry.getTs());
+        latestEntity.setKey(tsKvEntry.getKey());
+        latestEntity.setStrValue(tsKvEntry.getStrValue().orElse(null));
+        latestEntity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
+        latestEntity.setLongValue(tsKvEntry.getLongValue().orElse(null));
+        latestEntity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+        return service.submit(() -> {
+            tsKvLatestRepository.save(latestEntity);
+            return null;
+        });
     }
 
 }

@@ -27,17 +27,15 @@ import java.util.List;
  */
 public interface TimeseriesDao {
 
-    long toPartitionTs(long ts);
-
     ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, List<TsKvQuery> queries);
 
     ListenableFuture<TsKvEntry> findLatest(EntityId entityId, String key);
 
     ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId);
 
-    ListenableFuture<Void> save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl);
+    ListenableFuture<Void> save(EntityId entityId, TsKvEntry tsKvEntry, long ttl);
 
-    ListenableFuture<Void> savePartition(EntityId entityId, long partition, String key, long ttl);
+    ListenableFuture<Void> savePartition(EntityId entityId, long tsKvEntryTs, String key, long ttl);
 
     ListenableFuture<Void> saveLatest(EntityId entityId, TsKvEntry tsKvEntry);
 }

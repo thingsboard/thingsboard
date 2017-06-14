@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.dao.model.sql;
 
-public interface TsKvQuery {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-    String getKey();
+import javax.persistence.Transient;
+import java.io.Serializable;
+import java.util.UUID;
 
-    long getStartTs();
+@Data
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+public class TsKvLatestCompositeKey implements Serializable{
 
-    long getEndTs();
+    @Transient
+    private static final long serialVersionUID = -4089175869616037523L;
 
-    long getInterval();
-
-    int getLimit();
-
-    Aggregation getAggregation();
-
+    private String entityType;
+    private UUID entityId;
+    private String key;
 }

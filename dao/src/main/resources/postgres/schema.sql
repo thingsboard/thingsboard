@@ -51,18 +51,6 @@ CREATE TABLE IF NOT EXISTS alarm (
 );
 ALTER TABLE alarm OWNER TO postgres;
 
-CREATE TABLE IF NOT EXISTS relation (
-    from_id uuid,
-    from_type character varying(255),
-    to_id uuid,
-    to_type character varying(255),
-    relation_type_group character varying(255),
-    relation_type character varying(255),
-    additional_info jsonb,
-    CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
-);
-ALTER TABLE relation OWNER TO postgres;
-
 CREATE TABLE IF NOT EXISTS asset (
     id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
     additional_info jsonb,
@@ -172,6 +160,18 @@ CREATE TABLE IF NOT EXISTS plugin (
 );
 ALTER TABLE plugin OWNER TO postgres;
 
+CREATE TABLE IF NOT EXISTS relation (
+    from_id uuid,
+    from_type character varying(255),
+    to_id uuid,
+    to_type character varying(255),
+    relation_type_group character varying(255),
+    relation_type character varying(255),
+    additional_info jsonb,
+    CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
+);
+ALTER TABLE relation OWNER TO postgres;
+
 CREATE TABLE IF NOT EXISTS rule (
     id uuid NOT NULL CONSTRAINT rule_pkey PRIMARY KEY,
     action jsonb,
@@ -216,6 +216,32 @@ CREATE TABLE IF NOT EXISTS tenant (
     zip character varying(255)
 );
 ALTER TABLE tenant OWNER TO postgres;
+
+CREATE TABLE IF NOT EXISTS ts_kv (
+    entity_type character varying(255) NOT NULL,
+    entity_id uuid NOT NULL,
+    key character varying(255) NOT NULL,
+    ts bigint NOT NULL,
+    bool_v boolean,
+    str_v character varying(255),
+    long_v bigint,
+    dbl_v double precision,
+    CONSTRAINT ts_kv_unq_key UNIQUE (entity_type, entity_id, key, ts)
+);
+ALTER TABLE ts_kv OWNER TO postgres;
+
+CREATE TABLE IF NOT EXISTS ts_kv_latest (
+    entity_type character varying(255) NOT NULL,
+    entity_id uuid NOT NULL,
+    key character varying(255) NOT NULL,
+    ts bigint NOT NULL,
+    bool_v boolean,
+    str_v character varying(255),
+    long_v bigint,
+    dbl_v double precision,
+    CONSTRAINT ts_kv_latest_unq_key UNIQUE (entity_type, entity_id, key)
+);
+ALTER TABLE ts_kv OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS user_credentials (
     id uuid NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,

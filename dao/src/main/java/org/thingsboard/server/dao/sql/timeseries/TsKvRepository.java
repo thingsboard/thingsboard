@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.dao.sql.timeseries;
 
-public interface TsKvQuery {
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.TsKvCompositeKey;
+import org.thingsboard.server.dao.model.sql.TsKvEntity;
 
-    String getKey();
-
-    long getStartTs();
-
-    long getEndTs();
-
-    long getInterval();
-
-    int getLimit();
-
-    Aggregation getAggregation();
-
+@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
+public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
 }

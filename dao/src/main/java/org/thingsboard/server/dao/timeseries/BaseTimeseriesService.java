@@ -72,9 +72,8 @@ public class BaseTimeseriesService implements TimeseriesService {
         if (tsKvEntry == null) {
             throw new IncorrectParameterException("Key value entry can't be null");
         }
-        long partitionTs = timeseriesDao.toPartitionTs(tsKvEntry.getTs());
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
-        saveAndRegisterFutures(futures, entityId, tsKvEntry, partitionTs, 0L);
+        saveAndRegisterFutures(futures, entityId, tsKvEntry, 0L);
         return Futures.allAsList(futures);
     }
 
@@ -85,16 +84,15 @@ public class BaseTimeseriesService implements TimeseriesService {
             if (tsKvEntry == null) {
                 throw new IncorrectParameterException("Key value entry can't be null");
             }
-            long partitionTs = timeseriesDao.toPartitionTs(tsKvEntry.getTs());
-            saveAndRegisterFutures(futures, entityId, tsKvEntry, partitionTs, ttl);
+            saveAndRegisterFutures(futures, entityId, tsKvEntry, ttl);
         }
         return Futures.allAsList(futures);
     }
 
-    private void saveAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvEntry tsKvEntry, long partitionTs, long ttl) {
-        futures.add(timeseriesDao.savePartition(entityId, partitionTs, tsKvEntry.getKey(), ttl));
+    private void saveAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        futures.add(timeseriesDao.savePartition(entityId, tsKvEntry.getTs(), tsKvEntry.getKey(), ttl));
         futures.add(timeseriesDao.saveLatest(entityId, tsKvEntry));
-        futures.add(timeseriesDao.save(entityId, partitionTs, tsKvEntry, ttl));
+        futures.add(timeseriesDao.save(entityId, tsKvEntry, ttl));
     }
 
     private static void validate(EntityId entityId) {
