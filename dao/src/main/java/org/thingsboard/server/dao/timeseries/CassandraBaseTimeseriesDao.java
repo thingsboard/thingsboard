@@ -51,12 +51,11 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
  */
 @Component
 @Slf4j
-@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true")
 public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implements TimeseriesDao {
 
-    //@Value("${cassandra.query.min_aggregation_step_ms}")
-    //TODO:
-    private int minAggregationStepMs = 1000;
+    @Value("${cassandra.query.min_aggregation_step_ms}")
+    private int minAggregationStepMs;
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
@@ -103,9 +102,12 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             @Nullable
             @Override
             public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {
-                List<TsKvEntry> result = new ArrayList<TsKvEntry>();
-                results.forEach(r -> result.addAll(r));
-                return result;
+                if (results == null || results.isEmpty()) {
+                    return null;
+                }
+                return results.stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList());
             }
         }, readResultsProcessingExecutor);
     }
@@ -238,26 +240,26 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     @Override
-    public ResultSetFuture findLatest(EntityId entityId, String key) {
+    public ListenableFuture<TsKvEntry> findLatest(EntityId entityId, String key) {
         BoundStatement stmt = getFindLatestStmt().bind();
         stmt.setString(0, entityId.getEntityType().name());
         stmt.setUUID(1, entityId.getId());
         stmt.setString(2, key);
         log.debug("Generated query [{}] for entityType {} and entityId {}", stmt, entityId.getEntityType(), entityId.getId());
-        return executeAsyncRead(stmt);
+        return getFuture(executeAsyncRead(stmt), rs -> convertResultToTsKvEntry(rs.one()));
     }
 
     @Override
-    public ResultSetFuture findAllLatest(EntityId entityId) {
+    public ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId) {
         BoundStatement stmt = getFindAllLatestStmt().bind();
         stmt.setString(0, entityId.getEntityType().name());
         stmt.setUUID(1, entityId.getId());
         log.debug("Generated query [{}] for entityType {} and entityId {}", stmt, entityId.getEntityType(), entityId.getId());
-        return executeAsyncRead(stmt);
+        return getFuture(executeAsyncRead(stmt), rs -> convertResultToTsKvEntryList(rs.all()));
     }
 
     @Override
-    public ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl) {
+    public ListenableFuture<Void> save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl) {
         DataType type = tsKvEntry.getDataType();
         BoundStatement stmt = (ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind();
         stmt.setString(0, entityId.getEntityType().name())
@@ -269,11 +271,11 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         if (ttl > 0) {
             stmt.setInt(6, (int) ttl);
         }
-        return executeAsyncWrite(stmt);
+        return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
     @Override
-    public ResultSetFuture savePartition(EntityId entityId, long partition, String key, long ttl) {
+    public ListenableFuture<Void> savePartition(EntityId entityId, long partition, String key, long ttl) {
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
         BoundStatement stmt = (ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind();
         stmt = stmt.setString(0, entityId.getEntityType().name())
@@ -283,11 +285,11 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         if (ttl > 0) {
             stmt.setInt(4, (int) ttl);
         }
-        return executeAsyncWrite(stmt);
+        return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
     @Override
-    public ResultSetFuture saveLatest(EntityId entityId, TsKvEntry tsKvEntry) {
+    public ListenableFuture<Void> saveLatest(EntityId entityId, TsKvEntry tsKvEntry) {
         DataType type = tsKvEntry.getDataType();
         BoundStatement stmt = getLatestStmt(type).bind()
                 .setString(0, entityId.getEntityType().name())
@@ -295,25 +297,18 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 .setString(2, tsKvEntry.getKey())
                 .setLong(3, tsKvEntry.getTs());
         addValue(tsKvEntry, stmt, 4);
-        return executeAsyncWrite(stmt);
+        return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
-    @Override
-    public List<TsKvEntry> convertResultToTsKvEntryList(List<Row> rows) {
+    private List<TsKvEntry> convertResultToTsKvEntryList(List<Row> rows) {
         List<TsKvEntry> entries = new ArrayList<>(rows.size());
         if (!rows.isEmpty()) {
-            rows.forEach(row -> {
-                TsKvEntry kvEntry = convertResultToTsKvEntry(row);
-                if (kvEntry != null) {
-                    entries.add(kvEntry);
-                }
-            });
+            rows.forEach(row -> entries.add(convertResultToTsKvEntry(row)));
         }
         return entries;
     }
 
-    @Override
-    public TsKvEntry convertResultToTsKvEntry(Row row) {
+    private TsKvEntry convertResultToTsKvEntry(Row row) {
         String key = row.getString(ModelConstants.KEY_COLUMN);
         long ts = row.getLong(ModelConstants.TS_COLUMN);
         return new BasicTsKvEntry(ts, toKvEntry(row, key));
@@ -490,7 +485,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         return findAllLatestStmt;
     }
 
-    public static String getColumnName(DataType type) {
+    private static String getColumnName(DataType type) {
         switch (type) {
             case BOOLEAN:
                 return ModelConstants.BOOLEAN_VALUE_COLUMN;
@@ -505,7 +500,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         }
     }
 
-    public static void addValue(KvEntry kvEntry, BoundStatement stmt, int column) {
+    private static void addValue(KvEntry kvEntry, BoundStatement stmt, int column) {
         switch (kvEntry.getDataType()) {
             case BOOLEAN:
                 stmt.setBool(column, kvEntry.getBooleanValue().get().booleanValue());

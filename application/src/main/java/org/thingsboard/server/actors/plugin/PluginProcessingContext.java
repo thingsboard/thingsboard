@@ -16,9 +16,6 @@
 package org.thingsboard.server.actors.plugin;
 
 import akka.actor.ActorRef;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -159,7 +156,7 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveTsData(final EntityId entityId, final TsKvEntry entry, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entry);
+            ListenableFuture<List<Void>> rsListFuture = pluginCtx.tsService.save(entityId, entry);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
@@ -172,7 +169,7 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, long ttl, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entries, ttl);
+            ListenableFuture<List<Void>> rsListFuture = pluginCtx.tsService.save(entityId, entries, ttl);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
@@ -189,26 +186,16 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void loadLatestTimeseries(final EntityId entityId, final PluginCallback<List<TsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ResultSetFuture future = pluginCtx.tsService.findAllLatest(entityId);
-            Futures.addCallback(future, getCallback(callback, pluginCtx.tsService::convertResultSetToTsKvEntryList), executor);
+            ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAllLatest(entityId);
+            Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
 
     @Override
     public void loadLatestTimeseries(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<TsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.findLatest(entityId, keys);
-            Futures.addCallback(rsListFuture, getListCallback(callback, rsList ->
-            {
-                List<TsKvEntry> result = new ArrayList<>();
-                for (ResultSet rs : rsList) {
-                    Row row = rs.one();
-                    if (row != null) {
-                        result.add(pluginCtx.tsService.convertResultToTsKvEntry(row));
-                    }
-                }
-                return result;
-            }), executor);
+            ListenableFuture<List<TsKvEntry>> rsListFuture = pluginCtx.tsService.findLatest(entityId, keys);
+            Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);
         }));
     }
 

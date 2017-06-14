@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
@@ -62,8 +59,7 @@ public class TimeseriesServiceTest extends AbstractServiceTest {
         saveEntries(deviceId, TS - 1);
         saveEntries(deviceId, TS);
 
-        ResultSetFuture rsFuture = tsService.findAllLatest(deviceId);
-        List<TsKvEntry> tsList = tsService.convertResultSetToTsKvEntryList(rsFuture.get());
+        List<TsKvEntry> tsList = tsService.findAllLatest(deviceId).get();
 
         assertNotNull(tsList);
         assertEquals(4, tsList.size());
@@ -91,9 +87,9 @@ public class TimeseriesServiceTest extends AbstractServiceTest {
         saveEntries(deviceId, TS - 1);
         saveEntries(deviceId, TS);
 
-        List<ResultSet> rs = tsService.findLatest(deviceId, Collections.singleton(STRING_KEY)).get();
-        Assert.assertEquals(1, rs.size());
-        Assert.assertEquals(toTsEntry(TS, stringKvEntry), tsService.convertResultToTsKvEntry(rs.get(0).one()));
+        List<TsKvEntry> entries = tsService.findLatest(deviceId, Collections.singleton(STRING_KEY)).get();
+        Assert.assertEquals(1, entries.size());
+        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
     }
 
     @Test

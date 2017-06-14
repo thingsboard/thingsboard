@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.timeseries;
 
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -44,37 +42,28 @@ public class JpaTimeseriesDao implements TimeseriesDao {
     }
 
     @Override
-    public ResultSetFuture findLatest(EntityId entityId, String key) {
+    public ListenableFuture<TsKvEntry> findLatest(EntityId entityId, String key) {
         return null;
     }
 
     @Override
-    public ResultSetFuture findAllLatest(EntityId entityId) {
+    public ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId) {
         return null;
     }
 
     @Override
-    public ResultSetFuture save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl) {
+    public ListenableFuture<Void> save(EntityId entityId, long partition, TsKvEntry tsKvEntry, long ttl) {
         return null;
     }
 
     @Override
-    public ResultSetFuture savePartition(EntityId entityId, long partition, String key, long ttl) {
+    public ListenableFuture<Void> savePartition(EntityId entityId, long partition, String key, long ttl) {
         return null;
     }
 
     @Override
-    public ResultSetFuture saveLatest(EntityId entityId, TsKvEntry tsKvEntry) {
+    public ListenableFuture<Void> saveLatest(EntityId entityId, TsKvEntry tsKvEntry) {
         return null;
     }
 
-    @Override
-    public TsKvEntry convertResultToTsKvEntry(Row row) {
-        return null;
-    }
-
-    @Override
-    public List<TsKvEntry> convertResultToTsKvEntryList(List<Row> rows) {
-        return null;
-    }
 }

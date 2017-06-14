@@ -188,7 +188,7 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
                                 QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)
                 ),
                 pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
-        return getFuture(executeAsyncRead(query), rs -> getEntityRelations(rs));
+        return getFuture(executeAsyncRead(query), this::getEntityRelations);
     }
 
     private PreparedStatement getSaveStmt() {
