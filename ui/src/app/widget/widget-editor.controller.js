@@ -329,9 +329,13 @@ export default function WidgetEditorController(widgetService, userService, types
         $scope.$watch('vm.widget.type', function (newVal, oldVal) {
             if (!angular.equals(newVal, oldVal)) {
                 var config = angular.fromJson(vm.widget.defaultConfig);
-                if (vm.widget.type !== types.widgetType.rpc.value) {
+                if (vm.widget.type !== types.widgetType.rpc.value
+                    && vm.widget.type !== types.widgetType.alarm.value) {
                     if (config.targetDeviceAliases) {
                         delete config.targetDeviceAliases;
+                    }
+                    if (config.alarmSource) {
+                        delete config.alarmSource;
                     }
                     if (!config.datasources) {
                         config.datasources = [];
@@ -346,21 +350,37 @@ export default function WidgetEditorController(widgetService, userService, types
                     for (var i = 0; i < config.datasources.length; i++) {
                         var datasource = config.datasources[i];
                         datasource.type = vm.widget.type;
-                        if (vm.widget.type !== types.widgetType.timeseries.value && datasource.intervalSec) {
-                            delete datasource.intervalSec;
-                        } else if (vm.widget.type === types.widgetType.timeseries.value && !datasource.intervalSec) {
-                            datasource.intervalSec = 60;
-                        }
                     }
-                } else {
+                } else if (vm.widget.type == types.widgetType.rpc.value) {
                     if (config.datasources) {
                         delete config.datasources;
+                    }
+                    if (config.alarmSource) {
+                        delete config.alarmSource;
                     }
                     if (config.timewindow) {
                         delete config.timewindow;
                     }
                     if (!config.targetDeviceAliases) {
                         config.targetDeviceAliases = [];
+                    }
+                } else { // alarm
+                    if (config.datasources) {
+                        delete config.datasources;
+                    }
+                    if (config.targetDeviceAliases) {
+                        delete config.targetDeviceAliases;
+                    }
+                    if (!config.alarmSource) {
+                        config.alarmSource = {};
+                        config.alarmSource.type = vm.widget.type
+                    }
+                    if (!config.timewindow) {
+                        config.timewindow = {
+                            realtime: {
+                                timewindowMs: 24 * 60 * 60 * 1000
+                            }
+                        };
                     }
                 }
                 vm.widget.defaultConfig = angular.toJson(config);

@@ -52,7 +52,7 @@
                     <tb-timewindow ng-show="vm.isEdit || vm.displayDashboardTimewindow()"
                                    is-toolbar
                                    direction="left"
-                                   tooltip-direction="bottom" aggregation
+                                   tooltip-direction="bottom" aggregation="true"
                                    ng-model="vm.dashboardCtx.dashboardTimewindow">
                     </tb-timewindow>
                     <tb-aliases-entity-select ng-show="!vm.isEdit && vm.displayEntitiesSelect()"
@@ -179,6 +179,7 @@
                 <tb-edit-widget
                         dashboard="vm.dashboard"
                         alias-controller="vm.dashboardCtx.aliasController"
+                        widget-edit-mode="vm.widgetEditMode"
                         widget="vm.editingWidget"
                         widget-layout="vm.editingWidgetLayout"
                         the-form="vm.widgetForm">
@@ -205,7 +206,8 @@
             </header-pane>
             <div ng-if="vm.isAddingWidget">
                 <md-tabs ng-if="vm.timeseriesWidgetTypes.length > 0 || vm.latestWidgetTypes.length > 0 ||
-                                vm.rpcWidgetTypes.length > 0 || vm.staticWidgetTypes.length > 0"
+                                vm.rpcWidgetTypes.length > 0 || vm.alarmWidgetTypes.length > 0 ||
+                                vm.staticWidgetTypes.length > 0"
                          flex
                          class="tb-absolute-fill" md-border-bottom>
                     <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.timeseries' | translate }}">
@@ -238,6 +240,16 @@
                                 on-widget-clicked="vm.addWidgetFromType(event, widget)">
                         </tb-dashboard>
                     </md-tab>
+                    <md-tab ng-if="vm.alarmWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.alarm' | translate }}">
+                        <tb-dashboard
+                                widgets="vm.alarmWidgetTypes"
+                                is-edit="false"
+                                is-mobile="true"
+                                is-edit-action-enabled="false"
+                                is-remove-action-enabled="false"
+                                on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                        </tb-dashboard>
+                    </md-tab>
                     <md-tab ng-if="vm.staticWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.static' | translate }}">
                         <tb-dashboard
                                 widgets="vm.staticWidgetTypes"
@@ -250,7 +262,8 @@
                     </md-tab>
                 </md-tabs>
                 <span translate ng-if="vm.timeseriesWidgetTypes.length === 0 && vm.latestWidgetTypes.length === 0 &&
-                                       vm.rpcWidgetTypes.length === 0 && vm.staticWidgetTypes.length === 0 && vm.widgetsBundle"
+                                       vm.rpcWidgetTypes.length === 0 && vm.alarmWidgetTypes.length === 0 &&
+                                       vm.staticWidgetTypes.length === 0 && vm.widgetsBundle"
                       layout-align="center center"
                       style="text-transform: uppercase; display: flex;"
                       class="md-headline tb-absolute-fill">widgets-bundle.empty</span>

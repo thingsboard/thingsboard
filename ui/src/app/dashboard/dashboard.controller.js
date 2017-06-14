@@ -47,6 +47,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.latestWidgetTypes = [];
     vm.timeseriesWidgetTypes = [];
     vm.rpcWidgetTypes = [];
+    vm.alarmWidgetTypes = [];
     vm.staticWidgetTypes = [];
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
     vm.iframeMode = $rootScope.iframeMode;
@@ -263,6 +264,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         vm.latestWidgetTypes = [];
         vm.timeseriesWidgetTypes = [];
         vm.rpcWidgetTypes = [];
+        vm.alarmWidgetTypes = [];
         vm.staticWidgetTypes = [];
         if (vm.widgetsBundle) {
             var bundleAlias = vm.widgetsBundle.alias;
@@ -308,6 +310,8 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                             vm.latestWidgetTypes.push(widget);
                         } else if (widgetTypeInfo.type === types.widgetType.rpc.value) {
                             vm.rpcWidgetTypes.push(widget);
+                        } else if (widgetTypeInfo.type === types.widgetType.alarm.value) {
+                            vm.alarmWidgetTypes.push(widget);
                         } else if (widgetTypeInfo.type === types.widgetType.static.value) {
                             vm.staticWidgetTypes.push(widget);
                         }
@@ -358,21 +362,6 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
                     vm.dashboardCtx.aliasController = new AliasController($scope, $q, $filter, utils,
                         types, entityService, vm.dashboardCtx.stateController, vm.dashboardConfiguration.entityAliases);
-
-                   /* entityService.processEntityAliases(vm.dashboard.configuration.entityAliases)
-                        .then(
-                            function(resolution) {
-                                if (resolution.error && !isTenantAdmin()) {
-                                    vm.configurationError = true;
-                                    showAliasesResolutionError(resolution.error);
-                                } else {
-                                    vm.dashboardConfiguration = vm.dashboard.configuration;
-                                    vm.dashboardCtx.dashboard = vm.dashboard;
-                                    vm.dashboardCtx.aliasesInfo = resolution.aliasesInfo;
-                                    vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
-                                }
-                            }
-                        );*/
                 }, function fail() {
                     vm.configurationError = true;
                 });
@@ -744,6 +733,10 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     link = 'widgetsConfigRpc';
                     break;
                 }
+                case types.widgetType.alarm.value: {
+                    link = 'widgetsConfigAlarm';
+                    break;
+                }
                 case types.widgetType.static.value: {
                     link = 'widgetsConfigStatic';
                     break;
@@ -851,6 +844,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         vm.timeseriesWidgetTypes = [];
         vm.latestWidgetTypes = [];
         vm.rpcWidgetTypes = [];
+        vm.alarmWidgetTypes = [];
         vm.staticWidgetTypes = [];
     }
 

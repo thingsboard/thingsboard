@@ -76,6 +76,10 @@ export default function AddWidgetController($scope, widgetService, entityService
                     link = 'widgetsConfigRpc';
                     break;
                 }
+                case types.widgetType.alarm.value: {
+                    link = 'widgetsConfigAlarm';
+                    break;
+                }
                 case types.widgetType.static.value: {
                     link = 'widgetsConfigStatic';
                     break;

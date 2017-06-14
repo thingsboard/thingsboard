@@ -21,8 +21,10 @@ export default angular.module('thingsboard.utils', [thingsboardTypes])
     .factory('utils', Utils)
     .name;
 
+const varsRegex = /\$\{([^\}]*)\}/g;
+
 /*@ngInject*/
-function Utils($mdColorPalette, $rootScope, $window, types) {
+function Utils($mdColorPalette, $rootScope, $window, $translate, types) {
 
     var predefinedFunctions = {},
         predefinedFunctionsList = [],
@@ -93,9 +95,32 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
         dataKeys: [angular.copy(defaultDataKey)]
     };
 
+    var defaultAlarmFields = [
+        'createdTime',
+        'originator',
+        'type',
+        'severity',
+        'status'
+    ];
+
+    var defaultAlarmDataKeys = [];
+    for (var i=0;i<defaultAlarmFields.length;i++) {
+        var name = defaultAlarmFields[i];
+        var dataKey = {
+            name: name,
+            type: types.dataKeyType.alarm,
+            label: $translate.instant(types.alarmFields[name].name)+'',
+            color: getMaterialColor(i),
+            settings: {},
+            _hash: Math.random()
+        };
+        defaultAlarmDataKeys.push(dataKey);
+    }
+
     var service = {
         getDefaultDatasource: getDefaultDatasource,
         getDefaultDatasourceJson: getDefaultDatasourceJson,
+        getDefaultAlarmDataKeys: getDefaultAlarmDataKeys,
         getMaterialColor: getMaterialColor,
         getPredefinedFunctionBody: getPredefinedFunctionBody,
         getPredefinedFunctionsList: getPredefinedFunctionsList,
@@ -109,7 +134,8 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
         cleanCopy: cleanCopy,
         isLocalUrl: isLocalUrl,
         validateDatasources: validateDatasources,
-        createKey: createKey
+        createKey: createKey,
+        createLabelFromDatasource: createLabelFromDatasource
     }
 
     return service;
@@ -210,6 +236,10 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
 
     function getDefaultDatasourceJson(dataKeySchema) {
         return angular.toJson(getDefaultDatasource(dataKeySchema));
+    }
+
+    function getDefaultAlarmDataKeys() {
+        return angular.copy(defaultAlarmDataKeys);
     }
 
     function isDescriptorSchemaNotEmpty(descriptor) {
@@ -355,6 +385,26 @@ function Utils($mdColorPalette, $rootScope, $window, types) {
             _hash: Math.random()
         }
         return dataKey;
+    }
+
+    function createLabelFromDatasource(datasource, pattern) {
+        var label = angular.copy(pattern);
+        var match = varsRegex.exec(pattern);
+        while (match !== null) {
+            var variable = match[0];
+            var variableName = match[1];
+            if (variableName === 'dsName') {
+                label = label.split(variable).join(datasource.name);
+            } else if (variableName === 'entityName') {
+                label = label.split(variable).join(datasource.entityName);
+            } else if (variableName === 'deviceName') {
+                label = label.split(variable).join(datasource.entityName);
+            } else if (variableName === 'aliasName') {
+                label = label.split(variable).join(datasource.aliasName);
+            }
+            match = varsRegex.exec(pattern);
+        }
+        return label;
     }
 
 }

@@ -59,6 +59,53 @@ export default angular.module('thingsboard.types', [])
                     name: "aggregation.none"
                 }
             },
+            alarmFields: {
+                createdTime: {
+                    value: "createdTime",
+                    name: "alarm.created-time",
+                    time: true
+                },
+                startTime: {
+                    value: "startTs",
+                    name: "alarm.start-time",
+                    time: true
+                },
+                endTime: {
+                    value: "endTs",
+                    name: "alarm.end-time",
+                    time: true
+                },
+                ackTime: {
+                    value: "ackTs",
+                    name: "alarm.ack-time",
+                    time: true
+                },
+                clearTime: {
+                    value: "clearTs",
+                    name: "alarm.clear-time",
+                    time: true
+                },
+                originator: {
+                    value: "originatorName",
+                    name: "alarm.originator"
+                },
+                originatorType: {
+                    value: "originator.entityType",
+                    name: "alarm.originator-type"
+                },
+                type: {
+                    value: "type",
+                    name: "alarm.type"
+                },
+                severity: {
+                    value: "severity",
+                    name: "alarm.severity"
+                },
+                status: {
+                    value: "status",
+                    name: "alarm.status"
+                }
+            },
             alarmStatus: {
                 activeUnack: "ACTIVE_UNACK",
                 activeAck: "ACTIVE_ACK",
@@ -75,23 +122,28 @@ export default angular.module('thingsboard.types', [])
             alarmSeverity: {
                 "CRITICAL": {
                     name: "alarm.severity-critical",
-                    class: "tb-critical"
+                    class: "tb-critical",
+                    color: "red"
                 },
                 "MAJOR": {
                     name: "alarm.severity-major",
-                    class: "tb-major"
+                    class: "tb-major",
+                    color: "orange"
                 },
                 "MINOR": {
                     name: "alarm.severity-minor",
-                    class: "tb-minor"
+                    class: "tb-minor",
+                    color: "#ffca3d"
                 },
                 "WARNING": {
                     name: "alarm.severity-warning",
-                    class: "tb-warning"
+                    class: "tb-warning",
+                    color: "#abab00"
                 },
                 "INDETERMINATE": {
                     name: "alarm.severity-indeterminate",
-                    class: "tb-indeterminate"
+                    class: "tb-indeterminate",
+                    color: "green"
                 }
             },
             aliasFilterType: {
@@ -153,7 +205,8 @@ export default angular.module('thingsboard.types', [])
             dataKeyType: {
                 timeseries: "timeseries",
                 attribute: "attribute",
-                function: "function"
+                function: "function",
+                alarm: "alarm"
             },
             componentType: {
                 filter: "FILTER",
@@ -317,6 +370,14 @@ export default angular.module('thingsboard.types', [])
                     template: {
                         bundleAlias: "gpio_widgets",
                         alias: "basic_gpio_control"
+                    }
+                },
+                alarm: {
+                    value: "alarm",
+                    name: "widget.alarm",
+                    template: {
+                        bundleAlias: "alarm_widgets",
+                        alias: "alarms_table"
                     }
                 },
                 static: {

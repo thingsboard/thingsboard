@@ -30,7 +30,7 @@ export default angular.module('thingsboard.directives.datasource', [thingsboardT
     .name;
 
 /*@ngInject*/
-function Datasource($compile, $templateCache, types) {
+function Datasource($compile, $templateCache, utils, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -53,8 +53,12 @@ function Datasource($compile, $templateCache, types) {
         }
 
         scope.$watch('model.type', function (newType, prevType) {
-            if (newType != prevType) {
-                scope.model.dataKeys = [];
+            if (newType && prevType && newType != prevType) {
+                if (scope.widgetType == types.widgetType.alarm.value) {
+                    scope.model.dataKeys = utils.getDefaultAlarmDataKeys();
+                } else {
+                    scope.model.dataKeys = [];
+                }
             }
         });
 
@@ -63,9 +67,10 @@ function Datasource($compile, $templateCache, types) {
         }, true);
 
         ngModelCtrl.$render = function () {
-            scope.model = {};
             if (ngModelCtrl.$viewValue) {
                 scope.model = ngModelCtrl.$viewValue;
+            } else {
+                scope.model = {};
             }
         };
 
