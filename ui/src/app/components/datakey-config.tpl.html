@@ -16,7 +16,9 @@
 
 -->
 <md-content class="md-padding" layout="column">
-    <md-autocomplete ng-if="model.type === types.dataKeyType.timeseries || model.type === types.dataKeyType.attribute"
+    <md-autocomplete ng-if="model.type === types.dataKeyType.timeseries ||
+    						model.type === types.dataKeyType.attribute ||
+    						model.type === types.dataKeyType.alarm"
     	   style="padding-bottom: 8px;"
            ng-required="true"
    		   md-no-cache="true"
@@ -27,8 +29,8 @@
 		   md-items="item in keysSearch(keySearchText)"
 	 	   md-item-text="item"
 		   md-min-length="0"
-           placeholder="Key name"
-           md-floating-label="Key">
+           placeholder="{{ 'entity.key-name' | translate }}"
+           md-floating-label="{{ 'entity.key' | translate }}">
            <span md-highlight-text="keySearchText" md-highlight-flags="^i">{{item}}</span>
     </md-autocomplete>
 	<div layout="row" layout-align="start center">     
@@ -48,7 +50,7 @@
 		    md-color-history="false">
 		</div>    
 	</div>
-	<div layout="row" layout-align="start center">
+	<div layout="row" layout-align="start center" ng-if="model.type !== types.dataKeyType.alarm">
 		<md-input-container flex>
 			<label translate>datakey.units</label>
 			<input name="units" ng-model="model.units">

@@ -17,14 +17,14 @@
 .tb-alarms-table {
   margin-top: 15px;
   &.tb-data-table {
-    table.md-table {
+    table.md-table, table.md-table.md-row-select {
       tbody {
         tr {
           td {
-            &.ag-action-cell {
-              min-width: 40px;
-              max-width: 40px;
-              width: 40px;
+            &.tb-action-cell {
+              min-width: 36px;
+              max-width: 36px;
+              width: 36px;
             }
           }
         }

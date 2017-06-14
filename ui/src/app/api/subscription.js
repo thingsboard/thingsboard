@@ -70,6 +70,12 @@ export default class Subscription {
             this.callbacks.dataLoading = this.callbacks.dataLoading || function(){};
             this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || function(){};
             this.alarmSource = options.alarmSource;
+
+            this.alarmSearchStatus = angular.isDefined(options.alarmSearchStatus) ?
+                options.alarmSearchStatus : this.ctx.types.alarmSearchStatus.any;
+            this.alarmsPollingInterval = angular.isDefined(options.alarmsPollingInterval) ?
+                options.alarmsPollingInterval : 5000;
+
             this.alarmSourceListener = null;
             this.alarms = [];
 
@@ -193,8 +199,7 @@ export default class Subscription {
             registration = this.ctx.$scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
                 if (!angular.equals(subscription.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
                     subscription.timeWindowConfig = angular.copy(newDashboardTimewindow);
-                    subscription.unsubscribe();
-                    subscription.subscribe();
+                    subscription.update();
                 }
             });
             this.registrations.push(registration);
@@ -281,8 +286,7 @@ export default class Subscription {
                 registration = this.ctx.$scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
                     if (!angular.equals(subscription.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
                         subscription.timeWindowConfig = angular.copy(newDashboardTimewindow);
-                        subscription.unsubscribe();
-                        subscription.subscribe();
+                        subscription.update();
                     }
                 });
                 this.registrations.push(registration);
@@ -298,8 +302,7 @@ export default class Subscription {
             return subscription.timeWindowConfig;
         }, function (newTimewindow, prevTimewindow) {
             if (!angular.equals(newTimewindow, prevTimewindow)) {
-                subscription.unsubscribe();
-                subscription.subscribe();
+                subscription.update();
             }
         }, true);
         this.registrations.push(this.timeWindowWatchRegistration);
@@ -502,8 +505,7 @@ export default class Subscription {
                 this.timeWindowConfig = angular.copy(this.originalTimewindow);
                 this.originalTimewindow = null;
                 this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
-                this.unsubscribe();
-                this.subscribe();
+                this.update();
                 this.startWatchingTimewindow();
             }
         }
@@ -519,8 +521,7 @@ export default class Subscription {
             }
             this.timeWindowConfig = this.ctx.timeService.toHistoryTimewindow(this.timeWindowConfig, startTimeMs, endTimeMs);
             this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
-            this.unsubscribe();
-            this.subscribe();
+            this.update();
             this.startWatchingTimewindow();
         }
     }
@@ -618,6 +619,11 @@ export default class Subscription {
         this.callbacks.legendDataUpdated(this, apply !== false);
     }
 
+    update() {
+        this.unsubscribe();
+        this.subscribe();
+    }
+
     subscribe() {
         if (this.type === this.ctx.types.widgetType.rpc.value) {
             return;
@@ -688,6 +694,8 @@ export default class Subscription {
         this.alarmSourceListener = {
             subscriptionTimewindow: this.subscriptionTimewindow,
             alarmSource: this.alarmSource,
+            alarmSearchStatus: this.alarmSearchStatus,
+            alarmsPollingInterval: this.alarmsPollingInterval,
             alarmsUpdated: function(alarms, apply) {
                 subscription.alarmsUpdated(alarms, apply);
             }

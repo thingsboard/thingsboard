@@ -40,7 +40,12 @@ export default function AlarmRowDirective($compile, $templateCache, types, $mdDi
                 controller: 'AlarmDetailsDialogController',
                 controllerAs: 'vm',
                 templateUrl: alarmDetailsDialogTemplate,
-                locals: {alarmId: scope.alarm.id.id, showingCallback: onShowingCallback},
+                locals: {
+                    alarmId: scope.alarm.id.id,
+                    allowAcknowledgment: true,
+                    allowClear: true,
+                    showingCallback: onShowingCallback
+                },
                 parent: angular.element($document[0].body),
                 targetEvent: $event,
                 fullscreen: true,

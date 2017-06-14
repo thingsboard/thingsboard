@@ -31,6 +31,30 @@
                                    flex ng-model="timewindow"></tb-timewindow>
                 </section>
             </div>
+            <div ng-show="widgetType === types.widgetType.alarm.value" layout='column' layout-align="center"
+                 layout-gt-sm='row' layout-align-gt-sm="start center">
+                <md-input-container class="md-block" flex>
+                    <label translate>alarm.alarm-status</label>
+                    <md-select ng-model="alarmSearchStatus" style="padding-bottom: 24px;">
+                        <md-option ng-repeat="searchStatus in types.alarmSearchStatus" ng-value="searchStatus">
+                            {{ ('alarm.search-status.' + searchStatus) | translate }}
+                        </md-option>
+                    </md-select>
+                </md-input-container>
+                <md-input-container flex class="md-block">
+                    <label translate>alarm.polling-interval</label>
+                    <input ng-required="widgetType === types.widgetType.alarm.value"
+                           type="number"
+                           step="1"
+                           min="1"
+                           name="alarmsPollingInterval"
+                           ng-model="alarmsPollingInterval"/>
+                    <div ng-messages="theForm.alarmsPollingInterval.$error" multiple md-auto-hide="false">
+                        <div ng-message="required" translate>alarm.polling-interval-required</div>
+                        <div ng-message="min" translate>alarm.min-polling-interval-message</div>
+                    </div>
+                </md-input-container>
+            </div>
             <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
                          ng-show="widgetType !== types.widgetType.rpc.value
                          && widgetType !== types.widgetType.alarm.value

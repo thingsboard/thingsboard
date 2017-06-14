@@ -252,12 +252,12 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
             $timeout(function() {
                 alarmSourceListener.alarmsUpdated([simulatedAlarm], false);
             });
-        } else {
-            var pollingInterval = 5000; //TODO:
+        } else if (alarmSource.entityType && alarmSource.entityId) {
+            var pollingInterval = alarmSourceListener.alarmsPollingInterval;
             alarmSourceListener.alarmsQuery = {
                 entityType: alarmSource.entityType,
                 entityId: alarmSource.entityId,
-                alarmSearchStatus: null, //TODO:
+                alarmSearchStatus: alarmSourceListener.alarmSearchStatus,
                 alarmStatus: null
             }
             var originatorKeys = $filter('filter')(alarmSource.dataKeys, {name: 'originator'});
