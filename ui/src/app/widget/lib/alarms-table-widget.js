@@ -19,6 +19,7 @@ import './alarms-table-widget.scss';
 /* eslint-disable import/no-unresolved, import/default */
 
 import alarmsTableWidgetTemplate from './alarms-table-widget.tpl.html';
+import alarmDetailsDialogTemplate from '../../alarm/alarm-details-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -46,11 +47,12 @@ function AlarmsTableWidget() {
 }
 
 /*@ngInject*/
-function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUtil, $translate, utils, types) {
+function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDialog, $document, $translate, $q, alarmService, utils, types) {
     var vm = this;
 
     vm.stylesInfo = {};
     vm.contentsInfo = {};
+    vm.columnWidth = {};
 
     vm.showData = true;
     vm.hasData = false;
@@ -64,19 +66,32 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
 
     vm.currentAlarm = null;
 
+    vm.alarmsTitle = $translate.instant('alarm.alarms');
+    vm.enableSelection = true;
+    vm.enableSearch = true;
+    vm.displayDetails = true;
+    vm.allowAcknowledgment = true;
+    vm.allowClear = true;
+    vm.displayPagination = true;
+    vm.defaultPageSize = 10;
+    vm.defaultSortOrder = '-'+types.alarmFields.createdTime.value;
+
     vm.query = {
-        order: '-'+types.alarmFields.createdTime.value,
-        limit: 10,
+        order: vm.defaultSortOrder,
+        limit: vm.defaultPageSize,
         page: 1,
         search: null
     };
-
-    vm.alarmsTitle = $translate.instant('alarm.alarms');
 
     vm.enterFilterMode = enterFilterMode;
     vm.exitFilterMode = exitFilterMode;
     vm.onReorder = onReorder;
     vm.onPaginate = onPaginate;
+    vm.onRowClick = onRowClick;
+    vm.isCurrent = isCurrent;
+    vm.openAlarmDetails = openAlarmDetails;
+    vm.ackAlarms = ackAlarms;
+    vm.clearAlarms = clearAlarms;
 
     vm.cellStyle = cellStyle;
     vm.cellContent = cellContent;
@@ -119,7 +134,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
     $scope.$watch(function() { return $mdMedia('gt-md'); }, function(isGtMd) {
         vm.isGtMd = isGtMd;
         if (vm.isGtMd) {
-            vm.limitOptions = [5, 10, 15];
+            vm.limitOptions = [vm.defaultPageSize, vm.defaultPageSize*2, vm.defaultPageSize*3];
         } else {
             vm.limitOptions = null;
         }
@@ -130,7 +145,33 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
         if (vm.settings.alarmsTitle && vm.settings.alarmsTitle.length) {
             vm.alarmsTitle = vm.settings.alarmsTitle;
         }
-        //TODO:
+        vm.enableSelection = angular.isDefined(vm.settings.enableSelection) ? vm.settings.enableSelection : true;
+        vm.enableSearch = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
+        vm.displayDetails = angular.isDefined(vm.settings.displayDetails) ? vm.settings.displayDetails : true;
+        vm.allowAcknowledgment = angular.isDefined(vm.settings.allowAcknowledgment) ? vm.settings.allowAcknowledgment : true;
+        vm.allowClear = angular.isDefined(vm.settings.allowClear) ? vm.settings.allowClear : true;
+        if (!vm.allowAcknowledgment && !vm.allowClear) {
+            vm.enableSelection = false;
+        }
+
+        vm.displayPagination = angular.isDefined(vm.settings.displayPagination) ? vm.settings.displayPagination : true;
+
+        var pageSize = vm.settings.defaultPageSize;
+        if (angular.isDefined(pageSize) && Number.isInteger(pageSize) && pageSize > 0) {
+            vm.defaultPageSize = pageSize;
+        }
+
+        if (vm.settings.defaultSortOrder && vm.settings.defaultSortOrder.length) {
+            vm.defaultSortOrder = vm.settings.defaultSortOrder;
+        }
+
+        vm.query.order = vm.defaultSortOrder;
+        vm.query.limit = vm.defaultPageSize;
+        if (vm.isGtMd) {
+            vm.limitOptions = [vm.defaultPageSize, vm.defaultPageSize*2, vm.defaultPageSize*3];
+        } else {
+            vm.limitOptions = null;
+        }
 
         var origColor = vm.widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
         var defaultColor = tinycolor(origColor);
@@ -207,6 +248,115 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
         updateAlarms();
     }
 
+    function onRowClick($event, alarm) {
+        if (vm.currentAlarm != alarm) {
+            vm.currentAlarm = alarm;
+        }
+    }
+
+    function isCurrent(alarm) {
+        return (vm.currentAlarm && alarm && vm.currentAlarm.id && alarm.id) &&
+            (vm.currentAlarm.id.id === alarm.id.id);
+    }
+
+    function openAlarmDetails($event, alarm) {
+        if (alarm && alarm.id) {
+            var onShowingCallback = {
+                onShowing: function(){}
+            }
+            $mdDialog.show({
+                controller: 'AlarmDetailsDialogController',
+                controllerAs: 'vm',
+                templateUrl: alarmDetailsDialogTemplate,
+                locals: {
+                    alarmId: alarm.id.id,
+                    allowAcknowledgment: vm.allowAcknowledgment,
+                    allowClear: vm.allowClear,
+                    showingCallback: onShowingCallback
+                },
+                parent: angular.element($document[0].body),
+                targetEvent: $event,
+                fullscreen: true,
+                skipHide: true,
+                onShowing: function(scope, element) {
+                    onShowingCallback.onShowing(scope, element);
+                }
+            }).then(function (alarm) {
+                if (alarm) {
+                    vm.subscription.update();
+                }
+            });
+
+        }
+    }
+
+    function ackAlarms($event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        if (vm.selectedAlarms && vm.selectedAlarms.length > 0) {
+            var title = $translate.instant('alarm.aknowledge-alarms-title', {count: vm.selectedAlarms.length}, 'messageformat');
+            var content = $translate.instant('alarm.aknowledge-alarms-text', {count: vm.selectedAlarms.length}, 'messageformat');
+            var confirm = $mdDialog.confirm()
+                .targetEvent($event)
+                .title(title)
+                .htmlContent(content)
+                .ariaLabel(title)
+                .cancel($translate.instant('action.no'))
+                .ok($translate.instant('action.yes'));
+            $mdDialog.show(confirm).then(function () {
+                var tasks = [];
+                for (var i=0;i<vm.selectedAlarms.length;i++) {
+                    var alarm = vm.selectedAlarms[i];
+                    if (alarm.id) {
+                        tasks.push(alarmService.ackAlarm(alarm.id.id));
+                    }
+                }
+                if (tasks.length) {
+                    $q.all(tasks).then(function () {
+                        vm.selectedAlarms = [];
+                        vm.subscription.update();
+                    });
+                }
+
+            });
+        }
+    }
+
+    function clearAlarms($event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        if (vm.selectedAlarms && vm.selectedAlarms.length > 0) {
+            var title = $translate.instant('alarm.clear-alarms-title', {count: vm.selectedAlarms.length}, 'messageformat');
+            var content = $translate.instant('alarm.clear-alarms-text', {count: vm.selectedAlarms.length}, 'messageformat');
+            var confirm = $mdDialog.confirm()
+                .targetEvent($event)
+                .title(title)
+                .htmlContent(content)
+                .ariaLabel(title)
+                .cancel($translate.instant('action.no'))
+                .ok($translate.instant('action.yes'));
+            $mdDialog.show(confirm).then(function () {
+                var tasks = [];
+                for (var i=0;i<vm.selectedAlarms.length;i++) {
+                    var alarm = vm.selectedAlarms[i];
+                    if (alarm.id) {
+                        tasks.push(alarmService.clearAlarm(alarm.id.id));
+                    }
+                }
+                if (tasks.length) {
+                    $q.all(tasks).then(function () {
+                        vm.selectedAlarms = [];
+                        vm.subscription.update();
+                    });
+                }
+
+            });
+        }
+    }
+
+
     function updateAlarms(preserveSelections) {
         if (!preserveSelections) {
             vm.selectedAlarms = [];
@@ -216,8 +366,14 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
             result = $filter('filter')(result, {$: vm.query.search});
         }
         vm.alarmsCount = result.length;
-        var startIndex = vm.query.limit * (vm.query.page - 1);
-        vm.alarms = result.slice(startIndex, startIndex + vm.query.limit);
+
+        if (vm.displayPagination) {
+            var startIndex = vm.query.limit * (vm.query.page - 1);
+            vm.alarms = result.slice(startIndex, startIndex + vm.query.limit);
+        } else {
+            vm.alarms = result;
+        }
+
         if (preserveSelections) {
             var newSelectedAlarms = [];
             if (vm.selectedAlarms && vm.selectedAlarms.length) {
@@ -250,6 +406,10 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
             } else {
                 style = defaultStyle(key, value);
             }
+        }
+        if (!style.width) {
+            var columnWidth = vm.columnWidth[key.label];
+            style.width = columnWidth;
         }
         return style;
     }
@@ -295,7 +455,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
                     return value;
                 }
             } else {
-                return '';
+                return value;
             }
         } else {
             return '';
@@ -313,6 +473,8 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
                 } else {
                     return {};
                 }
+            } else {
+                return {};
             }
         } else {
             return {};
@@ -340,9 +502,19 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
 
         vm.stylesInfo = {};
         vm.contentsInfo = {};
+        vm.columnWidth = {};
 
         for (var d = 0; d < vm.alarmSource.dataKeys.length; d++ ) {
             var dataKey = vm.alarmSource.dataKeys[d];
+
+            var translationId = types.translate.keyLabelPrefix + dataKey.label;
+            var translation = $translate.instant(translationId);
+            if (translation != translationId) {
+                dataKey.title = translation;
+            } else {
+                dataKey.title = dataKey.label;
+            }
+
             var keySettings = dataKey.settings;
 
             var cellStyleFunction = null;
@@ -384,6 +556,9 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdUti
                 useCellContentFunction: useCellContentFunction,
                 cellContentFunction: cellContentFunction
             };
+
+            var columnWidth = angular.isDefined(keySettings.columnWidth) ? keySettings.columnWidth : '0px';
+            vm.columnWidth[dataKey.label] = columnWidth;
         }
     }
 

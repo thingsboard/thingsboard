@@ -144,6 +144,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                             scope.targetDeviceAlias.value = null;
                         }
                     } else if (scope.widgetType === types.widgetType.alarm.value && scope.isDataEnabled) {
+                        scope.alarmSearchStatus = angular.isDefined(config.alarmSearchStatus) ?
+                            config.alarmSearchStatus : types.alarmSearchStatus.any;
+                        scope.alarmsPollingInterval = angular.isDefined(config.alarmsPollingInterval) ?
+                            config.alarmsPollingInterval : 5;
                         if (config.alarmSource) {
                             scope.alarmSource.value = config.alarmSource;
                         } else {
@@ -205,7 +209,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
         };
 
         scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
-            'padding + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + showLegend', function () {
+            'padding + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
+            'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 if (value.config) {
@@ -225,6 +230,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.units = scope.units;
                     config.decimals = scope.decimals;
                     config.useDashboardTimewindow = scope.useDashboardTimewindow;
+                    config.alarmSearchStatus = scope.alarmSearchStatus;
+                    config.alarmsPollingInterval = scope.alarmsPollingInterval;
                     config.showLegend = scope.showLegend;
                 }
                 if (value.layout) {

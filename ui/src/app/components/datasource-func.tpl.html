@@ -48,9 +48,9 @@
 									<span translate>device.no-keys-found</span>
 								</div>
 								<div ng-if="textIsNotEmpty(dataKeySearchText)">
-									<span translate translate-values='{ key: "{{dataKeySearchText | truncate:true:6:&apos;...&apos;}}" }'>device.no-key-matching</span>
+									<span translate translate-values='{ key: "{{dataKeySearchText | truncate:true:6:&apos;...&apos;}}" }'>entity.no-key-matching</span>
 									<span>
-										<a translate ng-click="createKey($event, '#function_datakey_chips')">device.create-new-key</a>
+										<a translate ng-click="createKey($event, '#function_datakey_chips')">entity.create-new-key</a>
 									</span>
 								</div>
 							</div>
@@ -81,7 +81,7 @@
 				  ng-required="true"
 				  ng-model="alarmDataKeys" md-autocomplete-snap
 				  md-transform-chip="transformAlarmDataKeyChip($chip)"
-				  md-require-match="true">
+				  md-require-match="false">
 			<md-autocomplete
 					md-no-cache="true"
 					id="alarm_datakey"
@@ -100,6 +100,9 @@
 						</div>
 						<div ng-if="textIsNotEmpty(alarmDataKeySearchText)">
 							<span translate translate-values='{ key: "{{alarmDataKeySearchText | truncate:true:6:&apos;...&apos;}}" }'>entity.no-key-matching</span>
+							<span>
+								<a translate ng-click="createKey($event, '#alarm_datakey_chips')">entity.create-new-key</a>
+							</span>
 						</div>
 					</div>
 				</md-not-found>

@@ -243,11 +243,9 @@ export default function EntityStateController($scope, $location, $state, $stateP
     }
 
     function gotoState(stateId, update, openRightLayout) {
-        if (vm.dashboardCtrl.dashboardCtx.state != stateId) {
-            vm.dashboardCtrl.openDashboardState(stateId, openRightLayout);
-            if (update) {
-                updateLocation();
-            }
+        vm.dashboardCtrl.openDashboardState(stateId, openRightLayout);
+        if (update) {
+            updateLocation();
         }
     }
 

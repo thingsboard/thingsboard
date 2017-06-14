@@ -289,6 +289,10 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             }
             if (widget.type == types.widgetType.alarm.value) {
                 options.alarmSource = angular.copy(widget.config.alarmSource);
+                options.alarmSearchStatus = angular.isDefined(widget.config.alarmSearchStatus) ?
+                    widget.config.alarmSearchStatus : types.alarmSearchStatus.any;
+                options.alarmsPollingInterval = angular.isDefined(widget.config.alarmsPollingInterval) ?
+                    widget.config.alarmsPollingInterval * 1000 : 5000;
             } else {
                 options.datasources = angular.copy(widget.config.datasources)
             }

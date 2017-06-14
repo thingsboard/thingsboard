@@ -148,7 +148,14 @@ export default angular.module('thingsboard.locale', [])
                     "clear": "Clear",
                     "search": "Search alarms",
                     "selected-alarms": "{ count, select, 1 {1 alarm} other {# alarms} } selected",
-                    "no-data": "No data to display"
+                    "no-data": "No data to display",
+                    "polling-interval": "Alarms polling interval (sec)",
+                    "polling-interval-required": "Alarms polling interval is required.",
+                    "min-polling-interval-message": "At least 1 sec polling interval is allowed.",
+                    "aknowledge-alarms-title": "Acknowledge { count, select, 1 {1 alarm} other {# alarms} }",
+                    "aknowledge-alarms-text": "Are you sure you want to acknowledge { count, select, 1 {1 alarm} other {# alarms} }?",
+                    "clear-alarms-title": "Clear { count, select, 1 {1 alarm} other {# alarms} }",
+                    "clear-alarms-text": "Are you sure you want to clear { count, select, 1 {1 alarm} other {# alarms} }?"
                 },
                 "alias": {
                     "add": "Add alias",
@@ -643,6 +650,8 @@ export default angular.module('thingsboard.locale', [])
                     "no-aliases-found": "No aliases found.",
                     "no-alias-matching": "'{{alias}}' not found.",
                     "create-new-alias": "Create a new one!",
+                    "key": "Key",
+                    "key-name": "Key name",
                     "no-keys-found": "No keys found.",
                     "no-key-matching": "'{{key}}' not found.",
                     "create-new-key": "Create a new one!",

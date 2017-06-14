@@ -22,7 +22,7 @@
             <div class="md-toolbar-tools">
                 <span>{{ vm.alarmsTitle }}</span>
                 <span flex></span>
-                <md-button class="md-icon-button" ng-click="vm.enterFilterMode()">
+                <md-button ng-if="vm.enableSearch" class="md-icon-button" ng-click="vm.enterFilterMode()">
                     <md-icon>search</md-icon>
                     <md-tooltip md-direction="top">
                         {{ 'action.search' | translate }}
@@ -57,13 +57,13 @@
                       translate-values="{count: vm.selectedAlarms.length}"
                       translate-interpolation="messageformat"></span>
                 <span flex></span>
-                <md-button class="md-icon-button" ng-click="vm.ackAlarms($event)">
+                <md-button ng-if="vm.allowAcknowledgment" class="md-icon-button" ng-click="vm.ackAlarms($event)">
                     <md-icon>done</md-icon>
                     <md-tooltip md-direction="top">
                         {{ 'alarm.acknowledge' | translate }}
                     </md-tooltip>
                 </md-button>
-                <md-button class="md-icon-button" ng-click="vm.clearAlarms($event)">
+                <md-button ng-if="vm.allowClear" class="md-icon-button" ng-click="vm.clearAlarms($event)">
                     <md-icon>clear</md-icon>
                     <md-tooltip md-direction="top">
                         {{ 'alarm.clear' | translate }}
@@ -72,22 +72,22 @@
             </div>
         </md-toolbar>
         <md-table-container flex>
-            <table md-table md-row-select multiple="" ng-model="vm.selectedAlarms">
+            <table md-table md-row-select="vm.enableSelection" multiple="" ng-model="vm.selectedAlarms">
                 <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
-                    <th md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys"><span>{{ key.label }}</span></th>
-                    <th md-column><span>&nbsp</span></th>
+                    <th md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys"><span>{{ key.title }}</span></th>
+                    <th md-column ng-if="vm.displayDetails"><span>&nbsp</span></th>
                 </tr>
                 </thead>
                 <tbody md-body>
                 <tr ng-show="vm.alarms.length" md-row md-select="alarm"
                     md-select-id="id.id" md-auto-select="false" ng-repeat="alarm in vm.alarms"
                     ng-click="vm.onRowClick($event, alarm)" ng-class="{'tb-current': vm.isCurrent(alarm)}">
-                    <td md-cell ng-repeat="key in vm.alarmSource.dataKeys"
+                    <td md-cell flex ng-repeat="key in vm.alarmSource.dataKeys"
                         ng-style="vm.cellStyle(alarm, key)"
                         ng-bind-html="vm.cellContent(alarm, key)">
                     </td>
-                    <td md-cell class="tb-action-cell">
+                    <td md-cell ng-if="vm.displayDetails" class="tb-action-cell">
                         <md-button class="md-icon-button" aria-label="{{ 'alarm.details' | translate }}"
                                    ng-click="vm.openAlarmDetails($event, alarm)">
                             <md-icon aria-label="{{ 'alarm.details' | translate }}" class="material-icons">more_horiz</md-icon>
@@ -104,7 +104,7 @@
                   layout-align="center center"
                   class="no-data-found" translate>alarm.no-alarms-prompt</span>
         </md-table-container>
-        <md-table-pagination md-boundary-links md-limit="vm.query.limit" md-limit-options="vm.limitOptions"
+        <md-table-pagination ng-if="vm.displayPagination" md-boundary-links md-limit="vm.query.limit" md-limit-options="vm.limitOptions"
                              md-page="vm.query.page" md-total="{{vm.alarmsCount}}"
                              md-on-paginate="vm.onPaginate" md-page-select="vm.isGtMd">
         </md-table-pagination>

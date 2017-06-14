@@ -15,7 +15,7 @@
  */
 @import '../../scss/constants';
 
-.tb-entity-alias-autocomplete, .tb-timeseries-datakey-autocomplete, .tb-attribute-datakey-autocomplete {
+.tb-entity-alias-autocomplete, .tb-timeseries-datakey-autocomplete, .tb-attribute-datakey-autocomplete, .tb-alarm-datakey-autocomplete {
   .tb-not-found {
     display: block;
     line-height: 1.5;

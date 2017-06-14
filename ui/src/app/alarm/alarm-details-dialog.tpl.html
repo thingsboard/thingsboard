@@ -84,16 +84,16 @@
         </div>
     </md-dialog-content>
     <md-dialog-actions layout="row">
-        <md-button ng-if="vm.alarm.status==vm.types.alarmStatus.activeUnack ||
-                          vm.alarm.status==vm.types.alarmStatus.clearedUnack"
+        <md-button ng-if="vm.allowAcknowledgment && (vm.alarm.status==vm.types.alarmStatus.activeUnack ||
+                          vm.alarm.status==vm.types.alarmStatus.clearedUnack)"
                    class="md-raised md-primary"
                    ng-disabled="loading"
                    ng-click="vm.acknowledge()"
                    style="margin-right:20px;">{{ 'alarm.acknowledge' |
             translate }}
         </md-button>
-        <md-button ng-if="vm.alarm.status==vm.types.alarmStatus.activeAck ||
-                          vm.alarm.status==vm.types.alarmStatus.activeUnack"
+        <md-button ng-if="vm.allowClear && (vm.alarm.status==vm.types.alarmStatus.activeAck ||
+                          vm.alarm.status==vm.types.alarmStatus.activeUnack)"
                    class="md-raised md-primary"
                    ng-disabled="loading"
                    ng-click="vm.clear()">{{ 'alarm.clear' |
