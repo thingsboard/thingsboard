@@ -21,7 +21,7 @@ import Subscription from '../api/subscription';
 
 /*@ngInject*/
 export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
-                                         datasourceService, entityService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
+                                         datasourceService, alarmService, entityService, deviceService, visibleRect, isEdit, stDiff, dashboardTimewindow,
                                          dashboardTimewindowApi, widget, aliasController, stateController, widgetInfo, widgetType) {
 
     var vm = this;
@@ -44,7 +44,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     var widgetContext = {
         inited: false,
-        $scope: $scope,
         $container: null,
         $containerParent: null,
         width: 0,
@@ -113,6 +112,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         timeService: timeService,
         deviceService: deviceService,
         datasourceService: datasourceService,
+        alarmService: alarmService,
         utils: utils,
         widgetUtils: widgetContext.utils,
         dashboardTimewindowApi: dashboardTimewindowApi,
@@ -285,9 +285,14 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         var deferred = $q.defer();
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             options = {
-                type: widget.type,
-                datasources: angular.copy(widget.config.datasources)
-            };
+                type: widget.type
+            }
+            if (widget.type == types.widgetType.alarm.value) {
+                options.alarmSource = angular.copy(widget.config.alarmSource);
+            } else {
+                options.datasources = angular.copy(widget.config.datasources)
+            }
+
             defaultComponentsOptions(options);
 
             createSubscription(options).then(
@@ -320,7 +325,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                     $scope.executingRpcRequest = subscription.executingRpcRequest;
                 },
                 onRpcSuccess: function(subscription) {
-                    $scope.executingRpcRequest = subscription.executingRpcRequest;
+                   $scope.executingRpcRequest = subscription.executingRpcRequest;
                     $scope.rpcErrorText = subscription.rpcErrorText;
                     $scope.rpcRejection = subscription.rpcRejection;
                 },
@@ -436,7 +441,14 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         widgetContext.$container = $('#container', containerElement);
         widgetContext.$containerParent = $(containerElement);
 
-        $compile($element.contents())($scope);
+        if (widgetSizeDetected) {
+            widgetContext.$container.css('height', widgetContext.height + 'px');
+            widgetContext.$container.css('width', widgetContext.width + 'px');
+        }
+
+        widgetContext.$scope = $scope.$new();
+
+        $compile($element.contents())(widgetContext.$scope);
 
         addResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
     }
@@ -444,6 +456,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     function destroyWidgetElement() {
         removeResizeListener(widgetContext.$containerParent[0], onResize); // eslint-disable-line no-undef
         $element.html('');
+        if (widgetContext.$scope) {
+            widgetContext.$scope.$destroy();
+        }
         widgetContext.$container = null;
         widgetContext.$containerParent = null;
     }

@@ -131,6 +131,7 @@ export default angular.module('thingsboard.locale', [])
                     "type": "Type",
                     "severity": "Severity",
                     "originator": "Originator",
+                    "originator-type": "Originator type",
                     "details": "Details",
                     "status": "Status",
                     "alarm-details": "Alarm details",
@@ -144,7 +145,10 @@ export default angular.module('thingsboard.locale', [])
                     "severity-warning": "Warning",
                     "severity-indeterminate": "Indeterminate",
                     "acknowledge": "Acknowledge",
-                    "clear": "Clear"
+                    "clear": "Clear",
+                    "search": "Search alarms",
+                    "selected-alarms": "{ count, select, 1 {1 alarm} other {# alarms} } selected",
+                    "no-data": "No data to display"
                 },
                 "alias": {
                     "add": "Add alias",
@@ -486,8 +490,10 @@ export default angular.module('thingsboard.locale', [])
                     "configuration": "Data key configuration",
                     "timeseries": "Timeseries",
                     "attributes": "Attributes",
+                    "alarm": "Alarm fields",
                     "timeseries-required": "Entity timeseries are required.",
                     "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
+                    "alarm-fields-required": "Alarm fields are required.",
                     "function-types": "Function types",
                     "function-types-required": "Function types are required."
                 },
@@ -1046,6 +1052,7 @@ export default angular.module('thingsboard.locale', [])
                     "timeseries": "Time series",
                     "latest-values": "Latest values",
                     "rpc": "Control widget",
+                    "alarm": "Alarm widget",
                     "static": "Static widget",
                     "select-widget-type": "Select widget type",
                     "missing-widget-title-error": "Widget title must be specified!",
@@ -1133,7 +1140,8 @@ export default angular.module('thingsboard.locale', [])
                     "datasource-parameters": "Parameters",
                     "remove-datasource": "Remove datasource",
                     "add-datasource": "Add datasource",
-                    "target-device": "Target device"
+                    "target-device": "Target device",
+                    "alarm-source": "Alarm source"
                 },
                 "widget-type": {
                     "import": "Import widget type",

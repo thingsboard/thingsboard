@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-const varsRegex = /\$\{([^\}]*)\}/g;
-
 export default class AliasController {
 
     constructor($scope, $q, $filter, utils, types, entityService, stateController, entityAliases) {
@@ -113,14 +111,14 @@ export default class AliasController {
         }
     }
 
-    resolveDatasource(datasource) {
+    resolveDatasource(datasource, isSingle) {
         var deferred = this.$q.defer();
         if (datasource.type === this.types.datasourceType.entity) {
             if (datasource.entityAliasId) {
                 this.getAliasInfo(datasource.entityAliasId).then(
                     function success(aliasInfo) {
                         datasource.aliasName = aliasInfo.alias;
-                        if (aliasInfo.resolveMultiple) {
+                        if (aliasInfo.resolveMultiple && !isSingle) {
                             var newDatasource;
                             var resolvedEntities = aliasInfo.resolvedEntities;
                             if (resolvedEntities && resolvedEntities.length) {
@@ -178,30 +176,44 @@ export default class AliasController {
         return deferred.promise;
     }
 
+    resolveAlarmSource(alarmSource) {
+        var deferred = this.$q.defer();
+        var aliasCtrl = this;
+        this.resolveDatasource(alarmSource, true).then(
+            function success(datasources) {
+                var datasource = datasources[0];
+                if (datasource.type === aliasCtrl.types.datasourceType.function) {
+                    var name;
+                    if (datasource.name && datasource.name.length) {
+                        name = datasource.name;
+                    } else {
+                        name = aliasCtrl.types.datasourceType.function;
+                    }
+                    datasource.name = name;
+                    datasource.aliasName = name;
+                    datasource.entityName = name;
+                } else if (datasource.unresolvedStateEntity) {
+                    datasource.name = "Unresolved";
+                    datasource.entityName = "Unresolved";
+                }
+                deferred.resolve(datasource);
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
     resolveDatasources(datasources) {
+
+        var aliasCtrl = this;
 
         function updateDataKeyLabel(dataKey, datasource) {
             if (!dataKey.pattern) {
                 dataKey.pattern = angular.copy(dataKey.label);
             }
-            var pattern = dataKey.pattern;
-            var label = dataKey.pattern;
-            var match = varsRegex.exec(pattern);
-            while (match !== null) {
-                var variable = match[0];
-                var variableName = match[1];
-                if (variableName === 'dsName') {
-                    label = label.split(variable).join(datasource.name);
-                } else if (variableName === 'entityName') {
-                    label = label.split(variable).join(datasource.entityName);
-                } else if (variableName === 'deviceName') {
-                    label = label.split(variable).join(datasource.entityName);
-                } else if (variableName === 'aliasName') {
-                    label = label.split(variable).join(datasource.aliasName);
-                }
-                match = varsRegex.exec(pattern);
-            }
-            dataKey.label = label;
+            dataKey.label = aliasCtrl.utils.createLabelFromDatasource(datasource, dataKey.pattern);
         }
 
         function updateDatasourceKeyLabels(datasource) {
@@ -213,7 +225,7 @@ export default class AliasController {
         var deferred = this.$q.defer();
         var newDatasources = angular.copy(datasources);
         var datasorceResolveTasks = [];
-        var aliasCtrl = this;
+
         newDatasources.forEach(function (datasource) {
             var resolveDatasourceTask = aliasCtrl.resolveDatasource(datasource);
             datasorceResolveTasks.push(resolveDatasourceTask);

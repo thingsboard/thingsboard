@@ -181,6 +181,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.dropWidgetShadow = dropWidgetShadow;
     vm.enableWidgetFullscreen = enableWidgetFullscreen;
     vm.hasTimewindow = hasTimewindow;
+    vm.hasAggregation = hasAggregation;
     vm.editWidget = editWidget;
     vm.exportWidget = exportWidget;
     vm.removeWidget = removeWidget;
@@ -771,12 +772,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function hasTimewindow(widget) {
-        if (widget.type === types.widgetType.timeseries.value) {
+        if (widget.type === types.widgetType.timeseries.value || widget.type === types.widgetType.alarm.value) {
             return angular.isDefined(widget.config.useDashboardTimewindow) ?
                 !widget.config.useDashboardTimewindow : false;
         } else {
             return false;
         }
+    }
+
+    function hasAggregation(widget) {
+        return widget.type === types.widgetType.timeseries.value;
     }
 
     function adoptMaxRows() {

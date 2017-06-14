@@ -43,7 +43,7 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     .name;
 
 /*@ngInject*/
-function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, utils) {
+function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout, types, utils) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -87,6 +87,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             value: null
         }
 
+        scope.alarmSource = {
+            value: null
+        }
+
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 var config = ngModelCtrl.$viewValue.config;
@@ -113,7 +117,9 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                     scope.showLegend = angular.isDefined(config.showLegend) ?
                         config.showLegend : scope.widgetType === types.widgetType.timeseries.value;
                     scope.legendConfig = config.legendConfig;
-                    if (scope.widgetType !== types.widgetType.rpc.value && scope.widgetType !== types.widgetType.static.value
+                    if (scope.widgetType !== types.widgetType.rpc.value &&
+                        scope.widgetType !== types.widgetType.alarm.value &&
+                        scope.widgetType !== types.widgetType.static.value
                         && scope.isDataEnabled) {
                         if (scope.datasources) {
                             scope.datasources.splice(0, scope.datasources.length);
@@ -136,6 +142,12 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                             }
                         } else {
                             scope.targetDeviceAlias.value = null;
+                        }
+                    } else if (scope.widgetType === types.widgetType.alarm.value && scope.isDataEnabled) {
+                        if (config.alarmSource) {
+                            scope.alarmSource.value = config.alarmSource;
+                        } else {
+                            scope.alarmSource.value = null;
                         }
                     }
 
@@ -175,6 +187,9 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                     if (scope.widgetType === types.widgetType.rpc.value && scope.isDataEnabled) {
                         valid = config && config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0;
                         ngModelCtrl.$setValidity('targetDeviceAliasIds', valid);
+                    } else if (scope.widgetType === types.widgetType.alarm.value && scope.isDataEnabled) {
+                        valid = config && config.alarmSource;
+                        ngModelCtrl.$setValidity('alarmSource', valid);
                     } else if (scope.widgetType !== types.widgetType.static.value && scope.isDataEnabled) {
                         valid = config && config.datasources && config.datasources.length > 0;
                         ngModelCtrl.$setValidity('datasources', valid);
@@ -253,7 +268,9 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
         }, true);
 
         scope.$watch('datasources', function () {
-            if (ngModelCtrl.$viewValue && ngModelCtrl.$viewValue.config && scope.widgetType !== types.widgetType.rpc.value
+            if (ngModelCtrl.$viewValue && ngModelCtrl.$viewValue.config
+                && scope.widgetType !== types.widgetType.rpc.value
+                && scope.widgetType !== types.widgetType.alarm.value
                 && scope.widgetType !== types.widgetType.static.value && scope.isDataEnabled) {
                 var value = ngModelCtrl.$viewValue;
                 var config = value.config;
@@ -280,6 +297,20 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                     config.targetDeviceAliasIds = [scope.targetDeviceAlias.value.id];
                 } else {
                     config.targetDeviceAliasIds = [];
+                }
+                ngModelCtrl.$setViewValue(value);
+                scope.updateValidity();
+            }
+        });
+
+        scope.$watch('alarmSource.value', function () {
+            if (ngModelCtrl.$viewValue && ngModelCtrl.$viewValue.config && scope.widgetType === types.widgetType.alarm.value && scope.isDataEnabled) {
+                var value = ngModelCtrl.$viewValue;
+                var config = value.config;
+                if (scope.alarmSource.value) {
+                    config.alarmSource = scope.alarmSource.value;
+                } else {
+                    config.alarmSource = null;
                 }
                 ngModelCtrl.$setViewValue(value);
                 scope.updateValidity();
@@ -320,10 +351,19 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
                 return chip;
             }
 
+            var label = chip;
+            if (type === types.dataKeyType.alarm) {
+                var alarmField = types.alarmFields[chip];
+                if (alarmField) {
+                    label = $translate.instant(alarmField.name)+'';
+                }
+            }
+            label = scope.genNextLabel(label);
+
             var result = {
                 name: chip,
                 type: type,
-                label: scope.genNextLabel(chip),
+                label: label,
                 color: scope.genNextColor(),
                 settings: {},
                 _hash: Math.random()
@@ -351,15 +391,18 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
             var matches = false;
             do {
                 matches = false;
-                if (value.config.datasources) {
-                    for (var d=0;d<value.config.datasources.length;d++) {
-                        var datasource = value.config.datasources[d];
-                        for (var k=0;k<datasource.dataKeys.length;k++) {
-                            var dataKey = datasource.dataKeys[k];
-                            if (dataKey.label === label) {
-                                i++;
-                                label = name + ' ' + i;
-                                matches = true;
+                var datasources = scope.widgetType == types.widgetType.alarm.value ? [value.config.alarmSource] : value.config.datasources;
+                if (datasources) {
+                    for (var d=0;d<datasources.length;d++) {
+                        var datasource = datasources[d];
+                        if (datasource && datasource.dataKeys) {
+                            for (var k = 0; k < datasource.dataKeys.length; k++) {
+                                var dataKey = datasource.dataKeys[k];
+                                if (dataKey.label === label) {
+                                    i++;
+                                    label = name + ' ' + i;
+                                    matches = true;
+                                }
                             }
                         }
                     }
@@ -371,10 +414,13 @@ function WidgetConfig($compile, $templateCache, $rootScope, $timeout, types, uti
         scope.genNextColor = function () {
             var i = 0;
             var value = ngModelCtrl.$viewValue;
-            if (value.config.datasources) {
-                for (var d=0;d<value.config.datasources.length;d++) {
-                    var datasource = value.config.datasources[d];
-                    i += datasource.dataKeys.length;
+            var datasources = scope.widgetType == types.widgetType.alarm.value ? [value.config.alarmSource] : value.config.datasources;
+            if (datasources) {
+                for (var d=0;d<datasources.length;d++) {
+                    var datasource = datasources[d];
+                    if (datasource && datasource.dataKeys) {
+                        i += datasource.dataKeys.length;
+                    }
                 }
             }
             return utils.getMaterialColor(i);
