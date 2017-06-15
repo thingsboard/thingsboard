@@ -143,4 +143,30 @@ public class AlarmController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/alarm/highestSeverity/{entityType}/{entityId}", method = RequestMethod.GET)
+    @ResponseBody
+    public AlarmSeverity getHighestAlarmSeverity(
+            @PathVariable("entityType") String strEntityType,
+            @PathVariable("entityId") String strEntityId,
+            @RequestParam(required = false) String searchStatus,
+            @RequestParam(required = false) String status
+    ) throws ThingsboardException {
+        checkParameter("EntityId", strEntityId);
+        checkParameter("EntityType", strEntityType);
+        EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+        AlarmSearchStatus alarmSearchStatus = StringUtils.isEmpty(searchStatus) ? null : AlarmSearchStatus.valueOf(searchStatus);
+        AlarmStatus alarmStatus = StringUtils.isEmpty(status) ? null : AlarmStatus.valueOf(status);
+        if (alarmSearchStatus != null && alarmStatus != null) {
+            throw new ThingsboardException("Invalid alarms search query: Both parameters 'searchStatus' " +
+                    "and 'status' can't be specified at the same time!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        checkEntityId(entityId);
+        try {
+            return alarmService.findHighestAlarmSeverity(entityId, alarmSearchStatus, alarmStatus);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
 }
