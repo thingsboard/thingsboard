@@ -177,7 +177,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetBackgroundColor = widgetBackgroundColor;
     vm.widgetPadding = widgetPadding;
     vm.showWidgetTitle = showWidgetTitle;
+    vm.showWidgetTitlePanel = showWidgetTitlePanel;
     vm.widgetTitleStyle = widgetTitleStyle;
+    vm.widgetTitle = widgetTitle;
+    vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
     vm.enableWidgetFullscreen = enableWidgetFullscreen;
     vm.hasTimewindow = hasTimewindow;
@@ -747,12 +750,48 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     }
 
+    function showWidgetTitlePanel(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.hideTitlePanel) {
+            return false;
+        } else {
+            return showWidgetTitle(widget) || hasTimewindow(widget);
+        }
+    }
+
     function widgetTitleStyle(widget) {
         if (angular.isDefined(widget.config.titleStyle)) {
             return widget.config.titleStyle;
         } else {
             return {};
         }
+    }
+
+    function widgetTitle(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitle
+            && ctx.widgetTitle.length) {
+            return ctx.widgetTitle;
+        } else {
+            return widget.config.title;
+        }
+    }
+
+    function widgetActions(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetActions && ctx.widgetActions.length) {
+            return ctx.widgetActions;
+        } else {
+            return [];
+        }
+    }
+
+    function widgetContext(widget) {
+        var context;
+        if (widget.$ctx) {
+            context = widget.$ctx();
+        }
+        return context;
     }
 
     function dropWidgetShadow(widget) {

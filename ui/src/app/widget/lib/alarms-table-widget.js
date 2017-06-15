@@ -37,8 +37,7 @@ function AlarmsTableWidget() {
         scope: true,
         bindToController: {
             tableId: '=',
-            config: '=',
-            subscription: '='
+            ctx: '='
         },
         controller: AlarmsTableWidgetController,
         controllerAs: 'vm',
@@ -66,9 +65,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
     vm.currentAlarm = null;
 
-    vm.alarmsTitle = $translate.instant('alarm.alarms');
     vm.enableSelection = true;
-    vm.enableSearch = true;
     vm.displayDetails = true;
     vm.allowAcknowledgment = true;
     vm.allowClear = true;
@@ -81,6 +78,15 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         limit: vm.defaultPageSize,
         page: 1,
         search: null
+    };
+
+    vm.searchAction = {
+        name: 'action.search',
+        show: true,
+        onAction: function() {
+            vm.enterFilterMode();
+        },
+        icon: 'search'
     };
 
     vm.enterFilterMode = enterFilterMode;
@@ -96,24 +102,20 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     vm.cellStyle = cellStyle;
     vm.cellContent = cellContent;
 
-    $scope.$watch('vm.config', function() {
-        if (vm.config) {
-            vm.settings = vm.config.settings;
-            vm.widgetConfig = vm.config.widgetConfig;
+    $scope.$watch('vm.ctx', function() {
+        if (vm.ctx) {
+            vm.settings = vm.ctx.settings;
+            vm.widgetConfig = vm.ctx.widgetConfig;
+            vm.subscription = vm.ctx.defaultSubscription;
+            vm.alarmSource = vm.subscription.alarmSource;
             initializeConfig();
+            updateAlarmSource();
         }
     });
 
     $scope.$watch("vm.query.search", function(newVal, prevVal) {
         if (!angular.equals(newVal, prevVal) && vm.query.search != null) {
             updateAlarms();
-        }
-    });
-
-    $scope.$watch('vm.subscription', function() {
-        if (vm.subscription) {
-            vm.alarmSource = vm.subscription.alarmSource;
-            updateAlarmSource();
         }
     });
 
@@ -140,13 +142,37 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         }
     });
 
+    $scope.$watch('vm.selectedAlarms.length', function (newLength) {
+        var selectionMode = newLength ? true : false;
+        if (vm.ctx) {
+            if (selectionMode) {
+                vm.ctx.hideTitlePanel = true;
+            } else if (vm.query.search == null) {
+                vm.ctx.hideTitlePanel = false;
+            }
+        }
+    });
+
     function initializeConfig() {
 
+        vm.ctx.widgetActions = [ vm.searchAction ];
+
         if (vm.settings.alarmsTitle && vm.settings.alarmsTitle.length) {
-            vm.alarmsTitle = vm.settings.alarmsTitle;
+            var translationId = types.translate.customTranslationsPrefix + vm.settings.alarmsTitle;
+            var translation = $translate.instant(translationId);
+            if (translation != translationId) {
+                vm.alarmsTitle = translation + '';
+            } else {
+                vm.alarmsTitle = vm.settings.alarmsTitle;
+            }
+        } else {
+            vm.alarmsTitle = $translate.instant('alarm.alarms');
         }
+
+        vm.ctx.widgetTitle = vm.alarmsTitle;
+
         vm.enableSelection = angular.isDefined(vm.settings.enableSelection) ? vm.settings.enableSelection : true;
-        vm.enableSearch = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
+        vm.searchAction.show = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
         vm.displayDetails = angular.isDefined(vm.settings.displayDetails) ? vm.settings.displayDetails : true;
         vm.allowAcknowledgment = angular.isDefined(vm.settings.allowAcknowledgment) ? vm.settings.allowAcknowledgment : true;
         vm.allowClear = angular.isDefined(vm.settings.allowClear) ? vm.settings.allowClear : true;
@@ -233,11 +259,13 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
     function enterFilterMode () {
         vm.query.search = '';
+        vm.ctx.hideTitlePanel = true;
     }
 
     function exitFilterMode () {
         vm.query.search = null;
         updateAlarms();
+        vm.ctx.hideTitlePanel = false;
     }
 
     function onReorder () {
@@ -496,9 +524,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
     function updateAlarmSource() {
 
-        if (vm.settings.alarmsTitle && vm.settings.alarmsTitle.length) {
-            vm.alarmsTitle = utils.createLabelFromDatasource(vm.alarmSource, vm.settings.alarmsTitle);
-        }
+        vm.ctx.widgetTitle = utils.createLabelFromDatasource(vm.alarmSource, vm.alarmsTitle);
 
         vm.stylesInfo = {};
         vm.contentsInfo = {};
@@ -507,10 +533,10 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         for (var d = 0; d < vm.alarmSource.dataKeys.length; d++ ) {
             var dataKey = vm.alarmSource.dataKeys[d];
 
-            var translationId = types.translate.keyLabelPrefix + dataKey.label;
+            var translationId = types.translate.customTranslationsPrefix + dataKey.label;
             var translation = $translate.instant(translationId);
             if (translation != translationId) {
-                dataKey.title = translation;
+                dataKey.title = translation + '';
             } else {
                 dataKey.title = dataKey.label;
             }
