@@ -47,6 +47,9 @@ public class JacksonUtil {
     }
 
     public static JsonNode toJsonNode(String value) {
+        if (value == null || value.isEmpty()) {
+            return null;
+        }
         try {
             return OBJECT_MAPPER.readTree(value);
         } catch (IOException e) {

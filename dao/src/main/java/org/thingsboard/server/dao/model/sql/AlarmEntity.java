@@ -18,7 +18,10 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
@@ -28,6 +31,8 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.JacksonUtil;
+import org.thingsboard.server.dao.util.JsonStringType;
 
 import javax.persistence.*;
 import java.util.UUID;
@@ -36,7 +41,10 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
 @Entity
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ALARM_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class AlarmEntity implements BaseEntity<Alarm> {
 
     @Transient
@@ -78,8 +86,8 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
     @Column(name = ALARM_CLEAR_TS_PROPERTY)
     private Long clearTs;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
     private JsonNode details;
 
     @Column(name = ALARM_PROPAGATE_PROPERTY)

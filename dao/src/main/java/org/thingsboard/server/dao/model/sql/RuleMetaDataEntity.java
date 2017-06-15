@@ -16,13 +16,10 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-
-import javax.persistence.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.RuleId;
@@ -32,16 +29,17 @@ import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.JsonBinaryType;
+import org.thingsboard.server.dao.util.JsonStringType;
 
-import java.io.IOException;
-import java.util.Objects;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Data
 @Entity
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.RULE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
 
     @Transient
@@ -69,20 +67,20 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
     @Column(name = ModelConstants.RULE_PLUGIN_TOKEN_PROPERTY)
     private String pluginToken;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.RULE_FILTERS, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.RULE_FILTERS, columnDefinition = "json")
     private JsonNode filters;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.RULE_PROCESSOR, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.RULE_PROCESSOR, columnDefinition = "json")
     private JsonNode processor;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.RULE_ACTION, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.RULE_ACTION, columnDefinition = "json")
     private JsonNode action;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
     private JsonNode additionalInfo;
 
     public RuleMetaDataEntity() {
@@ -138,37 +136,5 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
         rule.setAction(action);
         rule.setAdditionalInfo(additionalInfo);
         return rule;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RuleMetaDataEntity that = (RuleMetaDataEntity) o;
-        return weight == that.weight &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(tenantId, that.tenantId) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(pluginToken, that.pluginToken) &&
-                Objects.equals(state, that.state) &&
-                Objects.equals(searchText, that.searchText);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, tenantId, name, pluginToken, state, weight, searchText);
-    }
-
-    @Override
-    public String toString() {
-        return "RuleMetaDataEntity{" +
-                "id=" + id +
-                ", tenantId=" + tenantId +
-                ", name='" + name + '\'' +
-                ", pluginToken='" + pluginToken + '\'' +
-                ", state='" + state + '\'' +
-                ", weight=" + weight +
-                ", searchText='" + searchText + '\'' +
-                '}';
     }
 }

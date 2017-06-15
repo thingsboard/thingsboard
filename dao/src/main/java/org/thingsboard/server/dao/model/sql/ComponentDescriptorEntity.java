@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
@@ -29,15 +27,17 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.JsonBinaryType;
+import org.thingsboard.server.dao.util.JsonStringType;
 
-import java.io.IOException;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Data
 @Entity
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 
     @Transient
@@ -61,8 +61,8 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY)
     private String clazz;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY, columnDefinition = "json")
     private JsonNode configurationDescriptor;
 
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)

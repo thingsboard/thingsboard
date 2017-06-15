@@ -40,7 +40,7 @@ public interface DashboardInfoRepository extends CrudRepository<DashboardInfoEnt
 
     @Query(nativeQuery = true, value = "SELECT * FROM DASHBOARD WHERE TENANT_ID = :tenantId " +
             "AND CUSTOMER_ID = :customerId AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit?1")
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
     List<DashboardInfoEntity> findByTenantIdAndCustomerId(@Param("limit") int limit,
                                                           @Param("tenantId") UUID tenantId,
                                                           @Param("customerId") UUID customerId,

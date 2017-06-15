@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.Event;
@@ -62,7 +62,8 @@ import java.util.Comparator;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+
+@RunWith(SpringRunner.class)
 @ContextConfiguration(classes = AbstractServiceTest.class, loader = AnnotationConfigContextLoader.class)
 @TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:application-test.properties"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

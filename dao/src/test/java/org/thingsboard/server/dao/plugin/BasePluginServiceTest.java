@@ -25,8 +25,6 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.util.UUID;
 

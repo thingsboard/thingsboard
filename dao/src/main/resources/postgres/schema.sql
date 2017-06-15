@@ -14,31 +14,18 @@
 -- limitations under the License.
 --
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SET check_function_bodies = false;
-SET client_min_messages = warning;
-SET row_security = off;
-
-SET search_path = public, pg_catalog;
-SET default_tablespace = '';
-SET default_with_oids = false;
 
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
-    json_value jsonb,
+    json_value varchar,
     key character varying(255)
 );
-ALTER TABLE admin_settings OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS alarm (
     id uuid NOT NULL CONSTRAINT alarm_pkey PRIMARY KEY,
     ack_ts bigint,
     clear_ts bigint,
-    additional_info jsonb,
+    additional_info varchar,
     end_ts bigint,
     originator_id uuid,
     originator_type integer,
@@ -49,18 +36,16 @@ CREATE TABLE IF NOT EXISTS alarm (
     tenant_id uuid,
     type character varying(255)
 );
-ALTER TABLE alarm OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS asset (
     id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
-    additional_info jsonb,
+    additional_info varchar,
     customer_id uuid,
     name character varying(255),
     search_text character varying(255),
     tenant_id uuid,
     type character varying(255)
 );
-ALTER TABLE asset OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_type character varying(255),
@@ -74,23 +59,21 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   last_update_ts bigint,
   CONSTRAINT attribute_kv_unq_key UNIQUE (entity_type, entity_id, attribute_type, attribute_key)
 );
-ALTER TABLE relation OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS component_descriptor (
     id uuid NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
     actions character varying(255),
     clazz character varying(255),
-    configuration_descriptor jsonb,
+    configuration_descriptor varchar,
     name character varying(255),
     scope character varying(255),
     search_text character varying(255),
     type character varying(255)
 );
-ALTER TABLE component_descriptor OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS customer (
     id uuid NOT NULL CONSTRAINT customer_pkey PRIMARY KEY,
-    additional_info jsonb,
+    additional_info varchar,
     address character varying(255),
     address2 character varying(255),
     city character varying(255),
@@ -103,28 +86,25 @@ CREATE TABLE IF NOT EXISTS customer (
     title character varying(255),
     zip character varying(255)
 );
-ALTER TABLE customer OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS dashboard (
     id uuid NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
-    configuration jsonb,
+    configuration varchar,
     customer_id uuid,
     search_text character varying(255),
     tenant_id uuid,
     title character varying(255)
 );
-ALTER TABLE dashboard OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS device (
     id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
-    additional_info jsonb,
+    additional_info varchar,
     customer_id uuid,
     type character varying(255),
     name character varying(255),
     search_text character varying(255),
     tenant_id uuid
 );
-ALTER TABLE device OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS device_credentials (
     id uuid NOT NULL CONSTRAINT device_credentials_pkey PRIMARY KEY,
@@ -133,32 +113,29 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     credentials_value character varying(255),
     device_id uuid
 );
-ALTER TABLE device_credentials OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS event (
     id uuid NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
-    body jsonb,
+    body varchar,
     entity_id uuid,
     entity_type character varying(255),
     event_type character varying(255),
     event_uid character varying(255),
     tenant_id uuid
 );
-ALTER TABLE event OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS plugin (
     id uuid NOT NULL CONSTRAINT plugin_pkey PRIMARY KEY,
-    additional_info jsonb,
+    additional_info varchar,
     api_token character varying(255),
     plugin_class character varying(255),
-    configuration jsonb,
+    configuration varchar,
     name character varying(255),
     public_access boolean,
     search_text character varying(255),
     state character varying(255),
     tenant_id uuid
 );
-ALTER TABLE plugin OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS relation (
     from_id uuid,
@@ -167,29 +144,27 @@ CREATE TABLE IF NOT EXISTS relation (
     to_type character varying(255),
     relation_type_group character varying(255),
     relation_type character varying(255),
-    additional_info jsonb,
+    additional_info varchar,
     CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
-ALTER TABLE relation OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS rule (
     id uuid NOT NULL CONSTRAINT rule_pkey PRIMARY KEY,
-    action jsonb,
-    additional_info jsonb,
-    filters jsonb,
+    action varchar,
+    additional_info varchar,
+    filters varchar,
     name character varying(255),
     plugin_token character varying(255),
-    processor jsonb,
+    processor varchar,
     search_text character varying(255),
     state character varying(255),
     tenant_id uuid,
     weight integer
 );
-ALTER TABLE rule OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS tb_user (
     id uuid NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
-    additional_info jsonb,
+    additional_info varchar,
     authority character varying(255),
     customer_id uuid,
     email character varying(255) UNIQUE,
@@ -198,11 +173,10 @@ CREATE TABLE IF NOT EXISTS tb_user (
     search_text character varying(255),
     tenant_id uuid
 );
-ALTER TABLE tb_user OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS tenant (
     id uuid NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
-    additional_info jsonb,
+    additional_info varchar,
     address character varying(255),
     address2 character varying(255),
     city character varying(255),
@@ -215,7 +189,6 @@ CREATE TABLE IF NOT EXISTS tenant (
     title character varying(255),
     zip character varying(255)
 );
-ALTER TABLE tenant OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS ts_kv (
     entity_type character varying(255) NOT NULL,
@@ -228,7 +201,6 @@ CREATE TABLE IF NOT EXISTS ts_kv (
     dbl_v double precision,
     CONSTRAINT ts_kv_unq_key UNIQUE (entity_type, entity_id, key, ts)
 );
-ALTER TABLE ts_kv OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
     entity_type character varying(255) NOT NULL,
@@ -241,7 +213,6 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
     dbl_v double precision,
     CONSTRAINT ts_kv_latest_unq_key UNIQUE (entity_type, entity_id, key)
 );
-ALTER TABLE ts_kv OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS user_credentials (
     id uuid NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,
@@ -251,17 +222,15 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     reset_token character varying(255) UNIQUE,
     user_id uuid UNIQUE
 );
-ALTER TABLE user_credentials OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS widget_type (
     id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     alias character varying(255),
     bundle_alias character varying(255),
-    descriptor jsonb,
+    descriptor varchar,
     name character varying(255),
     tenant_id uuid
 );
-ALTER TABLE widget_type OWNER TO postgres;
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
     id uuid NOT NULL CONSTRAINT widgets_bundle_pkey PRIMARY KEY,
@@ -271,4 +240,3 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
     tenant_id uuid,
     title character varying(255)
 );
-ALTER TABLE widgets_bundle OWNER TO postgres;

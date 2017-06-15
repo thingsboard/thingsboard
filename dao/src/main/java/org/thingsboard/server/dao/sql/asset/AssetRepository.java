@@ -56,6 +56,16 @@ public interface AssetRepository extends CrudRepository<AssetEntity, UUID> {
     AssetEntity findByTenantIdAndName(UUID tenantId, String name);
 
     @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = :tenantId " +
+            "AND TYPE = :type " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    List<AssetEntity> findByTenantIdAndType(@Param("limit") int limit,
+                                            @Param("tenantId") UUID tenantId,
+                                            @Param("type") String type,
+                                            @Param("textSearch") String textSearch,
+                                            @Param("idOffset") UUID idOffset);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = :tenantId " +
             "AND CUSTOMER_ID = :customerId AND TYPE = :type " +
             "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND ID > :idOffset ORDER BY ID LIMIT :limit")

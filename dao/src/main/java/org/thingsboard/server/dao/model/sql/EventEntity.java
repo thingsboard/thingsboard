@@ -16,32 +16,31 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-
-import javax.persistence.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.JsonBinaryType;
+import org.thingsboard.server.dao.util.JsonStringType;
+
+import javax.persistence.*;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
-import java.io.IOException;
-import java.util.UUID;
-
 @Data
-@NoArgsConstructor
 @Entity
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = EVENT_COLUMN_FAMILY_NAME)
+@NoArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class EventEntity implements BaseEntity<Event> {
 
     @Transient
@@ -67,8 +66,8 @@ public class EventEntity implements BaseEntity<Event> {
     @Column(name = EVENT_UID_PROPERTY)
     private String eventUid;
 
-    @Type(type = "jsonb")
-    @Column(name = EVENT_BODY_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = EVENT_BODY_PROPERTY, columnDefinition = "json")
     private JsonNode body;
 
     public EventEntity(Event event) {

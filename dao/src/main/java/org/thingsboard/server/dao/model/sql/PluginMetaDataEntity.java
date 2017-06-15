@@ -16,13 +16,10 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-
-import javax.persistence.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.PluginId;
@@ -31,16 +28,17 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.JsonBinaryType;
+import org.thingsboard.server.dao.util.JsonStringType;
 
-import java.io.IOException;
-import java.util.Objects;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Data
 @Entity
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
 
     @Transient
@@ -68,12 +66,12 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     @Column(name = ModelConstants.PLUGIN_STATE_PROPERTY)
     private ComponentLifecycleState state;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY, columnDefinition = "json")
     private JsonNode configuration;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
     private JsonNode additionalInfo;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
@@ -132,27 +130,4 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
         return data;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        PluginMetaDataEntity entity = (PluginMetaDataEntity) o;
-        return Objects.equals(id, entity.id) && Objects.equals(apiToken, entity.apiToken) && Objects.equals(tenantId, entity.tenantId)
-                && Objects.equals(name, entity.name) && Objects.equals(clazz, entity.clazz) && Objects.equals(state, entity.state)
-                && Objects.equals(configuration, entity.configuration)
-                && Objects.equals(searchText, entity.searchText);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, apiToken, tenantId, name, clazz, state, configuration, searchText);
-    }
-
-    @Override
-    public String toString() {
-        return "PluginMetaDataEntity{" + "id=" + id + ", apiToken='" + apiToken + '\'' + ", tenantId=" + tenantId + ", name='" + name + '\'' + ", clazz='"
-                + clazz + '\'' + ", state=" + state + ", configuration=" + configuration + ", searchText='" + searchText + '\'' + '}';
-    }
 }

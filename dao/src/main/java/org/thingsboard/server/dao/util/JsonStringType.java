@@ -20,25 +20,29 @@ import org.hibernate.usertype.DynamicParameterizedType;
 
 import java.util.Properties;
 
-/**
- * Created by Valerii Sosliuk on 5/12/2017.
- */
-public class JsonBinaryType extends AbstractSingleColumnStandardBasicType<Object>
+public class JsonStringType
+        extends AbstractSingleColumnStandardBasicType<Object>
         implements DynamicParameterizedType {
 
-    public JsonBinaryType() {
+    public JsonStringType() {
         super(
-                JsonBinarySqlTypeDescriptor.INSTANCE,
+                JsonStringSqlTypeDescriptor.INSTANCE,
                 new JsonTypeDescriptor()
         );
     }
 
     public String getName() {
-        return "jsonb";
+        return "json";
+    }
+
+    @Override
+    protected boolean registerUnderJavaType() {
+        return true;
     }
 
     @Override
     public void setParameterValues(Properties parameters) {
         ((JsonTypeDescriptor) getJavaTypeDescriptor())
                 .setParameterValues(parameters);
-    }}
+    }
+}

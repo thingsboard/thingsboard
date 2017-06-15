@@ -20,10 +20,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.model.ToData;
+import org.thingsboard.server.dao.util.JsonStringType;
 
 import javax.persistence.*;
 import java.util.UUID;
@@ -32,6 +34,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
 @Entity
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = RELATION_COLUMN_FAMILY_NAME)
 @IdClass(RelationCompositeKey.class)
 @EqualsAndHashCode
@@ -62,8 +65,8 @@ public final class RelationEntity implements ToData<EntityRelation> {
     @Column(name = RELATION_TYPE_PROPERTY)
     private String relationType;
 
-    @Type(type = "jsonb")
-    @Column(name = ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
     private JsonNode additionalInfo;
 
     public RelationEntity() {

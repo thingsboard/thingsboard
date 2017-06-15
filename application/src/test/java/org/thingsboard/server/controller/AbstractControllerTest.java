@@ -29,8 +29,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.IntegrationTest;
-import org.springframework.boot.test.SpringApplicationContextLoader;
+import org.springframework.boot.test.context.SpringBootContextLoader;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -43,7 +43,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -78,14 +78,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @ActiveProfiles("test")
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes=AbstractControllerTest.class, loader=SpringApplicationContextLoader.class)
-@TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:thingsboard-test.properties"})
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = AbstractControllerTest.class, loader = SpringBootContextLoader.class)
+@TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:application-test.properties"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
 @ComponentScan({"org.thingsboard.server"})
 @WebAppConfiguration
-@IntegrationTest("server.port:0")
+@SpringBootTest
 public abstract class AbstractControllerTest {
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
@@ -294,7 +294,7 @@ public abstract class AbstractControllerTest {
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
-    
+
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doDelete(urlTemplate, params).andExpect(status().isOk()), responseClass);
     }
@@ -353,8 +353,8 @@ public abstract class AbstractControllerTest {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readerFor(type).readValue(content);
     }
-     
-    class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
+
+    public class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());

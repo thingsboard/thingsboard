@@ -16,9 +16,10 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,15 +27,17 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.JsonBinaryType;
+import org.thingsboard.server.dao.util.JsonStringType;
 
 import javax.persistence.*;
 import java.util.UUID;
 
 @Data
 @Entity
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 
     @Transient
@@ -44,11 +47,9 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     @Column(name = ModelConstants.ID_PROPERTY)
     private UUID id;
 
-    @PartitionKey(value = 1)
     @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @PartitionKey(value = 2)
     @Column(name = ModelConstants.WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY)
     private String bundleAlias;
 
@@ -58,8 +59,8 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     @Column(name = ModelConstants.WIDGET_TYPE_NAME_PROPERTY)
     private String name;
 
-    @Type(type="jsonb")
-    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY, columnDefinition = "jsonb")
+    @Type(type="json")
+    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY, columnDefinition = "json")
     private JsonNode descriptor;
 
     public WidgetTypeEntity() {
@@ -87,45 +88,6 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     @Override
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (tenantId != null ? tenantId.hashCode() : 0);
-        result = 31 * result + (bundleAlias != null ? bundleAlias.hashCode() : 0);
-        result = 31 * result + (alias != null ? alias.hashCode() : 0);
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (descriptor != null ? descriptor.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        WidgetTypeEntity that = (WidgetTypeEntity) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (tenantId != null ? !tenantId.equals(that.tenantId) : that.tenantId != null) return false;
-        if (bundleAlias != null ? !bundleAlias.equals(that.bundleAlias) : that.bundleAlias != null) return false;
-        if (alias != null ? !alias.equals(that.alias) : that.alias != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        return descriptor != null ? descriptor.equals(that.descriptor) : that.descriptor == null;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("WidgetTypeEntity{");
-        sb.append("id=").append(id);
-        sb.append(", tenantId=").append(tenantId);
-        sb.append(", bundleAlias='").append(bundleAlias).append('\'');
-        sb.append(", alias='").append(alias).append('\'');
-        sb.append(", name='").append(name).append('\'');
-        sb.append(", descriptor=").append(descriptor);
-        sb.append('}');
-        return sb.toString();
     }
 
     @Override

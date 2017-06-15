@@ -15,10 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
 import javax.persistence.Transient;
 import java.io.Serializable;
@@ -26,6 +23,7 @@ import java.util.UUID;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode
 @ToString
 public class TsKvCompositeKey implements Serializable{

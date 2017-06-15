@@ -17,9 +17,9 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.User;
@@ -29,10 +29,9 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.JsonBinaryType;
+import org.thingsboard.server.dao.util.JsonStringType;
 
 import javax.persistence.*;
-import java.io.IOException;
 import java.util.UUID;
 
 /**
@@ -40,8 +39,10 @@ import java.util.UUID;
  */
 @Data
 @Entity
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.USER_PG_HIBERNATE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public class UserEntity implements SearchTextEntity<User> {
     @Transient
     private static final long serialVersionUID = -271106508790582977L;
@@ -72,8 +73,8 @@ public class UserEntity implements SearchTextEntity<User> {
     @Column(name = ModelConstants.USER_LAST_NAME_PROPERTY)
     private String lastName;
 
-    @Type(type="jsonb")
-    @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY, columnDefinition = "jsonb")
+    @Type(type="json")
+    @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
     private JsonNode additionalInfo;
 
     public UserEntity() {
@@ -116,28 +117,7 @@ public class UserEntity implements SearchTextEntity<User> {
         this.id = id;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("UserEntity [id=");
-        builder.append(id);
-        builder.append(", authority=");
-        builder.append(authority);
-        builder.append(", tenantId=");
-        builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
-        builder.append(", email=");
-        builder.append(email);
-        builder.append(", firstName=");
-        builder.append(firstName);
-        builder.append(", lastName=");
-        builder.append(lastName);
-        builder.append(", additionalInfo=");
-        builder.append(additionalInfo);
-        builder.append("]");
-        return builder.toString();
-    }
+
 
     @Override
     public User toData() {
@@ -157,67 +137,4 @@ public class UserEntity implements SearchTextEntity<User> {
         return user;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((additionalInfo == null) ? 0 : additionalInfo.hashCode());
-        result = prime * result + ((authority == null) ? 0 : authority.hashCode());
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((email == null) ? 0 : email.hashCode());
-        result = prime * result + ((firstName == null) ? 0 : firstName.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((lastName == null) ? 0 : lastName.hashCode());
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        UserEntity other = (UserEntity) obj;
-        if (additionalInfo == null) {
-            if (other.additionalInfo != null)
-                return false;
-        } else if (!additionalInfo.equals(other.additionalInfo))
-            return false;
-        if (authority != other.authority)
-            return false;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
-        if (email == null) {
-            if (other.email != null)
-                return false;
-        } else if (!email.equals(other.email))
-            return false;
-        if (firstName == null) {
-            if (other.firstName != null)
-                return false;
-        } else if (!firstName.equals(other.firstName))
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        if (lastName == null) {
-            if (other.lastName != null)
-                return false;
-        } else if (!lastName.equals(other.lastName))
-            return false;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
-            return false;
-        return true;
-    }
 }

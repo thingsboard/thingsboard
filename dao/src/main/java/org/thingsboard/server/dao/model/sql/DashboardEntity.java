@@ -16,15 +16,10 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Dashboard;
@@ -33,15 +28,17 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.JsonBinaryType;
+import org.thingsboard.server.dao.util.JsonStringType;
 
-import java.io.IOException;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Data
 @Entity
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class DashboardEntity implements SearchTextEntity<Dashboard> {
 
     @Transient
@@ -63,8 +60,8 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Type(type = "jsonb")
-    @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY, columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY, columnDefinition = "json")
     private JsonNode configuration;
 
     public DashboardEntity() {
@@ -106,80 +103,6 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     
     public String getSearchText() {
         return searchText;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((configuration == null) ? 0 : configuration.hashCode());
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((searchText == null) ? 0 : searchText.hashCode());
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
-        result = prime * result + ((title == null) ? 0 : title.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        DashboardEntity other = (DashboardEntity) obj;
-        if (configuration == null) {
-            if (other.configuration != null)
-                return false;
-        } else if (!configuration.equals(other.configuration))
-            return false;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        if (searchText == null) {
-            if (other.searchText != null)
-                return false;
-        } else if (!searchText.equals(other.searchText))
-            return false;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
-            return false;
-        if (title == null) {
-            if (other.title != null)
-                return false;
-        } else if (!title.equals(other.title))
-            return false;
-        return true;
-    }
-    
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("DashboardEntity [id=");
-        builder.append(id);
-        builder.append(", tenantId=");
-        builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
-        builder.append(", title=");
-        builder.append(title);
-        builder.append(", searchText=");
-        builder.append(searchText);
-        builder.append(", configuration=");
-        builder.append(configuration);
-        builder.append("]");
-        return builder.toString();
     }
 
     @Override
