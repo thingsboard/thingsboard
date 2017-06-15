@@ -48,6 +48,7 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         ackAlarm: ackAlarm,
         clearAlarm: clearAlarm,
         getAlarms: getAlarms,
+        getHighestAlarmSeverity: getHighestAlarmSeverity,
         pollAlarms: pollAlarms,
         cancelPollAlarms: cancelPollAlarms,
         subscribeForAlarms: subscribeForAlarms,
@@ -157,6 +158,23 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
             url += '&ascOrder=' + (ascOrder ? 'true' : 'false');
         }
 
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getHighestAlarmSeverity(entityType, entityId, alarmSearchStatus, alarmStatus, config) {
+        var deferred = $q.defer();
+        var url = '/api/alarm/highestSeverity/' + entityType + '/' + entityId;
+
+        if (alarmSearchStatus) {
+            url += '?searchStatus=' + alarmSearchStatus;
+        } else if (alarmStatus) {
+            url += '?status=' + alarmStatus;
+        }
         $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {

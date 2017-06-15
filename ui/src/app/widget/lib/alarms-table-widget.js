@@ -210,6 +210,9 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         var cssString = 'table.md-table th.md-column {\n'+
             'color: ' + mdDarkSecondary + ';\n'+
             '}\n'+
+            'table.md-table th.md-column.md-checkbox-column md-checkbox:not(.md-checked) .md-icon {\n'+
+            'border-color: ' + mdDarkSecondary + ';\n'+
+            '}\n'+
             'table.md-table th.md-column md-icon.md-sort-icon {\n'+
             'color: ' + mdDarkDisabled + ';\n'+
             '}\n'+
@@ -219,6 +222,9 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
             'table.md-table td.md-cell {\n'+
             'color: ' + mdDark + ';\n'+
             'border-top: 1px '+mdDarkDivider+' solid;\n'+
+            '}\n'+
+            'table.md-table td.md-cell.md-checkbox-cell md-checkbox:not(.md-checked) .md-icon {\n'+
+            'border-color: ' + mdDarkSecondary + ';\n'+
             '}\n'+
             'table.md-table td.md-cell.md-placeholder {\n'+
             'color: ' + mdDarkDisabled + ';\n'+

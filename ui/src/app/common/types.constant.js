@@ -394,7 +394,6 @@ export default angular.module('thingsboard.types', [])
                 cards: "cards"
             },
             translate: {
-                dashboardStatePrefix: "dashboardState.state.",
                 customTranslationsPrefix: "custom."
             }
         }

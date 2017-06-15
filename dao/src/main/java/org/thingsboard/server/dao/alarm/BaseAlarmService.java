@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TimePageData;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -46,6 +47,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -240,6 +242,46 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                 return new TimePageData<>(alarms, query.getPageLink());
             }
         });
+    }
+
+    @Override
+    public AlarmSeverity findHighestAlarmSeverity(EntityId entityId, AlarmSearchStatus alarmSearchStatus,
+                                                                    AlarmStatus alarmStatus) {
+        TimePageLink nextPageLink = new TimePageLink(100);
+        boolean hasNext = true;
+        AlarmSeverity highestSeverity = null;
+        AlarmQuery query;
+        while (hasNext) {
+            query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false);
+            List<AlarmInfo> alarms;
+            try {
+                alarms = alarmDao.findAlarms(query).get();
+            } catch (ExecutionException | InterruptedException e) {
+                log.warn("Failed to find highest alarm severity. EntityId: [{}], AlarmSearchStatus: [{}], AlarmStatus: [{}]",
+                        entityId, alarmSearchStatus, alarmStatus);
+                throw new RuntimeException(e);
+            }
+            hasNext = alarms.size() == nextPageLink.getLimit();
+            if (hasNext) {
+                nextPageLink = new TimePageData<>(alarms, nextPageLink).getNextPageLink();
+            }
+            if (alarms.isEmpty()) {
+                continue;
+            } else {
+                List<AlarmInfo> sorted = new ArrayList(alarms);
+                sorted.sort((p1, p2) -> p1.getSeverity().compareTo(p2.getSeverity()));
+                AlarmSeverity severity = sorted.get(0).getSeverity();
+                if (severity == AlarmSeverity.CRITICAL) {
+                    highestSeverity = severity;
+                    break;
+                } else if (highestSeverity == null) {
+                    highestSeverity = severity;
+                } else {
+                    highestSeverity = highestSeverity.compareTo(severity) < 0 ? highestSeverity : severity;
+                }
+            }
+        }
+        return highestSeverity;
     }
 
     private void deleteRelation(EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
