@@ -14,8 +14,32 @@
  * limitations under the License.
  */
 
+.tb-has-timewindow {
+  .tb-alarms-table {
+    md-toolbar {
+      min-height: 60px;
+      max-height: 60px;
+      &.md-table-toolbar {
+        .md-toolbar-tools {
+          max-height: 60px;
+        }
+      }
+    }
+  }
+}
+
 .tb-alarms-table {
-  margin-top: 15px;
+
+  md-toolbar {
+    min-height: 39px;
+    max-height: 39px;
+    &.md-table-toolbar {
+      .md-toolbar-tools {
+        max-height: 39px;
+      }
+    }
+  }
+
   &.tb-data-table {
     table.md-table, table.md-table.md-row-select {
       tbody {

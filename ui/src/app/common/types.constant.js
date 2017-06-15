@@ -395,7 +395,7 @@ export default angular.module('thingsboard.types', [])
             },
             translate: {
                 dashboardStatePrefix: "dashboardState.state.",
-                keyLabelPrefix: "key.label."
+                customTranslationsPrefix: "custom."
             }
         }
     ).name;

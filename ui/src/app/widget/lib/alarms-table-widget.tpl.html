@@ -17,19 +17,6 @@
 -->
 <div class="tb-absolute-fill tb-alarms-table tb-data-table" layout="column">
     <div ng-show="vm.showData" flex class="tb-absolute-fill" layout="column">
-        <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedAlarms.length
-                                                                 && vm.query.search === null">
-            <div class="md-toolbar-tools">
-                <span>{{ vm.alarmsTitle }}</span>
-                <span flex></span>
-                <md-button ng-if="vm.enableSearch" class="md-icon-button" ng-click="vm.enterFilterMode()">
-                    <md-icon>search</md-icon>
-                    <md-tooltip md-direction="top">
-                        {{ 'action.search' | translate }}
-                    </md-tooltip>
-                </md-button>
-            </div>
-        </md-toolbar>
         <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedAlarms.length &&
                                                                   vm.query.search != null">
             <div class="md-toolbar-tools">

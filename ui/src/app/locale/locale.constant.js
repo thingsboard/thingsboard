@@ -1167,6 +1167,11 @@ export default angular.module('thingsboard.locale', [])
                     "zh_CN": "Chinese",
                     "ru_RU": "Russian",
                     "es_ES": "Spanish"
+                },
+                "custom": {
+                    "alarms": {
+                        "title": "Super ${entityName}"
+                    }
                 }
             }
         }

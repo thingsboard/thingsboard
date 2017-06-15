@@ -48,6 +48,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         $containerParent: null,
         width: 0,
         height: 0,
+        hideTitlePanel: false,
         isEdit: isEdit,
         isMobile: false,
         widgetConfig: widget.config,
@@ -120,6 +121,10 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         stDiff: stDiff,
         aliasController: aliasController
     };
+
+    widget.$ctx = function() {
+        return widgetContext;
+    }
 
     var widgetTypeInstance;
 
