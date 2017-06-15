@@ -431,6 +431,7 @@ export default angular.module('thingsboard.locale', [])
                     "vertical-margin-required": "Vertical margin value is required.",
                     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
+                    "autofill-height": "Auto fill layout height",
                     "display-title": "Display dashboard title",
                     "toolbar-always-open": "Keep toolbar opened",
                     "title-color": "Title color",
@@ -472,11 +473,9 @@ export default angular.module('thingsboard.locale', [])
                     "state": "Dashboard state",
                     "state-name": "Name",
                     "state-name-required": "Dashboard state name is required.",
-                    "state-name-exists": "Dashboard state with the same name is already exists.",
                     "state-id": "State Id",
                     "state-id-required": "Dashboard state id is required.",
                     "state-id-exists": "Dashboard state with the same id is already exists.",
-                    "invalid-state-id-format": "Only alphanumeric characters and underscore are allowed.",
                     "is-root-state": "Root state",
                     "delete-state-title": "Delete dashboard state",
                     "delete-state-text": "Are you sure you want delete dashboard state with name '{{stateName}}'?",
@@ -1169,9 +1168,6 @@ export default angular.module('thingsboard.locale', [])
                     "es_ES": "Spanish"
                 },
                 "custom": {
-                    "alarms": {
-                        "title": "Super ${entityName}"
-                    }
                 }
             }
         }

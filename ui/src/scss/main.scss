@@ -324,8 +324,14 @@ pre.tb-highlight {
         tr {
           &.md-row:not([disabled]) {
             outline: none;
+            &:hover {
+              background-color: rgba(221, 221, 221, 0.3) !important;
+            }
+            &.md-selected {
+              background-color: rgba(221, 221, 221, 0.5) !important;
+            }
             &.tb-current, &.tb-current:hover{
-              background-color: #dddddd !important;
+              background-color: rgba(221, 221, 221, 0.65) !important;
             }
           }
         }

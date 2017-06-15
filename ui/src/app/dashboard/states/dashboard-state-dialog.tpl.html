@@ -37,18 +37,15 @@
                             <input name="name" required ng-model="vm.state.name">
                             <div ng-messages="theForm.name.$error">
                                 <div ng-message="required" translate>dashboard.state-name-required</div>
-                                <div ng-message="stateExists" translate>dashboard.state-name-exists</div>
                             </div>
                         </md-input-container>
                         <md-input-container class="md-block">
                             <label translate>dashboard.state-id</label>
-                            <input name="stateId" ng-model="vm.state.id"
-                                   ng-change="vm.stateIdTouched = true"
-                                   ng-pattern="/^[a-zA-Z0-9_]*$/">
+                            <input name="stateId" required ng-model="vm.state.id"
+                                   ng-change="vm.stateIdTouched = true">
                             <div ng-messages="theForm.stateId.$error">
                                 <div ng-message="required" translate>dashboard.state-id-required</div>
                                 <div ng-message="stateExists" translate>dashboard.state-id-exists</div>
-                                <div ng-message="pattern" translate>dashboard.invalid-state-id-format</div>
                             </div>
                         </md-input-container>
                         <md-checkbox flex aria-label="{{ 'dashboard.is-root-state' | translate }}"

@@ -135,7 +135,8 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, types) {
         isLocalUrl: isLocalUrl,
         validateDatasources: validateDatasources,
         createKey: createKey,
-        createLabelFromDatasource: createLabelFromDatasource
+        createLabelFromDatasource: createLabelFromDatasource,
+        insertVariable: insertVariable
     }
 
     return service;
@@ -405,6 +406,20 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, types) {
             match = varsRegex.exec(pattern);
         }
         return label;
+    }
+
+    function insertVariable(pattern, name, value) {
+        var result = angular.copy(pattern);
+        var match = varsRegex.exec(pattern);
+        while (match !== null) {
+            var variable = match[0];
+            var variableName = match[1];
+            if (variableName === name) {
+                result = result.split(variable).join(value);
+            }
+            match = varsRegex.exec(pattern);
+        }
+        return result;
     }
 
 }

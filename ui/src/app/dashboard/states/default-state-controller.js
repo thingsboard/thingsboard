@@ -97,10 +97,10 @@ export default function DefaultStateController($scope, $location, $state, $state
 
     function getStateName(id, state) {
         var result = '';
-        var translationId = types.translate.dashboardStatePrefix + id;
+        var translationId = types.translate.customTranslationsPrefix + state.name;
         var translation = $translate.instant(translationId);
         if (translation != translationId) {
-            result = translation;
+            result = translation + '';
         } else {
             result = state.name;
         }
