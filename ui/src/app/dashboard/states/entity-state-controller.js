@@ -17,7 +17,7 @@
 import './entity-state-controller.scss';
 
 /*@ngInject*/
-export default function EntityStateController($scope, $location, $state, $stateParams, $q, $translate, types, dashboardUtils, entityService) {
+export default function EntityStateController($scope, $location, $state, $stateParams, $q, $translate, utils, types, dashboardUtils, entityService) {
 
     var vm = this;
 
@@ -106,18 +106,17 @@ export default function EntityStateController($scope, $location, $state, $stateP
     function getStateName(index) {
         var result = '';
         if (vm.stateObject[index]) {
+            var stateName = vm.states[vm.stateObject[index].id].name;
+            var translationId = types.translate.customTranslationsPrefix + stateName;
+            var translation = $translate.instant(translationId);
+            if (translation != translationId) {
+                stateName = translation + '';
+            }
             var params = vm.stateObject[index].params;
             if (params && params.entityName) {
-                result = params.entityName;
+                result = utils.insertVariable(stateName, 'entityName', params.entityName);
             } else {
-                var id = vm.stateObject[index].id;
-                var translationId = types.translate.dashboardStatePrefix + id;
-                var translation = $translate.instant(translationId);
-                if (translation != translationId) {
-                    result = translation;
-                } else {
-                    result = vm.states[vm.stateObject[index].id].name;
-                }
+                result = stateName;
             }
         }
         return result;
@@ -243,11 +242,9 @@ export default function EntityStateController($scope, $location, $state, $stateP
     }
 
     function gotoState(stateId, update, openRightLayout) {
-        if (vm.dashboardCtrl.dashboardCtx.state != stateId) {
-            vm.dashboardCtrl.openDashboardState(stateId, openRightLayout);
-            if (update) {
-                updateLocation();
-            }
+        vm.dashboardCtrl.openDashboardState(stateId, openRightLayout);
+        if (update) {
+            updateLocation();
         }
     }
 

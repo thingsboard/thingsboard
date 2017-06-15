@@ -23,11 +23,14 @@ import './alarm-details-dialog.scss';
 const js_beautify = beautify.js;
 
 /*@ngInject*/
-export default function AlarmDetailsDialogController($mdDialog, $filter, $translate, types, alarmService, alarmId, showingCallback) {
+export default function AlarmDetailsDialogController($mdDialog, $filter, $translate, types,
+                                                     alarmService, alarmId, allowAcknowledgment, allowClear, showingCallback) {
 
     var vm = this;
 
     vm.alarmId = alarmId;
+    vm.allowAcknowledgment = allowAcknowledgment;
+    vm.allowClear = allowClear;
     vm.types = types;
     vm.alarm = null;
 

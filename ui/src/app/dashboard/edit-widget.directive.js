@@ -131,6 +131,7 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
         scope: {
             dashboard: '=',
             aliasController: '=',
+            widgetEditMode: '=',
             widget: '=',
             widgetLayout: '=',
             theForm: '='

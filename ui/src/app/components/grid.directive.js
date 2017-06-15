@@ -124,7 +124,7 @@ function Grid() {
 }
 
 /*@ngInject*/
-function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $translate, $mdMedia, $templateCache) {
+function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $translate, $mdMedia, $templateCache, $window) {
 
     var vm = this;
 
@@ -155,6 +155,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
     vm.refreshList = refreshList;
     vm.saveItem = saveItem;
     vm.toggleItemSelection = toggleItemSelection;
+    vm.triggerResize = triggerResize;
 
     $scope.$watch(function () {
         return $mdMedia('xs') || $mdMedia('sm');
@@ -598,6 +599,11 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
             delete vm.items.selections[item.id.id];
             vm.items.selectedCount--;
         }
+    }
+
+    function triggerResize() {
+        var w = angular.element($window);
+        w.triggerHandler('resize');
     }
 
     function moveToTop() {

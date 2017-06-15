@@ -20,18 +20,46 @@
     <md-tab label="{{ 'widget-config.data' | translate }}"
             ng-show="widgetType !== types.widgetType.static.value">
         <md-content class="md-padding" layout="column">
-            <div ng-show="widgetType === types.widgetType.timeseries.value" layout='column' layout-align="center"
+            <div ng-show="widgetType === types.widgetType.timeseries.value || widgetType === types.widgetType.alarm.value" layout='column' layout-align="center"
                  layout-gt-sm='row' layout-align-gt-sm="start center">
                 <md-checkbox flex aria-label="{{ 'widget-config.use-dashboard-timewindow' | translate }}"
                              ng-model="useDashboardTimewindow">{{ 'widget-config.use-dashboard-timewindow' | translate }}
                 </md-checkbox>
                 <section flex layout="row" layout-align="start center" style="margin-bottom: 16px;">
                     <span ng-class="{'tb-disabled-label': useDashboardTimewindow}" translate style="padding-right: 8px;">widget-config.timewindow</span>
-                    <tb-timewindow ng-disabled="useDashboardTimewindow" as-button="true" aggregation flex ng-model="timewindow"></tb-timewindow>
+                    <tb-timewindow ng-disabled="useDashboardTimewindow" as-button="true" aggregation="{{ widgetType === types.widgetType.timeseries.value }}"
+                                   flex ng-model="timewindow"></tb-timewindow>
                 </section>
             </div>
+            <div ng-show="widgetType === types.widgetType.alarm.value" layout='column' layout-align="center"
+                 layout-gt-sm='row' layout-align-gt-sm="start center">
+                <md-input-container class="md-block" flex>
+                    <label translate>alarm.alarm-status</label>
+                    <md-select ng-model="alarmSearchStatus" style="padding-bottom: 24px;">
+                        <md-option ng-repeat="searchStatus in types.alarmSearchStatus" ng-value="searchStatus">
+                            {{ ('alarm.search-status.' + searchStatus) | translate }}
+                        </md-option>
+                    </md-select>
+                </md-input-container>
+                <md-input-container flex class="md-block">
+                    <label translate>alarm.polling-interval</label>
+                    <input ng-required="widgetType === types.widgetType.alarm.value"
+                           type="number"
+                           step="1"
+                           min="1"
+                           name="alarmsPollingInterval"
+                           ng-model="alarmsPollingInterval"/>
+                    <div ng-messages="theForm.alarmsPollingInterval.$error" multiple md-auto-hide="false">
+                        <div ng-message="required" translate>alarm.polling-interval-required</div>
+                        <div ng-message="min" translate>alarm.min-polling-interval-message</div>
+                    </div>
+                </md-input-container>
+            </div>
             <v-accordion id="datasources-accordion" control="datasourcesAccordion" class="vAccordion--default"
-                         ng-show="widgetType !== types.widgetType.rpc.value && widgetType !== types.widgetType.static.value && isDataEnabled">
+                         ng-show="widgetType !== types.widgetType.rpc.value
+                         && widgetType !== types.widgetType.alarm.value
+                         && widgetType !== types.widgetType.static.value
+                         && isDataEnabled">
                 <v-pane id="datasources-pane" expanded="true">
                     <v-pane-header>
                         {{ 'widget-config.datasources' | translate }}
@@ -109,6 +137,24 @@
                                                 ng-model="targetDeviceAlias.value"
                                                 on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias, allowedEntityTypes: allowedEntityTypes})">
                         </tb-entity-alias-select>
+                    </v-pane-content>
+                </v-pane>
+            </v-accordion>
+            <v-accordion id="alarn-source-accordion" control="alarmSourceAccordion" class="vAccordion--default"
+                         ng-if="widgetType === types.widgetType.alarm.value && isDataEnabled">
+                <v-pane id="alarm-source-pane" expanded="true">
+                    <v-pane-header>
+                        {{ 'widget-config.alarm-source' | translate }}
+                    </v-pane-header>
+                    <v-pane-content style="padding: 0 5px;">
+                        <tb-datasource flex
+                                       ng-model="alarmSource.value"
+                                       widget-type="widgetType"
+                                       functions-only="functionsOnly"
+                                       alias-controller="aliasController"
+                                       datakey-settings-schema="datakeySettingsSchema"
+                                       generate-data-key="generateDataKey(chip,type)"
+                                       on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias})"></tb-datasource>
                     </v-pane-content>
                 </v-pane>
             </v-accordion>

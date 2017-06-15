@@ -53,12 +53,6 @@ export default function DashboardStateDialogController($scope, $mdDialog, $filte
         if (!vm.stateIdTouched && vm.isAdd) {
             vm.state.id = vm.state.name.toLowerCase().replace(/\W/g,"_");
         }
-        var result = $filter('filter')(vm.allStates, {name: vm.state.name}, true);
-        if (result && result.length && result[0].id !== vm.prevStateId) {
-            $scope.theForm.name.$setValidity('stateExists', false);
-        } else {
-            $scope.theForm.name.$setValidity('stateExists', true);
-        }
     }
 
     function checkStateId() {

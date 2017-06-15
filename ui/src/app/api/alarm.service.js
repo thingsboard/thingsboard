@@ -18,7 +18,29 @@ export default angular.module('thingsboard.api.alarm', [])
     .name;
 
 /*@ngInject*/
-function AlarmService($http, $q, $interval, $filter) {
+function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
+
+    var alarmSourceListeners = {};
+
+    var simulatedAlarm = {
+        createdTime: (new Date).getTime(),
+        startTs: (new Date).getTime(),
+        endTs: 0,
+        ackTs: 0,
+        clearTs: 0,
+        originatorName: 'Simulated',
+        originator: {
+            entityType: "DEVICE",
+            id: "1"
+        },
+        type: 'TEMPERATURE',
+        severity: "MAJOR",
+        status: types.alarmStatus.activeUnack,
+        details: {
+            message: "Temperature is high!"
+        }
+    };
+
     var service = {
         getAlarm: getAlarm,
         getAlarmInfo: getAlarmInfo,
@@ -26,8 +48,11 @@ function AlarmService($http, $q, $interval, $filter) {
         ackAlarm: ackAlarm,
         clearAlarm: clearAlarm,
         getAlarms: getAlarms,
+        getHighestAlarmSeverity: getHighestAlarmSeverity,
         pollAlarms: pollAlarms,
-        cancelPollAlarms: cancelPollAlarms
+        cancelPollAlarms: cancelPollAlarms,
+        subscribeForAlarms: subscribeForAlarms,
+        unsubscribeFromAlarms: unsubscribeFromAlarms
     }
 
     return service;
@@ -141,6 +166,23 @@ function AlarmService($http, $q, $interval, $filter) {
         return deferred.promise;
     }
 
+    function getHighestAlarmSeverity(entityType, entityId, alarmSearchStatus, alarmStatus, config) {
+        var deferred = $q.defer();
+        var url = '/api/alarm/highestSeverity/' + entityType + '/' + entityId;
+
+        if (alarmSearchStatus) {
+            url += '?searchStatus=' + alarmSearchStatus;
+        } else if (alarmStatus) {
+            url += '?status=' + alarmStatus;
+        }
+        $http.get(url, config).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
     function fetchAlarms(alarmsQuery, pageLink, deferred, alarmsList) {
         getAlarms(alarmsQuery.entityType, alarmsQuery.entityId,
             pageLink, alarmsQuery.alarmSearchStatus, alarmsQuery.alarmStatus,
@@ -171,12 +213,21 @@ function AlarmService($http, $q, $interval, $filter) {
             pageLink = {
                 limit: alarmsQuery.limit
             };
-        } else {
+        } else if (alarmsQuery.interval) {
             pageLink = {
                 limit: 100,
                 startTime: time - alarmsQuery.interval
             };
+        } else if (alarmsQuery.startTime) {
+            pageLink = {
+                limit: 100,
+                startTime: alarmsQuery.startTime
+            }
+            if (alarmsQuery.endTime) {
+                pageLink.endTime = alarmsQuery.endTime;
+            }
         }
+
         fetchAlarms(alarmsQuery, pageLink, deferred);
         return deferred.promise;
     }
@@ -211,4 +262,59 @@ function AlarmService($http, $q, $interval, $filter) {
         }
     }
 
+    function subscribeForAlarms(alarmSourceListener) {
+        alarmSourceListener.id = utils.guid();
+        alarmSourceListeners[alarmSourceListener.id] = alarmSourceListener;
+        var alarmSource = alarmSourceListener.alarmSource;
+        if (alarmSource.type == types.datasourceType.function) {
+            $timeout(function() {
+                alarmSourceListener.alarmsUpdated([simulatedAlarm], false);
+            });
+        } else if (alarmSource.entityType && alarmSource.entityId) {
+            var pollingInterval = alarmSourceListener.alarmsPollingInterval;
+            alarmSourceListener.alarmsQuery = {
+                entityType: alarmSource.entityType,
+                entityId: alarmSource.entityId,
+                alarmSearchStatus: alarmSourceListener.alarmSearchStatus,
+                alarmStatus: null
+            }
+            var originatorKeys = $filter('filter')(alarmSource.dataKeys, {name: 'originator'});
+            if (originatorKeys && originatorKeys.length) {
+                alarmSourceListener.alarmsQuery.fetchOriginator = true;
+            }
+            var subscriptionTimewindow = alarmSourceListener.subscriptionTimewindow;
+            if (subscriptionTimewindow.realtimeWindowMs) {
+                alarmSourceListener.alarmsQuery.startTime = subscriptionTimewindow.startTs;
+            } else {
+                alarmSourceListener.alarmsQuery.startTime = subscriptionTimewindow.fixedWindow.startTimeMs;
+                alarmSourceListener.alarmsQuery.endTime = subscriptionTimewindow.fixedWindow.endTimeMs;
+            }
+            alarmSourceListener.alarmsQuery.onAlarms = function(alarms) {
+                if (subscriptionTimewindow.realtimeWindowMs) {
+                    var now = Date.now();
+                    if (alarmSourceListener.lastUpdateTs) {
+                        var interval = now - alarmSourceListener.lastUpdateTs;
+                        alarmSourceListener.alarmsQuery.startTime += interval;
+                    } else {
+                        alarmSourceListener.lastUpdateTs = now;
+                    }
+                }
+                alarmSourceListener.alarmsUpdated(alarms, false);
+            }
+            onPollAlarms(alarmSourceListener.alarmsQuery);
+            alarmSourceListener.pollPromise = $interval(onPollAlarms, pollingInterval,
+                0, false, alarmSourceListener.alarmsQuery);
+        }
+
+    }
+
+    function unsubscribeFromAlarms(alarmSourceListener) {
+        if (alarmSourceListener && alarmSourceListener.id) {
+            if (alarmSourceListener.pollPromise) {
+                $interval.cancel(alarmSourceListener.pollPromise);
+                alarmSourceListener.pollPromise = null;
+            }
+            delete alarmSourceListeners[alarmSourceListener.id];
+        }
+    }
 }

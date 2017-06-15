@@ -43,10 +43,19 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         element.html(template);
 
         scope.ngModelCtrl = ngModelCtrl;
+        scope.types = types;
+
         scope.functionTypes = utils.getPredefinedFunctionsList();
+        scope.alarmFields = [];
+        for (var alarmField in types.alarmFields) {
+            scope.alarmFields.push(alarmField);
+        }
 
         scope.selectedDataKey = null;
         scope.dataKeySearchText = null;
+
+        scope.selectedAlarmDataKey = null;
+        scope.alarmDataKeySearchText = null;
 
         scope.updateValidity = function () {
             if (ngModelCtrl.$viewValue) {
@@ -54,7 +63,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                 var dataValid = angular.isDefined(value) && value != null;
                 ngModelCtrl.$setValidity('deviceData', dataValid);
                 if (dataValid) {
-                    ngModelCtrl.$setValidity('funcTypes',
+                    ngModelCtrl.$setValidity('datasourceKeys',
                         angular.isDefined(value.dataKeys) &&
                         value.dataKeys != null &&
                         value.dataKeys.length > 0);
@@ -63,13 +72,22 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         };
 
         scope.$watch('funcDataKeys', function () {
+            updateDataKeys();
+        }, true);
+
+        scope.$watch('alarmDataKeys', function () {
+            updateDataKeys();
+        }, true);
+
+        function updateDataKeys() {
             if (ngModelCtrl.$viewValue) {
                 var dataKeys = [];
                 dataKeys = dataKeys.concat(scope.funcDataKeys);
+                dataKeys = dataKeys.concat(scope.alarmDataKeys);
                 ngModelCtrl.$viewValue.dataKeys = dataKeys;
                 scope.updateValidity();
             }
-        }, true);
+        }
 
         scope.$watch('datasourceName', function () {
             if (ngModelCtrl.$viewValue) {
@@ -81,16 +99,29 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 var funcDataKeys = [];
+                var alarmDataKeys = [];
                 if (ngModelCtrl.$viewValue.dataKeys) {
-                    funcDataKeys = funcDataKeys.concat(ngModelCtrl.$viewValue.dataKeys);
+                    for (var d=0;d<ngModelCtrl.$viewValue.dataKeys.length;d++) {
+                        var dataKey = ngModelCtrl.$viewValue.dataKeys[d];
+                        if (dataKey.type === types.dataKeyType.function) {
+                            funcDataKeys.push(dataKey);
+                        } else if (dataKey.type === types.dataKeyType.alarm) {
+                            alarmDataKeys.push(dataKey);
+                        }
+                    }
                 }
                 scope.funcDataKeys = funcDataKeys;
+                scope.alarmDataKeys = alarmDataKeys;
                 scope.datasourceName = ngModelCtrl.$viewValue.name;
             }
         };
 
-        scope.transformDataKeyChip = function (chip) {
+        scope.transformFuncDataKeyChip = function (chip) {
             return scope.generateDataKey({chip: chip, type: types.dataKeyType.function});
+        };
+
+        scope.transformAlarmDataKeyChip = function (chip) {
+            return scope.generateDataKey({chip: chip, type: types.dataKeyType.alarm});
         };
 
         scope.showColorPicker = function (event, dataKey) {
@@ -129,7 +160,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                     dataKey: angular.copy(dataKey),
                     dataKeySettingsSchema: scope.datakeySettingsSchema,
                     entityAlias: null,
-                    entityAliases: null
+                    aliasController: null
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,
@@ -140,7 +171,11 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                     w.triggerHandler('resize');
                 }
             }).then(function (dataKey) {
-                scope.funcDataKeys[index] = dataKey;
+                if (dataKey.type === types.dataKeyType.function) {
+                    scope.funcDataKeys[index] = dataKey;
+                } else if (dataKey.type === types.dataKeyType.alarm) {
+                    scope.alarmDataKeys[index] = dataKey;
+                }
                 ngModelCtrl.$setDirty();
             }, function () {
             });
@@ -151,8 +186,9 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         }
 
         scope.dataKeysSearch = function (dataKeySearchText) {
-            var dataKeys = dataKeySearchText ? scope.functionTypes.filter(
-                scope.createFilterForDataKey(dataKeySearchText)) : scope.functionTypes;
+            var targetKeys = scope.widgetType == types.widgetType.alarm.value ? scope.alarmFields : scope.functionTypes;
+            var dataKeys = dataKeySearchText ? targetKeys.filter(
+                scope.createFilterForDataKey(dataKeySearchText)) : targetKeys;
             return dataKeys;
         };
 
@@ -180,6 +216,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         restrict: "E",
         require: "^ngModel",
         scope: {
+            widgetType: '=',
             generateDataKey: '&',
             datakeySettingsSchema: '='
         },

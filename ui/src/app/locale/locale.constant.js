@@ -131,6 +131,7 @@ export default angular.module('thingsboard.locale', [])
                     "type": "Type",
                     "severity": "Severity",
                     "originator": "Originator",
+                    "originator-type": "Originator type",
                     "details": "Details",
                     "status": "Status",
                     "alarm-details": "Alarm details",
@@ -144,7 +145,17 @@ export default angular.module('thingsboard.locale', [])
                     "severity-warning": "Warning",
                     "severity-indeterminate": "Indeterminate",
                     "acknowledge": "Acknowledge",
-                    "clear": "Clear"
+                    "clear": "Clear",
+                    "search": "Search alarms",
+                    "selected-alarms": "{ count, select, 1 {1 alarm} other {# alarms} } selected",
+                    "no-data": "No data to display",
+                    "polling-interval": "Alarms polling interval (sec)",
+                    "polling-interval-required": "Alarms polling interval is required.",
+                    "min-polling-interval-message": "At least 1 sec polling interval is allowed.",
+                    "aknowledge-alarms-title": "Acknowledge { count, select, 1 {1 alarm} other {# alarms} }",
+                    "aknowledge-alarms-text": "Are you sure you want to acknowledge { count, select, 1 {1 alarm} other {# alarms} }?",
+                    "clear-alarms-title": "Clear { count, select, 1 {1 alarm} other {# alarms} }",
+                    "clear-alarms-text": "Are you sure you want to clear { count, select, 1 {1 alarm} other {# alarms} }?"
                 },
                 "alias": {
                     "add": "Add alias",
@@ -420,6 +431,7 @@ export default angular.module('thingsboard.locale', [])
                     "vertical-margin-required": "Vertical margin value is required.",
                     "min-vertical-margin-message": "Only 0 is allowed as minimum vertical margin value.",
                     "max-vertical-margin-message": "Only 50 is allowed as maximum vertical margin value.",
+                    "autofill-height": "Auto fill layout height",
                     "display-title": "Display dashboard title",
                     "toolbar-always-open": "Keep toolbar opened",
                     "title-color": "Title color",
@@ -461,11 +473,9 @@ export default angular.module('thingsboard.locale', [])
                     "state": "Dashboard state",
                     "state-name": "Name",
                     "state-name-required": "Dashboard state name is required.",
-                    "state-name-exists": "Dashboard state with the same name is already exists.",
                     "state-id": "State Id",
                     "state-id-required": "Dashboard state id is required.",
                     "state-id-exists": "Dashboard state with the same id is already exists.",
-                    "invalid-state-id-format": "Only alphanumeric characters and underscore are allowed.",
                     "is-root-state": "Root state",
                     "delete-state-title": "Delete dashboard state",
                     "delete-state-text": "Are you sure you want delete dashboard state with name '{{stateName}}'?",
@@ -486,8 +496,10 @@ export default angular.module('thingsboard.locale', [])
                     "configuration": "Data key configuration",
                     "timeseries": "Timeseries",
                     "attributes": "Attributes",
+                    "alarm": "Alarm fields",
                     "timeseries-required": "Entity timeseries are required.",
                     "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
+                    "alarm-fields-required": "Alarm fields are required.",
                     "function-types": "Function types",
                     "function-types-required": "Function types are required."
                 },
@@ -637,6 +649,8 @@ export default angular.module('thingsboard.locale', [])
                     "no-aliases-found": "No aliases found.",
                     "no-alias-matching": "'{{alias}}' not found.",
                     "create-new-alias": "Create a new one!",
+                    "key": "Key",
+                    "key-name": "Key name",
                     "no-keys-found": "No keys found.",
                     "no-key-matching": "'{{key}}' not found.",
                     "create-new-key": "Create a new one!",
@@ -1046,6 +1060,7 @@ export default angular.module('thingsboard.locale', [])
                     "timeseries": "Time series",
                     "latest-values": "Latest values",
                     "rpc": "Control widget",
+                    "alarm": "Alarm widget",
                     "static": "Static widget",
                     "select-widget-type": "Select widget type",
                     "missing-widget-title-error": "Widget title must be specified!",
@@ -1133,7 +1148,8 @@ export default angular.module('thingsboard.locale', [])
                     "datasource-parameters": "Parameters",
                     "remove-datasource": "Remove datasource",
                     "add-datasource": "Add datasource",
-                    "target-device": "Target device"
+                    "target-device": "Target device",
+                    "alarm-source": "Alarm source"
                 },
                 "widget-type": {
                     "import": "Import widget type",
@@ -1150,6 +1166,8 @@ export default angular.module('thingsboard.locale', [])
                     "zh_CN": "Chinese",
                     "ru_RU": "Russian",
                     "es_ES": "Spanish"
+                },
+                "custom": {
                 }
             }
         }

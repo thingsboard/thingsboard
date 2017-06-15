@@ -23,7 +23,7 @@
 </md-content>
 <md-menu md-position-mode="target target" tb-mousepoint-menu>
 	<md-content id="gridster-parent" class="tb-dashboard-content" flex layout-wrap ng-click="" tb-contextmenu="vm.openDashboardContextMenu($event, $mdOpenMousepointMenu)">
-		<div ng-class="vm.dashboardClass" id="gridster-background" style="height: auto; min-height: 100%;">
+		<div ng-class="vm.dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
 			<div id="gridster-child" gridster="vm.gridsterOpts">
 				<ul>
 					<li gridster-item="vm.widgetItemMap" class="tb-noselect" ng-repeat="widget in vm.widgets">
@@ -37,7 +37,8 @@
 								 		class="tb-widget"
 										ng-class="{'tb-highlighted': vm.isHighlighted(widget),
 										           'tb-not-highlighted': vm.isNotHighlighted(widget),
-										           'md-whiteframe-4dp': vm.dropWidgetShadow(widget)}"
+										           'md-whiteframe-4dp': vm.dropWidgetShadow(widget),
+										           'tb-has-timewindow': vm.hasTimewindow(widget)}"
 										tb-mousedown="vm.widgetMouseDown($event, widget)"
 										ng-click="vm.widgetClicked($event, widget)"
 										tb-contextmenu="vm.openWidgetContextMenu($event, widget, $mdOpenMousepointMenu)"
@@ -45,11 +46,21 @@
             									   color: vm.widgetColor(widget),
             									   backgroundColor: vm.widgetBackgroundColor(widget),
             									   padding: vm.widgetPadding(widget)}">
-								<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitle(widget) || vm.hasTimewindow(widget)">
-									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{widget.config.title}}</span>
-									<tb-timewindow aggregation ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
+								<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitlePanel(widget)">
+									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{vm.widgetTitle(widget)}}</span>
+									<tb-timewindow aggregation="{{vm.hasAggregation(widget)}}" ng-if="vm.hasTimewindow(widget)" ng-model="widget.config.timewindow"></tb-timewindow>
 								</div>
-								<div class="tb-widget-actions" layout="row" layout-align="start center" tb-mousedown="$event.stopPropagation()">
+								<div class="tb-widget-actions" layout="row" layout-align="start center" ng-show="vm.showWidgetActions(widget)" tb-mousedown="$event.stopPropagation()">
+									<md-button ng-repeat="action in vm.widgetActions(widget)"
+											   aria-label="{{ action.name | translate }}"
+											   ng-show="!vm.isEdit && action.show"
+											   ng-click="action.onAction($event)"
+											   class="md-icon-button">
+											   <md-tooltip md-direction="top">
+												   {{ action.name | translate }}
+											   </md-tooltip>
+											   <ng-md-icon size="20" icon="{{action.icon}}"></ng-md-icon>
+									</md-button>
 									<md-button id="expand-button"
 											   ng-show="!vm.isEdit && vm.enableWidgetFullscreen(widget)"
 											   aria-label="{{ 'fullscreen.fullscreen' | translate }}"
@@ -92,6 +103,7 @@
 										 aliasController: vm.aliasController,
 										 stateController: vm.stateController,
 										 isEdit: vm.isEdit,
+										 isMobile: vm.isMobileSize,
 										 stDiff: vm.stDiff,
 										 dashboardTimewindow: vm.dashboardTimewindow,
 										 dashboardTimewindowApi: vm.dashboardTimewindowApi }">
