@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.dao.sql.relation;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
+@SqlDao
 public interface RelationRepository
         extends CrudRepository<RelationEntity, RelationCompositeKey>, JpaSpecificationExecutor<RelationEntity> {
 

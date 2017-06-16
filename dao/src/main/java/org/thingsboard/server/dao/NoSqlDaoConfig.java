@@ -16,11 +16,11 @@
 package org.thingsboard.server.dao;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
+import org.thingsboard.server.dao.annotation.NoSqlDao;
 
 @Configuration
 @EnableAutoConfiguration(
@@ -28,6 +28,6 @@ import org.springframework.context.annotation.Configuration;
                 DataSourceAutoConfiguration.class,
                 DataSourceTransactionManagerAutoConfiguration.class,
                 HibernateJpaAutoConfiguration.class})
-@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true")
+@NoSqlDao
 public class NoSqlDaoConfig {
 }

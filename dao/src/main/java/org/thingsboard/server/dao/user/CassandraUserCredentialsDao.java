@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.annotation.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.UserCredentialsEntity;
 
@@ -32,7 +33,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 @Component
 @Slf4j
-@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true", matchIfMissing = false)
+@NoSqlDao
 public class CassandraUserCredentialsDao extends CassandraAbstractModelDao<UserCredentialsEntity, UserCredentials> implements UserCredentialsDao {
 
     @Override

@@ -15,15 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.attributes;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
+@SqlDao
 public interface AttributeKvRepository extends CrudRepository<AttributeKvEntity, AttributeKvCompositeKey> {
 
     List<AttributeKvEntity> findAllByEntityTypeAndEntityIdAndAttributeType(String entityType,

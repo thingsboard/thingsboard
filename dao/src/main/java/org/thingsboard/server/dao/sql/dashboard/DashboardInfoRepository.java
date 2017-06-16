@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.dashboard;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
+@SqlDao
 public interface DashboardInfoRepository extends CrudRepository<DashboardInfoEntity, UUID> {
 
     @Query(nativeQuery = true, value = "SELECT * FROM DASHBOARD WHERE TENANT_ID = :tenantId " +

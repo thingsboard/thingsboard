@@ -20,9 +20,9 @@ import com.github.springtestdbunit.bean.DatabaseDataSourceConnectionFactoryBean;
 import org.dbunit.DatabaseUnitException;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.thingsboard.server.dao.annotation.SqlDao;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import java.sql.SQLException;
  * Created by Valerii Sosliuk on 5/6/2017.
  */
 @Configuration
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
+@SqlDao
 public class JpaDbunitTestConfig {
 
     @Autowired

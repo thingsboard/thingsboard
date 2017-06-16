@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
+@SqlDao
 public interface ComponentDescriptorRepository extends CrudRepository<ComponentDescriptorEntity, UUID> {
 
     ComponentDescriptorEntity findByClazz(String clazz);

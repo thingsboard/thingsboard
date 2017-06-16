@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.tenant;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.TenantEntity;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 4/30/2017.
  */
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
+@SqlDao
 public interface TenantRepository extends CrudRepository<TenantEntity, UUID> {
 
     @Query(nativeQuery = true, value = "SELECT * FROM TENANT WHERE REGION = :region " +

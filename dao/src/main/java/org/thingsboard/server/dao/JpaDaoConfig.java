@@ -16,13 +16,12 @@
 package org.thingsboard.server.dao;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.thingsboard.server.dao.annotation.SqlDao;
 
 /**
  * @author Valerii Sosliuk
@@ -33,7 +32,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableJpaRepositories("org.thingsboard.server.dao.sql")
 @EntityScan("org.thingsboard.server.dao.model.sql")
 @EnableTransactionManagement
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
+@SqlDao
 public class JpaDaoConfig {
 
 }

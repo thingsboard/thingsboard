@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.timeseries;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.TsKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.TsKvEntity;
 
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
+@SqlDao
 public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
 }

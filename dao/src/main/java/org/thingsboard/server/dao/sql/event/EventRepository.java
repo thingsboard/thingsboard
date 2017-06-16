@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 
 import java.util.UUID;
@@ -26,7 +26,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/3/2017.
  */
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
+@SqlDao
 public interface EventRepository extends CrudRepository<EventEntity, UUID>, JpaSpecificationExecutor<EventEntity> {
 
     EventEntity findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(

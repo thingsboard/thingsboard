@@ -25,8 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.dao.annotation.NoSqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -38,7 +38,7 @@ import java.util.List;
 @Component
 @Slf4j
 @Data
-@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true")
+@NoSqlDao
 public class CassandraCluster {
 
     private static final String COMMA = ",";

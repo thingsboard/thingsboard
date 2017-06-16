@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.asset.TenantAssetType;
+import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
  */
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true", matchIfMissing = false)
+@SqlDao
 public interface AssetRepository extends CrudRepository<AssetEntity, UUID> {
 
     @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = :tenantId " +
