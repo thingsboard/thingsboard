@@ -42,8 +42,10 @@ export default function DefaultStateController($scope, $location, $state, $state
                 params: params
             }
             //append new state
+            stopWatchStateObject();
             vm.stateObject[0] = newState;
             gotoState(vm.stateObject[0].id, true, openRightLayout);
+            watchStateObject();
         }
     }
 
@@ -57,24 +59,36 @@ export default function DefaultStateController($scope, $location, $state, $state
                 params: params
             }
             //replace with new state
+            stopWatchStateObject();
             vm.stateObject[0] = newState;
             gotoState(vm.stateObject[0].id, true, openRightLayout);
+            watchStateObject();
         }
     }
 
     function navigatePrevState(index) {
         if (index < vm.stateObject.length-1) {
+            stopWatchStateObject();
             vm.stateObject.splice(index+1, vm.stateObject.length-index-1);
             gotoState(vm.stateObject[vm.stateObject.length-1].id, true);
+            watchStateObject();
         }
     }
 
     function getStateId() {
-        return vm.stateObject[vm.stateObject.length-1].id;
+        if (vm.stateObject && vm.stateObject.length) {
+            return vm.stateObject[vm.stateObject.length-1].id;
+        } else {
+            return '';
+        }
     }
 
     function getStateParams() {
-        return vm.stateObject[vm.stateObject.length-1].params;
+        if (vm.stateObject && vm.stateObject.length) {
+            return vm.stateObject[vm.stateObject.length - 1].params;
+        } else {
+            return {};
+        }
     }
 
     function getStateParamsByStateId(stateId) {
@@ -102,7 +116,7 @@ export default function DefaultStateController($scope, $location, $state, $state
         if (translation != translationId) {
             result = translation + '';
         } else {
-            result = state.name;
+            result = id;
         }
         return result;
     }
@@ -194,7 +208,4 @@ export default function DefaultStateController($scope, $location, $state, $state
             $location.search({state : angular.toJson(vm.stateObject)});
         }
     }
-
-
-
 }

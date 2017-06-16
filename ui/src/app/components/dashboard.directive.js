@@ -16,6 +16,7 @@
 import './dashboard.scss';
 
 import $ from 'jquery';
+import 'javascript-detect-element-resize/detect-element-resize';
 import angularGridster from 'angular-gridster';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardApiWidget from '../api/widget.service';
@@ -225,6 +226,18 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     };
 
+    addResizeListener(gridsterParent[0], onGirdsterParentResize); // eslint-disable-line no-undef
+
+    $scope.$on("$destroy", function () {
+        removeResizeListener(gridsterParent[0], onGirdsterParentResize); // eslint-disable-line no-undef
+    });
+
+    function onGirdsterParentResize() {
+        if (gridsterParent.height() && vm.autofillHeight) {
+            updateMobileOpts();
+        }
+    }
+
     $scope.$watchCollection('vm.widgets', function () {
         var ids = [];
         for (var i=0;i<vm.widgets.length;i++) {
@@ -261,6 +274,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             if (ids.indexOf(widgetId) === -1) {
                 delete vm.widgetLayoutInfo[widgetId];
             }
+        }
+        if (vm.autofillHeight) {
+            updateMobileOpts();
         }
     });
 
@@ -316,31 +332,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     });
 
     $scope.$watch('vm.autofillHeight', function () {
-        if (vm.autofillHeight) {
-            //if (gridsterParent.height()) {
-            //    updateMobileOpts();
-            //} else {
-            if ($scope.parentHeighWatcher) {
-                $scope.parentHeighWatcher();
-            }
-            if (gridsterParent.height()) {
-                updateMobileOpts();
-            }
-            $scope.parentHeighWatcher = $scope.$watch(function() { return gridsterParent.height(); },
-                function(newHeight) {
-                    if (newHeight) {
-                        updateMobileOpts();
-                    }
-               }
-            );
-        } else {
-            if ($scope.parentHeighWatcher) {
-                $scope.parentHeighWatcher();
-                $scope.parentHeighWatcher = null;
-            }
-
-            updateMobileOpts();
-        }
+        updateMobileOpts();
     });
 
     $scope.$watch('vm.isMobileDisabled', function () {

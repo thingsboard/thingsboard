@@ -562,6 +562,9 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     }
 
     function onInit(skipSizeCheck) {
+        if (!widgetContext.$containerParent) {
+            return;
+        }
         if (!skipSizeCheck) {
             checkSize();
         }
