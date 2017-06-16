@@ -356,6 +356,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         var margins = vm.margins ? vm.margins : [10, 10];
         if (!angular.equals(vm.gridsterOpts.margins, margins)) {
             vm.gridsterOpts.margins = margins;
+            updateMobileOpts();
             if (vm.gridster) {
                 vm.gridster.margins = vm.margins;
                 updateGridsterParams();
@@ -413,7 +414,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
                 var sizeY = widgetSizeY(w);
                 totalRows += sizeY;
             }
-            rowHeight = (viewportHeight - (vm.gridsterOpts.margins[1])) / totalRows;
+            rowHeight = (viewportHeight - vm.gridsterOpts.margins[1]*(vm.widgets.length+1) + vm.gridsterOpts.margins[0]*vm.widgets.length) / totalRows;
         }
         return rowHeight;
     }
