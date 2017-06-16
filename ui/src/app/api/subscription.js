@@ -296,6 +296,21 @@ export default class Subscription {
         }
     }
 
+    resetData() {
+        for (var i=0;i<this.data.length;i++) {
+            this.data[i].data = [];
+            this.hiddenData[i].data = [];
+            if (this.displayLegend) {
+                this.legendData.data[i].min = null;
+                this.legendData.data[i].max = null;
+                this.legendData.data[i].avg = null;
+                this.legendData.data[i].total = null;
+                this.legendData.data[i].hidden = false;
+            }
+        }
+        this.onDataUpdated();
+    }
+
     startWatchingTimewindow() {
         var subscription = this;
         this.timeWindowWatchRegistration = this.ctx.$scope.$watch(function () {
@@ -720,6 +735,7 @@ export default class Subscription {
                     this.ctx.datasourceService.unsubscribeFromDatasource(listener);
                 }
                 this.datasourceListeners = [];
+                this.resetData();
             }
         }
     }

@@ -44,9 +44,11 @@ export default function EntityStateController($scope, $location, $state, $stateP
                         params: params
                     }
                     //append new state
+                    stopWatchStateObject();
                     vm.stateObject.push(newState);
                     vm.selectedStateIndex = vm.stateObject.length-1;
                     gotoState(vm.stateObject[vm.stateObject.length-1].id, true, openRightLayout);
+                    watchStateObject();
                 }
             );
         }
@@ -62,8 +64,10 @@ export default function EntityStateController($scope, $location, $state, $stateP
                         params: params
                     }
                     //replace with new state
+                    stopWatchStateObject();
                     vm.stateObject[vm.stateObject.length - 1] = newState;
                     gotoState(vm.stateObject[vm.stateObject.length - 1].id, true, openRightLayout);
+                    watchStateObject();
                 }
             );
         }
@@ -71,18 +75,28 @@ export default function EntityStateController($scope, $location, $state, $stateP
 
     function navigatePrevState(index) {
         if (index < vm.stateObject.length-1) {
+            stopWatchStateObject();
             vm.stateObject.splice(index+1, vm.stateObject.length-index-1);
             vm.selectedStateIndex = vm.stateObject.length-1;
             gotoState(vm.stateObject[vm.stateObject.length-1].id, true);
+            watchStateObject();
         }
     }
 
     function getStateId() {
-        return vm.stateObject[vm.stateObject.length-1].id;
+        if (vm.stateObject && vm.stateObject.length) {
+            return vm.stateObject[vm.stateObject.length-1].id;
+        } else {
+            return '';
+        }
     }
 
     function getStateParams() {
-        return vm.stateObject[vm.stateObject.length-1].params;
+        if (vm.stateObject && vm.stateObject.length) {
+            return vm.stateObject[vm.stateObject.length - 1].params;
+        } else {
+            return {};
+        }
     }
 
     function getStateParamsByStateId(stateId) {

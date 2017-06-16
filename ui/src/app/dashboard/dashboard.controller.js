@@ -72,6 +72,12 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         set: function() { }
     });
 
+    Object.defineProperty(vm, 'rightLayoutOpened', {
+        get: function() {
+            return !vm.isMobile || vm.isRightLayoutOpened; },
+        set: function() { }
+    });
+
     vm.layouts = {
         main: {
             show: false,

@@ -122,7 +122,7 @@ export default function ManageDashboardStatesController($scope, $mdDialog, $filt
     }
 
     function getStateIndex(id) {
-        var result = $filter('filter')(vm.allStates, {id: id});
+        var result = $filter('filter')(vm.allStates, {id: id}, true);
         if (result && result.length) {
             return vm.allStates.indexOf(result[0]);
         }
