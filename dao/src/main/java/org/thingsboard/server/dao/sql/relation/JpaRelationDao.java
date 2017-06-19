@@ -144,29 +144,25 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Override
     public ListenableFuture<Boolean> deleteOutboundRelations(EntityId entity) {
-        RelationEntity relationEntity = new RelationEntity();
-        relationEntity.setFromId(entity.getId());
-        relationEntity.setFromType(entity.getEntityType().name());
-
         return service.submit(
                 () -> {
                     boolean relationExistsBeforeDelete = relationRepository
-                            .findAllByFromIdAndFromType(relationEntity.getFromId(), relationEntity.getFromType())
+                            .findAllByFromIdAndFromType(entity.getId(), entity.getEntityType().name())
                             .size() > 0;
-                    relationRepository.delete(relationEntity);
+                    relationRepository.deleteByFromIdAndFromType(entity.getId(), entity.getEntityType().name());
                     return relationExistsBeforeDelete;
                 });
     }
 
     @Override
     public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
-        Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<RelationEntity>getTimeSearchPageSpec(pageLink, RELATION_TO_ID_PROPERTY);
+        Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<RelationEntity>getTimeSearchPageSpec(pageLink, "toId");
         Specification<RelationEntity> fieldsSpec = getEntityFieldsSpec(from, relationType, typeGroup, childType);
         Pageable pageable = new PageRequest(0, pageLink.getLimit(),
                 new Sort(
-                        new Order(ASC, RELATION_TYPE_GROUP_PROPERTY),
-                        new Order(ASC, RELATION_TYPE_PROPERTY),
-                        new Order(ASC, RELATION_TO_TYPE_PROPERTY))
+                        new Order(ASC, "relationTypeGroup"),
+                        new Order(ASC, "relationType"),
+                        new Order(ASC, "toType"))
         );
         return service.submit(() ->
                 DaoUtil.convertDataList(relationRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
@@ -188,7 +184,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                     predicates.add(relationTypePredicate);
                 }
                 if (typeGroup != null) {
-                    Predicate typeGroupPredicate = criteriaBuilder.equal(root.get("relationTypeGroup"), typeGroup);
+                    Predicate typeGroupPredicate = criteriaBuilder.equal(root.get("relationTypeGroup"), typeGroup.name());
                     predicates.add(typeGroupPredicate);
                 }
                 if (childType != null) {

@@ -100,7 +100,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
     @Override
     public List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        Specification<EventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<EventEntity>getTimeSearchPageSpec(pageLink, ID_PROPERTY);
+        Specification<EventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<EventEntity>getTimeSearchPageSpec(pageLink, "id");
         Specification<EventEntity> fieldsSpec = getEntityFieldsSpec(tenantId, entityId, eventType);
         Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);

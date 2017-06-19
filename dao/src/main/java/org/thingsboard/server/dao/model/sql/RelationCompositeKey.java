@@ -36,8 +36,8 @@ public class RelationCompositeKey implements Serializable {
     private String fromType;
     private UUID toId;
     private String toType;
-    private String relationTypeGroup;
     private String relationType;
+    private String relationTypeGroup;
 
     public RelationCompositeKey(EntityRelation relation) {
         this.fromId = relation.getFrom().getId();

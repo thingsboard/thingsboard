@@ -21,6 +21,7 @@ import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,4 +49,7 @@ public interface RelationRepository
 
     List<RelationEntity> findAllByFromIdAndFromType(UUID fromId,
                                                     String fromType);
+
+    @Transactional
+    List<RelationEntity> deleteByFromIdAndFromType(UUID fromId, String fromType);
 }

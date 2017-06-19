@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.*;
@@ -63,6 +63,16 @@ public final class TsKvLatestEntity implements ToData<TsKvEntry> {
 
     @Override
     public TsKvEntry toData() {
-        return null;
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(key, strValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(key, longValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(key, doubleValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(key, booleanValue);
+        }
+        return new BasicTsKvEntry(ts, kvEntry);
     }
 }
