@@ -168,7 +168,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     public void deleteDevicesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        tenantDevicesRemover.removeEntitites(tenantId);
+        tenantDevicesRemover.removeEntities(tenantId);
     }
 
     @Override
@@ -207,7 +207,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         log.trace("Executing unassignCustomerDevices, tenantId [{}], customerId [{}]", tenantId, customerId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
-        new CustomerDevicesUnassigner(tenantId).removeEntitites(customerId);
+        new CustomerDevicesUnassigner(tenantId).removeEntities(customerId);
     }
 
     @Override

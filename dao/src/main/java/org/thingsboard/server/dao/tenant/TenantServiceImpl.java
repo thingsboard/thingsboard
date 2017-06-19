@@ -119,7 +119,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
-        tenantsRemover.removeEntitites(DEFAULT_TENANT_REGION);
+        tenantsRemover.removeEntities(DEFAULT_TENANT_REGION);
     }
 
     private DataValidator<Tenant> tenantValidator =

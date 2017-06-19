@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.dao.user;
 
-import static org.thingsboard.server.dao.DaoUtil.getData;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 import java.util.List;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -47,10 +45,6 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
-
-import java.util.List;
-
-import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
@@ -193,7 +187,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     public void deleteTenantAdmins(TenantId tenantId) {
         log.trace("Executing deleteTenantAdmins, tenantId [{}]", tenantId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        tenantAdminsRemover.removeEntitites(tenantId);
+        tenantAdminsRemover.removeEntities(tenantId);
     }
 
     @Override
@@ -211,7 +205,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         log.trace("Executing deleteCustomerUsers, customerId [{}]", customerId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
-        new CustomerUsersRemover(tenantId).removeEntitites(customerId);
+        new CustomerUsersRemover(tenantId).removeEntities(customerId);
     }
 
     private DataValidator<User> userValidator =

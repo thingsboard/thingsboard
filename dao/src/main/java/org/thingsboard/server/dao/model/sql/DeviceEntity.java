@@ -96,10 +96,6 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         this.searchText = searchText;
     }
     
-    public String getSearchText() {
-        return searchText;
-    }
-
     @Override
     public Device toData() {
         Device device = new Device(new DeviceId(id));

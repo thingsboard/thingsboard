@@ -135,7 +135,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public void deleteCustomersByTenantId(TenantId tenantId) {
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        customersByTenantRemover.removeEntitites(tenantId);
+        customersByTenantRemover.removeEntities(tenantId);
     }
 
     private DataValidator<Customer> customerValidator =

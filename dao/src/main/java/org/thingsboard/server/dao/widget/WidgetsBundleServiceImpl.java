@@ -145,7 +145,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     public void deleteWidgetsBundlesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteWidgetsBundlesByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        tenantWidgetsBundleRemover.removeEntitites(tenantId);
+        tenantWidgetsBundleRemover.removeEntities(tenantId);
     }
 
     private DataValidator<WidgetsBundle> widgetsBundleValidator =

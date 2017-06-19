@@ -33,18 +33,14 @@ public interface UserRepository extends CrudRepository<UserEntity, UUID> {
     UserEntity findByEmail(String email);
 
     @Query(nativeQuery = true, value = "SELECT * FROM TB_USER WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID IS NULL AND AUTHORITY = 'TENANT_ADMIN' " +
+            "AND CUSTOMER_ID = :customerId AND AUTHORITY = :authority " +
+            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:searchText, '%'))" +
             "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<UserEntity> findTenantAdmins(@Param("limit") int limit,
-                                      @Param("tenantId") UUID tenantId,
-                                      @Param("idOffset") UUID idOffset);
-
-    @Query(nativeQuery = true, value = "SELECT * FROM TB_USER WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId AND AUTHORITY = 'CUSTOMER_USER' " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<UserEntity> findCustomerUsers(@Param("limit") int limit,
-                                       @Param("tenantId") UUID tenantId,
-                                       @Param("customerId") UUID customerId,
-                                       @Param("idOffset") UUID idOffset);
+    List<UserEntity> findUsersByAuthority(@Param("tenantId") UUID tenantId,
+                                          @Param("customerId") UUID customerId,
+                                          @Param("idOffset") UUID idOffset,
+                                          @Param("searchText") String searchText,
+                                          @Param("authority") String authority,
+                                          @Param("limit") int limit);
 
 }

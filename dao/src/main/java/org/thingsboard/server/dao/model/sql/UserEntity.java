@@ -99,7 +99,7 @@ public class UserEntity implements SearchTextEntity<User> {
 
     @Override
     public String getSearchTextSource() {
-        return searchText;
+        return email;
     }
 
     @Override

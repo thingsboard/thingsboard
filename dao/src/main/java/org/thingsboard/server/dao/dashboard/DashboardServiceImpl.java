@@ -128,7 +128,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     public void deleteDashboardsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDashboardsByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        tenantDashboardsRemover.removeEntitites(tenantId);
+        tenantDashboardsRemover.removeEntities(tenantId);
     }
 
     @Override
@@ -146,7 +146,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing unassignCustomerDashboards, tenantId [{}], customerId [{}]", tenantId, customerId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validateId(customerId, "Incorrect customerId " + customerId);
-        new CustomerDashboardsUnassigner(tenantId).removeEntitites(customerId);
+        new CustomerDashboardsUnassigner(tenantId).removeEntities(customerId);
     }
     
     private DataValidator<Dashboard> dashboardValidator =

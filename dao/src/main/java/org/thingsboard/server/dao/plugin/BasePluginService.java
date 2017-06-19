@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.plugin;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -223,7 +222,7 @@ public class BasePluginService extends AbstractEntityService implements PluginSe
     @Override
     public void deletePluginsByTenantId(TenantId tenantId) {
         Validator.validateId(tenantId, "Incorrect tenant id for delete plugins request.");
-        tenantPluginRemover.removeEntitites(tenantId);
+        tenantPluginRemover.removeEntities(tenantId);
     }
 
 

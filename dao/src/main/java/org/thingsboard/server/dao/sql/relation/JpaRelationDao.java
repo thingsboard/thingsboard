@@ -178,21 +178,21 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
             public Predicate toPredicate(Root<RelationEntity> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> predicates = new ArrayList<>();
                 if (from != null) {
-                    Predicate fromIdPredicate = criteriaBuilder.equal(root.get(RELATION_FROM_ID_PROPERTY), from.getId());
+                    Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"), from.getId());
                     predicates.add(fromIdPredicate);
-                    Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get(RELATION_FROM_TYPE_PROPERTY), from.getEntityType().name());
+                    Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get("fromType"), from.getEntityType().name());
                     predicates.add(fromEntityTypePredicate);
                 }
                 if (relationType != null) {
-                    Predicate relationTypePredicate = criteriaBuilder.equal(root.get(RELATION_TYPE_PROPERTY), relationType);
+                    Predicate relationTypePredicate = criteriaBuilder.equal(root.get("relationType"), relationType);
                     predicates.add(relationTypePredicate);
                 }
                 if (typeGroup != null) {
-                    Predicate typeGroupPredicate = criteriaBuilder.equal(root.get(RELATION_TYPE_GROUP_PROPERTY), typeGroup);
+                    Predicate typeGroupPredicate = criteriaBuilder.equal(root.get("relationTypeGroup"), typeGroup);
                     predicates.add(typeGroupPredicate);
                 }
                 if (childType != null) {
-                    Predicate childTypePredicate = criteriaBuilder.equal(root.get(RELATION_TO_TYPE_PROPERTY), childType.name());
+                    Predicate childTypePredicate = criteriaBuilder.equal(root.get("toType"), childType.name());
                     predicates.add(childTypePredicate);
                 }
                 return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

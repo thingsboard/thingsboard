@@ -20,10 +20,12 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
 
 import java.util.List;
@@ -36,7 +38,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
  */
 @Component
 @SqlDao
-public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements UserDao {
+public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> implements UserDao {
 
     @Autowired
     private UserRepository userRepository;
@@ -60,20 +62,26 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     public List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(
                 userRepository
-                        .findTenantAdmins(
-                                pageLink.getLimit(),
+                        .findUsersByAuthority(
                                 tenantId,
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                                NULL_UUID,
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                pageLink.getTextSearch(),
+                                Authority.TENANT_ADMIN.name(),
+                                pageLink.getLimit()));
     }
 
     @Override
     public List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(
                 userRepository
-                        .findCustomerUsers(
-                                pageLink.getLimit(),
+                        .findUsersByAuthority(
                                 tenantId,
                                 customerId,
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                pageLink.getTextSearch(),
+                                Authority.CUSTOMER_USER.name(),
+                                pageLink.getLimit()));
+
     }
 }

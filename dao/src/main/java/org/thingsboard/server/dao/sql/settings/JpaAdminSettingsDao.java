@@ -31,7 +31,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 @SqlDao
-public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, AdminSettings> implements AdminSettingsDao{
+public class JpaAdminSettingsDao extends JpaAbstractDao<AdminSettingsEntity, AdminSettings> implements AdminSettingsDao {
 
     @Autowired
     private AdminSettingsRepository adminSettingsRepository;

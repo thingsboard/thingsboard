@@ -17,7 +17,7 @@
 
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
-    json_value varchar,
+    json_value text,
     key character varying(255)
 );
 
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS alarm (
     id uuid NOT NULL CONSTRAINT alarm_pkey PRIMARY KEY,
     ack_ts bigint,
     clear_ts bigint,
-    additional_info varchar,
+    additional_info text,
     end_ts bigint,
     originator_id uuid,
     originator_type integer,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS alarm (
 
 CREATE TABLE IF NOT EXISTS asset (
     id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
-    additional_info varchar,
+    additional_info text,
     customer_id uuid,
     name character varying(255),
     search_text character varying(255),
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     id uuid NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
     actions character varying(255),
     clazz character varying(255),
-    configuration_descriptor varchar,
+    configuration_descriptor text,
     name character varying(255),
     scope character varying(255),
     search_text character varying(255),
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
 
 CREATE TABLE IF NOT EXISTS customer (
     id uuid NOT NULL CONSTRAINT customer_pkey PRIMARY KEY,
-    additional_info varchar,
+    additional_info text,
     address character varying(255),
     address2 character varying(255),
     city character varying(255),
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS customer (
 
 CREATE TABLE IF NOT EXISTS dashboard (
     id uuid NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
-    configuration varchar,
+    configuration text,
     customer_id uuid,
     search_text character varying(255),
     tenant_id uuid,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS dashboard (
 
 CREATE TABLE IF NOT EXISTS device (
     id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
-    additional_info varchar,
+    additional_info text,
     customer_id uuid,
     type character varying(255),
     name character varying(255),
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS device_credentials (
 
 CREATE TABLE IF NOT EXISTS event (
     id uuid NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
-    body varchar,
+    body text,
     entity_id uuid,
     entity_type character varying(255),
     event_type character varying(255),
@@ -126,10 +126,10 @@ CREATE TABLE IF NOT EXISTS event (
 
 CREATE TABLE IF NOT EXISTS plugin (
     id uuid NOT NULL CONSTRAINT plugin_pkey PRIMARY KEY,
-    additional_info varchar,
+    additional_info text,
     api_token character varying(255),
     plugin_class character varying(255),
-    configuration varchar,
+    configuration text,
     name character varying(255),
     public_access boolean,
     search_text character varying(255),
@@ -144,18 +144,18 @@ CREATE TABLE IF NOT EXISTS relation (
     to_type character varying(255),
     relation_type_group character varying(255),
     relation_type character varying(255),
-    additional_info varchar,
+    additional_info text,
     CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
 
 CREATE TABLE IF NOT EXISTS rule (
     id uuid NOT NULL CONSTRAINT rule_pkey PRIMARY KEY,
-    action varchar,
-    additional_info varchar,
-    filters varchar,
+    action text,
+    additional_info text,
+    filters text,
     name character varying(255),
     plugin_token character varying(255),
-    processor varchar,
+    processor text,
     search_text character varying(255),
     state character varying(255),
     tenant_id uuid,
@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS rule (
 
 CREATE TABLE IF NOT EXISTS tb_user (
     id uuid NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
-    additional_info varchar,
+    additional_info text,
     authority character varying(255),
     customer_id uuid,
     email character varying(255) UNIQUE,
@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS tb_user (
 
 CREATE TABLE IF NOT EXISTS tenant (
     id uuid NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
-    additional_info varchar,
+    additional_info text,
     address character varying(255),
     address2 character varying(255),
     city character varying(255),
@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     alias character varying(255),
     bundle_alias character varying(255),
-    descriptor varchar,
+    descriptor text,
     name character varying(255),
     tenant_id uuid
 );

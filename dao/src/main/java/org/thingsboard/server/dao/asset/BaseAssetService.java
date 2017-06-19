@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.*;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -150,7 +149,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     public void deleteAssetsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAssetsByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        tenantAssetsRemover.removeEntitites(tenantId);
+        tenantAssetsRemover.removeEntities(tenantId);
     }
 
     @Override
@@ -188,7 +187,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         log.trace("Executing unassignCustomerAssets, tenantId [{}], customerId [{}]", tenantId, customerId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(customerId, "Incorrect customerId " + customerId);
-        new CustomerAssetsUnassigner(tenantId).removeEntitites(customerId);
+        new CustomerAssetsUnassigner(tenantId).removeEntities(customerId);
     }
 
     @Override

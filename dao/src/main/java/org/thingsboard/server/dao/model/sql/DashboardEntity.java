@@ -83,15 +83,6 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     }
 
     @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-    }
-    
-    @Override
     public String getSearchTextSource() {
         return title;
     }
@@ -99,10 +90,6 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     @Override
     public void setSearchText(String searchText) {
         this.searchText = searchText;
-    }
-    
-    public String getSearchText() {
-        return searchText;
     }
 
     @Override

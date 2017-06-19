@@ -25,7 +25,7 @@ public abstract class PaginatedRemover<I, D extends IdBased<?>> {
 
     private static final int DEFAULT_LIMIT = 100;
 
-    public void removeEntitites(I id) {
+    public void removeEntities(I id) {
         TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
         boolean hasNext = true;
         while (hasNext) {

@@ -265,7 +265,7 @@ public class BaseRuleService extends AbstractEntityService implements RuleServic
     @Override
     public void deleteRulesByTenantId(TenantId tenantId) {
         validateId(tenantId, "Incorrect tenant id for delete rules request.");
-        tenantRulesRemover.removeEntitites(tenantId);
+        tenantRulesRemover.removeEntities(tenantId);
     }
 
     private DataValidator<RuleMetaData> ruleValidator =
