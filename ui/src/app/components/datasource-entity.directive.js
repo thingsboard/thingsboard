@@ -156,11 +156,19 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         };
 
         scope.transformTimeseriesDataKeyChip = function (chip) {
-            return scope.generateDataKey({chip: chip, type: types.dataKeyType.timeseries});
+            if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
+                return null;
+            } else {
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.timeseries});
+            }
         };
 
         scope.transformAttributeDataKeyChip = function (chip) {
-            return scope.generateDataKey({chip: chip, type: types.dataKeyType.attribute});
+            if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
+                return null;
+            } else {
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.attribute});
+            }
         };
 
         scope.transformAlarmDataKeyChip = function (chip) {
@@ -272,6 +280,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         require: "^ngModel",
         scope: {
             widgetType: '=',
+            maxDataKeys: '=',
             aliasController: '=',
             datakeySettingsSchema: '=',
             generateDataKey: '&',

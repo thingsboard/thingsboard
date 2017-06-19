@@ -499,9 +499,11 @@ export default angular.module('thingsboard.locale', [])
                     "alarm": "Alarm fields",
                     "timeseries-required": "Entity timeseries are required.",
                     "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
+                    "maximum-timeseries-or-attributes": "Maximum { count, select, 1 {1 timeseries/attribute is allowed.} other {# timeseries/attributes are allowed} }",
                     "alarm-fields-required": "Alarm fields are required.",
                     "function-types": "Function types",
-                    "function-types-required": "Function types are required."
+                    "function-types-required": "Function types are required.",
+                    "maximum-function-types": "Maximum { count, select, 1 {1 function type is allowed.} other {# function types are allowed} }"
                 },
                 "datasource": {
                     "type": "Datasource type",
@@ -691,7 +693,13 @@ export default angular.module('thingsboard.locale', [])
                     "type-alarm": "Alarm",
                     "type-alarms": "Alarms",
                     "list-of-alarms": "{ count, select, 1 {One alarms} other {List of # alarms} }",
-                    "alarm-name-starts-with": "Alarms whose names start with '{{prefix}}'"
+                    "alarm-name-starts-with": "Alarms whose names start with '{{prefix}}'",
+                    "search": "Search entities",
+                    "selected-entities": "{ count, select, 1 {1 entity} other {# entities} } selected",
+                    "entity-name": "Entity name",
+                    "details": "Entity details",
+                    "no-entities-prompt": "No entities found",
+                    "no-data": "No data to display"
                 },
                 "event": {
                     "event-type": "Event type",
@@ -1144,6 +1152,7 @@ export default angular.module('thingsboard.locale', [])
                     "use-dashboard-timewindow": "Use dashboard timewindow",
                     "display-legend": "Display legend",
                     "datasources": "Datasources",
+                    "maximum-datasources": "Maximum { count, select, 1 {1 datasource is allowed.} other {# datasources are allowed} }",
                     "datasource-type": "Type",
                     "datasource-parameters": "Parameters",
                     "remove-datasource": "Remove datasource",

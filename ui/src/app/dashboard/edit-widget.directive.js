@@ -40,7 +40,8 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
                             };
                             var settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
                             var dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
-                            scope.isDataEnabled = !widgetInfo.useCustomDatasources;
+                            scope.typeParameters = widgetInfo.typeParameters;
+                            scope.isDataEnabled = !widgetInfo.typeParameters.useCustomDatasources;
                             if (!settingsSchema || settingsSchema === '') {
                                 scope.settingsSchema = {};
                             } else {

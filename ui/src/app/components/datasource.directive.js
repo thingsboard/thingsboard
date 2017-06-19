@@ -82,6 +82,7 @@ function Datasource($compile, $templateCache, utils, types) {
         require: "^ngModel",
         scope: {
             aliasController: '=',
+            maxDataKeys: '=',
             widgetType: '=',
             functionsOnly: '=',
             datakeySettingsSchema: '=',

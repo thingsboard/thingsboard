@@ -442,6 +442,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             forceExpandDatasources: '=?',
             isDataEnabled: '=?',
             widgetType: '=',
+            typeParameters: '=',
             widgetSettingsSchema: '=',
             datakeySettingsSchema: '=',
             aliasController: '=',

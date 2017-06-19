@@ -212,6 +212,7 @@
                          class="tb-absolute-fill" md-border-bottom>
                     <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.timeseries' | translate }}">
                         <tb-dashboard
+                                alias-controller="vm.dashboardCtx.aliasController"
                                 widgets="vm.timeseriesWidgetTypes"
                                 is-edit="false"
                                 is-mobile="true"
@@ -222,6 +223,7 @@
                     </md-tab>
                     <md-tab ng-if="vm.latestWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.latest-values' | translate }}">
                         <tb-dashboard
+                                alias-controller="vm.dashboardCtx.aliasController"
                                 widgets="vm.latestWidgetTypes"
                                 is-edit="false"
                                 is-mobile="true"
@@ -232,6 +234,7 @@
                     </md-tab>
                     <md-tab ng-if="vm.rpcWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.rpc' | translate }}">
                         <tb-dashboard
+                                alias-controller="vm.dashboardCtx.aliasController"
                                 widgets="vm.rpcWidgetTypes"
                                 is-edit="false"
                                 is-mobile="true"
@@ -242,6 +245,7 @@
                     </md-tab>
                     <md-tab ng-if="vm.alarmWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.alarm' | translate }}">
                         <tb-dashboard
+                                alias-controller="vm.dashboardCtx.aliasController"
                                 widgets="vm.alarmWidgetTypes"
                                 is-edit="false"
                                 is-mobile="true"
@@ -252,6 +256,7 @@
                     </md-tab>
                     <md-tab ng-if="vm.staticWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.static' | translate }}">
                         <tb-dashboard
+                                alias-controller="vm.dashboardCtx.aliasController"
                                 widgets="vm.staticWidgetTypes"
                                 is-edit="false"
                                 is-mobile="true"
