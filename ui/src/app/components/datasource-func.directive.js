@@ -117,7 +117,11 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         };
 
         scope.transformFuncDataKeyChip = function (chip) {
-            return scope.generateDataKey({chip: chip, type: types.dataKeyType.function});
+            if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
+                return null;
+            } else {
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.function});
+            }
         };
 
         scope.transformAlarmDataKeyChip = function (chip) {
@@ -217,6 +221,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         require: "^ngModel",
         scope: {
             widgetType: '=',
+            maxDataKeys: '=',
             generateDataKey: '&',
             datakeySettingsSchema: '='
         },

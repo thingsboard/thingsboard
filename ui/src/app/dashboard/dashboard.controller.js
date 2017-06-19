@@ -918,7 +918,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     }
                 }
 
-                if (widgetTypeInfo.useCustomDatasources) {
+                if (widgetTypeInfo.typeParameters.useCustomDatasources) {
                     addWidget(newWidget);
                 } else {
                     $mdDialog.show({

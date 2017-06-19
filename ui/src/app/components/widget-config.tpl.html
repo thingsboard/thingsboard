@@ -62,7 +62,14 @@
                          && isDataEnabled">
                 <v-pane id="datasources-pane" expanded="true">
                     <v-pane-header>
-                        {{ 'widget-config.datasources' | translate }}
+                        <div layout="column">
+                            <div>{{ 'widget-config.datasources' | translate }}</div>
+                            <div class="md-caption" style="color: rgba(0,0,0,0.57);" ng-if="typeParameters.maxDatasources != -1"
+                                 translate="widget-config.maximum-datasources"
+                                 translate-values="{count: typeParameters.maxDatasources}"
+                                 translate-interpolation="messageformat"
+                            ></div>
+                        </div>
                     </v-pane-header>
                     <v-pane-content>
                         <div ng-if="datasources.length === 0">
@@ -88,6 +95,7 @@
                                          style="padding: 0 0 0 10px; margin: 5px;">
                                         <tb-datasource flex ng-model="datasource.value"
                                                        widget-type="widgetType"
+                                                       max-data-keys="typeParameters.maxDataKeys"
                                                        alias-controller="aliasController"
                                                        functions-only="functionsOnly"
                                                        datakey-settings-schema="datakeySettingsSchema"
@@ -111,7 +119,7 @@
                             </div>
                         </div>
                         <div flex layout="row" layout-align="start center">
-                            <md-button ng-disabled="loading" class="md-primary md-raised"
+                            <md-button ng-show="typeParameters.maxDatasources == -1 || datasources.length < typeParameters.maxDatasources" ng-disabled="loading" class="md-primary md-raised"
                                        ng-click="addDatasource($event)" aria-label="{{ 'action.add' | translate }}">
                                 <md-tooltip md-direction="top">
                                     {{ 'widget-config.add-datasource' | translate }}
@@ -140,7 +148,7 @@
                     </v-pane-content>
                 </v-pane>
             </v-accordion>
-            <v-accordion id="alarn-source-accordion" control="alarmSourceAccordion" class="vAccordion--default"
+            <v-accordion id="alarm-source-accordion" control="alarmSourceAccordion" class="vAccordion--default"
                          ng-if="widgetType === types.widgetType.alarm.value && isDataEnabled">
                 <v-pane id="alarm-source-pane" expanded="true">
                     <v-pane-header>

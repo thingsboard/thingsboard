@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import AliasController from '../api/alias-controller';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import selectWidgetTypeTemplate from './select-widget-type.tpl.html';
@@ -21,7 +24,8 @@ import selectWidgetTypeTemplate from './select-widget-type.tpl.html';
 
 /*@ngInject*/
 export default function WidgetLibraryController($scope, $rootScope, $q, widgetService, userService, importExport,
-                                                $state, $stateParams, $document, $mdDialog, $translate, $filter, types) {
+                                                $state, $stateParams, $document, $mdDialog, $translate, $filter,
+                                                utils, types, entityService) {
 
     var vm = this;
 
@@ -30,6 +34,14 @@ export default function WidgetLibraryController($scope, $rootScope, $q, widgetSe
     vm.widgetsBundle;
     vm.widgetTypes = [];
     vm.dashboardInitComplete = false;
+
+    var stateController = {
+        getStateParams: function() {
+            return {};
+        }
+    };
+    vm.aliasController = new AliasController($scope, $q, $filter, utils,
+        types, entityService, stateController, {});
 
     vm.noData = noData;
     vm.dashboardInited = dashboardInited;

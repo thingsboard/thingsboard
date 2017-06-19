@@ -128,7 +128,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     var widgetTypeInstance;
 
-    vm.useCustomDatasources = false;
+    vm.typeParameters = widgetInfo.typeParameters;
 
     try {
         widgetTypeInstance = new widgetType(widgetContext);
@@ -153,9 +153,6 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     }
     if (!widgetTypeInstance.onDestroy) {
         widgetTypeInstance.onDestroy = function() {};
-    }
-    if (widgetTypeInstance.useCustomDatasources) {
-        vm.useCustomDatasources = widgetTypeInstance.useCustomDatasources();
     }
 
     //TODO: widgets visibility
@@ -502,7 +499,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
                 var subscription = widgetContext.subscriptions[id];
                 subscriptionChanged = subscriptionChanged || subscription.onAliasesChanged(aliasIds);
             }
-            if (subscriptionChanged && !vm.useCustomDatasources) {
+            if (subscriptionChanged && !vm.typeParameters.useCustomDatasources) {
                 reInit();
             }
         });
@@ -513,7 +510,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
         configureWidgetElement();
         var deferred = $q.defer();
-        if (!vm.useCustomDatasources) {
+        if (!vm.typeParameters.useCustomDatasources) {
             createDefaultSubscription().then(
                 function success() {
                     subscriptionInited = true;
@@ -535,7 +532,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     function reInit() {
         onDestroy();
         configureWidgetElement();
-        if (!vm.useCustomDatasources) {
+        if (!vm.typeParameters.useCustomDatasources) {
             createDefaultSubscription().then(
                 function success() {
                     subscriptionInited = true;
@@ -575,7 +572,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             } catch (e) {
                 handleWidgetException(e);
             }
-            if (!vm.useCustomDatasources && widgetContext.defaultSubscription) {
+            if (!vm.typeParameters.useCustomDatasources && widgetContext.defaultSubscription) {
                 widgetContext.defaultSubscription.subscribe();
             }
         }

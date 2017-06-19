@@ -27,6 +27,7 @@
         <tb-datasource-func flex
                             ng-switch-default
                             ng-model="model"
+                            max-data-keys="maxDataKeys"
                             datakey-settings-schema="datakeySettingsSchema"
                             ng-required="model.type === types.datasourceType.function"
                             widget-type="widgetType"
@@ -34,6 +35,7 @@
         </tb-datasource-func>
         <tb-datasource-entity flex
                               ng-model="model"
+                              max-data-keys="maxDataKeys"
                               datakey-settings-schema="datakeySettingsSchema"
                               ng-switch-when="entity"
                               ng-required="model.type === types.datasourceType.entity"
