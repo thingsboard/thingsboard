@@ -181,6 +181,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetBackgroundColor = widgetBackgroundColor;
     vm.widgetPadding = widgetPadding;
     vm.showWidgetTitle = showWidgetTitle;
+    vm.hasWidgetTitleTemplate = hasWidgetTitleTemplate;
+    vm.widgetTitleTemplate = widgetTitleTemplate;
     vm.showWidgetTitlePanel = showWidgetTitlePanel;
     vm.showWidgetActions = showWidgetActions;
     vm.widgetTitleStyle = widgetTitleStyle;
@@ -239,6 +241,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     $scope.$watchCollection('vm.widgets', function () {
+        sortWidgets();
         var ids = [];
         for (var i=0;i<vm.widgets.length;i++) {
             var widget = vm.widgets[i];
@@ -422,8 +425,13 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     function widgetOrder(widget) {
         var order;
         if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
-            order = vm.widgetLayouts[widget.id].mobileOrder;
-        } else if (widget.config.mobileOrder) {
+            if (angular.isDefined(vm.widgetLayouts[widget.id].mobileOrder)
+                && vm.widgetLayouts[widget.id].mobileOrder >= 0) {
+                order = vm.widgetLayouts[widget.id].mobileOrder;
+            } else {
+                order = vm.widgetLayouts[widget.id].row;
+            }
+        } else if (angular.isDefined(widget.config.mobileOrder) && widget.config.mobileOrder >= 0) {
             order = widget.config.mobileOrder;
         } else {
             order = widget.row;
@@ -432,6 +440,12 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     $scope.$on('widgetPositionChanged', function () {
+        sortWidgets();
+    });
+
+    loadStDiff();
+
+    function sortWidgets() {
         vm.widgets.sort(function (widget1, widget2) {
             var row1 = widgetOrder(widget1);
             var row2 = widgetOrder(widget2);
@@ -441,9 +455,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             }
             return res;
         });
-    });
-
-    loadStDiff();
+    }
 
     function reload() {
         loadStDiff();
@@ -809,12 +821,30 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     }
 
+    function hasWidgetTitleTemplate(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitleTemplate) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function widgetTitleTemplate(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitleTemplate) {
+            return ctx.widgetTitleTemplate;
+        } else {
+            return '';
+        }
+    }
+
     function showWidgetTitlePanel(widget) {
         var ctx = widgetContext(widget);
         if (ctx && ctx.hideTitlePanel) {
             return false;
         } else {
-            return showWidgetTitle(widget) || hasTimewindow(widget);
+            return hasWidgetTitleTemplate(widget) || showWidgetTitle(widget) || hasTimewindow(widget);
         }
     }
 
