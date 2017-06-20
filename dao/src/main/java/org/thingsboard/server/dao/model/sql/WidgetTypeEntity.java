@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -36,8 +34,6 @@ import java.util.UUID;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 
     @Transient

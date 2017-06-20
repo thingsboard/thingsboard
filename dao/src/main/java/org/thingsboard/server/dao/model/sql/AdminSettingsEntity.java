@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -36,8 +34,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ADMIN_SETTINGS_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
 
     @Transient

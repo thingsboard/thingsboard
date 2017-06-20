@@ -16,8 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.model.ToData;
 
@@ -31,8 +29,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Entity
 @Table(name = "attribute_kv")
 @IdClass(AttributeKvCompositeKey.class)
-@EqualsAndHashCode
-@ToString
 public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable {
 
     @Id

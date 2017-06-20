@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
@@ -31,7 +29,6 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.JacksonUtil;
 import org.thingsboard.server.dao.util.JsonStringType;
 
 import javax.persistence.*;
@@ -43,8 +40,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ALARM_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public final class AlarmEntity implements BaseEntity<Alarm> {
 
     @Transient

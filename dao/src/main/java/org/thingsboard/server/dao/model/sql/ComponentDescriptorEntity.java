@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
@@ -36,8 +34,6 @@ import java.util.UUID;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 
     @Transient

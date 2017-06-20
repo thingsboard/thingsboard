@@ -60,7 +60,6 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
 
     @Test
     @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
-   // @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindSystemWidgetsBundles() {
         createSystemWidgetBundles(30, "WB_");
         assertEquals(30, widgetsBundleDao.find().size());

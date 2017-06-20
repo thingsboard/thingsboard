@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -32,8 +30,6 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle> {
 
     @Transient

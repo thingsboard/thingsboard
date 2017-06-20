@@ -16,8 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.ToData;
 
@@ -30,8 +28,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Entity
 @Table(name = "ts_kv")
 @IdClass(TsKvCompositeKey.class)
-@EqualsAndHashCode
-@ToString
 public final class TsKvEntity implements ToData<TsKvEntry> {
 
     @Id

@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -37,8 +35,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = RELATION_COLUMN_FAMILY_NAME)
 @IdClass(RelationCompositeKey.class)
-@EqualsAndHashCode
-@ToString
 public final class RelationEntity implements ToData<EntityRelation> {
 
     @Id

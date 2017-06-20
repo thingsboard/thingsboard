@@ -18,9 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
@@ -39,8 +37,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = EVENT_COLUMN_FAMILY_NAME)
 @NoArgsConstructor
-@EqualsAndHashCode
-@ToString
 public class EventEntity implements BaseEntity<Event> {
 
     @Transient

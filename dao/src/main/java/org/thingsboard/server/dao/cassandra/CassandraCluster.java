@@ -35,9 +35,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Data
 @Component
 @Slf4j
-@Data
 @NoSqlDao
 public class CassandraCluster {
 

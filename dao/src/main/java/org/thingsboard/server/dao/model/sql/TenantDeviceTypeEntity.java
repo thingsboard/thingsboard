@@ -17,15 +17,11 @@ package org.thingsboard.server.dao.model.sql;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 import java.util.UUID;
 
 @AllArgsConstructor
 @Data
-@EqualsAndHashCode
-@ToString
 public class TenantDeviceTypeEntity {
     private UUID tenantId;
     private String type;

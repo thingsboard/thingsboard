@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 
 import javax.persistence.Transient;
@@ -25,8 +27,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@EqualsAndHashCode
-@ToString
 public class RelationCompositeKey implements Serializable {
 
     @Transient

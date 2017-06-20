@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.User;
@@ -41,8 +39,6 @@ import java.util.UUID;
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.USER_PG_HIBERNATE_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public class UserEntity implements SearchTextEntity<User> {
     @Transient
     private static final long serialVersionUID = -271106508790582977L;
@@ -116,8 +112,6 @@ public class UserEntity implements SearchTextEntity<User> {
     public void setId(UUID id) {
         this.id = id;
     }
-
-
 
     @Override
     public User toData() {

@@ -24,8 +24,6 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
-@ToString
 public class TsKvLatestCompositeKey implements Serializable{
 
     @Transient

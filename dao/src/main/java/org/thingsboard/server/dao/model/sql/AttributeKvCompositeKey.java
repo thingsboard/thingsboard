@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -23,8 +25,6 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode
-@ToString
 public class AttributeKvCompositeKey implements Serializable {
     private String entityType;
     private UUID entityId;

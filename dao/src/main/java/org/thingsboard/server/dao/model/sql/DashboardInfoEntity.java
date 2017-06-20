@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -32,8 +30,6 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
 
     @Transient

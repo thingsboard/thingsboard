@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -32,8 +30,6 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = ModelConstants.DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentials> {
 
     @Transient

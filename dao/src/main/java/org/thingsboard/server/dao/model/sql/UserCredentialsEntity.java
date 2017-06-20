@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -31,8 +29,6 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
-@EqualsAndHashCode
-@ToString
 public final class UserCredentialsEntity implements BaseEntity<UserCredentials> {
 
     @Transient
