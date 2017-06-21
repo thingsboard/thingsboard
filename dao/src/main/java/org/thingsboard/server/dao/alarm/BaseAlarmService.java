@@ -227,6 +227,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     alarmFutures.add(Futures.transform(
                             entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
                                     originatorName -> {
+                                        if (originatorName == null) {
+                                            originatorName = "Deleted";
+                                        }
                                         alarmInfo.setOriginatorName(originatorName);
                                         return alarmInfo;
                                     }

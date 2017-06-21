@@ -35,6 +35,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         prepareAllowedEntityTypesList: prepareAllowedEntityTypesList,
         getEntityKeys: getEntityKeys,
         createDatasourcesFromSubscriptionsInfo: createDatasourcesFromSubscriptionsInfo,
+        createAlarmSourceFromSubscriptionInfo: createAlarmSourceFromSubscriptionInfo,
         getRelatedEntities: getRelatedEntities,
         saveRelatedEntity: saveRelatedEntity,
         getRelatedEntity: getRelatedEntity,
@@ -757,6 +758,26 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return deferred.promise;
     }
 
+    function createAlarmSourceFromSubscriptionInfo(subscriptionInfo) {
+        var deferred = $q.defer();
+        var datasources = [];
+        if (subscriptionInfo.entityId && subscriptionInfo.entityType) {
+            getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId, {ignoreLoading: true}).then(
+                function success(entity) {
+                    createDatasourceFromSubscription(subscriptionInfo, datasources, entity);
+                    var alarmSource = datasources[0];
+                    deferred.resolve(alarmSource);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } else {
+            deferred.reject();
+        }
+        return deferred.promise;
+    }
+
     function processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred) {
         if (index < subscriptionsInfo.length) {
             var subscriptionInfo = validateSubscriptionInfo(subscriptionsInfo[index]);
@@ -857,6 +878,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
         if (subscriptionInfo.functions) {
             createDatasourceKeys(subscriptionInfo.functions, types.dataKeyType.function, datasource, datasources);
+        }
+        if (subscriptionInfo.alarmFields) {
+            createDatasourceKeys(subscriptionInfo.alarmFields, types.dataKeyType.alarm, datasource, datasources);
         }
     }
 
