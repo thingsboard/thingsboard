@@ -61,47 +61,57 @@ export default angular.module('thingsboard.types', [])
             },
             alarmFields: {
                 createdTime: {
+                    keyName: 'createdTime',
                     value: "createdTime",
                     name: "alarm.created-time",
                     time: true
                 },
                 startTime: {
+                    keyName: 'startTime',
                     value: "startTs",
                     name: "alarm.start-time",
                     time: true
                 },
                 endTime: {
+                    keyName: 'endTime',
                     value: "endTs",
                     name: "alarm.end-time",
                     time: true
                 },
                 ackTime: {
+                    keyName: 'ackTime',
                     value: "ackTs",
                     name: "alarm.ack-time",
                     time: true
                 },
                 clearTime: {
+                    keyName: 'clearTime',
                     value: "clearTs",
                     name: "alarm.clear-time",
                     time: true
                 },
                 originator: {
+                    keyName: 'originator',
                     value: "originatorName",
                     name: "alarm.originator"
                 },
                 originatorType: {
+                    keyName: 'originatorType',
                     value: "originator.entityType",
                     name: "alarm.originator-type"
                 },
                 type: {
+                    keyName: 'type',
                     value: "type",
                     name: "alarm.type"
                 },
                 severity: {
+                    keyName: 'severity',
                     value: "severity",
                     name: "alarm.severity"
                 },
                 status: {
+                    keyName: 'status',
                     value: "status",
                     name: "alarm.status"
                 }

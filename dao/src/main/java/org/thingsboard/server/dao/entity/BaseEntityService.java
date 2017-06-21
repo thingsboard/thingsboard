@@ -109,7 +109,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             default:
                 throw new IllegalStateException("Not Implemented!");
         }
-        entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1.getName() );
+        entityName = Futures.transform(hasName, (Function<HasName, String>) hasName1 -> hasName1 != null ? hasName1.getName() : null );
         return entityName;
     }
 

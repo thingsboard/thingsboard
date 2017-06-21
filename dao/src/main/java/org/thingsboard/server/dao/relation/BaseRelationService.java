@@ -84,7 +84,6 @@ public class BaseRelationService implements RelationService {
         for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
             inboundRelationsList.add(relationDao.findAllByTo(entity, typeGroup));
         }
-        Futures.allAsList(inboundRelationsList);
         ListenableFuture<List<List<EntityRelation>>> inboundRelations = Futures.allAsList(inboundRelationsList);
         ListenableFuture<List<Boolean>> inboundDeletions = Futures.transform(inboundRelations, new AsyncFunction<List<List<EntityRelation>>, List<Boolean>>() {
             @Override

@@ -36,6 +36,8 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     $scope.rpcEnabled = false;
     $scope.executingRpcRequest = false;
 
+    vm.dashboardTimewindow = dashboardTimewindow;
+
     var gridsterItemInited = false;
     var subscriptionInited = false;
     var widgetSizeDetected = false;
@@ -192,9 +194,20 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             }
         }
 
-        entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo).then(
-            function (datasources) {
-                options.datasources = datasources;
+        var createDatasourcesPromise;
+        if (options.type == types.widgetType.alarm.value) {
+            createDatasourcesPromise = entityService.createAlarmSourceFromSubscriptionInfo(subscriptionsInfo);
+        } else {
+            createDatasourcesPromise = entityService.createDatasourcesFromSubscriptionsInfo(subscriptionsInfo);
+        }
+
+        createDatasourcesPromise.then(
+            function (result) {
+                if (options.type == types.widgetType.alarm.value) {
+                    options.alarmSource = result;
+                } else {
+                    options.datasources = result;
+                }
                 createSubscription(options, subscribe).then(
                     function success(subscription) {
                         if (useDefaultComponents) {
@@ -213,7 +226,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
 
     function createSubscription(options, subscribe) {
         var deferred = $q.defer();
-        options.dashboardTimewindow = dashboardTimewindow;
+        options.dashboardTimewindow = vm.dashboardTimewindow;
         new Subscription(subscriptionContext, options).then(
             function success(subscription) {
                 widgetContext.subscriptions[subscription.id] = subscription;
@@ -234,7 +247,7 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         options.useDashboardTimewindow = angular.isDefined(widget.config.useDashboardTimewindow)
             ? widget.config.useDashboardTimewindow : true;
 
-        options.timeWindowConfig = options.useDashboardTimewindow ? dashboardTimewindow : widget.config.timewindow;
+        options.timeWindowConfig = options.useDashboardTimewindow ? vm.dashboardTimewindow : widget.config.timewindow;
         options.legendConfig = null;
 
         if ($scope.displayLegend) {
@@ -502,6 +515,10 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             if (subscriptionChanged && !vm.typeParameters.useCustomDatasources) {
                 reInit();
             }
+        });
+
+        $scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
+            vm.dashboardTimewindow = newDashboardTimewindow;
         });
 
         $scope.$on("$destroy", function () {

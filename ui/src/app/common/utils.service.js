@@ -106,11 +106,11 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
     };
 
     var defaultAlarmFields = [
-        'createdTime',
-        'originator',
-        'type',
-        'severity',
-        'status'
+        types.alarmFields.createdTime.keyName,
+        types.alarmFields.originator.keyName,
+        types.alarmFields.type.keyName,
+        types.alarmFields.severity.keyName,
+        types.alarmFields.status.keyName
     ];
 
     var defaultAlarmDataKeys = [];
@@ -413,10 +413,20 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
     }
 
     function createKey(keyInfo, type, datasources) {
+        var label;
+        if (type === types.dataKeyType.alarm && !keyInfo.label) {
+            var alarmField = types.alarmFields[keyInfo.name];
+            if (alarmField) {
+                label = $translate.instant(alarmField.name)+'';
+            }
+        }
+        if (!label) {
+            label = keyInfo.label || keyInfo.name;
+        }
         var dataKey = {
             name: keyInfo.name,
             type: type,
-            label: keyInfo.label || keyInfo.name,
+            label: label,
             color: genNextColor(datasources),
             funcBody: keyInfo.funcBody,
             settings: {},
