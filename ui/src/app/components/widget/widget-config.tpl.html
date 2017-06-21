@@ -275,4 +275,10 @@
             </ng-form>
         </md-content>
     </md-tab>
+    <md-tab label="{{ 'widget-config.actions' | translate }}">
+        <md-content class="md-padding" layout="column">
+            <tb-manage-widget-actions action-sources="actionSources" widget-actions="actions">
+            </tb-manage-widget-actions>
+        </md-content>
+    </md-tab>
 </md-tabs>

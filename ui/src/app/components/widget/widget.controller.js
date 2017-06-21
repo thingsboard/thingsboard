@@ -15,7 +15,7 @@
  */
 import $ from 'jquery';
 import 'javascript-detect-element-resize/detect-element-resize';
-import Subscription from '../api/subscription';
+import Subscription from '../../api/subscription';
 
 /* eslint-disable angular/angularelement */
 

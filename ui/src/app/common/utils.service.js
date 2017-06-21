@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/* eslint-disable import/no-unresolved, import/default */
+
+import materialIconsCodepoints from 'raw-loader!material-design-icons/iconfont/codepoints';
+
+/* eslint-enable import/no-unresolved, import/default */
+
 import tinycolor from "tinycolor2";
 import jsonSchemaDefaults from "json-schema-defaults";
 import thingsboardTypes from "./types.constant";
@@ -24,11 +31,14 @@ export default angular.module('thingsboard.utils', [thingsboardTypes])
 const varsRegex = /\$\{([^\}]*)\}/g;
 
 /*@ngInject*/
-function Utils($mdColorPalette, $rootScope, $window, $translate, types) {
+function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, types) {
 
     var predefinedFunctions = {},
         predefinedFunctionsList = [],
-        materialColors = [];
+        materialColors = [],
+        materialIcons = [];
+
+    var commonUsedMaterialIcons = [ 'more_horiz', 'close', 'play_arrow' ];
 
     predefinedFunctions['Sin'] = "return Math.round(1000*Math.sin(time/5000));";
     predefinedFunctions['Cos'] = "return Math.round(1000*Math.cos(time/5000));";
@@ -122,6 +132,8 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, types) {
         getDefaultDatasourceJson: getDefaultDatasourceJson,
         getDefaultAlarmDataKeys: getDefaultAlarmDataKeys,
         getMaterialColor: getMaterialColor,
+        getMaterialIcons: getMaterialIcons,
+        getCommonMaterialIcons: getCommonMaterialIcons,
         getPredefinedFunctionBody: getPredefinedFunctionBody,
         getPredefinedFunctionsList: getPredefinedFunctionsList,
         genMaterialColor: genMaterialColor,
@@ -152,6 +164,31 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, types) {
     function getMaterialColor(index) {
         var colorIndex = index % materialColors.length;
         return materialColors[colorIndex].value;
+    }
+
+    function getMaterialIcons() {
+        var deferred = $q.defer();
+        if (materialIcons.length) {
+            deferred.resolve(materialIcons);
+        } else {
+            $timeout(function() {
+                var codepointsArray = materialIconsCodepoints.split("\n");
+                codepointsArray.forEach(function (codepoint) {
+                    if (codepoint && codepoint.length) {
+                        var values = codepoint.split(' ');
+                        if (values && values.length == 2) {
+                            materialIcons.push(values[0]);
+                        }
+                    }
+                });
+                deferred.resolve(materialIcons);
+            });
+        }
+        return deferred.promise;
+    }
+
+    function getCommonMaterialIcons() {
+        return commonUsedMaterialIcons;
     }
 
     function genMaterialColor(str) {

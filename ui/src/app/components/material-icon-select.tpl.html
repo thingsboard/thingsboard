@@ -15,17 +15,12 @@
     limitations under the License.
 
 -->
-<fieldset ng-disabled="loading">
-	<tb-widget-config widget-type="widget.type"
-					  type-parameters="typeParameters"
-					  action-sources="actionSources"
-					  ng-model="widgetConfig"
-					  is-data-enabled="isDataEnabled"
-					  widget-settings-schema="settingsSchema"
-					  datakey-settings-schema="dataKeySettingsSchema"
-					  alias-controller="aliasController"
-					  functions-only="widgetEditMode"
-					  fetch-entity-keys="fetchEntityKeys(entityAliasId, query, type)"
-					  on-create-entity-alias="createEntityAlias(event, alias, allowedEntityTypes)"
-					  the-form="theForm"></tb-widget-config>
-</fieldset>
+<div layout="row">
+    <md-icon class="material-icons" ng-click="openIconDialog($event)">{{icon}}</md-icon>
+    <md-input-container flex>
+        <md-input-container class="md-block">
+            <label translate>icon.icon</label>
+            <input ng-click="openIconDialog($event)" ng-model="icon">
+        </md-input-container>
+    </md-input-container>
+</div>

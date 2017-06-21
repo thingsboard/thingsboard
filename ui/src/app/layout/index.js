@@ -26,6 +26,7 @@ import thingsboardApiLogin from '../api/login.service';
 import thingsboardApiUser from '../api/user.service';
 
 import thingsboardNoAnimate from '../components/no-animate.directive';
+import thingsboardOnFinishRender from '../components/finish-render.directive';
 import thingsboardSideMenu from '../components/side-menu.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
 
@@ -81,6 +82,7 @@ export default angular.module('thingsboard.home', [
     thingsboardApiLogin,
     thingsboardApiUser,
     thingsboardNoAnimate,
+    thingsboardOnFinishRender,
     thingsboardSideMenu,
     thingsboardDashboardAutocomplete
 ])
