@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 import jsonSchemaDefaults from 'json-schema-defaults';
-import thingsboardTypes from '../common/types.constant';
-import thingsboardUtils from '../common/utils.service';
-import thingsboardEntityAliasSelect from './entity-alias-select.directive';
-import thingsboardDatasource from './datasource.directive';
-import thingsboardTimewindow from './timewindow.directive';
-import thingsboardLegendConfig from './legend-config.directive';
-import thingsboardJsonForm from "./json-form.directive";
+import thingsboardTypes from '../../common/types.constant';
+import thingsboardUtils from '../../common/utils.service';
+import thingsboardEntityAliasSelect from '../entity-alias-select.directive';
+import thingsboardDatasource from '../datasource.directive';
+import thingsboardTimewindow from '../timewindow.directive';
+import thingsboardLegendConfig from '../legend-config.directive';
+import thingsboardJsonForm from '../json-form.directive';
+import thingsboardManageWidgetActions from './action/manage-widget-actions.directive';
 import 'angular-ui-ace';
 
 /* eslint-disable import/no-unresolved, import/default */
@@ -38,6 +39,7 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     thingsboardDatasource,
     thingsboardTimewindow,
     thingsboardLegendConfig,
+    thingsboardManageWidgetActions,
     'ui.ace'])
     .directive('tbWidgetConfig', WidgetConfig)
     .name;
@@ -117,6 +119,10 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     scope.showLegend = angular.isDefined(config.showLegend) ?
                         config.showLegend : scope.widgetType === types.widgetType.timeseries.value;
                     scope.legendConfig = config.legendConfig;
+                    scope.actions = config.actions;
+                    if (!scope.actions) {
+                        scope.actions = {};
+                    }
                     if (scope.widgetType !== types.widgetType.rpc.value &&
                         scope.widgetType !== types.widgetType.alarm.value &&
                         scope.widgetType !== types.widgetType.static.value
@@ -324,6 +330,19 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             }
         });
 
+        scope.$watch('actions', function () {
+            if (ngModelCtrl.$viewValue && ngModelCtrl.$viewValue.config) {
+                var value = ngModelCtrl.$viewValue;
+                var config = value.config;
+                config.actions = scope.actions;
+                ngModelCtrl.$setViewValue(value);
+                scope.updateValidity();
+                /*if (scope.theForm) {
+                    scope.theForm.$setDirty();
+                }*/
+            }
+        }, true);
+
         scope.addDatasource = function () {
             var newDatasource;
             if (scope.functionsOnly) {
@@ -443,11 +462,13 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             isDataEnabled: '=?',
             widgetType: '=',
             typeParameters: '=',
+            actionSources: '=',
             widgetSettingsSchema: '=',
             datakeySettingsSchema: '=',
             aliasController: '=',
             functionsOnly: '=',
             fetchEntityKeys: '&',
+            fetchDashboardStates: '&',
             onCreateEntityAlias: '&',
             theForm: '='
         },

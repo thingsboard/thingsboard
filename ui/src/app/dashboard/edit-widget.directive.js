@@ -41,6 +41,7 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
                             var settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
                             var dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
                             scope.typeParameters = widgetInfo.typeParameters;
+                            scope.actionSources = widgetInfo.actionSources;
                             scope.isDataEnabled = !widgetInfo.typeParameters.useCustomDatasources;
                             if (!settingsSchema || settingsSchema === '') {
                                 scope.settingsSchema = {};
@@ -92,6 +93,26 @@ export default function EditWidgetDirective($compile, $templateCache, types, wid
             );
             return deferred.promise;
         };
+
+        scope.fetchDashboardStates = function(query) {
+            var deferred = $q.defer();
+            var stateIds = Object.keys(scope.dashboard.configuration.states);
+            var result = query ? stateIds.filter(
+                createFilterForDashboardState(query)) : stateIds;
+            if (result && result.length) {
+                deferred.resolve(result);
+            } else {
+                deferred.resolve([query]);
+            }
+            return deferred.promise;
+        }
+
+        function createFilterForDashboardState (query) {
+            var lowercaseQuery = angular.lowercase(query);
+            return function filterFn(stateId) {
+                return (angular.lowercase(stateId).indexOf(lowercaseQuery) === 0);
+            };
+        }
 
         scope.createEntityAlias = function (event, alias, allowedEntityTypes) {
 

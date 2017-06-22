@@ -59,10 +59,10 @@
             <span flex></span>
             <md-button ng-disabled="loading || theForm.$invalid || !theForm.$dirty" type="submit"
                        class="md-raised md-primary">
-                {{ vm.isAdd ? 'Add' : 'Save' }}
+                {{ (vm.isAdd ? 'action.add' : 'action.save') | translate }}
             </md-button>
             <md-button ng-disabled="loading" ng-click="vm.cancel()" style="margin-right:20px;">
-                Cancel
+                {{ 'action.cancel' | translate }}
             </md-button>
         </md-dialog-actions>
     </form>

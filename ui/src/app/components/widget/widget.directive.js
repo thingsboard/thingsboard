@@ -16,9 +16,9 @@
 
 import './widget.scss';
 
-import thingsboardLegend from './legend.directive';
-import thingsboardTypes from '../common/types.constant';
-import thingsboardApiDatasource from '../api/datasource.service';
+import thingsboardLegend from '../legend.directive';
+import thingsboardTypes from '../../common/types.constant';
+import thingsboardApiDatasource from '../../api/datasource.service';
 
 import WidgetController from './widget.controller';
 

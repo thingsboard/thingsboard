@@ -20,7 +20,7 @@ import 'javascript-detect-element-resize/detect-element-resize';
 import angularGridster from 'angular-gridster';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardApiWidget from '../api/widget.service';
-import thingsboardWidget from './widget.directive';
+import thingsboardWidget from './widget/widget.directive';
 import thingsboardToast from '../services/toast';
 import thingsboardTimewindow from './timewindow.directive';
 import thingsboardEvents from './tb-event-directives';
@@ -187,6 +187,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.showWidgetActions = showWidgetActions;
     vm.widgetTitleStyle = widgetTitleStyle;
     vm.widgetTitle = widgetTitle;
+    vm.customWidgetHeaderActions = customWidgetHeaderActions;
     vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
     vm.enableWidgetFullscreen = enableWidgetFullscreen;
@@ -872,6 +873,15 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             return ctx.widgetTitle;
         } else {
             return widget.config.title;
+        }
+    }
+
+    function customWidgetHeaderActions(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.customHeaderActions && ctx.customHeaderActions.length) {
+            return ctx.customHeaderActions;
+        } else {
+            return [];
         }
     }
 

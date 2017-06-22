@@ -102,6 +102,7 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
         if (vm.addToDashboardType === 0) {
             dashboardService.getDashboard(vm.dashboardId).then(
                 function success(dashboard) {
+                    dashboard = dashboardUtils.validateAndUpdateDashboard(dashboard);
                     selectTargetState($event, dashboard).then(
                         function(targetState) {
                             selectTargetLayout($event, dashboard, targetState).then(

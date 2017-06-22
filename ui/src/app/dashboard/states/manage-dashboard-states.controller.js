@@ -175,8 +175,6 @@ export default function ManageDashboardStatesController($scope, $mdDialog, $filt
                 $scope.theForm.$setDirty();
                 updateStates();
             });
-
-
         }
     }
 

@@ -18,6 +18,7 @@
 <fieldset ng-disabled="loading">
 	<tb-widget-config widget-type="widget.type"
 					  type-parameters="typeParameters"
+					  action-sources="actionSources"
 					  ng-model="widgetConfig"
 					  is-data-enabled="isDataEnabled"
 					  widget-settings-schema="settingsSchema"
@@ -25,6 +26,7 @@
 					  alias-controller="aliasController"
 					  functions-only="widgetEditMode"
 					  fetch-entity-keys="fetchEntityKeys(entityAliasId, query, type)"
+					  fetch-dashboard-states="fetchDashboardStates(query)"
 					  on-create-entity-alias="createEntityAlias(event, alias, allowedEntityTypes)"
 					  the-form="theForm"></tb-widget-config>
 </fieldset>

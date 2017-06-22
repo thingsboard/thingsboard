@@ -158,13 +158,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         vm.ctx.widgetActions = [ vm.searchAction ];
 
         if (vm.settings.alarmsTitle && vm.settings.alarmsTitle.length) {
-            var translationId = types.translate.customTranslationsPrefix + vm.settings.alarmsTitle;
-            var translation = $translate.instant(translationId);
-            if (translation != translationId) {
-                vm.alarmsTitle = translation + '';
-            } else {
-                vm.alarmsTitle = vm.settings.alarmsTitle;
-            }
+            vm.alarmsTitle = utils.customTranslation(vm.settings.alarmsTitle, vm.settings.alarmsTitle);
         } else {
             vm.alarmsTitle = $translate.instant('alarm.alarms');
         }
@@ -225,6 +219,9 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
             '}\n'+
             'table.md-table td.md-cell.md-checkbox-cell md-checkbox:not(.md-checked) .md-icon {\n'+
             'border-color: ' + mdDarkSecondary + ';\n'+
+            '}\n'+
+            'table.md-table td.md-cell.tb-action-cell button.md-icon-button md-icon {\n'+
+            'color: ' + mdDarkSecondary + ';\n'+
             '}\n'+
             'table.md-table td.md-cell.md-placeholder {\n'+
             'color: ' + mdDarkDisabled + ';\n'+
@@ -539,13 +536,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         for (var d = 0; d < vm.alarmSource.dataKeys.length; d++ ) {
             var dataKey = vm.alarmSource.dataKeys[d];
 
-            var translationId = types.translate.customTranslationsPrefix + dataKey.label;
-            var translation = $translate.instant(translationId);
-            if (translation != translationId) {
-                dataKey.title = translation + '';
-            } else {
-                dataKey.title = dataKey.label;
-            }
+            dataKey.title = utils.customTranslation(dataKey.label, dataKey.label);
 
             var keySettings = dataKey.settings;
 

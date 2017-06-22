@@ -399,6 +399,31 @@ export default angular.module('thingsboard.types', [])
                     }
                 }
             },
+            widgetActionSources: {
+                headerButton: {
+                    name: 'widget-action.header-button',
+                    value: 'headerButton',
+                    multiple: true
+                }
+            },
+            widgetActionTypes: {
+                openDashboardState: {
+                    name: 'widget-action.open-dashboard-state',
+                    value: 'openDashboardState'
+                },
+                updateDashboardState: {
+                    name: 'widget-action.update-dashboard-state',
+                    value: 'updateDashboardState'
+                },
+                openDashboard: {
+                    name: 'widget-action.open-dashboard',
+                    value: 'openDashboard'
+                },
+                custom: {
+                    name: 'widget-action.custom',
+                    value: 'custom'
+                }
+            },
             systemBundleAlias: {
                 charts: "charts",
                 cards: "cards"

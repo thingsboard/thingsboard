@@ -40,7 +40,7 @@ export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsbo
     .name;
 
 /*@ngInject*/
-function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, types, utils) {
+function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $translate, types, utils) {
 
     $window.$ = $;
     $window.jQuery = $;
@@ -548,13 +548,21 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
          '    }\n\n' +
 
          '    self.typeParameters = function() {\n\n' +
-                    {
-                        useCustomDatasources: false,
-                        maxDatasources: -1 //unlimited
-                        maxDataKeys: -1 //unlimited
-                    }
+                    return {
+                                useCustomDatasources: false,
+                                maxDatasources: -1 //unlimited
+                                maxDataKeys: -1 //unlimited
+                           };
          '    }\n\n' +
 
+         '    self.actionSources = function() {\n\n' +
+                    return {
+                                'headerButton': {
+                                   name: 'Header button',
+                                   multiple: true
+                                }
+                            };
+              }\n\n' +
          '    self.onResize = function() {\n\n' +
 
          '    }\n\n' +
@@ -611,6 +619,16 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
             if (angular.isUndefined(result.typeParameters.maxDataKeys)) {
                 result.typeParameters.maxDataKeys = -1;
             }
+            if (angular.isFunction(widgetTypeInstance.actionSources)) {
+                result.actionSources = widgetTypeInstance.actionSources();
+            } else {
+                result.actionSources = {};
+            }
+            for (var actionSourceId in types.widgetActionSources) {
+                result.actionSources[actionSourceId] = angular.copy(types.widgetActionSources[actionSourceId]);
+                result.actionSources[actionSourceId].name = $translate.instant(result.actionSources[actionSourceId].name) + '';
+            }
+
             return result;
         } catch (e) {
             utils.processWidgetException(e);
@@ -650,6 +668,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, typ
                         widgetInfo.typeDataKeySettingsSchema = widgetType.dataKeySettingsSchema;
                     }
                     widgetInfo.typeParameters = widgetType.typeParameters;
+                    widgetInfo.actionSources = widgetType.actionSources;
                     putWidgetInfoToCache(widgetInfo, bundleAlias, widgetInfo.alias, isSystem);
                     putWidgetTypeFunctionToCache(widgetType.widgetTypeFunction, bundleAlias, widgetInfo.alias, isSystem);
                     deferred.resolve(widgetInfo);

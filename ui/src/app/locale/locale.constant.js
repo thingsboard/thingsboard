@@ -1103,6 +1103,18 @@ export default angular.module('thingsboard.locale', [])
                     "undo": "Undo widget changes",
                     "export": "Export widget"
                 },
+                "widget-action": {
+                    "header-button": "Widget header button",
+                    "open-dashboard-state": "Navigate to new dashboard state",
+                    "update-dashboard-state": "Update current dashboard state",
+                    "open-dashboard": "Navigate to other dashboard",
+                    "custom": "Custom action",
+                    "target-dashboard-state": "Target dashboard state",
+                    "target-dashboard-state-required": "Target dashboard state is required",
+                    "set-entity-from-widget": "Set entity from widget",
+                    "target-dashboard": "Target dashboard",
+                    "open-right-layout": "Open right dashboard layout (mobile view)"
+                },
                 "widgets-bundle": {
                     "current": "Current bundle",
                     "widgets-bundles": "Widgets Bundles",
@@ -1158,7 +1170,23 @@ export default angular.module('thingsboard.locale', [])
                     "remove-datasource": "Remove datasource",
                     "add-datasource": "Add datasource",
                     "target-device": "Target device",
-                    "alarm-source": "Alarm source"
+                    "alarm-source": "Alarm source",
+                    "actions": "Actions",
+                    "action": "Action",
+                    "add-action": "Add action",
+                    "search-actions": "Search actions",
+                    "action-source": "Action source",
+                    "action-source-required": "Action source is required.",
+                    "action-name": "Name",
+                    "action-name-required": "Action name is required.",
+                    "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
+                    "action-icon": "Icon",
+                    "action-type": "Type",
+                    "action-type-required": "Action type is required.",
+                    "edit-action": "Edit action",
+                    "delete-action": "Delete action",
+                    "delete-action-title": "Delete widget action",
+                    "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?"
                 },
                 "widget-type": {
                     "import": "Import widget type",
@@ -1167,6 +1195,12 @@ export default angular.module('thingsboard.locale', [])
                     "create-new-widget-type": "Create new widget type",
                     "widget-type-file": "Widget type file",
                     "invalid-widget-type-file-error": "Unable to import widget type: Invalid widget type data structure."
+                },
+                "icon": {
+                    "icon": "Icon",
+                    "select-icon": "Select icon",
+                    "material-icons": "Material icons",
+                    "show-all": "Show all icons"
                 },
                 "language": {
                     "language": "Language",
@@ -1177,6 +1211,10 @@ export default angular.module('thingsboard.locale', [])
                     "es_ES": "Spanish"
                 },
                 "custom": {
+                    "widget-action": {
+                        "action-cell-button": "Action cell button",
+                        "row-click": "On row click"
+                    }
                 }
             }
         }

@@ -23,7 +23,7 @@ import thingsboardApiUser from '../api/user.service';
 import thingsboardApiDashboard from '../api/dashboard.service';
 import thingsboardApiCustomer from '../api/customer.service';
 import thingsboardDetailsSidenav from '../components/details-sidenav.directive';
-import thingsboardWidgetConfig from '../components/widget-config.directive';
+import thingsboardWidgetConfig from '../components/widget/widget-config.directive';
 import thingsboardDashboardSelect from '../components/dashboard-select.directive';
 import thingsboardRelatedEntityAutocomplete from '../components/related-entity-autocomplete.directive';
 import thingsboardDashboard from '../components/dashboard.directive';

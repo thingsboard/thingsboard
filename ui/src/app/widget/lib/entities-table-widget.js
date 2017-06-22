@@ -65,8 +65,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
     vm.currentEntity = null;
 
     vm.displayEntityName = true;
+    vm.entityNameColumnTitle = '';
     vm.displayEntityType = true;
-    vm.displayActions = false; //TODO: Widget actions
+    vm.actionCellDescriptors = [];
     vm.displayPagination = true;
     vm.defaultPageSize = 10;
     vm.defaultSortOrder = 'entityName';
@@ -92,6 +93,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
     vm.onReorder = onReorder;
     vm.onPaginate = onPaginate;
     vm.onRowClick = onRowClick;
+    vm.onActionButtonClick = onActionButtonClick;
     vm.isCurrent = isCurrent;
 
     vm.cellStyle = cellStyle;
@@ -141,14 +143,10 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
 
         vm.ctx.widgetActions = [ vm.searchAction ];
 
+        vm.actionCellDescriptors = vm.ctx.actionsApi.getActionDescriptors('actionCellButton');
+
         if (vm.settings.entitiesTitle && vm.settings.entitiesTitle.length) {
-            var translationId = types.translate.customTranslationsPrefix + vm.settings.entitiesTitle;
-            var translation = $translate.instant(translationId);
-            if (translation != translationId) {
-                vm.entitiesTitle = translation + '';
-            } else {
-                vm.entitiesTitle = vm.settings.entitiesTitle;
-            }
+            vm.entitiesTitle = utils.customTranslation(vm.settings.entitiesTitle, vm.settings.entitiesTitle);
         } else {
             vm.entitiesTitle = $translate.instant('entity.entities');
         }
@@ -157,6 +155,13 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
 
         vm.searchAction.show = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
         vm.displayEntityName = angular.isDefined(vm.settings.displayEntityName) ? vm.settings.displayEntityName : true;
+
+        if (vm.settings.entityNameColumnTitle && vm.settings.entityNameColumnTitle.length) {
+            vm.entityNameColumnTitle = utils.customTranslation(vm.settings.entityNameColumnTitle, vm.settings.entityNameColumnTitle);
+        } else {
+            vm.entityNameColumnTitle = $translate.instant('entity.entity-name');
+        }
+
         vm.displayEntityType = angular.isDefined(vm.settings.displayEntityType) ? vm.settings.displayEntityType : true;
         vm.displayPagination = angular.isDefined(vm.settings.displayPagination) ? vm.settings.displayPagination : true;
 
@@ -185,6 +190,8 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
         //var mdDarkIcon = mdDarkSecondary;
         var mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
 
+        //md-icon.md-default-theme, md-icon {
+
         var cssString = 'table.md-table th.md-column {\n'+
             'color: ' + mdDarkSecondary + ';\n'+
             '}\n'+
@@ -203,6 +210,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
             '}\n'+
             'table.md-table td.md-cell.md-checkbox-cell md-checkbox:not(.md-checked) .md-icon {\n'+
             'border-color: ' + mdDarkSecondary + ';\n'+
+            '}\n'+
+            'table.md-table td.md-cell.tb-action-cell button.md-icon-button md-icon {\n'+
+            'color: ' + mdDarkSecondary + ';\n'+
             '}\n'+
             'table.md-table td.md-cell.md-placeholder {\n'+
             'color: ' + mdDarkDisabled + ';\n'+
@@ -261,9 +271,35 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
     }
 
     function onRowClick($event, entity) {
+        if ($event) {
+            $event.stopPropagation();
+        }
         if (vm.currentEntity != entity) {
             vm.currentEntity = entity;
+            var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
+            if (descriptors.length) {
+                var entityId;
+                var entityName;
+                if (vm.currentEntity) {
+                    entityId = vm.currentEntity.id;
+                    entityName = vm.currentEntity.entityName;
+                }
+                vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+            }
         }
+    }
+
+    function onActionButtonClick($event, entity, actionDescriptor) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var entityId;
+        var entityName;
+        if (entity) {
+            entityId = entity.id;
+            entityName = entity.entityName;
+        }
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName);
     }
 
     function isCurrent(entity) {
@@ -393,13 +429,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
             }
             vm.dataKeys.push(dataKey);
 
-            var translationId = types.translate.customTranslationsPrefix + dataKey.label;
-            var translation = $translate.instant(translationId);
-            if (translation != translationId) {
-                dataKey.title = translation + '';
-            } else {
-                dataKey.title = dataKey.label;
-            }
+            dataKey.title = utils.customTranslation(dataKey.label, dataKey.label);
 
             var keySettings = dataKey.settings;
 
