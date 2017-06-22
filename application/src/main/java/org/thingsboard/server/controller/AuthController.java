@@ -107,7 +107,7 @@ public class AuthController extends BaseController {
             try {
                 URI location = new URI(createPasswordURI + "?activateToken=" + activateToken);
                 headers.setLocation(location);
-                responseStatus = HttpStatus.PERMANENT_REDIRECT;
+                responseStatus = HttpStatus.SEE_OTHER;
             } catch (URISyntaxException e) {
                 log.error("Unable to create URI with address [{}]", createPasswordURI);
                 responseStatus = HttpStatus.BAD_REQUEST;
@@ -146,7 +146,7 @@ public class AuthController extends BaseController {
             try {
                 URI location = new URI(resetPasswordURI + "?resetToken=" + resetToken);
                 headers.setLocation(location);
-                responseStatus = HttpStatus.PERMANENT_REDIRECT;
+                responseStatus = HttpStatus.SEE_OTHER;
             } catch (URISyntaxException e) {
                 log.error("Unable to create URI with address [{}]", resetPasswordURI);
                 responseStatus = HttpStatus.BAD_REQUEST;
