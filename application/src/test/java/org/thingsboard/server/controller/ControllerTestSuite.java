@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server;
+package org.thingsboard.server.controller;
 
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
@@ -25,9 +25,8 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.controller.*Test",
-        "org.thingsboard.server.mqtt.*.*Test"})
-public class ApplicationServerTestSuite {
+        "org.thingsboard.server.controller.*Test"})
+public class ControllerTestSuite {
 
     @ClassRule
     public static CustomCassandraCQLUnit cassandraUnit =
