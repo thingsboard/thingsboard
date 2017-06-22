@@ -20,7 +20,7 @@ import Subscription from '../../api/subscription';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
+export default function WidgetController($scope, $state, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
                                          datasourceService, alarmService, entityService, deviceService, visibleRect, isEdit, isMobile, stDiff, dashboardTimewindow,
                                          dashboardTimewindowApi, widget, aliasController, stateController, widgetInfo, widgetType) {
 
@@ -43,6 +43,20 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
     var widgetSizeDetected = false;
 
     var cafs = {};
+
+    var actionDescriptorsBySourceId = {};
+    if (widget.config.actions) {
+        for (var actionSourceId in widget.config.actions) {
+            var descriptors = widget.config.actions[actionSourceId];
+            var actionDescriptors = [];
+            descriptors.forEach(function(descriptor) {
+                var actionDescriptor = angular.copy(descriptor);
+                actionDescriptor.displayName = utils.customTranslation(descriptor.name, descriptor.name);
+                actionDescriptors.push(actionDescriptor);
+            });
+            actionDescriptorsBySourceId[actionSourceId] = actionDescriptors;
+        }
+    }
 
     var widgetContext = {
         inited: false,
@@ -103,8 +117,31 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
         utils: {
             formatValue: formatValue
         },
+        actionsApi: {
+            actionDescriptorsBySourceId: actionDescriptorsBySourceId,
+            getActionDescriptors: getActionDescriptors,
+            handleWidgetAction: handleWidgetAction
+        },
         stateController: stateController
     };
+
+    widgetContext.customHeaderActions = [];
+    var headerActionsDescriptors = getActionDescriptors(types.widgetActionSources.headerButton.value);
+    for (var i=0;i<headerActionsDescriptors.length;i++) {
+        var descriptor = headerActionsDescriptors[i];
+        var headerAction = {};
+        headerAction.name = descriptor.name;
+        headerAction.displayName = descriptor.displayName;
+        headerAction.icon = descriptor.icon;
+        headerAction.descriptor = descriptor;
+        headerAction.onAction = function($event) {
+            var entityInfo = getFirstEntityInfo();
+            var entityId = entityInfo ? entityInfo.entityId : null;
+            var entityName = entityInfo ? entityInfo.entityName : null;
+            handleWidgetAction($event, this.descriptor, entityId, entityName);
+        }
+        widgetContext.customHeaderActions.push(headerAction);
+    }
 
     var subscriptionContext = {
         $scope: $scope,
@@ -374,6 +411,87 @@ export default function WidgetController($scope, $timeout, $window, $element, $q
             deferred.resolve();
         }
         return deferred.promise;
+    }
+
+    function getActionDescriptors(actionSourceId) {
+        var result = widgetContext.actionsApi.actionDescriptorsBySourceId[actionSourceId];
+        if (!result) {
+            result = [];
+        }
+        return result;
+    }
+
+    function handleWidgetAction($event, descriptor, entityId, entityName) {
+        var type = descriptor.type;
+        switch (type) {
+            case types.widgetActionTypes.openDashboardState.value:
+            case types.widgetActionTypes.updateDashboardState.value:
+                var targetDashboardStateId = descriptor.targetDashboardStateId;
+                var targetEntityId;
+                if (descriptor.setEntityId) {
+                    targetEntityId = entityId;
+                }
+                var params = {};
+                if (targetEntityId) {
+                    params.entityId = targetEntityId;
+                    if (entityName) {
+                        params.entityName = entityName;
+                    }
+                }
+                if (type == types.widgetActionTypes.openDashboardState.value) {
+                    widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+                } else {
+                    widgetContext.stateController.updateState(targetDashboardStateId, params, descriptor.openRightLayout);
+                }
+                break;
+            case types.widgetActionTypes.openDashboard.value:
+                var targetDashboardId = descriptor.targetDashboardId;
+                targetDashboardStateId = descriptor.targetDashboardStateId;
+                targetEntityId;
+                if (descriptor.setEntityId) {
+                    targetEntityId = entityId;
+                }
+                var stateObject = {};
+                stateObject.params = {};
+                if (targetEntityId) {
+                    stateObject.params.entityId = targetEntityId;
+                    if (entityName) {
+                        stateObject.params.entityName = entityName;
+                    }
+                }
+                if (targetDashboardStateId) {
+                    stateObject.id = targetDashboardStateId;
+                }
+                var stateParams = {
+                    dashboardId: targetDashboardId,
+                    state: angular.toJson([ stateObject ])
+                }
+                $state.go('home.dashboards.dashboard', stateParams);
+                break;
+            case types.widgetActionTypes.custom.value:
+                var customFunction = descriptor.customFunction;
+                if (angular.isDefined(customFunction) && customFunction.length > 0) {
+                    try {
+                        var customActionFunction = new Function('$event', 'widgetContext', 'entityId', 'entityName', customFunction);
+                        customActionFunction($event, widgetContext, entityId, entityName);
+                    } catch (e) {
+                        //
+                    }
+                }
+                break;
+        }
+    }
+
+    function getFirstEntityInfo() {
+        var entityInfo;
+        for (var id in widgetContext.subscriptions) {
+            var subscription = widgetContext.subscriptions[id];
+            entityInfo = subscription.getFirstEntityInfo();
+            if (entityInfo) {
+                break;
+            }
+        }
+        return entityInfo;
     }
 
     function configureWidgetElement() {

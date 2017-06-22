@@ -41,10 +41,10 @@
             <table md-table>
                 <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
-                    <th md-column ng-if="vm.displayEntityName" md-order-by="entityName"><span translate>entity.entity-name</span></th>
+                    <th md-column ng-if="vm.displayEntityName" md-order-by="entityName"><span>{{vm.entityNameColumnTitle}}</span></th>
                     <th md-column ng-if="vm.displayEntityType" md-order-by="entityType"><span translate>entity.entity-type</span></th>
                     <th md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.dataKeys"><span>{{ key.title }}</span></th>
-                    <th md-column ng-if="vm.displayActions"><span>&nbsp</span></th>
+                    <th md-column ng-if="vm.actionCellDescriptors.length"><span>&nbsp</span></th>
                 </tr>
                 </thead>
                 <tbody md-body>
@@ -57,14 +57,18 @@
                         ng-style="vm.cellStyle(entity, key)"
                         ng-bind-html="vm.cellContent(entity, key)">
                     </td>
-                    <td md-cell ng-if="vm.displayActions" class="tb-action-cell">
-                        <!--md-button class="md-icon-button" aria-label="{{ 'entity.details' | translate }}"
-                                   ng-click="vm.openEntityDetails($event, entity)">
-                            <md-icon aria-label="{{ 'entity.details' | translate }}" class="material-icons">more_horiz</md-icon>
+                    <td md-cell ng-if="vm.actionCellDescriptors.length" class="tb-action-cell"
+                        ng-style="{minWidth: vm.actionCellDescriptors.length*36+'px',
+                                   maxWidth: vm.actionCellDescriptors.length*36+'px',
+                                   width: vm.actionCellDescriptors.length*36+'px'}">
+                        <md-button class="md-icon-button" ng-repeat="actionDescriptor in vm.actionCellDescriptors"
+                                   aria-label="{{ actionDescriptor.displayName }}"
+                                   ng-click="vm.onActionButtonClick($event, entity, actionDescriptor)">
+                            <md-icon aria-label="{{ actionDescriptor.displayName }}" class="material-icons">{{actionDescriptor.icon}}</md-icon>
                             <md-tooltip md-direction="top">
-                                {{ 'entity.details' | translate }}
+                                {{ actionDescriptor.displayName }}
                             </md-tooltip>
-                        </md-button-->
+                        </md-button>
                     </td>
                 </tr>
                 </tbody>

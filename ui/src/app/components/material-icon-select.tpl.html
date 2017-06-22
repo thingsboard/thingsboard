@@ -15,12 +15,10 @@
     limitations under the License.
 
 -->
-<div layout="row">
+<div class="tb-material-icon-select" layout="row">
     <md-icon class="material-icons" ng-click="openIconDialog($event)">{{icon}}</md-icon>
     <md-input-container flex>
-        <md-input-container class="md-block">
-            <label translate>icon.icon</label>
-            <input ng-click="openIconDialog($event)" ng-model="icon">
-        </md-input-container>
+        <label translate>icon.icon</label>
+        <input ng-mousedown="openIconDialog($event)" ng-model="icon">
     </md-input-container>
 </div>

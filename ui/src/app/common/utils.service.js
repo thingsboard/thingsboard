@@ -38,7 +38,11 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         materialColors = [],
         materialIcons = [];
 
-    var commonUsedMaterialIcons = [ 'more_horiz', 'close', 'play_arrow' ];
+    var commonMaterialIcons = [ 'more_horiz', 'more_vert', 'open_in_new', 'visibility', 'play_arrow', 'arrow_back', 'arrow_downward',
+        'arrow_forward', 'arrow_upwards', 'close', 'refresh', 'menu', 'show_chart', 'multiline_chart', 'pie_chart', 'insert_chart', 'people',
+        'person', 'domain', 'devices_other', 'now_widgets', 'dashboards', 'map', 'pin_drop', 'my_location', 'extension', 'search',
+        'settings', 'notifications', 'notifications_active', 'info', 'info_outline', 'warning', 'list', 'file_download', 'import_export',
+        'share', 'add', 'edit', 'done' ];
 
     predefinedFunctions['Sin'] = "return Math.round(1000*Math.sin(time/5000));";
     predefinedFunctions['Cos'] = "return Math.round(1000*Math.cos(time/5000));";
@@ -148,7 +152,8 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         validateDatasources: validateDatasources,
         createKey: createKey,
         createLabelFromDatasource: createLabelFromDatasource,
-        insertVariable: insertVariable
+        insertVariable: insertVariable,
+        customTranslation: customTranslation
     }
 
     return service;
@@ -188,7 +193,7 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
     }
 
     function getCommonMaterialIcons() {
-        return commonUsedMaterialIcons;
+        return commonMaterialIcons;
     }
 
     function genMaterialColor(str) {
@@ -465,6 +470,18 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
                 result = result.split(variable).join(value);
             }
             match = varsRegex.exec(pattern);
+        }
+        return result;
+    }
+
+    function customTranslation(translationValue, defaultValue) {
+        var result = '';
+        var translationId = types.translate.customTranslationsPrefix + translationValue;
+        var translation = $translate.instant(translationId);
+        if (translation != translationId) {
+            result = translation + '';
+        } else {
+            result = defaultValue;
         }
         return result;
     }

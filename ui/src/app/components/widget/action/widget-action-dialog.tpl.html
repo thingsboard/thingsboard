@@ -31,12 +31,12 @@
         <md-dialog-content>
             <div class="md-dialog-content">
                 <md-content class="md-padding" layout="column">
-                    <fieldset ng-disabled="loading">
+                    <fieldset ng-disabled="loading" layout="column">
                         <md-input-container class="md-block">
                             <label translate>widget-config.action-source</label>
                             <md-select name="actionSource" required aria-label="{{ 'widget-config.action-source' | translate }}" ng-model="vm.action.actionSourceId">
                                 <md-option ng-repeat="(actionSourceId, actionSource) in vm.actionSources" ng-value="actionSourceId">
-                                    {{actionSource.name}}
+                                    {{vm.actionSourceName(actionSource)}}
                                 </md-option>
                             </md-select>
                             <div ng-messages="theForm.actionSource.$error">
@@ -48,6 +48,7 @@
                             <input name="name" required ng-model="vm.action.name">
                             <div ng-messages="theForm.name.$error">
                                 <div ng-message="required" translate>widget-config.action-name-required</div>
+                                <div ng-message="actionNameNotUnique" translate>widget-config.action-name-not-unique</div>
                             </div>
                         </md-input-container>
                         <tb-material-icon-select ng-model="vm.action.icon">
@@ -63,6 +64,57 @@
                                 <div ng-message="required" translate>widget-config.action-type-required</div>
                             </div>
                         </md-input-container>
+                        <div layout="column"
+                             style="padding-bottom: 20px;"
+                             ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboard.value">
+                            <div class="md-caption tb-required"
+                                 style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>widget-action.target-dashboard</div>
+                            <tb-dashboard-autocomplete the-form="theForm"
+                                                       tb-required="true"
+                                                       ng-model="vm.action.targetDashboardId"
+                                                       select-first-dashboard="false">
+                            </tb-dashboard-autocomplete>
+                        </div>
+                        <md-autocomplete ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.openDashboard.value"
+                                         ng-required="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value"
+                                         md-no-cache="true"
+                                         md-input-name="targetDashboardState"
+                                         ng-model="vm.action.targetDashboardStateId"
+                                         md-selected-item="vm.action.targetDashboardStateId"
+                                         md-search-text="vm.targetDashboardStateSearchText"
+                                         md-search-text-change="vm.targetDashboardStateSearchTextChanged()"
+                                         md-items="item in vm.dashboardStateSearch(vm.targetDashboardStateSearchText)"
+                                         md-item-text="item"
+                                         md-min-length="0"
+                                         md-floating-label="{{ 'widget-action.target-dashboard-state' | translate }}"
+                                         md-select-on-match="true">
+                            <md-item-template>
+                                <div>
+                                    <span md-highlight-text="vm.targetDashboardStateSearchText" md-highlight-flags="^i">{{item}}</span>
+                                </div>
+                            </md-item-template>
+                            <div ng-messages="theForm.targetDashboardState.$error">
+                                <div translate ng-message="required">widget-action.target-dashboard-state-required</div>
+                            </div>
+                        </md-autocomplete>
+                        <md-checkbox ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
+                                            vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value"
+                                     flex aria-label="{{ 'widget-action.open-right-layout' | translate }}"
+                                     ng-model="vm.action.openRightLayout">{{ 'widget-action.open-right-layout' | translate }}
+                        </md-checkbox>
+                        <md-checkbox ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
+                                            vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value ||
+                                            vm.action.type == vm.types.widgetActionTypes.openDashboard.value"
+                                     flex aria-label="{{ 'widget-action.set-entity-from-widget' | translate }}"
+                                     ng-model="vm.action.setEntityId">{{ 'widget-action.set-entity-from-widget' | translate }}
+                        </md-checkbox>
+                        <tb-js-func ng-if="vm.action.type == vm.types.widgetActionTypes.custom.value"
+                                    ng-model="vm.action.customFunction"
+                                    function-args="{{ ['$event', 'widgetContext', 'entityId'] }}"
+                                    validation-args="{{ [] }}">
+                        </tb-js-func>
                     </fieldset>
                 </md-content>
             </div>

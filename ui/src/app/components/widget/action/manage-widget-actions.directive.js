@@ -42,7 +42,8 @@ function ManageWidgetActions() {
         scope: true,
         bindToController: {
             actionSources: '=',
-            widgetActions: '='
+            widgetActions: '=',
+            fetchDashboardStates: '&',
         },
         controller: ManageWidgetActionsController,
         controllerAs: 'vm',
@@ -55,7 +56,7 @@ function ManageWidgetActions() {
 
 /*@ngInject*/
 function ManageWidgetActionsController($rootScope, $scope, $document, $mdDialog, $q, $filter,
-                              $translate, $timeout, types) {
+                              $translate, $timeout, utils, types) {
 
     let vm = this;
 
@@ -165,12 +166,30 @@ function ManageWidgetActionsController($rootScope, $scope, $document, $mdDialog,
         if (!isAdd) {
             prevActionId = action.id;
         }
+        var availableActionSources = {};
+        for (var id in vm.actionSources) {
+            var actionSource = vm.actionSources[id];
+            if (actionSource.multiple) {
+                availableActionSources[id] = actionSource;
+            } else {
+                if (!isAdd && action.actionSourceId == id) {
+                    availableActionSources[id] = actionSource;
+                } else {
+                    var result = $filter('filter')(vm.allActions, {actionSourceId: id});
+                    if (!result || !result.length) {
+                        availableActionSources[id] = actionSource;
+                    }
+                }
+            }
+        }
         $mdDialog.show({
             controller: 'WidgetActionDialogController',
             controllerAs: 'vm',
             templateUrl: widgetActionDialogTemplate,
             parent: angular.element($document[0].body),
-            locals: {isAdd: isAdd, actionSources: vm.actionSources, action: angular.copy(action)},
+            locals: {isAdd: isAdd, fetchDashboardStates: vm.fetchDashboardStates,
+                actionSources: availableActionSources, widgetActions: vm.widgetActions,
+                action: angular.copy(action)},
             skipHide: true,
             fullscreen: true,
             targetEvent: $event
@@ -189,7 +208,8 @@ function ManageWidgetActionsController($rootScope, $scope, $document, $mdDialog,
     }
 
     function saveAction(action, prevActionId) {
-        action.actionSourceName = vm.actionSources[action.actionSourceId].name;
+        var actionSourceName = vm.actionSources[action.actionSourceId].name;
+        action.actionSourceName = utils.customTranslation(actionSourceName, actionSourceName);
         action.typeName = $translate.instant(types.widgetActionTypes[action.type].name);
         var actionSourceId = action.actionSourceId;
         var widgetAction = angular.copy(action);
@@ -227,15 +247,10 @@ function ManageWidgetActionsController($rootScope, $scope, $document, $mdDialog,
             var actionSourceActions = vm.widgetActions[actionSourceId];
             for (var i=0;i<actionSourceActions.length;i++) {
                 var actionSourceAction = actionSourceActions[i];
-                var action = {
-                    id: actionSourceAction.id,
-                    actionSourceId: actionSourceId,
-                    actionSourceName: actionSource.name,
-                    name: actionSourceAction.name,
-                    icon: actionSourceAction.icon,
-                    type: actionSourceAction.type,
-                    typeName: $translate.instant(types.widgetActionTypes[actionSourceAction.type].name)
-                };
+                var action = angular.copy(actionSourceAction);
+                action.actionSourceId = actionSourceId;
+                action.actionSourceName = utils.customTranslation(actionSource.name, actionSource.name);
+                action.typeName = $translate.instant(types.widgetActionTypes[actionSourceAction.type].name);
                 vm.allActions.push(action);
             }
         }

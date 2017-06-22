@@ -1104,11 +1104,16 @@ export default angular.module('thingsboard.locale', [])
                     "export": "Export widget"
                 },
                 "widget-action": {
-                    "header-button": "Header button",
+                    "header-button": "Widget header button",
                     "open-dashboard-state": "Navigate to new dashboard state",
                     "update-dashboard-state": "Update current dashboard state",
                     "open-dashboard": "Navigate to other dashboard",
-                    "custom": "Custom action"
+                    "custom": "Custom action",
+                    "target-dashboard-state": "Target dashboard state",
+                    "target-dashboard-state-required": "Target dashboard state is required",
+                    "set-entity-from-widget": "Set entity from widget",
+                    "target-dashboard": "Target dashboard",
+                    "open-right-layout": "Open right dashboard layout (mobile view)"
                 },
                 "widgets-bundle": {
                     "current": "Current bundle",
@@ -1174,6 +1179,7 @@ export default angular.module('thingsboard.locale', [])
                     "action-source-required": "Action source is required.",
                     "action-name": "Name",
                     "action-name-required": "Action name is required.",
+                    "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
                     "action-icon": "Icon",
                     "action-type": "Type",
                     "action-type-required": "Action type is required.",
@@ -1205,6 +1211,10 @@ export default angular.module('thingsboard.locale', [])
                     "es_ES": "Spanish"
                 },
                 "custom": {
+                    "widget-action": {
+                        "action-cell-button": "Action cell button",
+                        "row-click": "On row click"
+                    }
                 }
             }
         }

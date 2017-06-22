@@ -36,6 +36,7 @@ export default function AddWidgetController($scope, widgetService, entityService
     vm.add = add;
     vm.cancel = cancel;
     vm.fetchEntityKeys = fetchEntityKeys;
+    vm.fetchDashboardStates = fetchDashboardStates;
     vm.createEntityAlias = createEntityAlias;
 
     vm.widgetConfig = {
@@ -126,6 +127,26 @@ export default function AddWidgetController($scope, widgetService, entityService
             }
         );
         return deferred.promise;
+    }
+
+    function fetchDashboardStates (query) {
+        var deferred = $q.defer();
+        var stateIds = Object.keys(vm.dashboard.configuration.states);
+        var result = query ? stateIds.filter(
+            createFilterForDashboardState(query)) : stateIds;
+        if (result && result.length) {
+            deferred.resolve(result);
+        } else {
+            deferred.resolve([query]);
+        }
+        return deferred.promise;
+    }
+
+    function createFilterForDashboardState (query) {
+        var lowercaseQuery = angular.lowercase(query);
+        return function filterFn(stateId) {
+            return (angular.lowercase(stateId).indexOf(lowercaseQuery) === 0);
+        };
     }
 
     function createEntityAlias (event, alias, allowedEntityTypes) {

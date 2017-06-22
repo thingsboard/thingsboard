@@ -187,6 +187,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.showWidgetActions = showWidgetActions;
     vm.widgetTitleStyle = widgetTitleStyle;
     vm.widgetTitle = widgetTitle;
+    vm.customWidgetHeaderActions = customWidgetHeaderActions;
     vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
     vm.enableWidgetFullscreen = enableWidgetFullscreen;
@@ -872,6 +873,15 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             return ctx.widgetTitle;
         } else {
             return widget.config.title;
+        }
+    }
+
+    function customWidgetHeaderActions(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.customHeaderActions && ctx.customHeaderActions.length) {
+            return ctx.customHeaderActions;
+        } else {
+            return [];
         }
     }
 

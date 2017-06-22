@@ -400,8 +400,9 @@ export default angular.module('thingsboard.types', [])
                 }
             },
             widgetActionSources: {
-                'headerButton': {
+                headerButton: {
                     name: 'widget-action.header-button',
+                    value: 'headerButton',
                     multiple: true
                 }
             },

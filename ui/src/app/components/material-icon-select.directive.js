@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import './material-icon-select.scss';
+
 import MaterialIconsDialogController from './material-icons-dialog.controller';
 
 /* eslint-disable import/no-unresolved, import/default */

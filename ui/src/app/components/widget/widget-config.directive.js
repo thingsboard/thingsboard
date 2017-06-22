@@ -468,6 +468,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             aliasController: '=',
             functionsOnly: '=',
             fetchEntityKeys: '&',
+            fetchDashboardStates: '&',
             onCreateEntityAlias: '&',
             theForm: '='
         },

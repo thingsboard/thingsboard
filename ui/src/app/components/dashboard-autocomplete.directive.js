@@ -87,23 +87,32 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
                 dashboardService.getDashboardInfo(ngModelCtrl.$viewValue).then(
                     function success(dashboard) {
                         scope.dashboard = dashboard;
+                        startWatchers();
                     },
                     function fail() {
                         scope.dashboard = null;
+                        scope.updateView();
+                        startWatchers();
                     }
                 );
             } else {
                 scope.dashboard = null;
+                startWatchers();
             }
         }
 
-        scope.$watch('dashboard', function () {
-            scope.updateView();
-        });
-
-        scope.$watch('disabled', function () {
-            scope.updateView();
-        });
+        function startWatchers() {
+            scope.$watch('dashboard', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    scope.updateView();
+                }
+            });
+            scope.$watch('disabled', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    scope.updateView();
+                }
+            });
+        }
 
         if (scope.selectFirstDashboard) {
             var pageLink = {limit: 1, textSearch: ''};
@@ -111,6 +120,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
                 var dashboards = result.data;
                 if (dashboards.length > 0) {
                     scope.dashboard = dashboards[0];
+                    scope.updateView();
                 }
             }, function fail() {
             });

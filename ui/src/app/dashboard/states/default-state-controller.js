@@ -15,7 +15,7 @@
  */
 
 /*@ngInject*/
-export default function DefaultStateController($scope, $location, $state, $stateParams, $translate, types, dashboardUtils) {
+export default function DefaultStateController($scope, $location, $state, $stateParams, utils, types, dashboardUtils) {
 
     var vm = this;
 
@@ -50,6 +50,9 @@ export default function DefaultStateController($scope, $location, $state, $state
     }
 
     function updateState(id, params, openRightLayout) {
+        if (!id) {
+            id = getStateId();
+        }
         if (vm.states && vm.states[id]) {
             if (!params) {
                 params = {};
@@ -110,15 +113,7 @@ export default function DefaultStateController($scope, $location, $state, $state
     }
 
     function getStateName(id, state) {
-        var result = '';
-        var translationId = types.translate.customTranslationsPrefix + state.name;
-        var translation = $translate.instant(translationId);
-        if (translation != translationId) {
-            result = translation + '';
-        } else {
-            result = id;
-        }
-        return result;
+        return utils.customTranslation(state.name, id);
     }
 
     function parseState(stateJson) {

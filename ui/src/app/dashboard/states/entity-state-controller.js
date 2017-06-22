@@ -55,6 +55,9 @@ export default function EntityStateController($scope, $location, $state, $stateP
     }
 
     function updateState(id, params, openRightLayout) {
+        if (!id) {
+            id = getStateId();
+        }
         if (vm.states && vm.states[id]) {
             resolveEntity(params).then(
                 function success(entityName) {
@@ -121,17 +124,10 @@ export default function EntityStateController($scope, $location, $state, $stateP
         var result = '';
         if (vm.stateObject[index]) {
             var stateName = vm.states[vm.stateObject[index].id].name;
-            var translationId = types.translate.customTranslationsPrefix + stateName;
-            var translation = $translate.instant(translationId);
-            if (translation != translationId) {
-                stateName = translation + '';
-            }
+            stateName = utils.customTranslation(stateName, stateName);
             var params = vm.stateObject[index].params;
-            if (params && params.entityName) {
-                result = utils.insertVariable(stateName, 'entityName', params.entityName);
-            } else {
-                result = stateName;
-            }
+            var entityName = params && params.entityName ? params.entityName : '';
+            result = utils.insertVariable(stateName, 'entityName', entityName);
         }
         return result;
     }

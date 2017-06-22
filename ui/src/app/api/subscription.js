@@ -171,6 +171,48 @@ export default class Subscription {
         return deferred.promise;
     }
 
+    getFirstEntityInfo() {
+        var entityId;
+        var entityName;
+        if (this.type === this.ctx.types.widgetType.rpc.value) {
+            if (this.targetDeviceId) {
+                entityId = {
+                    entityType: this.ctx.entityType.device,
+                    id: this.targetDeviceId
+                }
+                entityName = this.targetDeviceName;
+            }
+        } else if (this.type == this.ctx.types.widgetType.alarm.value) {
+            if (this.alarmSource && this.alarmSource.entityType && this.alarmSource.entityId) {
+                entityId = {
+                    entityType: this.alarmSource.entityType,
+                    id: this.alarmSource.entityId
+                }
+                entityName = this.alarmSource.entityName;
+            }
+        } else {
+            for (var i=0;i<this.datasources.length;i++) {
+                var datasource = this.datasources[i];
+                if (datasource && datasource.entityType && datasource.entityId) {
+                    entityId = {
+                        entityType: datasource.entityType,
+                        id: datasource.entityId
+                    }
+                    entityName = datasource.entityName;
+                    break;
+                }
+            }
+        }
+        if (entityId) {
+            return {
+                entityId: entityId,
+                entityName: entityName
+            };
+        } else {
+            return null;
+        }
+    }
+
     initAlarmSubscription() {
         var deferred = this.ctx.$q.defer();
         if (!this.ctx.aliasController) {
@@ -342,6 +384,7 @@ export default class Subscription {
                 function success(aliasInfo) {
                     if (aliasInfo.currentEntity && aliasInfo.currentEntity.entityType == subscription.ctx.types.entityType.device) {
                         subscription.targetDeviceId = aliasInfo.currentEntity.id;
+                        subscription.targetDeviceName = aliasInfo.currentEntity.name;
                         if (subscription.targetDeviceId) {
                             subscription.rpcEnabled = true;
                         } else {

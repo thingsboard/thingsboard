@@ -626,7 +626,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
             }
             for (var actionSourceId in types.widgetActionSources) {
                 result.actionSources[actionSourceId] = angular.copy(types.widgetActionSources[actionSourceId]);
-                result.actionSources[actionSourceId].name = $translate.instant(result.actionSources[actionSourceId].name);
+                result.actionSources[actionSourceId].name = $translate.instant(result.actionSources[actionSourceId].name) + '';
             }
 
             return result;
