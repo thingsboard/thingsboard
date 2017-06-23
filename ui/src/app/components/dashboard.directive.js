@@ -60,6 +60,8 @@ function Dashboard() {
             margins: '=',
             isEdit: '=',
             autofillHeight: '=',
+            mobileAutofillHeight: '=?',
+            mobileRowHeight: '=?',
             isMobile: '=',
             isMobileDisabled: '=?',
             isEditActionEnabled: '=',
@@ -124,8 +126,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         maxRows: 100,
         columns: vm.columns ? vm.columns : 24,
         margins: vm.margins ? vm.margins : [10, 10],
-        minSizeX: 2,
-        minSizeY: 2,
+        minSizeX: 1,
+        minSizeY: 1,
         defaultSizeX: 8,
         defaultSizeY: 6,
         resizable: {
@@ -170,6 +172,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     vm.onWidgetFullscreenChanged = onWidgetFullscreenChanged;
 
+    vm.isAutofillHeight = autofillHeight;
+
     vm.widgetMouseDown = widgetMouseDown;
     vm.widgetClicked = widgetClicked;
 
@@ -177,9 +181,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.widgetSizeY = widgetSizeY;
     vm.widgetRow = widgetRow;
     vm.widgetCol = widgetCol;
-    vm.widgetColor = widgetColor;
-    vm.widgetBackgroundColor = widgetBackgroundColor;
-    vm.widgetPadding = widgetPadding;
+    vm.widgetStyle = widgetStyle;
     vm.showWidgetTitle = showWidgetTitle;
     vm.hasWidgetTitleTemplate = hasWidgetTitleTemplate;
     vm.widgetTitleTemplate = widgetTitleTemplate;
@@ -236,7 +238,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     });
 
     function onGirdsterParentResize() {
-        if (gridsterParent.height() && vm.autofillHeight) {
+        if (gridsterParent.height() && autofillHeight()) {
             updateMobileOpts();
         }
     }
@@ -279,7 +281,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
                 delete vm.widgetLayoutInfo[widgetId];
             }
         }
-        if (vm.autofillHeight) {
+        if (autofillHeight()) {
             updateMobileOpts();
         }
     });
@@ -295,14 +297,12 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     function updateMobileOpts() {
         var isMobileDisabled = vm.isMobileDisabled === true;
-        var isMobile = vm.isMobile === true && !isMobileDisabled || vm.autofillHeight;
+        var isMobile = vm.isMobile === true && !isMobileDisabled;
         var mobileBreakPoint = isMobileDisabled ? 0 : (isMobile ? 20000 : 960);
 
         if (!isMobile && !isMobileDisabled) {
             isMobile = !$mdMedia('gt-sm');
         }
-
-        var rowHeight = detectRowSize(isMobile);
 
         if (vm.gridsterOpts.isMobile != isMobile) {
             vm.gridsterOpts.isMobile = isMobile;
@@ -311,6 +311,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         if (vm.gridsterOpts.mobileBreakPoint != mobileBreakPoint) {
             vm.gridsterOpts.mobileBreakPoint = mobileBreakPoint;
         }
+        var rowHeight = detectRowSize(isMobile);
         if (vm.gridsterOpts.rowHeight != rowHeight) {
             vm.gridsterOpts.rowHeight = rowHeight;
         }
@@ -336,6 +337,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     });
 
     $scope.$watch('vm.autofillHeight', function () {
+        updateMobileOpts();
+    });
+
+    $scope.$watch('vm.mobileAutofillHeight', function () {
+        updateMobileOpts();
+    });
+
+    $scope.$watch('vm.mobileRowHeight', function () {
         updateMobileOpts();
     });
 
@@ -408,32 +417,49 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     });
 
+    function autofillHeight() {
+        if (vm.gridsterOpts.isMobile) {
+            return angular.isDefined(vm.mobileAutofillHeight) ? vm.mobileAutofillHeight : false;
+        } else {
+            return angular.isDefined(vm.autofillHeight) ? vm.autofillHeight : false;
+        }
+    }
+
     function detectRowSize(isMobile) {
-        var rowHeight = isMobile ? 70 : 'match';
-        if (vm.autofillHeight) {
+        var rowHeight;
+        if (autofillHeight()) {
             var viewportHeight = gridsterParent.height();
             var totalRows = 0;
             for (var i = 0; i < vm.widgets.length; i++) {
                 var w = vm.widgets[i];
                 var sizeY = widgetSizeY(w);
-                totalRows += sizeY;
+                if (isMobile) {
+                    totalRows += sizeY;
+                } else {
+                    var row = widgetRow(w);
+                    var bottom = row + sizeY;
+                    totalRows = Math.max(totalRows, bottom);
+                }
             }
             rowHeight = (viewportHeight - vm.gridsterOpts.margins[1]*(vm.widgets.length+1) + vm.gridsterOpts.margins[0]*vm.widgets.length) / totalRows;
+        } else if (isMobile) {
+            rowHeight = angular.isDefined(vm.mobileRowHeight) ? vm.mobileRowHeight : 70;
+        } else {
+            rowHeight = 'match';
         }
         return rowHeight;
     }
 
     function widgetOrder(widget) {
         var order;
-        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
-            if (angular.isDefined(vm.widgetLayouts[widget.id].mobileOrder)
+        var hasLayout = vm.widgetLayouts && vm.widgetLayouts[widget.id];
+        if (hasLayout && angular.isDefined(vm.widgetLayouts[widget.id].mobileOrder)
                 && vm.widgetLayouts[widget.id].mobileOrder >= 0) {
-                order = vm.widgetLayouts[widget.id].mobileOrder;
-            } else {
-                order = vm.widgetLayouts[widget.id].row;
-            }
+            order = vm.widgetLayouts[widget.id].mobileOrder;
         } else if (angular.isDefined(widget.config.mobileOrder) && widget.config.mobileOrder >= 0) {
             order = widget.config.mobileOrder;
+        } else if (hasLayout) {
+            order = vm.widgetLayouts[widget.id].row;
         } else {
             order = widget.row;
         }
@@ -722,7 +748,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function widgetSizeY(widget) {
-        if (vm.gridsterOpts.isMobile && !vm.autofillHeight) {
+        if (vm.gridsterOpts.isMobile && !vm.mobileAutofillHeight) {
             var mobileHeight;
             if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
                 mobileHeight = vm.widgetLayouts[widget.id].mobileHeight;
@@ -790,6 +816,18 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     }
 
+    function widgetStyle(widget) {
+        var style = {cursor: 'pointer',
+                     color: widgetColor(widget),
+                     backgroundColor: widgetBackgroundColor(widget),
+                     padding: widgetPadding(widget),
+                     margin: widgetMargin(widget)};
+        if (angular.isDefined(widget.config.widgetStyle)) {
+            Object.assign(style, widget.config.widgetStyle);
+        }
+        return style;
+    }
+
     function widgetColor(widget) {
         if (widget.config.color) {
             return widget.config.color;
@@ -811,6 +849,14 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             return widget.config.padding;
         } else {
             return '8px';
+        }
+    }
+
+    function widgetMargin(widget) {
+        if (widget.config.margin) {
+            return widget.config.margin;
+        } else {
+            return '0px';
         }
     }
 

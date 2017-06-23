@@ -64,7 +64,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             '*'
         ];
 
-        scope.titleStyleEditorOptions = {
+        scope.styleEditorOptions = {
             useWrapMode: true,
             mode: 'json',
             advanced: {
@@ -106,6 +106,9 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     scope.backgroundColor = config.backgroundColor;
                     scope.color = config.color;
                     scope.padding = config.padding;
+                    scope.margin = config.margin;
+                    scope.widgetStyle =
+                        angular.toJson(angular.isDefined(config.widgetStyle) ? config.widgetStyle : {}, true);
                     scope.titleStyle =
                         angular.toJson(angular.isDefined(config.titleStyle) ? config.titleStyle : {
                             fontSize: '16px',
@@ -205,6 +208,12 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                         ngModelCtrl.$setValidity('datasources', valid);
                     }
                     try {
+                        angular.fromJson(scope.widgetStyle);
+                        ngModelCtrl.$setValidity('widgetStyle', true);
+                    } catch (e) {
+                        ngModelCtrl.$setValidity('widgetStyle', false);
+                    }
+                    try {
                         angular.fromJson(scope.titleStyle);
                         ngModelCtrl.$setValidity('titleStyle', true);
                     } catch (e) {
@@ -215,7 +224,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
         };
 
         scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
-            'padding + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
+            'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
             'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
@@ -228,6 +237,12 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.backgroundColor = scope.backgroundColor;
                     config.color = scope.color;
                     config.padding = scope.padding;
+                    config.margin = scope.margin;
+                    try {
+                        config.widgetStyle = angular.fromJson(scope.widgetStyle);
+                    } catch (e) {
+                        config.widgetStyle = {};
+                    }
                     try {
                         config.titleStyle = angular.fromJson(scope.titleStyle);
                     } catch (e) {

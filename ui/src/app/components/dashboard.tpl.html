@@ -22,7 +22,8 @@
 	</md-progress-circular>
 </md-content>
 <md-menu md-position-mode="target target" tb-mousepoint-menu>
-	<md-content id="gridster-parent" class="tb-dashboard-content" flex layout-wrap ng-click="" tb-contextmenu="vm.openDashboardContextMenu($event, $mdOpenMousepointMenu)">
+	<md-content id="gridster-parent" class="tb-dashboard-content" flex layout-wrap ng-click="" ng-style="{'overflowY': vm.isAutofillHeight() ? 'hidden' : 'auto'}"
+				tb-contextmenu="vm.openDashboardContextMenu($event, $mdOpenMousepointMenu)">
 		<div ng-class="vm.dashboardClass" id="gridster-background" style="height: auto; min-height: 100%; display: inline;">
 			<div id="gridster-child" gridster="vm.gridsterOpts">
 				<ul>
@@ -42,10 +43,7 @@
 										tb-mousedown="vm.widgetMouseDown($event, widget)"
 										ng-click="vm.widgetClicked($event, widget)"
 										tb-contextmenu="vm.openWidgetContextMenu($event, widget, $mdOpenMousepointMenu)"
-									    ng-style="{cursor: 'pointer',
-            									   color: vm.widgetColor(widget),
-            									   backgroundColor: vm.widgetBackgroundColor(widget),
-            									   padding: vm.widgetPadding(widget)}">
+									    ng-style="vm.widgetStyle(widget)">
 								<div class="tb-widget-title" layout="column" layout-align="center start" ng-show="vm.showWidgetTitlePanel(widget)">
 									<div ng-if="vm.hasWidgetTitleTemplate(widget)" ng-include="vm.widgetTitleTemplate(widget)"></div>
 									<span ng-show="vm.showWidgetTitle(widget)" ng-style="vm.widgetTitleStyle(widget)" class="md-subhead">{{vm.widgetTitle(widget)}}</span>

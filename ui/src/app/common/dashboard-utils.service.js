@@ -215,6 +215,12 @@ function DashboardUtils(types, utils, timeService) {
                     row: widget.row,
                     col: widget.col,
                 };
+                if (angular.isDefined(widget.config.mobileHeight)) {
+                    mainLayout.widgets[id].mobileHeight = widget.config.mobileHeight;
+                }
+                if (angular.isDefined(widget.config.mobileOrder)) {
+                    mainLayout.widgets[id].mobileOrder = widget.config.mobileOrder;
+                }
             }
         } else {
             var states = dashboard.configuration.states;

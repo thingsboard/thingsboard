@@ -179,7 +179,7 @@
                     </md-input-container>
                     <div flex ng-show="showTitle">
                         <label translate>widget-config.title-style</label>
-                        <div ui-ace="titleStyleEditorOptions" ng-model="titleStyle" ng-style="{ minHeight: '100px' }">
+                        <div ui-ace="styleEditorOptions" ng-model="titleStyle" ng-style="{ minHeight: '100px' }">
                         </div>
                     </div>
                 </div>
@@ -198,6 +198,11 @@
                         <md-checkbox flex aria-label="{{ 'widget-config.enable-fullscreen' | translate }}"
                                      ng-model="enableFullscreen">{{ 'widget-config.enable-fullscreen' | translate }}
                         </md-checkbox>
+                    </div>
+                    <div flex>
+                        <label translate>widget-config.widget-style</label>
+                        <div ui-ace="styleEditorOptions" ng-model="widgetStyle" ng-style="{ minHeight: '100px' }">
+                        </div>
                     </div>
                 </div>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">
@@ -226,6 +231,10 @@
                     <md-input-container flex>
                         <label translate>widget-config.padding</label>
                         <input ng-model="padding">
+                    </md-input-container>
+                    <md-input-container flex>
+                        <label translate>widget-config.margin</label>
+                        <input ng-model="margin">
                     </md-input-container>
                 </div>
                 <div layout='column' layout-align="center" layout-gt-sm='row' layout-align-gt-sm="start center">

@@ -171,6 +171,22 @@
                                 <md-option value="auto">Original size</md-option>
                             </md-select>
                         </md-input-container>
+                        <small translate>dashboard.mobile-layout</small>
+                        <div flex layout="row" layout-align="start center">
+                            <md-checkbox flex aria-label="{{ 'dashboard.autofill-height' | translate }}"
+                                         ng-model="vm.gridSettings.mobileAutoFillHeight">{{ 'dashboard.autofill-height' | translate }}
+                            </md-checkbox>
+                            <md-input-container flex class="md-block">
+                                <label translate>dashboard.mobile-row-height</label>
+                                <input ng-required="vm.gridSettings" type="number" step="any" name="mobileRowHeight" ng-model="vm.gridSettings.mobileRowHeight"
+                                       min="5" max="200" />
+                                <div ng-messages="theForm.mobileRowHeight.$error" multiple md-auto-hide="false">
+                                    <div ng-message="required" translate>dashboard.mobile-row-height-required</div>
+                                    <div ng-message="min" translate>dashboard.min-mobile-row-height-message</div>
+                                    <div ng-message="max" translate>dashboard.max-mobile-row-height-message</div>
+                                </div>
+                            </md-input-container>
+                        </div>
                     </div>
                 </fieldset>
             </div>
