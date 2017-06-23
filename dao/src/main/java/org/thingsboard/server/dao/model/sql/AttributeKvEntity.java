@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.model.ToData;
 
@@ -32,8 +33,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable {
 
     @Id
+    @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_COLUMN)
-    private String entityType;
+    private EntityType entityType;
 
     @Id
     @Column(name = ENTITY_ID_COLUMN)

@@ -83,7 +83,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Override
     public ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute) {
         AttributeKvEntity entity = new AttributeKvEntity();
-        entity.setEntityType(entityId.getEntityType().name());
+        entity.setEntityType(entityId.getEntityType());
         entity.setEntityId(entityId.getId());
         entity.setAttributeType(attributeType);
         entity.setAttributeKey(attribute.getKey());
@@ -104,7 +104,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .stream()
                 .map(key -> {
                     AttributeKvEntity entityToDelete = new AttributeKvEntity();
-                    entityToDelete.setEntityType(entityId.getEntityType().name());
+                    entityToDelete.setEntityType(entityId.getEntityType());
                     entityToDelete.setEntityId(entityId.getId());
                     entityToDelete.setAttributeType(attributeType);
                     entityToDelete.setAttributeKey(key);

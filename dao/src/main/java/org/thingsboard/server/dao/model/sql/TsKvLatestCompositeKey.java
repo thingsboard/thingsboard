@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.*;
+import org.thingsboard.server.common.data.EntityType;
 
 import javax.persistence.Transient;
 import java.io.Serializable;
@@ -29,7 +30,7 @@ public class TsKvLatestCompositeKey implements Serializable{
     @Transient
     private static final long serialVersionUID = -4089175869616037523L;
 
-    private String entityType;
+    private EntityType entityType;
     private UUID entityId;
     private String key;
 }

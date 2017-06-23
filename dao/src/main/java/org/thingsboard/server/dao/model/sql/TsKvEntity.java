@@ -16,7 +16,8 @@
 package org.thingsboard.server.dao.model.sql;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.*;
@@ -30,9 +31,41 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @IdClass(TsKvCompositeKey.class)
 public final class TsKvEntity implements ToData<TsKvEntry> {
 
+    public TsKvEntity() {
+    }
+
+    public TsKvEntity(Double avgLongValue, Double avgDoubleValue) {
+        this.longValue = avgLongValue.longValue();
+        this.doubleValue = avgDoubleValue;
+    }
+
+    public TsKvEntity(Long sumLongValue, Double sumDoubleValue) {
+        this.longValue = sumLongValue;
+        this.doubleValue = sumDoubleValue;
+    }
+
+    public TsKvEntity(String strValue, Long longValue, Double doubleValue) {
+        this.strValue = strValue;
+        this.longValue = longValue;
+        this.doubleValue = doubleValue;
+    }
+
+    public TsKvEntity(Long booleanValueCount, Long strValueCount, Long longValueCount, Long doubleValueCount) {
+        if (booleanValueCount != 0) {
+            this.longValue = booleanValueCount;
+        } else if (strValueCount != 0) {
+            this.longValue = strValueCount;
+        } else if (longValueCount != 0) {
+            this.longValue = longValueCount;
+        } else if (doubleValueCount != 0) {
+            this.longValue = doubleValueCount;
+        }
+    }
+
     @Id
+    @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_COLUMN)
-    private String entityType;
+    private EntityType entityType;
 
     @Id
     @Column(name = ENTITY_ID_COLUMN)
@@ -60,6 +93,16 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
 
     @Override
     public TsKvEntry toData() {
-        return null;
+        KvEntry kvEntry = null;
+        if (strValue != null) {
+            kvEntry = new StringDataEntry(key, strValue);
+        } else if (longValue != null) {
+            kvEntry = new LongDataEntry(key, longValue);
+        } else if (doubleValue != null) {
+            kvEntry = new DoubleDataEntry(key, doubleValue);
+        } else if (booleanValue != null) {
+            kvEntry = new BooleanDataEntry(key, booleanValue);
+        }
+        return new BasicTsKvEntry(ts, kvEntry);
     }
 }
