@@ -58,7 +58,7 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     private String clazz;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY)
     private JsonNode configurationDescriptor;
 
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY)

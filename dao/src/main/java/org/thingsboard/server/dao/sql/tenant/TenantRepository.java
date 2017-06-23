@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.tenant;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -30,11 +31,11 @@ import java.util.UUID;
 @SqlDao
 public interface TenantRepository extends CrudRepository<TenantEntity, UUID> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM TENANT WHERE REGION = :region " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<TenantEntity> findByRegionNextPage(@Param("limit") int limit,
-                                            @Param("region") String region,
+    @Query("SELECT t FROM TenantEntity t WHERE t.region = :region " +
+            "AND LOWER(t.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND t.id > :idOffset ORDER BY t.id")
+    List<TenantEntity> findByRegionNextPage(@Param("region") String region,
                                             @Param("textSearch") String textSearch,
-                                            @Param("idOffset") UUID idOffset);
+                                            @Param("idOffset") UUID idOffset,
+                                            Pageable pageable);
 }

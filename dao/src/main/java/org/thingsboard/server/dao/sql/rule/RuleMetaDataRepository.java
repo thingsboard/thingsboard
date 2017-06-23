@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.rule;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -32,20 +33,20 @@ public interface RuleMetaDataRepository extends CrudRepository<RuleMetaDataEntit
 
     List<RuleMetaDataEntity> findByPluginToken(String pluginToken);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE TENANT_ID = :tenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<RuleMetaDataEntity> findByTenantIdAndPageLink(@Param("limit") int limit,
-                                                       @Param("tenantId") UUID tenantId,
+    @Query("SELECT rmd FROM RuleMetaDataEntity rmd WHERE rmd.tenantId = :tenantId " +
+            "AND LOWER(rmd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND rmd.id > :idOffset ORDER BY rmd.id")
+    List<RuleMetaDataEntity> findByTenantIdAndPageLink(@Param("tenantId") UUID tenantId,
                                                        @Param("textSearch") String textSearch,
-                                                       @Param("idOffset") UUID idOffset);
+                                                       @Param("idOffset") UUID idOffset,
+                                                       Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM RULE WHERE TENANT_ID IN (:tenantId, :nullTenantId) " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<RuleMetaDataEntity> findAllTenantRulesByTenantId(@Param("limit") int limit,
-                                                          @Param("tenantId") UUID tenantId,
+    @Query("SELECT rmd FROM RuleMetaDataEntity rmd WHERE rmd.tenantId IN (:tenantId, :nullTenantId) " +
+            "AND LOWER(rmd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND rmd.id > :idOffset ORDER BY rmd.id")
+    List<RuleMetaDataEntity> findAllTenantRulesByTenantId(@Param("tenantId") UUID tenantId,
                                                           @Param("nullTenantId") UUID nullTenantId,
                                                           @Param("textSearch") String textSearch,
-                                                          @Param("idOffset") UUID idOffset);
+                                                          @Param("idOffset") UUID idOffset,
+                                                          Pageable pageable);
 }

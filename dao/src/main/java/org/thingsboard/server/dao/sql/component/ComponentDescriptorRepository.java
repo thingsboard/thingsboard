@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -32,22 +33,22 @@ public interface ComponentDescriptorRepository extends CrudRepository<ComponentD
 
     ComponentDescriptorEntity findByClazz(String clazz);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = :type " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<ComponentDescriptorEntity> findByType(@Param("limit") int limit,
-                                               @Param("type") String type,
+    @Query("SELECT cd FROM ComponentDescriptorEntity cd WHERE cd.type = :type " +
+            "AND LOWER(cd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND cd.id > :idOffset ORDER BY cd.id")
+    List<ComponentDescriptorEntity> findByType(@Param("type") String type,
                                                @Param("textSearch") String textSearch,
-                                               @Param("idOffset") UUID idOffset);
+                                               @Param("idOffset") UUID idOffset,
+                                               Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM COMPONENT_DESCRIPTOR WHERE TYPE = :type " +
-            "AND SCOPE = :scope AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<ComponentDescriptorEntity> findByScopeAndType(@Param("limit") int limit,
-                                                       @Param("type") String type,
+    @Query("SELECT cd FROM ComponentDescriptorEntity cd WHERE cd.type = :type " +
+            "AND cd.scope = :scope AND LOWER(cd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND cd.id > :idOffset ORDER BY cd.id")
+    List<ComponentDescriptorEntity> findByScopeAndType(@Param("type") String type,
                                                        @Param("scope") String scope,
                                                        @Param("textSearch") String textSearch,
-                                                       @Param("idOffset") UUID idOffset);
+                                                       @Param("idOffset") UUID idOffset,
+                                                       Pageable pageable);
 
     void deleteByClazz(String clazz);
 }

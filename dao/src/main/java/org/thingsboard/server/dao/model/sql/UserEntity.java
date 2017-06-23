@@ -70,7 +70,7 @@ public class UserEntity implements SearchTextEntity<User> {
     private String lastName;
 
     @Type(type="json")
-    @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     public UserEntity() {

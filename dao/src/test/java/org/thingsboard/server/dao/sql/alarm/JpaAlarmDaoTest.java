@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.alarm;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
@@ -59,7 +60,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         saveAlarm(alarm3Id, tenantId, originator2Id, "TEST_ALARM");
         assertEquals(3, alarmDao.find().size());
         AlarmEntity alarmEntity = alarmRepository.findLatestByOriginatorAndType(
-                tenantId, originator1Id, EntityType.DEVICE.ordinal(), "TEST_ALARM");
+                tenantId, originator1Id, EntityType.DEVICE, "TEST_ALARM", new PageRequest(0, 1)).get(0);
         assertNotNull(alarmEntity);
         ListenableFuture<Alarm> future = alarmDao
                 .findLatestByOriginatorAndType(new TenantId(tenantId), new DeviceId(originator1Id), "TEST_ALARM");

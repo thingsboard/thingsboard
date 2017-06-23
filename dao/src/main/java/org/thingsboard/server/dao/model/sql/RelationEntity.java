@@ -62,7 +62,7 @@ public final class RelationEntity implements ToData<EntityRelation> {
     private String relationType;
 
     @Type(type = "json")
-    @Column(name = ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     public RelationEntity() {

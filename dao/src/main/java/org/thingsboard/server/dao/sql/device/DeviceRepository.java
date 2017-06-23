@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -32,47 +33,47 @@ import java.util.UUID;
 public interface DeviceRepository extends CrudRepository<DeviceEntity, UUID> {
 
 
-    @Query(nativeQuery = true, value = "SELECT * FROM DEVICE WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<DeviceEntity> findByTenantIdAndCustomerId(@Param("limit") int limit,
-                                                   @Param("tenantId") UUID tenantId,
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.customerId = :customerId " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "AND d.id > :idOffset ORDER BY d.id")
+    List<DeviceEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                    @Param("customerId") UUID customerId,
                                                    @Param("searchText") String searchText,
-                                                   @Param("idOffset") UUID idOffset);
+                                                   @Param("idOffset") UUID idOffset,
+                                                   Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM DEVICE WHERE TENANT_ID = :tenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<DeviceEntity> findByTenantId(@Param("limit") int limit,
-                                      @Param("tenantId") UUID tenantId,
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND d.id > :idOffset ORDER BY d.id")
+    List<DeviceEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                       @Param("textSearch") String textSearch,
-                                      @Param("idOffset") UUID idOffset);
+                                      @Param("idOffset") UUID idOffset,
+                                      Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM DEVICE WHERE TENANT_ID = :tenantId " +
-            "AND TYPE = :type " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<DeviceEntity> findByTenantIdAndType(@Param("limit") int limit,
-                                             @Param("tenantId") UUID tenantId,
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.type = :type " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND d.id > :idOffset ORDER BY d.id")
+    List<DeviceEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                              @Param("type") String type,
                                              @Param("textSearch") String textSearch,
-                                             @Param("idOffset") UUID idOffset);
+                                             @Param("idOffset") UUID idOffset,
+                                             Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM DEVICE WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId " +
-            "AND TYPE = :type " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<DeviceEntity> findByTenantIdAndCustomerIdAndType(@Param("limit") int limit,
-                                                          @Param("tenantId") UUID tenantId,
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
+            "AND d.customerId = :customerId " +
+            "AND d.type = :type " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND d.id > :idOffset ORDER BY d.id")
+    List<DeviceEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                           @Param("customerId") UUID customerId,
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
-                                                          @Param("idOffset") UUID idOffset);
+                                                          @Param("idOffset") UUID idOffset,
+                                                          Pageable pageable);
 
-    @Query(value = "SELECT DISTINCT NEW org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity(d.tenantId, d.type) FROM DeviceEntity d")
+    @Query("SELECT DISTINCT NEW org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity(d.tenantId, d.type) FROM DeviceEntity d")
     List<TenantDeviceTypeEntity> findTenantDeviceTypes();
 
     DeviceEntity findByTenantIdAndName(UUID tenantId, String name);

@@ -63,7 +63,7 @@ public class EventEntity implements BaseEntity<Event> {
     private String eventUid;
 
     @Type(type = "json")
-    @Column(name = EVENT_BODY_PROPERTY, columnDefinition = "json")
+    @Column(name = EVENT_BODY_PROPERTY)
     private JsonNode body;
 
     public EventEntity(Event event) {

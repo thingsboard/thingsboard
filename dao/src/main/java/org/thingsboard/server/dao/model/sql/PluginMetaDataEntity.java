@@ -63,11 +63,11 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     private ComponentLifecycleState state;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.PLUGIN_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)

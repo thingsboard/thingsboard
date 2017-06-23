@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.customer;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -30,13 +31,13 @@ import java.util.UUID;
 @SqlDao
 public interface CustomerRepository extends CrudRepository<CustomerEntity, UUID> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM CUSTOMER WHERE TENANT_ID = :tenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<CustomerEntity> findByTenantId(@Param("limit") int limit,
-                                        @Param("tenantId") UUID tenantId,
+    @Query("SELECT c FROM CustomerEntity c WHERE c.tenantId = :tenantId " +
+            "AND LOWER(c.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND c.id > :idOffset ORDER BY c.id")
+    List<CustomerEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                         @Param("textSearch") String textSearch,
-                                        @Param("idOffset") UUID idOffset);
+                                        @Param("idOffset") UUID idOffset,
+                                        Pageable pageable);
 
     CustomerEntity findByTenantIdAndTitle(UUID tenantId, String title);
 

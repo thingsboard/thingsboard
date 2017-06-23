@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.dashboard;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -27,6 +28,7 @@ import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -55,20 +57,20 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     public List<DashboardInfo> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(dashboardInfoRepository
                 .findByTenantId(
-                        pageLink.getLimit(),
                         tenantId,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
     public List<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(dashboardInfoRepository
                 .findByTenantIdAndCustomerId(
-                        pageLink.getLimit(),
                         tenantId,
                         customerId,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -32,28 +33,28 @@ public interface WidgetsBundleRepository extends CrudRepository<WidgetsBundleEnt
 
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID = :systemTenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("limit") int limit,
-                                                       @Param("systemTenantId") UUID systemTenantId,
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
+            "AND LOWER(wb.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "AND wb.id > :idOffset ORDER BY wb.id")
+    List<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("systemTenantId") UUID systemTenantId,
                                                        @Param("searchText") String searchText,
-                                                       @Param("idOffset") UUID idOffset);
+                                                       @Param("idOffset") UUID idOffset,
+                                                       Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID = :tenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantId(@Param("limit") int limit,
-                                                                 @Param("tenantId") UUID tenantId,
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :tenantId " +
+            "AND LOWER(wb.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND wb.id > :idOffset ORDER BY wb.id")
+    List<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
                                                                  @Param("textSearch") String textSearch,
-                                                                 @Param("idOffset") UUID idOffset);
+                                                                 @Param("idOffset") UUID idOffset,
+                                                                 Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM WIDGETS_BUNDLE WHERE TENANT_ID IN (:tenantId, :nullTenantId) " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantId(@Param("limit") int limit,
-                                                                    @Param("tenantId") UUID tenantId,
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantId, :nullTenantId) " +
+            "AND LOWER(wb.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND wb.id > :idOffset ORDER BY wb.id")
+    List<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
                                                                     @Param("nullTenantId") UUID nullTenantId,
                                                                     @Param("textSearch") String textSearch,
-                                                                    @Param("idOffset") UUID idOffset);
+                                                                    @Param("idOffset") UUID idOffset,
+                                                                    Pageable pageable);
 }

@@ -56,7 +56,7 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     private String name;
 
     @Type(type="json")
-    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY)
     private JsonNode descriptor;
 
     public WidgetTypeEntity() {

@@ -64,19 +64,19 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
     private String pluginToken;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.RULE_FILTERS, columnDefinition = "json")
+    @Column(name = ModelConstants.RULE_FILTERS)
     private JsonNode filters;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.RULE_PROCESSOR, columnDefinition = "json")
+    @Column(name = ModelConstants.RULE_PROCESSOR)
     private JsonNode processor;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.RULE_ACTION, columnDefinition = "json")
+    @Column(name = ModelConstants.RULE_ACTION)
     private JsonNode action;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     public RuleMetaDataEntity() {

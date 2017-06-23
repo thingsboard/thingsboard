@@ -51,9 +51,6 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Column(name = ModelConstants.WIDGETS_BUNDLE_IMAGE_PROPERTY)
-    private byte[] image;
-
     public WidgetsBundleEntity() {
         super();
     }
@@ -67,9 +64,6 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
         }
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
-        if (widgetsBundle.getImage() != null) {
-            this.image = widgetsBundle.getImage();
-        }
     }
 
     @Override
@@ -101,7 +95,6 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
         }
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
-        widgetsBundle.setImage(image);
         return widgetsBundle;
     }
 }

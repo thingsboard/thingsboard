@@ -57,7 +57,7 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     private String searchText;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
 
     public DashboardEntity() {

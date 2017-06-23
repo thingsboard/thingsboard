@@ -82,7 +82,7 @@ public final class AlarmEntity implements BaseEntity<Alarm> {
     private Long clearTs;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY)
     private JsonNode details;
 
     @Column(name = ALARM_PROPAGATE_PROPERTY)

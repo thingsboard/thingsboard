@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -27,6 +28,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -61,10 +63,10 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return DaoUtil.convertDataList(
                 widgetsBundleRepository
                         .findSystemWidgetsBundles(
-                                pageLink.getLimit(),
                                 NULL_UUID,
-                                pageLink.getTextSearch(),
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
@@ -72,10 +74,10 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return DaoUtil.convertDataList(
                 widgetsBundleRepository
                         .findTenantWidgetsBundlesByTenantId(
-                                pageLink.getLimit(),
                                 tenantId,
-                                pageLink.getTextSearch(),
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
@@ -83,10 +85,10 @@ public class JpaWidgetsBundleDao extends JpaAbstractSearchTextDao<WidgetsBundleE
         return DaoUtil.convertDataList(
                 widgetsBundleRepository
                         .findAllTenantWidgetsBundlesByTenantId(
-                                pageLink.getLimit(),
                                 tenantId,
                                 NULL_UUID,
-                                pageLink.getTextSearch(),
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                new PageRequest(0, pageLink.getLimit())));
     }
 }

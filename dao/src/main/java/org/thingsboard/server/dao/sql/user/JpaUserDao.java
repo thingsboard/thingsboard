@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
@@ -24,11 +25,11 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.UserEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -66,9 +67,9 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                                 tenantId,
                                 NULL_UUID,
                                 pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
-                                pageLink.getTextSearch(),
-                                Authority.TENANT_ADMIN.name(),
-                                pageLink.getLimit()));
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                Authority.TENANT_ADMIN,
+                                new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
@@ -79,9 +80,9 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                                 tenantId,
                                 customerId,
                                 pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
-                                pageLink.getTextSearch(),
-                                Authority.CUSTOMER_USER.name(),
-                                pageLink.getLimit()));
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                Authority.CUSTOMER_USER,
+                                new PageRequest(0, pageLink.getLimit())));
 
     }
 }

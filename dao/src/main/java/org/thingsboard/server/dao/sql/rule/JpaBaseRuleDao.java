@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.RuleId;
@@ -31,6 +32,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -73,10 +75,10 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
         List<RuleMetaDataEntity> entities =
                 ruleMetaDataRepository
                         .findByTenantIdAndPageLink(
-                                pageLink.getLimit(),
                                 tenantId.getId(),
-                                pageLink.getTextSearch(),
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {
@@ -91,11 +93,11 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
         List<RuleMetaDataEntity> entities =
                 ruleMetaDataRepository
                         .findAllTenantRulesByTenantId(
-                                pageLink.getLimit(),
                                 tenantId,
                                 NULL_UUID,
-                                pageLink.getTextSearch(),
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
+                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                new PageRequest(0, pageLink.getLimit()));
 
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));

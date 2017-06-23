@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.timeseries;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.DaoUtil;
@@ -31,7 +34,9 @@ import org.thingsboard.server.dao.model.sql.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -46,12 +51,34 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, List<TsKvQuery> queries) {
-        // TODO - Add implementation
-        return service.submit(() -> null);
+        List<ListenableFuture<List<TsKvEntry>>> futures = queries
+                .stream()
+                .map(query -> findAllAsync(entityId, query))
+                .collect(Collectors.toList());
+        return Futures.transform(Futures.allAsList(futures), new Function<List<List<TsKvEntry>>, List<TsKvEntry>>() {
+            @Nullable
+            @Override
+            public List<TsKvEntry> apply(@Nullable List<List<TsKvEntry>> results) {
+                if (results == null || results.isEmpty()) {
+                    return null;
+                }
+                return results.stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList());
+            }
+        }, service);
     }
 
     private ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, TsKvQuery query) {
-        return null;
+        if (query.getAggregation() == Aggregation.NONE) {
+            return findAllAsyncWithLimit(entityId, query);
+        } else {
+            return service.submit(() -> null);
+        }
+    }
+
+    private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, TsKvQuery query) {
+        return service.submit(() -> null);
     }
 
     @Override

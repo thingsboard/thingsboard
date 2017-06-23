@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.component;
 
 import com.datastax.driver.core.utils.UUIDs;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
@@ -31,6 +32,7 @@ import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -83,21 +85,21 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     public List<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
         return DaoUtil.convertDataList(componentDescriptorRepository
                 .findByType(
-                        pageLink.getLimit(),
                         type.toString(),
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
     public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         return DaoUtil.convertDataList(componentDescriptorRepository
                 .findByScopeAndType(
-                        pageLink.getLimit(),
                         type.toString(),
                         scope.toString(),
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override

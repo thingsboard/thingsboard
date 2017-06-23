@@ -60,7 +60,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     private String searchText;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     public DeviceEntity() {

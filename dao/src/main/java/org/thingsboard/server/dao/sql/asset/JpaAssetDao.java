@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.asset;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -29,6 +30,7 @@ import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,10 +60,10 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     public List<Asset> findAssetsByTenantId(UUID tenantId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(assetRepository
                 .findByTenantId(
-                        pageLink.getLimit(),
                         tenantId,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
@@ -74,11 +76,11 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     public List<Asset> findAssetsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(assetRepository
                 .findByTenantIdAndCustomerId(
-                        pageLink.getLimit(),
                         tenantId,
                         customerId,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
@@ -97,23 +99,23 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     public List<Asset> findAssetsByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink) {
         return DaoUtil.convertDataList(assetRepository
                 .findByTenantIdAndType(
-                        pageLink.getLimit(),
                         tenantId,
                         type,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override
     public List<Asset> findAssetsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink) {
         return DaoUtil.convertDataList(assetRepository
                 .findByTenantIdAndCustomerIdAndType(
-                        pageLink.getLimit(),
                         tenantId,
                         customerId,
                         type,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 
     @Override

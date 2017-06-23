@@ -77,7 +77,7 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
     private String email;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     public CustomerEntity() {

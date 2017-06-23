@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -31,23 +33,23 @@ import java.util.UUID;
 @SqlDao
 public interface AssetRepository extends CrudRepository<AssetEntity, UUID> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = :tenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<AssetEntity> findByTenantId(@Param("limit") int limit,
-                                     @Param("tenantId") UUID tenantId,
+    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND a.id > :idOffset ORDER BY a.id")
+    List<AssetEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                      @Param("textSearch") String textSearch,
-                                     @Param("idOffset") UUID idOffset);
+                                     @Param("idOffset") UUID idOffset,
+                                     Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<AssetEntity> findByTenantIdAndCustomerId(@Param("limit") int limit,
-                                                  @Param("tenantId") UUID tenantId,
+    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
+            "AND a.customerId = :customerId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND a.id > :idOffset ORDER BY a.id")
+    List<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                   @Param("customerId") UUID customerId,
                                                   @Param("textSearch") String textSearch,
-                                                  @Param("idOffset") UUID idOffset);
+                                                  @Param("idOffset") UUID idOffset,
+                                                  Pageable pageable);
 
     List<AssetEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> assetIds);
 
@@ -55,27 +57,27 @@ public interface AssetRepository extends CrudRepository<AssetEntity, UUID> {
 
     AssetEntity findByTenantIdAndName(UUID tenantId, String name);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = :tenantId " +
-            "AND TYPE = :type " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<AssetEntity> findByTenantIdAndType(@Param("limit") int limit,
-                                            @Param("tenantId") UUID tenantId,
+    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
+            "AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND a.id > :idOffset ORDER BY a.id")
+    List<AssetEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                             @Param("type") String type,
                                             @Param("textSearch") String textSearch,
-                                            @Param("idOffset") UUID idOffset);
+                                            @Param("idOffset") UUID idOffset,
+                                            Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM ASSET WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId AND TYPE = :type " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("limit") int limit,
-                                                         @Param("tenantId") UUID tenantId,
+    @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
+            "AND a.customerId = :customerId AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND a.id > :idOffset ORDER BY a.id")
+    List<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                          @Param("customerId") UUID customerId,
                                                          @Param("type") String type,
                                                          @Param("textSearch") String textSearch,
-                                                         @Param("idOffset") UUID idOffset);
+                                                         @Param("idOffset") UUID idOffset,
+                                                         Pageable pageable);
 
-    @Query(value = "SELECT NEW org.thingsboard.server.common.data.asset.TenantAssetType(a.type, a.tenantId) FROM AssetEntity a GROUP BY a.tenantId, a.type")
+    @Query("SELECT NEW org.thingsboard.server.common.data.asset.TenantAssetType(a.type, a.tenantId) FROM AssetEntity a GROUP BY a.tenantId, a.type")
     List<TenantAssetType> findTenantAssetTypes();
 }

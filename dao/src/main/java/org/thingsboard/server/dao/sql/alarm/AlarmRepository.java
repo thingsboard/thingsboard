@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -29,10 +32,11 @@ import java.util.UUID;
 @SqlDao
 public interface AlarmRepository extends CrudRepository<AlarmEntity, UUID> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM ALARM WHERE TENANT_ID = :tenantId AND ORIGINATOR_ID = :originatorId " +
-            "AND ORIGINATOR_TYPE = :entityType AND TYPE = :alarmType ORDER BY TYPE ASC, ID DESC LIMIT 1")
-    AlarmEntity findLatestByOriginatorAndType(@Param("tenantId") UUID tenantId,
-                                              @Param("originatorId") UUID originatorId,
-                                              @Param("entityType") int entityType,
-                                              @Param("alarmType") String alarmType);
+    @Query("SELECT a FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.originatorId = :originatorId " +
+            "AND a.originatorType = :entityType AND a.type = :alarmType ORDER BY a.type ASC, a.id DESC")
+    List<AlarmEntity> findLatestByOriginatorAndType(@Param("tenantId") UUID tenantId,
+                                                    @Param("originatorId") UUID originatorId,
+                                                    @Param("entityType") EntityType entityType,
+                                                    @Param("alarmType") String alarmType,
+                                                    Pageable pageable);
 }

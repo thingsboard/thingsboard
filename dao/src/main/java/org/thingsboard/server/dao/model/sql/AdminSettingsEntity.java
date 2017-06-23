@@ -47,7 +47,7 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
     private String key;
 
     @Type(type = "json")
-    @Column(name = ADMIN_SETTINGS_JSON_VALUE_PROPERTY, columnDefinition = "json")
+    @Column(name = ADMIN_SETTINGS_JSON_VALUE_PROPERTY)
     private JsonNode jsonValue;
 
     public AdminSettingsEntity() {

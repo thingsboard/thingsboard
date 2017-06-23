@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.dashboard;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -30,20 +31,20 @@ import java.util.UUID;
 @SqlDao
 public interface DashboardInfoRepository extends CrudRepository<DashboardInfoEntity, UUID> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM DASHBOARD WHERE TENANT_ID = :tenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<DashboardInfoEntity> findByTenantId(@Param("limit") int limit,
-                                             @Param("tenantId") UUID tenantId,
-                                             @Param("textSearch") String textSearch,
-                                             @Param("idOffset") UUID idOffset);
+    @Query("SELECT di FROM DashboardInfoEntity di WHERE di.tenantId = :tenantId " +
+            "AND LOWER(di.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "AND di.id > :idOffset ORDER BY di.id")
+    List<DashboardInfoEntity> findByTenantId(@Param("tenantId") UUID tenantId,
+                                             @Param("searchText") String searchText,
+                                             @Param("idOffset") UUID idOffset,
+                                             Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM DASHBOARD WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<DashboardInfoEntity> findByTenantIdAndCustomerId(@Param("limit") int limit,
-                                                          @Param("tenantId") UUID tenantId,
+    @Query("SELECT di FROM DashboardInfoEntity di WHERE di.tenantId = :tenantId " +
+            "AND di.customerId = :customerId AND LOWER(di.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
+            "AND di.id > :idOffset ORDER BY di.id")
+    List<DashboardInfoEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                           @Param("customerId") UUID customerId,
-                                                          @Param("textSearch") String textSearch,
-                                                          @Param("idOffset") UUID idOffset);
+                                                          @Param("searchText") String searchText,
+                                                          @Param("idOffset") UUID idOffset,
+                                                          Pageable pageable);
 }

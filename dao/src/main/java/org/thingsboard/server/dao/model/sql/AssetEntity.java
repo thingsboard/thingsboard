@@ -62,7 +62,7 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
     private String searchText;
 
     @Type(type = "json")
-    @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     public AssetEntity() {

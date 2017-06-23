@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.tenant;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Tenant;
@@ -27,6 +28,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -55,9 +57,9 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     public List<Tenant> findTenantsByRegion(String region, TextPageLink pageLink) {
         return DaoUtil.convertDataList(tenantRepository
                 .findByRegionNextPage(
-                        pageLink.getLimit(),
                         region,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset()));
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 }

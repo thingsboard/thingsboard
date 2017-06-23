@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.plugin;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.PluginId;
@@ -31,6 +32,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -96,10 +98,10 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
         log.debug("Try to find plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<PluginMetaDataEntity> entities = pluginMetaDataRepository
                 .findByTenantIdAndPageLink(
-                        pageLink.getLimit(),
                         tenantId.getId(),
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {
@@ -113,11 +115,11 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
         log.debug("Try to find all tenant plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<PluginMetaDataEntity> entities = pluginMetaDataRepository
                 .findAllTenantPluginsByTenantId(
-                        pageLink.getLimit(),
                         tenantId,
                         NULL_UUID,
-                        pageLink.getTextSearch(),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset());
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {

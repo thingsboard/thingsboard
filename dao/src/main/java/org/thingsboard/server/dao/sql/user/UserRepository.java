@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
@@ -32,15 +34,15 @@ public interface UserRepository extends CrudRepository<UserEntity, UUID> {
 
     UserEntity findByEmail(String email);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM TB_USER WHERE TENANT_ID = :tenantId " +
-            "AND CUSTOMER_ID = :customerId AND AUTHORITY = :authority " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:searchText, '%'))" +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
+    @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
+            "AND u.customerId = :customerId AND u.authority = :authority " +
+            "AND LOWER(u.searchText) LIKE LOWER(CONCAT(:searchText, '%'))" +
+            "AND u.id > :idOffset ORDER BY u.id")
     List<UserEntity> findUsersByAuthority(@Param("tenantId") UUID tenantId,
                                           @Param("customerId") UUID customerId,
                                           @Param("idOffset") UUID idOffset,
                                           @Param("searchText") String searchText,
-                                          @Param("authority") String authority,
-                                          @Param("limit") int limit);
+                                          @Param("authority") Authority authority,
+                                          Pageable pageable);
 
 }

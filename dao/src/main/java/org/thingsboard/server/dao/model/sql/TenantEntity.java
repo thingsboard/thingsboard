@@ -76,7 +76,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     private String email;
 
     @Type(type="json")
-    @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY, columnDefinition = "json")
+    @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
     public TenantEntity() {

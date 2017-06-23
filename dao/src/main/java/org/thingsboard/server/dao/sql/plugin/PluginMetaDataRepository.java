@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.plugin;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -32,20 +33,20 @@ public interface PluginMetaDataRepository extends CrudRepository<PluginMetaDataE
 
     PluginMetaDataEntity findByApiToken(String apiToken);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE TENANT_ID = :tenantId " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<PluginMetaDataEntity> findByTenantIdAndPageLink(@Param("limit") int limit,
-                                                         @Param("tenantId") UUID tenantId,
+    @Query("SELECT pmd FROM PluginMetaDataEntity pmd WHERE pmd.tenantId = :tenantId " +
+            "AND LOWER(pmd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND pmd.id > :idOffset ORDER BY pmd.id")
+    List<PluginMetaDataEntity> findByTenantIdAndPageLink(@Param("tenantId") UUID tenantId,
                                                          @Param("textSearch") String textSearch,
-                                                         @Param("idOffset") UUID idOffset);
+                                                         @Param("idOffset") UUID idOffset,
+                                                         Pageable pageable);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM PLUGIN WHERE TENANT_ID IN (:tenantId, :nullTenantId) " +
-            "AND LOWER(SEARCH_TEXT) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND ID > :idOffset ORDER BY ID LIMIT :limit")
-    List<PluginMetaDataEntity> findAllTenantPluginsByTenantId(@Param("limit") int limit,
-                                                              @Param("tenantId") UUID tenantId,
+    @Query("SELECT pmd FROM PluginMetaDataEntity pmd WHERE pmd.tenantId IN (:tenantId, :nullTenantId) " +
+            "AND LOWER(pmd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND pmd.id > :idOffset ORDER BY pmd.id")
+    List<PluginMetaDataEntity> findAllTenantPluginsByTenantId(@Param("tenantId") UUID tenantId,
                                                               @Param("nullTenantId") UUID nullTenantId,
                                                               @Param("textSearch") String textSearch,
-                                                              @Param("idOffset") UUID idOffset);
+                                                              @Param("idOffset") UUID idOffset,
+                                                              Pageable pageable);
 }

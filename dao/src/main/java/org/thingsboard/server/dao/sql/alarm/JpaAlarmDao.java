@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,12 +75,15 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     @Transactional(propagation = REQUIRES_NEW)
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return service.submit(() ->
-                DaoUtil.getData(alarmRepository.findLatestByOriginatorAndType(
-                        tenantId.getId(),
-                        originator.getId(),
-                        originator.getEntityType().ordinal(),
-                        type)));
+        return service.submit(() -> {
+            List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
+                    tenantId.getId(),
+                    originator.getId(),
+                    originator.getEntityType(),
+                    type,
+                    new PageRequest(0, 1));
+            return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
+        });
     }
 
     @Override
