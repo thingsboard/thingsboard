@@ -745,6 +745,13 @@
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${h2.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>ru.yandex.qatools.embed</groupId>
+                <artifactId>postgresql-embedded</artifactId>
+                <version>2.2</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.sun.winsw</groupId>

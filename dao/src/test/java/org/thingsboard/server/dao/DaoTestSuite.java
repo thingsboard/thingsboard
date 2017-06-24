@@ -20,8 +20,15 @@ import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
 import org.junit.runner.RunWith;
+import ru.yandex.qatools.embed.postgresql.EmbeddedPostgres;
 
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Arrays;
+
+import static ru.yandex.qatools.embed.postgresql.distribution.Version.Main.V9_6;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
@@ -41,4 +48,10 @@ public class DaoTestSuite {
                             new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
                             new ClassPathCQLDataSet("system-test.cql", false, false)),
                     "cassandra-test.yaml", 30000l);
+
+    @ClassRule
+    public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
+                    Arrays.asList("postgres/schema.sql", "postgres/system-data.sql"),
+                    "postgres-embedded-test.properties");
+
 }
