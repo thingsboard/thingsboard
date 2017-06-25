@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
 import javax.net.ssl.SSLException;
@@ -45,14 +46,17 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
     private final SessionMsgProcessor processor;
     private final DeviceService deviceService;
     private final DeviceAuthService authService;
+    private final RelationService relationService;
     private final MqttTransportAdaptor adaptor;
     private final MqttSslHandlerProvider sslHandlerProvider;
 
-    public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, MqttTransportAdaptor adaptor,
+    public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService,
+                                          MqttTransportAdaptor adaptor,
                                           MqttSslHandlerProvider sslHandlerProvider) {
         this.processor = processor;
         this.deviceService = deviceService;
         this.authService = authService;
+        this.relationService = relationService;
         this.adaptor = adaptor;
         this.sslHandlerProvider = sslHandlerProvider;
     }
@@ -68,7 +72,7 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast("decoder", new MqttDecoder(MAX_PAYLOAD_SIZE));
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
-        MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, adaptor, sslHandler);
+        MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, relationService, adaptor, sslHandler);
         pipeline.addLast(handler);
         ch.closeFuture().addListener(handler);
     }
