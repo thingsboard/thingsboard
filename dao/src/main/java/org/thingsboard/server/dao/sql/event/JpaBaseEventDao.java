@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
@@ -98,6 +98,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     public List<Event> findEvents(UUID tenantId, EntityId entityId, TimePageLink pageLink) {
         return findEvents(tenantId, entityId, null, pageLink);
     }
+
     @Override
     public List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
         Specification<EventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<EventEntity>getTimeSearchPageSpec(pageLink, "id");
@@ -119,7 +120,8 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         if (StringUtils.isEmpty(entity.getEventUid())) {
             entity.setEventUid(entity.getId().toString());
         }
-        if (ifNotExists && findById(entity.getId()) != null) {
+        if (ifNotExists &&
+                eventRepository.findByTenantIdAndEntityTypeAndEntityId(entity.getTenantId(), entity.getEntityType(), entity.getEntityId()) != null) {
             return Optional.empty();
         }
         return Optional.of(DaoUtil.getData(eventRepository.save(entity)));

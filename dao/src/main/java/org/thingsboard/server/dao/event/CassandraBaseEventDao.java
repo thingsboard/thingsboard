@@ -28,9 +28,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.CassandraAbstractSearchTimeDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTimeDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.NoSqlDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.EventEntity;
 

@@ -17,12 +17,11 @@ package org.thingsboard.server.dao.user;
 
 import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.dao.CassandraAbstractModelDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.NoSqlDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.UserCredentialsEntity;
 

@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.dashboard;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
-import org.thingsboard.server.dao.annotation.NoSqlDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.nosql.DashboardEntity;
 
 import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME;

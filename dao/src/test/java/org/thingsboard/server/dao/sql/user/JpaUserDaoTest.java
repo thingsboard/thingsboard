@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/18/2017.
@@ -120,7 +121,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     private void create30Adminsand60Users(UUID tenantId, UUID customerId) {
         // Create 30 tenant admins and 60 customer users
         for (int i = 0; i < 30; i++) {
-            saveUser(tenantId, null);
+            saveUser(tenantId, NULL_UUID);
             saveUser(tenantId, customerId);
             saveUser(tenantId, customerId);
         }

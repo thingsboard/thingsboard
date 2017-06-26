@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.component;
 import com.datastax.driver.core.utils.UUIDs;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;

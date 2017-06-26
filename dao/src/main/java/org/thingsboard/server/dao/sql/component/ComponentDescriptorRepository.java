@@ -19,7 +19,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.common.data.plugin.ComponentScope;
+import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 
 import java.util.List;
@@ -36,7 +38,7 @@ public interface ComponentDescriptorRepository extends CrudRepository<ComponentD
     @Query("SELECT cd FROM ComponentDescriptorEntity cd WHERE cd.type = :type " +
             "AND LOWER(cd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND cd.id > :idOffset ORDER BY cd.id")
-    List<ComponentDescriptorEntity> findByType(@Param("type") String type,
+    List<ComponentDescriptorEntity> findByType(@Param("type") ComponentType type,
                                                @Param("textSearch") String textSearch,
                                                @Param("idOffset") UUID idOffset,
                                                Pageable pageable);
@@ -44,8 +46,8 @@ public interface ComponentDescriptorRepository extends CrudRepository<ComponentD
     @Query("SELECT cd FROM ComponentDescriptorEntity cd WHERE cd.type = :type " +
             "AND cd.scope = :scope AND LOWER(cd.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND cd.id > :idOffset ORDER BY cd.id")
-    List<ComponentDescriptorEntity> findByScopeAndType(@Param("type") String type,
-                                                       @Param("scope") String scope,
+    List<ComponentDescriptorEntity> findByScopeAndType(@Param("type") ComponentType type,
+                                                       @Param("scope") ComponentScope scope,
                                                        @Param("textSearch") String textSearch,
                                                        @Param("idOffset") UUID idOffset,
                                                        Pageable pageable);

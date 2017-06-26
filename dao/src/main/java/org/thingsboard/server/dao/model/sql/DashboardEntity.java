@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
 import java.util.UUID;

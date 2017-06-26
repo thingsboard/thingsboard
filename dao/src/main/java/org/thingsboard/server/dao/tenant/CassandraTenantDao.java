@@ -19,9 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.NoSqlDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.nosql.TenantEntity;
 
 import java.util.Arrays;

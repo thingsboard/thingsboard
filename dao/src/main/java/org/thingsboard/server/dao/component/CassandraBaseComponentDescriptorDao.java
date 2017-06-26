@@ -27,9 +27,9 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.dao.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.NoSqlDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.ComponentDescriptorEntity;
 
@@ -102,7 +102,7 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     public List<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
         log.debug("Try to find component by type [{}] and pageLink [{}]", type, pageLink);
         List<ComponentDescriptorEntity> entities = findPageWithTextSearch(ModelConstants.COMPONENT_DESCRIPTOR_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type.name())), pageLink);
+                Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type)), pageLink);
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
         } else {
@@ -115,7 +115,7 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         log.debug("Try to find component by scope [{}] and type [{}] and pageLink [{}]", scope, type, pageLink);
         List<ComponentDescriptorEntity> entities = findPageWithTextSearch(ModelConstants.COMPONENT_DESCRIPTOR_BY_SCOPE_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type.name()),
+                Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type),
                         eq(ModelConstants.COMPONENT_DESCRIPTOR_SCOPE_PROPERTY, scope.name())), pageLink);
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));

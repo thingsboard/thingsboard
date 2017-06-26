@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
 import java.util.UUID;

@@ -23,7 +23,7 @@ import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
 import java.util.UUID;

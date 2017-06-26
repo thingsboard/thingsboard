@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.attributes;
 
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 

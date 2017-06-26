@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.component.ComponentDescriptorDao;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
@@ -85,7 +85,7 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     public List<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
         return DaoUtil.convertDataList(componentDescriptorRepository
                 .findByType(
-                        type.toString(),
+                        type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
                         new PageRequest(0, pageLink.getLimit())));
@@ -95,8 +95,8 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     public List<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         return DaoUtil.convertDataList(componentDescriptorRepository
                 .findByScopeAndType(
-                        type.toString(),
-                        scope.toString(),
+                        type,
+                        scope,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
                         new PageRequest(0, pageLink.getLimit())));

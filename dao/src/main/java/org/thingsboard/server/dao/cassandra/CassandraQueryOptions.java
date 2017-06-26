@@ -21,12 +21,14 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.PostConstruct;
 
 @Component
 @Configuration
 @Data
+@NoSqlDao
 public class CassandraQueryOptions {
 
     @Value("${cassandra.query.default_fetch_size}")

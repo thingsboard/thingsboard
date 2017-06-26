@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.WidgetTypeEntity;
 
 import java.util.List;

@@ -121,7 +121,8 @@ CREATE TABLE IF NOT EXISTS event (
     entity_type character varying(255),
     event_type character varying(255),
     event_uid character varying(255),
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
 CREATE TABLE IF NOT EXISTS plugin (

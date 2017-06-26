@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.RuleMetaDataEntity;
 import org.thingsboard.server.dao.rule.RuleDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;

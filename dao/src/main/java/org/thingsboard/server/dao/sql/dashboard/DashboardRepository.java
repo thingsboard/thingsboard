@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.dashboard;
 
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.DashboardEntity;
 
 import java.util.UUID;

@@ -113,7 +113,7 @@ public class JpaBaseRuleDaoTest extends AbstractJpaDaoTest {
         assertEquals(40, rules1.size());
 
         List<RuleMetaData> rules2 = ruleDao.findAllTenantRulesByTenantId(tenantId1,
-                new TextPageLink(40, "name_", rules1.get(39).getId().getId(), null));
+                new TextPageLink(40, "name_", rules1.get(19).getId().getId(), null));
         assertEquals(20, rules2.size());
 
         List<RuleMetaData> rules3 = ruleDao.findAllTenantRulesByTenantId(tenantId1,
@@ -129,7 +129,7 @@ public class JpaBaseRuleDaoTest extends AbstractJpaDaoTest {
     }
 
     private void createTenantsAndSystemRules(UUID tenantId1, UUID tenantId2, String namePrefix, String pluginToken) {
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 40; i++) {
             createRule(tenantId1, namePrefix, pluginToken, i);
             createRule(tenantId2, namePrefix, pluginToken, i);
             createRule(null, namePrefix, pluginToken, i);

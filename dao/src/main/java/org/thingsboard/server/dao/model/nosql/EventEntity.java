@@ -22,14 +22,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
-
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 /**
  * @author Andrew Shvayka

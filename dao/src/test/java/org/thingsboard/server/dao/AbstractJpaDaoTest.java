@@ -31,7 +31,7 @@ import org.springframework.test.context.support.DirtiesContextTestExecutionListe
  */
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {JpaDaoConfig.class, JpaDbunitTestConfig.class})
-@TestPropertySource("classpath:jpa-test.properties")
+@TestPropertySource("classpath:sql-test.properties")
 @TestExecutionListeners({
         DependencyInjectionTestExecutionListener.class,
         DirtiesContextTestExecutionListener.class,

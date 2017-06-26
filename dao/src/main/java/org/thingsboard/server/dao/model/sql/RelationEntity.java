@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.util.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
 import java.util.UUID;

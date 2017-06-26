@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.sql.event;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
@@ -29,6 +29,13 @@ import java.util.UUID;
 @SqlDao
 public interface EventRepository extends CrudRepository<EventEntity, UUID>, JpaSpecificationExecutor<EventEntity> {
 
-    EventEntity findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
-            UUID tenantId, EntityType entityType, UUID id, String eventType, String eventUid);
+    EventEntity findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(UUID tenantId,
+                                                                              EntityType entityType,
+                                                                              UUID entityId,
+                                                                              String eventType,
+                                                                              String eventUid);
+
+    EventEntity findByTenantIdAndEntityTypeAndEntityId(UUID tenantId,
+                                                       EntityType entityType,
+                                                       UUID entityId);
 }

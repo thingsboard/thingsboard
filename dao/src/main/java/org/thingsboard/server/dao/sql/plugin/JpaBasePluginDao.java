@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.annotation.SqlDao;
+import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.PluginMetaDataEntity;
 import org.thingsboard.server.dao.plugin.PluginDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;

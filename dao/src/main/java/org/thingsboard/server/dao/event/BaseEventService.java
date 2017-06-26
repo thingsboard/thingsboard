@@ -49,8 +49,7 @@ public class BaseEventService implements EventService {
         if (StringUtils.isEmpty(event.getUid())) {
             throw new DataValidationException("Event uid should be specified!.");
         }
-        Optional<Event> result = eventDao.saveIfNotExists(event);
-        return result.isPresent() ? Optional.of(result.get()) : Optional.empty();
+        return eventDao.saveIfNotExists(event);
     }
 
     @Override
