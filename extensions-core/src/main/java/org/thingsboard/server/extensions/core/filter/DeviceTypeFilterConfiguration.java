@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.rules;
+package org.thingsboard.server.extensions.core.filter;
 
-import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.id.RuleId;
-import org.thingsboard.server.extensions.api.device.DeviceAttributes;
-import org.thingsboard.server.extensions.api.device.DeviceMetaData;
+import lombok.Data;
 
-import java.util.Optional;
+/**
+ * @author Andrew Shvayka
+ */
+@Data
+public class DeviceTypeFilterConfiguration {
 
-public interface RuleContext {
+    private DeviceTypeName[] deviceTypes;
 
-    RuleId getRuleId();
-
-    DeviceMetaData getDeviceMetaData();
-
-    Event save(Event event);
-
-    Optional<Event> saveIfNotExists(Event event);
-
-    Optional<Event> findEvent(String eventType, String eventUid);
+    @Data
+    public static class DeviceTypeName {
+        private String name;
+    }
 
 }

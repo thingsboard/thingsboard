@@ -15,10 +15,9 @@
  */
 package org.thingsboard.server.actors.rule;
 
-import org.thingsboard.server.extensions.api.device.DeviceAttributes;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-
 import akka.actor.ActorRef;
+import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 
 /**
  * Immutable part of chain processing data;
@@ -30,13 +29,13 @@ public final class ChainProcessingMetaData {
     final RuleActorChain chain;
     final ToDeviceActorMsg inMsg;
     final ActorRef originator;
-    final DeviceAttributes deviceAttributes;
+    final DeviceMetaData deviceMetaData;
 
-    public ChainProcessingMetaData(RuleActorChain chain, ToDeviceActorMsg inMsg, DeviceAttributes deviceAttributes, ActorRef originator) {
+    public ChainProcessingMetaData(RuleActorChain chain, ToDeviceActorMsg inMsg, DeviceMetaData deviceMetaData, ActorRef originator) {
         super();
         this.chain = chain;
         this.inMsg = inMsg;
         this.originator = originator;
-        this.deviceAttributes = deviceAttributes;
+        this.deviceMetaData = deviceMetaData;
     }
 }

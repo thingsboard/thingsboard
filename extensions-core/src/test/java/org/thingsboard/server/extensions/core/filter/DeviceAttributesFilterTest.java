@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 package org.thingsboard.server.extensions.core.filter;
-
+С
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,6 +32,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Andrew Shvayka
@@ -52,7 +55,7 @@ public class DeviceAttributesFilterTest {
         clientAttributes.add(new BaseAttributeKvEntry(new BooleanDataEntry("booleanValue", false), 42));
         DeviceAttributes attributes = new DeviceAttributes(clientAttributes, new ArrayList<>(), new ArrayList<>());
 
-        Mockito.when(ruleCtx.getDeviceAttributes()).thenReturn(attributes);
+        Mockito.when(ruleCtx.getDeviceMetaData()).thenReturn(new DeviceMetaData(new DeviceId(UUID.randomUUID()), "A", "A", attributes));
         Assert.assertTrue(filter.filter(ruleCtx, null));
         filter.stop();
     }
@@ -66,7 +69,7 @@ public class DeviceAttributesFilterTest {
         clientAttributes.add(new BaseAttributeKvEntry(new BooleanDataEntry("booleanValue", false), 42));
         DeviceAttributes attributes = new DeviceAttributes(clientAttributes, new ArrayList<>(), new ArrayList<>());
 
-        Mockito.when(ruleCtx.getDeviceAttributes()).thenReturn(attributes);
+        Mockito.when(ruleCtx.getDeviceMetaData()).thenReturn(new DeviceMetaData(new DeviceId(UUID.randomUUID()), "A", "A", attributes));
         Assert.assertTrue(filter.filter(ruleCtx, null));
         filter.stop();
     }
@@ -81,7 +84,7 @@ public class DeviceAttributesFilterTest {
         clientAttributes.add(new BaseAttributeKvEntry(new BooleanDataEntry("booleanValue", false), 42));
         DeviceAttributes attributes = new DeviceAttributes(clientAttributes, new ArrayList<>(), new ArrayList<>());
 
-        Mockito.when(ruleCtx.getDeviceAttributes()).thenReturn(attributes);
+        Mockito.when(ruleCtx.getDeviceMetaData()).thenReturn(new DeviceMetaData(new DeviceId(UUID.randomUUID()), "A", "A", attributes));
 
         for (int i = 0; i < 10000; i++) {
             Assert.assertTrue(filter.filter(ruleCtx, null));
@@ -99,7 +102,7 @@ public class DeviceAttributesFilterTest {
         serverAttributes.add(new BaseAttributeKvEntry(new BooleanDataEntry("booleanValue", false), 42));
         DeviceAttributes attributes = new DeviceAttributes(new ArrayList<>(), serverAttributes, new ArrayList<>());
 
-        Mockito.when(ruleCtx.getDeviceAttributes()).thenReturn(attributes);
+        Mockito.when(ruleCtx.getDeviceMetaData()).thenReturn(new DeviceMetaData(new DeviceId(UUID.randomUUID()), "A", "A", attributes));
         Assert.assertTrue(filter.filter(ruleCtx, null));
         filter.stop();
     }
@@ -118,7 +121,7 @@ public class DeviceAttributesFilterTest {
         serverAttributes.add(new BaseAttributeKvEntry(new BooleanDataEntry("booleanValue", false), 42));
         DeviceAttributes attributes = new DeviceAttributes(clientAttributes, serverAttributes, new ArrayList<>());
 
-        Mockito.when(ruleCtx.getDeviceAttributes()).thenReturn(attributes);
+        Mockito.when(ruleCtx.getDeviceMetaData()).thenReturn(new DeviceMetaData(new DeviceId(UUID.randomUUID()), "A", "A", attributes));
         Assert.assertTrue(filter.filter(ruleCtx, null));
         filter.stop();
     }

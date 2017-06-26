@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.rules;
+package org.thingsboard.server.extensions.api.device;
 
-import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.id.RuleId;
-import org.thingsboard.server.extensions.api.device.DeviceAttributes;
-import org.thingsboard.server.extensions.api.device.DeviceMetaData;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
 
-import java.util.Optional;
+/**
+ * Contains basic device metadata;
+ *
+ * @author ashvayka
+ */
+@Data
+public final class DeviceMetaData {
 
-public interface RuleContext {
-
-    RuleId getRuleId();
-
-    DeviceMetaData getDeviceMetaData();
-
-    Event save(Event event);
-
-    Optional<Event> saveIfNotExists(Event event);
-
-    Optional<Event> findEvent(String eventType, String eventUid);
+    final DeviceId deviceId;
+    final String deviceName;
+    final String deviceType;
+    final DeviceAttributes deviceAttributes;
 
 }
