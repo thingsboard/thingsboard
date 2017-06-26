@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.timeseries;
 
 import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.annotation.SqlDao;
 import org.thingsboard.server.dao.model.sql.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sql.TsKvLatestEntity;
@@ -26,5 +27,5 @@ import java.util.UUID;
 @SqlDao
 public interface TsKvLatestRepository extends CrudRepository<TsKvLatestEntity, TsKvLatestCompositeKey> {
 
-    List<TsKvLatestEntity> findAllByEntityTypeAndEntityId(String entityType, UUID entityId);
+    List<TsKvLatestEntity> findAllByEntityTypeAndEntityId(EntityType entityType, UUID entityId);
 }

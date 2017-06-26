@@ -46,7 +46,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey) {
         AttributeKvCompositeKey compositeKey =
                 new AttributeKvCompositeKey(
-                        entityId.getEntityType().name(),
+                        entityId.getEntityType(),
                         entityId.getId(),
                         attributeType,
                         attributeKey);
@@ -61,7 +61,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                         .stream()
                         .map(attributeKey ->
                                 new AttributeKvCompositeKey(
-                                        entityId.getEntityType().name(),
+                                        entityId.getEntityType(),
                                         entityId.getId(),
                                         attributeType,
                                         attributeKey))
@@ -75,7 +75,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         return service.submit(() ->
                 DaoUtil.convertDataList(Lists.newArrayList(
                         attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
-                                entityId.getEntityType().name(),
+                                entityId.getEntityType(),
                                 entityId.getId(),
                                 attributeType))));
     }

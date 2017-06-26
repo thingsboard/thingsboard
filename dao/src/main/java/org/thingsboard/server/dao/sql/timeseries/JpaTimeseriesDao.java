@@ -173,7 +173,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         return service.submit(() ->
                 DaoUtil.convertDataList(Lists.newArrayList(
                         tsKvLatestRepository.findAllByEntityTypeAndEntityId(
-                                entityId.getEntityType().name(),
+                                entityId.getEntityType(),
                                 entityId.getId()))));
     }
 
