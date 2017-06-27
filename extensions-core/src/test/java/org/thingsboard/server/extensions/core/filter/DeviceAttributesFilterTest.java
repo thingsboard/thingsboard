@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package org.thingsboard.server.extensions.core.filter;
-С
+
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
