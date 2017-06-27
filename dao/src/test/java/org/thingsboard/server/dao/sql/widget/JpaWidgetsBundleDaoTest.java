@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**
  * Created by Valerii Sosliuk on 4/23/2017.
@@ -160,6 +161,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
             widgetsBundle.setAlias(prefix + i);
             widgetsBundle.setTitle(prefix + i);
+            widgetsBundle.setTenantId(new TenantId(NULL_UUID));
             widgetsBundle.setId(new WidgetsBundleId(UUIDs.timeBased()));
             widgetsBundleDao.save(widgetsBundle);
         }

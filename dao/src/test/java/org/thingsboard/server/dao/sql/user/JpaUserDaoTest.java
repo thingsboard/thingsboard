@@ -132,10 +132,10 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         UUID id = UUIDs.timeBased();
         user.setId(new UserId(id));
         user.setTenantId(new TenantId(tenantId));
-        if (customerId == null) {
+        user.setCustomerId(new CustomerId(customerId));
+        if (customerId == NULL_UUID) {
             user.setAuthority(Authority.TENANT_ADMIN);
         } else {
-            user.setCustomerId(new CustomerId(customerId));
             user.setAuthority(Authority.CUSTOMER_USER);
         }
         String idString = id.toString();
