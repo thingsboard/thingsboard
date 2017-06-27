@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao;
 
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
@@ -25,17 +24,9 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.service.*Test"
+        "org.thingsboard.server.dao.service.*ServiceSqlTest"
 })
-public class DaoServiceTestSuite {
-
-    @ClassRule
-    public static CustomCassandraCQLUnit cassandraUnit =
-            new CustomCassandraCQLUnit(
-                    Arrays.asList(new ClassPathCQLDataSet("cassandra/schema.cql", false, false),
-                            new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
-                            new ClassPathCQLDataSet("system-test.cql", false, false)),
-                    "cassandra-test.yaml", 30000L);
+public class SqlDaoServiceTestSuite {
 
     @ClassRule
     public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
