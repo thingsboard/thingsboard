@@ -11,4 +11,4 @@ build:
 
 push: build
 	docker push ${PROJECT}/${APP}:${VERSION}
-    docker push ${PROJECT}/${APP}:latest
+	docker push ${PROJECT}/${APP}:latest

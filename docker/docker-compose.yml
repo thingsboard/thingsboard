@@ -25,7 +25,7 @@ services:
       - "5683:5683/udp"
     env_file:
       - tb.env
-    entrypoint: ./run-application.sh
+    entrypoint: /run-application.sh
   tb-cassandra-schema:
     image: "thingsboard/tb-cassandra-schema:1.2.4"
     environment:
@@ -33,7 +33,7 @@ services:
       - ADD_SYSTEM_DATA=${ADD_SYSTEM_DATA}
       - ADD_DEMO_DATA=${ADD_DEMO_DATA}
       - CASSANDRA_URL=${CASSANDRA_URL}
-    entrypoint: ./install-schema.sh
+    entrypoint: /install-schema.sh
   cassandra:
     image: "cassandra:3.9"
     ports:
