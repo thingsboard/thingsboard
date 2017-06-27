@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service.rule.sql;
 
-import org.thingsboard.server.dao.service.DaoServiceSqlTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.service.rule.BaseRuleServiceTest;
 
-@DaoServiceSqlTest
+@DaoSqlTest
 public class RuleServiceSqlTest extends BaseRuleServiceTest {
 }

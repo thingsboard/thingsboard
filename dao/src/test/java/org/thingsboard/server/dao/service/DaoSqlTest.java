@@ -24,5 +24,5 @@ import java.lang.annotation.*;
 @Inherited
 @Documented
 @TestPropertySource(locations = {"classpath:application-test.properties", "classpath:sql-test.properties"})
-public @interface DaoServiceSqlTest {
+public @interface DaoSqlTest {
 }

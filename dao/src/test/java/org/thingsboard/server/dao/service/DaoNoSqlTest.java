@@ -24,5 +24,5 @@ import java.lang.annotation.*;
 @Inherited
 @Documented
 @TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:application-test.properties", "classpath:nosql-test.properties"})
-public @interface DaoServiceNoSqlTest {
+public @interface DaoNoSqlTest {
 }

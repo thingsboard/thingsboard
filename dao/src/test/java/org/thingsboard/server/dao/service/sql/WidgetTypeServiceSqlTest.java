@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service.sql;
 
-import org.thingsboard.server.dao.service.DaoServiceSqlTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.service.BaseWidgetTypeServiceTest;
 
-@DaoServiceSqlTest
+@DaoSqlTest
 public class WidgetTypeServiceSqlTest extends BaseWidgetTypeServiceTest {
 }

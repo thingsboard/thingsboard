@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service.sql;
 
-import org.thingsboard.server.dao.service.DaoServiceSqlTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.service.BaseTenantServiceTest;
 
-@DaoServiceSqlTest
+@DaoSqlTest
 public class TenantServiceSqlTest extends BaseTenantServiceTest {
 }

@@ -71,7 +71,6 @@
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
         <bouncycastle.version>1.56</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
-        <h2.version>1.4.194</h2.version>
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
         <postgresql.driver.version>9.4.1211</postgresql.driver.version>
@@ -740,12 +739,6 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk15on</artifactId>
                 <version>${bouncycastle.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.h2database</groupId>
-                <artifactId>h2</artifactId>
-                <version>${h2.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>ru.yandex.qatools.embed</groupId>

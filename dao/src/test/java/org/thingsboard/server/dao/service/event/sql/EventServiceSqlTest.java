@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service.event.sql;
 
-import org.thingsboard.server.dao.service.DaoServiceSqlTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.service.event.BaseEventServiceTest;
 
-@DaoServiceSqlTest
+@DaoSqlTest
 public class EventServiceSqlTest extends BaseEventServiceTest {
 }

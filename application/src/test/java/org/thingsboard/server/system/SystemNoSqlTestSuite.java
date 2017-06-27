@@ -27,8 +27,8 @@ import java.util.Arrays;
  * @author Andrew Shvayka
  */
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.system.*Test"})
-public class SystemTestSuite {
+@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.system.*NoSqlTest"})
+public class SystemNoSqlTestSuite {
 
     @ClassRule
     public static CustomCassandraCQLUnit cassandraUnit =

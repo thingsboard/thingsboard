@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author Andrew Shvayka
  */
-public class HttpDeviceApiTest extends AbstractControllerTest {
+public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
     private static final AtomicInteger idSeq = new AtomicInteger(new Random(System.currentTimeMillis()).nextInt());
 

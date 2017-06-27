@@ -30,7 +30,9 @@ public abstract class DaoUtil {
         if (toDataList != null && !toDataList.isEmpty()) {
             list = new ArrayList<>();
             for (ToData<T> object : toDataList) {
-                list.add(object.toData());
+                if (object != null) {
+                    list.add(object.toData());
+                }
             }
         }
         return list;

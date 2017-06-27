@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service.nosql;
 
-import org.thingsboard.server.dao.service.DaoServiceNoSqlTest;
+import org.thingsboard.server.dao.service.DaoNoSqlTest;
 import org.thingsboard.server.dao.service.BaseDeviceCredentialsServiceTest;
 
-@DaoServiceNoSqlTest
+@DaoNoSqlTest
 public class DeviceCredentialServiceNoSqlTest extends BaseDeviceCredentialsServiceTest {
 }

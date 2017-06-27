@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.service.nosql;
 
-import org.thingsboard.server.dao.service.DaoServiceNoSqlTest;
+import org.thingsboard.server.dao.service.DaoNoSqlTest;
 import org.thingsboard.server.dao.service.BaseDashboardServiceTest;
 
-@DaoServiceNoSqlTest
+@DaoNoSqlTest
 public class DashboardServiceNoSqlTest extends BaseDashboardServiceTest {
 }
