@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
+import static org.thingsboard.server.common.data.DataConstants.ALARM;
 import static org.thingsboard.server.common.data.DataConstants.STATS;
 
 /**
@@ -50,7 +51,6 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     private EventDao eventDao;
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void testSaveIfNotExists() {
         UUID eventId = UUIDs.timeBased();
         UUID tenantId = UUIDs.timeBased();
@@ -58,7 +58,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         Event event = getEvent(eventId, tenantId, entityId);
         Optional<Event> optEvent1 = eventDao.saveIfNotExists(event);
         assertTrue("Optional is expected to be non-empty", optEvent1.isPresent());
-        assertEquals(optEvent1.get(), event);
+        assertEquals(event, optEvent1.get());
         Optional<Event> optEvent2 = eventDao.saveIfNotExists(event);
         assertFalse("Optional is expected to be empty", optEvent2.isPresent());
     }
@@ -77,16 +77,12 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
     public void findEventsByEntityIdAndPageLink() {
         UUID tenantId = UUIDs.timeBased();
         UUID entityId1 = UUIDs.timeBased();
         UUID entityId2 = UUIDs.timeBased();
         long startTime = System.currentTimeMillis();
         long endTime = createEventsTwoEntities(tenantId, entityId1, entityId2, startTime, 20);
-        List<Event> allEvents = eventDao.find();
-
-        assertEquals(20, allEvents.size());
 
         TimePageLink pageLink1 = new TimePageLink(30, null, null, true);
         List<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), pageLink1);
@@ -111,31 +107,65 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     }
 
-    private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
-        // Generate #count events for two entities with timestamps from an hour ago till now
+    @Test
+    public void findEventsByEntityIdAndEventTypeAndPageLink() {
+        UUID tenantId = UUIDs.timeBased();
+        UUID entityId1 = UUIDs.timeBased();
+        UUID entityId2 = UUIDs.timeBased();
+        long startTime = System.currentTimeMillis();
+        long endTime = createEventsTwoEntitiesTwoTypes(tenantId, entityId1, entityId2, startTime, 20);
 
-        // Distribute events uniformly
-        long step = HOUR_MILLISECONDS / count;
-        long timestamp = startTime;
+        TimePageLink pageLink1 = new TimePageLink(30, null, null, true);
+        List<Event> events1 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink1);
+        assertEquals(5, events1.size());
+
+        TimePageLink pageLink2 = new TimePageLink(30, startTime, null, true);
+        List<Event> events2 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink2);
+        assertEquals(5, events2.size());
+
+        TimePageLink pageLink3 = new TimePageLink(30, startTime, endTime, true);
+        List<Event> events3 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink3);
+        assertEquals(5, events3.size());
+
+        TimePageLink pageLink4 = new TimePageLink(4, startTime, endTime, true);
+        List<Event> events4 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink4);
+        assertEquals(4, events4.size());
+
+        UUID idOffset = events3.get(2).getId().getId();
+        TimePageLink pageLink5 = new TimePageLink(10, startTime, endTime, true, idOffset);
+        List<Event> events5 = eventDao.findEvents(tenantId, new DeviceId(entityId1), ALARM, pageLink5);
+        assertEquals(2, events5.size());
+    }
+
+    private long createEventsTwoEntitiesTwoTypes(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
         for (int i = 0; i < count / 2; i++) {
-            //UUID eventId1 = UUIDs.startOf(timestamp);
+            String type = i % 2 == 0 ? STATS : ALARM;
             UUID eventId1 = UUIDs.timeBased();
-            Event event1 = getEvent(eventId1, tenantId, entityId1);
+            Event event1 = getEvent(eventId1, tenantId, entityId1, type);
             eventDao.save(event1);
-            timestamp += step;
-            //UUID eventId2 = UUIDs.startOf(timestamp);
             UUID eventId2 = UUIDs.timeBased();
-            Event event2 = getEvent(eventId2, tenantId, entityId2);
+            Event event2 = getEvent(eventId2, tenantId, entityId2, type);
             eventDao.save(event2);
-            timestamp += step;
         }
         return System.currentTimeMillis();
     }
 
-    @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
-    public void findEventsByEntityIdAndEventTypeAndPageLink() {
+    private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
+        for (int i = 0; i < count / 2; i++) {
+            UUID eventId1 = UUIDs.timeBased();
+            Event event1 = getEvent(eventId1, tenantId, entityId1);
+            eventDao.save(event1);
+            UUID eventId2 = UUIDs.timeBased();
+            Event event2 = getEvent(eventId2, tenantId, entityId2);
+            eventDao.save(event2);
+        }
+        return System.currentTimeMillis();
+    }
 
+    private Event getEvent(UUID eventId, UUID tenantId, UUID entityId, String type) {
+        Event event = getEvent(eventId, tenantId, entityId);
+        event.setType(type);
+        return event;
     }
 
     private Event getEvent(UUID eventId, UUID tenantId, UUID entityId) {
@@ -144,7 +174,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         event.setTenantId(new TenantId(tenantId));
         EntityId deviceId = new DeviceId(entityId);
         event.setEntityId(deviceId);
-        event.setUid(entityId.toString());
+        event.setUid(event.getId().getId().toString());
         event.setType(STATS);
         ObjectMapper mapper = new ObjectMapper();
         try {
