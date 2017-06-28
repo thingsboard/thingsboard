@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -31,10 +32,8 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
-import org.thingsboard.server.dao.entity.BaseEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.*;
 import org.thingsboard.server.dao.relation.EntityRelationsQuery;
 import org.thingsboard.server.dao.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -53,8 +52,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.DaoUtil.*;
-import static org.thingsboard.server.dao.service.Validator.*;
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
@@ -115,7 +113,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private Alarm createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
         log.debug("New Alarm : {}", alarm);
-        Alarm saved = getData(alarmDao.save(new AlarmEntity(alarm)));
+        Alarm saved = alarmDao.save(alarm);
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(saved.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
         List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
@@ -144,11 +142,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private Alarm updateAlarm(Alarm oldAlarm, Alarm newAlarm) {
         AlarmStatus oldStatus = oldAlarm.getStatus();
         AlarmStatus newStatus = newAlarm.getStatus();
-        AlarmEntity result = alarmDao.save(new AlarmEntity(merge(oldAlarm, newAlarm)));
+        Alarm result = alarmDao.save(merge(oldAlarm, newAlarm));
         if (oldStatus != newStatus) {
             updateRelations(oldAlarm, oldStatus, newStatus);
         }
-        return result.toData();
+        return result;
     }
 
     @Override
@@ -164,7 +162,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     AlarmStatus newStatus = oldStatus.isCleared() ? AlarmStatus.CLEARED_ACK : AlarmStatus.ACTIVE_ACK;
                     alarm.setStatus(newStatus);
                     alarm.setAckTs(ackTime);
-                    alarmDao.save(new AlarmEntity(alarm));
+                    alarmDao.save(alarm);
                     updateRelations(alarm, oldStatus, newStatus);
                     return true;
                 }
@@ -185,7 +183,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
                     alarm.setStatus(newStatus);
                     alarm.setClearTs(clearTime);
-                    alarmDao.save(new AlarmEntity(alarm));
+                    alarmDao.save(alarm);
                     updateRelations(alarm, oldStatus, newStatus);
                     return true;
                 }
@@ -387,7 +385,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     if (alarm.getTenantId() == null) {
                         throw new DataValidationException("Alarm should be assigned to tenant!");
                     } else {
-                        TenantEntity tenant = tenantDao.findById(alarm.getTenantId().getId());
+                        Tenant tenant = tenantDao.findById(alarm.getTenantId().getId());
                         if (tenant == null) {
                             throw new DataValidationException("Alarm is referencing to non-existent tenant!");
                         }

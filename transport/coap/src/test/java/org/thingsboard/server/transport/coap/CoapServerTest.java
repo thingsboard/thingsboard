@@ -20,6 +20,16 @@ import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -37,21 +47,7 @@ import org.thingsboard.server.common.msg.core.BasicRequest;
 import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
 import org.thingsboard.server.common.msg.kv.BasicAttributeKVMsg;
 import org.thingsboard.server.common.msg.session.*;
-import org.thingsboard.server.common.msg.session.ex.SessionAuthException;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.thingsboard.server.common.transport.auth.DeviceAuthResult;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 
@@ -60,8 +56,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration
+@RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @Slf4j
 public class CoapServerTest {
@@ -70,7 +65,6 @@ public class CoapServerTest {
     private static final String TELEMETRY_POST_MESSAGE = "[{\"key1\":\"value1\"}]";
     private static final String TEST_ATTRIBUTES_RESPONSE = "{\"key1\":\"value1\",\"key2\":42}";
     private static final String DEVICE1_TOKEN = "Device1Token";
-    private static final String DEVICE2_TOKEN = "Device2Token";
 
     @Configuration
     public static class EchoCoapServerITConfiguration extends CoapServerTestConfiguration {

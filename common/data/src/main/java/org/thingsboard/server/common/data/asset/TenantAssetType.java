@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.asset;
 
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.UUID;
+
 public class TenantAssetType {
 
     private static final long serialVersionUID = 8057290243855622101L;
@@ -31,6 +33,11 @@ public class TenantAssetType {
     public TenantAssetType(String type, TenantId tenantId) {
         this.type = type;
         this.tenantId = tenantId;
+    }
+
+    public TenantAssetType(String type, UUID tenantId) {
+        this.type = type;
+        this.tenantId = new TenantId(tenantId);
     }
 
     public String getType() {

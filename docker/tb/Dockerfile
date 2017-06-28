@@ -16,9 +16,7 @@
 
 FROM openjdk:8-jre
 
-ADD run-application.sh /root/run-application.sh
-ADD thingsboard.deb /root/thingsboard.deb
+ADD run-application.sh /run-application.sh
+ADD thingsboard.deb /thingsboard.deb
 
-RUN chmod +x /root/run-application.sh
-
-WORKDIR /root
+RUN chmod +x /run-application.sh

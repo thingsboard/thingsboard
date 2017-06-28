@@ -17,9 +17,8 @@ package org.thingsboard.server.dao.settings;
 
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.AdminSettingsEntity;
 
-public interface AdminSettingsDao extends Dao<AdminSettingsEntity> {
+public interface AdminSettingsDao extends Dao<AdminSettings> {
 
     /**
      * Save or update admin settings object
@@ -27,7 +26,7 @@ public interface AdminSettingsDao extends Dao<AdminSettingsEntity> {
      * @param adminSettings the admin settings object
      * @return saved admin settings object
      */
-    AdminSettingsEntity save(AdminSettings adminSettings);
+    AdminSettings save(AdminSettings adminSettings);
     
     /**
      * Find admin settings by key.
@@ -35,6 +34,6 @@ public interface AdminSettingsDao extends Dao<AdminSettingsEntity> {
      * @param key the key
      * @return the admin settings object
      */
-    AdminSettingsEntity findByKey(String key);
+    AdminSettings findByKey(String key);
 
 }

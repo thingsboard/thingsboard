@@ -15,21 +15,17 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.Dao;
+
 import java.util.List;
 import java.util.UUID;
 
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.DashboardEntity;
-import org.thingsboard.server.dao.model.DashboardInfoEntity;
-
 /**
  * The Interface DashboardInfoDao.
- *
- * @param <T> the generic type
  */
-public interface DashboardInfoDao extends Dao<DashboardInfoEntity> {
+public interface DashboardInfoDao extends Dao<DashboardInfo> {
 
     /**
      * Find dashboards by tenantId and page link.
@@ -38,7 +34,7 @@ public interface DashboardInfoDao extends Dao<DashboardInfoEntity> {
      * @param pageLink the page link
      * @return the list of dashboard objects
      */
-    List<DashboardInfoEntity> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink);
+    List<DashboardInfo> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
      * Find dashboards by tenantId, customerId and page link.
@@ -48,6 +44,6 @@ public interface DashboardInfoDao extends Dao<DashboardInfoEntity> {
      * @param pageLink the page link
      * @return the list of dashboard objects
      */
-    List<DashboardInfoEntity> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
+    List<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
 
 }

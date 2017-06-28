@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.AlarmEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,13 +29,13 @@ import java.util.UUID;
 /**
  * Created by ashvayka on 11.05.17.
  */
-public interface AlarmDao extends Dao<AlarmEntity> {
+public interface AlarmDao extends Dao<Alarm> {
 
     ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(UUID key);
 
-    AlarmEntity save(Alarm alarm);
+    Alarm save(Alarm alarm);
 
     ListenableFuture<List<AlarmInfo>> findAlarms(AlarmQuery query);
 }

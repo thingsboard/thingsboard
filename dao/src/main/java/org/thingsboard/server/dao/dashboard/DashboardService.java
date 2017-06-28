@@ -26,28 +26,28 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 
 public interface DashboardService {
     
-    public Dashboard findDashboardById(DashboardId dashboardId);
+    Dashboard findDashboardById(DashboardId dashboardId);
 
-    public ListenableFuture<Dashboard> findDashboardByIdAsync(DashboardId dashboardId);
+    ListenableFuture<Dashboard> findDashboardByIdAsync(DashboardId dashboardId);
 
-    public DashboardInfo findDashboardInfoById(DashboardId dashboardId);
+    DashboardInfo findDashboardInfoById(DashboardId dashboardId);
 
-    public ListenableFuture<DashboardInfo> findDashboardInfoByIdAsync(DashboardId dashboardId);
+    ListenableFuture<DashboardInfo> findDashboardInfoByIdAsync(DashboardId dashboardId);
 
-    public Dashboard saveDashboard(Dashboard dashboard);
-    
-    public Dashboard assignDashboardToCustomer(DashboardId dashboardId, CustomerId customerId);
+    Dashboard saveDashboard(Dashboard dashboard);
 
-    public Dashboard unassignDashboardFromCustomer(DashboardId dashboardId);
+    Dashboard assignDashboardToCustomer(DashboardId dashboardId, CustomerId customerId);
 
-    public void deleteDashboard(DashboardId dashboardId);
-    
-    public TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
+    Dashboard unassignDashboardFromCustomer(DashboardId dashboardId);
 
-    public void deleteDashboardsByTenantId(TenantId tenantId);
-    
-    public TextPageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+    void deleteDashboard(DashboardId dashboardId);
 
-    public void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
-    
+    TextPageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, TextPageLink pageLink);
+
+    void deleteDashboardsByTenantId(TenantId tenantId);
+
+    TextPageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
+
 }

@@ -15,35 +15,20 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -67,67 +52,47 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> findLatest(EntityId entityId, Collection<String> keys) {
+    public ListenableFuture<List<TsKvEntry>> findLatest(EntityId entityId, Collection<String> keys) {
         validate(entityId);
-        List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(keys.size());
+        List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(keys.size());
         keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
         keys.forEach(key -> futures.add(timeseriesDao.findLatest(entityId, key)));
         return Futures.allAsList(futures);
     }
 
     @Override
-    public ResultSetFuture findAllLatest(EntityId entityId) {
+    public ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId) {
         validate(entityId);
         return timeseriesDao.findAllLatest(entityId);
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> save(EntityId entityId, TsKvEntry tsKvEntry) {
+    public ListenableFuture<List<Void>> save(EntityId entityId, TsKvEntry tsKvEntry) {
         validate(entityId);
         if (tsKvEntry == null) {
             throw new IncorrectParameterException("Key value entry can't be null");
         }
-        long partitionTs = timeseriesDao.toPartitionTs(tsKvEntry.getTs());
-
-        List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
-        saveAndRegisterFutures(futures, entityId, tsKvEntry, partitionTs, 0L);
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
+        saveAndRegisterFutures(futures, entityId, tsKvEntry, 0L);
         return Futures.allAsList(futures);
     }
 
     @Override
-    public ListenableFuture<List<ResultSet>> save(EntityId entityId, List<TsKvEntry> tsKvEntries) {
-        return save(entityId, tsKvEntries, 0L);
-    }
-
-    @Override
-    public ListenableFuture<List<ResultSet>> save(EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
-        validate(entityId);
-        List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size() * INSERTS_PER_ENTRY);
+    public ListenableFuture<List<Void>> save(EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size() * INSERTS_PER_ENTRY);
         for (TsKvEntry tsKvEntry : tsKvEntries) {
             if (tsKvEntry == null) {
                 throw new IncorrectParameterException("Key value entry can't be null");
             }
-            long partitionTs = timeseriesDao.toPartitionTs(tsKvEntry.getTs());
-            saveAndRegisterFutures(futures, entityId, tsKvEntry, partitionTs, ttl);
+            saveAndRegisterFutures(futures, entityId, tsKvEntry, ttl);
         }
         return Futures.allAsList(futures);
     }
 
-
-    @Override
-    public TsKvEntry convertResultToTsKvEntry(Row row) {
-        return timeseriesDao.convertResultToTsKvEntry(row);
-    }
-
-    @Override
-    public List<TsKvEntry> convertResultSetToTsKvEntryList(ResultSet rs) {
-        return timeseriesDao.convertResultToTsKvEntryList(rs.all());
-    }
-
-    private void saveAndRegisterFutures(List<ResultSetFuture> futures, EntityId entityId, TsKvEntry tsKvEntry, long partitionTs, long ttl) {
-        futures.add(timeseriesDao.savePartition(entityId, partitionTs, tsKvEntry.getKey(), ttl));
+    private void saveAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        futures.add(timeseriesDao.savePartition(entityId, tsKvEntry.getTs(), tsKvEntry.getKey(), ttl));
         futures.add(timeseriesDao.saveLatest(entityId, tsKvEntry));
-        futures.add(timeseriesDao.save(entityId, partitionTs, tsKvEntry, ttl));
+        futures.add(timeseriesDao.save(entityId, tsKvEntry, ttl));
     }
 
     private static void validate(EntityId entityId) {

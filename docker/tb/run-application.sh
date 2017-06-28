@@ -16,7 +16,7 @@
 #
 
 
-dpkg -i /root/thingsboard.deb
+dpkg -i /thingsboard.deb
 
 reachable=0
 while [ $reachable -eq 0 ];

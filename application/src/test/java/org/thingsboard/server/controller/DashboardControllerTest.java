@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.datastax.driver.core.utils.UUIDs;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -35,7 +36,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 public class DashboardControllerTest extends AbstractControllerTest {
@@ -155,7 +155,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         dashboard.setTitle("My dashboard");
         Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
         
-        doPost("/api/customer/" + UUIDs.timeBased().toString() 
+        doPost("/api/customer/" + UUIDs.timeBased().toString()
                 + "/dashboard/" + savedDashboard.getId().getId().toString())
         .andExpect(status().isNotFound());
     }

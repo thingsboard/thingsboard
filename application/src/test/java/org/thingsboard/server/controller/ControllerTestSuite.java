@@ -18,22 +18,22 @@ package org.thingsboard.server.controller;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
 import org.junit.runner.RunWith;
 import org.thingsboard.server.dao.CustomCassandraCQLUnit;
 
 import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
-@ClassnameFilters({"org.thingsboard.server.controller.*Test"})
+@ClasspathSuite.ClassnameFilters({
+        "org.thingsboard.server.controller.*Test"})
 public class ControllerTestSuite {
 
     @ClassRule
     public static CustomCassandraCQLUnit cassandraUnit =
-            new CustomCassandraCQLUnit(Arrays.asList(
-                                         new ClassPathCQLDataSet("schema.cql", false, false),
-                                         new ClassPathCQLDataSet("system-data.cql", false, false),
-                                         new ClassPathCQLDataSet("system-test.cql", false, false)),
+            new CustomCassandraCQLUnit(
+                    Arrays.asList(
+                            new ClassPathCQLDataSet("cassandra/schema.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
+                            new ClassPathCQLDataSet("system-test.cql", false, false)),
                     "cassandra-test.yaml", 30000l);
-
 }

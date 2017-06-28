@@ -15,19 +15,13 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Andrew Shvayka
@@ -36,18 +30,11 @@ public interface TimeseriesService {
 
     ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<TsKvQuery> queries);
 
-    ListenableFuture<List<ResultSet>> findLatest(EntityId entityId, Collection<String> keys);
+    ListenableFuture<List<TsKvEntry>> findLatest(EntityId entityId, Collection<String> keys);
 
-    ResultSetFuture findAllLatest(EntityId entityId);
+    ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId);
 
-    ListenableFuture<List<ResultSet>> save(EntityId entityId, TsKvEntry tsKvEntry);
+    ListenableFuture<List<Void>> save(EntityId entityId, TsKvEntry tsKvEntry);
 
-    ListenableFuture<List<ResultSet>> save(EntityId entityId, List<TsKvEntry> tsKvEntry);
-
-    ListenableFuture<List<ResultSet>> save(EntityId entityId, List<TsKvEntry> tsKvEntry, long ttl);
-
-    TsKvEntry convertResultToTsKvEntry(Row row);
-
-    List<TsKvEntry> convertResultSetToTsKvEntryList(ResultSet rs);
-
+    ListenableFuture<List<Void>> save(EntityId entityId, List<TsKvEntry> tsKvEntry, long ttl);
 }

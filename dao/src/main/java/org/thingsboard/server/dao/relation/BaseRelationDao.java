@@ -19,8 +19,6 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,26 +28,26 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.AbstractAsyncDao;
-import org.thingsboard.server.dao.AbstractSearchTimeDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTimeDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.type.RelationTypeGroupCodec;
 
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static org.thingsboard.server.dao.model.ModelConstants.RELATION_COLUMN_FAMILY_NAME;
 
 /**
  * Created by ashvayka on 25.04.17.
  */
 @Component
 @Slf4j
-public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
+@NoSqlDao
+public class BaseRelationDao extends CassandraAbstractAsyncDao implements RelationDao {
 
     private static final String SELECT_COLUMNS = "SELECT " +
             ModelConstants.RELATION_FROM_ID_PROPERTY + "," +
@@ -172,7 +170,7 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
-        Select.Where query = AbstractSearchTimeDao.buildQuery(ModelConstants.RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME,
+        Select.Where query = CassandraAbstractSearchTimeDao.buildQuery(ModelConstants.RELATION_BY_TYPE_AND_CHILD_TYPE_VIEW_NAME,
                 Arrays.asList(eq(ModelConstants.RELATION_FROM_ID_PROPERTY, from.getId()),
                         eq(ModelConstants.RELATION_FROM_TYPE_PROPERTY, from.getEntityType().name()),
                         eq(ModelConstants.RELATION_TYPE_GROUP_PROPERTY, typeGroup.name()),
@@ -187,7 +185,7 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
                                 QueryBuilder.asc(ModelConstants.RELATION_TO_TYPE_PROPERTY)
                 ),
                 pageLink, ModelConstants.RELATION_TO_ID_PROPERTY);
-        return getFuture(executeAsyncRead(query), rs -> getEntityRelations(rs));
+        return getFuture(executeAsyncRead(query), this::getEntityRelations);
     }
 
     private PreparedStatement getSaveStmt() {
@@ -300,16 +298,6 @@ public class BaseRelationDao extends AbstractAsyncDao implements RelationDao {
 
     private ListenableFuture<Boolean> getBooleanListenableFuture(ResultSetFuture rsFuture) {
         return getFuture(rsFuture, rs -> rs != null ? rs.wasApplied() : false);
-    }
-
-    private <T> ListenableFuture<T> getFuture(ResultSetFuture future, java.util.function.Function<ResultSet, T> transformer) {
-        return Futures.transform(future, new Function<ResultSet, T>() {
-            @Nullable
-            @Override
-            public T apply(@Nullable ResultSet input) {
-                return transformer.apply(input);
-            }
-        }, readResultsProcessingExecutor);
     }
 
     private List<EntityRelation> getEntityRelations(ResultSet rs) {

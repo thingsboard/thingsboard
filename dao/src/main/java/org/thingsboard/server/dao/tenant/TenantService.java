@@ -34,5 +34,4 @@ public interface TenantService {
     TextPageData<Tenant> findTenants(TextPageLink pageLink);
     
     void deleteTenants();
-    
 }

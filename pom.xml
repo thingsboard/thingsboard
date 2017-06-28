@@ -71,6 +71,9 @@
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
         <bouncycastle.version>1.56</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
+        <dbunit.version>2.5.3</dbunit.version>
+        <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
+        <postgresql.driver.version>9.4.1211</postgresql.driver.version>
     </properties>
 
     <modules>
@@ -412,6 +415,16 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.driver.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
                 <version>${spring.version}</version>
@@ -438,6 +451,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>com.github.springtestdbunit</groupId>
+                <artifactId>spring-test-dbunit</artifactId>
+                <version>${spring-test-dbunit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>${jjwt.version}</version>
@@ -460,6 +479,14 @@
                     <exclusion>
                         <groupId>javax.servlet</groupId>
                         <artifactId>servlet-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>dom4j</groupId>
+                        <artifactId>dom4j</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>antlr</groupId>
+                        <artifactId>antlr</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -636,6 +663,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>org.dbunit</groupId>
+                <artifactId>dbunit</artifactId>
+                <version>${dbunit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-all</artifactId>
                 <version>${mockito.version}</version>
@@ -706,6 +739,12 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcpkix-jdk15on</artifactId>
                 <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ru.yandex.qatools.embed</groupId>
+                <artifactId>postgresql-embedded</artifactId>
+                <version>2.2</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.sun.winsw</groupId>

@@ -28,14 +28,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.IntegrationTest;
-import org.springframework.boot.test.SpringApplicationContextLoader;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.context.SpringBootContextLoader;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -48,7 +43,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -66,11 +61,9 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
-import org.thingsboard.server.exception.ThingsboardException;
-import org.thingsboard.server.service.mail.MailService;
 import org.thingsboard.server.service.mail.TestMailService;
-import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
+import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -81,21 +74,18 @@ import java.util.List;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @ActiveProfiles("test")
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes=AbstractControllerTest.class, loader=SpringApplicationContextLoader.class)
-@TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:thingsboard-test.properties"})
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = AbstractControllerTest.class, loader = SpringBootContextLoader.class)
+@TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:application-test.properties", "classpath:nosql-test.properties"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
-@EnableAutoConfiguration
 @ComponentScan({"org.thingsboard.server"})
 @WebAppConfiguration
-@IntegrationTest("server.port:0")
+@SpringBootTest
 public abstract class AbstractControllerTest {
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
@@ -113,7 +103,6 @@ public abstract class AbstractControllerTest {
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
-    
     protected MockMvc mockMvc;
     
     protected String token;
@@ -305,7 +294,7 @@ public abstract class AbstractControllerTest {
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
-    
+
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doDelete(urlTemplate, params).andExpect(status().isOk()), responseClass);
     }
@@ -364,8 +353,8 @@ public abstract class AbstractControllerTest {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readerFor(type).readValue(content);
     }
-     
-    class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
+
+    public class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());

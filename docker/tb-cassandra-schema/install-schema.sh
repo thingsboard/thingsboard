@@ -24,7 +24,7 @@ done
 
 if [ "$CREATE_SCHEMA" == "true" ]; then
     echo "Creating 'Thingsboard' keyspace..."
-    cqlsh $CASSANDRA_URL -f /root/schema.cql
+    cqlsh $CASSANDRA_URL -f /schema.cql
     if [ "$?" -eq 0 ]; then
         echo "'Thingsboard' keyspace was successfully created!"
     else
@@ -34,7 +34,7 @@ fi
 
 if [ "$ADD_SYSTEM_DATA" == "true" ]; then
     echo "Adding system data..."
-    cqlsh $CASSANDRA_URL -f /root/system-data.cql
+    cqlsh $CASSANDRA_URL -f /system-data.cql
     if [ "$?" -eq 0 ]; then
         echo "System data was successfully added!"
     else
@@ -44,7 +44,7 @@ fi
 
 if [ "$ADD_DEMO_DATA" == "true" ]; then
     echo "Adding demo data..."
-    cqlsh $CASSANDRA_URL -f /root/demo-data.cql
+    cqlsh $CASSANDRA_URL -f /demo-data.cql
     if [ "$?" -eq 0 ]; then
         echo "Demo data was successfully added!"
     else

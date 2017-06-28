@@ -27,13 +27,13 @@ public interface CustomerService {
     Customer findCustomerById(CustomerId customerId);
 
     ListenableFuture<Customer> findCustomerByIdAsync(CustomerId customerId);
-    
+
     Customer saveCustomer(Customer customer);
     
     void deleteCustomer(CustomerId customerId);
 
     Customer findOrCreatePublicCustomer(TenantId tenantId);
-    
+
     TextPageData<Customer> findCustomersByTenantId(TenantId tenantId, TextPageLink pageLink);
     
     void deleteCustomersByTenantId(TenantId tenantId);

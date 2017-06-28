@@ -15,19 +15,14 @@
  */
 package org.thingsboard.server.dao.settings;
 
-import static org.thingsboard.server.dao.DaoUtil.getData;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.AdminSettingsEntity;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
 
 @Service
@@ -41,24 +36,21 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     public AdminSettings findAdminSettingsById(AdminSettingsId adminSettingsId) {
         log.trace("Executing findAdminSettingsById [{}]", adminSettingsId);
         Validator.validateId(adminSettingsId, "Incorrect adminSettingsId " + adminSettingsId);
-        AdminSettingsEntity adminSettingsEntity = adminSettingsDao.findById(adminSettingsId.getId());
-        return getData(adminSettingsEntity);
+        return  adminSettingsDao.findById(adminSettingsId.getId());
     }
 
     @Override
     public AdminSettings findAdminSettingsByKey(String key) {
         log.trace("Executing findAdminSettingsByKey [{}]", key);
         Validator.validateString(key, "Incorrect key " + key);
-        AdminSettingsEntity adminSettingsEntity = adminSettingsDao.findByKey(key);
-        return getData(adminSettingsEntity);
+        return adminSettingsDao.findByKey(key);
     }
 
     @Override
     public AdminSettings saveAdminSettings(AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         adminSettingsValidator.validate(adminSettings);
-        AdminSettingsEntity adminSettingsEntity = adminSettingsDao.save(adminSettings);
-        return getData(adminSettingsEntity);
+        return adminSettingsDao.save(adminSettings);
     }
     
     private DataValidator<AdminSettings> adminSettingsValidator =

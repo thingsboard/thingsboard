@@ -112,7 +112,7 @@ spec:
         command:
         - sh
         - -c
-        - ./run-application.sh
+        - /run-application.sh
         livenessProbe:
           httpGet:
             path: /login

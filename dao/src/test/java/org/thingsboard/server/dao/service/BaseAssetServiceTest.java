@@ -37,7 +37,7 @@ import java.util.List;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-public class BaseAssetServiceTest extends AbstractServiceTest {
+public abstract class BaseAssetServiceTest extends AbstractServiceTest {
 
     private IdComparator<Asset> idComparator = new IdComparator<>();
 
