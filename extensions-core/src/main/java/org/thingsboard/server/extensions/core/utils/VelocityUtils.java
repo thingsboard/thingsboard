@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 import org.thingsboard.server.extensions.api.rules.RuleProcessingMetaData;
 import org.thingsboard.server.extensions.core.filter.DeviceAttributesFilter;
 
@@ -64,9 +65,11 @@ public class VelocityUtils {
         return context;
     }
 
-    public static VelocityContext createContext(DeviceAttributes deviceAttributes, FromDeviceMsg payload) {
+    public static VelocityContext createContext(DeviceMetaData deviceMetaData, FromDeviceMsg payload) {
         VelocityContext context = new VelocityContext();
         context.put("date", new DateTool());
+        DeviceAttributes deviceAttributes = deviceMetaData.getDeviceAttributes();
+
         pushAttributes(context, deviceAttributes.getClientSideAttributes(), DeviceAttributesFilter.CLIENT_SIDE);
         pushAttributes(context, deviceAttributes.getServerSideAttributes(), DeviceAttributesFilter.SERVER_SIDE);
         pushAttributes(context, deviceAttributes.getServerSidePublicAttributes(), DeviceAttributesFilter.SHARED);
@@ -76,6 +79,10 @@ public class VelocityUtils {
                 pushTsEntries(context, (TelemetryUploadRequest) payload);
                 break;
         }
+
+        context.put("deviceId", deviceMetaData.getDeviceId().getId().toString());
+        context.put("deviceName", deviceMetaData.getDeviceName());
+        context.put("deviceType", deviceMetaData.getDeviceType());
 
         return context;
     }

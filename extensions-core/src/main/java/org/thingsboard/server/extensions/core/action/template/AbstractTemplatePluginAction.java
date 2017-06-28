@@ -71,8 +71,8 @@ public abstract class AbstractTemplatePluginAction<T extends TemplateActionConfi
     }
 
     protected String getMsgBody(RuleContext ctx, ToDeviceActorMsg msg) {
-        log.trace("Creating context for: {} and payload {}", ctx.getDeviceAttributes(), msg.getPayload());
-        VelocityContext context = VelocityUtils.createContext(ctx.getDeviceAttributes(), msg.getPayload());
+        log.trace("Creating context for: {} and payload {}", ctx.getDeviceMetaData(), msg.getPayload());
+        VelocityContext context = VelocityUtils.createContext(ctx.getDeviceMetaData(), msg.getPayload());
         return VelocityUtils.merge(template, context);
     }
 
