@@ -341,6 +341,12 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.extensions</groupId>
+                <artifactId>extension-mqtt</artifactId>
+                <classifier>extension</classifier>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>data</artifactId>
                 <version>${project.version}</version>

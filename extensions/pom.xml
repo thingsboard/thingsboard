@@ -38,6 +38,7 @@
         <module>extension-rabbitmq</module>
         <module>extension-rest-api-call</module>
         <module>extension-kafka</module>
+        <module>extension-mqtt</module>
     </modules>
 
 </project>
