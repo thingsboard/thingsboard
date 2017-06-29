@@ -22,6 +22,7 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
 
 import java.util.Optional;
@@ -34,7 +35,7 @@ public class RuleProcessingContext implements RuleContext {
     private TenantId tenantId;
     private CustomerId customerId;
     private DeviceId deviceId;
-    private DeviceAttributes deviceAttributes;
+    private DeviceMetaData deviceMetaData;
 
     RuleProcessingContext(ActorSystemContext systemContext, RuleId ruleId) {
         this.tsService = systemContext.getTsService();
@@ -42,11 +43,11 @@ public class RuleProcessingContext implements RuleContext {
         this.ruleId = ruleId;
     }
 
-    void update(ToDeviceActorMsg toDeviceActorMsg, DeviceAttributes attributes) {
+    void update(ToDeviceActorMsg toDeviceActorMsg, DeviceMetaData deviceMetaData) {
         this.tenantId = toDeviceActorMsg.getTenantId();
         this.customerId = toDeviceActorMsg.getCustomerId();
         this.deviceId = toDeviceActorMsg.getDeviceId();
-        this.deviceAttributes = attributes;
+        this.deviceMetaData = deviceMetaData;
     }
 
     @Override
@@ -55,8 +56,8 @@ public class RuleProcessingContext implements RuleContext {
     }
 
     @Override
-    public DeviceAttributes getDeviceAttributes() {
-        return deviceAttributes;
+    public DeviceMetaData getDeviceMetaData() {
+        return deviceMetaData;
     }
 
     @Override

@@ -24,3 +24,6 @@ services:
   zk:
     ports:
       - "2181:2181"
+  postgres:
+    ports:
+      - "5432:5432"

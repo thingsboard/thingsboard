@@ -35,5 +35,5 @@ spec:
     command:
     - sh
     - -c
-    - ./install-schema.sh
+    - /install-schema.sh
   restartPolicy: Never

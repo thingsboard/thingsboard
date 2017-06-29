@@ -46,7 +46,7 @@ public class DeviceAttributesFilter extends BasicJsFilter {
 
     @Override
     protected boolean doFilter(RuleContext ctx, ToDeviceActorMsg msg) throws ScriptException {
-        return evaluator.execute(toBindings(ctx.getDeviceAttributes(), msg != null ? msg.getPayload() : null));
+        return evaluator.execute(toBindings(ctx.getDeviceMetaData().getDeviceAttributes(), msg != null ? msg.getPayload() : null));
     }
 
     private Bindings toBindings(DeviceAttributes attributes, FromDeviceMsg msg) {

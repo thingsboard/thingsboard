@@ -144,7 +144,7 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
         ChainProcessingContext chainCtx = msg.getCtx();
         ToDeviceActorMsg inMsg = chainCtx.getInMsg();
 
-        ruleCtx.update(inMsg, chainCtx.getAttributes());
+        ruleCtx.update(inMsg, chainCtx.getDeviceMetaData());
 
         logger.debug("[{}] Going to filter in msg: {}", entityId, inMsg);
         for (RuleFilter filter : filters) {

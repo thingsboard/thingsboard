@@ -18,9 +18,7 @@ package org.thingsboard.server.transport.mqtt.util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Base64Utils;
 import org.thingsboard.server.dao.EncryptionUtil;
-import sun.misc.BASE64Encoder;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;

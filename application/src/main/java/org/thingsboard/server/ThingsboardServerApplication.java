@@ -16,15 +16,13 @@
 package org.thingsboard.server;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.Arrays;
 
-@EnableAutoConfiguration
-@SpringBootApplication
+@SpringBootConfiguration
 @EnableSwagger2
 @ComponentScan({"org.thingsboard.server"})
 public class ThingsboardServerApplication {

@@ -25,7 +25,7 @@ services:
       - "5683:5683/udp"
     env_file:
       - tb.env
-    entrypoint: ./run-application.sh
+    entrypoint: /run-application.sh
   tb-cassandra-schema:
     image: "thingsboard/tb-cassandra-schema:1.2.4"
     environment:
@@ -33,7 +33,7 @@ services:
       - ADD_SYSTEM_DATA=${ADD_SYSTEM_DATA}
       - ADD_DEMO_DATA=${ADD_DEMO_DATA}
       - CASSANDRA_URL=${CASSANDRA_URL}
-    entrypoint: ./install-schema.sh
+    entrypoint: /install-schema.sh
   cassandra:
     image: "cassandra:3.9"
     ports:
@@ -46,3 +46,24 @@ services:
     ports:
       - "2181"
     restart: always
+  postgres:
+    image: "postgres:9.6"
+    ports:
+    - "5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - "${POSTGRES_DATA_DIR}:/var/lib/postgresql/data"
+  tb-postgres-schema:
+    image: "thingsboard/tb-postgres-schema:1.2.4"
+    environment:
+      - POSTGRES_URL=${POSTGRES_URL}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - CREATE_SCHEMA=${CREATE_SCHEMA}
+      - ADD_SYSTEM_DATA=${ADD_SYSTEM_DATA}
+      - ADD_DEMO_DATA=${ADD_DEMO_DATA}
+    entrypoint: /install-schema.sh

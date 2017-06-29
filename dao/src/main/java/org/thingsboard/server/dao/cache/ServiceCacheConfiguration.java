@@ -57,16 +57,25 @@ public class ServiceCacheConfiguration {
         Config config = new Config();
 
         if (zkEnabled) {
-            config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-
-            config.setProperty(GroupProperty.DISCOVERY_SPI_ENABLED.getName(), Boolean.TRUE.toString());
-            DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(new ZookeeperDiscoveryStrategyFactory());
-            discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_URL.key(), zkUrl);
-            discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_PATH.key(), zkDir);
-            discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.GROUP.key(), HAZELCAST_CLUSTER_NAME);
-            config.getNetworkConfig().getJoin().getDiscoveryConfig().addDiscoveryStrategyConfig(discoveryStrategyConfig);
+            addZkConfig(config);
         }
 
+        config.addMapConfig(createDeviceCredentialsCacheConfig());
+
+        return Hazelcast.newHazelcastInstance(config);
+    }
+
+    private void addZkConfig(Config config) {
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        config.setProperty(GroupProperty.DISCOVERY_SPI_ENABLED.getName(), Boolean.TRUE.toString());
+        DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(new ZookeeperDiscoveryStrategyFactory());
+        discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_URL.key(), zkUrl);
+        discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_PATH.key(), zkDir);
+        discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.GROUP.key(), HAZELCAST_CLUSTER_NAME);
+        config.getNetworkConfig().getJoin().getDiscoveryConfig().addDiscoveryStrategyConfig(discoveryStrategyConfig);
+    }
+
+    private MapConfig createDeviceCredentialsCacheConfig() {
         MapConfig deviceCredentialsCacheConfig = new MapConfig(CacheConstants.DEVICE_CREDENTIALS_CACHE);
         deviceCredentialsCacheConfig.setTimeToLiveSeconds(cacheDeviceCredentialsTTL);
         deviceCredentialsCacheConfig.setEvictionPolicy(EvictionPolicy.LRU);
@@ -75,9 +84,7 @@ public class ServiceCacheConfiguration {
                         cacheDeviceCredentialsMaxSizeSize,
                         MaxSizeConfig.MaxSizePolicy.valueOf(cacheDeviceCredentialsMaxSizePolicy))
         );
-        config.addMapConfig(deviceCredentialsCacheConfig);
-
-        return Hazelcast.newHazelcastInstance(config);
+        return deviceCredentialsCacheConfig;
     }
 
     @Bean

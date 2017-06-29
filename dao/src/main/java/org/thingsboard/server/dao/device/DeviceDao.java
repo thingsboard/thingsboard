@@ -15,22 +15,22 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TenantDeviceType;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.DeviceEntity;
-import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
 
 /**
  * The Interface DeviceDao.
  *
  */
-public interface DeviceDao extends Dao<DeviceEntity> {
+public interface DeviceDao extends Dao<Device> {
 
     /**
      * Save or update device object
@@ -38,7 +38,7 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param device the device object
      * @return saved device object
      */
-    DeviceEntity save(Device device);
+    Device save(Device device);
 
     /**
      * Find devices by tenantId and page link.
@@ -47,7 +47,7 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<DeviceEntity> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink);
+    List<Device> findDevicesByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
      * Find devices by tenantId, type and page link.
@@ -57,7 +57,7 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<DeviceEntity> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
+    List<Device> findDevicesByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
 
     /**
      * Find devices by tenantId and devices Ids.
@@ -66,7 +66,7 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param deviceIds the device Ids
      * @return the list of device objects
      */
-    ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds);
+    ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds);
 
     /**
      * Find devices by tenantId, customerId and page link.
@@ -76,7 +76,7 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<DeviceEntity> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
+    List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
 
     /**
      * Find devices by tenantId, customerId, type and page link.
@@ -87,7 +87,7 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param pageLink the page link
      * @return the list of device objects
      */
-    List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
+    List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
 
 
     /**
@@ -98,7 +98,7 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param deviceIds the device Ids
      * @return the list of device objects
      */
-    ListenableFuture<List<DeviceEntity>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds);
+    ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds);
 
     /**
      * Find devices by tenantId and device name.
@@ -107,12 +107,12 @@ public interface DeviceDao extends Dao<DeviceEntity> {
      * @param name the device name
      * @return the optional device object
      */
-    Optional<DeviceEntity> findDevicesByTenantIdAndName(UUID tenantId, String name);
+    Optional<Device> findDeviceByTenantIdAndName(UUID tenantId, String name);
 
     /**
      * Find tenants device types.
      *
      * @return the list of tenant device type objects
      */
-    ListenableFuture<List<TenantDeviceTypeEntity>> findTenantDeviceTypesAsync();
+    ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync();
 }

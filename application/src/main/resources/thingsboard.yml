@@ -107,6 +107,7 @@ coap:
 
 # Cassandra driver configuration parameters
 cassandra:
+  enabled: "${CASSANDRA_ENABLED:false}"
   # Thingsboard cluster name
   cluster_name: "${CASSANDRA_CLUSTER_NAME:Thingsboard Cluster}"
   # Thingsboard keyspace name
@@ -151,8 +152,6 @@ cassandra:
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
     # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
-    # Specify max data points per request
-    min_aggregation_step_ms: "${TS_KV_MIN_AGGREGATION_STEP_MS:100}"
 
 # Actor system parameters
 actors:
@@ -222,3 +221,24 @@ spring.mvc.cors:
          allowed-headers: "*"
          max-age: "1800"
          allow-credentials: "true"
+         
+# SQL DAO Configuration
+sql:
+  enabled: "${SQL_ENABLED:true}"
+
+spring:
+  data:
+    jpa:
+      repositories:
+        enabled: "true"
+  jpa:
+    show-sql: "false"
+    generate-ddl: "true"
+    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+    hibernate:
+      ddl-auto: "validate"
+  datasource:
+    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"

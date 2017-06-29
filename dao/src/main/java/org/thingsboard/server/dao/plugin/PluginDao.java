@@ -20,24 +20,23 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.PluginMetaDataEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface PluginDao extends Dao<PluginMetaDataEntity> {
+public interface PluginDao extends Dao<PluginMetaData> {
 
-    PluginMetaDataEntity save(PluginMetaData plugin);
+    PluginMetaData save(PluginMetaData plugin);
 
-    PluginMetaDataEntity findById(PluginId pluginId);
+    PluginMetaData findById(PluginId pluginId);
 
-    PluginMetaDataEntity findByApiToken(String apiToken);
+    PluginMetaData findByApiToken(String apiToken);
 
     void deleteById(UUID id);
 
     void deleteById(PluginId pluginId);
 
-    List<PluginMetaDataEntity> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
+    List<PluginMetaData> findByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
 
     /**
      * Find all tenant plugins (including system) by tenantId and page link.
@@ -46,6 +45,6 @@ public interface PluginDao extends Dao<PluginMetaDataEntity> {
      * @param pageLink the page link
      * @return the list of plugins objects
      */
-    List<PluginMetaDataEntity> findAllTenantPluginsByTenantId(UUID tenantId, TextPageLink pageLink);
+    List<PluginMetaData> findAllTenantPluginsByTenantId(UUID tenantId, TextPageLink pageLink);
 
 }

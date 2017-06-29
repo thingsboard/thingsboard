@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import java.util.Optional;
-
 public interface TsKvQuery {
 
     String getKey();

@@ -1,0 +1,48 @@
+{
+  "schema": {
+    "title": "Mqtt Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "host": {
+        "title": "Specify the host to connect to",
+        "type": "string",
+        "default": "localhost"
+      },
+      "port": {
+        "title": "Connect to the port specified",
+        "type": "integer",
+        "default": 1883
+      },
+      "accessToken": {
+        "title": "Username (Access Token) to be used for authenticating.",
+        "type": "string"
+      },
+      "clientId": {
+        "title": "The id to use for this client.",
+        "type": "string"
+      },
+      "maxInFlight": {
+        "title": "How many messages can be send without acknowledgments.",
+        "type": "integer",
+        "default": 1000
+      },
+      "retryInterval": {
+        "title": "Interval to wait between connect attempts to host.",
+        "type": "integer",
+        "default": 3000
+      }
+    },
+    "required": [
+      "host",
+      "port"
+    ]
+  },
+  "form": [
+    "host",
+    "port",
+    "accessToken",
+    "clientId",
+    "maxInFlight",
+    "retryInterval"
+  ]
+}

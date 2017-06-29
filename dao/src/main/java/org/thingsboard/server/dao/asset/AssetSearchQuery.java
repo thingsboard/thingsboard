@@ -23,7 +23,6 @@ import org.thingsboard.server.dao.relation.EntityRelationsQuery;
 import org.thingsboard.server.dao.relation.EntityTypeFilter;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 

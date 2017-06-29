@@ -18,6 +18,7 @@ package org.thingsboard.server.extensions.api.rules;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 
 import java.util.Optional;
 
@@ -25,7 +26,7 @@ public interface RuleContext {
 
     RuleId getRuleId();
 
-    DeviceAttributes getDeviceAttributes();
+    DeviceMetaData getDeviceMetaData();
 
     Event save(Event event);
 

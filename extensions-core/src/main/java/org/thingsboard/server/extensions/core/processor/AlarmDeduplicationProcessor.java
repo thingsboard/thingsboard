@@ -59,7 +59,7 @@ public class AlarmDeduplicationProcessor extends SimpleRuleLifecycleComponent
     @Override
     public RuleProcessingMetaData process(RuleContext ctx, ToDeviceActorMsg msg) throws RuleException {
         RuleProcessingMetaData md = new RuleProcessingMetaData();
-        VelocityContext context = VelocityUtils.createContext(ctx.getDeviceAttributes(), msg.getPayload());
+        VelocityContext context = VelocityUtils.createContext(ctx.getDeviceMetaData(), msg.getPayload());
         String alarmId = VelocityUtils.merge(alarmIdTemplate, context);
         String alarmBody = VelocityUtils.merge(alarmBodyTemplate, context);
         Optional<Event> existingEvent = ctx.findEvent(DataConstants.ALARM, alarmId);

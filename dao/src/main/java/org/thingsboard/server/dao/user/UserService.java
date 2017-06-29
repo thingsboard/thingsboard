@@ -26,34 +26,34 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 
 public interface UserService {
 	
-	public User findUserById(UserId userId);
+	User findUserById(UserId userId);
 
-	public ListenableFuture<User> findUserByIdAsync(UserId userId);
+	ListenableFuture<User> findUserByIdAsync(UserId userId);
 
-	public User findUserByEmail(String email);
-	
-	public User saveUser(User user);
+	User findUserByEmail(String email);
 
-	public UserCredentials findUserCredentialsByUserId(UserId userId);	
-	
-	public UserCredentials findUserCredentialsByActivateToken(String activateToken);
+	User saveUser(User user);
 
-	public UserCredentials findUserCredentialsByResetToken(String resetToken);
+	UserCredentials findUserCredentialsByUserId(UserId userId);
+	
+	UserCredentials findUserCredentialsByActivateToken(String activateToken);
 
-	public UserCredentials saveUserCredentials(UserCredentials userCredentials);
-	
-	public UserCredentials activateUserCredentials(String activateToken, String password);
-	
-	public UserCredentials requestPasswordReset(String email);
+	UserCredentials findUserCredentialsByResetToken(String resetToken);
 
-	public void deleteUser(UserId userId);
+	UserCredentials saveUserCredentials(UserCredentials userCredentials);
 	
-	public TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink);
+	UserCredentials activateUserCredentials(String activateToken, String password);
 	
-	public void deleteTenantAdmins(TenantId tenantId);
+	UserCredentials requestPasswordReset(String email);
+
+	void deleteUser(UserId userId);
 	
-	public TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+	TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink);
+	
+	void deleteTenantAdmins(TenantId tenantId);
+	
+	TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 	    
-	public void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
+	void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
 	
 }

@@ -67,6 +67,20 @@ public class CustomerController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/customer/{customerId}/title", method = RequestMethod.GET, produces = "application/text")
+    @ResponseBody
+    public String getCustomerTitleById(@PathVariable("customerId") String strCustomerId) throws ThingsboardException {
+        checkParameter("customerId", strCustomerId);
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId);
+            return customer.getTitle();
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody 

@@ -15,15 +15,7 @@
  */
 package org.thingsboard.server.actors.plugin;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
+import akka.actor.ActorRef;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -45,8 +37,8 @@ import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
-import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
+import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.msg.PluginToRuleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequest;
@@ -55,9 +47,12 @@ import org.thingsboard.server.extensions.api.plugins.rpc.RpcMsg;
 import org.thingsboard.server.extensions.api.plugins.ws.PluginWebsocketSessionRef;
 import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
 
-import akka.actor.ActorRef;
-
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 public final class PluginProcessingContext implements PluginContext {
@@ -95,8 +90,8 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<AttributeKvEntry> attributes, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.attributesService.save(entityId, scope, attributes);
-            Futures.addCallback(rsListFuture, getListCallback(callback, v -> {
+            ListenableFuture<List<Void>> futures = pluginCtx.attributesService.save(entityId, scope, attributes);
+            Futures.addCallback(futures, getListCallback(callback, v -> {
                 if (entityId.getEntityType() == EntityType.DEVICE) {
                     onDeviceAttributesChanged(tenantId, new DeviceId(entityId.getId()), scope, attributes);
                 }
@@ -108,8 +103,8 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void removeAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> future = pluginCtx.attributesService.removeAll(entityId, scope, keys);
-            Futures.addCallback(future, getCallback(callback, v -> null), executor);
+            ListenableFuture<List<Void>> futures = pluginCtx.attributesService.removeAll(entityId, scope, keys);
+            Futures.addCallback(futures, getCallback(callback, v -> null), executor);
             if (entityId.getEntityType() == EntityType.DEVICE) {
                 onDeviceAttributesDeleted(tenantId, new DeviceId(entityId.getId()), keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
             }
@@ -161,7 +156,7 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveTsData(final EntityId entityId, final TsKvEntry entry, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entry);
+            ListenableFuture<List<Void>> rsListFuture = pluginCtx.tsService.save(entityId, entry);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
@@ -174,7 +169,7 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, long ttl, final PluginCallback<Void> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(entityId, entries, ttl);
+            ListenableFuture<List<Void>> rsListFuture = pluginCtx.tsService.save(entityId, entries, ttl);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
@@ -191,26 +186,16 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void loadLatestTimeseries(final EntityId entityId, final PluginCallback<List<TsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ResultSetFuture future = pluginCtx.tsService.findAllLatest(entityId);
-            Futures.addCallback(future, getCallback(callback, pluginCtx.tsService::convertResultSetToTsKvEntryList), executor);
+            ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAllLatest(entityId);
+            Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
 
     @Override
     public void loadLatestTimeseries(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<TsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.findLatest(entityId, keys);
-            Futures.addCallback(rsListFuture, getListCallback(callback, rsList ->
-            {
-                List<TsKvEntry> result = new ArrayList<>();
-                for (ResultSet rs : rsList) {
-                    Row row = rs.one();
-                    if (row != null) {
-                        result.add(pluginCtx.tsService.convertResultToTsKvEntry(row));
-                    }
-                }
-                return result;
-            }), executor);
+            ListenableFuture<List<TsKvEntry>> rsListFuture = pluginCtx.tsService.findLatest(entityId, keys);
+            Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);
         }));
     }
 
@@ -237,10 +222,10 @@ public final class PluginProcessingContext implements PluginContext {
         pluginCtx.toDeviceActor(DeviceAttributesEventNotificationMsg.onUpdate(tenantId, deviceId, scope, values));
     }
 
-    private <T> FutureCallback<List<ResultSet>> getListCallback(final PluginCallback<T> callback, Function<List<ResultSet>, T> transformer) {
-        return new FutureCallback<List<ResultSet>>() {
+    private <T, R> FutureCallback<List<T>> getListCallback(final PluginCallback<R> callback, Function<List<T>, R> transformer) {
+        return new FutureCallback<List<T>>() {
             @Override
-            public void onSuccess(@Nullable List<ResultSet> result) {
+            public void onSuccess(@Nullable List<T> result) {
                 pluginCtx.self().tell(PluginCallbackMessage.onSuccess(callback, transformer.apply(result)), ActorRef.noSender());
             }
 

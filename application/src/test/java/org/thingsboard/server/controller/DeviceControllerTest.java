@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.datastax.driver.core.utils.UUIDs;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -39,7 +40,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 public class DeviceControllerTest extends AbstractControllerTest {
@@ -215,7 +215,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         
-        doPost("/api/customer/" + UUIDs.timeBased().toString() 
+        doPost("/api/customer/" + UUIDs.timeBased().toString()
                 + "/device/" + savedDevice.getId().getId().toString())
         .andExpect(status().isNotFound());
     }

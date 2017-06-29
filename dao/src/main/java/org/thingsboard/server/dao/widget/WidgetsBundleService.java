@@ -25,24 +25,24 @@ import java.util.List;
 
 public interface WidgetsBundleService {
 
-    public WidgetsBundle findWidgetsBundleById(WidgetsBundleId widgetsBundleId);
+    WidgetsBundle findWidgetsBundleById(WidgetsBundleId widgetsBundleId);
 
-    public WidgetsBundle saveWidgetsBundle(WidgetsBundle widgetsBundle);
+    WidgetsBundle saveWidgetsBundle(WidgetsBundle widgetsBundle);
 
-    public void deleteWidgetsBundle(WidgetsBundleId widgetsBundleId);
+    void deleteWidgetsBundle(WidgetsBundleId widgetsBundleId);
 
-    public WidgetsBundle findWidgetsBundleByTenantIdAndAlias(TenantId tenantId, String alias);
+    WidgetsBundle findWidgetsBundleByTenantIdAndAlias(TenantId tenantId, String alias);
 
-    public TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TextPageLink pageLink);
+    TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TextPageLink pageLink);
 
-    public List<WidgetsBundle> findSystemWidgetsBundles();
+    List<WidgetsBundle> findSystemWidgetsBundles();
 
-    public TextPageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, TextPageLink pageLink);
+    TextPageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, TextPageLink pageLink);
 
-    public TextPageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
+    TextPageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
 
-    public List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(TenantId tenantId);
+    List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(TenantId tenantId);
 
-    public void deleteWidgetsBundlesByTenantId(TenantId tenantId);
+    void deleteWidgetsBundlesByTenantId(TenantId tenantId);
 
 }

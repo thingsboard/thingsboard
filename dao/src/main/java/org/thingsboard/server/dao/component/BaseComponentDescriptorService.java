@@ -32,15 +32,11 @@ import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.ComponentDescriptorEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
 import java.util.Optional;
-
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
 
 /**
  * @author Andrew Shvayka
@@ -55,39 +51,37 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
     @Override
     public ComponentDescriptor saveComponent(ComponentDescriptor component) {
         componentValidator.validate(component);
-        Optional<ComponentDescriptorEntity> result = componentDescriptorDao.save(component);
+        Optional<ComponentDescriptor> result = componentDescriptorDao.saveIfNotExist(component);
         if (result.isPresent()) {
-            return getData(result.get());
+            return result.get();
         } else {
-            return getData(componentDescriptorDao.findByClazz(component.getClazz()));
+            return componentDescriptorDao.findByClazz(component.getClazz());
         }
     }
 
     @Override
     public ComponentDescriptor findById(ComponentDescriptorId componentId) {
         Validator.validateId(componentId, "Incorrect component id for search request.");
-        return getData(componentDescriptorDao.findById(componentId));
+        return componentDescriptorDao.findById(componentId);
     }
 
     @Override
     public ComponentDescriptor findByClazz(String clazz) {
         Validator.validateString(clazz, "Incorrect clazz for search request.");
-        return getData(componentDescriptorDao.findByClazz(clazz));
+        return componentDescriptorDao.findByClazz(clazz);
     }
 
     @Override
     public TextPageData<ComponentDescriptor> findByTypeAndPageLink(ComponentType type, TextPageLink pageLink) {
         Validator.validatePageLink(pageLink, "Incorrect PageLink object for search plugin components request.");
-        List<ComponentDescriptorEntity> pluginEntities = componentDescriptorDao.findByTypeAndPageLink(type, pageLink);
-        List<ComponentDescriptor> components = convertDataList(pluginEntities);
+        List<ComponentDescriptor> components = componentDescriptorDao.findByTypeAndPageLink(type, pageLink);
         return new TextPageData<>(components, pageLink);
     }
 
     @Override
     public TextPageData<ComponentDescriptor> findByScopeAndTypeAndPageLink(ComponentScope scope, ComponentType type, TextPageLink pageLink) {
         Validator.validatePageLink(pageLink, "Incorrect PageLink object for search plugin components request.");
-        List<ComponentDescriptorEntity> pluginEntities = componentDescriptorDao.findByScopeAndTypeAndPageLink(scope, type, pageLink);
-        List<ComponentDescriptor> components = convertDataList(pluginEntities);
+        List<ComponentDescriptor> components = componentDescriptorDao.findByScopeAndTypeAndPageLink(scope, type, pageLink);
         return new TextPageData<>(components, pageLink);
     }
 

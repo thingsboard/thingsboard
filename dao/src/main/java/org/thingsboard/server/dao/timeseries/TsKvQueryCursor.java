@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-import lombok.Data;
 import lombok.Getter;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
