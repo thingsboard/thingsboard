@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.extensions.api.device;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@ConditionalOnProperty(prefix = "database", value = "type", havingValue = "cassandra")
-public @interface NoSqlDao {
+@Data
+@AllArgsConstructor
+public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+    private final String deviceName;
+    private final String deviceType;
 }

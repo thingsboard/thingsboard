@@ -61,7 +61,14 @@ public class DeviceController extends BaseController {
     public Device saveDevice(@RequestBody Device device) throws ThingsboardException {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
-            return checkNotNull(deviceService.saveDevice(device));
+            Device savedDevice = checkNotNull(deviceService.saveDevice(device));
+            actorService
+                    .onDeviceNameOrTypeUpdate(
+                            savedDevice.getTenantId(),
+                            savedDevice.getId(),
+                            savedDevice.getName(),
+                            savedDevice.getType());
+            return savedDevice;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -174,7 +181,7 @@ public class DeviceController extends BaseController {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            if (type != null && type.trim().length()>0) {
+            if (type != null && type.trim().length() > 0) {
                 return checkNotNull(deviceService.findDevicesByTenantIdAndType(tenantId, type, pageLink));
             } else {
                 return checkNotNull(deviceService.findDevicesByTenantId(tenantId, pageLink));
@@ -213,7 +220,7 @@ public class DeviceController extends BaseController {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId);
             TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            if (type != null && type.trim().length()>0) {
+            if (type != null && type.trim().length() > 0) {
                 return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
             } else {
                 return checkNotNull(deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerId, pageLink));

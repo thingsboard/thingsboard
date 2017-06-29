@@ -17,6 +17,6 @@ package org.thingsboard.server.dao.util;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@ConditionalOnProperty(prefix = "sql", value = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "database", value = "type", havingValue = "postgres")
 public @interface SqlDao {
 }
