@@ -16,21 +16,15 @@
 package org.thingsboard.server.extensions.api.device;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@ToString
+@Data
 @AllArgsConstructor
 public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
-
-    @Getter
     private final TenantId tenantId;
-    @Getter
     private final DeviceId deviceId;
-    @Getter
     private final String deviceName;
-    @Getter
     private final String deviceType;
 }

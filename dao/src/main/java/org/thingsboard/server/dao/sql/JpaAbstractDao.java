@@ -18,19 +18,15 @@ package org.thingsboard.server.dao.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
@@ -46,9 +42,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     protected abstract CrudRepository<E, UUID> getCrudRepository();
 
-    protected boolean isSearchTextDao() {
-        return false;
-    }
+    protected void setSearchText(E entity) {}
 
     @Override
     @Transactional(propagation = REQUIRES_NEW)
@@ -60,9 +54,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
             log.error("Can't create entity for domain object {}", domain, e);
             throw new IllegalArgumentException("Can't create entity for domain object {" + domain + "}", e);
         }
-        if (isSearchTextDao()) {
-            ((SearchTextEntity) entity).setSearchText(((SearchTextEntity) entity).getSearchTextSource().toLowerCase());
-        }
+        setSearchText(entity);
         log.debug("Saving entity {}", entity);
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
