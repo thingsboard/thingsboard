@@ -15,15 +15,14 @@
  */
 package org.thingsboard.server.extensions.api.device;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-/**
- * @author Andrew Shvayka
- */
 @ToString
+@AllArgsConstructor
 public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
 
     @Getter
@@ -34,11 +33,4 @@ public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
     private final String deviceName;
     @Getter
     private final String deviceType;
-
-    public DeviceNameOrTypeUpdateMsg(TenantId tenantId, DeviceId deviceId, String deviceName, String deviceType) {
-        this.tenantId = tenantId;
-        this.deviceId = deviceId;
-        this.deviceName = deviceName;
-        this.deviceType = deviceType;
-    }
 }
