@@ -17,6 +17,6 @@ package org.thingsboard.server.dao.util;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@ConditionalOnProperty(prefix = "cassandra", value = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "database", value = "type", havingValue = "cassandra")
 public @interface NoSqlDao {
 }
