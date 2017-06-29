@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.component;
+package org.thingsboard.server.service.install;
 
-import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentType;
+public interface SystemDataLoaderService {
 
-import java.util.List;
-import java.util.Optional;
+    void createSysAdmin() throws Exception;
 
-/**
- * @author Andrew Shvayka
- */
-public interface ComponentDiscoveryService {
+    void createAdminSettings() throws Exception;
 
-    void discoverComponents();
+    void loadSystemWidgets() throws Exception;
 
-    List<ComponentDescriptor> getComponents(ComponentType type);
+    void loadSystemPlugins() throws Exception;
 
-    Optional<ComponentDescriptor> getComponent(String clazz);
+    void loadSystemRules() throws Exception;
 
-    List<ComponentDescriptor> getPluginActions(String pluginClazz);
+    void loadDemoData() throws Exception;
 
 }

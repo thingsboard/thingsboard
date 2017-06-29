@@ -1,0 +1,9 @@
+{
+  "apiToken": "telemetry",
+  "name": "System Telemetry Plugin",
+  "clazz": "org.thingsboard.server.extensions.core.plugin.telemetry.TelemetryStoragePlugin",
+  "publicAccess": true,
+  "state": "ACTIVE",
+  "configuration": {},
+  "additionalInfo": null
+}

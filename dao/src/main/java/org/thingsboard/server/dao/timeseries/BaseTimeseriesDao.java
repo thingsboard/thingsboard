@@ -24,7 +24,9 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.*;
@@ -51,6 +53,9 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 @Slf4j
 public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao {
 
+    @Autowired
+    private Environment environment;
+
     //@Value("${cassandra.query.min_aggregation_step_ms}")
     //TODO:
     private int minAggregationStepMs = 1000;
@@ -69,16 +74,22 @@ public class BaseTimeseriesDao extends AbstractAsyncDao implements TimeseriesDao
     private PreparedStatement findLatestStmt;
     private PreparedStatement findAllLatestStmt;
 
+    private boolean isInstall() {
+        return environment.acceptsProfiles("install");
+    }
+
     @PostConstruct
     public void init() {
         super.startExecutor();
-        getFetchStmt(Aggregation.NONE);
-        Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
-        if (partition.isPresent()) {
-            tsFormat = partition.get();
-        } else {
-            log.warn("Incorrect configuration of partitioning {}", partitioning);
-            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+        if (!isInstall()) {
+            getFetchStmt(Aggregation.NONE);
+            Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
+            if (partition.isPresent()) {
+                tsFormat = partition.get();
+            } else {
+                log.warn("Incorrect configuration of partitioning {}", partitioning);
+                throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+            }
         }
     }
 

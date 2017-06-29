@@ -1,0 +1,46 @@
+{
+  "name": "Demo Alarm Rule",
+  "state": "ACTIVE",
+  "weight": 0,
+  "pluginToken": "mail",
+  "filters": [
+    {
+      "clazz": "org.thingsboard.server.extensions.core.filter.MsgTypeFilter",
+      "name": "MsgTypeFilter",
+      "configuration": {
+        "messageTypes": [
+          "POST_TELEMETRY",
+          "POST_ATTRIBUTES",
+          "GET_ATTRIBUTES"
+        ]
+      }
+    },
+    {
+      "clazz": "org.thingsboard.server.extensions.core.filter.DeviceTelemetryFilter",
+      "name": "Temperature filter",
+      "configuration": {
+        "filter": "typeof temperature !== 'undefined' && temperature >= 100"
+      }
+    }
+  ],
+  "processor": {
+    "clazz": "org.thingsboard.server.extensions.core.processor.AlarmDeduplicationProcessor",
+    "name": "AlarmDeduplicationProcessor",
+    "configuration": {
+      "alarmIdTemplate": "[$date.get('yyyy-MM-dd HH:mm')] Device $cs.get('serialNumber')($cs.get('model')) temperature is high!",
+      "alarmBodyTemplate": "[$date.get('yyyy-MM-dd HH:mm:ss')] Device $cs.get('serialNumber')($cs.get('model')) temperature is $temp.valueAsString!"
+    }
+  },
+  "action": {
+    "clazz": "org.thingsboard.server.extensions.core.action.mail.SendMailAction",
+    "name": "Send Mail Action",
+    "configuration": {
+      "sendFlag": "isNewAlarm",
+      "fromTemplate": "thingsboard@gmail.com",
+      "toTemplate": "thingsboard@gmail.com",
+      "subjectTemplate": "$alarmId",
+      "bodyTemplate": "$alarmBody"
+    }
+  },
+  "additionalInfo": null
+}

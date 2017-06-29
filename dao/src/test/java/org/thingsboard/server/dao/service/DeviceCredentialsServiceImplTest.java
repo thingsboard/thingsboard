@@ -138,22 +138,6 @@ public class DeviceCredentialsServiceImplTest extends AbstractServiceTest {
         }
     }
 
-    @Test(expected = DataValidationException.class)
-    public void testSaveDeviceCredentialsWithInvalidCredemtialsIdLength() {
-        Device device = new Device();
-        device.setName("My device");
-        device.setType("default");
-        device.setTenantId(tenantId);
-        device = deviceService.saveDevice(device);
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getId());
-        deviceCredentials.setCredentialsId(RandomStringUtils.randomAlphanumeric(21));
-        try {
-            deviceCredentialsService.updateDeviceCredentials(deviceCredentials);
-        } finally {
-            deviceService.deleteDevice(device.getId());
-        }
-    }
-
     @Test
     public void testFindDeviceCredentialsByDeviceId() {
         Device device = new Device();

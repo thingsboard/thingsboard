@@ -1,0 +1,29 @@
+{
+  "name": "System Telemetry Rule",
+  "state": "ACTIVE",
+  "weight": 0,
+  "pluginToken": "telemetry",
+  "filters": [
+    {
+      "clazz": "org.thingsboard.server.extensions.core.filter.MsgTypeFilter",
+      "name": "TelemetryFilter",
+      "configuration": {
+        "messageTypes": [
+          "POST_TELEMETRY",
+          "POST_ATTRIBUTES",
+          "GET_ATTRIBUTES"
+        ]
+      }
+    }
+  ],
+  "processor": null,
+  "action": {
+    "clazz": "org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction",
+    "name": "TelemetryMsgConverterAction",
+    "configuration": {
+      "timeUnit": "DAYS",
+      "ttlValue": 365
+    }
+  },
+  "additionalInfo": null
+}

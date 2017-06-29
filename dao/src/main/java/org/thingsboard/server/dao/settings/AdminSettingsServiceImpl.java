@@ -24,8 +24,6 @@ import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.AdminSettingsEntity;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
@@ -63,11 +61,26 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     
     private DataValidator<AdminSettings> adminSettingsValidator =
             new DataValidator<AdminSettings>() {
-        
+
                 @Override
                 protected void validateCreate(AdminSettings adminSettings) {
-                    throw new DataValidationException("Creation of new admin settings entry is prohibited!");
+                    AdminSettings existentAdminSettingsWithKey = findAdminSettingsByKey(adminSettings.getKey());
+                    if (existentAdminSettingsWithKey != null) {
+                        throw new DataValidationException("Admin settings with such name already exists!");
+                    }
                 }
+
+                @Override
+                protected void validateUpdate(AdminSettings adminSettings) {
+                    AdminSettings existentAdminSettings = findAdminSettingsById(adminSettings.getId());
+                    if (existentAdminSettings != null) {
+                        if (!existentAdminSettings.getKey().equals(adminSettings.getKey())) {
+                            throw new DataValidationException("Changing key of admin settings entry is prohibited!");
+                        }
+                        validateJsonStructure(existentAdminSettings.getJsonValue(), adminSettings.getJsonValue());
+                    }
+                }
+
         
                 @Override
                 protected void validateDataImpl(AdminSettings adminSettings) {
@@ -77,11 +90,6 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
                     if (adminSettings.getJsonValue() == null) {
                         throw new DataValidationException("Json value should be specified!");
                     }
-                    AdminSettings existentAdminSettingsWithKey = findAdminSettingsByKey(adminSettings.getKey());
-                    if (existentAdminSettingsWithKey == null || !isSameData(existentAdminSettingsWithKey, adminSettings)) {
-                        throw new DataValidationException("Changing key of admin settings entry is prohibited!");
-                    }
-                    validateJsonStructure(existentAdminSettingsWithKey.getJsonValue(), adminSettings.getJsonValue());
                 }
     };
 
