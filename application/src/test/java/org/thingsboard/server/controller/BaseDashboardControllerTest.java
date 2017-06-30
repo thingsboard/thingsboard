@@ -38,7 +38,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-public class DashboardControllerTest extends AbstractControllerTest {
+public abstract class BaseDashboardControllerTest extends AbstractControllerTest {
     
     private IdComparator<DashboardInfo> idComparator = new IdComparator<>();
     
