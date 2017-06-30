@@ -16,16 +16,14 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserCredentialsDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
@@ -33,7 +31,7 @@ import java.util.UUID;
  * Created by Valerii Sosliuk on 4/22/2017.
  */
 @Component
-@ConditionalOnProperty(prefix="sql", value="enabled",havingValue = "true", matchIfMissing = false)
+@SqlDao
 public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity, UserCredentials> implements UserCredentialsDao {
 
     @Autowired

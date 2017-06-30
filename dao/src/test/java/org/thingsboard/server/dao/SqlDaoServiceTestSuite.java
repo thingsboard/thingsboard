@@ -30,7 +30,7 @@ public class SqlDaoServiceTestSuite {
 
     @ClassRule
     public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
-            Arrays.asList("postgres/schema.sql", "postgres/system-data.sql", "system-test.sql"),
+            Arrays.asList("postgres/schema.sql", "postgres/system-data.sql", "postgres/system-test.sql"),
             "postgres-embedded-test.properties");
 
 }

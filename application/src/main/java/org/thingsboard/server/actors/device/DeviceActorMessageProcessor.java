@@ -37,10 +37,7 @@ import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.MsgType;
 import org.thingsboard.server.common.msg.session.SessionType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
-import org.thingsboard.server.extensions.api.device.DeviceAttributes;
-import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.extensions.api.device.DeviceMetaData;
+import org.thingsboard.server.extensions.api.device.*;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutIntMsg;
@@ -372,11 +369,16 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    public void processCredentialsUpdate(ActorContext context, DeviceCredentialsUpdateNotificationMsg msg) {
+    public void processCredentialsUpdate() {
         sessions.forEach((k, v) -> {
             sendMsgToSessionActor(new BasicToDeviceSessionActorMsg(new SessionCloseNotification(), k), v.getServer());
         });
         attributeSubscriptions.clear();
         rpcSubscriptions.clear();
+    }
+
+    public void processNameOrTypeUpdate(DeviceNameOrTypeUpdateMsg msg) {
+        this.deviceName = msg.getDeviceName();
+        this.deviceType = msg.getDeviceType();
     }
 }

@@ -105,9 +105,11 @@ coap:
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
   timeout: "${COAP_TIMEOUT:10000}"
 
+database:
+  type: "${DATABASE_TYPE:cassandra}" # cassandra OR postgres
+
 # Cassandra driver configuration parameters
 cassandra:
-  enabled: "${CASSANDRA_ENABLED:false}"
   # Thingsboard cluster name
   cluster_name: "${CASSANDRA_CLUSTER_NAME:Thingsboard Cluster}"
   # Thingsboard keyspace name
@@ -200,7 +202,7 @@ updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
   
-  # spring CORS configuration
+# spring CORS configuration
 spring.mvc.cors:
    mappings:
      # Intercept path
@@ -223,8 +225,6 @@ spring.mvc.cors:
          allow-credentials: "true"
          
 # SQL DAO Configuration
-sql:
-  enabled: "${SQL_ENABLED:true}"
 
 spring:
   data:
