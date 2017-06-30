@@ -19,29 +19,21 @@ package org.thingsboard.server.install;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.cassandra.CassandraInstallCluster;
-import org.thingsboard.server.install.cql.CQLStatementsParser;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.install.DatabaseSchemaService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 @Service
 @Profile("install")
 @Slf4j
 public class ThingsboardInstallService {
-
-    private static final String SCHEMA_CQL = "schema.cql";
 
     @Value("${install.data_dir}")
     private String dataDir;
@@ -50,7 +42,7 @@ public class ThingsboardInstallService {
     private Boolean loadDemo;
 
     @Autowired
-    private CassandraInstallCluster cluster;
+    private DatabaseSchemaService databaseSchemaService;
 
     @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
@@ -74,8 +66,7 @@ public class ThingsboardInstallService {
 
             log.info("Installing DataBase schema...");
 
-            Path schemaFile = Paths.get(this.dataDir, SCHEMA_CQL);
-            loadCql(schemaFile);
+            databaseSchemaService.createDatabaseSchema();
 
             log.info("Loading system data...");
 
@@ -99,11 +90,6 @@ public class ThingsboardInstallService {
         } finally {
             SpringApplication.exit(context);
         }
-    }
-
-    private void loadCql(Path cql) throws Exception {
-        List<String> statements = new CQLStatementsParser(cql).getStatements();
-        statements.forEach(statement -> cluster.getSession().execute(statement));
     }
 
 }
