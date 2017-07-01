@@ -18,7 +18,7 @@ package org.thingsboard.server.system;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
-import org.thingsboard.server.dao.CustomPostgresUnit;
+import org.thingsboard.server.dao.CustomSqlUnit;
 
 import java.util.Arrays;
 
@@ -30,9 +30,10 @@ import java.util.Arrays;
 public class SystemSqlTestSuite {
 
     @ClassRule
-    public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
-            Arrays.asList("postgres/schema.sql", "postgres/system-data.sql"),
-            "postgres-embedded-test.properties");
+    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+            Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
+            "sql-test.properties",
+            "sql/drop-all-tables.sql");
 
 
 }

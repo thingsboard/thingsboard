@@ -29,8 +29,9 @@ import java.util.Arrays;
 public class SqlDaoServiceTestSuite {
 
     @ClassRule
-    public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
-            Arrays.asList("postgres/schema.sql", "postgres/system-data.sql", "postgres/system-test.sql"),
-            "postgres-embedded-test.properties");
+    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+            Arrays.asList("sql/schema.sql", "sql/system-data.sql", "sql/system-test.sql"),
+            "sql-test.properties",
+            "sql/drop-all-tables.sql");
 
 }

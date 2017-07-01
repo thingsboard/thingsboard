@@ -18,6 +18,7 @@ package org.thingsboard.server.dao;
 import com.github.springtestdbunit.bean.DatabaseConfigBean;
 import com.github.springtestdbunit.bean.DatabaseDataSourceConnectionFactoryBean;
 import org.dbunit.DatabaseUnitException;
+import org.dbunit.ext.hsqldb.HsqldbDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +42,7 @@ public class JpaDbunitTestConfig {
     @Bean
     public DatabaseConfigBean databaseConfigBean() {
         DatabaseConfigBean databaseConfigBean = new DatabaseConfigBean();
-        databaseConfigBean.setDatatypeFactory(new PostgresqlDataTypeFactory());
+        databaseConfigBean.setDatatypeFactory(new HsqldbDataTypeFactory());
         return databaseConfigBean;
     }
 

@@ -19,7 +19,6 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.rules.ExternalResource;
-import ru.yandex.qatools.embed.postgresql.EmbeddedPostgres;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,58 +29,58 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
-import static ru.yandex.qatools.embed.postgresql.distribution.Version.Main.V9_6;
 
 /**
  * Created by Valerii Sosliuk on 6/24/2017.
  */
 @Slf4j
-public class CustomPostgresUnit extends ExternalResource {
-
-    private static final String HOST = "host";
-    private static final String PORT = "port";
-    private static final String DATABASE = "database";
-    private static final String USERNAME = "username";
-    private static final String PASSWORD = "password";
+public class CustomSqlUnit extends ExternalResource {
 
     private List<String> sqlFiles;
     private Properties properties;
+    private String dropAllTablesSqlFile;
 
-    private EmbeddedPostgres postgres;
-
-    public CustomPostgresUnit(List<String> sqlFiles, String configurationFileName) {
+    public CustomSqlUnit(List<String> sqlFiles, String configurationFileName, String dropAllTablesSqlFile) {
         this.sqlFiles = sqlFiles;
         this.properties = loadProperties(configurationFileName);
+        this.dropAllTablesSqlFile = dropAllTablesSqlFile;
     }
 
     @Override
     public void before() {
-        postgres = new EmbeddedPostgres(V9_6);
-        load();
-    }
-
-    @Override
-    public void after() {
-        postgres.stop();
-    }
-
-    private void load() {
         Connection conn = null;
         try {
-            String url = postgres.start(properties.getProperty(HOST),
-                                        Integer.parseInt(properties.getProperty(PORT)),
-                                        properties.getProperty(DATABASE),
-                                        properties.getProperty(USERNAME),
-                                        properties.getProperty(PASSWORD));
-
-            conn = DriverManager.getConnection(url);
+            String url = properties.getProperty("spring.datasource.url");
+            conn = DriverManager.getConnection(url, "sa", "");
             for (String sqlFile : sqlFiles) {
                 URL sqlFileUrl = Resources.getResource(sqlFile);
                 String sql = Resources.toString(sqlFileUrl, Charsets.UTF_8);
                 conn.createStatement().execute(sql);
             }
         } catch (IOException | SQLException e) {
-            throw new RuntimeException("Unable to start embedded postgres. Reason: " + e.getMessage(), e);
+            throw new RuntimeException("Unable to start embedded hsqldb. Reason: " + e.getMessage(), e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (SQLException e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void after() {
+        Connection conn = null;
+        try {
+            String url = properties.getProperty("spring.datasource.url");
+            conn = DriverManager.getConnection(url, "sa", "");
+            URL dropAllTableSqlFileUrl = Resources.getResource(dropAllTablesSqlFile);
+            String dropAllTablesSql = Resources.toString(dropAllTableSqlFileUrl, Charsets.UTF_8);
+            conn.createStatement().execute(dropAllTablesSql);
+        } catch (IOException | SQLException e) {
+            throw new RuntimeException("Unable to clean up embedded hsqldb. Reason: " + e.getMessage(), e);
         } finally {
             if (conn != null) {
                 try {

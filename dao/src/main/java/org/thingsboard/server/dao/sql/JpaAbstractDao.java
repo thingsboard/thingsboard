@@ -45,7 +45,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     protected void setSearchText(E entity) {}
 
     @Override
-    @Transactional(propagation = REQUIRES_NEW)
+    @Transactional
     public D save(D domain) {
         E entity;
         try {
@@ -64,7 +64,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     @Override
-    @Transactional(propagation = REQUIRES_NEW)
     public D findById(UUID key) {
         log.debug("Get entity by key {}", key);
         E entity = getCrudRepository().findOne(key);
@@ -78,7 +77,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     @Override
-    @Transactional(propagation = REQUIRES_NEW)
+    @Transactional
     public boolean removeById(UUID key) {
         getCrudRepository().delete(key);
         log.debug("Remove request: {}", key);

@@ -249,11 +249,6 @@
             <artifactId>spring-test-dbunit</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>ru.yandex.qatools.embed</groupId>
-            <artifactId>postgresql-embedded</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

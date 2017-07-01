@@ -24,13 +24,14 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.sql.*Test"
+        "org.thingsboard.server.dao.sql.*ABTest"
 })
 public class JpaDaoTestSuite {
 
     @ClassRule
-    public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
-            Arrays.asList("postgres/schema.sql", "postgres/system-data.sql"),
-            "postgres-embedded-test.properties");
+    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+            Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
+            "sql-test.properties",
+            "sql/drop-all-tables.sql");
 
 }

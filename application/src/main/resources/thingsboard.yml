@@ -106,7 +106,7 @@ coap:
   timeout: "${COAP_TIMEOUT:10000}"
 
 database:
-  type: "${DATABASE_TYPE:cassandra}" # cassandra OR postgres
+  type: "${DATABASE_TYPE:cassandra}" # cassandra OR sql
 
 # Cassandra driver configuration parameters
 cassandra:
