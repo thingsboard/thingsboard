@@ -97,8 +97,8 @@ public class EntityRelationController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relation", method = RequestMethod.GET, params = {"fromId", "fromType", "relationType", "toId", "toType"})
-    @ResponseStatus(value = HttpStatus.OK)
-    public void checkRelation(@RequestParam("fromId") String strFromId,
+    @ResponseBody
+    public EntityRelation getRelation(@RequestParam("fromId") String strFromId,
                               @RequestParam("fromType") String strFromType,
                               @RequestParam("relationType") String strRelationType,
                               @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
@@ -114,10 +114,7 @@ public class EntityRelationController extends BaseController {
             checkEntityId(fromId);
             checkEntityId(toId);
             RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
-            Boolean found = relationService.checkRelation(fromId, toId, strRelationType, typeGroup).get();
-            if (!found) {
-                throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
-            }
+            return checkNotNull(relationService.getRelation(fromId, toId, strRelationType, typeGroup).get());
         } catch (Exception e) {
             throw handleException(e);
         }

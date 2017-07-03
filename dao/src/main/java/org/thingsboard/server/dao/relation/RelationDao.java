@@ -39,6 +39,8 @@ public interface RelationDao {
 
     ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
+    ListenableFuture<EntityRelation> getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+
     ListenableFuture<Boolean> saveRelation(EntityRelation relation);
 
     ListenableFuture<Boolean> deleteRelation(EntityRelation relation);

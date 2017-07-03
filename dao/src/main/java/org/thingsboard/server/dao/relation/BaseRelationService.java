@@ -56,6 +56,13 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
+    public ListenableFuture<EntityRelation> getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing EntityRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        validate(from, to, relationType, typeGroup);
+        return relationDao.getRelation(from, to, relationType, typeGroup);
+    }
+
+    @Override
     public ListenableFuture<Boolean> saveRelation(EntityRelation relation) {
         log.trace("Executing saveRelation [{}]", relation);
         validate(relation);
