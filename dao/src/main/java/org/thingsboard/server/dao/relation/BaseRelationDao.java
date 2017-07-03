@@ -128,6 +128,19 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
     }
 
     @Override
+    public ListenableFuture<EntityRelation> getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        BoundStatement stmt = getCheckRelationStmt().bind()
+                .setUUID(0, from.getId())
+                .setString(1, from.getEntityType().name())
+                .setUUID(2, to.getId())
+                .setString(3, to.getEntityType().name())
+                .set(4, typeGroup, relationTypeGroupCodec)
+                .setString(5, relationType);
+        return getFuture(executeAsyncRead(stmt), rs -> rs != null ? getEntityRelation(rs.one()) : null);
+    }
+
+
+    @Override
     public ListenableFuture<Boolean> saveRelation(EntityRelation relation) {
         BoundStatement stmt = getSaveStmt().bind()
                 .setUUID(0, relation.getFrom().getId())

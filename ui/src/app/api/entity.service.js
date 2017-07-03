@@ -892,10 +892,10 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
     }
 
-    function getRelatedEntities(rootEntityId, entityType, entitySubTypes, maxLevel, keys, typeTranslatePrefix) {
+    function getRelatedEntities(rootEntityId, entityType, entitySubTypes, maxLevel, keys, typeTranslatePrefix, relationType) {
         var deferred = $q.defer();
 
-        var entitySearchQuery = constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel);
+        var entitySearchQuery = constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType);
         if (!entitySearchQuery) {
             deferred.reject();
         } else {
@@ -930,12 +930,12 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         return deferred.promise;
     }
 
-    function saveRelatedEntity(relatedEntity, parentEntityId, keys) {
+    function saveRelatedEntity(relatedEntity, parentEntityId, keys, relation) {
         var deferred = $q.defer();
         if (relatedEntity.id.id) {
-            updateRelatedEntity(relatedEntity, keys, deferred);
+            updateRelatedEntity(relatedEntity, keys, deferred, relation);
         } else {
-            addRelatedEntity(relatedEntity, parentEntityId, keys, deferred);
+            addRelatedEntity(relatedEntity, parentEntityId, keys, deferred, relation);
         }
         return deferred.promise;
     }
@@ -1073,7 +1073,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
     }
 
-    function addRelatedEntity(relatedEntity, parentEntityId, keys, deferred) {
+    function addRelatedEntity(relatedEntity, parentEntityId, keys, deferred, relation) {
         var entity = {};
         entity.id = relatedEntity.id;
         entity.name = relatedEntity.name;
@@ -1081,14 +1081,18 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         saveEntityPromise(entity).then(
             function success(entity) {
                 relatedEntity.id = entity.id;
-                var relation = {
-                    from: parentEntityId,
-                    to: relatedEntity.id,
-                    type: types.entityRelationType.contains
-                };
+                if (!relation) {
+                    relation = {
+                        from: parentEntityId,
+                        to: relatedEntity.id,
+                        type: types.entityRelationType.contains
+                    };
+                } else {
+                    relation.to = relatedEntity.id;
+                }
                 entityRelationService.saveRelation(relation).then(
                     function success() {
-                        updateEntity(entity, relatedEntity, keys, deferred);
+                        updateEntity(entity, relatedEntity, keys, deferred, relation);
                     },
                     function fail() {
                         deferred.reject();
@@ -1101,10 +1105,22 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         );
     }
 
-    function updateRelatedEntity(relatedEntity, keys, deferred) {
+    function updateRelatedEntity(relatedEntity, keys, deferred, relation) {
         getEntityPromise(relatedEntity.id.entityType, relatedEntity.id.id, {ignoreLoading: true}).then(
             function success(entity) {
-                updateEntity(entity, relatedEntity, keys, deferred);
+                if (relation) {
+                    relation.to = relatedEntity.id;
+                    entityRelationService.saveRelation(relation).then(
+                        function success() {
+                            updateEntity(entity, relatedEntity, keys, deferred);
+                        },
+                        function fail() {
+                            deferred.reject();
+                        }
+                    );
+                } else {
+                    updateEntity(entity, relatedEntity, keys, deferred);
+                }
             },
             function fail() {
                 deferred.reject();
@@ -1146,7 +1162,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             );
     }
 
-    function constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel) {
+    function constructRelatedEntitiesSearchQuery(rootEntityId, entityType, entitySubTypes, maxLevel, relationType) {
 
         var searchQuery = {
             parameters: {
@@ -1154,8 +1170,11 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 rootType: rootEntityId.entityType,
                 direction: types.entitySearchDirection.from
             },
-            relationType: types.entityRelationType.contains
+            relationType: relationType
         };
+        if (!relationType) {
+            searchQuery.relationType = types.entityRelationType.contains;
+        }
 
         if (maxLevel) {
             searchQuery.parameters.maxLevel = maxLevel;

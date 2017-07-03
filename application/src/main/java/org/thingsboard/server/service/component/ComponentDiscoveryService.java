@@ -26,6 +26,8 @@ import java.util.Optional;
  */
 public interface ComponentDiscoveryService {
 
+    void discoverComponents();
+
     List<ComponentDescriptor> getComponents(ComponentType type);
 
     Optional<ComponentDescriptor> getComponent(String clazz);

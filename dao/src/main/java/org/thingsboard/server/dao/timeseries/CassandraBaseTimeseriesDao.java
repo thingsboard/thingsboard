@@ -24,7 +24,9 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.*;
@@ -54,8 +56,10 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 @NoSqlDao
 public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implements TimeseriesDao {
 
-    @Value("${cassandra.query.min_aggregation_step_ms}")
-    private int minAggregationStepMs;
+    private static final int MIN_AGGREGATION_STEP_MS = 1000;
+
+    @Autowired
+    private Environment environment;
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
@@ -71,16 +75,22 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     private PreparedStatement findLatestStmt;
     private PreparedStatement findAllLatestStmt;
 
+    private boolean isInstall() {
+        return environment.acceptsProfiles("install");
+    }
+
     @PostConstruct
     public void init() {
         super.startExecutor();
-        getFetchStmt(Aggregation.NONE);
-        Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
-        if (partition.isPresent()) {
-            tsFormat = partition.get();
-        } else {
-            log.warn("Incorrect configuration of partitioning {}", partitioning);
-            throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+        if (!isInstall()) {
+            getFetchStmt(Aggregation.NONE);
+            Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
+            if (partition.isPresent()) {
+                tsFormat = partition.get();
+            } else {
+                log.warn("Incorrect configuration of partitioning {}", partitioning);
+                throw new RuntimeException("Failed to parse partitioning property: " + partitioning + "!");
+            }
         }
     }
 
@@ -111,7 +121,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(entityId, query);
         } else {
-            long step = Math.max(query.getInterval(), minAggregationStepMs);
+            long step = Math.max(query.getInterval(), MIN_AGGREGATION_STEP_MS);
             long stepTs = query.getStartTs();
             List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
             while (stepTs < query.getEndTs()) {

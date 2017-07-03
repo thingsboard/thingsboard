@@ -1,0 +1,11 @@
+{
+  "apiToken": "time",
+  "name": "Demo Time RPC Plugin",
+  "clazz": "org.thingsboard.server.extensions.core.plugin.time.TimePlugin",
+  "publicAccess": false,
+  "state": "ACTIVE",
+  "configuration": {
+    "timeFormat": "yyyy MM dd HH:mm:ss.SSS"
+  },
+  "additionalInfo": null
+}

@@ -1,0 +1,11 @@
+{
+  "apiToken": "rpc",
+  "name": "System RPC Plugin",
+  "clazz": "org.thingsboard.server.extensions.core.plugin.rpc.RpcPlugin",
+  "publicAccess": true,
+  "state": "ACTIVE",
+  "configuration": {
+    "defaultTimeout": 20000
+  },
+  "additionalInfo": null
+}
