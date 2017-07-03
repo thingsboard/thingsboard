@@ -110,7 +110,6 @@ public class EntityRelation {
         if (to != null ? !to.equals(that.to) : that.to != null) return false;
         if (type != null ? !type.equals(that.type) : that.type != null) return false;
         return typeGroup == that.typeGroup;
-
     }
 
     @Override
