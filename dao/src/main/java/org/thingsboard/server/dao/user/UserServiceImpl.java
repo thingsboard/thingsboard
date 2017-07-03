@@ -235,9 +235,6 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
                     
                     switch (authority) {
                         case SYS_ADMIN:
-                            if (user.getId() == null) {
-                                throw new DataValidationException("Creation of system administrator is prohibited!");
-                            }
                             if (!tenantId.getId().equals(ModelConstants.NULL_UUID)
                                     || !customerId.getId().equals(ModelConstants.NULL_UUID)) {
                                     throw new DataValidationException("System administrator can't be assigned neither to tenant nor to customer!");

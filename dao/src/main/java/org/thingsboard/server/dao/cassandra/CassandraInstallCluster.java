@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.component;
 
-import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentType;
+package org.thingsboard.server.dao.cassandra;
 
-import java.util.List;
-import java.util.Optional;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
-/**
- * @author Andrew Shvayka
- */
-public interface ComponentDiscoveryService {
+import javax.annotation.PostConstruct;
 
-    void discoverComponents();
+@Component
+@NoSqlDao
+@Profile("install")
+public class CassandraInstallCluster extends AbstractCassandraCluster {
 
-    List<ComponentDescriptor> getComponents(ComponentType type);
-
-    Optional<ComponentDescriptor> getComponent(String clazz);
-
-    List<ComponentDescriptor> getPluginActions(String pluginClazz);
+    @PostConstruct
+    public void init() {
+        super.init(null);
+    }
 
 }

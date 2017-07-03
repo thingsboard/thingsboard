@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.component;
 
-import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentType;
+package org.thingsboard.server.service.install;
 
-import java.util.List;
-import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
-/**
- * @author Andrew Shvayka
- */
-public interface ComponentDiscoveryService {
+@Service
+@Profile("install")
+@Slf4j
+public class SqlDatabaseSchemaService implements DatabaseSchemaService {
 
-    void discoverComponents();
+    @Value("${install.data_dir}")
+    private String dataDir;
 
-    List<ComponentDescriptor> getComponents(ComponentType type);
+    @Override
+    public void createDatabaseSchema() throws Exception {
 
-    Optional<ComponentDescriptor> getComponent(String clazz);
+        log.info("Installing SQL DataBase schema...");
+        //TODO:
 
-    List<ComponentDescriptor> getPluginActions(String pluginClazz);
+    }
 
 }

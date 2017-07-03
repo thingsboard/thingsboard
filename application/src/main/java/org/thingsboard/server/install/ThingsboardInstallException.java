@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.component;
 
-import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentType;
+package org.thingsboard.server.install;
 
-import java.util.List;
-import java.util.Optional;
+import org.springframework.boot.ExitCodeGenerator;
 
-/**
- * @author Andrew Shvayka
- */
-public interface ComponentDiscoveryService {
+public class ThingsboardInstallException extends RuntimeException implements ExitCodeGenerator {
 
-    void discoverComponents();
+    public ThingsboardInstallException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    List<ComponentDescriptor> getComponents(ComponentType type);
-
-    Optional<ComponentDescriptor> getComponent(String clazz);
-
-    List<ComponentDescriptor> getPluginActions(String pluginClazz);
+    public int getExitCode() {
+        return 1;
+    }
 
 }

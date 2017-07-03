@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
@@ -43,6 +44,9 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     private String[] scanPackages;
 
     @Autowired
+    private Environment environment;
+
+    @Autowired
     private ComponentDescriptorService componentDescriptorService;
 
     private Map<String, ComponentDescriptor> components = new HashMap<>();
@@ -51,17 +55,15 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     private ObjectMapper mapper = new ObjectMapper();
 
+    private boolean isInstall() {
+        return environment.acceptsProfiles("install");
+    }
+
     @PostConstruct
     public void init() {
-        registerComponents(ComponentType.FILTER, Filter.class);
-
-        registerComponents(ComponentType.PROCESSOR, Processor.class);
-
-        registerComponents(ComponentType.ACTION, Action.class);
-
-        registerComponents(ComponentType.PLUGIN, Plugin.class);
-
-        log.info("Found following definitions: {}", components.values());
+        if (!isInstall()) {
+            discoverComponents();
+        }
     }
 
     private void registerComponents(ComponentType type, Class<? extends Annotation> annotation) {
@@ -157,6 +159,19 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             defs.addAll(scanner.findCandidateComponents(scanPackage));
         }
         return defs;
+    }
+
+    @Override
+    public void discoverComponents() {
+        registerComponents(ComponentType.FILTER, Filter.class);
+
+        registerComponents(ComponentType.PROCESSOR, Processor.class);
+
+        registerComponents(ComponentType.ACTION, Action.class);
+
+        registerComponents(ComponentType.PLUGIN, Plugin.class);
+
+        log.info("Found following definitions: {}", components.values());
     }
 
     @Override

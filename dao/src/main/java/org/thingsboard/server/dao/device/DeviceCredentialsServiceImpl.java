@@ -127,19 +127,6 @@ public class DeviceCredentialsServiceImpl implements DeviceCredentialsService {
                     if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
                         throw new DataValidationException("Device credentials id should be specified!");
                     }
-                    switch (deviceCredentials.getCredentialsType()) {
-                        case ACCESS_TOKEN:
-                            if (deviceCredentials.getCredentialsId().length() < 1 || deviceCredentials.getCredentialsId().length() > 20) {
-                                throw new DataValidationException("Incorrect access token length [" + deviceCredentials.getCredentialsId().length() + "]!");
-                            }
-                            break;
-                        case X509_CERTIFICATE:
-                            if (deviceCredentials.getCredentialsId().length() == 0) {
-                                throw new DataValidationException("X509 Certificate Cannot be empty!");
-                            }
-                        default:
-                            break;
-                    }
                     Device device = deviceService.findDeviceById(deviceCredentials.getDeviceId());
                     if (device == null) {
                         throw new DataValidationException("Can't assign device credentials to non-existent device!");

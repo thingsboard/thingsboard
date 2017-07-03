@@ -13,25 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.component;
+package org.thingsboard.server.service.install;
 
-import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentType;
+public interface DatabaseSchemaService {
 
-import java.util.List;
-import java.util.Optional;
-
-/**
- * @author Andrew Shvayka
- */
-public interface ComponentDiscoveryService {
-
-    void discoverComponents();
-
-    List<ComponentDescriptor> getComponents(ComponentType type);
-
-    Optional<ComponentDescriptor> getComponent(String clazz);
-
-    List<ComponentDescriptor> getPluginActions(String pluginClazz);
+    void createDatabaseSchema() throws Exception;
 
 }
