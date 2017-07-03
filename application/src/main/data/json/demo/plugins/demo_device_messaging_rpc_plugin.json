@@ -1,0 +1,13 @@
+{
+  "apiToken": "messaging",
+  "name": "Demo Device Messaging RPC Plugin",
+  "clazz": "org.thingsboard.server.extensions.core.plugin.messaging.DeviceMessagingPlugin",
+  "publicAccess": false,
+  "state": "ACTIVE",
+  "configuration": {
+    "maxDeviceCountPerCustomer": 1024,
+    "defaultTimeout": 20000,
+    "maxTimeout": 60000
+  },
+  "additionalInfo": null
+}

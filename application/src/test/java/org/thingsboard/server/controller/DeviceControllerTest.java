@@ -355,20 +355,6 @@ public class DeviceControllerTest extends AbstractControllerTest {
         doPost("/api/device/credentials", deviceCredentials)
         .andExpect(status().isNotFound());
     }
-    
-    @Test
-    public void testSaveDeviceCredentialsWithInvalidCredentialsIdLength() throws Exception {
-        Device device = new Device();
-        device.setName("My device");
-        device.setType("default");
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        DeviceCredentials deviceCredentials = 
-                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-        deviceCredentials.setCredentialsId(RandomStringUtils.randomAlphanumeric(21));
-        doPost("/api/device/credentials", deviceCredentials)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("Incorrect access token length")));
-    }
 
     @Test
     public void testFindTenantDevices() throws Exception {

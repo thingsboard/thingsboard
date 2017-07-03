@@ -109,6 +109,18 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
+    public ListenableFuture<EntityRelation> getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        RelationCompositeKey key =
+                new RelationCompositeKey(from.getId(),
+                        from.getEntityType().name(),
+                        to.getId(),
+                        to.getEntityType().name(),
+                        relationType,
+                        typeGroup.name());
+        return service.submit(() -> DaoUtil.getData(relationRepository.findOne(key)));
+    }
+
+    @Override
     public ListenableFuture<Boolean> saveRelation(EntityRelation relation) {
         return service.submit(() -> relationRepository.save(new RelationEntity(relation)) != null);
     }

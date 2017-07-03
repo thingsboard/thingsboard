@@ -1,0 +1,35 @@
+{
+  "name": "Demo getTime RPC Rule",
+  "state": "ACTIVE",
+  "weight": 0,
+  "pluginToken": "time",
+  "filters": [
+    {
+      "configuration": {
+        "messageTypes": [
+          "RPC_REQUEST"
+        ]
+      },
+      "name": "RPC Request Filter",
+      "clazz": "org.thingsboard.server.extensions.core.filter.MsgTypeFilter"
+    },
+    {
+      "configuration": {
+        "methodNames": [
+          {
+            "name": "getTime"
+          }
+        ]
+      },
+      "name": "getTime method filter",
+      "clazz": "org.thingsboard.server.extensions.core.filter.MethodNameFilter"
+    }
+  ],
+  "processor": null,
+  "action": {
+    "configuration": {},
+    "clazz": "org.thingsboard.server.extensions.core.action.rpc.RpcPluginAction",
+    "name": "getTimeAction"
+  },
+  "additionalInfo": null
+}

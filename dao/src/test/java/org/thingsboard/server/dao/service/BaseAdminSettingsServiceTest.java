@@ -56,14 +56,6 @@ public abstract class BaseAdminSettingsServiceTest extends AbstractServiceTest {
     }
     
     @Test(expected = DataValidationException.class)
-    public void testCreateAdminSettings() throws Exception {
-        AdminSettings adminSettings = new AdminSettings();
-        adminSettings.setKey("someKey");
-        adminSettings.setJsonValue(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
-        adminSettingsService.saveAdminSettings(adminSettings);
-    }
-    
-    @Test(expected = DataValidationException.class)
     public void testSaveAdminSettingsWithEmptyKey() {
         AdminSettings adminSettings = adminSettingsService.findAdminSettingsByKey("mail");
         adminSettings.setKey(null);
