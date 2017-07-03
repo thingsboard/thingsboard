@@ -37,21 +37,22 @@ import java.util.Properties;
 public class CustomSqlUnit extends ExternalResource {
 
     private List<String> sqlFiles;
-    private Properties properties;
     private String dropAllTablesSqlFile;
+    private String dbUrl;
+    private String dbUserName;
+    private String dbPassword;
 
     public CustomSqlUnit(List<String> sqlFiles, String configurationFileName, String dropAllTablesSqlFile) {
         this.sqlFiles = sqlFiles;
-        this.properties = loadProperties(configurationFileName);
         this.dropAllTablesSqlFile = dropAllTablesSqlFile;
+        loadProperties(configurationFileName);
     }
 
     @Override
     public void before() {
         Connection conn = null;
         try {
-            String url = properties.getProperty("spring.datasource.url");
-            conn = DriverManager.getConnection(url, "sa", "");
+            conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
             for (String sqlFile : sqlFiles) {
                 URL sqlFileUrl = Resources.getResource(sqlFile);
                 String sql = Resources.toString(sqlFileUrl, Charsets.UTF_8);
@@ -74,8 +75,7 @@ public class CustomSqlUnit extends ExternalResource {
     public void after() {
         Connection conn = null;
         try {
-            String url = properties.getProperty("spring.datasource.url");
-            conn = DriverManager.getConnection(url, "sa", "");
+            conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
             URL dropAllTableSqlFileUrl = Resources.getResource(dropAllTablesSqlFile);
             String dropAllTablesSql = Resources.toString(dropAllTableSqlFileUrl, Charsets.UTF_8);
             conn.createStatement().execute(dropAllTablesSql);
@@ -92,13 +92,16 @@ public class CustomSqlUnit extends ExternalResource {
         }
     }
 
-    private Properties loadProperties(String fileName) {
+    private void loadProperties(String fileName) {
         final Properties properties = new Properties();
         try (final InputStream stream = this.getClass().getClassLoader().getResourceAsStream(fileName)) {
             properties.load(stream);
-            return properties;
+            this.dbUrl = properties.getProperty("spring.datasource.url");
+            this.dbUserName = properties.getProperty("spring.datasource.username");
+            this.dbPassword = properties.getProperty("spring.datasource.password");
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+
     }
 }

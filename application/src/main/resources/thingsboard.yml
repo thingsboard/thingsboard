@@ -235,7 +235,6 @@ spring:
         enabled: "true"
   jpa:
     show-sql: "false"
-    generate-ddl: "true"
     database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     hibernate:
       ddl-auto: "validate"
