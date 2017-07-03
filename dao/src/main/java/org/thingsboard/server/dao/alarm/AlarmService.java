@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.alarm;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 
 /**
@@ -39,5 +40,7 @@ public interface AlarmService {
 
     AlarmSeverity findHighestAlarmSeverity(EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                            AlarmStatus alarmStatus);
+
+    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
 }
