@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.controller;
 
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
-import org.thingsboard.server.dao.CustomCassandraCQLUnit;
-import org.thingsboard.server.dao.CustomPostgresUnit;
+import org.thingsboard.server.dao.CustomSqlUnit;
 
 import java.util.Arrays;
 
@@ -31,7 +29,8 @@ import java.util.Arrays;
 public class ControllerSqlTestSuite {
 
     @ClassRule
-    public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
-            Arrays.asList("postgres/schema.sql", "postgres/system-data.sql"),
-            "postgres-embedded-test.properties");
+    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
+            Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
+            "sql/drop-all-tables.sql",
+            "sql-test.properties");
 }

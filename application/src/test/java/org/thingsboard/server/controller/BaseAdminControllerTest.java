@@ -79,19 +79,6 @@ public abstract class BaseAdminControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testCreateAdminSettings() throws Exception {
-        loginSysAdmin();
-        
-        AdminSettings adminSettings = new AdminSettings();
-        adminSettings.setKey("someKey");
-        adminSettings.setJsonValue(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
-
-        doPost("/api/admin/settings", adminSettings)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("is prohibited")));
-    }
-
-    @Test
     public void testSaveAdminSettingsWithEmptyKey() throws Exception {
         loginSysAdmin();
         AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class); 
