@@ -35,7 +35,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-public class CustomerControllerTest extends AbstractControllerTest {
+public abstract class BaseCustomerControllerTest extends AbstractControllerTest {
 
     private IdComparator<Customer> idComparator = new IdComparator<>();
     

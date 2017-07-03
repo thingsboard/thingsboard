@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class RuleControllerTest extends AbstractControllerTest {
+public abstract class BaseRuleControllerTest extends AbstractControllerTest {
 
     private IdComparator<RuleMetaData> idComparator = new IdComparator<>();
 

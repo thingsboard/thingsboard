@@ -20,20 +20,18 @@ import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
 import org.thingsboard.server.dao.CustomCassandraCQLUnit;
+import org.thingsboard.server.dao.CustomPostgresUnit;
 
 import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.controller.*Test"})
-public class ControllerTestSuite {
+        "org.thingsboard.server.controller.sql.*SqlTest",
+        })
+public class ControllerSqlTestSuite {
 
     @ClassRule
-    public static CustomCassandraCQLUnit cassandraUnit =
-            new CustomCassandraCQLUnit(
-                    Arrays.asList(
-                            new ClassPathCQLDataSet("cassandra/schema.cql", false, false),
-                            new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
-                            new ClassPathCQLDataSet("cassandra/system-test.cql", false, false)),
-                    "cassandra-test.yaml", 30000l);
+    public static CustomPostgresUnit postgresUnit = new CustomPostgresUnit(
+            Arrays.asList("postgres/schema.sql", "postgres/system-data.sql"),
+            "postgres-embedded-test.properties");
 }

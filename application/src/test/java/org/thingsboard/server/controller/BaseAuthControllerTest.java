@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.thingsboard.server.common.data.security.Authority;
 import org.junit.Test;
 
-public class AuthControllerTest extends AbstractControllerTest {
+public abstract class BaseAuthControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetUser() throws Exception {

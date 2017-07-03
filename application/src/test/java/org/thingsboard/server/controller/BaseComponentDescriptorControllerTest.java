@@ -33,7 +33,7 @@ import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class ComponentDescriptorControllerTest extends AbstractControllerTest {
+public abstract class BaseComponentDescriptorControllerTest extends AbstractControllerTest {
 
     private static final int AMOUNT_OF_DEFAULT_PLUGINS_DESCRIPTORS = 5;
     private Tenant savedTenant;
