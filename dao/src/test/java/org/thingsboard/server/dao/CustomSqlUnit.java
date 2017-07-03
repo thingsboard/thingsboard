@@ -36,16 +36,24 @@ import java.util.Properties;
 @Slf4j
 public class CustomSqlUnit extends ExternalResource {
 
-    private List<String> sqlFiles;
-    private String dropAllTablesSqlFile;
-    private String dbUrl;
-    private String dbUserName;
-    private String dbPassword;
+    private final List<String> sqlFiles;
+    private final String dropAllTablesSqlFile;
+    private final String dbUrl;
+    private final String dbUserName;
+    private final String dbPassword;
 
-    public CustomSqlUnit(List<String> sqlFiles, String configurationFileName, String dropAllTablesSqlFile) {
+    public CustomSqlUnit(List<String> sqlFiles, String dropAllTablesSqlFile, String configurationFileName) {
         this.sqlFiles = sqlFiles;
         this.dropAllTablesSqlFile = dropAllTablesSqlFile;
-        loadProperties(configurationFileName);
+        final Properties properties = new Properties();
+        try (final InputStream stream = this.getClass().getClassLoader().getResourceAsStream(configurationFileName)) {
+            properties.load(stream);
+            this.dbUrl = properties.getProperty("spring.datasource.url");
+            this.dbUserName = properties.getProperty("spring.datasource.username");
+            this.dbPassword = properties.getProperty("spring.datasource.password");
+        } catch (IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override
@@ -90,18 +98,5 @@ public class CustomSqlUnit extends ExternalResource {
                 }
             }
         }
-    }
-
-    private void loadProperties(String fileName) {
-        final Properties properties = new Properties();
-        try (final InputStream stream = this.getClass().getClassLoader().getResourceAsStream(fileName)) {
-            properties.load(stream);
-            this.dbUrl = properties.getProperty("spring.datasource.url");
-            this.dbUserName = properties.getProperty("spring.datasource.username");
-            this.dbPassword = properties.getProperty("spring.datasource.password");
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
     }
 }

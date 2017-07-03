@@ -32,8 +32,9 @@ public class SystemSqlTestSuite {
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
             Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
-            "sql-test.properties",
-            "sql/drop-all-tables.sql");
+            "sql/drop-all-tables.sql",
+            "sql-test.properties"
+    );
 
 
 }

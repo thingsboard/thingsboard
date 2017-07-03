@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS widget_type (
     id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     alias character varying(255),
     bundle_alias character varying(255),
-    descriptor varchar(2000000),
+    descriptor varchar(1000000),
     name character varying(255),
     tenant_id uuid
 );
