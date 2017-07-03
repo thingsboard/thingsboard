@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.rules;
+package org.thingsboard.server.extensions.core.processor;
 
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-import org.thingsboard.server.extensions.api.component.ConfigurableComponent;
+import lombok.Data;
 
-import javax.script.ScriptException;
+import java.util.List;
 
 /**
  * @author Andrew Shvayka
  */
-public interface RuleProcessor<T> extends ConfigurableComponent<T>, RuleLifecycleComponent {
+@Data
+public class AlarmProcessorConfiguration {
 
-    RuleProcessingMetaData process(RuleContext ctx, ToDeviceActorMsg msg) throws RuleException;
+    private String newAlarmExpression;
+    private String clearAlarmExpression;
+
+    private String alarmTypeTemplate;
+    private String alarmSeverity;
+    private String alarmStatus;
+    private boolean alarmPropagateFlag;
+
+    private String alarmDetailsTemplate;
+
 }
