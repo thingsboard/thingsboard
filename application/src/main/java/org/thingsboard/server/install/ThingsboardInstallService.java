@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.DatabaseSchemaService;
+import org.thingsboard.server.service.install.DatabaseUpgradeService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 
 import java.nio.file.Files;
@@ -35,6 +36,12 @@ import java.nio.file.Paths;
 @Slf4j
 public class ThingsboardInstallService {
 
+    @Value("${install.upgrade:false}")
+    private Boolean isUpgrade;
+
+    @Value("${install.upgrade.form_version:1.2.3}")
+    private String upgradeFromVersion;
+
     @Value("${install.data_dir}")
     private String dataDir;
 
@@ -43,6 +50,9 @@ public class ThingsboardInstallService {
 
     @Autowired
     private DatabaseSchemaService databaseSchemaService;
+
+    @Autowired
+    private DatabaseUpgradeService databaseUpgradeService;
 
     @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
@@ -55,35 +65,67 @@ public class ThingsboardInstallService {
 
     public void performInstall() {
         try {
-            log.info("Starting ThingsBoard Installation...");
+            if (isUpgrade) {
+                log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
 
-            if (this.dataDir == null) {
-                throw new RuntimeException("'install.data_dir' property should specified!");
+                switch (upgradeFromVersion) {
+                    case "1.2.3":
+                        log.info("Upgrading ThingsBoard from version {} to 1.3.0 ...", upgradeFromVersion);
+
+                        databaseUpgradeService.upgradeDatabase(upgradeFromVersion);
+
+                        log.info("Updating system data...");
+
+                        systemDataLoaderService.deleteSystemWidgetBundle("charts");
+                        systemDataLoaderService.deleteSystemWidgetBundle("cards");
+                        systemDataLoaderService.deleteSystemWidgetBundle("maps");
+                        systemDataLoaderService.deleteSystemWidgetBundle("analogue_gauges");
+                        systemDataLoaderService.deleteSystemWidgetBundle("digital_gauges");
+                        systemDataLoaderService.deleteSystemWidgetBundle("gpio_widgets");
+                        systemDataLoaderService.deleteSystemWidgetBundle("alarm_widgets");
+
+                        systemDataLoaderService.loadSystemWidgets();
+
+                        break;
+                    default:
+                        throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
+
+                }
+                log.info("Upgrade finished successfully!");
+
+            } else {
+
+                log.info("Starting ThingsBoard Installation...");
+
+                if (this.dataDir == null) {
+                    throw new RuntimeException("'install.data_dir' property should specified!");
+                }
+                if (!Files.isDirectory(Paths.get(this.dataDir))) {
+                    throw new RuntimeException("'install.data_dir' property value is not a valid directory!");
+                }
+
+                log.info("Installing DataBase schema...");
+
+                databaseSchemaService.createDatabaseSchema();
+
+                log.info("Loading system data...");
+
+                componentDiscoveryService.discoverComponents();
+
+                systemDataLoaderService.createSysAdmin();
+                systemDataLoaderService.createAdminSettings();
+                systemDataLoaderService.loadSystemWidgets();
+                systemDataLoaderService.loadSystemPlugins();
+                systemDataLoaderService.loadSystemRules();
+
+                if (loadDemo) {
+                    log.info("Loading demo data...");
+                    systemDataLoaderService.loadDemoData();
+                }
+                log.info("Installation finished successfully!");
             }
-            if (!Files.isDirectory(Paths.get(this.dataDir))) {
-                throw new RuntimeException("'install.data_dir' property value is not a valid directory!");
-            }
 
-            log.info("Installing DataBase schema...");
 
-            databaseSchemaService.createDatabaseSchema();
-
-            log.info("Loading system data...");
-
-            componentDiscoveryService.discoverComponents();
-
-            systemDataLoaderService.createSysAdmin();
-            systemDataLoaderService.createAdminSettings();
-            systemDataLoaderService.loadSystemWidgets();
-            systemDataLoaderService.loadSystemPlugins();
-            systemDataLoaderService.loadSystemRules();
-
-            if (loadDemo) {
-                log.info("Loading demo data...");
-                systemDataLoaderService.loadDemoData();
-            }
-
-            log.info("Finished!");
         } catch (Exception e) {
             log.error("Unexpected error during ThingsBoard installation!", e);
             throw new ThingsboardInstallException("Unexpected error during ThingsBoard installation!", e);

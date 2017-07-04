@@ -27,7 +27,7 @@
     <artifactId>application</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server Application</name>
+    <name>ThingsBoard Server Application</name>
     <url>https://thingsboard.io</url>
     <description>Open-source IoT Platform - Device management, data collection, processing and visualization
     </description>
@@ -136,6 +136,14 @@
         <dependency>
             <groupId>org.apache.velocity</groupId>
             <artifactId>velocity-tools</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

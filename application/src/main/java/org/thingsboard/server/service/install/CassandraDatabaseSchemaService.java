@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.cassandra.CassandraInstallCluster;
 import org.thingsboard.server.dao.util.NoSqlDao;
-import org.thingsboard.server.install.cql.CQLStatementsParser;
+import org.thingsboard.server.service.install.cql.CQLStatementsParser;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

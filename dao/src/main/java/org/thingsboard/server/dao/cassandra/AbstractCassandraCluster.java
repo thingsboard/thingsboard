@@ -127,6 +127,10 @@ public abstract class AbstractCassandraCluster {
         }
     }
 
+    public String getKeyspaceName() {
+        return keyspaceName;
+    }
+
     private boolean isInstall() {
         return environment.acceptsProfiles("install");
     }
