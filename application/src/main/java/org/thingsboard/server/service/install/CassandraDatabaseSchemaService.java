@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.cassandra.CassandraInstallCluster;
 import org.thingsboard.server.dao.util.NoSqlDao;
-import org.thingsboard.server.install.cql.CQLStatementsParser;
+import org.thingsboard.server.service.install.cql.CQLStatementsParser;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,6 +35,7 @@ import java.util.List;
 @Slf4j
 public class CassandraDatabaseSchemaService implements DatabaseSchemaService {
 
+    private static final String CASSANDRA_DIR = "cassandra";
     private static final String SCHEMA_CQL = "schema.cql";
 
     @Value("${install.data_dir}")
@@ -47,7 +48,7 @@ public class CassandraDatabaseSchemaService implements DatabaseSchemaService {
     public void createDatabaseSchema() throws Exception {
         log.info("Installing Cassandra DataBase schema...");
 
-        Path schemaFile = Paths.get(this.dataDir, SCHEMA_CQL);
+        Path schemaFile = Paths.get(this.dataDir, CASSANDRA_DIR, SCHEMA_CQL);
         loadCql(schemaFile);
 
     }

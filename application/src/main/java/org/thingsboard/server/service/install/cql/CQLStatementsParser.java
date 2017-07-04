@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.thingsboard.server.install.cql;
+package org.thingsboard.server.service.install.cql;
 
 import lombok.extern.slf4j.Slf4j;
 
