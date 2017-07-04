@@ -39,7 +39,7 @@ public class ThingsboardInstallService {
     @Value("${install.upgrade:false}")
     private Boolean isUpgrade;
 
-    @Value("${install.upgrade.form_version:1.2.3}")
+    @Value("${install.upgrade.from_version:1.2.3}")
     private String upgradeFromVersion;
 
     @Value("${install.data_dir}")

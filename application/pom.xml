@@ -376,6 +376,29 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-install</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/bin/install</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/scripts/install</directory>
+                                    <includes>
+                                        <include>**/*.sh</include>
+                                        <include>**/*.xml</include>
+                                    </includes>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                            <filters>
+                                <filter>src/main/filters/unix.properties</filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-windows-control</id>
                         <phase>process-resources</phase>
                         <goals>
@@ -395,7 +418,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>copy-data-cql</id>
+                        <id>copy-data</id>
                         <phase>process-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
@@ -404,9 +427,13 @@
                             <outputDirectory>${project.build.directory}/data</outputDirectory>
                             <resources>
                                 <resource>
+                                    <directory>src/main/data</directory>
+                                </resource>
+                                <resource>
                                     <directory>../dao/src/main/resources</directory>
                                     <includes>
                                         <include>**/*.cql</include>
+                                        <include>**/*.sql</include>
                                     </includes>
                                     <filtering>false</filtering>
                                 </resource>
