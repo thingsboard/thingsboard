@@ -17,11 +17,11 @@ package org.thingsboard.server.dao.sql.relation;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.dao.util.SqlDao;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
+import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,5 +51,5 @@ public interface RelationRepository
                                                     String fromType);
 
     @Transactional
-    List<RelationEntity> deleteByFromIdAndFromType(UUID fromId, String fromType);
+    void deleteByFromIdAndFromType(UUID fromId, String fromType);
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.system;
+package org.thingsboard.server.controller;
 
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
@@ -22,18 +22,15 @@ import org.thingsboard.server.dao.CustomSqlUnit;
 
 import java.util.Arrays;
 
-/**
- * Created by Valerii Sosliuk on 6/27/2017.
- */
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.system.sql.*SqlTest"})
-public class SystemSqlTestSuite {
+@ClasspathSuite.ClassnameFilters({
+        "org.thingsboard.server.controller.sql.*SqlTest",
+        })
+public class ControllerSqlTestSuite {
 
     @ClassRule
     public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
             Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
             "sql/drop-all-tables.sql",
             "sql-test.properties");
-
-
 }
