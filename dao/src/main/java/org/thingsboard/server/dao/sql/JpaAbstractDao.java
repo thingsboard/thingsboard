@@ -28,8 +28,6 @@ import org.thingsboard.server.dao.model.BaseEntity;
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
-
 /**
  * @author Valerii Sosliuk
  */

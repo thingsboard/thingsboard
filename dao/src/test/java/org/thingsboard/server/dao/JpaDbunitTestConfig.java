@@ -51,7 +51,6 @@ public class JpaDbunitTestConfig {
         DatabaseDataSourceConnectionFactoryBean databaseDataSourceConnectionFactoryBean = new DatabaseDataSourceConnectionFactoryBean();
         databaseDataSourceConnectionFactoryBean.setDatabaseConfig(databaseConfigBean());
         databaseDataSourceConnectionFactoryBean.setDataSource(dataSource);
-        databaseDataSourceConnectionFactoryBean.setSchema("public");
         return databaseDataSourceConnectionFactoryBean;
     }
 }
