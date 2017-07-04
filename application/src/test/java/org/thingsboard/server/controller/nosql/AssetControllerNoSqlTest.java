@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.controller.nosql;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.thingsboard.server.controller.BaseAssetControllerTest;
+import org.thingsboard.server.dao.service.DaoNoSqlTest;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
-@ConditionalOnProperty(prefix = "database", value = "type", havingValue = "sql")
-public @interface SqlDao {
+/**
+ * Created by Valerii Sosliuk on 6/28/2017.
+ */
+@DaoNoSqlTest
+public class AssetControllerNoSqlTest extends BaseAssetControllerTest {
 }

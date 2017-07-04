@@ -106,7 +106,7 @@ coap:
   timeout: "${COAP_TIMEOUT:10000}"
 
 database:
-  type: "${DATABASE_TYPE:cassandra}" # cassandra OR postgres
+  type: "${DATABASE_TYPE:cassandra}" # cassandra OR sql
 
 # Cassandra driver configuration parameters
 cassandra:
@@ -233,7 +233,6 @@ spring:
         enabled: "true"
   jpa:
     show-sql: "false"
-    generate-ddl: "true"
     database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     hibernate:
       ddl-auto: "validate"

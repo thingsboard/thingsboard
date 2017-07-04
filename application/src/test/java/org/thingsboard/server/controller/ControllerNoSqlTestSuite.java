@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.system;
+package org.thingsboard.server.controller;
 
+import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
-import org.thingsboard.server.dao.CustomSqlUnit;
+import org.thingsboard.server.dao.CustomCassandraCQLUnit;
 
 import java.util.Arrays;
 
-/**
- * Created by Valerii Sosliuk on 6/27/2017.
- */
 @RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({"org.thingsboard.server.system.sql.*SqlTest"})
-public class SystemSqlTestSuite {
+@ClasspathSuite.ClassnameFilters({
+        "org.thingsboard.server.controller.nosql.*Test"})
+public class ControllerNoSqlTestSuite {
 
     @ClassRule
-    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
-            "sql/drop-all-tables.sql",
-            "sql-test.properties");
-
-
+    public static CustomCassandraCQLUnit cassandraUnit =
+            new CustomCassandraCQLUnit(
+                    Arrays.asList(
+                            new ClassPathCQLDataSet("cassandra/schema.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/system-data.cql", false, false),
+                            new ClassPathCQLDataSet("cassandra/system-test.cql", false, false)),
+                    "cassandra-test.yaml", 30000l);
 }
