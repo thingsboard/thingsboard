@@ -57,6 +57,21 @@ ospackage {
         into "bin"
     }
 
+    // Copy the install files
+    from("target/bin/install/install.sh") {
+        fileMode 0775
+        into "bin/install"
+    }
+
+    from("target/bin/install/upgrade.sh") {
+        fileMode 0775
+        into "bin/install"
+    }
+
+    from("target/bin/install/logback.xml") {
+        into "bin/install"
+    }
+
     // Copy the config files
     from("target/conf") {
         exclude "${pkgName}.conf"
