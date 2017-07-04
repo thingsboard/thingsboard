@@ -32,7 +32,7 @@ import java.util.Optional;
 /**
  * @author Andrew Shvayka
  */
-@Processor(name = "Alarm Deduplication Processor", descriptor = "AlarmDeduplicationProcessorDescriptor.json",
+@Processor(name = "(Deprecated) Alarm Deduplication Processor", descriptor = "AlarmDeduplicationProcessorDescriptor.json",
         configuration = AlarmDeduplicationProcessorConfiguration.class)
 @Slf4j
 public class AlarmDeduplicationProcessor extends SimpleRuleLifecycleComponent

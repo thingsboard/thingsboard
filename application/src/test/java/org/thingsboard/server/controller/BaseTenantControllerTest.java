@@ -31,7 +31,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-public class TenantControllerTest extends AbstractControllerTest {
+public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     
     private IdComparator<Tenant> idComparator = new IdComparator<>();
 
@@ -107,7 +107,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
         tenants.addAll(pageData.getData());
-        
+
         for (int i=0;i<56;i++) {
             Tenant tenant = new Tenant();
             tenant.setTitle("Tenant"+i);

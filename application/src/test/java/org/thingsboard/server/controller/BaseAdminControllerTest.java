@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class AdminControllerTest extends AbstractControllerTest {
+public abstract class BaseAdminControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindAdminSettingsByKey() throws Exception {

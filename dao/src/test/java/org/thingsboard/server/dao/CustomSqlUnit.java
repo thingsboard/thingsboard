@@ -58,6 +58,8 @@ public class CustomSqlUnit extends ExternalResource {
 
     @Override
     public void before() {
+        cleanUpDb();
+
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
@@ -81,6 +83,10 @@ public class CustomSqlUnit extends ExternalResource {
 
     @Override
     public void after() {
+        cleanUpDb();
+    }
+
+    private void cleanUpDb() {
         Connection conn = null;
         try {
             conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword);

@@ -34,7 +34,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class WidgetsBundleControllerTest extends AbstractControllerTest {
+public abstract class BaseWidgetsBundleControllerTest extends AbstractControllerTest {
 
     private IdComparator<WidgetsBundle> idComparator = new IdComparator<>();
 

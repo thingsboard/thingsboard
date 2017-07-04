@@ -15,22 +15,27 @@
  */
 package org.thingsboard.server.actors.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.extensions.api.device.DeviceAttributes;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public class RuleProcessingContext implements RuleContext {
 
     private final TimeseriesService tsService;
     private final EventService eventService;
+    private final AlarmService alarmService;
     private final RuleId ruleId;
     private TenantId tenantId;
     private CustomerId customerId;
@@ -40,6 +45,7 @@ public class RuleProcessingContext implements RuleContext {
     RuleProcessingContext(ActorSystemContext systemContext, RuleId ruleId) {
         this.tsService = systemContext.getTsService();
         this.eventService = systemContext.getEventService();
+        this.alarmService = systemContext.getAlarmService();
         this.ruleId = ruleId;
     }
 
@@ -75,6 +81,25 @@ public class RuleProcessingContext implements RuleContext {
     @Override
     public Optional<Event> findEvent(String eventType, String eventUid) {
         return eventService.findEvent(tenantId, deviceId, eventType, eventUid);
+    }
+
+    @Override
+    public Alarm createOrUpdateAlarm(Alarm alarm) {
+        alarm.setTenantId(tenantId);
+        return alarmService.createOrUpdateAlarm(alarm);
+    }
+
+    public Optional<Alarm> findLatestAlarm(EntityId originator, String alarmType) {
+        try {
+            return Optional.ofNullable(alarmService.findLatestByOriginatorAndType(tenantId, originator, alarmType).get());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Failed to lookup alarm!", e);
+        }
+    }
+
+    @Override
+    public ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long clearTs) {
+        return alarmService.clearAlarm(alarmId, clearTs);
     }
 
     private void checkEvent(Event event) {

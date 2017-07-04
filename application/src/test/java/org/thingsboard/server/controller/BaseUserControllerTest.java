@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class UserControllerTest extends AbstractControllerTest {
+public abstract class BaseUserControllerTest extends AbstractControllerTest {
     
     private IdComparator<User> idComparator = new IdComparator<>();
 

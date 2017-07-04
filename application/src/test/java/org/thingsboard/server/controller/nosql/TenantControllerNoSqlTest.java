@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.rules;
+package org.thingsboard.server.controller.nosql;
 
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-import org.thingsboard.server.extensions.api.component.ConfigurableComponent;
-
-import javax.script.ScriptException;
+import org.thingsboard.server.controller.BaseTenantControllerTest;
+import org.thingsboard.server.dao.service.DaoNoSqlTest;
 
 /**
- * @author Andrew Shvayka
+ * Created by Valerii Sosliuk on 6/28/2017.
  */
-public interface RuleProcessor<T> extends ConfigurableComponent<T>, RuleLifecycleComponent {
-
-    RuleProcessingMetaData process(RuleContext ctx, ToDeviceActorMsg msg) throws RuleException;
+@DaoNoSqlTest
+public class TenantControllerNoSqlTest extends BaseTenantControllerTest {
 }

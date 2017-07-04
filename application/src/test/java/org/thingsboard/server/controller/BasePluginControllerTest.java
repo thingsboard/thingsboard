@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class PluginControllerTest extends AbstractControllerTest {
+public abstract class BasePluginControllerTest extends AbstractControllerTest {
 
     private IdComparator<PluginMetaData> idComparator = new IdComparator<>();
 
@@ -130,7 +130,7 @@ public class PluginControllerTest extends AbstractControllerTest {
 
         doPost("/api/plugin/" + savedPlugin.getId().getId().toString() + "/activate").andExpect(status().isOk());
 
-        RuleMetaData rule = RuleControllerTest.createRuleMetaData(savedPlugin);
+        RuleMetaData rule = BaseRuleControllerTest.createRuleMetaData(savedPlugin);
         RuleMetaData savedRule = doPost("/api/rule", rule, RuleMetaData.class);
         doPost("/api/rule/" + savedRule.getId().getId().toString() + "/activate").andExpect(status().isOk());
 
@@ -151,7 +151,7 @@ public class PluginControllerTest extends AbstractControllerTest {
 
         PluginMetaData savedPlugin = doPost("/api/plugin", plugin, PluginMetaData.class);
 
-        RuleMetaData rule = RuleControllerTest.createRuleMetaData(savedPlugin);
+        RuleMetaData rule = BaseRuleControllerTest.createRuleMetaData(savedPlugin);
         RuleMetaData savedRule = doPost("/api/rule", rule, RuleMetaData.class);
 
         doDelete("/api/plugin/" + savedPlugin.getId().getId()).andExpect(status().isBadRequest());

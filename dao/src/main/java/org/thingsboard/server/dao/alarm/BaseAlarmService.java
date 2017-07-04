@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -109,6 +110,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+        return alarmDao.findLatestByOriginatorAndType(tenantId, originator, type);
     }
 
     private Alarm createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
@@ -204,15 +209,15 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         validateId(alarmId, "Incorrect alarmId " + alarmId);
         return Futures.transform(alarmDao.findAlarmByIdAsync(alarmId.getId()),
                 (AsyncFunction<Alarm, AlarmInfo>) alarm1 -> {
-                AlarmInfo alarmInfo = new AlarmInfo(alarm1);
-                return Futures.transform(
-                    entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
-                        originatorName -> {
-                            alarmInfo.setOriginatorName(originatorName);
-                            return alarmInfo;
-                        }
-                );
-        });
+                    AlarmInfo alarmInfo = new AlarmInfo(alarm1);
+                    return Futures.transform(
+                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
+                                    originatorName -> {
+                                        alarmInfo.setOriginatorName(originatorName);
+                                        return alarmInfo;
+                                    }
+                    );
+                });
     }
 
     @Override
@@ -234,7 +239,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     ));
                 }
                 return Futures.successfulAsList(alarmFutures);
-             });
+            });
         }
         return Futures.transform(alarms, new Function<List<AlarmInfo>, TimePageData<AlarmInfo>>() {
             @Nullable
@@ -247,7 +252,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Override
     public AlarmSeverity findHighestAlarmSeverity(EntityId entityId, AlarmSearchStatus alarmSearchStatus,
-                                                                    AlarmStatus alarmStatus) {
+                                                  AlarmStatus alarmStatus) {
         TimePageLink nextPageLink = new TimePageLink(100);
         boolean hasNext = true;
         AlarmSeverity highestSeverity = null;
@@ -321,7 +326,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
             for (EntityId parentId : parentEntities) {
                 updateAlarmRelation(parentId, alarm.getId(), oldStatus, newStatus);
-           }
+            }
             updateAlarmRelation(alarm.getOriginator(), alarm.getId(), oldStatus, newStatus);
         } catch (ExecutionException | InterruptedException e) {
             log.warn("[{}] Failed to update relations. Old status: [{}], New status: [{}]", alarm.getId(), oldStatus, newStatus);

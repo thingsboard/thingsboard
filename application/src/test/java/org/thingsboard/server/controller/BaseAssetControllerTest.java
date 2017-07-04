@@ -40,7 +40,7 @@ import org.junit.Test;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.type.TypeReference;
 
-public class AssetControllerTest extends AbstractControllerTest {
+public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
     private IdComparator<Asset> idComparator = new IdComparator<>();
 

@@ -23,9 +23,7 @@ import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Filter;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
 
-import javax.script.Bindings;
 import javax.script.ScriptException;
-import javax.script.SimpleBindings;
 import java.util.List;
 
 /**
@@ -41,20 +39,12 @@ public class DeviceTelemetryFilter extends BasicJsFilter {
         if (deviceMsg instanceof TelemetryUploadRequest) {
             TelemetryUploadRequest telemetryMsg = (TelemetryUploadRequest) deviceMsg;
             for (List<KvEntry> entries : telemetryMsg.getData().values()) {
-                if (evaluator.execute(toBindings(entries))) {
+                if (evaluator.execute(NashornJsEvaluator.toBindings(entries))) {
                     return true;
                 }
             }
         }
         return false;
-    }
-
-    private Bindings toBindings(List<KvEntry> entries) {
-        Bindings bindings = new SimpleBindings();
-        for (KvEntry entry : entries) {
-            bindings.put(entry.getKey(), getValue(entry));
-        }
-        return bindings;
     }
 
 }

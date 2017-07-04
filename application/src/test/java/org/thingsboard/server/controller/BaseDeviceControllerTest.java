@@ -42,7 +42,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-public class DeviceControllerTest extends AbstractControllerTest {
+public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     
     private IdComparator<Device> idComparator = new IdComparator<>();
     

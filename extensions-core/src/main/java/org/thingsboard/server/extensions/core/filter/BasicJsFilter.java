@@ -75,18 +75,4 @@ public abstract class BasicJsFilter implements RuleFilter<JsFilterConfiguration>
         }
     }
 
-    protected static Object getValue(KvEntry attr) {
-        switch (attr.getDataType()) {
-            case STRING:
-                return attr.getStrValue().get();
-            case LONG:
-                return attr.getLongValue().get();
-            case DOUBLE:
-                return attr.getDoubleValue().get();
-            case BOOLEAN:
-                return attr.getBooleanValue().get();
-        }
-        return null;
-    }
-
 }
