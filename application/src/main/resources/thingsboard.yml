@@ -223,21 +223,36 @@ spring.mvc.cors:
          allowed-headers: "*"
          max-age: "1800"
          allow-credentials: "true"
-         
-# SQL DAO Configuration
 
+# HSQLDB DAO Configuration
 spring:
   data:
     jpa:
       repositories:
         enabled: "true"
   jpa:
-    show-sql: "false"
-    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     hibernate:
       ddl-auto: "validate"
+    database-platform: "org.hibernate.dialect.HSQLDialect"
   datasource:
-    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
-    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false}"
+    username: "${SPRING_DATASOURCE_USERNAME:sa}"
+    password: "${SPRING_DATASOURCE_PASSWORD:}"
+
+
+# Postgres DAO Configuration
+#spring:
+#  data:
+#    jpa:
+#      repositories:
+#        enabled: "true"
+#  jpa:
+#    hibernate:
+#      ddl-auto: "validate"
+#    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+#  datasource:
+#    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+#    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+#    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+#    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
