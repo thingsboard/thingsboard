@@ -22,6 +22,7 @@ if not defined fromVersion (
 )
 
 SET LOADER_PATH=%BASE%\conf,%BASE%\extensions
+SET SQL_DATA_FOLDER=%BASE%\data\sql
 SET jarfile=%BASE%\lib\${pkg.name}.jar
 SET installDir=%BASE%\data
 

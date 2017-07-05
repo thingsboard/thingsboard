@@ -18,8 +18,6 @@ package org.thingsboard.server.dao.sql.alarm;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -27,7 +25,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.alarm.AlarmDao;
-import org.thingsboard.server.dao.model.sql.AlarmEntity;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -43,8 +40,6 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
     @Autowired
     private AlarmDao alarmDao;
 
-    @Autowired
-    private AlarmRepository alarmRepository;
 
     @Test
     public void testFindLatestByOriginatorAndType() throws ExecutionException, InterruptedException {
@@ -59,19 +54,11 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         saveAlarm(alarm2Id, tenantId, originator1Id, "TEST_ALARM");
         saveAlarm(alarm3Id, tenantId, originator2Id, "TEST_ALARM");
         assertEquals(3, alarmDao.find().size());
-        AlarmEntity alarmEntity = alarmRepository.findLatestByOriginatorAndType(
-                tenantId, originator1Id, EntityType.DEVICE, "TEST_ALARM", new PageRequest(0, 1)).get(0);
-        assertNotNull(alarmEntity);
         ListenableFuture<Alarm> future = alarmDao
                 .findLatestByOriginatorAndType(new TenantId(tenantId), new DeviceId(originator1Id), "TEST_ALARM");
         Alarm alarm = future.get();
         assertNotNull(alarm);
         assertEquals(alarm2Id, alarm.getId().getId());
-    }
-
-    @Test
-    public void testFindAlarmByIdAsync() {
-        // TODO: implement
     }
 
     private void saveAlarm(UUID id, UUID tenantId, UUID deviceId, String type) {
