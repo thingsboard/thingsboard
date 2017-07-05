@@ -41,6 +41,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -225,6 +226,14 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         loadPlugins(Paths.get(dataDir, JSON_DIR, DEMO_DIR, PLUGINS_DIR), demoTenant.getId());
         loadRules(Paths.get(dataDir, JSON_DIR, DEMO_DIR, RULES_DIR), demoTenant.getId());
         loadDashboards(Paths.get(dataDir, JSON_DIR, DEMO_DIR, DASHBOARDS_DIR), demoTenant.getId(), null);
+    }
+
+    @Override
+    public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
+        WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(new TenantId(ModelConstants.NULL_UUID), bundleAlias);
+        if (widgetsBundle != null) {
+            widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getId());
+        }
     }
 
     private User createUser(Authority authority,

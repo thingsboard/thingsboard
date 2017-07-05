@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.thingsboard.server.service.install;
 
-public interface SystemDataLoaderService {
+public interface DatabaseUpgradeService {
 
-    void createSysAdmin() throws Exception;
-
-    void createAdminSettings() throws Exception;
-
-    void loadSystemWidgets() throws Exception;
-
-    void loadSystemPlugins() throws Exception;
-
-    void loadSystemRules() throws Exception;
-
-    void loadDemoData() throws Exception;
-
-    void deleteSystemWidgetBundle(String bundleAlias) throws Exception;
+    void upgradeDatabase(String fromVersion) throws Exception;
 
 }

@@ -44,16 +44,14 @@ function RelatedEntityAutocomplete($compile, $templateCache, $q, $filter, entity
             if (!scope.allEntities) {
                 entityService.getRelatedEntities(scope.rootEntityId, scope.entityType, scope.entitySubtypes, -1, []).then(
                     function success(entities) {
-                        if (scope.excludeEntityId) {
-                            var result = $filter('filter')(entities, {id: {id: scope.excludeEntityId.id} }, true);
-                            result = $filter('filter')(result, {id: {entityType: scope.excludeEntityId.entityType} }, true);
-                            if (result && result.length) {
-                                var excludeEntity = result[0];
-                                var index = entities.indexOf(excludeEntity);
-                                if (index > -1) {
-                                    entities.splice(index, 1);
+                        if (scope.excludeEntityIds && scope.excludeEntityIds.length) {
+                            var filteredEntities = [];
+                            entities.forEach(function(entity) {
+                                if (scope.excludeEntityIds.indexOf(entity.id.id) == -1) {
+                                    filteredEntities.push(entity);
                                 }
-                            }
+                            });
+                            entities = filteredEntities;
                         }
                         scope.allEntities = entities;
                         filterEntities(searchText, deferred);
@@ -116,7 +114,7 @@ function RelatedEntityAutocomplete($compile, $templateCache, $q, $filter, entity
             rootEntityId: '=',
             entityType: '=',
             entitySubtypes: '=',
-            excludeEntityId: '=?',
+            excludeEntityIds: '=?',
             theForm: '=?',
             tbRequired: '=?',
             disabled:'=ngDisabled',
