@@ -69,9 +69,34 @@ IF "%JRE_PATH2%" == ""  GOTO JAVA_NOT_INSTALLED
 
 @ECHO Java 1.8 found!
 @ECHO Installing ${pkg.name} ...
-%~dp0${pkg.name}.exe install
 
-@ECHO DONE.
+SET loadDemo=false
+
+if "%1" == "--loadDemo" (
+    SET loadDemo=true
+)
+
+SET BASE=%~dp0
+SET LOADER_PATH=%BASE%\conf,%BASE%\extensions
+SET jarfile=%BASE%\lib\${pkg.name}.jar
+SET installDir=%BASE%\data
+
+java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication^
+                    -Dinstall.data_dir=%installDir%^
+                    -Dinstall.load_demo=%loadDemo%^
+                    -Dspring.jpa.hibernate.ddl-auto=none^
+                    -Dinstall.upgrade=false^
+                    -Dlogging.config=%BASE%\install\logback.xml^
+                    org.springframework.boot.loader.PropertiesLauncher
+
+if errorlevel 1 (
+   @echo ThingsBoard installation failed!
+   exit /b %errorlevel%
+)
+
+%BASE%${pkg.name}.exe install
+
+@ECHO ThingsBoard installed successfully!
 
 GOTO END
 
