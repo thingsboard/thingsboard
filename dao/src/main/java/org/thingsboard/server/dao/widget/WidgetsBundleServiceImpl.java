@@ -169,7 +169,10 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
 
                 @Override
                 protected void validateCreate(WidgetsBundle widgetsBundle) {
-                    String alias = widgetsBundle.getTitle().toLowerCase().replaceAll("\\W+", "_");
+                    String alias = widgetsBundle.getAlias();
+                    if (alias == null || alias.trim().isEmpty()) {
+                        alias = widgetsBundle.getTitle().toLowerCase().replaceAll("\\W+", "_");
+                    }
                     String originalAlias = alias;
                     int c = 1;
                     WidgetsBundle withSameAlias;

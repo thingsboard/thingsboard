@@ -124,8 +124,10 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                     if (widgetsBundle == null) {
                         throw new DataValidationException("Widget type is referencing to non-existent widgets bundle!");
                     }
-
-                    String alias = widgetType.getName().toLowerCase().replaceAll("\\W+", "_");
+                    String alias = widgetType.getAlias();
+                    if (alias == null || alias.trim().isEmpty()) {
+                        alias = widgetType.getName().toLowerCase().replaceAll("\\W+", "_");
+                    }
                     String originalAlias = alias;
                     int c = 1;
                     WidgetType withSameAlias;
