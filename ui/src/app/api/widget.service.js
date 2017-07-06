@@ -27,6 +27,7 @@ import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
 import TbAnalogueRadialGauge from '../widget/lib/analogue-radial-gauge';
 import TbCanvasDigitalGauge from '../widget/lib/canvas-digital-gauge';
 import TbMapWidget from '../widget/lib/map-widget';
+import TbMapWidgetV2 from '../widget/lib/map-widget2';
 
 import 'oclazyload';
 import cssjs from '../../vendor/css.js/css';
@@ -53,6 +54,8 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
     $window.TbAnalogueRadialGauge = TbAnalogueRadialGauge;
     $window.TbCanvasDigitalGauge = TbCanvasDigitalGauge;
     $window.TbMapWidget = TbMapWidget;
+    $window.TbMapWidgetV2 = TbMapWidgetV2;
+
     $window.cssjs = cssjs;
 
     var cssParser = new cssjs();

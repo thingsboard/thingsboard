@@ -144,6 +144,12 @@ export default class TbGoogleMap {
     }
 
     /* eslint-disable no-undef */
+    updateMarkerLabel(marker, settings, labelText) {
+        marker.set('labelContent', '<div style="color: '+ settings.labelColor +';"><b>'+labelText+'</b></div>');
+    }
+    /* eslint-enable no-undef */
+
+    /* eslint-disable no-undef */
     updateMarkerColor(marker, color) {
         var pinColor = color.substr(1);
         var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
