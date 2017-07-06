@@ -144,8 +144,8 @@ export default class TbGoogleMap {
     }
 
     /* eslint-disable no-undef */
-    updateMarkerLabel(marker, settings, labelText) {
-        marker.set('labelContent', '<div style="color: '+ settings.labelColor +';"><b>'+labelText+'</b></div>');
+    updateMarkerLabel(marker, settings) {
+        marker.set('labelContent', '<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>');
     }
     /* eslint-enable no-undef */
 
@@ -180,7 +180,7 @@ export default class TbGoogleMap {
             }
             marker.setIcon(pinImage);
             if (settings.showLabel) {
-                marker.set('labelAnchor', new google.maps.Point(50, height + 20));
+                marker.set('labelAnchor', new google.maps.Point(100, height + 20));
             }
         }
         testImage.src = image;
@@ -206,9 +206,9 @@ export default class TbGoogleMap {
                 map: this.map,
                 icon: pinImage,
                 shadow: pinShadow,
-                labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.label+'</b></div>',
+                labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
                 labelClass: "tb-labels",
-                labelAnchor: new google.maps.Point(50, height + 20)
+                labelAnchor: new google.maps.Point(100, height + 20)
             });
         } else {
             marker = new google.maps.Marker({

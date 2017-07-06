@@ -52,8 +52,9 @@ export default class TbMapWidgetV2 {
 
         if (!useDynamicLocations) {
             this.subscription = this.ctx.defaultSubscription;
-            this.configureLocationsSettings();
         }
+
+        this.configureLocationsSettings();
 
         var minZoomLevel = this.drawRoutes ? 18 : 15;
 
@@ -73,15 +74,36 @@ export default class TbMapWidgetV2 {
         Object.assign(this.callbacks, callbacks);
     }
 
+    clearLocations() {
+        if (this.locations) {
+            var tbMap = this;
+            this.locations.forEach(function(location) {
+                if (location.marker) {
+                    tbMap.map.removeMarker(location.marker);
+                }
+                if (location.polyline) {
+                    tbMap.map.removePolyline(location.polyline);
+                }
+            });
+            this.locations = null;
+            this.markers = [];
+            if (this.drawRoutes) {
+                this.polylines = [];
+            }
+        }
+    }
+
+    setSubscription(subscription) {
+        this.subscription = subscription;
+        this.clearLocations();
+    }
+
     configureLocationsSettings() {
 
         this.locationSettings.latKeyName = this.ctx.settings.latKeyName || 'latitude';
         this.locationSettings.lngKeyName = this.ctx.settings.lngKeyName || 'longitude';
 
         this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${"+this.locationSettings.latKeyName+":7}<br/><b>Longitude:</b> ${"+this.locationSettings.lngKeyName+":7}";
-
-        //TODO:
-        //this.locationSettings.tooltipReplaceInfo = procesTooltipPattern(this, this.locationsSettings[i].tooltipPattern, this.subscription.datasources);
 
         this.locationSettings.showLabel = this.ctx.settings.showLabel !== false;
         this.locationSettings.displayTooltip = true;
@@ -99,7 +121,7 @@ export default class TbMapWidgetV2 {
         }
 
         this.locationSettings.useMarkerImageFunction = this.ctx.settings.useMarkerImageFunction === true;
-        if (angular.isDefined(this.ctx.settings.markerImageFunction) &&this.ctx.settings.markerImageFunction.length > 0) {
+        if (angular.isDefined(this.ctx.settings.markerImageFunction) && this.ctx.settings.markerImageFunction.length > 0) {
             try {
                 this.locationSettings.markerImageFunction = new Function('data, images, dsData, dsIndex', this.ctx.settings.markerImageFunction);
             } catch (e) {
@@ -121,8 +143,6 @@ export default class TbMapWidgetV2 {
             this.locationSettings.strokeWeight = this.ctx.settings.strokeWeight || 2;
             this.locationSettings.strokeOpacity = this.ctx.settings.strokeOpacity || 1.0;
         }
-
-
     }
 
     update() {
@@ -131,10 +151,9 @@ export default class TbMapWidgetV2 {
 
         function updateLocationLabel(location) {
             if (location.settings.showLabel && location.settings.labelReplaceInfo.variables.length) {
-                var labelText = fillPattern(location.settings.label,
+                location.settings.labelText = fillPattern(location.settings.label,
                     location.settings.labelReplaceInfo, tbMap.subscription.data);
-                tbMap.map.updateMarkerLabel(location.marker, location.settings, labelText);
-                //TODO: update openStreetMap
+                tbMap.map.updateMarkerLabel(location.marker, location.settings);
             }
         }
 
@@ -152,10 +171,9 @@ export default class TbMapWidgetV2 {
             }
         }
 
-        function updateLocationColor(location, dataMap) {
-            var color = calculateLocationColor(location, dataMap);
+        function updateLocationColor(location, color, image) {
             if (!location.settings.calculatedColor || location.settings.calculatedColor !== color) {
-                if (!location.settings.useMarkerImage) {
+                if (!location.settings.useMarkerImage && !image) {
                     tbMap.map.updateMarkerColor(location.marker, color);
                 }
                 if (location.polyline) {
@@ -179,9 +197,8 @@ export default class TbMapWidgetV2 {
             }
         }
 
-        function updateLocationMarkerImage(location, dataMap) {
-            var image = calculateLocationMarkerImage(location, dataMap);
-            if (image != null && (!location.settings.calculatedImage || !angular.equals(location.settings.calculatedImage, image))) {
+        function updateLocationMarkerImage(location, image) {
+            if (image && (!location.settings.calculatedImage || !angular.equals(location.settings.calculatedImage, image))) {
                 tbMap.map.updateMarkerImage(location.marker, location.settings, image.url, image.size);
                 location.settings.calculatedImage = image;
             }
@@ -189,8 +206,10 @@ export default class TbMapWidgetV2 {
 
         function updateLocationStyle(location, dataMap) {
             updateLocationLabel(location);
-            updateLocationColor(location, dataMap);
-            updateLocationMarkerImage(location, dataMap);
+            var color = calculateLocationColor(location, dataMap);
+            var image = calculateLocationMarkerImage(location, dataMap);
+            updateLocationColor(location, color, image);
+            updateLocationMarkerImage(location, image);
         }
 
         function updateLocation(location, data, dataMap) {
@@ -298,6 +317,7 @@ export default class TbMapWidgetV2 {
                     if (location.settings.showLabel) {
                         location.settings.label = tbMap.utils.createLabelFromDatasource(currentDatasource, location.settings.label);
                         location.settings.labelReplaceInfo = processPattern(location.settings.label, datasources, currentDatasourceIndex);
+                        location.settings.labelText = location.settings.label;
                     }
                     if (location.settings.displayTooltip) {
                         location.settings.tooltipPattern = tbMap.utils.createLabelFromDatasource(currentDatasource, location.settings.tooltipPattern);
@@ -372,7 +392,7 @@ export default class TbMapWidgetV2 {
         }
     }
 
-    static settingsSchema(mapProvider) {
+    static settingsSchema(mapProvider, drawRoutes) {
         var schema;
         if (mapProvider === 'google-map') {
             schema = angular.copy(googleMapSettingsSchema);
@@ -382,6 +402,11 @@ export default class TbMapWidgetV2 {
         angular.merge(schema.schema.properties, commonMapSettingsSchema.schema.properties);
         schema.schema.required = schema.schema.required.concat(commonMapSettingsSchema.schema.required);
         schema.form = schema.form.concat(commonMapSettingsSchema.form);
+        if (drawRoutes) {
+            angular.merge(schema.schema.properties, routeMapSettingsSchema.schema.properties);
+            schema.schema.required = schema.schema.required.concat(routeMapSettingsSchema.schema.required);
+            schema.form = schema.form.concat(routeMapSettingsSchema.form);
+        }
         return schema;
     }
 
@@ -442,7 +467,7 @@ const googleMapSettingsSchema =
 const openstreetMapSettingsSchema =
     {
         "schema":{
-            "title":"Google Map Configuration",
+            "title":"Openstreet Map Configuration",
             "type":"object",
             "properties":{
             },
@@ -574,3 +599,28 @@ const commonMapSettingsSchema =
         ]
 };
 
+const routeMapSettingsSchema =
+    {
+        "schema":{
+            "title":"Route Map Configuration",
+            "type":"object",
+            "properties":{
+                "strokeWeight": {
+                    "title": "Stroke weight",
+                    "type": "number",
+                    "default": 2
+                },
+                "strokeOpacity": {
+                    "title": "Stroke opacity",
+                    "type": "number",
+                    "default": 1.0
+                }
+            },
+            "required":[
+            ]
+        },
+        "form":[
+            "strokeWeight",
+            "strokeOpacity"
+        ]
+    };
