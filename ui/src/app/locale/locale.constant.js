@@ -1220,7 +1220,9 @@ export default angular.module('thingsboard.locale', [])
                 "custom": {
                     "widget-action": {
                         "action-cell-button": "Action cell button",
-                        "row-click": "On row click"
+                        "row-click": "On row click",
+                        "marker-click": "On marker click",
+                        "tooltip-tag-action": "Tooltip tag action"
                     }
                 }
             }

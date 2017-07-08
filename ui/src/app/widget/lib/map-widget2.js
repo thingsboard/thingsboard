@@ -19,7 +19,7 @@ import tinycolor from 'tinycolor2';
 import TbGoogleMap from './google-map';
 import TbOpenStreetMap from './openstreet-map';
 
-import {processPattern, arraysEqual, toLabelValueMap, fillPattern} from './widget-utils';
+import {processPattern, arraysEqual, toLabelValueMap, fillPattern, fillPatternWithActions} from './widget-utils';
 
 export default class TbMapWidgetV2 {
     constructor(mapProvider, drawRoutes, ctx, useDynamicLocations, $element) {
@@ -62,6 +62,15 @@ export default class TbMapWidgetV2 {
             tbMap.update();
             tbMap.resize();
         };
+
+        this.ctx.$scope.onTooltipAction = function(event, actionName, dsIndex) {
+            tbMap.onTooltipAction(event, actionName, dsIndex);
+        };
+        this.tooltipActionsMap = {};
+        var descriptors = this.ctx.actionsApi.getActionDescriptors('tooltipAction');
+        descriptors.forEach(function (descriptor) {
+            tbMap.tooltipActionsMap[descriptor.name] = descriptor;
+        });
 
         if (mapProvider === 'google-map') {
             this.map = new TbGoogleMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
@@ -145,6 +154,18 @@ export default class TbMapWidgetV2 {
         }
     }
 
+    onTooltipAction(event, actionName, dsIndex) {
+        var descriptor = this.tooltipActionsMap[actionName];
+        if (descriptor) {
+            var datasource = this.subscription.datasources[dsIndex];
+            var entityId = {};
+            entityId.id = datasource.entityId;
+            entityId.entityType = datasource.entityType;
+            var entityName = datasource.entityName;
+            this.ctx.actionsApi.handleWidgetAction(event, descriptor, entityId, entityName);
+        }
+    }
+
     update() {
 
         var tbMap = this;
@@ -159,10 +180,11 @@ export default class TbMapWidgetV2 {
 
         function calculateLocationColor(location, dataMap) {
             if (location.settings.useColorFunction && location.settings.colorFunction) {
-                var color = '#FE7569';
+                var color;
                 try {
                     color = location.settings.colorFunction(dataMap.dataMap, dataMap.dsDataMap, location.dsIndex);
-                } catch (e) {
+                } catch (e) {/**/}
+                if (!color) {
                     color = '#FE7569';
                 }
                 return tinycolor(color).toHexString();
@@ -212,6 +234,18 @@ export default class TbMapWidgetV2 {
             updateLocationMarkerImage(location, image);
         }
 
+        function locationRowClick($event, location) {
+            var descriptors = tbMap.ctx.actionsApi.getActionDescriptors('markerClick');
+            if (descriptors.length) {
+                var datasource = tbMap.subscription.datasources[location.dsIndex];
+                var entityId = {};
+                entityId.id = datasource.entityId;
+                entityId.entityType = datasource.entityType;
+                var entityName = datasource.entityName;
+                tbMap.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+            }
+        }
+
         function updateLocation(location, data, dataMap) {
             var locationChanged = false;
             if (location.latIndex > -1 && location.lngIndex > -1) {
@@ -234,9 +268,10 @@ export default class TbMapWidgetV2 {
                             var markerLocation = latLngs[latLngs.length - 1];
                             if (!location.marker) {
                                 location.marker = tbMap.map.createMarker(markerLocation, location.settings,
-                                    function () {
+                                    function (event) {
                                         tbMap.callbacks.onLocationClick(location);
-                                    }
+                                        locationRowClick(event, location);
+                                    }, [location.dsIndex]
                                 );
                             } else {
                                 tbMap.map.setMarkerPosition(location.marker, markerLocation);
@@ -259,9 +294,11 @@ export default class TbMapWidgetV2 {
                         lng = lngData[lngData.length - 1][1];
                         latLng = tbMap.map.createLatLng(lat, lng);
                         if (!location.marker) {
-                            location.marker = tbMap.map.createMarker(latLng, location.settings, function () {
-                                tbMap.callbacks.onLocationClick(location);
-                            });
+                            location.marker = tbMap.map.createMarker(latLng, location.settings,
+                                function (event) {
+                                    tbMap.callbacks.onLocationClick(location);
+                                    locationRowClick(event, location);
+                                }, [location.dsIndex]);
                             tbMap.markers.push(location.marker);
                             locationChanged = true;
                         } else {
@@ -368,6 +405,7 @@ export default class TbMapWidgetV2 {
                 for (var t=0; t < tooltips.length; t++) {
                     var tooltip = tooltips[t];
                     var text = fillPattern(tooltip.pattern, tooltip.replaceInfo, this.subscription.data);
+                    text = fillPatternWithActions(text, 'onTooltipAction', tooltip.markerArgs);
                     tooltip.popup.setContent(text);
                 }
             }
@@ -412,6 +450,19 @@ export default class TbMapWidgetV2 {
 
     static dataKeySettingsSchema(/*mapProvider*/) {
         return {};
+    }
+
+    static actionSources() {
+        return {
+            'markerClick': {
+                name: 'widget-action.marker-click',
+                multiple: false
+            },
+            'tooltipAction': {
+                name: 'widget-action.tooltip-tag-action',
+                multiple: true
+            }
+        };
     }
 
 }
@@ -509,12 +560,12 @@ const commonMapSettingsSchema =
                     "default":true
                 },
                 "label":{
-                    "title":"Label",
+                    "title":"Label (pattern examples: '${entityName}', '${entityName}: (Text ${keyName} units.)' )",
                     "type":"string",
                     "default":"${entityName}"
                 },
                 "tooltipPattern":{
-                    "title":"Pattern ( for ex. 'Text ${keyName} units.' or '${#<key index>} units'  )",
+                    "title":"Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
                     "type":"string",
                     "default":"<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}"
                 },
@@ -567,7 +618,10 @@ const commonMapSettingsSchema =
             "lngKeyName",
             "showLabel",
             "label",
-            "tooltipPattern",
+            {
+                "key": "tooltipPattern",
+                "type": "textarea"
+            },
             {
                 "key":"color",
                 "type":"color"

@@ -16,6 +16,9 @@
 
 const varsRegex = /\$\{([^\}]*)\}/g;
 
+const linkActionRegex = /\<link-act name=['"]([^['"]*)['"]\>([^\<]*)\<\/link-act\>/g;
+const buttonActionRegex = /\<button-act name=['"]([^['"]*)['"]\>([^\<]*)\<\/button-act\>/g;
+
 export function processPattern(pattern, datasources, dsIndex) {
     var match = varsRegex.exec(pattern);
     var replaceInfo = {};
@@ -86,6 +89,49 @@ export function fillPattern(pattern, replaceInfo, data) {
             }
         }
         text = text.split(variableInfo.variable).join(txtVal);
+    }
+    return text;
+}
+
+function createLink(actionName, actionText, actionCallbackName, additionalArgs) {
+    var args = 'event,\''+actionName+'\'';
+    if (additionalArgs && additionalArgs.length) {
+        args += ','+additionalArgs.join();
+    }
+    return '<a href="#" onclick="angular.element(this).scope().'+actionCallbackName+'('+args+'); return false;">'+actionText+'</a>';
+}
+
+function createButton(actionName, actionText, actionCallbackName, additionalArgs) {
+    var args = 'event,\''+actionName+'\'';
+    if (additionalArgs && additionalArgs.length) {
+        args += ','+additionalArgs.join();
+    }
+    return '<button onclick="angular.element(this).scope().'+actionCallbackName+'('+args+'); return false;">'+actionText+'</button>';
+}
+
+export function fillPatternWithActions(pattern, actionCallbackName, additionalArgs) {
+    var text = angular.copy(pattern);
+    var match = linkActionRegex.exec(pattern);
+    var actionTags;
+    var actionName;
+    var actionText;
+    var actionHtml;
+    while (match !== null) {
+        actionTags = match[0];
+        actionName = match[1];
+        actionText = match[2];
+        actionHtml = createLink(actionName, actionText, actionCallbackName, additionalArgs);
+        text = text.split(actionTags).join(actionHtml);
+        match = linkActionRegex.exec(pattern);
+    }
+    match = buttonActionRegex.exec(pattern);
+    while (match !== null) {
+        actionTags = match[0];
+        actionName = match[1];
+        actionText = match[2];
+        actionHtml = createButton(actionName, actionText, actionCallbackName, additionalArgs);
+        text = text.split(actionTags).join(actionHtml);
+        match = buttonActionRegex.exec(pattern);
     }
     return text;
 }
