@@ -255,7 +255,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         stmt.setUUID(1, entityId.getId());
         stmt.setString(2, key);
         log.debug("Generated query [{}] for entityType {} and entityId {}", stmt, entityId.getEntityType(), entityId.getId());
-        return getFuture(executeAsyncRead(stmt), rs -> convertResultToTsKvEntry(rs.one()));
+        return getFuture(executeAsyncRead(stmt), rs -> convertResultToTsKvEntry(key, rs.one()));
     }
 
     @Override
@@ -317,6 +317,15 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             rows.forEach(row -> entries.add(convertResultToTsKvEntry(row)));
         }
         return entries;
+    }
+
+    private TsKvEntry convertResultToTsKvEntry(String key, Row row) {
+        if (row != null) {
+            long ts = row.getLong(ModelConstants.TS_COLUMN);
+            return new BasicTsKvEntry(ts, toKvEntry(row, key));
+        } else {
+            return new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+        }
     }
 
     private TsKvEntry convertResultToTsKvEntry(Row row) {
