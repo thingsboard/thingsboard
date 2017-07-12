@@ -100,7 +100,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
     vm.cellContent = cellContent;
 
     $scope.$watch('vm.ctx', function() {
-        if (vm.ctx) {
+        if (vm.ctx && vm.ctx.defaultSubscription) {
             vm.settings = vm.ctx.settings;
             vm.widgetConfig = vm.ctx.widgetConfig;
             vm.subscription = vm.ctx.defaultSubscription;

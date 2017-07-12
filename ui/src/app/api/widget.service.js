@@ -29,6 +29,9 @@ import TbCanvasDigitalGauge from '../widget/lib/canvas-digital-gauge';
 import TbMapWidget from '../widget/lib/map-widget';
 import TbMapWidgetV2 from '../widget/lib/map-widget2';
 
+import 'jquery.terminal/js/jquery.terminal.min.js';
+import 'jquery.terminal/css/jquery.terminal.min.css';
+
 import 'oclazyload';
 import cssjs from '../../vendor/css.js/css';
 

@@ -605,9 +605,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function widgetClicked ($event, widget) {
-        if ($event) {
-            $event.stopPropagation();
-        }
         if (vm.onWidgetClicked) {
             vm.onWidgetClicked({event: $event, widget: widget});
         }
