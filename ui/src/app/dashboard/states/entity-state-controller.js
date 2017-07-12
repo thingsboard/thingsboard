@@ -168,11 +168,11 @@ export default function EntityStateController($scope, $location, $state, $stateP
         return deferred.promise;
     }
 
-    function parseState(stateJson) {
+    function parseState(stateBase64) {
         var result;
-        if (stateJson) {
+        if (stateBase64) {
             try {
-                result = angular.fromJson(stateJson);
+                result = utils.base64toObj(stateBase64);
             } catch (e) {
                 result = [ { id: null, params: {} } ];
             }
@@ -278,7 +278,7 @@ export default function EntityStateController($scope, $location, $state, $stateP
 
     function updateLocation() {
         if (vm.stateObject[vm.stateObject.length-1].id) {
-            $location.search({state : angular.toJson(vm.stateObject)});
+            $location.search({state : utils.objToBase64(vm.stateObject)});
         }
     }
 

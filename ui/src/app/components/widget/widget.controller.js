@@ -473,7 +473,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 }
                 var stateParams = {
                     dashboardId: targetDashboardId,
-                    state: angular.toJson([ stateObject ])
+                    state: utils.objToBase64([ stateObject ])
                 }
                 $state.go('home.dashboards.dashboard', stateParams);
                 break;
