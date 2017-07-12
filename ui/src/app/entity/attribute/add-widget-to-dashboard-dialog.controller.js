@@ -23,7 +23,7 @@ import selectTargetLayoutTemplate from '../../dashboard/layouts/select-target-la
 
 /*@ngInject*/
 export default function AddWidgetToDashboardDialogController($scope, $mdDialog, $state, $q, $document, dashboardUtils,
-                                                             types, itembuffer, dashboardService, entityId, entityType, entityName, widget) {
+                                                             utils, types, itembuffer, dashboardService, entityId, entityType, entityName, widget) {
 
     var vm = this;
 
@@ -143,7 +143,7 @@ export default function AddWidgetToDashboardDialogController($scope, $mdDialog, 
                             var stateIds = Object.keys(dashboard.configuration.states);
                             var stateIndex = stateIds.indexOf(targetState);
                             if (stateIndex > 0) {
-                                stateParams.state = angular.toJson([ {id: targetState, params: {}} ]);
+                                stateParams.state = utils.objToBase64([ {id: targetState, params: {}} ]);
                             }
                             $state.go('home.dashboards.dashboard', stateParams);
                         }

@@ -20,9 +20,12 @@ import materialIconsCodepoints from 'raw-loader!material-design-icons/iconfont/c
 
 /* eslint-enable import/no-unresolved, import/default */
 
-import tinycolor from "tinycolor2";
-import jsonSchemaDefaults from "json-schema-defaults";
-import thingsboardTypes from "./types.constant";
+import tinycolor from 'tinycolor2';
+import jsonSchemaDefaults from 'json-schema-defaults';
+import base64js from 'base64-js';
+import {utf8Encode, utf8Decode} from './utf8-support';
+
+import thingsboardTypes from './types.constant';
 
 export default angular.module('thingsboard.utils', [thingsboardTypes])
     .factory('utils', Utils)
@@ -153,7 +156,9 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         createKey: createKey,
         createLabelFromDatasource: createLabelFromDatasource,
         insertVariable: insertVariable,
-        customTranslation: customTranslation
+        customTranslation: customTranslation,
+        objToBase64: objToBase64,
+        base64toObj: base64toObj
     }
 
     return service;
@@ -484,6 +489,20 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             result = defaultValue;
         }
         return result;
+    }
+
+    function objToBase64(obj) {
+        var json = angular.toJson(obj);
+        var encoded = utf8Encode(json);
+        var b64Encoded = base64js.fromByteArray(encoded);
+        return b64Encoded;
+    }
+
+    function base64toObj(b64Encoded) {
+        var encoded = base64js.toByteArray(b64Encoded);
+        var json = utf8Decode(encoded);
+        var obj = angular.fromJson(json);
+        return obj;
     }
 
 }

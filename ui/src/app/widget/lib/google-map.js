@@ -144,6 +144,12 @@ export default class TbGoogleMap {
     }
 
     /* eslint-disable no-undef */
+    updateMarkerLabel(marker, settings) {
+        marker.set('labelContent', '<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>');
+    }
+    /* eslint-enable no-undef */
+
+    /* eslint-disable no-undef */
     updateMarkerColor(marker, color) {
         var pinColor = color.substr(1);
         var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
@@ -174,7 +180,7 @@ export default class TbGoogleMap {
             }
             marker.setIcon(pinImage);
             if (settings.showLabel) {
-                marker.set('labelAnchor', new google.maps.Point(50, height + 20));
+                marker.set('labelAnchor', new google.maps.Point(100, height + 20));
             }
         }
         testImage.src = image;
@@ -182,7 +188,7 @@ export default class TbGoogleMap {
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
-    createMarker(location, settings, onClickListener) {
+    createMarker(location, settings, onClickListener, markerArgs) {
         var height = 34;
         var pinColor = settings.color.substr(1);
         var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
@@ -200,9 +206,9 @@ export default class TbGoogleMap {
                 map: this.map,
                 icon: pinImage,
                 shadow: pinShadow,
-                labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.label+'</b></div>',
+                labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
                 labelClass: "tb-labels",
-                labelAnchor: new google.maps.Point(50, height + 20)
+                labelAnchor: new google.maps.Point(100, height + 20)
             });
         } else {
             marker = new google.maps.Marker({
@@ -218,7 +224,7 @@ export default class TbGoogleMap {
         }
 
         if (settings.displayTooltip) {
-            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo);
+            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, markerArgs);
         }
 
         if (onClickListener) {
@@ -235,7 +241,7 @@ export default class TbGoogleMap {
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
-    createTooltip(marker, pattern, replaceInfo) {
+    createTooltip(marker, pattern, replaceInfo, markerArgs) {
         var popup = new google.maps.InfoWindow({
             content: ''
         });
@@ -243,6 +249,7 @@ export default class TbGoogleMap {
             popup.open(this.map, marker);
         });
         this.tooltips.push( {
+            markerArgs: markerArgs,
             popup: popup,
             pattern: pattern,
             replaceInfo: replaceInfo

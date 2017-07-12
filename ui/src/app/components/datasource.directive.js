@@ -83,6 +83,7 @@ function Datasource($compile, $templateCache, utils, types) {
         scope: {
             aliasController: '=',
             maxDataKeys: '=',
+            optDataKeys: '=',
             widgetType: '=',
             functionsOnly: '=',
             datakeySettingsSchema: '=',

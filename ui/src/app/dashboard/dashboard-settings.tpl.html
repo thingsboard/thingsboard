@@ -34,7 +34,8 @@
                     <div ng-show="vm.settings">
                        <md-input-container class="md-block">
                             <label translate>dashboard.state-controller</label>
-                            <md-select aria-label="{{ 'dashboard.state-controller' | translate }}" ng-model="vm.settings.stateControllerId">
+                            <md-select aria-label="{{ 'dashboard.state-controller' | translate }}"
+                                       ng-model="vm.settings.stateControllerId" ng-change="vm.stateControllerIdChanged()">
                                 <md-option ng-repeat="(stateControllerId, stateController) in vm.stateControllers" ng-value="stateControllerId">
                                     {{stateControllerId}}
                                 </md-option>

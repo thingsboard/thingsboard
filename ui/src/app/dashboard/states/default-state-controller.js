@@ -27,6 +27,7 @@ export default function DefaultStateController($scope, $location, $state, $state
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
     vm.getStateParamsByStateId = getStateParamsByStateId;
+    vm.getEntityId = getEntityId;
 
     vm.getStateName = getStateName;
 
@@ -103,6 +104,10 @@ export default function DefaultStateController($scope, $location, $state, $state
         }
     }
 
+    function getEntityId() {
+        return null;
+    }
+
     function getStateObjById(id) {
         for (var i=0; i < vm.stateObject.length; i++) {
             if (vm.stateObject[i].id === id) {
@@ -116,11 +121,11 @@ export default function DefaultStateController($scope, $location, $state, $state
         return utils.customTranslation(state.name, id);
     }
 
-    function parseState(stateJson) {
+    function parseState(stateBase64) {
         var result;
-        if (stateJson) {
+        if (stateBase64) {
             try {
-                result = angular.fromJson(stateJson);
+                result = utils.base64toObj(stateBase64);
             } catch (e) {
                 result = [ { id: null, params: {} } ];
             }
@@ -200,7 +205,7 @@ export default function DefaultStateController($scope, $location, $state, $state
 
     function updateLocation() {
         if (vm.stateObject[0].id) {
-            $location.search({state : angular.toJson(vm.stateObject)});
+            $location.search({state : utils.objToBase64(vm.stateObject)});
         }
     }
 }
