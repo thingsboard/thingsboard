@@ -53,10 +53,11 @@ export default class AliasController {
     }
 
     dashboardStateChanged() {
-        var newEntityId = this.stateController.getStateParams().entityId;
         var changedAliasIds = [];
         for (var aliasId in this.resolvedAliasesToStateEntities) {
-            var prevEntityId = this.resolvedAliasesToStateEntities[aliasId];
+            var stateEntityInfo = this.resolvedAliasesToStateEntities[aliasId];
+            var newEntityId = this.stateController.getEntityId(stateEntityInfo.entityParamName);
+            var prevEntityId = stateEntityInfo.entityId;
             if (!angular.equals(newEntityId, prevEntityId)) {
                 changedAliasIds.push(aliasId);
                 this.setAliasUnresolved(aliasId);
@@ -93,19 +94,26 @@ export default class AliasController {
                 this.entityService.resolveAlias(entityAlias, this.stateController.getStateParams()).then(
                     function success(aliasInfo) {
                         aliasCtrl.resolvedAliases[aliasId] = aliasInfo;
+                        delete aliasCtrl.resolvedAliasesPromise[aliasId];
                         if (aliasInfo.stateEntity) {
+                            var stateEntityInfo = {
+                                entityParamName: aliasInfo.entityParamName,
+                                entityId: aliasCtrl.stateController.getEntityId(aliasInfo.entityParamName)
+                            };
                             aliasCtrl.resolvedAliasesToStateEntities[aliasId] =
-                                aliasCtrl.stateController.getStateParams().entityId;
+                                stateEntityInfo;
                         }
                         aliasCtrl.$scope.$broadcast('entityAliasResolved', aliasId);
                         deferred.resolve(aliasInfo);
                     },
                     function fail() {
                         deferred.reject();
+                        delete aliasCtrl.resolvedAliasesPromise[aliasId];
                     }
                 );
             } else {
                 deferred.reject();
+                delete aliasCtrl.resolvedAliasesPromise[aliasId];
             }
             return this.resolvedAliasesPromise[aliasId];
         }

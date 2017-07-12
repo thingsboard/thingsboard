@@ -68,10 +68,14 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     ngModelCtrl.$setValidity('entityAlias',
                         angular.isDefined(value.entityAliasId) &&
                         value.entityAliasId != null);
-                    ngModelCtrl.$setValidity('entityKeys',
-                        angular.isDefined(value.dataKeys) &&
-                        value.dataKeys != null &&
-                        value.dataKeys.length > 0);
+                    if (scope.optDataKeys) {
+                        ngModelCtrl.$setValidity('entityKeys', true);
+                    } else {
+                        ngModelCtrl.$setValidity('entityKeys',
+                            angular.isDefined(value.dataKeys) &&
+                            value.dataKeys != null &&
+                            value.dataKeys.length > 0);
+                    }
                 }
             }
         };
@@ -281,6 +285,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         scope: {
             widgetType: '=',
             maxDataKeys: '=',
+            optDataKeys: '=',
             aliasController: '=',
             datakeySettingsSchema: '=',
             generateDataKey: '&',

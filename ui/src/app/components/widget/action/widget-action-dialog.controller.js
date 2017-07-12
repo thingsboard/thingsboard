@@ -145,11 +145,13 @@ export default function WidgetActionDialogController($scope, $mdDialog, $filter,
                 result.targetDashboardStateId = action.targetDashboardStateId;
                 result.openRightLayout = action.openRightLayout;
                 result.setEntityId = action.setEntityId;
+                result.stateEntityParamName = action.stateEntityParamName;
                 break;
             case vm.types.widgetActionTypes.openDashboard.value:
                 result.targetDashboardId = action.targetDashboardId;
                 result.targetDashboardStateId = action.targetDashboardStateId;
                 result.setEntityId = action.setEntityId;
+                result.stateEntityParamName = action.stateEntityParamName;
                 break;
             case vm.types.widgetActionTypes.custom.value:
                 result.customFunction = action.customFunction;

@@ -556,8 +556,9 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
          '    self.typeParameters = function() {\n\n' +
                     return {
                                 useCustomDatasources: false,
-                                maxDatasources: -1 //unlimited
-                                maxDataKeys: -1 //unlimited
+                                maxDatasources: -1, //unlimited
+                                maxDataKeys: -1, //unlimited
+                                dataKeysOptional: false
                            };
          '    }\n\n' +
 
@@ -624,6 +625,9 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
             }
             if (angular.isUndefined(result.typeParameters.maxDataKeys)) {
                 result.typeParameters.maxDataKeys = -1;
+            }
+            if (angular.isUndefined(result.typeParameters.dataKeysOptional)) {
+                result.typeParameters.dataKeysOptional = false;
             }
             if (angular.isFunction(widgetTypeInstance.actionSources)) {
                 result.actionSources = widgetTypeInstance.actionSources();

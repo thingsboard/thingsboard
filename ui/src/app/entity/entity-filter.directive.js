@@ -54,6 +54,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                     filter.entityNameFilter = '';
                     break;
                 case types.aliasFilterType.stateEntity.value:
+                    filter.stateEntityParamName = null;
                     break;
                 case types.aliasFilterType.assetType.value:
                     filter.assetType = null;
@@ -67,6 +68,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                 case types.aliasFilterType.assetSearchQuery.value:
                 case types.aliasFilterType.deviceSearchQuery.value:
                     filter.rootStateEntity = false;
+                    filter.stateEntityParamName = null;
                     filter.rootEntity = null;
                     filter.direction = types.entitySearchDirection.from;
                     filter.maxLevel = 1;

@@ -730,12 +730,15 @@ export default class Subscription {
                 index += datasource.dataKeys.length;
 
                 this.datasourceListeners.push(listener);
-                this.ctx.datasourceService.subscribeToDatasource(listener);
-                if (datasource.unresolvedStateEntity) {
+
+                if (datasource.dataKeys.length) {
+                    this.ctx.datasourceService.subscribeToDatasource(listener);
+                }
+
+                if (datasource.unresolvedStateEntity || !datasource.dataKeys.length) {
                     this.notifyDataLoaded();
                     this.onDataUpdated();
                 }
-
             }
         }
     }

@@ -104,12 +104,20 @@
                                      flex aria-label="{{ 'widget-action.open-right-layout' | translate }}"
                                      ng-model="vm.action.openRightLayout">{{ 'widget-action.open-right-layout' | translate }}
                         </md-checkbox>
-                        <md-checkbox ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
-                                            vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value ||
-                                            vm.action.type == vm.types.widgetActionTypes.openDashboard.value"
-                                     flex aria-label="{{ 'widget-action.set-entity-from-widget' | translate }}"
-                                     ng-model="vm.action.setEntityId">{{ 'widget-action.set-entity-from-widget' | translate }}
-                        </md-checkbox>
+                        <div flex layout="column" ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.openDashboard.value">
+                            <md-checkbox flex aria-label="{{ 'widget-action.set-entity-from-widget' | translate }}"
+                                         ng-model="vm.action.setEntityId">{{ 'widget-action.set-entity-from-widget' | translate }}
+                            </md-checkbox>
+                            <md-input-container ng-if="vm.action.setEntityId" class="md-block">
+                                <label translate>alias.state-entity-parameter-name</label>
+                                <input name="stateEntityParamName"
+                                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                                       ng-model="vm.action.stateEntityParamName"
+                                       aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+                            </md-input-container>
+                        </div>
                         <tb-js-func ng-if="vm.action.type == vm.types.widgetActionTypes.custom.value"
                                     ng-model="vm.action.customFunction"
                                     function-args="{{ ['$event', 'widgetContext', 'entityId'] }}"

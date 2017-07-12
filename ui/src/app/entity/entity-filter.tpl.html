@@ -59,6 +59,13 @@
         </md-input-container>
     </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.stateEntity.value" id="stateEntityFilter">
+        <md-input-container class="md-block">
+            <label translate>alias.state-entity-parameter-name</label>
+            <input name="stateEntityParamName"
+                   placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                   ng-model="filter.stateEntityParamName"
+                   aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+        </md-input-container>
     </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.assetType.value" id="assetTypeFilter">
         <tb-entity-subtype-autocomplete
@@ -97,12 +104,21 @@
                               ng-disabled="filter.rootStateEntity"
                               ng-model="filter.rootEntity">
             </tb-entity-select>
-            <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
-                <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
-                <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
-                           aria-label="{{ 'alias.root-state-entity' | translate }}">
-                </md-switch>
-            </section>
+            <div layout="column">
+                <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
+                    <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+                    <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                               aria-label="{{ 'alias.root-state-entity' | translate }}">
+                    </md-switch>
+                </section>
+                <md-input-container ng-if="filter.rootStateEntity" class="md-block">
+                    <label translate>alias.state-entity-parameter-name</label>
+                    <input name="stateEntityParamName"
+                           placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                           ng-model="filter.stateEntityParamName"
+                           aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+                </md-input-container>
+            </div>
         </div>
         <div flex layout="row">
             <md-input-container class="md-block" style="min-width: 100px;">
@@ -139,12 +155,21 @@
                               ng-disabled="filter.rootStateEntity"
                               ng-model="filter.rootEntity">
             </tb-entity-select>
-            <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
-                <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
-                <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
-                           aria-label="{{ 'alias.root-state-entity' | translate }}">
-                </md-switch>
-            </section>
+            <div layout="column">
+                <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
+                    <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+                    <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                               aria-label="{{ 'alias.root-state-entity' | translate }}">
+                    </md-switch>
+                </section>
+                <md-input-container ng-if="filter.rootStateEntity" class="md-block">
+                    <label translate>alias.state-entity-parameter-name</label>
+                    <input name="stateEntityParamName"
+                           placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                           ng-model="filter.stateEntityParamName"
+                           aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+                </md-input-container>
+            </div>
         </div>
         <div flex layout="row">
             <md-input-container class="md-block" style="min-width: 100px;">
@@ -189,12 +214,21 @@
                               ng-disabled="filter.rootStateEntity"
                               ng-model="filter.rootEntity">
             </tb-entity-select>
-            <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
-                <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
-                <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
-                           aria-label="{{ 'alias.root-state-entity' | translate }}">
-                </md-switch>
-            </section>
+            <div layout="column">
+                <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
+                    <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+                    <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                               aria-label="{{ 'alias.root-state-entity' | translate }}">
+                    </md-switch>
+                </section>
+                <md-input-container ng-if="filter.rootStateEntity" class="md-block">
+                    <label translate>alias.state-entity-parameter-name</label>
+                    <input name="stateEntityParamName"
+                           placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                           ng-model="filter.stateEntityParamName"
+                           aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+                </md-input-container>
+            </div>
         </div>
         <div flex layout="row">
             <md-input-container class="md-block" style="min-width: 100px;">

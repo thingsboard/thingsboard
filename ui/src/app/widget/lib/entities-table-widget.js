@@ -479,6 +479,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
 
         for (var i=0;i<vm.datasources.length;i++) {
             datasource = vm.datasources[i];
+            if (datasource.type == types.datasourceType.entity && !datasource.entityId) {
+                continue;
+            }
             var entity = {
                 id: {}
             };

@@ -25,6 +25,8 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
     vm.imageAdded = imageAdded;
     vm.clearImage = clearImage;
 
+    vm.stateControllerIdChanged = stateControllerIdChanged;
+
     vm.settings = settings;
     vm.gridSettings = gridSettings;
     vm.stateControllers = statesControllerService.getStateControllers();
@@ -96,6 +98,12 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
     function clearImage() {
         $scope.theForm.$setDirty();
         vm.gridSettings.backgroundImageUrl = null;
+    }
+
+    function stateControllerIdChanged() {
+        if (vm.settings.stateControllerId != 'default') {
+            vm.settings.toolbarAlwaysOpen = true;
+        }
     }
 
     function save() {

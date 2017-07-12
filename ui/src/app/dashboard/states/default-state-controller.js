@@ -27,6 +27,7 @@ export default function DefaultStateController($scope, $location, $state, $state
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
     vm.getStateParamsByStateId = getStateParamsByStateId;
+    vm.getEntityId = getEntityId;
 
     vm.getStateName = getStateName;
 
@@ -101,6 +102,10 @@ export default function DefaultStateController($scope, $location, $state, $state
         } else {
             return null;
         }
+    }
+
+    function getEntityId() {
+        return null;
     }
 
     function getStateObjById(id) {
