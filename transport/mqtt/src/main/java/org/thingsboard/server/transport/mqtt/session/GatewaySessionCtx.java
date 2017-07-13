@@ -55,6 +55,7 @@ import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.val
 @Slf4j
 public class GatewaySessionCtx {
 
+    private static final String DEFAULT_DEVICE_TYPE = "default";
     private final Device gateway;
     private final SessionId gatewaySessionId;
     private final SessionMsgProcessor processor;
@@ -78,6 +79,11 @@ public class GatewaySessionCtx {
         JsonElement json = getJson(msg);
         String deviceName = checkDeviceName(getDeviceName(json));
         String deviceType = getDeviceType(json);
+        onDeviceConnect(deviceName, deviceType);
+        ack(msg);
+    }
+
+    private void onDeviceConnect(String deviceName, String deviceType) {
         if (!devices.containsKey(deviceName)) {
             Optional<Device> deviceOpt = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
             Device device = deviceOpt.orElseGet(() -> {
@@ -95,7 +101,6 @@ public class GatewaySessionCtx {
             processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
             processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
         }
-        ack(msg);
     }
 
     public void onDeviceDisconnect(MqttPublishMessage msg) throws AdaptorException {
@@ -205,10 +210,9 @@ public class GatewaySessionCtx {
     private String checkDeviceConnected(String deviceName) {
         if (!devices.containsKey(deviceName)) {
             log.debug("[{}] Missing device [{}] for the gateway session", gatewaySessionId, deviceName);
-            throw new RuntimeException("Device " + deviceName + " is not connected!");
-        } else {
-            return deviceName;
+            onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
         }
+        return deviceName;
     }
 
     private String checkDeviceName(String deviceName) {
@@ -225,7 +229,7 @@ public class GatewaySessionCtx {
 
     private String getDeviceType(JsonElement json) throws AdaptorException {
         JsonElement type = json.getAsJsonObject().get("type");
-        return type == null ? "default" : type.getAsString();
+        return type == null ? DEFAULT_DEVICE_TYPE : type.getAsString();
     }
 
     private JsonElement getJson(MqttPublishMessage mqttMsg) throws AdaptorException {
@@ -236,7 +240,7 @@ public class GatewaySessionCtx {
         return processor;
     }
 
-    protected DeviceAuthService getAuthService() {
+    DeviceAuthService getAuthService() {
         return authService;
     }
 
@@ -250,7 +254,7 @@ public class GatewaySessionCtx {
         }
     }
 
-    protected void writeAndFlush(MqttMessage mqttMessage) {
+    void writeAndFlush(MqttMessage mqttMessage) {
         channel.writeAndFlush(mqttMessage);
     }
 

@@ -22,6 +22,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matcher;
 import org.junit.After;
@@ -85,6 +86,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ComponentScan({"org.thingsboard.server"})
 @WebAppConfiguration
 @SpringBootTest
+@Slf4j
 public abstract class AbstractControllerTest {
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
@@ -130,6 +132,7 @@ public abstract class AbstractControllerTest {
     
     @Before
     public void setup() throws Exception {
+        log.info("Executing setup");
         if (this.mockMvc == null) {
             this.mockMvc = webAppContextSetup(webApplicationContext)
                     .apply(springSecurity()).build();
@@ -163,13 +166,16 @@ public abstract class AbstractControllerTest {
         createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
 
         logout();
+        log.info("Executed setup");
     }
 
     @After
     public void teardown() throws Exception {
+        log.info("Executing teardown");
         loginSysAdmin();
         doDelete("/api/tenant/"+tenantId.getId().toString())
                 .andExpect(status().isOk());
+        log.info("Executed teardown");
     }
 
     protected void loginSysAdmin() throws Exception {
