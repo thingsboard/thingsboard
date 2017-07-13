@@ -183,8 +183,12 @@ export default function EntityStateController($scope, $location, $state, $stateP
         if (!result.length) {
             result[0] = { id: null, params: {} }
         }
+        var rootStateId = dashboardUtils.getRootStateId(vm.states);
         if (!result[0].id) {
-            result[0].id = dashboardUtils.getRootStateId(vm.states);
+            result[0].id = rootStateId;
+        }
+        if (result[0].id !== rootStateId) {
+            result = [ { id: rootStateId, params: {} } ];
         }
         return result;
     }
