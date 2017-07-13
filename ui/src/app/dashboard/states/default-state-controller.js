@@ -135,7 +135,12 @@ export default function DefaultStateController($scope, $location, $state, $state
         }
         if (!result.length) {
             result[0] = { id: null, params: {} }
+        } else if (result.length > 1) {
+            var newResult = [];
+            newResult.push(result[result.length-1]);
+            result = newResult;
         }
+
         if (!result[0].id) {
             result[0].id = dashboardUtils.getRootStateId(vm.states);
         }
