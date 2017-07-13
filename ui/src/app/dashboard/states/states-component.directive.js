@@ -70,6 +70,15 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                     return null;
                 }
             }
+
+            stateController.getEntityId = function(entityParamName) {
+                if (scope.statesController) {
+                    return scope.statesController.getEntityId(entityParamName);
+                } else {
+                    return null;
+                }
+            }
+
         }
 
         scope.$on('$destroy', function callOnDestroyHook() {

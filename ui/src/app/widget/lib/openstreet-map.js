@@ -42,6 +42,12 @@ export default class TbOpenStreetMap {
         return angular.isDefined(this.map);
     }
 
+    updateMarkerLabel(marker, settings) {
+        marker.unbindTooltip();
+        marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
+            { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
+    }
+
     updateMarkerColor(marker, color) {
         var pinColor = color.substr(1);
         var icon = L.icon({
@@ -78,14 +84,15 @@ export default class TbOpenStreetMap {
             marker.setIcon(icon);
             if (settings.showLabel) {
                 marker.unbindTooltip();
-                marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.label+'</b></div>',
-                    { className: 'tb-marker-label', permanent: true, direction: 'top', offset: [0, -height + 10] });
+                marker.tooltipOffset = [0, -height + 10];
+                marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
+                    { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
             }
         }
         testImage.src = image;
     }
 
-    createMarker(location, settings, onClickListener) {
+    createMarker(location, settings, onClickListener, markerArgs) {
         var height = 34;
         var pinColor = settings.color.substr(1);
         var icon = L.icon({
@@ -101,8 +108,9 @@ export default class TbOpenStreetMap {
         var marker = L.marker(location, {icon: icon}).addTo(this.map);
 
         if (settings.showLabel) {
-            marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.label+'</b></div>',
-                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: [0, -height + 10] });
+            marker.tooltipOffset = [0, -height + 10];
+            marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
+                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
         }
 
         if (settings.useMarkerImage) {
@@ -110,7 +118,7 @@ export default class TbOpenStreetMap {
         }
 
         if (settings.displayTooltip) {
-            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo);
+            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, markerArgs);
         }
 
         if (onClickListener) {
@@ -124,11 +132,12 @@ export default class TbOpenStreetMap {
         this.map.removeLayer(marker);
     }
 
-    createTooltip(marker, pattern, replaceInfo) {
+    createTooltip(marker, pattern, replaceInfo, markerArgs) {
         var popup = L.popup();
         popup.setContent('');
         marker.bindPopup(popup, {autoClose: false, closeOnClick: false});
         this.tooltips.push( {
+            markerArgs: markerArgs,
             popup: popup,
             pattern: pattern,
             replaceInfo: replaceInfo

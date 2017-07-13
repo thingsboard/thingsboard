@@ -63,10 +63,14 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
                 var dataValid = angular.isDefined(value) && value != null;
                 ngModelCtrl.$setValidity('deviceData', dataValid);
                 if (dataValid) {
-                    ngModelCtrl.$setValidity('datasourceKeys',
-                        angular.isDefined(value.dataKeys) &&
-                        value.dataKeys != null &&
-                        value.dataKeys.length > 0);
+                    if (scope.optDataKeys) {
+                        ngModelCtrl.$setValidity('datasourceKeys', true);
+                    } else {
+                        ngModelCtrl.$setValidity('datasourceKeys',
+                            angular.isDefined(value.dataKeys) &&
+                            value.dataKeys != null &&
+                            value.dataKeys.length > 0);
+                    }
                 }
             }
         };
@@ -222,6 +226,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
         scope: {
             widgetType: '=',
             maxDataKeys: '=',
+            optDataKeys: '=',
             generateDataKey: '&',
             datakeySettingsSchema: '='
         },

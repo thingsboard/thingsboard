@@ -187,6 +187,8 @@ export default angular.module('thingsboard.locale', [])
                     "no-entity-filter-specified": "No entity filter specified",
                     "root-state-entity": "Use dashboard state entity as root",
                     "root-entity": "Root entity",
+                    "state-entity-parameter-name": "State entity parameter name",
+                    "default-entity-parameter-name": "By default",
                     "max-relation-level": "Max relation level",
                     "unlimited-level": "Unlimited level",
                     "state-entity": "Dashboard state entity",
@@ -1220,7 +1222,9 @@ export default angular.module('thingsboard.locale', [])
                 "custom": {
                     "widget-action": {
                         "action-cell-button": "Action cell button",
-                        "row-click": "On row click"
+                        "row-click": "On row click",
+                        "marker-click": "On marker click",
+                        "tooltip-tag-action": "Tooltip tag action"
                     }
                 }
             }
