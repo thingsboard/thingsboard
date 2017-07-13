@@ -28,6 +28,10 @@ import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootContextLoader;
@@ -117,6 +121,17 @@ public abstract class AbstractControllerTest {
     
     @Autowired
     private WebApplicationContext webApplicationContext;
+
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            log.info("Starting test: {}", description.getMethodName());
+        }
+
+        protected void finished(Description description) {
+            log.info("Finished test: {}", description.getMethodName());
+        }
+    };
     
     @Autowired
     void setConverters(HttpMessageConverter<?>[] converters) {
