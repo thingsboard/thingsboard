@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
 
 import java.util.List;
 import java.util.Optional;

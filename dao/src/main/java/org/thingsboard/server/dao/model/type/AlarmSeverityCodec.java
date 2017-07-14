@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.model.type;
 
 import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
-import org.thingsboard.server.dao.alarm.AlarmService;
 
 public class AlarmSeverityCodec extends EnumNameCodec<AlarmSeverity> {
 

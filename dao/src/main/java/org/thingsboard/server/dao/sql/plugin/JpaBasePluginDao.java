@@ -20,22 +20,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.PluginMetaDataEntity;
 import org.thingsboard.server.dao.plugin.PluginDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
  * Created by Valerii Sosliuk on 5/1/2017.
@@ -54,7 +55,7 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
     }
 
     @Override
-    protected CrudRepository<PluginMetaDataEntity, UUID> getCrudRepository() {
+    protected CrudRepository<PluginMetaDataEntity, String> getCrudRepository() {
         return pluginMetaDataRepository;
     }
 
@@ -85,7 +86,7 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
     @Override
     public void deleteById(UUID id) {
         log.debug("Delete plugin meta-data entity by id [{}]", id);
-        pluginMetaDataRepository.delete(id);
+        pluginMetaDataRepository.delete(UUIDConverter. fromTimeUUID(id));
     }
 
     @Override
@@ -98,9 +99,9 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
         log.debug("Try to find plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<PluginMetaDataEntity> entities = pluginMetaDataRepository
                 .findByTenantIdAndPageLink(
-                        tenantId.getId(),
+                        UUIDConverter.fromTimeUUID(tenantId.getId()),
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR :  UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
@@ -115,10 +116,10 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
         log.debug("Try to find all tenant plugins by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<PluginMetaDataEntity> entities = pluginMetaDataRepository
                 .findAllTenantPluginsByTenantId(
-                        tenantId,
-                        NULL_UUID,
+                        UUIDConverter.fromTimeUUID(tenantId),
+                        NULL_UUID_STR,
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR :  UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));

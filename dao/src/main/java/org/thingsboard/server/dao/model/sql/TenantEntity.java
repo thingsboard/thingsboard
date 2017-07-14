@@ -18,29 +18,30 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.TENANT_COLUMN_FAMILY_NAME)
-public final class TenantEntity implements SearchTextEntity<Tenant> {
+public final class TenantEntity extends BaseSqlEntity<Tenant> implements SearchTextEntity<Tenant> {
 
     @Transient
     private static final long serialVersionUID = -4330655990232136337L;
-
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
 
     @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
@@ -75,7 +76,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
-    @Type(type="json")
+    @Type(type = "json")
     @Column(name = ModelConstants.TENANT_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -85,7 +86,7 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
 
     public TenantEntity(Tenant tenant) {
         if (tenant.getId() != null) {
-            this.id = tenant.getId().getId();
+            this.setId(tenant.getId().getId());
         }
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
@@ -116,8 +117,8 @@ public final class TenantEntity implements SearchTextEntity<Tenant> {
 
     @Override
     public Tenant toData() {
-        Tenant tenant = new Tenant(new TenantId(id));
-        tenant.setCreatedTime(UUIDs.unixTimestamp(id));
+        Tenant tenant = new Tenant(new TenantId(getId()));
+        tenant.setCreatedTime(UUIDs.unixTimestamp(getId()));
         tenant.setTitle(title);
         tenant.setRegion(region);
         tenant.setCountry(country);

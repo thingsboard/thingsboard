@@ -24,8 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -37,16 +37,14 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.BaseAlarmService;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -68,7 +66,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    protected CrudRepository<AlarmEntity, UUID> getCrudRepository() {
+    protected CrudRepository<AlarmEntity, String> getCrudRepository() {
         return alarmRepository;
     }
 
@@ -76,8 +74,8 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return service.submit(() -> {
             List<AlarmEntity> latest = alarmRepository.findLatestByOriginatorAndType(
-                    tenantId.getId(),
-                    originator.getId(),
+                    UUIDConverter.fromTimeUUID(tenantId.getId()),
+                    UUIDConverter.fromTimeUUID(originator.getId()),
                     originator.getEntityType(),
                     type,
                     new PageRequest(0, 1));

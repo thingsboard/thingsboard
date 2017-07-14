@@ -21,14 +21,13 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class AttributeKvCompositeKey implements Serializable {
     private EntityType entityType;
-    private UUID entityId;
+    private String entityId;
     private String attributeType;
     private String attributeKey;
 }

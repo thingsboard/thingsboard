@@ -26,14 +26,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -67,7 +68,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     @Override
-    protected CrudRepository<EventEntity, UUID> getCrudRepository() {
+    protected CrudRepository<EventEntity, String> getCrudRepository() {
         return eventRepository;
     }
 
@@ -91,7 +92,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     @Override
     public Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
         return DaoUtil.getData(eventRepository.findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
-                tenantId, entityId.getEntityType(), entityId.getId(), eventType, eventUid));
+                UUIDConverter.fromTimeUUID(tenantId), entityId.getEntityType(),  UUIDConverter.fromTimeUUID(entityId.getId()), eventType, eventUid));
     }
 
     @Override
@@ -112,7 +113,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         log.debug("Save event [{}] ", entity);
         if (entity.getTenantId() == null) {
             log.trace("Save system event with predefined id {}", systemTenantId);
-            entity.setTenantId(systemTenantId);
+            entity.setTenantId(UUIDConverter.fromTimeUUID(systemTenantId));
         }
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());
@@ -133,13 +134,13 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
             public Predicate toPredicate(Root<EventEntity> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> predicates = new ArrayList<Predicate>();
                 if (tenantId != null) {
-                    Predicate tenantIdPredicate = criteriaBuilder.equal(root.get("tenantId"), tenantId);
+                    Predicate tenantIdPredicate = criteriaBuilder.equal(root.get("tenantId"), UUIDConverter.fromTimeUUID(tenantId));
                     predicates.add(tenantIdPredicate);
                 }
                 if (entityId != null) {
                     Predicate entityTypePredicate = criteriaBuilder.equal(root.get("entityType"), entityId.getEntityType());
                     predicates.add(entityTypePredicate);
-                    Predicate entityIdPredicate = criteriaBuilder.equal(root.get("entityId"), entityId.getId());
+                    Predicate entityIdPredicate = criteriaBuilder.equal(root.get("entityId"), UUIDConverter.fromTimeUUID(entityId.getId()));
                     predicates.add(entityIdPredicate);
                 }
                 if (eventType != null) {

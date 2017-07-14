@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.dao.model.nosql;
 
-import java.util.UUID;
-
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -24,11 +27,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
 
-import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 

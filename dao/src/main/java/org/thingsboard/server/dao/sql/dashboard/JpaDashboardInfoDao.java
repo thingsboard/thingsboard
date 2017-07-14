@@ -20,18 +20,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -57,9 +58,9 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     public List<DashboardInfo> findDashboardsByTenantId(UUID tenantId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(dashboardInfoRepository
                 .findByTenantId(
-                        tenantId,
+                        UUIDConverter.fromTimeUUID(tenantId),
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())));
     }
 
@@ -67,10 +68,10 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     public List<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(dashboardInfoRepository
                 .findByTenantIdAndCustomerId(
-                        tenantId,
-                        customerId,
+                        UUIDConverter.fromTimeUUID(tenantId),
+                        UUIDConverter.fromTimeUUID(customerId),
                         Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())));
     }
 }

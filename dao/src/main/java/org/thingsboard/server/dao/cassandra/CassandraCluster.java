@@ -17,8 +17,9 @@ package org.thingsboard.server.dao.cassandra;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import javax.annotation.PostConstruct;
 import org.thingsboard.server.dao.util.NoSqlDao;
+
+import javax.annotation.PostConstruct;
 
 @Component
 @NoSqlDao

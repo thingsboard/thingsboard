@@ -18,37 +18,38 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
-public final class DashboardEntity implements SearchTextEntity<Dashboard> {
+public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard> {
 
     @Transient
     private static final long serialVersionUID = -4838084363113078898L;
 
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
-    
     @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ModelConstants.DASHBOARD_CUSTOMER_ID_PROPERTY)
-    private UUID customerId;
+    private String customerId;
 
     @Column(name = ModelConstants.DASHBOARD_TITLE_PROPERTY)
     private String title;
@@ -66,13 +67,13 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
 
     public DashboardEntity(Dashboard dashboard) {
         if (dashboard.getId() != null) {
-            this.id = dashboard.getId().getId();
+            this.setId(dashboard.getId().getId());
         }
         if (dashboard.getTenantId() != null) {
-            this.tenantId = dashboard.getTenantId().getId();
+            this.tenantId = toString(dashboard.getTenantId().getId());
         }
         if (dashboard.getCustomerId() != null) {
-            this.customerId = dashboard.getCustomerId().getId();
+            this.customerId = toString(dashboard.getCustomerId().getId());
         }
         this.title = dashboard.getTitle();
         this.configuration = dashboard.getConfiguration();
@@ -90,13 +91,13 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
 
     @Override
     public Dashboard toData() {
-        Dashboard dashboard = new Dashboard(new DashboardId(id));
-        dashboard.setCreatedTime(UUIDs.unixTimestamp(id));
+        Dashboard dashboard = new Dashboard(new DashboardId(this.getId()));
+        dashboard.setCreatedTime(UUIDs.unixTimestamp(this.getId()));
         if (tenantId != null) {
-            dashboard.setTenantId(new TenantId(tenantId));
+            dashboard.setTenantId(new TenantId(toUUID(tenantId)));
         }
         if (customerId != null) {
-            dashboard.setCustomerId(new CustomerId(customerId));
+            dashboard.setCustomerId(new CustomerId(toUUID(customerId)));
         }
         dashboard.setTitle(title);
         dashboard.setConfiguration(configuration);

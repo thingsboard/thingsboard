@@ -16,40 +16,40 @@
 
 
 CREATE TABLE IF NOT EXISTS admin_settings (
-    id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
     json_value varchar,
     key character varying(255)
 );
 
 CREATE TABLE IF NOT EXISTS alarm (
-    id uuid NOT NULL CONSTRAINT alarm_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT alarm_pkey PRIMARY KEY,
     ack_ts bigint,
     clear_ts bigint,
     additional_info varchar,
     end_ts bigint,
-    originator_id uuid,
+    originator_id character varying(31),
     originator_type integer,
     propagate boolean,
     severity character varying(255),
     start_ts bigint,
     status character varying(255),
-    tenant_id uuid,
+    tenant_id character varying(31),
     type character varying(255)
 );
 
 CREATE TABLE IF NOT EXISTS asset (
-    id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
     additional_info varchar,
-    customer_id uuid,
+    customer_id character varying(31),
     name character varying(255),
     search_text character varying(255),
-    tenant_id uuid,
+    tenant_id character varying(31),
     type character varying(255)
 );
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_type character varying(255),
-  entity_id uuid,
+  entity_id character varying(31),
   attribute_type character varying(255),
   attribute_key character varying(255),
   bool_v boolean,
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
 );
 
 CREATE TABLE IF NOT EXISTS component_descriptor (
-    id uuid NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT component_descriptor_pkey PRIMARY KEY,
     actions character varying(255),
     clazz character varying(255),
     configuration_descriptor varchar,
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
 );
 
 CREATE TABLE IF NOT EXISTS customer (
-    id uuid NOT NULL CONSTRAINT customer_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT customer_pkey PRIMARY KEY,
     additional_info varchar,
     address character varying(255),
     address2 character varying(255),
@@ -82,51 +82,51 @@ CREATE TABLE IF NOT EXISTS customer (
     phone character varying(255),
     search_text character varying(255),
     state character varying(255),
-    tenant_id uuid,
+    tenant_id character varying(31),
     title character varying(255),
     zip character varying(255)
 );
 
 CREATE TABLE IF NOT EXISTS dashboard (
-    id uuid NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
     configuration varchar,
-    customer_id uuid,
+    customer_id character varying(31),
     search_text character varying(255),
-    tenant_id uuid,
+    tenant_id character varying(31),
     title character varying(255)
 );
 
 CREATE TABLE IF NOT EXISTS device (
-    id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
     additional_info varchar,
-    customer_id uuid,
+    customer_id character varying(31),
     type character varying(255),
     name character varying(255),
     search_text character varying(255),
-    tenant_id uuid
+    tenant_id character varying(31)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (
-    id uuid NOT NULL CONSTRAINT device_credentials_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT device_credentials_pkey PRIMARY KEY,
     credentials_id character varying(255),
     credentials_type character varying(255),
     credentials_value character varying(255),
-    device_id uuid
+    device_id character varying(31)
 );
 
 CREATE TABLE IF NOT EXISTS event (
-    id uuid NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT event_pkey PRIMARY KEY,
     body varchar,
-    entity_id uuid,
+    entity_id character varying(31),
     entity_type character varying(255),
     event_type character varying(255),
     event_uid character varying(255),
-    tenant_id uuid,
+    tenant_id character varying(31),
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
 CREATE TABLE IF NOT EXISTS plugin (
-    id uuid NOT NULL CONSTRAINT plugin_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT plugin_pkey PRIMARY KEY,
     additional_info varchar,
     api_token character varying(255),
     plugin_class character varying(255),
@@ -135,13 +135,13 @@ CREATE TABLE IF NOT EXISTS plugin (
     public_access boolean,
     search_text character varying(255),
     state character varying(255),
-    tenant_id uuid
+    tenant_id character varying(31)
 );
 
 CREATE TABLE IF NOT EXISTS relation (
-    from_id uuid,
+    from_id character varying(31),
     from_type character varying(255),
-    to_id uuid,
+    to_id character varying(31),
     to_type character varying(255),
     relation_type_group character varying(255),
     relation_type character varying(255),
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS relation (
 );
 
 CREATE TABLE IF NOT EXISTS rule (
-    id uuid NOT NULL CONSTRAINT rule_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT rule_pkey PRIMARY KEY,
     action varchar,
     additional_info varchar,
     filters varchar,
@@ -159,24 +159,24 @@ CREATE TABLE IF NOT EXISTS rule (
     processor varchar,
     search_text character varying(255),
     state character varying(255),
-    tenant_id uuid,
+    tenant_id character varying(31),
     weight integer
 );
 
 CREATE TABLE IF NOT EXISTS tb_user (
-    id uuid NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT tb_user_pkey PRIMARY KEY,
     additional_info varchar,
     authority character varying(255),
-    customer_id uuid,
+    customer_id character varying(31),
     email character varying(255) UNIQUE,
     first_name character varying(255),
     last_name character varying(255),
     search_text character varying(255),
-    tenant_id uuid
+    tenant_id character varying(31)
 );
 
 CREATE TABLE IF NOT EXISTS tenant (
-    id uuid NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT tenant_pkey PRIMARY KEY,
     additional_info varchar,
     address character varying(255),
     address2 character varying(255),
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS tenant (
 
 CREATE TABLE IF NOT EXISTS ts_kv (
     entity_type character varying(255) NOT NULL,
-    entity_id uuid NOT NULL,
+    entity_id character varying(31) NOT NULL,
     key character varying(255) NOT NULL,
     ts bigint NOT NULL,
     bool_v boolean,
@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS ts_kv (
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
     entity_type character varying(255) NOT NULL,
-    entity_id uuid NOT NULL,
+    entity_id character varying(31) NOT NULL,
     key character varying(255) NOT NULL,
     ts bigint NOT NULL,
     bool_v boolean,
@@ -216,27 +216,27 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
-    id uuid NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,
     activate_token character varying(255) UNIQUE,
     enabled boolean,
     password character varying(255),
     reset_token character varying(255) UNIQUE,
-    user_id uuid UNIQUE
+    user_id character varying(31) UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS widget_type (
-    id uuid NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT widget_type_pkey PRIMARY KEY,
     alias character varying(255),
     bundle_alias character varying(255),
     descriptor varchar(1000000),
     name character varying(255),
-    tenant_id uuid
+    tenant_id character varying(31)
 );
 
 CREATE TABLE IF NOT EXISTS widgets_bundle (
-    id uuid NOT NULL CONSTRAINT widgets_bundle_pkey PRIMARY KEY,
+    id character varying(31) NOT NULL CONSTRAINT widgets_bundle_pkey PRIMARY KEY,
     alias character varying(255),
     search_text character varying(255),
-    tenant_id uuid,
+    tenant_id character varying(31),
     title character varying(255)
 );

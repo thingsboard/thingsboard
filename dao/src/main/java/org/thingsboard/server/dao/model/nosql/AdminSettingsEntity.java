@@ -15,24 +15,20 @@
  */
 package org.thingsboard.server.dao.model.nosql;
 
-import static org.thingsboard.server.dao.model.ModelConstants.ADMIN_SETTINGS_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.ADMIN_SETTINGS_JSON_VALUE_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ADMIN_SETTINGS_KEY_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
-
-import java.util.UUID;
-
-import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.id.AdminSettingsId;
-import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.type.JsonCodec;
-
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.id.AdminSettingsId;
+import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.type.JsonCodec;
+
+import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = ADMIN_SETTINGS_COLUMN_FAMILY_NAME)
 public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {

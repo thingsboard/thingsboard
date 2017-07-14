@@ -21,11 +21,11 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.UserEntity;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
 import java.util.Arrays;
 import java.util.List;

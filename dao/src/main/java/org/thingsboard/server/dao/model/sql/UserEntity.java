@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.User;
@@ -25,33 +26,33 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
-import java.util.UUID;
+
+import static org.thingsboard.server.common.data.UUIDConverter.fromString;
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 /**
  * Created by Valerii Sosliuk on 4/21/2017.
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.USER_PG_HIBERNATE_COLUMN_FAMILY_NAME)
-public class UserEntity implements SearchTextEntity<User> {
+public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<User> {
     @Transient
     private static final long serialVersionUID = -271106508790582977L;
 
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
-
     @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ModelConstants.USER_CUSTOMER_ID_PROPERTY)
-    private UUID customerId;
+    private String customerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.USER_AUTHORITY_PROPERTY)
@@ -69,7 +70,7 @@ public class UserEntity implements SearchTextEntity<User> {
     @Column(name = ModelConstants.USER_LAST_NAME_PROPERTY)
     private String lastName;
 
-    @Type(type="json")
+    @Type(type = "json")
     @Column(name = ModelConstants.USER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
@@ -78,14 +79,14 @@ public class UserEntity implements SearchTextEntity<User> {
 
     public UserEntity(User user) {
         if (user.getId() != null) {
-            this.id = user.getId().getId();
+            this.setId(user.getId().getId());
         }
         this.authority = user.getAuthority();
         if (user.getTenantId() != null) {
-            this.tenantId = user.getTenantId().getId();
+            this.tenantId = fromTimeUUID(user.getTenantId().getId());
         }
         if (user.getCustomerId() != null) {
-            this.customerId = user.getCustomerId().getId();
+            this.customerId = fromTimeUUID(user.getCustomerId().getId());
         }
         this.email = user.getEmail();
         this.firstName = user.getFirstName();
@@ -104,25 +105,15 @@ public class UserEntity implements SearchTextEntity<User> {
     }
 
     @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    @Override
     public User toData() {
-        User user = new User(new UserId(id));
-        user.setCreatedTime(UUIDs.unixTimestamp(id));
+        User user = new User(new UserId(getId()));
+        user.setCreatedTime(UUIDs.unixTimestamp(getId()));
         user.setAuthority(authority);
         if (tenantId != null) {
-            user.setTenantId(new TenantId(tenantId));
+            user.setTenantId(new TenantId(fromString(tenantId)));
         }
         if (customerId != null) {
-            user.setCustomerId(new CustomerId(customerId));
+            user.setCustomerId(new CustomerId(fromString(customerId)));
         }
         user.setEmail(email);
         user.setFirstName(firstName);

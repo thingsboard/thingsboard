@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.asset;
 
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
@@ -38,6 +39,11 @@ public class TenantAssetType {
     public TenantAssetType(String type, UUID tenantId) {
         this.type = type;
         this.tenantId = new TenantId(tenantId);
+    }
+
+    public TenantAssetType(String type, String tenantId) {
+        this.type = type;
+        this.tenantId = new TenantId(UUIDConverter.fromString(tenantId));
     }
 
     public String getType() {

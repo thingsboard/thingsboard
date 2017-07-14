@@ -18,31 +18,33 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ADMIN_SETTINGS_COLUMN_FAMILY_NAME)
-public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
+public final class AdminSettingsEntity extends BaseSqlEntity<AdminSettings> implements BaseEntity<AdminSettings> {
 
     @Transient
     private static final long serialVersionUID = 842759712850362147L;
 
-    @Id
-    @Column(name = ID_PROPERTY)
-    private UUID id;
-    
     @Column(name = ADMIN_SETTINGS_KEY_PROPERTY)
     private String key;
 
@@ -56,26 +58,16 @@ public final class AdminSettingsEntity implements BaseEntity<AdminSettings> {
 
     public AdminSettingsEntity(AdminSettings adminSettings) {
         if (adminSettings.getId() != null) {
-            this.id = adminSettings.getId().getId();
+            this.setId(adminSettings.getId().getId());
         }
         this.key = adminSettings.getKey();
         this.jsonValue = adminSettings.getJsonValue();
     }
 
     @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
-    }
-    
-    @Override
     public AdminSettings toData() {
-        AdminSettings adminSettings = new AdminSettings(new AdminSettingsId(id));
-        adminSettings.setCreatedTime(UUIDs.unixTimestamp(id));
+        AdminSettings adminSettings = new AdminSettings(new AdminSettingsId(UUIDConverter.fromString(id)));
+        adminSettings.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
         adminSettings.setKey(key);
         adminSettings.setJsonValue(jsonValue);
         return adminSettings;

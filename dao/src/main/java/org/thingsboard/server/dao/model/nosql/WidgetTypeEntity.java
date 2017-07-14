@@ -26,9 +26,10 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
-import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = WIDGET_TYPE_COLUMN_FAMILY_NAME)
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {

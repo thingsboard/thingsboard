@@ -18,44 +18,45 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.DEVICE_COLUMN_FAMILY_NAME)
-public final class DeviceEntity implements SearchTextEntity<Device> {
+public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchTextEntity<Device> {
 
     @Transient
     private static final long serialVersionUID = 8050086401213322856L;
 
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
-    
     @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ModelConstants.DEVICE_CUSTOMER_ID_PROPERTY)
-    private UUID customerId;
+    private String customerId;
 
     @Column(name = ModelConstants.DEVICE_TYPE_PROPERTY)
     private String type;
 
     @Column(name = ModelConstants.DEVICE_NAME_PROPERTY)
     private String name;
-    
+
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
@@ -69,13 +70,13 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
 
     public DeviceEntity(Device device) {
         if (device.getId() != null) {
-            this.id = device.getId().getId();
+            this.setId(device.getId().getId());
         }
         if (device.getTenantId() != null) {
-            this.tenantId = device.getTenantId().getId();
+            this.tenantId = toString(device.getTenantId().getId());
         }
         if (device.getCustomerId() != null) {
-            this.customerId = device.getCustomerId().getId();
+            this.customerId = toString(device.getCustomerId().getId());
         }
         this.name = device.getName();
         this.type = device.getType();
@@ -91,16 +92,16 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     public void setSearchText(String searchText) {
         this.searchText = searchText;
     }
-    
+
     @Override
     public Device toData() {
-        Device device = new Device(new DeviceId(id));
-        device.setCreatedTime(UUIDs.unixTimestamp(id));
+        Device device = new Device(new DeviceId(getId()));
+        device.setCreatedTime(UUIDs.unixTimestamp(getId()));
         if (tenantId != null) {
-            device.setTenantId(new TenantId(tenantId));
+            device.setTenantId(new TenantId(toUUID(tenantId)));
         }
         if (customerId != null) {
-            device.setCustomerId(new CustomerId(customerId));
+            device.setCustomerId(new CustomerId(toUUID(customerId)));
         }
         device.setName(name);
         device.setType(type);

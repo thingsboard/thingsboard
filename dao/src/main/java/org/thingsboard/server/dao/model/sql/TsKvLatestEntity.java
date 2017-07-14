@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.*;
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
@@ -31,6 +30,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @IdClass(TsKvLatestCompositeKey.class)
 public final class TsKvLatestEntity implements ToData<TsKvEntry> {
 
+
+    //TODO: reafctor this and TsKvEntity to avoid code duplicates
     @Id
     @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_COLUMN)
@@ -38,7 +39,7 @@ public final class TsKvLatestEntity implements ToData<TsKvEntry> {
 
     @Id
     @Column(name = ENTITY_ID_COLUMN)
-    private UUID entityId;
+    private String entityId;
 
     @Id
     @Column(name = KEY_COLUMN)

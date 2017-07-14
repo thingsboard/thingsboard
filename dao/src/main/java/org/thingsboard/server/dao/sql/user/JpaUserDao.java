@@ -23,16 +23,17 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
  * @author Valerii Sosliuk
@@ -50,7 +51,7 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
     }
 
     @Override
-    protected CrudRepository<UserEntity, UUID> getCrudRepository() {
+    protected CrudRepository<UserEntity, String> getCrudRepository() {
         return userRepository;
     }
 
@@ -64,9 +65,9 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
         return DaoUtil.convertDataList(
                 userRepository
                         .findUsersByAuthority(
-                                tenantId,
-                                NULL_UUID,
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                fromTimeUUID(tenantId),
+                                NULL_UUID_STR,
+                                pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.TENANT_ADMIN,
                                 new PageRequest(0, pageLink.getLimit())));
@@ -77,9 +78,9 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
         return DaoUtil.convertDataList(
                 userRepository
                         .findUsersByAuthority(
-                                tenantId,
-                                customerId,
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                fromTimeUUID(tenantId),
+                                fromTimeUUID(customerId),
+                                pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                                 Objects.toString(pageLink.getTextSearch(), ""),
                                 Authority.CUSTOMER_USER,
                                 new PageRequest(0, pageLink.getLimit())));

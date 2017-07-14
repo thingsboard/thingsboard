@@ -19,10 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.nosql.DashboardInfoEntity;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -33,11 +33,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
-import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.AlarmEntity;
+import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.relation.RelationDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
 import java.util.ArrayList;
 import java.util.List;

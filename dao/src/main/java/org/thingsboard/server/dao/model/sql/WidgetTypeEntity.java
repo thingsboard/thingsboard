@@ -18,33 +18,34 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.WIDGET_TYPE_COLUMN_FAMILY_NAME)
-public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
+public final class WidgetTypeEntity  extends BaseSqlEntity<WidgetType> implements BaseEntity<WidgetType> {
 
     @Transient
     private static final long serialVersionUID = -5436279069884988630L;
 
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
-
     @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ModelConstants.WIDGET_TYPE_BUNDLE_ALIAS_PROPERTY)
     private String bundleAlias;
@@ -65,10 +66,10 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 
     public WidgetTypeEntity(WidgetType widgetType) {
         if (widgetType.getId() != null) {
-            this.id = widgetType.getId().getId();
+            this.setId(widgetType.getId().getId());
         }
         if (widgetType.getTenantId() != null) {
-            this.tenantId = widgetType.getTenantId().getId();
+            this.tenantId = toString(widgetType.getTenantId().getId());
         }
         this.bundleAlias = widgetType.getBundleAlias();
         this.alias = widgetType.getAlias();
@@ -77,21 +78,11 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
     }
 
     @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    @Override
     public WidgetType toData() {
-        WidgetType widgetType = new WidgetType(new WidgetTypeId(id));
-        widgetType.setCreatedTime(UUIDs.unixTimestamp(id));
+        WidgetType widgetType = new WidgetType(new WidgetTypeId(getId()));
+        widgetType.setCreatedTime(UUIDs.unixTimestamp(getId()));
         if (tenantId != null) {
-            widgetType.setTenantId(new TenantId(tenantId));
+            widgetType.setTenantId(new TenantId(toUUID(tenantId)));
         }
         widgetType.setBundleAlias(bundleAlias);
         widgetType.setAlias(alias);
