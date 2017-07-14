@@ -15,18 +15,18 @@
  */
 package org.thingsboard.server.dao.model.nosql;
 
-import java.util.UUID;
-
-import org.thingsboard.server.common.data.id.UserCredentialsId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.UserCredentials;
-
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.Transient;
+import org.thingsboard.server.common.data.id.UserCredentialsId;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.model.BaseEntity;
+
+import java.util.UUID;
+
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = USER_CREDENTIALS_COLUMN_FAMILY_NAME)

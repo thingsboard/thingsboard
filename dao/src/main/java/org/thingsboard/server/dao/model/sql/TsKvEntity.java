@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.*;
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
@@ -69,7 +68,7 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
 
     @Id
     @Column(name = ENTITY_ID_COLUMN)
-    private UUID entityId;
+    private String entityId;
 
     @Id
     @Column(name = KEY_COLUMN)

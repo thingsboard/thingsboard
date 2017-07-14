@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.TenantAssetTypeEntity;
 
 import java.util.List;
 import java.util.Optional;

@@ -17,31 +17,29 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
-import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
-public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
+public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor> implements SearchTextEntity<ComponentDescriptor> {
 
     @Transient
     private static final long serialVersionUID = 253590350877992402L;
-
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY)
@@ -72,7 +70,7 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
 
     public ComponentDescriptorEntity(ComponentDescriptor component) {
         if (component.getId() != null) {
-            this.id = component.getId().getId();
+            this.setId(component.getId().getId());
         }
         this.actions = component.getActions();
         this.type = component.getType();
@@ -85,7 +83,7 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
 
     @Override
     public ComponentDescriptor toData() {
-        ComponentDescriptor data = new ComponentDescriptor(new ComponentDescriptorId(id));
+        ComponentDescriptor data = new ComponentDescriptor(new ComponentDescriptorId(this.getId()));
         data.setType(type);
         data.setScope(scope);
         data.setName(this.getName());
@@ -93,16 +91,6 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
         data.setActions(this.getActions());
         data.setConfigurationDescriptor(configurationDescriptor);
         return data;
-    }
-
-    @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     public String getSearchText() {

@@ -18,39 +18,41 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ASSET_COLUMN_FAMILY_NAME)
-public final class AssetEntity implements SearchTextEntity<Asset> {
+public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTextEntity<Asset> {
 
     @Transient
     private static final long serialVersionUID = -4089175869616037592L;
 
-    @Id
-    @Column(name = ID_PROPERTY)
-    private UUID id;
-
     @Column(name = ASSET_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ASSET_CUSTOMER_ID_PROPERTY)
-    private UUID customerId;
+    private String customerId;
 
     @Column(name = ASSET_NAME_PROPERTY)
     private String name;
@@ -71,13 +73,13 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
 
     public AssetEntity(Asset asset) {
         if (asset.getId() != null) {
-            this.id = asset.getId().getId();
+            this.setId(asset.getId().getId());
         }
         if (asset.getTenantId() != null) {
-            this.tenantId = asset.getTenantId().getId();
+            this.tenantId = UUIDConverter.fromTimeUUID(asset.getTenantId().getId());
         }
         if (asset.getCustomerId() != null) {
-            this.customerId = asset.getCustomerId().getId();
+            this.customerId = UUIDConverter.fromTimeUUID(asset.getCustomerId().getId());
         }
         this.name = asset.getName();
         this.type = asset.getType();
@@ -100,13 +102,13 @@ public final class AssetEntity implements SearchTextEntity<Asset> {
 
     @Override
     public Asset toData() {
-        Asset asset = new Asset(new AssetId(id));
-        asset.setCreatedTime(UUIDs.unixTimestamp(id));
+        Asset asset = new Asset(new AssetId(UUIDConverter.fromString(id)));
+        asset.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
         if (tenantId != null) {
-            asset.setTenantId(new TenantId(tenantId));
+            asset.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         }
         if (customerId != null) {
-            asset.setCustomerId(new CustomerId(customerId));
+            asset.setCustomerId(new CustomerId(UUIDConverter.fromString(customerId)));
         }
         asset.setName(name);
         asset.setType(type);

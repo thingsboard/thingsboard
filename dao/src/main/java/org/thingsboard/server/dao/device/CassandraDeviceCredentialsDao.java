@@ -19,11 +19,11 @@ import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.DeviceCredentialsEntity;
+import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
 import java.util.UUID;
 

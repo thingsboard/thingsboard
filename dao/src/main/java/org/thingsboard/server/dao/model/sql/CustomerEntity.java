@@ -18,33 +18,35 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME)
-public final class CustomerEntity implements SearchTextEntity<Customer> {
+public final class CustomerEntity extends BaseSqlEntity<Customer> implements SearchTextEntity<Customer> {
 
     @Transient
     private static final long serialVersionUID = 8951342124082981556L;
 
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
-    
     @Column(name = ModelConstants.CUSTOMER_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
     
     @Column(name = ModelConstants.CUSTOMER_TITLE_PROPERTY)
     private String title;
@@ -86,9 +88,9 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
 
     public CustomerEntity(Customer customer) {
         if (customer.getId() != null) {
-            this.id = customer.getId().getId();
+            this.setId(customer.getId().getId());
         }
-        this.tenantId = customer.getTenantId().getId();
+        this.tenantId = UUIDConverter.fromTimeUUID(customer.getTenantId().getId());
         this.title = customer.getTitle();
         this.country = customer.getCountry();
         this.state = customer.getState();
@@ -99,16 +101,6 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
         this.phone = customer.getPhone();
         this.email = customer.getEmail();
         this.additionalInfo = customer.getAdditionalInfo();
-    }
-
-    @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     @Override
@@ -123,9 +115,9 @@ public final class CustomerEntity implements SearchTextEntity<Customer> {
 
     @Override
     public Customer toData() {
-        Customer customer = new Customer(new CustomerId(id));
-        customer.setCreatedTime(UUIDs.unixTimestamp(id));
-        customer.setTenantId(new TenantId(tenantId));
+        Customer customer = new Customer(new CustomerId(getId()));
+        customer.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        customer.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         customer.setTitle(title);
         customer.setCountry(country);
         customer.setState(state);

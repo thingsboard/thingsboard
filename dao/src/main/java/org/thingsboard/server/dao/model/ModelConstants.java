@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.dao.model;
 
-import java.util.UUID;
-
 import com.datastax.driver.core.utils.UUIDs;
 import org.apache.commons.lang3.ArrayUtils;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.kv.Aggregation;
+
+import java.util.UUID;
 
 public class ModelConstants {
 
@@ -27,6 +28,7 @@ public class ModelConstants {
     }
 
     public static UUID NULL_UUID = UUIDs.startOf(0);
+    public static String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
 
     /**
      * Generic constants.

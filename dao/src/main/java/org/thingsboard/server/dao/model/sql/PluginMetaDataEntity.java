@@ -18,36 +18,38 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
-import java.util.UUID;
+
+import static org.thingsboard.server.common.data.UUIDConverter.fromString;
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
-public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
+public class PluginMetaDataEntity extends BaseSqlEntity<PluginMetaData> implements SearchTextEntity<PluginMetaData> {
 
     @Transient
     private static final long serialVersionUID = -6164321050824823149L;
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
 
     @Column(name = ModelConstants.PLUGIN_API_TOKEN_PROPERTY)
     private String apiToken;
 
     @Column(name = ModelConstants.PLUGIN_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ModelConstants.PLUGIN_NAME_PROPERTY)
     private String name;
@@ -78,9 +80,9 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
 
     public PluginMetaDataEntity(PluginMetaData pluginMetaData) {
         if (pluginMetaData.getId() != null) {
-            this.id = pluginMetaData.getId().getId();
+            this.setId(pluginMetaData.getId().getId());
         }
-        this.tenantId = pluginMetaData.getTenantId().getId();
+        this.tenantId = fromTimeUUID(pluginMetaData.getTenantId().getId());
         this.apiToken = pluginMetaData.getApiToken();
         this.clazz = pluginMetaData.getClazz();
         this.name = pluginMetaData.getName();
@@ -102,20 +104,10 @@ public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {
     }
 
     @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    @Override
     public PluginMetaData toData() {
-        PluginMetaData data = new PluginMetaData(new PluginId(id));
-        data.setTenantId(new TenantId(tenantId));
-        data.setCreatedTime(UUIDs.unixTimestamp(id));
+        PluginMetaData data = new PluginMetaData(new PluginId(getId()));
+        data.setTenantId(new TenantId(fromString(tenantId)));
+        data.setCreatedTime(UUIDs.unixTimestamp(getId()));
         data.setName(name);
         data.setClazz(clazz);
         data.setPublicAccess(publicAccess);

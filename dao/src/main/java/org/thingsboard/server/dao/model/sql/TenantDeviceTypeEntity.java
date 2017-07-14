@@ -18,11 +18,9 @@ package org.thingsboard.server.dao.model.sql;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.util.UUID;
-
 @AllArgsConstructor
 @Data
 public class TenantDeviceTypeEntity {
-    private UUID tenantId;
+    private String tenantId;
     private String type;
 }

@@ -24,57 +24,56 @@ import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
  */
 @SqlDao
-public interface AssetRepository extends CrudRepository<AssetEntity, UUID> {
+public interface AssetRepository extends CrudRepository<AssetEntity, String> {
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantId(@Param("tenantId") UUID tenantId,
+    List<AssetEntity> findByTenantId(@Param("tenantId") String tenantId,
                                      @Param("textSearch") String textSearch,
-                                     @Param("idOffset") UUID idOffset,
+                                     @Param("idOffset") String idOffset,
                                      Pageable pageable);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
-                                                  @Param("customerId") UUID customerId,
+    List<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
+                                                  @Param("customerId") String customerId,
                                                   @Param("textSearch") String textSearch,
-                                                  @Param("idOffset") UUID idOffset,
+                                                  @Param("idOffset") String idOffset,
                                                   Pageable pageable);
 
-    List<AssetEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> assetIds);
+    List<AssetEntity> findByTenantIdAndIdIn(String tenantId, List<String> assetIds);
 
-    List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(UUID tenantId, UUID customerId, List<UUID> assetIds);
+    List<AssetEntity> findByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> assetIds);
 
-    AssetEntity findByTenantIdAndName(UUID tenantId, String name);
+    AssetEntity findByTenantIdAndName(String tenantId, String name);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
+    List<AssetEntity> findByTenantIdAndType(@Param("tenantId") String tenantId,
                                             @Param("type") String type,
                                             @Param("textSearch") String textSearch,
-                                            @Param("idOffset") UUID idOffset,
+                                            @Param("idOffset") String idOffset,
                                             Pageable pageable);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId AND a.type = :type " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
             "AND a.id > :idOffset ORDER BY a.id")
-    List<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
-                                                         @Param("customerId") UUID customerId,
+    List<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") String tenantId,
+                                                         @Param("customerId") String customerId,
                                                          @Param("type") String type,
                                                          @Param("textSearch") String textSearch,
-                                                         @Param("idOffset") UUID idOffset,
+                                                         @Param("idOffset") String idOffset,
                                                          Pageable pageable);
 
     @Query("SELECT NEW org.thingsboard.server.common.data.asset.TenantAssetType(a.type, a.tenantId) FROM AssetEntity a GROUP BY a.tenantId, a.type")

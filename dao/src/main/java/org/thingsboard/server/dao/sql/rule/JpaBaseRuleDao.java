@@ -20,22 +20,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.model.sql.RuleMetaDataEntity;
 import org.thingsboard.server.dao.rule.RuleDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
  * Created by Valerii Sosliuk on 4/30/2017.
@@ -54,7 +55,7 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
     }
 
     @Override
-    protected CrudRepository<RuleMetaDataEntity, UUID> getCrudRepository() {
+    protected CrudRepository<RuleMetaDataEntity, String> getCrudRepository() {
         return ruleMetaDataRepository;
     }
 
@@ -75,9 +76,9 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
         List<RuleMetaDataEntity> entities =
                 ruleMetaDataRepository
                         .findByTenantIdAndPageLink(
-                                tenantId.getId(),
+                                UUIDConverter.fromTimeUUID(tenantId.getId()),
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                pageLink.getIdOffset() == null ? NULL_UUID_STR :  UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                                 new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
@@ -93,10 +94,10 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
         List<RuleMetaDataEntity> entities =
                 ruleMetaDataRepository
                         .findAllTenantRulesByTenantId(
-                                tenantId,
-                                NULL_UUID,
+                                UUIDConverter.fromTimeUUID(tenantId),
+                                NULL_UUID_STR,
                                 Objects.toString(pageLink.getTextSearch(), ""),
-                                pageLink.getIdOffset() == null ? NULL_UUID : pageLink.getIdOffset(),
+                                pageLink.getIdOffset() == null ? NULL_UUID_STR :  UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                                 new PageRequest(0, pageLink.getLimit()));
 
         if (log.isTraceEnabled()) {
@@ -110,7 +111,7 @@ public class JpaBaseRuleDao extends JpaAbstractSearchTextDao<RuleMetaDataEntity,
     @Override
     public void deleteById(UUID id) {
         log.debug("Delete rule meta-data entity by id [{}]", id);
-        ruleMetaDataRepository.delete(id);
+        ruleMetaDataRepository.delete(UUIDConverter.fromTimeUUID(id));
     }
 
     @Override

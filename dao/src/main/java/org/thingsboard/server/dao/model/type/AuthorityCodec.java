@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.dao.model.type;
 
-import org.thingsboard.server.common.data.security.Authority;
-
 import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
+import org.thingsboard.server.common.data.security.Authority;
 
 public class AuthorityCodec extends EnumNameCodec<Authority> {
 
