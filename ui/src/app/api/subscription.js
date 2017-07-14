@@ -629,7 +629,9 @@ export default class Subscription {
         }
         if (this.type === this.ctx.types.widgetType.latest.value) {
             var prevData = currentData.data;
-            if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
+            if (!sourceData.data.length) {
+                update = false;
+            } else if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
                 var prevValue = prevData[0][1];
                 if (prevValue === sourceData.data[0][1]) {
                     update = false;
