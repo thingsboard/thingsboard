@@ -814,7 +814,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     function formatValue(value, dec, units) {
         if (angular.isDefined(value) &&
             value !== null && isNumeric(value)) {
-            var formatted = value;
+            var formatted = Number(value);
             if (angular.isDefined(dec)) {
                 formatted = formatted.toFixed(dec);
             }
@@ -824,7 +824,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             }
             return formatted;
         } else {
-            return '';
+            return value;
         }
     }
 
