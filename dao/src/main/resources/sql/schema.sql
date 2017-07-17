@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS device_credentials (
     id varchar(31) NOT NULL CONSTRAINT device_credentials_pkey PRIMARY KEY,
     credentials_id varchar,
     credentials_type varchar(255),
-    credentials_value varchar),
+    credentials_value varchar,
     device_id varchar(31)
 );
 
