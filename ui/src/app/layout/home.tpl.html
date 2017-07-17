@@ -49,7 +49,7 @@
 					   class="md-icon-button" aria-label="{{ 'action.back' | translate }}" ng-click="vm.goBack()" ng-class="{'tb-invisible': vm.displaySearchMode()}">
 				  <md-icon aria-label="{{ 'action.back' | translate }}" class="material-icons">arrow_back</md-icon>
 			  </md-button>
-	          <md-button class="md-icon-button" aria-label="{{ 'action.back' | translate }}" ng-click="searchConfig.showSearch = !searchConfig.showSearch" ng-class="{'tb-invisible': !vm.displaySearchMode()}" >
+	          <md-button class="md-icon-button" aria-label="{{ 'action.back' | translate }}" ng-click="vm.closeSearch()" ng-class="{'tb-invisible': !vm.displaySearchMode()}" >
 		      	  <md-icon aria-label="{{ 'action.back' | translate }}" class="material-icons">arrow_back</md-icon>
 	          </md-button>		    
 			  <div flex layout="row" ng-show="!vm.displaySearchMode()" tb-no-animate class="md-toolbar-tools">
@@ -64,10 +64,10 @@
 				  </div>
 				  <md-input-container ng-class="{'tb-entity-search': vm.displayEntitySubtypeSearch()}" flex>
 					  <label>&nbsp;</label>
-					  <input ng-model="searchConfig.searchText" ng-change="vm.searchTextUpdated()" placeholder="{{ 'common.enter-search' | translate }}"/>
+					  <input id="tb-search-text-input" ng-model="searchConfig.searchText" ng-change="vm.searchTextUpdated()" placeholder="{{ 'common.enter-search' | translate }}"/>
 				  </md-input-container>
 			  </div>
-		      <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}" ng-show="searchConfig.searchEnabled" ng-click="searchConfig.showSearch = !searchConfig.showSearch">
+		      <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}" ng-show="searchConfig.searchEnabled" ng-click="vm.openSearch()">
 		      	  <md-icon aria-label="{{ 'action.search' | translate }}" class="material-icons">search</md-icon>
           	  </md-button>
 		      <md-button ng-show="!vm.displaySearchMode()" hide-xs hide-sm class="md-icon-button" ng-click="vm.toggleFullscreen()" aria-label="{{ 'fullscreen.toggle' | translate }}">
