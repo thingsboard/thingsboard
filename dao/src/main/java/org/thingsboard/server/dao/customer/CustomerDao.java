@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.dao.customer;
 
-import java.util.Optional;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**

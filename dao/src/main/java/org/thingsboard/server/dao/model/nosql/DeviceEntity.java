@@ -28,9 +28,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
-
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = DEVICE_COLUMN_FAMILY_NAME)
 public final class DeviceEntity implements SearchTextEntity<Device> {

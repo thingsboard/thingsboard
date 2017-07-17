@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.RuleId;
@@ -25,27 +26,25 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
-import java.util.UUID;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.RULE_COLUMN_FAMILY_NAME)
-public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
+public class RuleMetaDataEntity extends BaseSqlEntity<RuleMetaData> implements SearchTextEntity<RuleMetaData> {
 
     @Transient
     private static final long serialVersionUID = -1506905644259463884L;
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
 
     @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ModelConstants.RULE_NAME_PROPERTY)
     private String name;
@@ -84,9 +83,9 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
 
     public RuleMetaDataEntity(RuleMetaData rule) {
         if (rule.getId() != null) {
-            this.id = rule.getUuidId();
+            this.setId(rule.getUuidId());
         }
-        this.tenantId = DaoUtil.getId(rule.getTenantId());
+        this.tenantId = toString(DaoUtil.getId(rule.getTenantId()));
         this.name = rule.getName();
         this.pluginToken = rule.getPluginToken();
         this.state = rule.getState();
@@ -109,23 +108,13 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
     }
 
     @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    @Override
     public RuleMetaData toData() {
-        RuleMetaData rule = new RuleMetaData(new RuleId(id));
-        rule.setTenantId(new TenantId(tenantId));
+        RuleMetaData rule = new RuleMetaData(new RuleId(getId()));
+        rule.setTenantId(new TenantId(toUUID(tenantId)));
         rule.setName(name);
         rule.setState(state);
         rule.setWeight(weight);
-        rule.setCreatedTime(UUIDs.unixTimestamp(id));
+        rule.setCreatedTime(UUIDs.unixTimestamp(getId()));
         rule.setPluginToken(pluginToken);
         rule.setFilters(filters);
         rule.setProcessor(processor);

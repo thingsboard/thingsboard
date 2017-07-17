@@ -22,7 +22,6 @@ import org.thingsboard.server.dao.model.ToData;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
@@ -39,7 +38,7 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
 
     @Id
     @Column(name = ENTITY_ID_COLUMN)
-    private UUID entityId;
+    private String entityId;
 
     @Id
     @Column(name = ATTRIBUTE_TYPE_COLUMN)

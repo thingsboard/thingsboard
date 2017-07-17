@@ -19,15 +19,13 @@ import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.UUID;
-
 /**
  * Created by Valerii Sosliuk on 4/22/2017.
  */
 @SqlDao
-public interface UserCredentialsRepository extends CrudRepository<UserCredentialsEntity, UUID> {
+public interface UserCredentialsRepository extends CrudRepository<UserCredentialsEntity, String> {
 
-    UserCredentialsEntity findByUserId(UUID userId);
+    UserCredentialsEntity findByUserId(String userId);
 
     UserCredentialsEntity findByActivateToken(String activateToken);
 

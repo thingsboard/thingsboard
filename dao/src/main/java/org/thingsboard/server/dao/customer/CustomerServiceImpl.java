@@ -15,12 +15,6 @@
  */
 package org.thingsboard.server.dao.customer;
 
-import static org.thingsboard.server.dao.service.Validator.validateId;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,6 +38,12 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j

@@ -28,11 +28,11 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.model.type.RelationTypeGroupCodec;
 import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTimeDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
-import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.type.RelationTypeGroupCodec;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;

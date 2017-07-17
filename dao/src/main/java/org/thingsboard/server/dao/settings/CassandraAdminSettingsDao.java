@@ -19,10 +19,10 @@ import com.datastax.driver.core.querybuilder.Select.Where;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.nosql.AdminSettingsEntity;
+import org.thingsboard.server.dao.nosql.CassandraAbstractModelDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;

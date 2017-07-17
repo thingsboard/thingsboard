@@ -26,10 +26,10 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
-
 import java.util.Objects;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = PLUGIN_COLUMN_FAMILY_NAME)
 public class PluginMetaDataEntity implements SearchTextEntity<PluginMetaData> {

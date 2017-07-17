@@ -15,8 +15,12 @@
  */
 package org.thingsboard.server.dao.model.nosql;
 
-import java.util.UUID;
-
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,12 +30,8 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.AuthorityCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.UUID;
+
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = USER_COLUMN_FAMILY_NAME)

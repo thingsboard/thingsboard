@@ -27,11 +27,11 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.dao.model.TenantAssetTypeEntity;
 import org.thingsboard.server.dao.model.nosql.AssetEntity;
+import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.Nullable;
 import java.util.*;

@@ -18,29 +18,31 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
-public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle> {
+public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> implements SearchTextEntity<WidgetsBundle> {
 
     @Transient
     private static final long serialVersionUID = 6897035686422298096L;
 
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
-
     @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
-    private UUID tenantId;
+    private String tenantId;
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_ALIAS_PROPERTY)
     private String alias;
@@ -57,23 +59,13 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
 
     public WidgetsBundleEntity(WidgetsBundle widgetsBundle) {
         if (widgetsBundle.getId() != null) {
-            this.id = widgetsBundle.getId().getId();
+            this.setId(widgetsBundle.getId().getId());
         }
         if (widgetsBundle.getTenantId() != null) {
-            this.tenantId = widgetsBundle.getTenantId().getId();
+            this.tenantId = UUIDConverter.fromTimeUUID(widgetsBundle.getTenantId().getId());
         }
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
-    }
-
-    @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     @Override
@@ -88,10 +80,10 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
 
     @Override
     public WidgetsBundle toData() {
-        WidgetsBundle widgetsBundle = new WidgetsBundle(new WidgetsBundleId(id));
-        widgetsBundle.setCreatedTime(UUIDs.unixTimestamp(id));
+        WidgetsBundle widgetsBundle = new WidgetsBundle(new WidgetsBundleId(UUIDConverter.fromString(id)));
+        widgetsBundle.setCreatedTime(UUIDs.unixTimestamp(UUIDConverter.fromString(id)));
         if (tenantId != null) {
-            widgetsBundle.setTenantId(new TenantId(tenantId));
+            widgetsBundle.setTenantId(new TenantId(UUIDConverter.fromString(tenantId)));
         }
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);

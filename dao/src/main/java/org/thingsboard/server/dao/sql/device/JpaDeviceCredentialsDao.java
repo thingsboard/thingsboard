@@ -18,12 +18,13 @@ package org.thingsboard.server.dao.sql.device;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.device.DeviceCredentialsDao;
 import org.thingsboard.server.dao.model.sql.DeviceCredentialsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.UUID;
 
@@ -43,13 +44,13 @@ public class JpaDeviceCredentialsDao extends JpaAbstractDao<DeviceCredentialsEnt
     }
 
     @Override
-    protected CrudRepository<DeviceCredentialsEntity, UUID> getCrudRepository() {
+    protected CrudRepository<DeviceCredentialsEntity, String> getCrudRepository() {
         return deviceCredentialsRepository;
     }
 
     @Override
     public DeviceCredentials findByDeviceId(UUID deviceId) {
-        return DaoUtil.getData(deviceCredentialsRepository.findByDeviceId(deviceId));
+        return DaoUtil.getData(deviceCredentialsRepository.findByDeviceId(UUIDConverter.fromTimeUUID(deviceId)));
     }
 
     @Override

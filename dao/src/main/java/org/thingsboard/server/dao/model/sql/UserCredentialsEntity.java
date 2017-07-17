@@ -17,29 +17,30 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import javax.persistence.*;
-import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
-public final class UserCredentialsEntity implements BaseEntity<UserCredentials> {
+public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> implements BaseEntity<UserCredentials> {
 
     @Transient
     private static final long serialVersionUID = -3989724854149114846L;
 
-    @Id
-    @Column(name = ModelConstants.ID_PROPERTY)
-    private UUID id;
-
     @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, unique = true)
-    private UUID userId;
+    private String userId;
 
     @Column(name = ModelConstants.USER_CREDENTIALS_ENABLED_PROPERTY)
     private boolean enabled;
@@ -59,10 +60,10 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
 
     public UserCredentialsEntity(UserCredentials userCredentials) {
         if (userCredentials.getId() != null) {
-            this.id = userCredentials.getId().getId();
+            this.setId(userCredentials.getId().getId());
         }
         if (userCredentials.getUserId() != null) {
-            this.userId = userCredentials.getUserId().getId();
+            this.userId = toString(userCredentials.getUserId().getId());
         }
         this.enabled = userCredentials.isEnabled();
         this.password = userCredentials.getPassword();
@@ -72,10 +73,10 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
 
     @Override
     public UserCredentials toData() {
-        UserCredentials userCredentials = new UserCredentials(new UserCredentialsId(id));
-        userCredentials.setCreatedTime(UUIDs.unixTimestamp(id));
+        UserCredentials userCredentials = new UserCredentials(new UserCredentialsId(getId()));
+        userCredentials.setCreatedTime(UUIDs.unixTimestamp(getId()));
         if (userId != null) {
-            userCredentials.setUserId(new UserId(userId));
+            userCredentials.setUserId(new UserId(toUUID(userId)));
         }
         userCredentials.setEnabled(enabled);
         userCredentials.setPassword(password);
@@ -84,13 +85,4 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
         return userCredentials;
     }
 
-    @Override
-    public UUID getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(UUID id) {
-        this.id = id;
-    }
 }

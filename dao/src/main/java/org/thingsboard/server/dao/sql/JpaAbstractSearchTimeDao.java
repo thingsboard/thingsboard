@@ -17,9 +17,9 @@ package org.thingsboard.server.dao.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import org.springframework.data.jpa.domain.Specification;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.model.BaseEntity;
-import  static org.thingsboard.server.dao.model.ModelConstants.*;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -41,30 +41,30 @@ public abstract class JpaAbstractSearchTimeDao<E extends BaseEntity<D>, D> exten
                 List<Predicate> predicates = new ArrayList<>();
                 if (pageLink.isAscOrder()) {
                     if (pageLink.getIdOffset() != null) {
-                        Predicate lowerBound = criteriaBuilder.greaterThan(root.get(idColumn), pageLink.getIdOffset());
+                        Predicate lowerBound = criteriaBuilder.greaterThan(root.get(idColumn), UUIDConverter.fromTimeUUID(pageLink.getIdOffset()));
                         predicates.add(lowerBound);
                     } else if (pageLink.getStartTime() != null) {
                         UUID startOf = UUIDs.startOf(pageLink.getStartTime());
-                        Predicate lowerBound = criteriaBuilder.greaterThanOrEqualTo(root.get(idColumn), startOf);
+                        Predicate lowerBound = criteriaBuilder.greaterThanOrEqualTo(root.get(idColumn), UUIDConverter.fromTimeUUID(startOf));
                         predicates.add(lowerBound);
                     }
                     if (pageLink.getEndTime() != null) {
                         UUID endOf = UUIDs.endOf(pageLink.getEndTime());
-                        Predicate upperBound = criteriaBuilder.lessThanOrEqualTo(root.get(idColumn), endOf);
+                        Predicate upperBound = criteriaBuilder.lessThanOrEqualTo(root.get(idColumn), UUIDConverter.fromTimeUUID(endOf));
                         predicates.add(upperBound);
                     }
                 } else {
                     if (pageLink.getIdOffset() != null) {
-                        Predicate lowerBound = criteriaBuilder.lessThan(root.get(idColumn), pageLink.getIdOffset());
+                        Predicate lowerBound = criteriaBuilder.lessThan(root.get(idColumn), UUIDConverter.fromTimeUUID(pageLink.getIdOffset()));
                         predicates.add(lowerBound);
                     } else if (pageLink.getEndTime() != null) {
                         UUID endOf = UUIDs.endOf(pageLink.getEndTime());
-                        Predicate lowerBound = criteriaBuilder.lessThanOrEqualTo(root.get(idColumn), endOf);
+                        Predicate lowerBound = criteriaBuilder.lessThanOrEqualTo(root.get(idColumn), UUIDConverter.fromTimeUUID(endOf));
                         predicates.add(lowerBound);
                     }
                     if (pageLink.getStartTime() != null) {
                         UUID startOf = UUIDs.startOf(pageLink.getStartTime());
-                        Predicate upperBound = criteriaBuilder.greaterThanOrEqualTo(root.get(idColumn), startOf);
+                        Predicate upperBound = criteriaBuilder.greaterThanOrEqualTo(root.get(idColumn), UUIDConverter.fromTimeUUID(startOf));
                         predicates.add(upperBound);
                     }
                 }

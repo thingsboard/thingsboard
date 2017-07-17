@@ -30,11 +30,11 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
-
 import javax.persistence.Transient;
 import java.util.Objects;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = RULE_COLUMN_FAMILY_NAME)
 public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
