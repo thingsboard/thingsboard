@@ -589,7 +589,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         if (keyData.length > 0) {
                             series = keyData[0];
                             time = series[0];
-                            value = series[1];
+                            value = convertValue(series[1]);
                             if (dataKey.postFunc) {
                                 value = dataKey.postFunc(time, value, prevSeries[1]);
                             }
