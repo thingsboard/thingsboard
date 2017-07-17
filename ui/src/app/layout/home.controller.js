@@ -56,6 +56,8 @@ export default function HomeController(types, loginService, userService, deviceS
     vm.searchTextUpdated = searchTextUpdated;
     vm.sidenavClicked = sidenavClicked;
     vm.toggleFullscreen = toggleFullscreen;
+    vm.openSearch = openSearch;
+    vm.closeSearch = closeSearch;
 
     $scope.$on('$stateChangeSuccess', function (evt, to, toParams, from) {
         watchEntitySubtype(false);
@@ -125,6 +127,25 @@ export default function HomeController(types, loginService, userService, deviceS
             Fullscreen.cancel();
         } else {
             Fullscreen.all();
+        }
+    }
+
+    function openSearch() {
+        if ($scope.searchConfig.searchEnabled) {
+            $scope.searchConfig.showSearch = true;
+            $timeout(() => {
+                angular.element('#tb-search-text-input', $element).focus();
+            });
+        }
+    }
+
+    function closeSearch() {
+        if ($scope.searchConfig.searchEnabled) {
+            $scope.searchConfig.showSearch = false;
+            if ($scope.searchConfig.searchText.length) {
+                $scope.searchConfig.searchText = '';
+                searchTextUpdated();
+            }
         }
     }
 
