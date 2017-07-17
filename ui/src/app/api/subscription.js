@@ -277,6 +277,7 @@ export default class Subscription {
             var datasource = this.datasources[i];
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
+                dataKey.hidden = false;
                 dataKey.pattern = angular.copy(dataKey.label);
                 var datasourceData = {
                     datasource: datasource,
@@ -290,7 +291,6 @@ export default class Subscription {
                         dataKey: dataKey,
                         dataIndex: dataIndex++
                     };
-                    legendKey.dataKey.hidden = false;
                     this.legendData.keys.push(legendKey);
                     var legendKeyData = {
                         min: null,

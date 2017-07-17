@@ -155,7 +155,7 @@ export default class TbFlot {
         var options = {
             title: null,
             subtitle: null,
-            shadowSize: settings.shadowSize || 4,
+            shadowSize: angular.isDefined(settings.shadowSize) ? settings.shadowSize : 4,
             HtmlText: false,
             grid: {
                 hoverable: true,
@@ -234,6 +234,12 @@ export default class TbFlot {
                 }
                 if (settings.grid.horizontalLines === false) {
                     this.yaxis.tickLength = 0;
+                }
+                if (angular.isDefined(settings.grid.margin)) {
+                    options.grid.margin = settings.grid.margin;
+                }
+                if (angular.isDefined(settings.grid.minBorderMargin)) {
+                    options.grid.minBorderMargin = settings.grid.minBorderMargin;
                 }
             }
 
@@ -326,6 +332,10 @@ export default class TbFlot {
                 fill: keySettings.fillLines === true,
                 show: this.chartType === 'line' ? keySettings.showLines !== false : keySettings.showLines === true
             };
+
+            if (angular.isDefined(keySettings.lineWidth)) {
+                series.lines.lineWidth = keySettings.lineWidth;
+            }
 
             series.points = {
                 show: false,
@@ -446,7 +456,7 @@ export default class TbFlot {
                                         hidden = hidden && yaxis.keysInfo[k].hidden;
                                     }
                                 }
-                                yaxis.hidden = hidden
+                                yaxis.hidden = hidden;
                                 var newIndex = -1;
                                 if (!yaxis.hidden) {
                                     this.options.yaxes.push(yaxis);

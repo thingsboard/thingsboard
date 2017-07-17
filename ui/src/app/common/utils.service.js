@@ -437,10 +437,14 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             name: keyInfo.name,
             type: type,
             label: label,
-            color: genNextColor(datasources),
             funcBody: keyInfo.funcBody,
             settings: {},
             _hash: Math.random()
+        }
+        if (keyInfo.color) {
+            dataKey.color = keyInfo.color;
+        } else {
+            dataKey.color = genNextColor(datasources);
         }
         return dataKey;
     }
