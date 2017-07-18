@@ -26,7 +26,7 @@ import org.thingsboard.server.dao.model.sql.TsKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 @SqlDao
 public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvCompositeKey> {
@@ -45,17 +45,17 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Query("SELECT new TsKvEntity(MAX(tskv.strValue), MAX(tskv.longValue), MAX(tskv.doubleValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
-    Future<TsKvEntity> findMax(@Param("entityId") String entityId,
-                       @Param("entityType") EntityType entityType,
-                       @Param("entityKey") String entityKey,
-                       @Param("startTs") long startTs,
-                       @Param("endTs") long endTs);
+    CompletableFuture<TsKvEntity> findMax(@Param("entityId") String entityId,
+                                          @Param("entityType") EntityType entityType,
+                                          @Param("entityKey") String entityKey,
+                                          @Param("startTs") long startTs,
+                                          @Param("endTs") long endTs);
 
     @Async
     @Query("SELECT new TsKvEntity(MIN(tskv.strValue), MIN(tskv.longValue), MIN(tskv.doubleValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
-    Future<TsKvEntity> findMin(@Param("entityId") String entityId,
+    CompletableFuture<TsKvEntity> findMin(@Param("entityId") String entityId,
                        @Param("entityType") EntityType entityType,
                        @Param("entityKey") String entityKey,
                        @Param("startTs") long startTs,
@@ -65,7 +65,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Query("SELECT new TsKvEntity(COUNT(tskv.booleanValue), COUNT(tskv.strValue), COUNT(tskv.longValue), COUNT(tskv.doubleValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
-    Future<TsKvEntity> findCount(@Param("entityId") String entityId,
+    CompletableFuture<TsKvEntity> findCount(@Param("entityId") String entityId,
                                  @Param("entityType") EntityType entityType,
                                  @Param("entityKey") String entityKey,
                                  @Param("startTs") long startTs,
@@ -75,7 +75,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Query("SELECT new TsKvEntity(AVG(tskv.longValue), AVG(tskv.doubleValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
-    Future<TsKvEntity> findAvg(@Param("entityId") String entityId,
+    CompletableFuture<TsKvEntity> findAvg(@Param("entityId") String entityId,
                        @Param("entityType") EntityType entityType,
                        @Param("entityKey") String entityKey,
                        @Param("startTs") long startTs,
@@ -86,7 +86,7 @@ public interface TsKvRepository extends CrudRepository<TsKvEntity, TsKvComposite
     @Query("SELECT new TsKvEntity(SUM(tskv.longValue), SUM(tskv.doubleValue)) FROM TsKvEntity tskv " +
             "WHERE tskv.entityId = :entityId AND tskv.entityType = :entityType " +
             "AND tskv.key = :entityKey AND tskv.ts > :startTs AND tskv.ts < :endTs")
-    Future<TsKvEntity> findSum(@Param("entityId") String entityId,
+    CompletableFuture<TsKvEntity> findSum(@Param("entityId") String entityId,
                        @Param("entityType") EntityType entityType,
                        @Param("entityKey") String entityKey,
                        @Param("startTs") long startTs,

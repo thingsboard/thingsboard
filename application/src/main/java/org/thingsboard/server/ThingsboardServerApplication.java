@@ -18,11 +18,13 @@ package org.thingsboard.server;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableAsync;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.Arrays;
 
 @SpringBootConfiguration
+@EnableAsync
 @EnableSwagger2
 @ComponentScan({"org.thingsboard.server"})
 public class ThingsboardServerApplication {
