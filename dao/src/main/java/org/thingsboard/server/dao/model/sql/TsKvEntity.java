@@ -34,7 +34,9 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
     }
 
     public TsKvEntity(Double avgLongValue, Double avgDoubleValue) {
-        this.longValue = avgLongValue.longValue();
+        if(avgLongValue != null) {
+            this.longValue = avgLongValue.longValue();
+        }
         this.doubleValue = avgDoubleValue;
     }
 
@@ -103,5 +105,9 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
             kvEntry = new BooleanDataEntry(key, booleanValue);
         }
         return new BasicTsKvEntry(ts, kvEntry);
+    }
+
+    public boolean isNotEmpty() {
+        return strValue != null || longValue != null || doubleValue != null || booleanValue != null;
     }
 }
