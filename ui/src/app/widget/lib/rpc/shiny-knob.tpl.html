@@ -17,12 +17,15 @@
 -->
 
 <div class="tb-shiny-knob" layout="column" ng-class="{'dark': vm.darkTheme}">
-    <div layout="row" layout-align="center start" class="md-padding">
-        <span>{{ vm.value }}</span>
-    </div>
     <div id="knob-container" flex layout="column" layout-align="center center">
         <div class="knob">
+            <div class="value-background" layout="row" layout-align="center center">
+                <span class="knob-value">{{ vm.value }}</span>
+            </div>
             <canvas id="canvasBar"></canvas>
+            <div class="top-pointer-container">
+                <div class="top-pointer"></div>
+            </div>
             <div class="top"></div>
             <div class="base"></div>
         </div>

@@ -17,7 +17,6 @@
 import './shiny-knob.scss';
 
 import CanvasDigitalGauge from './../CanvasDigitalGauge';
-//import tinycolor from 'tinycolor2';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -53,7 +52,11 @@ function ShinyKnobController($element, $scope, $document) {
 
     var knob = angular.element('.knob', $element),
         knobContainer = angular.element('#knob-container', $element),
-        knobTop = knob.find('.top'),
+       // knobTop = knob.find('.top'),
+        knobTopPointerContainer = knob.find('.top-pointer-container'),
+        knobTopPointer = knob.find('.top-pointer'),
+        knobValueBackground = knob.find('.value-background'),
+        knobValue = knob.find('.knob-value'),
         startDeg = -1,
         currentDeg = 0,
         rotation = 0,
@@ -61,7 +64,7 @@ function ShinyKnobController($element, $scope, $document) {
 
     var canvasBarElement = angular.element('#canvasBar', $element);
 
-    var levelColors = ['rgb(0, 128, 0)', 'rgb(251, 192, 45)', 'rgb(244, 67, 54)'];
+    var levelColors = ['rgb(0, 128, 0)', 'rgb(251, 192, 45)', 'rgb(255, 0, 0)'];//['cyan'];//
     var canvasBar;
 
     $scope.$watch('vm.ctx', () => {
@@ -80,14 +83,14 @@ function ShinyKnobController($element, $scope, $document) {
         var canvasBarData = {
             renderTo: canvasBarElement[0],
             hideValue: true,
-            neonGlowBrightness: vm.darkTheme ? 40 : 0,
-            gaugeWidthScale: 0.5,
-            gaugeColor: vm.darkTheme ? 'rgb(23, 26, 28)' : 'rgba(0,0,0,0)',
+            neonGlowBrightness: 40,//40,//vm.darkTheme ? 40 : 0,
+            gaugeWidthScale: 0.2,
+            gaugeColor: vm.darkTheme ? 'rgb(23, 26, 28)' : 'rgba(0, 0, 0, 0.75)',
             levelColors: levelColors,
             minValue: vm.minValue,
             maxValue: vm.maxValue,
             gaugeType: 'donut',
-            dashThickness: 1.5,
+            dashThickness: 0,//1.5,
             donutStartAngle: Math.PI,
             animation: false,
             animationDuration: 250,
@@ -141,7 +144,7 @@ function ShinyKnobController($element, $scope, $document) {
                 currentDeg = tmp;
                 lastDeg = tmp;
 
-                knobTop.css('transform','rotate('+(currentDeg)+'deg)');
+                knobTopPointerContainer.css('transform','rotate('+(currentDeg)+'deg)');
                 turn(currentDeg/359);
             });
 
@@ -168,6 +171,8 @@ function ShinyKnobController($element, $scope, $document) {
         var size = Math.min(width, height);
         knob.css({width: size, height: size});
         canvasBar.update({width: size, height: size});
+        var valHeight = knobValueBackground.height()/3.3;
+        knobValue.css({'fontSize': valHeight+'px', 'lineHeight': valHeight+'px'});
     }
 
     function turn(ratio) {
@@ -175,16 +180,20 @@ function ShinyKnobController($element, $scope, $document) {
         if (canvasBar.value != value) {
             canvasBar.value = value;
         }
+        knobTopPointer.css({'backgroundColor': canvasBar.getValueColor()});
+        knobValue.css({'color': 'cyan'});//canvasBar.getValueColor()});
         onValue(value);
     }
 
     function setValue(value) {
         var ratio = (value-vm.minValue) / (vm.maxValue - vm.minValue);
         rotation = lastDeg = currentDeg = ratio*360;
-        knobTop.css('transform','rotate('+(currentDeg)+'deg)');
+        knobTopPointerContainer.css('transform','rotate('+(currentDeg)+'deg)');
         if (canvasBar.value != value) {
             canvasBar.value = value;
         }
+        knobTopPointer.css({'backgroundColor': canvasBar.getValueColor()});
+        knobValue.css({'color': 'cyan'});//canvasBar.getValueColor()});
         vm.value = value;
     }
 

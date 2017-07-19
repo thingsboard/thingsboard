@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-$knob-img: url('./knob.png');
+$knob-img: url('./knob.svg');
 
-$bars-margin-pct: percentage(0.2);
-$shadow-size: 5;
+$bars-margin-pct: percentage(0.08);
+$value-background-margin-pct: percentage(0.30);
+$shadow-size: 0;
 $shadow-size-px: $shadow-size+px;
 $shadow-offset-px: $shadow-size/2+px;
 
@@ -25,7 +26,7 @@ $shadow-offset-px: $shadow-size/2+px;
   width:100%;
   height:100%;
   &.dark {
-    background: #000;//$dark-bg-img #1f2129;
+    background: #000;
   }
 
   .knob {
@@ -42,6 +43,40 @@ $shadow-offset-px: $shadow-size/2+px;
       bottom: 0;
       right: 0;
     }
+    .value-background {
+      position:absolute;
+      top: $value-background-margin-pct;
+      left: $value-background-margin-pct;
+      bottom: $value-background-margin-pct;
+      right: $value-background-margin-pct;
+      border-radius: 50%;
+      background: #000;
+      color: #fff;
+      font-weight: 500;
+      z-index:4;
+    }
+    .top-pointer-container {
+      position:absolute;
+      top: calc(#{$bars-margin-pct} - #{$shadow-offset-px});
+      left: $bars-margin-pct;
+      bottom: calc(#{$bars-margin-pct} + #{$shadow-offset-px});
+      right: $bars-margin-pct;
+      z-index:3;
+      cursor:default !important;
+      .top-pointer {
+        content:'';
+        width:5%;
+        height:5%;
+        background-color:#b5b5b5;
+        position:absolute;
+        top:50%;
+        left:5%;
+        margin-top:-2.5%;
+        border-radius: 50%;
+        cursor:default !important;
+        box-shadow: 1px 0 2px #040404;
+      }
+    }
     .top{
       position:absolute;
       top: calc(#{$bars-margin-pct} - #{$shadow-offset-px});
@@ -50,21 +85,8 @@ $shadow-offset-px: $shadow-size/2+px;
       right: $bars-margin-pct;
       background:$knob-img no-repeat;
       background-size: contain;
-      z-index:10;
+      z-index:2;
       cursor:default !important;
-      &:after {
-        content:'';
-        width:10px;
-        height:10px;
-        background-color:#666;
-        position:absolute;
-        top:50%;
-        left:10px;
-        margin-top:-5px;
-        border-radius: 50%;
-        cursor:default !important;
-        box-shadow: 0 0 1px #5a5a5a inset;
-      }
     }
     .base{
       top: calc(#{$bars-margin-pct} - #{$shadow-offset-px});

@@ -238,6 +238,21 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
         return this;
     }
 
+    getValueColor() {
+        if (this.contextProgressClone) {
+            var color = this.contextProgressClone.currentColor;
+            if (!color) {
+                if (this.options.neonGlowBrightness) {
+                    color = getProgressColor(0, this.options.neonColorsRange);
+                } else {
+                    color = getProgressColor(0, this.options.colorsRange);
+                }
+            }
+            return color;
+        } else {
+            return '#000';
+        }
+    }
 }
 
 /* eslint-disable angular/document-service */
@@ -666,9 +681,9 @@ function drawBarGlow(context, startX, startY, endX, endY, color, strokeWidth, is
 function drawProgress(context, options, progress) {
     var neonColor;
     if (options.neonGlowBrightness) {
-        neonColor = getProgressColor(progress, options.neonColorsRange);
+        context.currentColor = neonColor = getProgressColor(progress, options.neonColorsRange);
     } else {
-        context.strokeStyle = getProgressColor(progress, options.colorsRange);
+        context.currentColor = context.strokeStyle = getProgressColor(progress, options.colorsRange);
     }
 
     let {barLeft, barRight, barTop, baseX, width, barBottom, Cx, Cy, Rm, Ro, Ri, strokeWidth} =
