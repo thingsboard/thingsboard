@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.attributes;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +50,8 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey) {
         AttributeKvCompositeKey compositeKey =
                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey);
-        return service.submit(() ->
-                Optional.of(DaoUtil.getData(attributeKvRepository.findOne(compositeKey))));
+        return Futures.immediateFuture(
+                Optional.ofNullable(DaoUtil.getData(attributeKvRepository.findOne(compositeKey))));
     }
 
     @Override
@@ -61,13 +62,13 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                         .map(attributeKey ->
                                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey))
                         .collect(Collectors.toList());
-        return service.submit(() ->
+        return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(attributeKvRepository.findAll(compositeKeys))));
     }
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType) {
-        return service.submit(() ->
+        return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(
                         attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
                                 entityId.getEntityType(),

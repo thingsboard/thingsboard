@@ -26,9 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.TsKvEntity;
 import org.thingsboard.server.dao.model.sql.TsKvLatestCompositeKey;
@@ -187,7 +185,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
     }
 
     private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, TsKvQuery query) {
-        return service.submit(() ->
+        return Futures.immediateFuture(
                 DaoUtil.convertDataList(
                         tsKvRepository.findAllWithLimit(
                                 fromTimeUUID(entityId.getId()),
@@ -205,13 +203,19 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
                         entityId.getEntityType(),
                         fromTimeUUID(entityId.getId()),
                         key);
-        return service.submit(() ->
-                DaoUtil.getData(tsKvLatestRepository.findOne(compositeKey)));
+        TsKvLatestEntity entry = tsKvLatestRepository.findOne(compositeKey);
+        TsKvEntry result;
+        if (entry != null) {
+            result = DaoUtil.getData(entry);
+        } else {
+            result = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+        }
+        return Futures.immediateFuture(result);
     }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(EntityId entityId) {
-        return service.submit(() ->
+        return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(
                         tsKvLatestRepository.findAllByEntityTypeAndEntityId(
                                 entityId.getEntityType(),
