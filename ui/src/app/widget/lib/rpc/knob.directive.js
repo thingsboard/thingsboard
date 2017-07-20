@@ -63,7 +63,7 @@ function KnobController($element, $scope, $document) {
         knobTitleContainer = knob.find('.title-container'),
         knobTitle = knob.find('.knob-title'),
         knobMinmaxContainer = knob.find('.minmax-container'),
-        minmaxLanel = knob.find('.minmax-label'),
+        minmaxLabel = knob.find('.minmax-label'),
         textMeasure = knob.find('#text-measure'),
         startDeg = -1,
         currentDeg = 0,
@@ -91,8 +91,6 @@ function KnobController($element, $scope, $document) {
         vm.minValue = angular.isDefined(vm.ctx.settings.minValue) ? vm.ctx.settings.minValue : 0;
         vm.maxValue = angular.isDefined(vm.ctx.settings.maxValue) ? vm.ctx.settings.maxValue : 100;
         vm.title = angular.isDefined(vm.ctx.settings.title) ? vm.ctx.settings.title : '';
-
-        vm.darkTheme = vm.ctx.settings.theme == 'dark';
 
         var canvasBarData = {
             renderTo: canvasBarElement[0],
@@ -267,7 +265,7 @@ function KnobController($element, $scope, $document) {
         setFontSize(knobTitle, vm.title, knobTitleContainer.height(), knobTitleContainer.width());
         setFontSize(knobError, vm.error, knobErrorContainer.height(), knobErrorContainer.width());
         var minmaxHeight = knobMinmaxContainer.height();
-        minmaxLanel.css({'fontSize': minmaxHeight+'px', 'lineHeight': minmaxHeight+'px'});
+        minmaxLabel.css({'fontSize': minmaxHeight+'px', 'lineHeight': minmaxHeight+'px'});
         checkValueSize();
     }
 
