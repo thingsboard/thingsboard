@@ -15,7 +15,9 @@
  */
 
 import tbKnob from './knob.directive';
+import tbSwitch from './switch.directive';
 
 export default angular.module('thingsboard.widgets.rpc', [
-    tbKnob
+    tbKnob,
+    tbSwitch
 ]).name;
