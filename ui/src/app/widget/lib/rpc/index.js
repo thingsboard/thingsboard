@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import tbShinyKnob from './shiny-knob.directive';
+import tbKnob from './knob.directive';
 
 export default angular.module('thingsboard.widgets.rpc', [
-    tbShinyKnob
+    tbKnob
 ]).name;

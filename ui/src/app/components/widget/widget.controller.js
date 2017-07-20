@@ -811,14 +811,17 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         return (val - parseFloat( val ) + 1) >= 0;
     }
 
-    function formatValue(value, dec, units) {
+    function formatValue(value, dec, units, showZeroDecimals) {
         if (angular.isDefined(value) &&
             value !== null && isNumeric(value)) {
             var formatted = Number(value);
             if (angular.isDefined(dec)) {
                 formatted = formatted.toFixed(dec);
             }
-            formatted = (formatted * 1).toString();
+            if (!showZeroDecimals) {
+                formatted = (formatted * 1);
+            }
+            formatted = formatted.toString();
             if (angular.isDefined(units) && units.length > 0) {
                 formatted += ' ' + units;
             }

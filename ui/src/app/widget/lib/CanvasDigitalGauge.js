@@ -99,6 +99,9 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
             if (!options.donutStartAngle) {
                 options.donutStartAngle = 1.5 * Math.PI;
             }
+            if (!options.donutEndAngle) {
+                options.donutEndAngle = options.donutStartAngle + 2 * Math.PI;
+            }
         }
 
         var colorsCount = options.levelColors.length;
@@ -494,7 +497,7 @@ function drawBackground(context, options) {
         context.lineCap = 'round';
     }
     if (options.gaugeType === 'donut') {
-        context.arc(context.barDimensions.Cx, context.barDimensions.Cy, context.barDimensions.Rm, options.donutStartAngle, options.donutStartAngle + 2 * Math.PI);
+        context.arc(context.barDimensions.Cx, context.barDimensions.Cy, context.barDimensions.Rm, options.donutStartAngle, options.donutEndAngle);
         context.stroke();
     } else if (options.gaugeType === 'arc') {
         context.arc(context.barDimensions.Cx, context.barDimensions.Cy, context.barDimensions.Rm, Math.PI, 2*Math.PI);
@@ -626,7 +629,7 @@ function getProgressColor(progress, colorsRange) {
     }
 }
 
-function drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, color, progress, isDonut, donutStartAngle) {
+function drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, color, progress, isDonut, donutStartAngle, donutEndAngle) {
     context.setLineDash([]);
     var strokeWidth = Ro - Ri;
     var blur = 0.55;
@@ -644,7 +647,7 @@ function drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, color, progress, isDonut, donu
     context.beginPath();
     var e = 0.01 * Math.PI;
     if (isDonut) {
-        context.arc(Cx, Cy, Rm, donutStartAngle - e, donutStartAngle + 2 * Math.PI * progress + e);
+        context.arc(Cx, Cy, Rm, donutStartAngle - e, donutStartAngle + (donutEndAngle - donutStartAngle) * progress + e);
     } else {
         context.arc(Cx, Cy, Rm, Math.PI - e, Math.PI + Math.PI * progress + e);
     }
@@ -703,10 +706,10 @@ function drawProgress(context, options, progress) {
             context.strokeStyle = neonColor;
         }
         context.beginPath();
-        context.arc(Cx, Cy, Rm, options.donutStartAngle, options.donutStartAngle + 2 * Math.PI * progress);
+        context.arc(Cx, Cy, Rm, options.donutStartAngle, options.donutStartAngle + (options.donutEndAngle - options.donutStartAngle) * progress);
         context.stroke();
         if (options.neonGlowBrightness && !options.isMobile) {
-            drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, true, options.donutStartAngle);
+            drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, true, options.donutStartAngle, options.donutEndAngle);
         }
     } else if (options.gaugeType === 'arc') {
         if (options.neonGlowBrightness) {
