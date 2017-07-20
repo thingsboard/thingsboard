@@ -22,6 +22,8 @@ import thingsboardTimeseriesTableWidget from '../widget/lib/timeseries-table-wid
 import thingsboardAlarmsTableWidget from '../widget/lib/alarms-table-widget';
 import thingsboardEntitiesTableWidget from '../widget/lib/entities-table-widget';
 
+import thingsboardRpcWidgets from '../widget/lib/rpc';
+
 import TbFlot from '../widget/lib/flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
 import TbAnalogueRadialGauge from '../widget/lib/analogue-radial-gauge';
@@ -39,7 +41,7 @@ import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
 
 export default angular.module('thingsboard.api.widget', ['oc.lazyLoad', thingsboardLedLight, thingsboardTimeseriesTableWidget,
-    thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget, thingsboardTypes, thingsboardUtils])
+    thingsboardAlarmsTableWidget, thingsboardEntitiesTableWidget, thingsboardRpcWidgets, thingsboardTypes, thingsboardUtils])
     .factory('widgetService', WidgetService)
     .name;
 
