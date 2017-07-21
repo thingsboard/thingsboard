@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<md-dialog aria-label="{{ 'user.add' | translate }}" tb-help="'users'" help-container-id="help-container">
-	<form name="theForm" ng-submit="vm.add()">
+<md-dialog style="width: 600px;" aria-label="{{ 'user.add' | translate }}" tb-help="'users'" help-container-id="help-container">
+	<form name="theForm" ng-submit="vm.add($event)">
 	    <md-toolbar>
 	      <div class="md-toolbar-tools">
 	        <h2 translate>user.add</h2>
@@ -32,6 +32,15 @@
 	    <md-dialog-content>
 	      <div class="md-dialog-content">
   	        	<tb-user user="vm.item" is-edit="true" the-form="theForm"></tb-user>
+				<md-input-container class="md-block">
+					  <label translate>user.activation-method</label>
+					  <md-select aria-label="{{ 'user.activation-method' | translate }}"
+								 ng-model="vm.userActivationMethod">
+						  <md-option ng-repeat="activationMethod in vm.activationMethods" ng-value="activationMethod.value">
+							  {{activationMethod.name | translate}}
+						  </md-option>
+					  </md-select>
+				</md-input-container>
 	      </div>
 	    </md-dialog-content>
 	    <md-dialog-actions layout="row">

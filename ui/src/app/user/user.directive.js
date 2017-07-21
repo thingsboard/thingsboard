@@ -45,6 +45,7 @@ export default function UserDirective($compile, $templateCache/*, dashboardServi
             user: '=',
             isEdit: '=',
             theForm: '=',
+            onDisplayActivationLink: '&',
             onResendActivation: '&',
             onDeleteUser: '&'
         }

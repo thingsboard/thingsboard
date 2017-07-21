@@ -22,6 +22,7 @@
 	<tb-user user="vm.grid.operatingItem()"
 			 is-edit="vm.grid.detailsConfig.isDetailsEditMode"
 			 the-form="vm.grid.detailsForm"
+			 on-display-activation-link="vm.displayActivationLink(event, vm.grid.detailsConfig.currentItem)"
 			 on-resend-activation="vm.resendActivation(vm.grid.detailsConfig.currentItem)"
 			 on-delete-user="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-user>
 </tb-grid>

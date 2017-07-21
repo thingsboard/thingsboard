@@ -45,6 +45,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         isUserLoaded: isUserLoaded,
         saveUser: saveUser,
         sendActivationEmail: sendActivationEmail,
+        getActivationLink: getActivationLink,
         setUserFromJwtToken: setUserFromJwtToken,
         getJwtToken: getJwtToken,
         clearJwtToken: clearJwtToken,
@@ -397,9 +398,12 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         return deferred.promise;
     }
 
-    function saveUser(user) {
+    function saveUser(user, sendActivationMail) {
         var deferred = $q.defer();
         var url = '/api/user';
+        if (angular.isDefined(sendActivationMail)) {
+            url += '?sendActivationMail=' + sendActivationMail;
+        }
         $http.post(url, user).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
@@ -435,6 +439,17 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         var url = '/api/user/sendActivationMail?email=' + email;
         $http.post(url, null).then(function success(response) {
             deferred.resolve(response);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getActivationLink(userId) {
+        var deferred = $q.defer();
+        var url = `/api/user/${userId}/activationLink`
+        $http.get(url).then(function success(response) {
+            deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
         });
