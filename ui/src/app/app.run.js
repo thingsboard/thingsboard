@@ -74,6 +74,11 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
 
             var locationSearch = $location.search();
             var publicId = locationSearch.publicId;
+            var activateToken = locationSearch.activateToken;
+
+            if (to.url === '/createPassword?activateToken' && activateToken && activateToken.length) {
+                userService.setUserFromJwtToken(null, null, false);
+            }
 
             if (userService.isUserLoaded() === true) {
                 if (userService.isAuthenticated()) {
@@ -124,7 +129,7 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
             }
         })
 
-        $rootScope.pageTitle = 'Thingsboard';
+        $rootScope.pageTitle = 'ThingsBoard';
 
         $rootScope.stateChangeSuccessHandle = $rootScope.$on('$stateChangeSuccess', function (evt, to, params) {
             if (userService.isPublic() && to.name === 'home.dashboards.dashboard') {
@@ -133,9 +138,9 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
             }
             if (angular.isDefined(to.data.pageTitle)) {
                 $translate(to.data.pageTitle).then(function (translation) {
-                    $rootScope.pageTitle = 'Thingsboard | ' + translation;
+                    $rootScope.pageTitle = 'ThingsBoard | ' + translation;
                 }, function (translationId) {
-                    $rootScope.pageTitle = 'Thingsboard | ' + translationId;
+                    $rootScope.pageTitle = 'ThingsBoard | ' + translationId;
                 });
             }
         })

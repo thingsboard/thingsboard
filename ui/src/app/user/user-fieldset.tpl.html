@@ -15,6 +15,9 @@
     limitations under the License.
 
 -->
+<md-button ng-click="onDisplayActivationLink({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{
+    'user.display-activation-link' | translate }}
+</md-button>
 <md-button ng-click="onResendActivation({event: $event})" ng-show="!isEdit" class="md-raised md-primary">{{
     'user.resend-activation' | translate }}
 </md-button>
@@ -26,9 +29,12 @@
     <fieldset ng-disabled="loading || !isEdit">
         <md-input-container class="md-block">
             <label translate>user.email</label>
-            <input required name="email" type="email" ng-model="user.email">
+            <input required name="email"
+                   ng-pattern="/^[_a-z0-9]+(\.[_a-z0-9]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/"
+                   ng-model="user.email">
             <div ng-messages="theForm.email.$error">
                 <div translate ng-message="required">user.email-required</div>
+                <div translate ng-message="pattern">user.invalid-email-format</div>
             </div>
         </md-input-container>
         <md-input-container class="md-block">
@@ -43,7 +49,7 @@
             <label translate>user.description</label>
             <textarea ng-model="user.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
-        <section class="tb-default-dashboard" flex layout="column">
+        <section class="tb-default-dashboard" flex layout="column" ng-if="user.id">
             <span class="tb-default-dashboard-label" ng-class="{'tb-disabled-label': loading || !isEdit}" translate>user.default-dashboard</span>
             <section flex layout="column" layout-gt-sm="row">
                 <tb-dashboard-autocomplete ng-if="isTenantAdmin()"

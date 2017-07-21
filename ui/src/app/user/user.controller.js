@@ -17,12 +17,13 @@
 
 import addUserTemplate from './add-user.tpl.html';
 import userCard from './user-card.tpl.html';
+import activationLinkDialogTemplate from './activation-link.dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 
 /*@ngInject*/
-export default function UserController(userService, toast, $scope, $controller, $state, $stateParams, $translate, types) {
+export default function UserController(userService, toast, $scope, $mdDialog, $document, $controller, $state, $stateParams, $translate, types) {
 
     var tenantId = $stateParams.tenantId;
     var customerId = $stateParams.customerId;
@@ -58,6 +59,7 @@ export default function UserController(userService, toast, $scope, $controller, 
         onGridInited: gridInited,
 
         addItemTemplateUrl: addUserTemplate,
+        addItemController: 'AddUserController',
 
         addItemText: function() { return $translate.instant('user.add-user-text') },
         noItemsText: function() { return $translate.instant('user.no-users-text') },
@@ -72,6 +74,7 @@ export default function UserController(userService, toast, $scope, $controller, 
         vm.userGridConfig.topIndex = $stateParams.topIndex;
     }
 
+    vm.displayActivationLink = displayActivationLink;
     vm.resendActivation = resendActivation;
 
     initController();
@@ -149,6 +152,29 @@ export default function UserController(userService, toast, $scope, $controller, 
 
     function deleteUser(userId) {
         return userService.deleteUser(userId);
+    }
+
+    function displayActivationLink(event, user) {
+        userService.getActivationLink(user.id.id).then(
+            function success(activationLink) {
+                openActivationLinkDialog(event, activationLink);
+            }
+        );
+    }
+
+    function openActivationLinkDialog(event, activationLink) {
+        $mdDialog.show({
+            controller: 'ActivationLinkDialogController',
+            controllerAs: 'vm',
+            templateUrl: activationLinkDialogTemplate,
+            locals: {
+                activationLink: activationLink
+            },
+            parent: angular.element($document[0].body),
+            fullscreen: true,
+            skipHide: true,
+            targetEvent: event
+        });
     }
 
     function resendActivation(user) {

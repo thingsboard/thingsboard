@@ -1037,6 +1037,7 @@ export default angular.module('thingsboard.locale', [])
                     "resend-activation": "Resend activation",
                     "email": "Email",
                     "email-required": "Email is required.",
+                    "invalid-email-format": "Invalid email format.",
                     "first-name": "First Name",
                     "last-name": "Last Name",
                     "description": "Description",
@@ -1044,7 +1045,14 @@ export default angular.module('thingsboard.locale', [])
                     "always-fullscreen": "Always fullscreen",
                     "select-user": "Select user",
                     "no-users-matching": "No users matching '{{entity}}' were found.",
-                    "user-required": "User is required"
+                    "user-required": "User is required",
+                    "activation-method": "Activation method",
+                    "display-activation-link": "Display activation link",
+                    "send-activation-mail": "Send activation mail",
+                    "activation-link": "User activation link",
+                    "activation-link-text": "In order to activate user use the following <a href='{{activationLink}}' target='_blank'>activation link</a> :",
+                    "copy-activation-link": "Copy activation link",
+                    "activation-link-copied-message": "User activation link has been copied to clipboard"
                 },
                 "value": {
                     "type": "Value type",

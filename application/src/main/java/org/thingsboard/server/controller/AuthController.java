@@ -173,7 +173,12 @@ public class AuthController extends BaseController {
             String baseUrl = constructBaseUrl(request);
             String loginUrl = String.format("%s/login", baseUrl);
             String email = user.getEmail();
-            mailService.sendAccountActivatedEmail(loginUrl, email);
+
+            try {
+                mailService.sendAccountActivatedEmail(loginUrl, email);
+            } catch (Exception e) {
+                log.info("Unable to send account activation email [{}]", e.getMessage());
+            }
 
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);

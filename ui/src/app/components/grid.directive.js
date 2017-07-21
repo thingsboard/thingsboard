@@ -26,6 +26,7 @@ import gridTemplate from './grid.tpl.html';
 
 export default angular.module('thingsboard.directives.grid', [thingsboardScopeElement, thingsboardDetailsSidenav])
     .directive('tbGrid', Grid)
+    .controller('AddItemController', AddItemController)
     .controller('ItemCardController', ItemCardController)
     .directive('tbGridCardContent', GridCardContent)
     .filter('range', RangeFilter)
@@ -342,6 +343,11 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         } else {
             vm.itemCardController = 'ItemCardController';
         }
+        if (vm.config.addItemController) {
+            vm.addItemController =  vm.config.addItemController;
+        } else {
+            vm.addItemController = 'AddItemController';
+        }
 
         vm.parentCtl = vm.config.parentCtl || vm;
 
@@ -468,7 +474,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
 
     function addItem($event) {
         $mdDialog.show({
-            controller: AddItemController,
+            controller: vm.addItemController,
             controllerAs: 'vm',
             templateUrl: vm.addItemTemplateUrl,
             parent: angular.element($document[0].body),
