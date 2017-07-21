@@ -112,6 +112,12 @@
                     <td md-cell ng-if="vm.direction == vm.types.entitySearchDirection.from">{{ relation.toName }}</td>
                     <td md-cell ng-if="vm.direction == vm.types.entitySearchDirection.to">{{ relation.fromName }}</td>
                     <td md-cell class="tb-action-cell">
+                        <md-button class="md-icon-button" aria-label="{{ 'action.edit' | translate }}" ng-click="vm.editRelation($event, relation)">
+                            <md-icon aria-label="{{ 'action.edit' | translate }}" class="material-icons">edit</md-icon>
+                            <md-tooltip md-direction="top">
+                                {{ 'relation.edit' | translate }}
+                            </md-tooltip>
+                        </md-button>
                         <md-button class="md-icon-button" aria-label="{{ 'action.delete' | translate }}" ng-click="vm.deleteRelation($event, relation)">
                             <md-icon aria-label="{{ 'action.delete' | translate }}" class="material-icons">delete</md-icon>
                             <md-tooltip md-direction="top">
