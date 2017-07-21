@@ -19,11 +19,11 @@ import './relation-table.scss';
 /* eslint-disable import/no-unresolved, import/default */
 
 import relationTableTemplate from './relation-table.tpl.html';
-import addRelationTemplate from './add-relation-dialog.tpl.html';
+import relationTemplate from './relation-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
-import AddRelationController from './add-relation-dialog.controller';
+import RelationController from './relation-dialog.controller';
 
 /*@ngInject*/
 export default function RelationTable() {
@@ -66,6 +66,7 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
     vm.onReorder = onReorder;
     vm.onPaginate = onPaginate;
     vm.addRelation = addRelation;
+    vm.editRelation = editRelation;
     vm.deleteRelation = deleteRelation;
     vm.deleteRelations = deleteRelations;
     vm.reloadRelations = reloadRelations;
@@ -110,18 +111,52 @@ function RelationTableController($scope, $q, $mdDialog, $document, $translate, $
         if ($event) {
             $event.stopPropagation();
         }
-        var entityId = {
-            id: vm.entityId,
-            entityType: vm.entityType
-        };
+        openRelationDialog($event);
+    }
+
+    function editRelation($event, relation) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        openRelationDialog($event, relation);
+    }
+
+    function openRelationDialog($event, relation) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var isAdd = false;
+        if (!relation) {
+            isAdd = true;
+            var entityId = {
+                id: vm.entityId,
+                entityType: vm.entityType
+            };
+            relation = {};
+            if (vm.direction == vm.types.entitySearchDirection.from) {
+                relation.from = entityId;
+            } else {
+                relation.to = entityId;
+            }
+        }
+        var onShowingCallback = {
+            onShowing: function(){}
+        }
         $mdDialog.show({
-            controller: AddRelationController,
+            controller: RelationController,
             controllerAs: 'vm',
-            templateUrl: addRelationTemplate,
+            templateUrl: relationTemplate,
             parent: angular.element($document[0].body),
-            locals: { direction: vm.direction, entityId: entityId },
+            locals: { isAdd: isAdd,
+                      direction: vm.direction,
+                      relation: relation,
+                      showingCallback: onShowingCallback},
+            targetEvent: $event,
             fullscreen: true,
-            targetEvent: $event
+            skipHide: true,
+            onShowing: function(scope, element) {
+                onShowingCallback.onShowing(scope, element);
+            }
         }).then(function () {
             reloadRelations();
         }, function () {

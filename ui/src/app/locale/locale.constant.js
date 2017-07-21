@@ -888,6 +888,7 @@ export default angular.module('thingsboard.locale', [])
                     "relation-type-required": "Relation type is required.",
                     "any-relation-type": "Any type",
                     "add": "Add relation",
+                    "edit": "Edit relation",
                     "delete-to-relation-title": "Are you sure you want to delete relation to the entity '{{entityName}}'?",
                     "delete-to-relation-text": "Be careful, after the confirmation the entity '{{entityName}}' will be unrelated from the current entity.",
                     "delete-to-relations-title": "Are you sure you want to delete { count, select, 1 {1 relation} other {# relations} }?",
@@ -899,7 +900,9 @@ export default angular.module('thingsboard.locale', [])
                     "remove-relation-filter": "Remove relation filter",
                     "add-relation-filter": "Add relation filter",
                     "any-relation": "Any relation",
-                    "relation-filters": "Relation filters"
+                    "relation-filters": "Relation filters",
+                    "additional-info": "Additional info (JSON)",
+                    "invalid-additional-info": "Unable to parse additional info json."
                 },
                 "rule": {
                     "rule": "Rule",
