@@ -118,17 +118,23 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private Alarm createAlarm(Alarm alarm) throws InterruptedException, ExecutionException {
         log.debug("New Alarm : {}", alarm);
         Alarm saved = alarmDao.save(alarm);
-        EntityRelationsQuery query = new EntityRelationsQuery();
-        query.setParameters(new RelationsSearchParameters(saved.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
-        List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
-        for (EntityId parentId : parentEntities) {
-            createAlarmRelation(parentId, saved.getId(), saved.getStatus(), true);
-        }
-        createAlarmRelation(alarm.getOriginator(), saved.getId(), saved.getStatus(), true);
+        createAlarmRelations(saved);
         return saved;
     }
 
-    protected ListenableFuture<Alarm> updateAlarm(Alarm update) {
+    private void createAlarmRelations(Alarm alarm) throws InterruptedException, ExecutionException {
+        if (alarm.isPropagate()) {
+            EntityRelationsQuery query = new EntityRelationsQuery();
+            query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
+            List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
+            for (EntityId parentId : parentEntities) {
+                createAlarmRelation(parentId, alarm.getId(), alarm.getStatus(), true);
+            }
+        }
+        createAlarmRelation(alarm.getOriginator(), alarm.getId(), alarm.getStatus(), true);
+    }
+
+    private ListenableFuture<Alarm> updateAlarm(Alarm update) {
         alarmDataValidator.validate(update);
         return getAndUpdate(update.getId(), new Function<Alarm, Alarm>() {
             @Nullable
@@ -146,8 +152,17 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private Alarm updateAlarm(Alarm oldAlarm, Alarm newAlarm) {
         AlarmStatus oldStatus = oldAlarm.getStatus();
         AlarmStatus newStatus = newAlarm.getStatus();
+        boolean oldPropagate = oldAlarm.isPropagate();
+        boolean newPropagate = newAlarm.isPropagate();
         Alarm result = alarmDao.save(merge(oldAlarm, newAlarm));
-        if (oldStatus != newStatus) {
+        if (!oldPropagate && newPropagate) {
+            try {
+                createAlarmRelations(result);
+            } catch (InterruptedException | ExecutionException e) {
+                log.warn("Failed to update alarm relations [{}]", result, e);
+                throw new RuntimeException(e);
+            }
+        } else if (oldStatus != newStatus) {
             updateRelations(oldAlarm, oldStatus, newStatus);
         }
         return result;
@@ -315,16 +330,19 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setStatus(alarm.getStatus());
         existing.setSeverity(alarm.getSeverity());
         existing.setDetails(alarm.getDetails());
+        existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
         return existing;
     }
 
     private void updateRelations(Alarm alarm, AlarmStatus oldStatus, AlarmStatus newStatus) {
         try {
-            EntityRelationsQuery query = new EntityRelationsQuery();
-            query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
-            List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
-            for (EntityId parentId : parentEntities) {
-                updateAlarmRelation(parentId, alarm.getId(), oldStatus, newStatus);
+            if (alarm.isPropagate()) {
+                EntityRelationsQuery query = new EntityRelationsQuery();
+                query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
+                List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
+                for (EntityId parentId : parentEntities) {
+                    updateAlarmRelation(parentId, alarm.getId(), oldStatus, newStatus);
+                }
             }
             updateAlarmRelation(alarm.getOriginator(), alarm.getId(), oldStatus, newStatus);
         } catch (ExecutionException | InterruptedException e) {

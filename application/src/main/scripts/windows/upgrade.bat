@@ -26,6 +26,8 @@ SET SQL_DATA_FOLDER=%BASE%\data\sql
 SET jarfile=%BASE%\lib\${pkg.name}.jar
 SET installDir=%BASE%\data
 
+PUSHD %BASE%\conf
+
 java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication^
                     -Dinstall.data_dir=%installDir%^
                     -Dspring.jpa.hibernate.ddl-auto=none^
@@ -36,8 +38,10 @@ java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplic
 
 if errorlevel 1 (
    @echo ThingsBoard upgrade failed!
+   POPD
    exit /b %errorlevel%
 )
+POPD
 
 @ECHO ThingsBoard upgraded successfully!
 

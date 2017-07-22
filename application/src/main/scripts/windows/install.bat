@@ -82,6 +82,8 @@ SET SQL_DATA_FOLDER=%BASE%\data\sql
 SET jarfile=%BASE%\lib\${pkg.name}.jar
 SET installDir=%BASE%\data
 
+PUSHD %BASE%\conf
+
 java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication^
                     -Dinstall.data_dir=%installDir%^
                     -Dinstall.load_demo=%loadDemo%^
@@ -92,8 +94,10 @@ java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplic
 
 if errorlevel 1 (
    @echo ThingsBoard installation failed!
+   POPD
    exit /b %errorlevel%
 )
+POPD
 
 %BASE%${pkg.name}.exe install
 

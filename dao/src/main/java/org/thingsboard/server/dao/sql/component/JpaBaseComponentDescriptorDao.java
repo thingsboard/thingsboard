@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -102,11 +103,13 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     }
 
     @Override
+    @Transactional
     public void deleteById(ComponentDescriptorId componentId) {
         removeById(componentId.getId());
     }
 
     @Override
+    @Transactional
     public void deleteByClazz(String clazz) {
         componentDescriptorRepository.deleteByClazz(clazz);
     }

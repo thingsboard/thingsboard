@@ -241,7 +241,7 @@ spring:
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
 
-# Postgres DAO Configuration
+# PostgreSQL DAO Configuration
 #spring:
 #  data:
 #    jpa:

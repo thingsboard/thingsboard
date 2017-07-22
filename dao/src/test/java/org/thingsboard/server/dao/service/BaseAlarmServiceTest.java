@@ -99,6 +99,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         long ts = System.currentTimeMillis();
         Alarm alarm = Alarm.builder().tenantId(tenantId).originator(childId)
                 .type(TEST_ALARM)
+                .propagate(false)
                 .severity(AlarmSeverity.CRITICAL).status(AlarmStatus.ACTIVE_UNACK)
                 .startTs(ts).build();
 
@@ -106,6 +107,28 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
 
         // Check child relation
         TimePageData<AlarmInfo> alarms = alarmService.findAlarms(AlarmQuery.builder()
+                .affectedEntityId(childId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(1, alarms.getData().size());
+        Assert.assertEquals(created, alarms.getData().get(0));
+
+        // Check parent relation
+        alarms = alarmService.findAlarms(AlarmQuery.builder()
+                .affectedEntityId(parentId)
+                .status(AlarmStatus.ACTIVE_UNACK).pageLink(
+                        new TimePageLink(1, 0L, System.currentTimeMillis(), false)
+                ).build()).get();
+        Assert.assertNotNull(alarms.getData());
+        Assert.assertEquals(0, alarms.getData().size());
+
+        created.setPropagate(true);
+        created = alarmService.createOrUpdateAlarm(created);
+
+        // Check child relation
+        alarms = alarmService.findAlarms(AlarmQuery.builder()
                 .affectedEntityId(childId)
                 .status(AlarmStatus.ACTIVE_UNACK).pageLink(
                         new TimePageLink(1, 0L, System.currentTimeMillis(), false)
