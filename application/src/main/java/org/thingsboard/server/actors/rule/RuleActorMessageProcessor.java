@@ -174,15 +174,16 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
                 context.parent().tell(new RuleToPluginMsgWrapper(pluginTenantId, pluginId, tenantId, entityId, ruleToPluginMsg), context.self());
                 if (action.isOneWayAction()) {
                     pushToNextRule(context, msg.getCtx(), RuleEngineError.NO_TWO_WAY_ACTIONS);
+                    return;
                 } else {
                     pendingMsgMap.put(ruleToPluginMsg.getUid(), msg);
                     scheduleMsgWithDelay(context, new RuleToPluginTimeoutMsg(ruleToPluginMsg.getUid()), systemContext.getPluginProcessingTimeout());
+                    return;
                 }
             }
-        } else {
-            logger.debug("[{}] Nothing to send to plugin: {}", entityId, pluginId);
-            pushToNextRule(context, msg.getCtx(), RuleEngineError.NO_TWO_WAY_ACTIONS);
         }
+        logger.debug("[{}] Nothing to send to plugin: {}", entityId, pluginId);
+        pushToNextRule(context, msg.getCtx(), RuleEngineError.NO_TWO_WAY_ACTIONS);
     }
 
     void onPluginMsg(ActorContext context, PluginToRuleMsg<?> msg) {
@@ -215,13 +216,13 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
             ctx = ctx.withError(error);
         }
         if (ctx.isFailure()) {
-            logger.debug("[{}] Forwarding processing chain to device actor due to failure.", ctx.getInMsg().getDeviceId());
+            logger.debug("[{}][{}] Forwarding processing chain to device actor due to failure.", ruleMd.getId(), ctx.getInMsg().getDeviceId());
             ctx.getDeviceActor().tell(new RulesProcessedMsg(ctx), ActorRef.noSender());
         } else if (!ctx.hasNext()) {
-            logger.debug("[{}] Forwarding processing chain to device actor due to end of chain.", ctx.getInMsg().getDeviceId());
+            logger.debug("[{}][{}] Forwarding processing chain to device actor due to end of chain.", ruleMd.getId(), ctx.getInMsg().getDeviceId());
             ctx.getDeviceActor().tell(new RulesProcessedMsg(ctx), ActorRef.noSender());
         } else {
-            logger.debug("[{}] Forwarding processing chain to next rule actor.", ctx.getInMsg().getDeviceId());
+            logger.debug("[{}][{}] Forwarding processing chain to next rule actor.", ruleMd.getId(), ctx.getInMsg().getDeviceId());
             ChainProcessingContext nextTask = ctx.getNext();
             nextTask.getCurrentActor().tell(new RuleProcessingMsg(nextTask), context.self());
         }
