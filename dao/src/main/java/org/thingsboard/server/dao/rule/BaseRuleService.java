@@ -91,7 +91,9 @@ public class BaseRuleService extends AbstractEntityService implements RuleServic
         if (rule.getProcessor() != null && !rule.getProcessor().isNull()) {
             validateComponentJson(rule.getProcessor(), ComponentType.PROCESSOR);
         }
-        validateComponentJson(rule.getAction(), ComponentType.ACTION);
+        if (rule.getAction() != null && !rule.getAction().isNull()) {
+            validateComponentJson(rule.getAction(), ComponentType.ACTION);
+        }
         validateRuleAndPluginState(rule);
         return ruleDao.save(rule);
     }
@@ -129,6 +131,9 @@ public class BaseRuleService extends AbstractEntityService implements RuleServic
     }
 
     private void validateRuleAndPluginState(RuleMetaData rule) {
+        if (org.springframework.util.StringUtils.isEmpty(rule.getPluginToken())) {
+            return;
+        }
         PluginMetaData pluginMd = pluginService.findPluginByApiToken(rule.getPluginToken());
         if (pluginMd == null) {
             throw new IncorrectParameterException("Rule points to non-existent plugin!");
