@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.RuleId;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class RuleMetaData extends SearchTextBased<RuleId> implements HasName {
 
     private static final long serialVersionUID = -5656679015122935465L;
