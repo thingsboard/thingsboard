@@ -165,11 +165,11 @@
         <fieldset ng-disabled="loading || !isEdit || isReadOnly">
             <md-input-container ng-if="!isEdit || isReadOnly" flex class="md-block">
                 <label translate>plugin.plugin</label>
-                <input required name="name" ng-model="plugin.name">
+                <input name="name" ng-model="plugin.name">
             </md-input-container>
             <tb-plugin-select ng-show="isEdit && !isReadOnly" flex
                       ng-model="plugin"
-                      tb-required="true"
+                      tb-required="false"
                       the-form="theForm"
                       plugins-scope="action">
             </tb-plugin-select>

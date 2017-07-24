@@ -72,16 +72,19 @@ public abstract class RuleManager {
     }
 
     public Optional<ActorRef> update(ActorContext context, RuleId ruleId, ComponentLifecycleEvent event) {
-        RuleMetaData rule = null;
+        RuleMetaData rule;
         if (event != ComponentLifecycleEvent.DELETED) {
             rule = systemContext.getRuleService().findRuleById(ruleId);
-        }
-        if (rule == null) {
+        } else {
             rule = ruleMap.keySet().stream()
                     .filter(r -> r.getId().equals(ruleId))
                     .peek(r -> r.setState(ComponentLifecycleState.SUSPENDED))
                     .findFirst()
                     .orElse(null);
+            if (rule != null) {
+                ruleMap.remove(rule);
+                ruleActors.remove(ruleId);
+            }
         }
         if (rule != null) {
             RuleActorMetaData actorMd = ruleMap.get(rule);

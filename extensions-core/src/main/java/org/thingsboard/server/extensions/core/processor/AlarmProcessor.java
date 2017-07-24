@@ -125,10 +125,10 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
             Alarm alarm = buildAlarm(ctx, msg);
             existing = ctx.createOrUpdateAlarm(alarm);
             if (existing.getStartTs() == alarm.getStartTs()) {
-                log.debug("[{}][{}] New Active Alarm detected");
+                log.debug("[{}][{}] New Active Alarm detected", ctx.getRuleId(), existing.getId());
                 md.put(IS_NEW_ALARM, Boolean.TRUE);
             } else {
-                log.debug("[{}][{}] Existing Active Alarm detected");
+                log.debug("[{}][{}] Existing Active Alarm detected", ctx.getRuleId(), existing.getId());
                 md.put(IS_EXISTING_ALARM, Boolean.TRUE);
             }
         } else if (isClearedAlarm) {

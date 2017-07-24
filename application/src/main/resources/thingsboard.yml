@@ -176,7 +176,7 @@ actors:
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
-    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:60000}"
+    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 
 # Cache parameters
 cache:
