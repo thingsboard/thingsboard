@@ -73,6 +73,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         decimals: angular.isDefined(widget.config.decimals) ? widget.config.decimals : 2,
         subscriptions: {},
         defaultSubscription: null,
+        dashboardTimewindow: dashboardTimewindow,
         timewindowFunctions: {
             onUpdateTimewindow: function(startTimeMs, endTimeMs) {
                 if (widgetContext.defaultSubscription) {
@@ -646,6 +647,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
 
         $scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
             vm.dashboardTimewindow = newDashboardTimewindow;
+            widgetContext.dashboardTimewindow = newDashboardTimewindow;
         });
 
         $scope.$on("$destroy", function () {

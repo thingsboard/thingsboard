@@ -221,10 +221,10 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         } else if (alarmsQuery.startTime) {
             pageLink = {
                 limit: 100,
-                startTime: alarmsQuery.startTime
+                startTime: Math.round(alarmsQuery.startTime)
             }
             if (alarmsQuery.endTime) {
-                pageLink.endTime = alarmsQuery.endTime;
+                pageLink.endTime = Math.round(alarmsQuery.endTime);
             }
         }
 
