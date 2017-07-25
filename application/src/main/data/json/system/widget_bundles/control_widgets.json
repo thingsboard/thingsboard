@@ -68,6 +68,22 @@
         "dataKeySettingsSchema": "{}\n",
         "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":false,\"getValueMethod\":\"getValue\",\"setValueMethod\":\"setValue\",\"showOnOffLabels\":true,\"title\":\"Switch control\"},\"title\":\"Switch Control\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"decimals\":2}"
       }
+    },
+    {
+      "alias": "round_switch",
+      "name": "Round switch",
+      "descriptor": {
+        "type": "rpc",
+        "sizeX": 2.5,
+        "sizeY": 2,
+        "resources": [],
+        "templateHtml": "<tb-round-switch ctx='ctx'></tb-round-switch>",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n    var scope = self.ctx.$scope;\n    scope.ctx = self.ctx;\n}\n\nself.onResize = function() {\n    if (self.ctx.resize) {\n        self.ctx.resize();\n    }\n}\n\nself.onDestroy = function() {\n}\n",
+        "settingsSchema": "{\n    \"schema\": {\n        \"type\": \"object\",\n        \"title\": \"Settings\",\n        \"properties\": {\n            \"initialValue\": {\n                \"title\": \"Initial value\",\n                \"type\": \"boolean\",\n                \"default\": false\n            },\n            \"title\": {\n                \"title\": \"Switch title\",\n                \"type\": \"string\",\n                \"default\": \"\"\n            },\n            \"getValueMethod\": {\n                \"title\": \"Get value method\",\n                \"type\": \"string\",\n                \"default\": \"getValue\"\n            },\n            \"setValueMethod\": {\n                \"title\": \"Set value method\",\n                \"type\": \"string\",\n                \"default\": \"setValue\"\n            },\n            \"requestTimeout\": {\n                \"title\": \"RPC request timeout\",\n                \"type\": \"number\",\n                \"default\": 500\n            }\n        },\n        \"required\": [\"getValueMethod\", \"setValueMethod\", \"requestTimeout\"]\n    },\n    \"form\": [\n        \"initialValue\",\n        \"title\",\n        \"getValueMethod\",\n        \"setValueMethod\",\n        \"requestTimeout\"\n    ]\n}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":false,\"getValueMethod\":\"getValue\",\"setValueMethod\":\"setValue\",\"showOnOffLabels\":true,\"title\":\"Round switch\"},\"title\":\"Round switch\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"decimals\":2}"
+      }
     }
   ]
 }
