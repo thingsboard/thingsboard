@@ -76,7 +76,6 @@ function RoundSwitchController($element, $scope, utils) {
 
         vm.title = angular.isDefined(vm.ctx.settings.title) ? vm.ctx.settings.title : '';
         vm.showTitle = vm.title && vm.title.length ? true : false;
-        vm.showOnOffLabels = angular.isDefined(vm.ctx.settings.showOnOffLabels) ? vm.ctx.settings.showOnOffLabels : true;
         vm.ctx.resize = resize;
         $scope.$applyAsync(() => {
             resize();
