@@ -59,24 +59,18 @@ $background-color: #e6e7e8;
       cursor: pointer;
       position: relative;
       border-radius: 50%;
-      //background-color: rgba(0, 0, 9, 0.5);
-      //box-shadow: #000 0 -1px 6px 1px;
-      //background-color: #FF0;
-      //box-shadow: #000 0 -1px 6px 1px, inset #660 0 -1px 8px, #FF0 0 3px 11px;
-              //rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #808002 0 -1px 9px, #FF0 0 2px 12px;
       background-image: -owg-radial-gradient(50% 50%, circle closest-corner, transparent, rgba(0, 0, 0, 0.25));
       background-image: -webkit-radial-gradient(50% 50%, circle closest-corner, transparent, rgba(0, 0, 0, 0.25));
       background-image: -moz-radial-gradient(50% 50%, circle closest-corner, transparent, rgba(0, 0, 0, 0.25));
       background-image: -o-radial-gradient(50% 50%, circle closest-corner, transparent, rgba(0, 0, 0, 0.25));
       background-image: radial-gradient(50% 50%, circle closest-corner, transparent, rgba(0, 0, 0, 0.25));
-      transition: background-color 0.5s, box-shadow 0.5s;//, background-image 0.5s;
+      transition: background-color 0.5s, box-shadow 0.5s;
       &.disabled {
         background-image: -owg-radial-gradient(50% 50%, circle closest-corner, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.1));
         background-image: -webkit-radial-gradient(50% 50%, circle closest-corner, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.1));
         background-image: -moz-radial-gradient(50% 50%, circle closest-corner, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.1));
         background-image: -o-radial-gradient(50% 50%, circle closest-corner, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.1));
         background-image: radial-gradient(50% 50%, circle closest-corner, rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0.1));
-        //transition: background-color 0.5s, box-shadow 0.5s, background-image 0.5s;
       }
     }
   }
