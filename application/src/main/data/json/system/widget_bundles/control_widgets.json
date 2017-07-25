@@ -84,6 +84,22 @@
         "dataKeySettingsSchema": "{}\n",
         "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":false,\"getValueMethod\":\"getValue\",\"setValueMethod\":\"setValue\",\"showOnOffLabels\":true,\"title\":\"Round switch\"},\"title\":\"Round switch\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"decimals\":2}"
       }
+    },
+    {
+      "alias": "led_indicator",
+      "name": "Led indicator",
+      "descriptor": {
+        "type": "rpc",
+        "sizeX": 2.5,
+        "sizeY": 2.5,
+        "resources": [],
+        "templateHtml": "<tb-led-indicator ctx='ctx'></tb-led-indicator>",
+        "templateCss": "",
+        "controllerScript": "self.onInit = function() {\n    var scope = self.ctx.$scope;\n    scope.ctx = self.ctx;\n}\n\nself.onResize = function() {\n    if (self.ctx.resize) {\n        self.ctx.resize();\n    }\n}\n\nself.onDestroy = function() {\n}\n",
+        "settingsSchema": "{\n    \"schema\": {\n        \"type\": \"object\",\n        \"title\": \"Settings\",\n        \"properties\": {\n            \"initialValue\": {\n                \"title\": \"Initial value\",\n                \"type\": \"boolean\",\n                \"default\": false\n            },\n            \"title\": {\n                \"title\": \"LED title\",\n                \"type\": \"string\",\n                \"default\": \"\"\n            },\n            \"ledColor\": {\n                \"title\": \"LED Color\",\n                \"type\": \"string\",\n                \"default\": \"green\"\n            },\n            \"getValueMethod\": {\n                \"title\": \"Get value method\",\n                \"type\": \"string\",\n                \"default\": \"getValue\"\n            },\n            \"valuePollingInterval\": {\n                \"title\": \"Value polling interval (ms)\",\n                \"type\": \"number\",\n                \"default\": 500\n            },\n            \"requestTimeout\": {\n                \"title\": \"RPC request timeout (ms)\",\n                \"type\": \"number\",\n                \"default\": 500\n            }\n        },\n        \"required\": [\"getValueMethod\", \"requestTimeout\"]\n    },\n    \"form\": [\n        \"initialValue\",\n        \"title\",\n        {\n          \"key\": \"ledColor\",\n          \"type\": \"color\"\n        },\n        \"getValueMethod\",\n        \"valuePollingInterval\",\n        \"requestTimeout\"\n    ]\n}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":500,\"initialValue\":true,\"getValueMethod\":\"getValue\",\"title\":\"Led indicator\",\"ledColor\":\"#4caf50\",\"valuePollingInterval\":500},\"title\":\"Led indicator\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"decimals\":2}"
+      }
     }
   ]
 }
