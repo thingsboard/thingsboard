@@ -107,6 +107,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
             vm.datasources = vm.subscription.datasources;
             initializeConfig();
             updateDatasources();
+            updateEntities();
         }
     });
 
@@ -276,16 +277,16 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
         }
         if (vm.currentEntity != entity) {
             vm.currentEntity = entity;
-            var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
-            if (descriptors.length) {
-                var entityId;
-                var entityName;
-                if (vm.currentEntity) {
-                    entityId = vm.currentEntity.id;
-                    entityName = vm.currentEntity.entityName;
-                }
-                vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+        }
+        var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
+        if (descriptors.length) {
+            var entityId;
+            var entityName;
+            if (vm.currentEntity) {
+                entityId = vm.currentEntity.id;
+                entityName = vm.currentEntity.entityName;
             }
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
         }
     }
 

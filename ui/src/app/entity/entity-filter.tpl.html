@@ -66,6 +66,14 @@
                    ng-model="filter.stateEntityParamName"
                    aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
         </md-input-container>
+        <div layout="column">
+            <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
+            <tb-entity-select flex
+                              the-form="theForm"
+                              tb-required="false"
+                              ng-model="filter.defaultStateEntity">
+            </tb-entity-select>
+        </div>
     </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.assetType.value" id="assetTypeFilter">
         <tb-entity-subtype-autocomplete
@@ -97,27 +105,35 @@
     </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.relationsQuery.value" id="relationsQueryFilter">
         <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
-        <div flex layout="row">
+        <section class="tb-root-state-entity-switch" layout="row" layout-align="start center" style="padding-left: 0px;">
+            <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                       aria-label="{{ 'alias.root-state-entity' | translate }}">
+            </md-switch>
+            <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+        </section>
+        <div flex layout="row" ng-if="!filter.rootStateEntity">
             <tb-entity-select flex
                               the-form="theForm"
                               tb-required="!filter.rootStateEntity"
                               ng-disabled="filter.rootStateEntity"
                               ng-model="filter.rootEntity">
             </tb-entity-select>
-            <div layout="column">
-                <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
-                    <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
-                    <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
-                               aria-label="{{ 'alias.root-state-entity' | translate }}">
-                    </md-switch>
-                </section>
-                <md-input-container ng-if="filter.rootStateEntity" class="md-block">
-                    <label translate>alias.state-entity-parameter-name</label>
-                    <input name="stateEntityParamName"
-                           placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
-                           ng-model="filter.stateEntityParamName"
-                           aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
-                </md-input-container>
+        </div>
+        <div flex layout="row" ng-if="filter.rootStateEntity">
+            <md-input-container class="md-block" style="margin-top: 32px;">
+                <label translate>alias.state-entity-parameter-name</label>
+                <input name="stateEntityParamName"
+                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                       ng-model="filter.stateEntityParamName"
+                       aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+            </md-input-container>
+            <div flex layout="column">
+                <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
+                <tb-entity-select flex
+                                  the-form="theForm"
+                                  tb-required="false"
+                                  ng-model="filter.defaultStateEntity">
+                </tb-entity-select>
             </div>
         </div>
         <div flex layout="row">
@@ -148,27 +164,35 @@
     </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.assetSearchQuery.value" id="assetSearchQueryFilter">
         <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
-        <div flex layout="row">
+        <section class="tb-root-state-entity-switch" layout="row" layout-align="start center" style="padding-left: 0px;">
+            <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                       aria-label="{{ 'alias.root-state-entity' | translate }}">
+            </md-switch>
+            <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+        </section>
+        <div flex layout="row" ng-if="!filter.rootStateEntity">
             <tb-entity-select flex
                               the-form="theForm"
                               tb-required="!filter.rootStateEntity"
                               ng-disabled="filter.rootStateEntity"
                               ng-model="filter.rootEntity">
             </tb-entity-select>
-            <div layout="column">
-                <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
-                    <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
-                    <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
-                               aria-label="{{ 'alias.root-state-entity' | translate }}">
-                    </md-switch>
-                </section>
-                <md-input-container ng-if="filter.rootStateEntity" class="md-block">
-                    <label translate>alias.state-entity-parameter-name</label>
-                    <input name="stateEntityParamName"
-                           placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
-                           ng-model="filter.stateEntityParamName"
-                           aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
-                </md-input-container>
+        </div>
+        <div flex layout="row" ng-if="filter.rootStateEntity">
+            <md-input-container class="md-block" style="margin-top: 32px;">
+                <label translate>alias.state-entity-parameter-name</label>
+                <input name="stateEntityParamName"
+                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                       ng-model="filter.stateEntityParamName"
+                       aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+            </md-input-container>
+            <div flex layout="column">
+                <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
+                <tb-entity-select flex
+                                  the-form="theForm"
+                                  tb-required="false"
+                                  ng-model="filter.defaultStateEntity">
+                </tb-entity-select>
             </div>
         </div>
         <div flex layout="row">
@@ -207,27 +231,35 @@
     </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.deviceSearchQuery.value" id="deviceSearchQueryFilter">
         <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
-        <div flex layout="row">
+        <section class="tb-root-state-entity-switch" layout="row" layout-align="start center" style="padding-left: 0px;">
+            <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
+                       aria-label="{{ 'alias.root-state-entity' | translate }}">
+            </md-switch>
+            <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
+        </section>
+        <div flex layout="row" ng-if="!filter.rootStateEntity">
             <tb-entity-select flex
                               the-form="theForm"
                               tb-required="!filter.rootStateEntity"
                               ng-disabled="filter.rootStateEntity"
                               ng-model="filter.rootEntity">
             </tb-entity-select>
-            <div layout="column">
-                <section class="tb-root-state-entity-switch" layout="column" layout-align="start center">
-                    <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
-                    <md-switch class="root-state-entity-switch" ng-model="filter.rootStateEntity"
-                               aria-label="{{ 'alias.root-state-entity' | translate }}">
-                    </md-switch>
-                </section>
-                <md-input-container ng-if="filter.rootStateEntity" class="md-block">
-                    <label translate>alias.state-entity-parameter-name</label>
-                    <input name="stateEntityParamName"
-                           placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
-                           ng-model="filter.stateEntityParamName"
-                           aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
-                </md-input-container>
+        </div>
+        <div flex layout="row" ng-if="filter.rootStateEntity">
+            <md-input-container class="md-block" style="margin-top: 32px;">
+                <label translate>alias.state-entity-parameter-name</label>
+                <input name="stateEntityParamName"
+                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                       ng-model="filter.stateEntityParamName"
+                       aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+            </md-input-container>
+            <div flex layout="column">
+                <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
+                <tb-entity-select flex
+                                  the-form="theForm"
+                                  tb-required="false"
+                                  ng-model="filter.defaultStateEntity">
+                </tb-entity-select>
             </div>
         </div>
         <div flex layout="row">

@@ -95,12 +95,16 @@ export default function EntityAutocomplete($compile, $templateCache, $q, $filter
             }
         });
 
-        scope.$watch('entity', function () {
-            scope.updateView();
+        scope.$watch('entity', function (newVal, prevVal) {
+            if (!angular.equals(newVal, prevVal)) {
+                scope.updateView();
+            }
         });
 
-        scope.$watch('disabled', function () {
-            scope.updateView();
+        scope.$watch('disabled', function (newVal, prevVal) {
+            if (!angular.equals(newVal, prevVal)) {
+                scope.updateView();
+            }
         });
 
 

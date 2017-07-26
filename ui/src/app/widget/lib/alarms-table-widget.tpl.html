@@ -64,6 +64,7 @@
                 <tr md-row>
                     <th md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.alarmSource.dataKeys"><span>{{ key.title }}</span></th>
                     <th md-column ng-if="vm.displayDetails"><span>&nbsp</span></th>
+                    <th md-column ng-if="vm.actionCellDescriptors.length"><span>&nbsp</span></th>
                 </tr>
                 </thead>
                 <tbody md-body>
@@ -80,6 +81,19 @@
                             <md-icon aria-label="{{ 'alarm.details' | translate }}" class="material-icons">more_horiz</md-icon>
                             <md-tooltip md-direction="top">
                                 {{ 'alarm.details' | translate }}
+                            </md-tooltip>
+                        </md-button>
+                    </td>
+                    <td md-cell ng-if="vm.actionCellDescriptors.length" class="tb-action-cell"
+                        ng-style="{minWidth: vm.actionCellDescriptors.length*36+'px',
+                                   maxWidth: vm.actionCellDescriptors.length*36+'px',
+                                   width: vm.actionCellDescriptors.length*36+'px'}">
+                        <md-button class="md-icon-button" ng-repeat="actionDescriptor in vm.actionCellDescriptors"
+                                   aria-label="{{ actionDescriptor.displayName }}"
+                                   ng-click="vm.onActionButtonClick($event, alarm, actionDescriptor)">
+                            <md-icon aria-label="{{ actionDescriptor.displayName }}" class="material-icons">{{actionDescriptor.icon}}</md-icon>
+                            <md-tooltip md-direction="top">
+                                {{ actionDescriptor.displayName }}
                             </md-tooltip>
                         </md-button>
                     </td>

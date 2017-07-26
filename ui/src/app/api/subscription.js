@@ -737,7 +737,15 @@ export default class Subscription {
                     this.ctx.datasourceService.subscribeToDatasource(listener);
                 }
 
-                if (datasource.unresolvedStateEntity || !datasource.dataKeys.length) {
+                var forceUpdate = false;
+                if (datasource.unresolvedStateEntity ||
+                    !datasource.dataKeys.length ||
+                    (datasource.type === this.ctx.types.datasourceType.entity && !datasource.entityId)
+                ) {
+                    forceUpdate = true;
+                }
+
+                if (forceUpdate) {
                     this.notifyDataLoaded();
                     this.onDataUpdated();
                 }
@@ -767,7 +775,14 @@ export default class Subscription {
 
         this.ctx.alarmService.subscribeForAlarms(this.alarmSourceListener);
 
-        if (this.alarmSource.unresolvedStateEntity) {
+        var forceUpdate = false;
+        if (this.alarmSource.unresolvedStateEntity ||
+            (this.alarmSource.type === this.ctx.types.datasourceType.entity && !this.alarmSource.entityId)
+        ) {
+            forceUpdate = true;
+        }
+
+        if (forceUpdate) {
             this.notifyDataLoaded();
             this.onDataUpdated();
         }

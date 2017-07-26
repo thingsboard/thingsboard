@@ -282,10 +282,30 @@ export default function EntityStateController($scope, $location, $state, $stateP
 
     function updateLocation() {
         if (vm.stateObject[vm.stateObject.length-1].id) {
-            $location.search({state : utils.objToBase64(vm.stateObject)});
+            if (isDefaultState()) {
+                $location.search({state : null});
+            } else {
+                $location.search({state : utils.objToBase64(vm.stateObject)});
+            }
         }
     }
 
+    function isDefaultState() {
+        if (vm.stateObject.length == 1) {
+            var state = vm.stateObject[0];
+            var rootStateId = dashboardUtils.getRootStateId(vm.states);
+            if (state.id == rootStateId && (!state.params || isEmpty(state.params))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    function isEmpty(map) {
+        for(var key in map) {
+            return !map.hasOwnProperty(key);
+        }
+        return true;
+    }
 
 }
