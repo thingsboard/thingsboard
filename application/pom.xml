@@ -548,6 +548,7 @@
                         <confFolder>${pkg.installFolder}/conf</confFolder>
                         <logFolder>${pkg.unixLogFolder}</logFolder>
                         <logFilename>${pkg.name}.out</logFilename>
+                        <initInfoProvides>${pkg.name}</initInfoProvides>
                     </embeddedLaunchScriptProperties>
                 </configuration>
                 <executions>
