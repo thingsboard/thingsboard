@@ -188,6 +188,7 @@ export default angular.module('thingsboard.locale', [])
                     "root-state-entity": "Use dashboard state entity as root",
                     "root-entity": "Root entity",
                     "state-entity-parameter-name": "State entity parameter name",
+                    "default-state-entity": "Default state entity",
                     "default-entity-parameter-name": "By default",
                     "max-relation-level": "Max relation level",
                     "unlimited-level": "Unlimited level",

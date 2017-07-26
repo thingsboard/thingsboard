@@ -69,6 +69,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     vm.displayDetails = true;
     vm.allowAcknowledgment = true;
     vm.allowClear = true;
+    vm.actionCellDescriptors = [];
     vm.displayPagination = true;
     vm.defaultPageSize = 10;
     vm.defaultSortOrder = '-'+types.alarmFields.createdTime.value;
@@ -94,6 +95,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     vm.onReorder = onReorder;
     vm.onPaginate = onPaginate;
     vm.onRowClick = onRowClick;
+    vm.onActionButtonClick = onActionButtonClick;
     vm.isCurrent = isCurrent;
     vm.openAlarmDetails = openAlarmDetails;
     vm.ackAlarms = ackAlarms;
@@ -156,6 +158,8 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     function initializeConfig() {
 
         vm.ctx.widgetActions = [ vm.searchAction ];
+
+        vm.actionCellDescriptors = vm.ctx.actionsApi.getActionDescriptors('actionCellButton');
 
         if (vm.settings.alarmsTitle && vm.settings.alarmsTitle.length) {
             vm.alarmsTitle = utils.customTranslation(vm.settings.alarmsTitle, vm.settings.alarmsTitle);
@@ -280,9 +284,35 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     }
 
     function onRowClick($event, alarm) {
+        if ($event) {
+            $event.stopPropagation();
+        }
         if (vm.currentAlarm != alarm) {
             vm.currentAlarm = alarm;
         }
+        var descriptors = vm.ctx.actionsApi.getActionDescriptors('rowClick');
+        if (descriptors.length) {
+            var entityId;
+            var entityName;
+            if (vm.currentAlarm && vm.currentAlarm.originator) {
+                entityId = vm.currentAlarm.originator;
+                entityName = vm.currentAlarm.originatorName;
+            }
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+        }
+    }
+
+    function onActionButtonClick($event, alarm, actionDescriptor) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var entityId;
+        var entityName;
+        if (alarm && alarm.originator) {
+            entityId = alarm.originator;
+            entityName = alarm.originatorName;
+        }
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName);
     }
 
     function isCurrent(alarm) {

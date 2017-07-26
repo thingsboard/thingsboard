@@ -71,7 +71,7 @@ export default function EntityAliasDialogController($scope, $mdDialog, $q, $filt
             entity: null,
             stateEntity: false
         }
-        entityService.resolveAliasFilter(vm.alias.filter, null, 1).then(
+        entityService.resolveAliasFilter(vm.alias.filter, null, 1, true).then(
             function success(result) {
                 validationResult.stateEntity = result.stateEntity;
                 var entities = result.entities;

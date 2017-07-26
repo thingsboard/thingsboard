@@ -353,16 +353,20 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
 
     function entitiesToEntitiesInfo(entities) {
         var entitiesInfo = [];
-        for (var d = 0; d < entities.length; d++) {
-            entitiesInfo.push(entityToEntityInfo(entities[d]));
+        if (entities) {
+            for (var d = 0; d < entities.length; d++) {
+                entitiesInfo.push(entityToEntityInfo(entities[d]));
+            }
         }
         return entitiesInfo;
     }
 
     function entityRelationInfosToEntitiesInfo(entityRelations, direction) {
         var entitiesInfo = [];
-        for (var d = 0; d < entityRelations.length; d++) {
-            entitiesInfo.push(entityRelationInfoToEntityInfo(entityRelations[d], direction));
+        if (entityRelations) {
+            for (var d = 0; d < entityRelations.length; d++) {
+                entitiesInfo.push(entityRelationInfoToEntityInfo(entityRelations[d], direction));
+            }
         }
         return entitiesInfo;
     }
@@ -371,7 +375,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
     function resolveAlias(entityAlias, stateParams) {
         var deferred = $q.defer();
         var filter = entityAlias.filter;
-        resolveAliasFilter(filter, stateParams, -1).then(
+        resolveAliasFilter(filter, stateParams, -1, false).then(
             function (result) {
                 var aliasInfo = {
                     alias: entityAlias.alias,
@@ -404,10 +408,13 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 entityId = stateParams.entityId;
             }
         }
+        if (!entityId) {
+            entityId = filter.defaultStateEntity;
+        }
         return entityId;
     }
 
-    function resolveAliasFilter(filter, stateParams, maxItems) {
+    function resolveAliasFilter(filter, stateParams, maxItems, failOnEmpty) {
         var deferred = $q.defer();
         var result = {
             entities: [],
@@ -421,7 +428,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case types.aliasFilterType.entityList.value:
                 getEntities(filter.entityType, filter.entityList).then(
                     function success(entities) {
-                        if (entities && entities.length) {
+                        if (entities && entities.length || !failOnEmpty) {
                             result.entities = entitiesToEntitiesInfo(entities);
                             deferred.resolve(result);
                         } else {
@@ -436,7 +443,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case types.aliasFilterType.entityName.value:
                 getEntitiesByNameFilter(filter.entityType, filter.entityNameFilter, maxItems).then(
                     function success(entities) {
-                        if (entities && entities.length) {
+                        if (entities && entities.length || !failOnEmpty) {
                             result.entities = entitiesToEntitiesInfo(entities);
                             deferred.resolve(result);
                         } else {
@@ -457,7 +464,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                             deferred.resolve(result);
                         },
                         function fail() {
-                            deferred.reject();
+                            deferred.resolve(result);
                         }
                     );
                 } else {
@@ -467,7 +474,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case types.aliasFilterType.assetType.value:
                 getEntitiesByNameFilter(types.entityType.asset, filter.assetNameFilter, maxItems, null, filter.assetType).then(
                     function success(entities) {
-                        if (entities && entities.length) {
+                        if (entities && entities.length || !failOnEmpty) {
                             result.entities = entitiesToEntitiesInfo(entities);
                             deferred.resolve(result);
                         } else {
@@ -482,7 +489,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             case types.aliasFilterType.deviceType.value:
                 getEntitiesByNameFilter(types.entityType.device, filter.deviceNameFilter, maxItems, null, filter.deviceType).then(
                     function success(entities) {
-                        if (entities && entities.length) {
+                        if (entities && entities.length || !failOnEmpty) {
                             result.entities = entitiesToEntitiesInfo(entities);
                             deferred.resolve(result);
                         } else {
@@ -517,8 +524,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     searchQuery.parameters.maxLevel = filter.maxLevel && filter.maxLevel > 0 ? filter.maxLevel : -1;
                     entityRelationService.findInfoByQuery(searchQuery).then(
                         function success(allRelations) {
-                            if (allRelations && allRelations.length) {
-                                if (angular.isDefined(maxItems) && maxItems > 0) {
+                            if (allRelations && allRelations.length || !failOnEmpty) {
+                                if (angular.isDefined(maxItems) && maxItems > 0 && allRelations) {
                                     var limit = Math.min(allRelations.length, maxItems);
                                     allRelations.length = limit;
                                 }
@@ -566,8 +573,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                     }
                     findByQueryPromise.then(
                         function success(entities) {
-                            if (entities && entities.length) {
-                                if (angular.isDefined(maxItems) && maxItems > 0) {
+                            if (entities && entities.length || !failOnEmpty) {
+                                if (angular.isDefined(maxItems) && maxItems > 0 && entities) {
                                     var limit = Math.min(entities.length, maxItems);
                                     entities.length = limit;
                                 }
@@ -720,7 +727,7 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
 
     function checkEntityAlias(entityAlias) {
         var deferred = $q.defer();
-        resolveAliasFilter(entityAlias.filter, null, 1).then(
+        resolveAliasFilter(entityAlias.filter, null, 1, true).then(
             function success(result) {
                 if (result.stateEntity) {
                     deferred.resolve(true);

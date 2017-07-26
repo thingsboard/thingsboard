@@ -48,6 +48,7 @@ export default function EntitySelect($compile, $templateCache) {
         }
 
         ngModelCtrl.$render = function () {
+            destroyWatchers();
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 scope.model.entityType = value.entityType;
@@ -56,19 +57,43 @@ export default function EntitySelect($compile, $templateCache) {
                 scope.model.entityType = null;
                 scope.model.entityId = null;
             }
+            initWatchers();
         }
 
-        scope.$watch('model.entityType', function () {
-            scope.updateView();
-        });
+        function initWatchers() {
+            scope.entityTypeDeregistration = scope.$watch('model.entityType', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    scope.updateView();
+                }
+            });
 
-        scope.$watch('model.entityId', function () {
-            scope.updateView();
-        });
+            scope.entityIdDeregistration = scope.$watch('model.entityId', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    scope.updateView();
+                }
+            });
 
-        scope.$watch('disabled', function () {
-            scope.updateView();
-        });
+            scope.disabledDeregistration = scope.$watch('disabled', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    scope.updateView();
+                }
+            });
+        }
+
+        function destroyWatchers() {
+            if (scope.entityTypeDeregistration) {
+                scope.entityTypeDeregistration();
+                scope.entityTypeDeregistration = null;
+            }
+            if (scope.entityIdDeregistration) {
+                scope.entityIdDeregistration();
+                scope.entityIdDeregistration = null;
+            }
+            if (scope.disabledDeregistration) {
+                scope.disabledDeregistration();
+                scope.disabledDeregistration = null;
+            }
+        }
 
         $compile(element.contents())(scope);
     }
