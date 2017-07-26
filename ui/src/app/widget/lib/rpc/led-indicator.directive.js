@@ -43,12 +43,22 @@ function LedIndicator() {
 }
 
 /*@ngInject*/
-function LedIndicatorController($element, $scope, $timeout) {
+function LedIndicatorController($element, $scope, $timeout, utils, types) {
     let vm = this;
 
     vm.showTitle = false;
     vm.value = false;
     vm.error = '';
+
+    const checkStatusPollingInterval = 10000;
+
+    vm.subscriptionOptions = {
+        callbacks: {
+            onDataUpdated: onDataUpdated,
+            onDataUpdateError: onDataUpdateError,
+            dataLoading: () => {}
+        }
+    };
 
     var led = angular.element('.led', $element),
         ledContainer = angular.element('#led-container', $element),
@@ -66,8 +76,11 @@ function LedIndicatorController($element, $scope, $timeout) {
 
     $scope.$on('$destroy', () => {
         vm.destroyed = true;
-        if (vm.requestValueTimeoutHandle) {
-            $timeout.cancel(vm.requestValueTimeoutHandle);
+        if (vm.checkStatusTimeoutHandle) {
+            $timeout.cancel(vm.checkStatusTimeoutHandle);
+        }
+        if (vm.subscription) {
+            vm.ctx.subscriptionApi.removeSubscription(vm.subscription.id);
         }
     });
 
@@ -79,6 +92,8 @@ function LedIndicatorController($element, $scope, $timeout) {
         vm.showTitle = vm.title && vm.title.length ? true : false;
 
         var origColor = angular.isDefined(vm.ctx.settings.ledColor) ? vm.ctx.settings.ledColor : 'green';
+
+        vm.valueAttribute = angular.isDefined(vm.ctx.settings.valueAttribute) ? vm.ctx.settings.valueAttribute : 'value';
 
         vm.ledColor = tinycolor(origColor).brighten(30).toHexString();
         vm.ledMiddleColor = tinycolor(origColor).toHexString();
@@ -101,19 +116,15 @@ function LedIndicatorController($element, $scope, $timeout) {
         if (vm.ctx.settings.requestTimeout) {
             vm.requestTimeout = vm.ctx.settings.requestTimeout;
         }
-        vm.valuePollingInterval = 500;
-        if (vm.ctx.settings.valuePollingInterval) {
-            vm.valuePollingInterval = vm.ctx.settings.valuePollingInterval;
-        }
-        vm.getValueMethod = 'getValue';
-        if (vm.ctx.settings.getValueMethod && vm.ctx.settings.getValueMethod.length) {
-            vm.getValueMethod = vm.ctx.settings.getValueMethod;
+        vm.checkStatusMethod = 'checkStatus';
+        if (vm.ctx.settings.checkStatusMethod && vm.ctx.settings.checkStatusMethod.length) {
+            vm.checkStatusMethod = vm.ctx.settings.checkStatusMethod;
         }
         if (!rpcEnabled) {
             onError('Target device is not set!');
         } else {
             if (!vm.isSimulated) {
-                rpcRequestValue();
+                rpcCheckStatus();
             }
         }
     }
@@ -173,29 +184,86 @@ function LedIndicatorController($element, $scope, $timeout) {
         return textMeasure.width();
     }
 
-    function rpcRequestValue() {
+    function rpcCheckStatus() {
         if (vm.destroyed) {
             return;
         }
         vm.error = '';
-        vm.ctx.controlApi.sendTwoWayCommand(vm.getValueMethod, null, vm.requestTimeout).then(
+        vm.ctx.controlApi.sendTwoWayCommand(vm.checkStatusMethod, null, vm.requestTimeout).then(
             (responseBody) => {
-                var newValue = responseBody ? true : false;
-                setValue(newValue);
-                if (vm.requestValueTimeoutHandle) {
-                    $timeout.cancel(vm.requestValueTimeoutHandle);
+                var status = responseBody ? true : false;
+                if (status) {
+                    if (vm.checkStatusTimeoutHandle) {
+                        $timeout.cancel(vm.checkStatusTimeoutHandle);
+                        vm.checkStatusTimeoutHandle = null;
+                    }
+                    subscribeForValue();
+                } else {
+                    var errorText = 'Unknown device status!';
+                    onError(errorText);
+                    if (vm.checkStatusTimeoutHandle) {
+                        $timeout.cancel(vm.checkStatusTimeoutHandle);
+                    }
+                    vm.checkStatusTimeoutHandle = $timeout(rpcCheckStatus, checkStatusPollingInterval);
                 }
-                vm.requestValueTimeoutHandle = $timeout(rpcRequestValue, vm.valuePollingInterval);
             },
             () => {
                 var errorText = vm.ctx.defaultSubscription.rpcErrorText;
                 onError(errorText);
-                if (vm.requestValueTimeoutHandle) {
-                    $timeout.cancel(vm.requestValueTimeoutHandle);
+                if (vm.checkStatusTimeoutHandle) {
+                    $timeout.cancel(vm.checkStatusTimeoutHandle);
                 }
-                vm.requestValueTimeoutHandle = $timeout(rpcRequestValue, vm.valuePollingInterval);
+                vm.checkStatusTimeoutHandle = $timeout(rpcCheckStatus, checkStatusPollingInterval);
             }
         );
+    }
+
+    function subscribeForValue() {
+        var subscriptionsInfo = [{
+            type: types.datasourceType.entity,
+            entityType: types.entityType.device,
+            entityId: vm.ctx.defaultSubscription.targetDeviceId,
+            attributes: [
+                {name: vm.valueAttribute}
+            ]
+        }];
+        vm.ctx.subscriptionApi.createSubscriptionFromInfo (
+            types.widgetType.latest.value, subscriptionsInfo, vm.subscriptionOptions, false, true).then(
+            function(subscription) {
+                vm.subscription = subscription;
+            }
+        );
+    }
+
+    function onDataUpdated(subscription, apply) {
+        var value = false;
+        var data = subscription.data;
+        if (data.length) {
+            var keyData = data[0];
+            if (keyData && keyData.data && keyData.data[0]) {
+                var attrValue = keyData.data[0][1];
+                if (attrValue) {
+                    var parsed = null;
+                    try {
+                        parsed = angular.fromJson(attrValue);
+                    } catch (e){/**/}
+                    value = parsed ? true : false;
+                }
+            }
+        }
+        setValue(value);
+        if (apply) {
+            $scope.$digest();
+        }
+    }
+
+    function onDataUpdateError(subscription, e) {
+        var exceptionData = utils.parseException(e);
+        var errorText = exceptionData.name;
+        if (exceptionData.message) {
+            errorText += ': ' + exceptionData.message;
+        }
+        onError(errorText);
     }
 
 }
