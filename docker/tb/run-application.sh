@@ -19,7 +19,7 @@
 dpkg -i /thingsboard.deb
 
 if [ "$DATABASE_TYPE" == "cassandra" ]; then
-    until nmap cassandra -p 9042 | grep "9042/tcp open"
+    until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open"
     do
       echo "Wait for cassandra db to start..."
       sleep 10
@@ -39,7 +39,7 @@ fi
 if [ "$ADD_SCHEMA_AND_SYSTEM_DATA" == "true" ]; then
     echo "Creating 'Thingsboard' schema and system data..."
     if [ "$ADD_DEMO_DATA" == "true" ]; then
-        echo "Adding demo data..."
+        echo "plus demo data..."
         /usr/share/thingsboard/bin/install/install.sh --loadDemo
     elif [ "$ADD_DEMO_DATA" == "false" ]; then
         /usr/share/thingsboard/bin/install/install.sh

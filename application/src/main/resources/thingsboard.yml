@@ -115,7 +115,9 @@ cassandra:
   # Thingsboard keyspace name
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
-  url: "${CASSANDRA_URL:127.0.0.1:9042}"
+  host: "${CASSANDRA_HOST:127.0.0.1}"
+  # Specify node list
+  post: "${CASSANDRA_PORT:9042}"
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX
