@@ -18,18 +18,34 @@
 
 dpkg -i /thingsboard.deb
 
-reachable=0
-while [ $reachable -eq 0 ];
-do
-  echo "$TB_CASSANDRA_SCHEMA_URL container is still in progress. waiting until it completed..."
-  sleep 3
-  ping -q -c 1 $TB_CASSANDRA_SCHEMA_URL > /dev/null 2>&1
-  if [ "$?" -ne 0 ];
-  then
-    echo "$TB_CASSANDRA_SCHEMA_URL container completed!"
-    reachable=1
-  fi
-done
+if [ "$DATABASE_TYPE" == "cassandra" ]; then
+    until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open"
+    do
+      echo "Wait for cassandra db to start..."
+      sleep 10
+    done
+fi
+
+if [ "$DATABASE_TYPE" == "sql" ]; then
+    if [ "$SPRING_DRIVER_CLASS_NAME" == "org.postgresql.Driver" ]; then
+        until nmap postgres -p 5432 | grep "5432/tcp open"
+        do
+          echo "Waiting for postgres db to start..."
+          sleep 10
+        done
+    fi
+fi
+
+if [ "$ADD_SCHEMA_AND_SYSTEM_DATA" == "true" ]; then
+    echo "Creating 'Thingsboard' schema and system data..."
+    if [ "$ADD_DEMO_DATA" == "true" ]; then
+        echo "plus demo data..."
+        /usr/share/thingsboard/bin/install/install.sh --loadDemo
+    elif [ "$ADD_DEMO_DATA" == "false" ]; then
+        /usr/share/thingsboard/bin/install/install.sh
+    fi
+fi
+
 
 # Copying env variables into conf files
 printenv | awk -F "=" '{print "export " $1 "='\''" $2 "'\''"}' >> /usr/share/thingsboard/conf/thingsboard.conf

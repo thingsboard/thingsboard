@@ -50,7 +50,9 @@ metadata:
 data:
   zookeeper.enabled: "true"
   zookeeper.url: "zk-headless"
-  cassandra.url: "cassandra-headless:9042"
+  cassandra.host: "cassandra-headless"
+  cassandra.port: "9042"
+  database.type: "cassandra"
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -100,11 +102,21 @@ spec:
             configMapKeyRef:
               name: tb-config
               key: zookeeper.url
-        - name : CASSANDRA_URL
+        - name : CASSANDRA_HOST
           valueFrom:
             configMapKeyRef:
               name: tb-config
-              key: cassandra.url
+              key: cassandra.host
+        - name : CASSANDRA_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: cassandra.port
+        - name: DATABASE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: database.type
         - name : RPC_HOST
           valueFrom:
             fieldRef:

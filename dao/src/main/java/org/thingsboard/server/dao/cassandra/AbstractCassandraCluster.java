@@ -44,7 +44,7 @@ public abstract class AbstractCassandraCluster {
 
     @Value("${cassandra.cluster_name}")
     private String clusterName;
-    @Value("${cassandra.url}")
+    @Value("${cassandra.host}:${cassandra.port}")
     private String url;
     @Value("${cassandra.compression}")
     private String compression;

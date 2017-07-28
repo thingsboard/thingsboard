@@ -17,23 +17,23 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: tb-cassandra-schema
+  name: cassandra-setup
 spec:
   containers:
-  - name: tb-cassandra-schema
+  - name: cassandra-setup
     imagePullPolicy: Always
-    image: thingsboard/tb-cassandra-schema:1.2.4
+    image: thingsboard/cassandra-setup:1.2.4
     env:
-    - name: CREATE_SCHEMA
+    - name: ADD_DEMO_DATA
       value: "true"
-    - name: ADD_SYSTEM_DATA
-      value: "true"
-    - name : ADD_DEMO_DATA
-      value: "true"
-    - name : CASSANDRA_URL
+    - name : CASSANDRA_HOST
       value: "cassandra-headless"
+    - name : CASSANDRA_PORT
+      value: "9042"
+    - name : DATABASE_TYPE
+      value: "cassandra"
     command:
     - sh
     - -c
-    - /install-schema.sh
+    - /install.sh
   restartPolicy: Never

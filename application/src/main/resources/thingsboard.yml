@@ -115,7 +115,9 @@ cassandra:
   # Thingsboard keyspace name
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
-  url: "${CASSANDRA_URL:127.0.0.1:9042}"
+  host: "${CASSANDRA_HOST:127.0.0.1}"
+  # Specify node list
+  post: "${CASSANDRA_PORT:9042}"
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX
@@ -233,7 +235,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: "validate"
-    database-platform: "org.hibernate.dialect.HSQLDialect"
+    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
     url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false}"
@@ -250,7 +252,7 @@ spring:
 #  jpa:
 #    hibernate:
 #      ddl-auto: "validate"
-#    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+#    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
 #  datasource:
 #    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
 #    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"

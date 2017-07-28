@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -14,14 +15,19 @@
 # limitations under the License.
 #
 
-FROM postgres:9.6
 
-ADD install-schema.sh /install-schema.sh
+dpkg -i /thingsboard.deb
 
-RUN apt-get update \
-        && apt-get install -y nmap \
-        && chmod +x /install-schema.sh
+until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open"
+do
+  echo "Wait for cassandra db to start..."
+  sleep 10
+done
 
-ADD schema.sql /schema.sql
-ADD system-data.sql /system-data.sql
-ADD demo-data.sql /demo-data.sql
+echo "Creating 'Thingsboard' schema and system data..."
+if [ "$ADD_DEMO_DATA" == "true" ]; then
+    echo "plus demo data..."
+    /usr/share/thingsboard/bin/install/install.sh --loadDemo
+elif [ "$ADD_DEMO_DATA" == "false" ]; then
+    /usr/share/thingsboard/bin/install/install.sh
+fi
