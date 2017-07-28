@@ -47,6 +47,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -336,15 +337,11 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private void updateRelations(Alarm alarm, AlarmStatus oldStatus, AlarmStatus newStatus) {
         try {
-            if (alarm.isPropagate()) {
-                EntityRelationsQuery query = new EntityRelationsQuery();
-                query.setParameters(new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE));
-                List<EntityId> parentEntities = relationService.findByQuery(query).get().stream().map(r -> r.getFrom()).collect(Collectors.toList());
-                for (EntityId parentId : parentEntities) {
-                    updateAlarmRelation(parentId, alarm.getId(), oldStatus, newStatus);
-                }
+            List<EntityRelation> relations = relationService.findByTo(alarm.getId(), RelationTypeGroup.ALARM).get();
+            Set<EntityId> parents = relations.stream().map(EntityRelation::getFrom).collect(Collectors.toSet());
+            for (EntityId parentId : parents) {
+                updateAlarmRelation(parentId, alarm.getId(), oldStatus, newStatus);
             }
-            updateAlarmRelation(alarm.getOriginator(), alarm.getId(), oldStatus, newStatus);
         } catch (ExecutionException | InterruptedException e) {
             log.warn("[{}] Failed to update relations. Old status: [{}], New status: [{}]", alarm.getId(), oldStatus, newStatus);
             throw new RuntimeException(e);
