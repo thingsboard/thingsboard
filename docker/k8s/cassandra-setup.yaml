@@ -32,6 +32,8 @@ spec:
       value: "9042"
     - name : DATABASE_TYPE
       value: "cassandra"
+    - name : CASSANDRA_URL
+      value: "cassandra-headless:9042"
     command:
     - sh
     - -c

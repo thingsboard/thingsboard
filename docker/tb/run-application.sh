@@ -28,7 +28,7 @@ fi
 
 if [ "$DATABASE_TYPE" == "sql" ]; then
     if [ "$SPRING_DRIVER_CLASS_NAME" == "org.postgresql.Driver" ]; then
-        until nmap postgres -p 5432 | grep "5432/tcp open"
+        until nmap $POSTGRES_HOST -p $POSTGRES_PORT | grep "$POSTGRES_PORT/tcp open"
         do
           echo "Waiting for postgres db to start..."
           sleep 10
