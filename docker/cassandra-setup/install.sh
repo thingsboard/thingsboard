@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright © 2016-2017 The Thingsboard Authors
 #
@@ -14,26 +15,19 @@
 # limitations under the License.
 #
 
-apiVersion: v1
-kind: Pod
-metadata:
-  name: tb-cassandra-schema
-spec:
-  containers:
-  - name: tb-cassandra-schema
-    imagePullPolicy: Always
-    image: thingsboard/tb-cassandra-schema:1.2.4
-    env:
-    - name: CREATE_SCHEMA
-      value: "true"
-    - name: ADD_SYSTEM_DATA
-      value: "true"
-    - name : ADD_DEMO_DATA
-      value: "true"
-    - name : CASSANDRA_URL
-      value: "cassandra-headless"
-    command:
-    - sh
-    - -c
-    - /install-schema.sh
-  restartPolicy: Never
+
+dpkg -i /thingsboard.deb
+
+until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open"
+do
+  echo "Wait for cassandra db to start..."
+  sleep 10
+done
+
+echo "Creating 'Thingsboard' schema and system data..."
+if [ "$ADD_DEMO_DATA" == "true" ]; then
+    echo "plus demo data..."
+    /usr/share/thingsboard/bin/install/install.sh --loadDemo
+elif [ "$ADD_DEMO_DATA" == "false" ]; then
+    /usr/share/thingsboard/bin/install/install.sh
+fi

@@ -51,6 +51,9 @@ data:
   zookeeper.enabled: "true"
   zookeeper.url: "zk-headless"
   cassandra.url: "cassandra-headless:9042"
+  cassandra.host: "cassandra-headless"
+  cassandra.port: "9042"
+  database.type: "cassandra"
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -79,7 +82,7 @@ spec:
       containers:
       - name: tb
         imagePullPolicy: Always
-        image: thingsboard/application:1.2.4
+        image: thingsboard/application:1.3.0
         ports:
         - containerPort: 8080
           name: ui
@@ -100,11 +103,26 @@ spec:
             configMapKeyRef:
               name: tb-config
               key: zookeeper.url
+        - name : CASSANDRA_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: cassandra.host
+        - name : CASSANDRA_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: cassandra.port
         - name : CASSANDRA_URL
           valueFrom:
             configMapKeyRef:
               name: tb-config
               key: cassandra.url
+        - name: DATABASE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: tb-config
+              key: database.type
         - name : RPC_HOST
           valueFrom:
             fieldRef:

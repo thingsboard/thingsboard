@@ -14,15 +14,11 @@
 # limitations under the License.
 #
 
-FROM cassandra:3.9
+FROM openjdk:8-jre
 
-ADD install-schema.sh /install-schema.sh
+ADD install.sh /install.sh
+ADD thingsboard.deb /thingsboard.deb
 
 RUN apt-get update \
         && apt-get install -y nmap \
-        && chmod +x /install-schema.sh
-
-ADD schema.cql /schema.cql
-ADD demo-data.cql /demo-data.cql
-ADD system-data.cql /system-data.cql
-
+        && chmod +x /install.sh
