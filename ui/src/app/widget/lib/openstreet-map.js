@@ -28,8 +28,8 @@ export default class TbOpenStreetMap {
 
         this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
-        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(this.map);
 
         if (initCallback) {
@@ -51,11 +51,11 @@ export default class TbOpenStreetMap {
     updateMarkerColor(marker, color) {
         var pinColor = color.substr(1);
         var icon = L.icon({
-            iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
             iconSize: [21, 34],
             iconAnchor: [10, 34],
             popupAnchor: [0, -34],
-            shadowUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
             shadowSize: [40, 37],
             shadowAnchor: [12, 35]
         });
@@ -96,11 +96,11 @@ export default class TbOpenStreetMap {
         var height = 34;
         var pinColor = settings.color.substr(1);
         var icon = L.icon({
-            iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
             iconSize: [21, 34],
             iconAnchor: [10, 34],
             popupAnchor: [0, -34],
-            shadowUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
             shadowSize: [40, 37],
             shadowAnchor: [12, 35]
         });

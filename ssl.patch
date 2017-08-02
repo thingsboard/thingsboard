@@ -1,0 +1,77 @@
+diff --git a/ui/src/app/widget/lib/google-map.js b/ui/src/app/widget/lib/google-map.js
+index c3d294e..4b0ea2f 100644
+--- a/ui/src/app/widget/lib/google-map.js
++++ b/ui/src/app/widget/lib/google-map.js
+@@ -152,7 +152,7 @@ export default class TbGoogleMap {
+     /* eslint-disable no-undef */
+     updateMarkerColor(marker, color) {
+         var pinColor = color.substr(1);
+-        var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
++        var pinImage = new google.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
+             new google.maps.Size(21, 34),
+             new google.maps.Point(0,0),
+             new google.maps.Point(10, 34));
+@@ -191,11 +191,11 @@ export default class TbGoogleMap {
+     createMarker(location, settings, onClickListener, markerArgs) {
+         var height = 34;
+         var pinColor = settings.color.substr(1);
+-        var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
++        var pinImage = new google.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
+             new google.maps.Size(21, 34),
+             new google.maps.Point(0,0),
+             new google.maps.Point(10, 34));
+-        var pinShadow = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_shadow",
++        var pinShadow = new google.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_shadow",
+             new google.maps.Size(40, 37),
+             new google.maps.Point(0, 0),
+             new google.maps.Point(12, 35));
+@@ -350,4 +350,4 @@ export default class TbGoogleMap {
+         return this.tooltips;
+     }
+ 
+-}
+\ No newline at end of file
++}
+diff --git a/ui/src/app/widget/lib/openstreet-map.js b/ui/src/app/widget/lib/openstreet-map.js
+index e6f10de..3a911ce 100644
+--- a/ui/src/app/widget/lib/openstreet-map.js
++++ b/ui/src/app/widget/lib/openstreet-map.js
+@@ -28,8 +28,8 @@ export default class TbOpenStreetMap {
+ 
+         this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
+ 
+-        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
++        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
++            attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+         }).addTo(this.map);
+ 
+         if (initCallback) {
+@@ -51,11 +51,11 @@ export default class TbOpenStreetMap {
+     updateMarkerColor(marker, color) {
+         var pinColor = color.substr(1);
+         var icon = L.icon({
+-            iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
++            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+             iconSize: [21, 34],
+             iconAnchor: [10, 34],
+             popupAnchor: [0, -34],
+-            shadowUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_shadow',
++            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+             shadowSize: [40, 37],
+             shadowAnchor: [12, 35]
+         });
+@@ -96,11 +96,11 @@ export default class TbOpenStreetMap {
+         var height = 34;
+         var pinColor = settings.color.substr(1);
+         var icon = L.icon({
+-            iconUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
++            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
+             iconSize: [21, 34],
+             iconAnchor: [10, 34],
+             popupAnchor: [0, -34],
+-            shadowUrl: 'http://chart.apis.google.com/chart?chst=d_map_pin_shadow',
++            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
+             shadowSize: [40, 37],
+             shadowAnchor: [12, 35]
+         });
