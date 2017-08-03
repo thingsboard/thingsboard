@@ -81,6 +81,7 @@
     "schema-inspector": "^1.6.6",
     "split.js": "^1.0.7",
     "tinycolor2": "^1.4.1",
+    "tooltipster": "^4.2.4",
     "typeface-roboto": "0.0.22",
     "v-accordion": "^1.6.0"
   },

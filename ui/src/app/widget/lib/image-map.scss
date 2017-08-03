@@ -1,0 +1,98 @@
+/**
+ * Copyright © 2016-2017 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.image-map-pin-tooltip {
+  pointer-events: all;
+  padding: 5px;
+  .image-map-pin-tooltip-close-button {
+    cursor: pointer;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 6px 6px 0 0;
+    border: none;
+    text-align: center;
+    width: 20px;
+    height: 16px;
+    font: 18px/16px Tahoma, Verdana, sans-serif;
+    color: #b0b0b0;
+    text-decoration: none;
+    font-weight: bold;
+    background: transparent;
+    &:hover {
+      color: #919191;
+    }
+  }
+  #tooltip-content {
+    line-height: normal;
+    font-size: 13px;
+    font-weight: 300;
+    color: #333;
+  }
+}
+
+#image-map-container {
+  width: 100%;
+  height: 100%;
+  #image-map {
+    color: rgba(0, 0, 0, 0.870588);
+    position: relative;
+    margin: auto;
+    background: transparent no-repeat scroll 0 0;
+    background-size: cover;
+
+    &.is-pointer {
+      cursor: pointer !important;
+    }
+
+    .movable {
+      cursor: move;
+    }
+
+    .image-map-pin {
+      outline: none;
+      position: absolute;
+      background: none;
+      .image-map-pin-title {
+        position: relative;
+        white-space: nowrap;
+        text-align: center;
+        line-height: 1.5;
+        font-size: 12px;
+        font-weight: 400;
+        top: -20px;
+        &:before {
+          content: "";
+          margin-left: -100%;
+        }
+        &:after {
+          content: "";
+          margin-right: -100%;
+        }
+      }
+      .image-map-pin-image {
+        position: absolute;
+        pointer-events: none;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+}
