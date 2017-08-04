@@ -33,11 +33,11 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
 
     if (vm.settings) {
         if (angular.isUndefined(vm.settings.stateControllerId)) {
-            vm.settings.stateControllerId = 'default';
+            vm.settings.stateControllerId = 'entity';
         }
 
         if (angular.isUndefined(vm.settings.showTitle)) {
-            vm.settings.showTitle = true;
+            vm.settings.showTitle = false;
         }
 
         if (angular.isUndefined(vm.settings.titleColor)) {
@@ -61,7 +61,7 @@ export default function DashboardSettingsController($scope, $mdDialog, statesCon
         }
 
         if (angular.isUndefined(vm.settings.toolbarAlwaysOpen)) {
-            vm.settings.toolbarAlwaysOpen = false;
+            vm.settings.toolbarAlwaysOpen = true;
         }
     }
 

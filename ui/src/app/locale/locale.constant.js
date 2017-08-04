@@ -163,6 +163,7 @@ export default angular.module('thingsboard.locale', [])
                     "name": "Alias name",
                     "name-required": "Alias name is required",
                     "duplicate-alias": "Alias with same name is already exists.",
+                    "filter-type-single-entity": "Single entity",
                     "filter-type-entity-list": "Entity list",
                     "filter-type-entity-name": "Entity name",
                     "filter-type-state-entity": "Entity from dashboard state",

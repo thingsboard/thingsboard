@@ -28,6 +28,13 @@
             <div ng-message="required" translate>alias.filter-type-required</div>
         </div>
     </md-input-container>
+    <section layout="column" ng-if="filter.type == types.aliasFilterType.singleEntity.value" id="singleEntityFilter">
+        <tb-entity-select flex
+                          the-form="theForm"
+                          tb-required="true"
+                          ng-model="filter.singleEntity">
+        </tb-entity-select>
+    </section>
     <section layout="column" ng-if="filter.type == types.aliasFilterType.entityList.value" id="entityListFilter">
         <tb-entity-type-select
                 ng-model="filter.entityType"

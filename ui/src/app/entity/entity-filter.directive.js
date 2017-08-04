@@ -43,8 +43,12 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
         function updateFilter() {
             var filter = {};
             filter.type = scope.filter.type;
-            filter.resolveMultiple = scope.filter.resolveMultiple;
+            filter.resolveMultiple = true;
             switch (filter.type) {
+                case types.aliasFilterType.singleEntity.value:
+                    filter.singleEntity = null;
+                    filter.resolveMultiple = false;
+                    break;
                 case types.aliasFilterType.entityList.value:
                     filter.entityType = null;
                     filter.entityList = [];
@@ -56,6 +60,7 @@ export default function EntityFilterDirective($compile, $templateCache, $q, $doc
                 case types.aliasFilterType.stateEntity.value:
                     filter.stateEntityParamName = null;
                     filter.defaultStateEntity = null;
+                    filter.resolveMultiple = false;
                     break;
                 case types.aliasFilterType.assetType.value:
                     filter.assetType = null;

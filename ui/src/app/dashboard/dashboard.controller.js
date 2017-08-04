@@ -757,7 +757,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             angular.isDefined(vm.dashboard.configuration.settings.toolbarAlwaysOpen)) {
             return vm.dashboard.configuration.settings.toolbarAlwaysOpen;
         } else {
-            return false;
+            return true;
         }
     }
 
@@ -766,7 +766,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             angular.isDefined(vm.dashboard.configuration.settings.showTitle)) {
             return vm.dashboard.configuration.settings.showTitle;
         } else {
-            return true;
+            return false;
         }
     }
 

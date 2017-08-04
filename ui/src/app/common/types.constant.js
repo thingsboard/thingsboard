@@ -157,6 +157,10 @@ export default angular.module('thingsboard.types', [])
                 }
             },
             aliasFilterType: {
+                singleEntity: {
+                    value: 'singleEntity',
+                    name: 'alias.filter-type-single-entity'
+                },
                 entityList: {
                     value: 'entityList',
                     name: 'alias.filter-type-entity-list'
