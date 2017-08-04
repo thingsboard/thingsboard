@@ -33,11 +33,21 @@ export default function EntitySubtypeAutocomplete($compile, $templateCache, $q, 
         scope.subTypeSearchText = '';
         scope.entitySubtypes = null;
 
+        var comparator = function(actual, expected) {
+            if (angular.isUndefined(actual)) {
+                return false;
+            }
+            if ((actual === null) || (expected === null)) {
+                return actual === expected;
+            }
+            return actual.indexOf(expected) !== -1;
+        };
+
         scope.fetchSubTypes = function(searchText) {
             var deferred = $q.defer();
             loadSubTypes().then(
                 function success(subTypes) {
-                    var result = $filter('filter')(subTypes, {'$': searchText});
+                    var result = $filter('filter')(subTypes, {'$': searchText}, comparator);
                     if (result && result.length) {
                         deferred.resolve(result);
                     } else {
