@@ -43,6 +43,10 @@ export default function EntityFilterViewDirective($compile, $templateCache, $q, 
                 var entityType;
                 var prefix;
                 switch (scope.filter.type) {
+                    case types.aliasFilterType.singleEntity.value:
+                        entityType = scope.filter.singleEntity.entityType;
+                        scope.filterDisplayValue = $translate.instant(types.entityTypeTranslations[entityType].list, {count: 1}, 'messageformat');
+                        break;
                     case types.aliasFilterType.entityList.value:
                         entityType = scope.filter.entityType;
                         var count = scope.filter.entityList.length;

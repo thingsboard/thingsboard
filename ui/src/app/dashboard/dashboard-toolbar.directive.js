@@ -51,10 +51,17 @@ function DashboardToolbarController($scope, $element, $timeout, mdFabToolbarAnim
 
     vm.mdFabToolbarElement = angular.element($element[0].querySelector('md-fab-toolbar'));
 
-    $timeout(function() {
-        vm.mdFabBackgroundElement = angular.element(vm.mdFabToolbarElement[0].querySelector('.md-fab-toolbar-background'));
-        vm.mdFabTriggerElement = angular.element(vm.mdFabToolbarElement[0].querySelector('md-fab-trigger button'));
-    });
+    function initElements() {
+        $timeout(function() {
+            vm.mdFabBackgroundElement = angular.element(vm.mdFabToolbarElement[0].querySelector('.md-fab-toolbar-background'));
+            vm.mdFabTriggerElement = angular.element(vm.mdFabToolbarElement[0].querySelector('md-fab-trigger button'));
+            if (!vm.mdFabBackgroundElement || !vm.mdFabBackgroundElement[0]) {
+                initElements();
+            } else {
+                triggerFabResize();
+            }
+        });
+    }
 
     addResizeListener(vm.mdFabToolbarElement[0], triggerFabResize); // eslint-disable-line no-undef
 
@@ -62,7 +69,12 @@ function DashboardToolbarController($scope, $element, $timeout, mdFabToolbarAnim
         removeResizeListener(vm.mdFabToolbarElement[0], triggerFabResize); // eslint-disable-line no-undef
     });
 
+    initElements();
+
     function triggerFabResize() {
+        if (!vm.mdFabBackgroundElement || !vm.mdFabBackgroundElement[0]) {
+            return;
+        }
         var ctrl = vm.mdFabToolbarElement.controller('mdFabToolbar');
         if (ctrl.isOpen) {
             if (!vm.mdFabBackgroundElement[0].offsetWidth) {

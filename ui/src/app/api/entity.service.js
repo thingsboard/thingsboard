@@ -425,6 +425,17 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
         var stateEntityId = getStateEntityId(filter, stateParams);
         switch (filter.type) {
+            case types.aliasFilterType.singleEntity.value:
+                getEntity(filter.singleEntity.entityType, filter.singleEntity.id).then(
+                    function success(entity) {
+                        result.entities = entitiesToEntitiesInfo([entity]);
+                        deferred.resolve(result);
+                    },
+                    function fail() {
+                        deferred.reject();
+                    }
+                );
+                break;
             case types.aliasFilterType.entityList.value:
                 getEntities(filter.entityType, filter.entityList).then(
                     function success(entities) {
@@ -600,6 +611,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         var filter = entityAlias.filter;
         if (filterAliasFilterTypeByEntityTypes(filter.type, entityTypes)) {
             switch (filter.type) {
+                case types.aliasFilterType.singleEntity.value:
+                    return entityTypes.indexOf(filter.singleEntity.entityType) > -1 ? true : false;
                 case types.aliasFilterType.entityList.value:
                     return entityTypes.indexOf(filter.entityType) > -1 ? true : false;
                 case types.aliasFilterType.entityName.value:
@@ -642,6 +655,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
 
     function filterAliasFilterTypeByEntityType(aliasFilterType, entityType) {
         switch (aliasFilterType) {
+            case types.aliasFilterType.singleEntity.value:
+                return true;
             case types.aliasFilterType.entityList.value:
                 return true;
             case types.aliasFilterType.entityName.value:
