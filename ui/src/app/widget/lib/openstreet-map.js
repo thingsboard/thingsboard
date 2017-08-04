@@ -28,8 +28,8 @@ export default class TbOpenStreetMap {
 
         this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
-        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(this.map);
 
         if (initCallback) {

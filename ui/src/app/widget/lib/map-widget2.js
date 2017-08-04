@@ -116,6 +116,8 @@ export default class TbMapWidgetV2 {
         if (this.mapProvider  == 'image-map') {
             this.locationSettings.latKeyName = this.ctx.settings.xPosKeyName || 'xPos';
             this.locationSettings.lngKeyName = this.ctx.settings.yPosKeyName || 'yPos';
+            this.locationSettings.markerOffsetX = angular.isDefined(this.ctx.settings.markerOffsetX) ? this.ctx.settings.markerOffsetX : 0.5;
+            this.locationSettings.markerOffsetY = angular.isDefined(this.ctx.settings.markerOffsetY) ? this.ctx.settings.markerOffsetY : 1;
         } else {
             this.locationSettings.latKeyName = this.ctx.settings.latKeyName || 'latitude';
             this.locationSettings.lngKeyName = this.ctx.settings.lngKeyName || 'longitude';
@@ -735,6 +737,16 @@ const imageMapSettingsSchema =
                 "type":"string",
                 "default": "return {x: origXPos, y: origYPos};"
             },
+            "markerOffsetX": {
+                "title": "Marker X offset relative to position",
+                "type": "number",
+                "default": 0.5
+            },
+            "markerOffsetY": {
+                "title": "Marker Y offset relative to position",
+                "type": "number",
+                "default": 1
+            },
             "useColorFunction":{
                 "title":"Use color function",
                 "type":"boolean",
@@ -794,6 +806,8 @@ const imageMapSettingsSchema =
             "key":"posFunction",
             "type":"javascript"
         },
+        "markerOffsetX",
+        "markerOffsetY",
         "useColorFunction",
         {
             "key":"colorFunction",
