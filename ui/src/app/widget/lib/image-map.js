@@ -137,8 +137,8 @@ export default class TbImageMap {
     updateMarkerDimensions(marker) {
         var pinElement = marker.pinElement;
         pinElement.css({width: marker.size, height: marker.size});
-        var left = marker.x * this.width - marker.size/2;
-        var top = marker.y * this.height - marker.size;
+        var left = marker.x * this.width - marker.size * marker.offsetX;
+        var top = marker.y * this.height - marker.size * marker.offsetY;
         pinElement.css({left: left, top: top});
     }
 
@@ -150,6 +150,8 @@ export default class TbImageMap {
         var pos = this.posFunction(position.x, position.y);
         marker.x = pos.x;
         marker.y = pos.y;
+        marker.offsetX = settings.markerOffsetX;
+        marker.offsetY = settings.markerOffsetY;
         marker.pinElement = angular.element('<div class="image-map-pin"></div>');
 
         if (settings.showLabel) {
