@@ -338,6 +338,8 @@ function barDimensions(context, options, x, y, w, h) {
         bd.height = w / aspect;
     }
 
+    bd.origBaseX = bd.baseX;
+    bd.origBaseY = bd.baseY;
     bd.baseX += (w - bd.width) / 2;
     bd.baseY += (h - bd.height) / 2;
 
@@ -432,15 +434,15 @@ function barDimensions(context, options, x, y, w, h) {
 
         if (options.hideMinMax && options.label === '') {
             bd.labelY = bd.barBottom;
-            bd.barLeft = options.fontMinMaxSize/3 * bd.fontSizeFactor;
-            bd.barRight = bd.width - options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.barLeft = bd.origBaseX + options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.barRight = bd.bd.origBaseX + w + /*bd.width*/ - options.fontMinMaxSize/3 * bd.fontSizeFactor;
         } else {
             context.font = canvasGauges.drawings.font(options, 'MinMax', bd.fontSizeFactor);
             var minTextWidth  = context.measureText(options.minValue+'').width;
             var maxTextWidth  = context.measureText(options.maxValue+'').width;
             var maxW = Math.max(minTextWidth, maxTextWidth);
-            bd.minX = bd.baseX + maxW/2 + options.fontMinMaxSize/3 * bd.fontSizeFactor;
-            bd.maxX = bd.baseX + bd.width - maxW/2 - options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.minX = bd.origBaseX + maxW/2 + options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.maxX = bd.origBaseX + w + /*bd.width*/ - maxW/2 - options.fontMinMaxSize/3 * bd.fontSizeFactor;
             bd.barLeft = bd.minX;
             bd.barRight = bd.maxX;
             bd.labelY = bd.barBottom + (8 + options.fontLabelSize) * bd.fontSizeFactor;

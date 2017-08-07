@@ -29,7 +29,8 @@ export default function AliasesEntitySelectPanelController(mdPanelRef, $scope, $
     var allEntityAliases = vm.aliasController.getEntityAliases();
     for (var aliasId in allEntityAliases) {
         var aliasInfo = vm.aliasController.getInstantAliasInfo(aliasId);
-        if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity) {
+        if (aliasInfo && !aliasInfo.resolveMultiple && aliasInfo.currentEntity
+            && aliasInfo.resolvedEntities.length > 1) {
             vm.entityAliasesInfo[aliasId] = angular.copy(aliasInfo);
             vm.entityAliasesInfo[aliasId].selectedId = aliasInfo.currentEntity.id;
         }
