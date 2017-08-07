@@ -20,7 +20,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
-import org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -72,8 +71,8 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
                                                           @Param("idOffset") String idOffset,
                                                           Pageable pageable);
 
-    @Query("SELECT DISTINCT NEW org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity(d.tenantId, d.type) FROM DeviceEntity d")
-    List<TenantDeviceTypeEntity> findTenantDeviceTypes();
+    @Query("SELECT DISTINCT d.type FROM DeviceEntity d WHERE d.tenantId = :tenantId")
+    List<String> findTenantDeviceTypes(@Param("tenantId") String tenantId);
 
     DeviceEntity findByTenantIdAndName(String tenantId, String name);
 

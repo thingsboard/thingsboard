@@ -21,14 +21,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.TenantDeviceType;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
-import org.thingsboard.server.dao.model.sql.TenantDeviceTypeEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -120,16 +120,16 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync() {
-        return service.submit(() -> convertTenantDeviceTypeEntityToDto(deviceRepository.findTenantDeviceTypes()));
+    public ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId) {
+        return service.submit(() -> convertTenantDeviceTypesToDto(tenantId, deviceRepository.findTenantDeviceTypes(fromTimeUUID(tenantId))));
     }
 
-    private List<TenantDeviceType> convertTenantDeviceTypeEntityToDto(List<TenantDeviceTypeEntity> entities) {
-        List<TenantDeviceType> list = Collections.emptyList();
-        if (entities != null && !entities.isEmpty()) {
+    private List<EntitySubtype> convertTenantDeviceTypesToDto(UUID tenantId, List<String> types) {
+        List<EntitySubtype> list = Collections.emptyList();
+        if (types != null && !types.isEmpty()) {
             list = new ArrayList<>();
-            for (TenantDeviceTypeEntity entity : entities) {
-                list.add(new TenantDeviceType(entity.getType(), new TenantId(UUIDConverter.fromString(entity.getTenantId()))));
+            for (String type : types) {
+                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.DEVICE, type));
             }
         }
         return list;

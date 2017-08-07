@@ -23,8 +23,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TenantDeviceType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -191,7 +191,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
                 device.setType("typeA");
                 devices.add(deviceService.saveDevice(device));
             }
-            List<TenantDeviceType> deviceTypes = deviceService.findDeviceTypesByTenantId(tenantId).get();
+            List<EntitySubtype> deviceTypes = deviceService.findDeviceTypesByTenantId(tenantId).get();
             Assert.assertNotNull(deviceTypes);
             Assert.assertEquals(3, deviceTypes.size());
             Assert.assertEquals("typeA", deviceTypes.get(0).getType());

@@ -22,9 +22,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -181,7 +181,7 @@ public abstract class BaseAssetServiceTest extends AbstractServiceTest {
                 asset.setType("typeA");
                 assets.add(assetService.saveAsset(asset));
             }
-            List<TenantAssetType> assetTypes = assetService.findAssetTypesByTenantId(tenantId).get();
+            List<EntitySubtype> assetTypes = assetService.findAssetTypesByTenantId(tenantId).get();
             Assert.assertNotNull(assetTypes);
             Assert.assertEquals(3, assetTypes.size());
             Assert.assertEquals("typeA", assetTypes.get(0).getType());

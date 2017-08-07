@@ -19,7 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -76,6 +77,7 @@ public interface AssetRepository extends CrudRepository<AssetEntity, String> {
                                                          @Param("idOffset") String idOffset,
                                                          Pageable pageable);
 
-    @Query("SELECT NEW org.thingsboard.server.common.data.asset.TenantAssetType(a.type, a.tenantId) FROM AssetEntity a GROUP BY a.tenantId, a.type")
-    List<TenantAssetType> findTenantAssetTypes();
+    @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
+    List<String> findTenantAssetTypes(@Param("tenantId") String tenantId);
+
 }

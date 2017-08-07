@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.TenantDeviceType;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -113,5 +113,5 @@ public interface DeviceDao extends Dao<Device> {
      *
      * @return the list of tenant device type objects
      */
-    ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync();
+    ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId);
 }

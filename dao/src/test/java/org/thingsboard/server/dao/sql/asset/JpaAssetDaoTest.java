@@ -19,8 +19,8 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,12 +33,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
@@ -192,11 +189,10 @@ public class JpaAssetDaoTest extends AbstractJpaDaoTest {
         saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_8", "TYPE_1");
         saveAsset(UUIDs.timeBased(), tenantId2, customerId2, "TEST_ASSET_9", "TYPE_1");
 
-        ListenableFuture<List<TenantAssetType>> tenantAssetTypesFuture = assetDao.findTenantAssetTypesAsync();
-        List<TenantAssetType> tenantAssetTypes = tenantAssetTypesFuture.get();
-        assertNotNull(tenantAssetTypes);
-        List<TenantAssetType> tenant1Types = tenantAssetTypes.stream().filter(t -> t.getTenantId().getId().equals(tenantId1)).collect(Collectors.toList());
-        List<TenantAssetType> tenant2Types = tenantAssetTypes.stream().filter(t -> t.getTenantId().getId().equals(tenantId2)).collect(Collectors.toList());
+        List<EntitySubtype> tenant1Types = assetDao.findTenantAssetTypesAsync(tenantId1).get();
+        assertNotNull(tenant1Types);
+        List<EntitySubtype> tenant2Types = assetDao.findTenantAssetTypesAsync(tenantId2).get();
+        assertNotNull(tenant2Types);
 
         assertEquals(3, tenant1Types.size());
         assertTrue(tenant1Types.stream().anyMatch(t -> t.getType().equals("TYPE_1")));

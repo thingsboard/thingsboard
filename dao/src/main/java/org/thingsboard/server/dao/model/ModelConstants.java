@@ -151,6 +151,14 @@ public class ModelConstants {
     public static final String ASSET_TYPES_BY_TENANT_VIEW_NAME = "asset_types_by_tenant";
 
     /**
+     * Cassandra entity_subtype constants.
+     */
+    public static final String ENTITY_SUBTYPE_COLUMN_FAMILY_NAME = "entity_subtype";
+    public static final String ENTITY_SUBTYPE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String ENTITY_SUBTYPE_TYPE_PROPERTY = "type";
+
+    /**
      * Cassandra alarm constants.
      */
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";

@@ -237,22 +237,15 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Override
-    public ListenableFuture<List<TenantDeviceType>> findDeviceTypesByTenantId(TenantId tenantId) {
+    public ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findDeviceTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        ListenableFuture<List<TenantDeviceType>> tenantDeviceTypeEntities = deviceDao.findTenantDeviceTypesAsync();
-        ListenableFuture<List<TenantDeviceType>> tenantDeviceTypes = Futures.transform(tenantDeviceTypeEntities,
-            (Function<List<TenantDeviceType>, List<TenantDeviceType>>) deviceTypeEntities -> {
-                List<TenantDeviceType> deviceTypes = new ArrayList<>();
-                for (TenantDeviceType deviceType : deviceTypeEntities) {
-                    if (deviceType.getTenantId().equals(tenantId)) {
-                        deviceTypes.add(deviceType);
-                    }
-                }
-                deviceTypes.sort(Comparator.comparing(TenantDeviceType::getType));
+        ListenableFuture<List<EntitySubtype>> tenantDeviceTypes = deviceDao.findTenantDeviceTypesAsync(tenantId.getId());
+        return Futures.transform(tenantDeviceTypes,
+            (Function<List<EntitySubtype>, List<EntitySubtype>>) deviceTypes -> {
+                deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
                 return deviceTypes;
-            });
-        return tenantDeviceTypes;
+        });
     }
 
     private DataValidator<Device> deviceValidator =

@@ -20,8 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -246,11 +246,11 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/types", method = RequestMethod.GET)
     @ResponseBody
-    public List<TenantAssetType> getAssetTypes() throws ThingsboardException {
+    public List<EntitySubtype> getAssetTypes() throws ThingsboardException {
         try {
             SecurityUser user = getCurrentUser();
             TenantId tenantId = user.getTenantId();
-            ListenableFuture<List<TenantAssetType>> assetTypes = assetService.findAssetTypesByTenantId(tenantId);
+            ListenableFuture<List<EntitySubtype>> assetTypes = assetService.findAssetTypesByTenantId(tenantId);
             return checkNotNull(assetTypes.get());
         } catch (Exception e) {
             throw handleException(e);

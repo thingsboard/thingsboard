@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.device;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
@@ -25,10 +26,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.TenantDeviceType;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.TenantDeviceTypeEntity;
+import org.thingsboard.server.dao.model.EntitySubtypeEntity;
 import org.thingsboard.server.dao.model.nosql.DeviceEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
@@ -52,6 +54,16 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     @Override
     protected String getColumnFamilyName() {
         return DEVICE_COLUMN_FAMILY_NAME;
+    }
+
+    @Override
+    public Device save(Device domain) {
+        Device savedDevice = super.save(domain);
+        EntitySubtype entitySubtype = new EntitySubtype(savedDevice.getTenantId(), EntityType.DEVICE, savedDevice.getType());
+        EntitySubtypeEntity entitySubtypeEntity = new EntitySubtypeEntity(entitySubtype);
+        Statement saveStatement = cluster.getMapper(EntitySubtypeEntity.class).saveQuery(entitySubtypeEntity);
+        executeWrite(saveStatement);
+        return savedDevice;
     }
 
     @Override
@@ -130,34 +142,27 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
     }
 
     @Override
-    public ListenableFuture<List<TenantDeviceType>> findTenantDeviceTypesAsync() {
-        Select statement = select().distinct().column(DEVICE_TYPE_PROPERTY).column(DEVICE_TENANT_ID_PROPERTY).from(DEVICE_TYPES_BY_TENANT_VIEW_NAME);
-        statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-        ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
-        ListenableFuture<List<TenantDeviceTypeEntity>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<TenantDeviceTypeEntity>>() {
+    public ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId) {
+        Select select = select().from(ENTITY_SUBTYPE_COLUMN_FAMILY_NAME);
+        Select.Where query = select.where();
+        query.and(eq(ENTITY_SUBTYPE_TENANT_ID_PROPERTY, tenantId));
+        query.and(eq(ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY, EntityType.DEVICE));
+        query.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+        ResultSetFuture resultSetFuture = getSession().executeAsync(query);
+        return Futures.transform(resultSetFuture, new Function<ResultSet, List<EntitySubtype>>() {
             @Nullable
             @Override
-            public List<TenantDeviceTypeEntity> apply(@Nullable ResultSet resultSet) {
-                Result<TenantDeviceTypeEntity> result = cluster.getMapper(TenantDeviceTypeEntity.class).map(resultSet);
+            public List<EntitySubtype> apply(@Nullable ResultSet resultSet) {
+                Result<EntitySubtypeEntity> result = cluster.getMapper(EntitySubtypeEntity.class).map(resultSet);
                 if (result != null) {
-                    return result.all();
+                    List<EntitySubtype> entitySubtypes = new ArrayList<>();
+                    result.all().forEach((entitySubtypeEntity) ->
+                        entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
+                    );
+                    return entitySubtypes;
                 } else {
                     return Collections.emptyList();
                 }
-            }
-        });
-        return Futures.transform(result, new Function<List<TenantDeviceTypeEntity>, List<TenantDeviceType>>() {
-            @Nullable
-            @Override
-            public List<TenantDeviceType> apply(@Nullable List<TenantDeviceTypeEntity> entityList) {
-                List<TenantDeviceType> list = Collections.emptyList();
-                if (entityList != null && !entityList.isEmpty()) {
-                    list = new ArrayList<>();
-                    for (TenantDeviceTypeEntity object : entityList) {
-                        list.add(object.toTenantDeviceType());
-                    }
-                }
-                return list;
             }
         });
     }

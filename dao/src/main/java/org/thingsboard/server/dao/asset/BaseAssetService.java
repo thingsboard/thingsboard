@@ -25,10 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -217,22 +217,15 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     }
 
     @Override
-    public ListenableFuture<List<TenantAssetType>> findAssetTypesByTenantId(TenantId tenantId) {
+    public ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findAssetTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        ListenableFuture<List<TenantAssetType>> tenantAssetTypeEntities = assetDao.findTenantAssetTypesAsync();
-        ListenableFuture<List<TenantAssetType>> tenantAssetTypes = Futures.transform(tenantAssetTypeEntities,
-                (Function<List<TenantAssetType>, List<TenantAssetType>>) assetTypeEntities -> {
-                    List<TenantAssetType> assetTypes = new ArrayList<>();
-                    for (TenantAssetType assetType : assetTypeEntities) {
-                        if (assetType.getTenantId().equals(tenantId)) {
-                            assetTypes.add(assetType);
-                        }
-                    }
-                    assetTypes.sort(Comparator.comparing(TenantAssetType::getType));
+        ListenableFuture<List<EntitySubtype>> tenantAssetTypes = assetDao.findTenantAssetTypesAsync(tenantId.getId());
+        return Futures.transform(tenantAssetTypes,
+                (Function<List<EntitySubtype>, List<EntitySubtype>>) assetTypes -> {
+                    assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
                     return assetTypes;
                 });
-        return tenantAssetTypes;
     }
 
     private DataValidator<Asset> assetValidator =

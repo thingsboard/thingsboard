@@ -33,7 +33,7 @@ public class CassandraDbHelper {
     private static final CSVFormat CSV_DUMP_FORMAT = CSVFormat.DEFAULT.withNullString("\\N");
 
     public static Path dumpCfIfExists(KeyspaceMetadata ks, Session session, String cfName,
-                                      String[] columns, String dumpPrefix) throws Exception {
+                                      String[] columns, String[] defaultValues, String dumpPrefix) throws Exception {
         if (ks.getTable(cfName) != null) {
             Path dumpFile = Files.createTempFile(dumpPrefix, null);
             Files.deleteIfExists(dumpFile);
@@ -45,7 +45,7 @@ public class CassandraDbHelper {
                 while (iter.hasNext()) {
                     Row row = iter.next();
                     if (row != null) {
-                        dumpRow(row, columns, csvPrinter);
+                        dumpRow(row, columns, defaultValues, csvPrinter);
                     }
                 }
             }
@@ -89,18 +89,25 @@ public class CassandraDbHelper {
     }
 
 
-    private static void dumpRow(Row row, String[] columns, CSVPrinter csvPrinter) throws Exception {
+    private static void dumpRow(Row row, String[] columns, String[] defaultValues, CSVPrinter csvPrinter) throws Exception {
         List<String> record = new ArrayList<>();
-        for (String column : columns) {
-            record.add(getColumnValue(column, row));
+        for (int i=0;i<columns.length;i++) {
+            String column = columns[i];
+            String defaultValue;
+            if (defaultValues != null && i < defaultValues.length) {
+                defaultValue = defaultValues[i];
+            } else {
+                defaultValue = "";
+            }
+            record.add(getColumnValue(column, defaultValue, row));
         }
         csvPrinter.printRecord(record);
     }
 
-    private static String getColumnValue(String column, Row row) {
-        String str = "";
+    private static String getColumnValue(String column, String defaultValue, Row row) {
         int index = row.getColumnDefinitions().getIndexOf(column);
         if (index > -1) {
+            String str;
             DataType type = row.getColumnDefinitions().getType(index);
             try {
                 if (row.isNull(index)) {
@@ -123,8 +130,10 @@ public class CassandraDbHelper {
             } catch (Exception e) {
                 str = "";
             }
+            return str;
+        } else {
+            return defaultValue;
         }
-        return str;
     }
 
     private static String createInsertStatement(String cfName, String[] columns) {

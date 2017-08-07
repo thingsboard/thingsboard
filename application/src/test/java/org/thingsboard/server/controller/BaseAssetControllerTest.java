@@ -15,30 +15,31 @@
  */
 package org.thingsboard.server.controller;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.thingsboard.server.common.data.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
-import com.datastax.driver.core.utils.UUIDs;
-import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseAssetControllerTest extends AbstractControllerTest {
 
@@ -128,8 +129,8 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
             asset.setType("typeA");
             assets.add(doPost("/api/asset", asset, Asset.class));
         }
-        List<TenantAssetType> assetTypes = doGetTyped("/api/asset/types",
-                new TypeReference<List<TenantAssetType>>(){});
+        List<EntitySubtype> assetTypes = doGetTyped("/api/asset/types",
+                new TypeReference<List<EntitySubtype>>(){});
 
         Assert.assertNotNull(assetTypes);
         Assert.assertEquals(3, assetTypes.size());

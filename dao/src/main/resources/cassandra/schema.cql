@@ -197,13 +197,6 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_customer_by_type_an
     PRIMARY KEY ( customer_id, tenant_id, type, search_text, id )
     WITH CLUSTERING ORDER BY ( tenant_id DESC, type ASC, search_text ASC, id DESC );
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_types_by_tenant AS
-    SELECT *
-    from thingsboard.device
-    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND id IS NOT NULL
-    PRIMARY KEY ( (type, tenant_id), id, customer_id)
-    WITH CLUSTERING ORDER BY ( id ASC, customer_id DESC);
-
 CREATE TABLE IF NOT EXISTS thingsboard.device_credentials (
 	id timeuuid PRIMARY KEY,
 	device_id timeuuid,
@@ -270,12 +263,12 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_by_customer_by_type_and
     PRIMARY KEY ( customer_id, tenant_id, type, search_text, id )
     WITH CLUSTERING ORDER BY ( tenant_id DESC, type ASC, search_text ASC, id DESC );
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.asset_types_by_tenant AS
-    SELECT *
-    from thingsboard.asset
-    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND type IS NOT NULL AND id IS NOT NULL
-    PRIMARY KEY ( (type, tenant_id), id, customer_id)
-    WITH CLUSTERING ORDER BY ( id ASC, customer_id DESC);
+CREATE TABLE IF NOT EXISTS thingsboard.entity_subtype (
+    tenant_id timeuuid,
+    entity_type text, // (DEVICE, ASSET)
+    type text,
+    PRIMARY KEY (tenant_id, entity_type, type)
+);
 
 CREATE TABLE IF NOT EXISTS thingsboard.alarm (
 	id timeuuid,

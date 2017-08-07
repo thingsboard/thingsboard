@@ -140,8 +140,8 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
             device.setType("typeA");
             devices.add(doPost("/api/device", device, Device.class));
         }
-        List<TenantDeviceType> deviceTypes = doGetTyped("/api/device/types",
-                new TypeReference<List<TenantDeviceType>>(){});
+        List<EntitySubtype> deviceTypes = doGetTyped("/api/device/types",
+                new TypeReference<List<EntitySubtype>>(){});
 
         Assert.assertNotNull(deviceTypes);
         Assert.assertEquals(3, deviceTypes.size());

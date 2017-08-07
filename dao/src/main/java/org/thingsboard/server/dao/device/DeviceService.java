@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.TenantDeviceType;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,6 +61,6 @@ public interface DeviceService {
 
     ListenableFuture<List<Device>> findDevicesByQuery(DeviceSearchQuery query);
 
-    ListenableFuture<List<TenantDeviceType>> findDeviceTypesByTenantId(TenantId tenantId);
+    ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 
 }

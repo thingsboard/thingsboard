@@ -20,8 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.asset.AssetDao;
@@ -29,10 +31,7 @@ import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUIDs;
@@ -121,7 +120,18 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     }
 
     @Override
-    public ListenableFuture<List<TenantAssetType>> findTenantAssetTypesAsync() {
-        return service.submit(() -> assetRepository.findTenantAssetTypes());
+    public ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId) {
+        return service.submit(() -> convertTenantAssetTypesToDto(tenantId, assetRepository.findTenantAssetTypes(fromTimeUUID(tenantId))));
+    }
+
+    private List<EntitySubtype> convertTenantAssetTypesToDto(UUID tenantId, List<String> types) {
+        List<EntitySubtype> list = Collections.emptyList();
+        if (types != null && !types.isEmpty()) {
+            list = new ArrayList<>();
+            for (String type : types) {
+                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.ASSET, type));
+            }
+        }
+        return list;
     }
 }

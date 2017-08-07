@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.asset;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
@@ -24,11 +25,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.TenantAssetTypeEntity;
+import org.thingsboard.server.dao.model.EntitySubtypeEntity;
 import org.thingsboard.server.dao.model.nosql.AssetEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
@@ -52,6 +54,16 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
     @Override
     protected String getColumnFamilyName() {
         return ASSET_COLUMN_FAMILY_NAME;
+    }
+
+    @Override
+    public Asset save(Asset domain) {
+        Asset savedAsset = super.save(domain);
+        EntitySubtype entitySubtype = new EntitySubtype(savedAsset.getTenantId(), EntityType.ASSET, savedAsset.getType());
+        EntitySubtypeEntity entitySubtypeEntity = new EntitySubtypeEntity(entitySubtype);
+        Statement saveStatement = cluster.getMapper(EntitySubtypeEntity.class).saveQuery(entitySubtypeEntity);
+        executeWrite(saveStatement);
+        return savedAsset;
     }
 
     @Override
@@ -130,34 +142,27 @@ public class CassandraAssetDao extends CassandraAbstractSearchTextDao<AssetEntit
     }
 
     @Override
-    public ListenableFuture<List<TenantAssetType>> findTenantAssetTypesAsync() {
-        Select statement = select().distinct().column(ASSET_TYPE_PROPERTY).column(ASSET_TENANT_ID_PROPERTY).from(ASSET_TYPES_BY_TENANT_VIEW_NAME);
-        statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-        ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
-        ListenableFuture<List<TenantAssetTypeEntity>> result = Futures.transform(resultSetFuture, new Function<ResultSet, List<TenantAssetTypeEntity>>() {
+    public ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId) {
+        Select select = select().from(ENTITY_SUBTYPE_COLUMN_FAMILY_NAME);
+        Select.Where query = select.where();
+        query.and(eq(ENTITY_SUBTYPE_TENANT_ID_PROPERTY, tenantId));
+        query.and(eq(ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY, EntityType.ASSET));
+        query.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
+        ResultSetFuture resultSetFuture = getSession().executeAsync(query);
+        return Futures.transform(resultSetFuture, new Function<ResultSet, List<EntitySubtype>>() {
             @Nullable
             @Override
-            public List<TenantAssetTypeEntity> apply(@Nullable ResultSet resultSet) {
-                Result<TenantAssetTypeEntity> result = cluster.getMapper(TenantAssetTypeEntity.class).map(resultSet);
+            public List<EntitySubtype> apply(@Nullable ResultSet resultSet) {
+                Result<EntitySubtypeEntity> result = cluster.getMapper(EntitySubtypeEntity.class).map(resultSet);
                 if (result != null) {
-                    return result.all();
+                    List<EntitySubtype> entitySubtypes = new ArrayList<>();
+                    result.all().forEach((entitySubtypeEntity) ->
+                            entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
+                    );
+                    return entitySubtypes;
                 } else {
                     return Collections.emptyList();
                 }
-            }
-        });
-        return Futures.transform(result, new Function<List<TenantAssetTypeEntity>, List<TenantAssetType>>() {
-            @Nullable
-            @Override
-            public List<TenantAssetType> apply(@Nullable List<TenantAssetTypeEntity> entityList) {
-                List<TenantAssetType> list = Collections.emptyList();
-                if (entityList != null && !entityList.isEmpty()) {
-                    list = new ArrayList<>();
-                    for (TenantAssetTypeEntity object : entityList) {
-                        list.add(object.toTenantAssetType());
-                    }
-                }
-                return list;
             }
         });
     }

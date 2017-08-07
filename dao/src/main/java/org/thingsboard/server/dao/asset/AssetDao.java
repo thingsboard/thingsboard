@@ -16,8 +16,8 @@
 package org.thingsboard.server.dao.asset;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.TenantAssetType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -112,6 +112,6 @@ public interface AssetDao extends Dao<Asset> {
      *
      * @return the list of tenant asset type objects
      */
-    ListenableFuture<List<TenantAssetType>> findTenantAssetTypesAsync();
+    ListenableFuture<List<EntitySubtype>> findTenantAssetTypesAsync(UUID tenantId);
 
 }
