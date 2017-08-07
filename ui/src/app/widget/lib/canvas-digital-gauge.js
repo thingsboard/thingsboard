@@ -45,6 +45,9 @@ export default class TbCanvasDigitalGauge {
             (settings.unitTitle && settings.unitTitle.length > 0 ?
                 settings.unitTitle : dataKey.label) : '');
 
+        this.localSettings.showTimestamp = settings.showTimestamp == true ? true : false;
+        this.localSettings.timestampFormat = settings.timestampFormat && settings.timestampFormat.length ? settings.timestampFormat : 'yyyy-MM-dd HH:mm:ss';
+
         this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
         this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
 
@@ -167,6 +170,7 @@ export default class TbCanvasDigitalGauge {
 
             symbol: this.localSettings.units,
             label: this.localSettings.unitTitle,
+            showTimestamp: this.localSettings.showTimestamp,
             hideValue: this.localSettings.hideValue,
             hideMinMax: this.localSettings.hideMinMax,
 
@@ -193,6 +197,12 @@ export default class TbCanvasDigitalGauge {
             if (cellData.data.length > 0) {
                 var tvPair = cellData.data[cellData.data.length -
                 1];
+                if (this.localSettings.showTimestamp) {
+                    var timestamp = tvPair[0];
+                    var filter= this.ctx.$scope.$injector.get('$filter');
+                    var timestampDisplayValue = filter('date')(timestamp, this.localSettings.timestampFormat);
+                    this.gauge.options.label = timestampDisplayValue;
+                }
                 var value = tvPair[1];
                 this.gauge.value = value;
             }
@@ -268,6 +278,16 @@ export default class TbCanvasDigitalGauge {
                         "title": "Show unit title",
                         "type": "boolean",
                         "default": false
+                    },
+                    "showTimestamp": {
+                        "title": "Show value timestamp",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "timestampFormat": {
+                        "title": "Timestamp format",
+                        "type": "string",
+                        "default": "yyyy-MM-dd HH:mm:ss"
                     },
                     "showValue": {
                         "title": "Show value text",
@@ -477,6 +497,8 @@ export default class TbCanvasDigitalGauge {
                 "showTitle",
                 "unitTitle",
                 "showUnitTitle",
+                "showTimestamp",
+                "timestampFormat",
                 "showValue",
                 "showMinMax",
                 "gaugeWidthScale",

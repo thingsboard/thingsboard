@@ -180,7 +180,9 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
 
                 drawDigitalTitle(context, options);
 
-                drawDigitalLabel(context, options);
+                if (!options.showTimestamp) {
+                    drawDigitalLabel(context, options);
+                }
 
                 drawDigitalMinMax(context, options);
 
@@ -197,6 +199,10 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
                 context.save();
 
                 drawDigitalValue(context, options, this.value);
+
+                if (options.showTimestamp) {
+                    drawDigitalLabel(context, options);
+                }
 
                 this.elementValueClone.initialized = true;
                 this.elementValueClone.renderedValue = this.value;
