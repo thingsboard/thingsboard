@@ -79,7 +79,7 @@ export default class TbMapWidgetV2 {
         } else if (mapProvider === 'openstreet-map') {
             this.map = new TbOpenStreetMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
         } else if (mapProvider === 'image-map') {
-            this.map = new TbImageMap($element, initCallback, settings.mapImageUrl, settings.posFunction);
+            this.map = new TbImageMap(this.ctx, $element, initCallback, settings.mapImageUrl, settings.posFunction);
         }
     }
 

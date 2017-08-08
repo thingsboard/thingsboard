@@ -26,8 +26,9 @@ const pinSvg = `<svg class="image-map-pin-image" xmlns="http://www.w3.org/2000/s
 
 export default class TbImageMap {
 
-    constructor($containerElement, initCallback, imageUrl, posFunction) {
+    constructor(ctx, $containerElement, initCallback, imageUrl, posFunction) {
 
+        this.ctx = ctx;
         this.tooltips = [];
 
         $containerElement.append('<div id="image-map-container"><div id="image-map"></div></div>');
@@ -195,7 +196,7 @@ export default class TbImageMap {
     }
 
     createTooltip(marker, pattern, replaceInfo, markerArgs) {
-        var popup = new Popup(marker.pinElement);
+        var popup = new Popup(this.ctx, marker.pinElement);
         popup.setContent('');
         this.tooltips.push( {
             markerArgs: markerArgs,
@@ -271,7 +272,7 @@ class Position {
 }
 
 class Popup {
-    constructor(anchor) {
+    constructor(ctx, anchor) {
         anchor.tooltipster(
             {
                 theme: 'tooltipster-shadow',
@@ -287,9 +288,11 @@ class Popup {
         this.tooltip = anchor.tooltipster('instance');
         var contentElement = angular.element('<div class="image-map-pin-tooltip">' +
                 '<a class="image-map-pin-tooltip-close-button" id="close" style="outline: none;">×</a>' +
-                '<div flex id="tooltip-content" layout="column">' +
+                '<div id="tooltip-content">' +
                 '</div>' +
             '</div>');
+        var $compile = ctx.$scope.$injector.get('$compile');
+        $compile(contentElement)(ctx.$scope);
         var popup = this;
         contentElement.find('#close').on('click', function() {
             popup.tooltip.close();
