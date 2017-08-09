@@ -139,6 +139,11 @@ export default function EntityStateController($scope, $location, $state, $stateP
             var params = vm.stateObject[index].params;
             var entityName = params && params.entityName ? params.entityName : '';
             result = utils.insertVariable(stateName, 'entityName', entityName);
+            for (var prop in params) {
+                if (params[prop] && params[prop].entityName) {
+                    result = utils.insertVariable(stateName, prop + ':entityName', params[prop].entityName);
+                }
+            }
         }
         return result;
     }
@@ -163,7 +168,7 @@ export default function EntityStateController($scope, $location, $state, $stateP
                 );
             }
         } else {
-            deferred.reject();
+            deferred.resolve('');
         }
         return deferred.promise;
     }
