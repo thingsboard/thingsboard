@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.relation;
-
-import lombok.Data;
-
-import java.util.List;
+package org.thingsboard.server.common.data.relation;
 
 /**
  * Created by ashvayka on 02.05.17.
  */
-@Data
-public class EntityRelationsQuery {
+public enum EntitySearchDirection {
 
-    private RelationsSearchParameters parameters;
-    private List<EntityTypeFilter> filters;
+    FROM, TO;
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.relation;
+package org.thingsboard.server.common.data.relation;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

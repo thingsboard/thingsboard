@@ -26,10 +26,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.relation.EntityRelationsQuery;
-import org.thingsboard.server.dao.relation.EntitySearchDirection;
-import org.thingsboard.server.dao.relation.EntityTypeFilter;
-import org.thingsboard.server.dao.relation.RelationsSearchParameters;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 
 import java.util.Collections;
 import java.util.List;

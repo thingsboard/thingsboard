@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.relation;
+package org.thingsboard.server.common.data.relation;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -28,8 +27,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class EntityTypeFilter {
-    @Nullable
+
     private String relationType;
-    @Nullable
+
     private List<EntityType> entityTypes;
 }

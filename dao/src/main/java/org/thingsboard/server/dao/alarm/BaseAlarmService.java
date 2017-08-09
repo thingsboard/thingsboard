@@ -35,10 +35,10 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.relation.EntityRelationsQuery;
-import org.thingsboard.server.dao.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.relation.RelationsSearchParameters;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 

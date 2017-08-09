@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardException;
 

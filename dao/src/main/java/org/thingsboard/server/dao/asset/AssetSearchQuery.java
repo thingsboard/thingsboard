@@ -18,9 +18,9 @@ package org.thingsboard.server.dao.asset;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.dao.relation.EntityRelationsQuery;
-import org.thingsboard.server.dao.relation.EntityTypeFilter;
-import org.thingsboard.server.dao.relation.RelationsSearchParameters;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.EntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
