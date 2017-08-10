@@ -130,10 +130,8 @@ public class DefaultActorService implements ActorService {
 
     @Override
     public void process(SessionAwareMsg msg) {
-        if (msg instanceof SessionAwareMsg) {
-            log.debug("Processing session aware msg: {}", msg);
-            sessionManagerActor.tell(msg, ActorRef.noSender());
-        }
+        log.debug("Processing session aware msg: {}", msg);
+        sessionManagerActor.tell(msg, ActorRef.noSender());
     }
 
     @Override
