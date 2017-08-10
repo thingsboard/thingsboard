@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -107,6 +108,11 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
         boolean isActiveAlarm;
         boolean isClearedAlarm;
 
+        VelocityContext context = VelocityUtils.createContext(ctx.getDeviceMetaData(), msg);
+        for (Object key : context.getKeys()) {
+            md.put(key.toString(), context.get(key.toString()));
+        }
+
         try {
             isActiveAlarm = newAlarmEvaluator.execute(bindings);
             isClearedAlarm = clearAlarmEvaluator.execute(bindings);
@@ -132,7 +138,6 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
                 md.put(IS_EXISTING_ALARM, Boolean.TRUE);
             }
         } else if (isClearedAlarm) {
-            VelocityContext context = VelocityUtils.createContext(ctx.getDeviceMetaData(), msg);
             String alarmType = VelocityUtils.merge(alarmTypeTemplate, context);
             Optional<Alarm> alarm = ctx.findLatestAlarm(ctx.getDeviceMetaData().getDeviceId(), alarmType);
             if (alarm.isPresent()) {
@@ -149,7 +154,11 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
             md.put("alarmType", existing.getType());
             md.put("alarmSeverity", existing.getSeverity());
             try {
-                md.put("alarmDetails", mapper.writeValueAsString(existing.getDetails()));
+                if (!StringUtils.isEmpty(existing.getDetails())) {
+                    md.put("alarmDetails", mapper.writeValueAsString(existing.getDetails()));
+                } else {
+                    md.put("alarmDetails", "{}");
+                }
             } catch (JsonProcessingException e) {
                 throw new RuleException("Failed to serialize alarm details", e);
             }
