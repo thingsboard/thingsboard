@@ -50,5 +50,11 @@ public interface RelationRepository
                                                     String fromType);
 
     @Transactional
+    RelationEntity save(RelationEntity entity);
+
+    @Transactional
+    void delete(RelationCompositeKey id);
+
+    @Transactional
     void deleteByFromIdAndFromType(String fromId, String fromType);
 }

@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.relation.RelationService;
 
+import java.util.concurrent.ExecutionException;
+
 @Slf4j
 public abstract class AbstractEntityService {
 
@@ -29,7 +31,11 @@ public abstract class AbstractEntityService {
 
     protected void deleteEntityRelations(EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
-        relationService.deleteEntityRelations(entityId);
+        try {
+            relationService.deleteEntityRelations(entityId).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
