@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.EncryptionUtil;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -44,7 +45,8 @@ import java.security.cert.X509Certificate;
 @ConditionalOnProperty(prefix = "mqtt.ssl", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class MqttSslHandlerProvider {
 
-    public static final String TLS = "TLS";
+    @Value("${mqtt.ssl.protocol}")
+    private String sslProtocol;
     @Value("${mqtt.ssl.key_store}")
     private String keyStoreFile;
     @Value("${mqtt.ssl.key_store_password}")
@@ -53,7 +55,7 @@ public class MqttSslHandlerProvider {
     private String keyPassword;
     @Value("${mqtt.ssl.key_store_type}")
     private String keyStoreType;
-    
+
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
 
@@ -79,7 +81,10 @@ public class MqttSslHandlerProvider {
             KeyManager[] km = kmf.getKeyManagers();
             TrustManager x509wrapped = getX509TrustManager(tmFactory);
             TrustManager[] tm = {x509wrapped};
-            SSLContext sslContext = SSLContext.getInstance(TLS);
+            if (StringUtils.isEmpty(sslProtocol)) {
+                sslProtocol = "TLS";
+            }
+            SSLContext sslContext = SSLContext.getInstance(sslProtocol);
             sslContext.init(km, tm, null);
             SSLEngine sslEngine = sslContext.createSSLEngine();
             sslEngine.setUseClientMode(false);
