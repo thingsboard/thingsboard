@@ -160,43 +160,36 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
     @Override
     public ListenableFuture<List<EntityRelation>> findRelations(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType, TimePageLink pageLink) {
-        Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<RelationEntity>getTimeSearchPageSpec(pageLink, "toId");
+        Specification<RelationEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "toId");
         Specification<RelationEntity> fieldsSpec = getEntityFieldsSpec(from, relationType, typeGroup, childType);
-        Pageable pageable = new PageRequest(0, pageLink.getLimit(),
-                new Sort(
-                        new Order(ASC, "relationTypeGroup"),
-                        new Order(ASC, "relationType"),
-                        new Order(ASC, "toType"))
-        );
+        Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, "toId");
         return service.submit(() ->
                 DaoUtil.convertDataList(relationRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent()));
     }
 
     private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {
-        return new Specification<RelationEntity>() {
-            @Override
-            public Predicate toPredicate(Root<RelationEntity> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
-                List<Predicate> predicates = new ArrayList<>();
-                if (from != null) {
-                    Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"),  UUIDConverter.fromTimeUUID(from.getId()));
-                    predicates.add(fromIdPredicate);
-                    Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get("fromType"), from.getEntityType().name());
-                    predicates.add(fromEntityTypePredicate);
-                }
-                if (relationType != null) {
-                    Predicate relationTypePredicate = criteriaBuilder.equal(root.get("relationType"), relationType);
-                    predicates.add(relationTypePredicate);
-                }
-                if (typeGroup != null) {
-                    Predicate typeGroupPredicate = criteriaBuilder.equal(root.get("relationTypeGroup"), typeGroup.name());
-                    predicates.add(typeGroupPredicate);
-                }
-                if (childType != null) {
-                    Predicate childTypePredicate = criteriaBuilder.equal(root.get("toType"), childType.name());
-                    predicates.add(childTypePredicate);
-                }
-                return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (from != null) {
+                Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"),  UUIDConverter.fromTimeUUID(from.getId()));
+                predicates.add(fromIdPredicate);
+                Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get("fromType"), from.getEntityType().name());
+                predicates.add(fromEntityTypePredicate);
             }
+            if (relationType != null) {
+                Predicate relationTypePredicate = criteriaBuilder.equal(root.get("relationType"), relationType);
+                predicates.add(relationTypePredicate);
+            }
+            if (typeGroup != null) {
+                Predicate typeGroupPredicate = criteriaBuilder.equal(root.get("relationTypeGroup"), typeGroup.name());
+                predicates.add(typeGroupPredicate);
+            }
+            if (childType != null) {
+                Predicate childTypePredicate = criteriaBuilder.equal(root.get("toType"), childType.name());
+                predicates.add(childTypePredicate);
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 }

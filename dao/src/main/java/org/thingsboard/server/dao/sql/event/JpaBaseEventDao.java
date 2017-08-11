@@ -102,7 +102,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
 
     @Override
     public List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
-        Specification<EventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.<EventEntity>getTimeSearchPageSpec(pageLink, "id");
+        Specification<EventEntity> timeSearchSpec = JpaAbstractSearchTimeDao.getTimeSearchPageSpec(pageLink, "id");
         Specification<EventEntity> fieldsSpec = getEntityFieldsSpec(tenantId, entityId, eventType);
         Sort.Direction sortDirection = pageLink.isAscOrder() ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = new PageRequest(0, pageLink.getLimit(), sortDirection, ID_PROPERTY);
@@ -129,26 +129,23 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     private Specification<EventEntity> getEntityFieldsSpec(UUID tenantId, EntityId entityId, String eventType) {
-        return new Specification<EventEntity>() {
-            @Override
-            public Predicate toPredicate(Root<EventEntity> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
-                List<Predicate> predicates = new ArrayList<Predicate>();
-                if (tenantId != null) {
-                    Predicate tenantIdPredicate = criteriaBuilder.equal(root.get("tenantId"), UUIDConverter.fromTimeUUID(tenantId));
-                    predicates.add(tenantIdPredicate);
-                }
-                if (entityId != null) {
-                    Predicate entityTypePredicate = criteriaBuilder.equal(root.get("entityType"), entityId.getEntityType());
-                    predicates.add(entityTypePredicate);
-                    Predicate entityIdPredicate = criteriaBuilder.equal(root.get("entityId"), UUIDConverter.fromTimeUUID(entityId.getId()));
-                    predicates.add(entityIdPredicate);
-                }
-                if (eventType != null) {
-                    Predicate eventTypePredicate = criteriaBuilder.equal(root.get("eventType"), eventType);
-                    predicates.add(eventTypePredicate);
-                }
-                return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (tenantId != null) {
+                Predicate tenantIdPredicate = criteriaBuilder.equal(root.get("tenantId"), UUIDConverter.fromTimeUUID(tenantId));
+                predicates.add(tenantIdPredicate);
             }
+            if (entityId != null) {
+                Predicate entityTypePredicate = criteriaBuilder.equal(root.get("entityType"), entityId.getEntityType());
+                predicates.add(entityTypePredicate);
+                Predicate entityIdPredicate = criteriaBuilder.equal(root.get("entityId"), UUIDConverter.fromTimeUUID(entityId.getId()));
+                predicates.add(entityIdPredicate);
+            }
+            if (eventType != null) {
+                Predicate eventTypePredicate = criteriaBuilder.equal(root.get("eventType"), eventType);
+                predicates.add(eventTypePredicate);
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[]{}));
         };
     }
 }
