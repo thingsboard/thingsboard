@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,6 +53,8 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
     static final String IS_NEW_ALARM = "isNewAlarm";
     static final String IS_EXISTING_ALARM = "isExistingAlarm";
     static final String IS_CLEARED_ALARM = "isClearedAlarm";
+    static final String IS_NEW_OR_CLEARED_ALARM = "isNewOrClearedAlarm";
+
 
     protected NashornJsEvaluator newAlarmEvaluator;
     protected NashornJsEvaluator clearAlarmEvaluator;
@@ -133,6 +135,7 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
             if (existing.getStartTs() == alarm.getStartTs()) {
                 log.debug("[{}][{}] New Active Alarm detected", ctx.getRuleId(), existing.getId());
                 md.put(IS_NEW_ALARM, Boolean.TRUE);
+                md.put(IS_NEW_OR_CLEARED_ALARM, Boolean.TRUE);
             } else {
                 log.debug("[{}][{}] Existing Active Alarm detected", ctx.getRuleId(), existing.getId());
                 md.put(IS_EXISTING_ALARM, Boolean.TRUE);
@@ -144,10 +147,10 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
                 ctx.clearAlarm(alarm.get().getId(), System.currentTimeMillis());
                 log.debug("[{}][{}] Existing Active Alarm cleared");
                 md.put(IS_CLEARED_ALARM, Boolean.TRUE);
+                md.put(IS_NEW_OR_CLEARED_ALARM, Boolean.TRUE);
                 existing = alarm.get();
             }
         }
-        //TODO: handle cleared alarms
 
         if (existing != null) {
             md.put("alarmId", existing.getId().getId());
