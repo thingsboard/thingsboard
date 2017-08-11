@@ -50,7 +50,9 @@ public class SessionManagerActor extends ContextAwareActor {
 
     @Override
     public void onReceive(Object msg) throws Exception {
-        if (msg instanceof SessionAwareMsg) {
+        if (msg instanceof SessionCtrlMsg) {
+            onSessionCtrlMsg((SessionCtrlMsg) msg);
+        } else if (msg instanceof SessionAwareMsg) {
             forwardToSessionActor((SessionAwareMsg) msg);
         } else if (msg instanceof SessionTerminationMsg) {
             onSessionTermination((SessionTerminationMsg) msg);
@@ -58,8 +60,6 @@ public class SessionManagerActor extends ContextAwareActor {
             onTermination((Terminated) msg);
         } else if (msg instanceof SessionTimeoutMsg) {
             onSessionTimeout((SessionTimeoutMsg) msg);
-        } else if (msg instanceof SessionCtrlMsg) {
-            onSessionCtrlMsg((SessionCtrlMsg) msg);
         } else if (msg instanceof ClusterEventMsg) {
             broadcast(msg);
         }
