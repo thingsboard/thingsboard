@@ -154,7 +154,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                 protected void validateUpdate(Customer customer) {
                     customerDao.findCustomersByTenantIdAndTitle(customer.getTenantId().getId(), customer.getTitle()).ifPresent(
                             c -> {
-                                if (!c.getId().equals(customer.getUuidId())) {
+                                if (!c.getId().equals(customer.getId())) {
                                     throw new DataValidationException("Customer with such title already exists!");
                                 }
                             }
