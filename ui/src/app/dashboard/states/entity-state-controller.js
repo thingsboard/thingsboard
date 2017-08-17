@@ -141,7 +141,7 @@ export default function EntityStateController($scope, $location, $state, $stateP
             result = utils.insertVariable(stateName, 'entityName', entityName);
             for (var prop in params) {
                 if (params[prop] && params[prop].entityName) {
-                    result = utils.insertVariable(stateName, prop + ':entityName', params[prop].entityName);
+                    result = utils.insertVariable(result, prop + ':entityName', params[prop].entityName);
                 }
             }
         }
