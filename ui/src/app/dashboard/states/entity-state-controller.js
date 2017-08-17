@@ -288,9 +288,9 @@ export default function EntityStateController($scope, $location, $state, $stateP
     function updateLocation() {
         if (vm.stateObject[vm.stateObject.length-1].id) {
             if (isDefaultState()) {
-                $location.search({state : null});
+                $location.search('state', null);
             } else {
-                $location.search({state : utils.objToBase64(vm.stateObject)});
+                $location.search('state', utils.objToBase64(vm.stateObject));
             }
         }
     }

@@ -27,6 +27,14 @@ md-toolbar.md-table-toolbar.alternate {
 }
 
 .md-table {
+  &.tb-attribute-table {
+      table-layout: fixed;
+      td.md-cell {
+          &.tb-value-cell {
+            overflow: auto;
+          }
+      }
+  }
   .md-cell {
     ng-md-icon {
       fill: $md-edit-icon-fill;

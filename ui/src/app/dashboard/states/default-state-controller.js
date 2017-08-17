@@ -210,7 +210,7 @@ export default function DefaultStateController($scope, $location, $state, $state
 
     function updateLocation() {
         if (vm.stateObject[0].id) {
-            $location.search({state : utils.objToBase64(vm.stateObject)});
+            $location.search('state', utils.objToBase64(vm.stateObject));
         }
     }
 }

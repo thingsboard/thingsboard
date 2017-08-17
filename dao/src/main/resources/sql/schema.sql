@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   attribute_type varchar(255),
   attribute_key varchar(255),
   bool_v boolean,
-  str_v varchar,
+  str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
   last_update_ts bigint,
@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS ts_kv (
     key varchar(255) NOT NULL,
     ts bigint NOT NULL,
     bool_v boolean,
-    str_v varchar,
+    str_v varchar(10000000),
     long_v bigint,
     dbl_v double precision,
     CONSTRAINT ts_kv_unq_key UNIQUE (entity_type, entity_id, key, ts)
