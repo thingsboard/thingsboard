@@ -31,8 +31,9 @@
         "default": true
       },
       "alarmDetailsTemplate": {
-        "title": "Alarm details",
-        "type": "string"
+        "title": "Alarm details (JSON)",
+        "type": "string",
+        "default": "{}"
       }
     },
     "required": [
