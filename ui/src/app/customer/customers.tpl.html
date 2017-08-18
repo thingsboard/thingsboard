@@ -19,11 +19,52 @@
 	<details-buttons tb-help="'customers'" help-container-id="help-container">
 		<div id="help-container"></div>
 	</details-buttons>
-	<tb-customer customer="vm.grid.operatingItem()"
-			is-edit="vm.grid.detailsConfig.isDetailsEditMode"
-			the-form="vm.grid.detailsForm"
-			on-manage-users="vm.openCustomerUsers(event, vm.grid.detailsConfig.currentItem)"
-			on-manage-devices="vm.openCustomerDevices(event, vm.grid.detailsConfig.currentItem)"
-			on-manage-dashboards="vm.openCustomerDashboards(event, vm.grid.detailsConfig.currentItem)"
-			on-delete-customer="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-customer>
+	<md-tabs ng-class="{'tb-headless': vm.grid.detailsConfig.isDetailsEditMode}"
+			 id="tabs" md-border-bottom flex class="tb-absolute-fill">
+		<md-tab label="{{ 'customer.details' | translate }}">
+			<tb-customer customer="vm.grid.operatingItem()"
+				is-edit="vm.grid.detailsConfig.isDetailsEditMode"
+				the-form="vm.grid.detailsForm"
+				on-manage-users="vm.openCustomerUsers(event, vm.grid.detailsConfig.currentItem)"
+				on-manage-assets="vm.openCustomerAssets(event, vm.grid.detailsConfig.currentItem)"
+				on-manage-devices="vm.openCustomerDevices(event, vm.grid.detailsConfig.currentItem)"
+				on-manage-dashboards="vm.openCustomerDashboards(event, vm.grid.detailsConfig.currentItem)"
+				on-delete-customer="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-customer>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
+			<tb-attribute-table flex
+								entity-id="vm.grid.operatingItem().id.id"
+								entity-type="{{vm.types.entityType.customer}}"
+								entity-name="vm.grid.operatingItem().title"
+								default-attribute-scope="{{vm.types.attributesScope.server.value}}">
+			</tb-attribute-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.latest-telemetry' | translate }}">
+			<tb-attribute-table flex
+								entity-id="vm.grid.operatingItem().id.id"
+								entity-type="{{vm.types.entityType.customer}}"
+								entity-name="vm.grid.operatingItem().title"
+								default-attribute-scope="{{vm.types.latestTelemetry.value}}"
+								disable-attribute-scope-selection="true">
+			</tb-attribute-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'alarm.alarms' | translate }}">
+			<tb-alarm-table flex entity-type="vm.types.entityType.customer"
+							entity-id="vm.grid.operatingItem().id.id">
+			</tb-alarm-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'customer.events' | translate }}">
+			<tb-event-table flex entity-type="vm.types.entityType.customer"
+							entity-id="vm.grid.operatingItem().id.id"
+							tenant-id="vm.grid.operatingItem().tenantId.id"
+							default-event-type="{{vm.types.eventType.error.value}}">
+			</tb-event-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'relation.relations' | translate }}">
+			<tb-relation-table flex
+							   entity-id="vm.grid.operatingItem().id.id"
+							   entity-type="{{vm.types.entityType.customer}}">
+			</tb-relation-table>
+		</md-tab>
+	</md-tabs>
 </tb-grid>

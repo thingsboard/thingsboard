@@ -1,0 +1,2 @@
+TRUNCATE TABLE plugin;
+TRUNCATE TABLE rule;

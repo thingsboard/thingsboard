@@ -22,7 +22,8 @@ import ruleFieldsetTemplate from './rule-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleDirective($compile, $templateCache, $mdDialog, $document, $q, pluginService, componentDialogService, componentDescriptorService, types) {
+export default function RuleDirective($compile, $templateCache, $mdDialog, $document, $q, $translate, pluginService,
+                                      componentDialogService, componentDescriptorService, types, toast) {
     var linker = function (scope, element) {
         var template = $templateCache.get(ruleFieldsetTemplate);
         element.html(template);
@@ -84,11 +85,16 @@ export default function RuleDirective($compile, $templateCache, $mdDialog, $docu
             if (scope.rule) {
                 var valid = scope.rule.filters && scope.rule.filters.length > 0;
                 scope.theForm.$setValidity('filters', valid);
-                valid = angular.isDefined(scope.rule.pluginToken) && scope.rule.pluginToken != null;
-                scope.theForm.$setValidity('plugin', valid);
-                valid = angular.isDefined(scope.rule.action) && scope.rule.action != null;
-                scope.theForm.$setValidity('action', valid);
+                var processorDefined = angular.isDefined(scope.rule.processor) && scope.rule.processor != null;
+                var pluginDefined = angular.isDefined(scope.rule.pluginToken) && scope.rule.pluginToken != null;
+                var pluginActionDefined = angular.isDefined(scope.rule.action) && scope.rule.action != null;
+                valid = processorDefined && !pluginDefined || (pluginDefined && pluginActionDefined);
+                scope.theForm.$setValidity('processorOrPlugin', valid);
             }
+        };
+
+        scope.onRuleIdCopied = function() {
+            toast.showSuccess($translate.instant('rule.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
         };
 
         scope.$watch('rule', function(newVal, prevVal) {
@@ -155,6 +161,7 @@ export default function RuleDirective($compile, $templateCache, $mdDialog, $docu
         scope.$watch('rule.processor', function(newVal, prevVal) {
             if (scope.rule && scope.isEdit && !angular.equals(newVal, prevVal)) {
                 scope.theForm.$setDirty();
+                scope.updateValidity();
             }
         }, true);
 

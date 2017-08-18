@@ -21,6 +21,7 @@ import org.thingsboard.server.common.msg.core.RuleEngineErrorMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 
 public class ChainProcessingContext {
 
@@ -85,8 +86,20 @@ public class ChainProcessingContext {
         return md.inMsg;
     }
 
+    public DeviceMetaData getDeviceMetaData() {
+        return md.deviceMetaData;
+    }
+
+    public String getDeviceName() {
+        return md.deviceMetaData.getDeviceName();
+    }
+
+    public String getDeviceType() {
+        return md.deviceMetaData.getDeviceType();
+    }
+
     public DeviceAttributes getAttributes() {
-        return md.deviceAttributes;
+        return md.deviceMetaData.getDeviceAttributes();
     }
 
     public ToDeviceMsg getResponse() {

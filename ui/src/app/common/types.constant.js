@@ -59,6 +59,141 @@ export default angular.module('thingsboard.types', [])
                     name: "aggregation.none"
                 }
             },
+            alarmFields: {
+                createdTime: {
+                    keyName: 'createdTime',
+                    value: "createdTime",
+                    name: "alarm.created-time",
+                    time: true
+                },
+                startTime: {
+                    keyName: 'startTime',
+                    value: "startTs",
+                    name: "alarm.start-time",
+                    time: true
+                },
+                endTime: {
+                    keyName: 'endTime',
+                    value: "endTs",
+                    name: "alarm.end-time",
+                    time: true
+                },
+                ackTime: {
+                    keyName: 'ackTime',
+                    value: "ackTs",
+                    name: "alarm.ack-time",
+                    time: true
+                },
+                clearTime: {
+                    keyName: 'clearTime',
+                    value: "clearTs",
+                    name: "alarm.clear-time",
+                    time: true
+                },
+                originator: {
+                    keyName: 'originator',
+                    value: "originatorName",
+                    name: "alarm.originator"
+                },
+                originatorType: {
+                    keyName: 'originatorType',
+                    value: "originator.entityType",
+                    name: "alarm.originator-type"
+                },
+                type: {
+                    keyName: 'type',
+                    value: "type",
+                    name: "alarm.type"
+                },
+                severity: {
+                    keyName: 'severity',
+                    value: "severity",
+                    name: "alarm.severity"
+                },
+                status: {
+                    keyName: 'status',
+                    value: "status",
+                    name: "alarm.status"
+                }
+            },
+            alarmStatus: {
+                activeUnack: "ACTIVE_UNACK",
+                activeAck: "ACTIVE_ACK",
+                clearedUnack: "CLEARED_UNACK",
+                clearedAck: "CLEARED_ACK"
+            },
+            alarmSearchStatus: {
+                any: "ANY",
+                active: "ACTIVE",
+                cleared: "CLEARED",
+                ack: "ACK",
+                unack: "UNACK"
+            },
+            alarmSeverity: {
+                "CRITICAL": {
+                    name: "alarm.severity-critical",
+                    class: "tb-critical",
+                    color: "red"
+                },
+                "MAJOR": {
+                    name: "alarm.severity-major",
+                    class: "tb-major",
+                    color: "orange"
+                },
+                "MINOR": {
+                    name: "alarm.severity-minor",
+                    class: "tb-minor",
+                    color: "#ffca3d"
+                },
+                "WARNING": {
+                    name: "alarm.severity-warning",
+                    class: "tb-warning",
+                    color: "#abab00"
+                },
+                "INDETERMINATE": {
+                    name: "alarm.severity-indeterminate",
+                    class: "tb-indeterminate",
+                    color: "green"
+                }
+            },
+            aliasFilterType: {
+                singleEntity: {
+                    value: 'singleEntity',
+                    name: 'alias.filter-type-single-entity'
+                },
+                entityList: {
+                    value: 'entityList',
+                    name: 'alias.filter-type-entity-list'
+                },
+                entityName: {
+                    value: 'entityName',
+                    name: 'alias.filter-type-entity-name'
+                },
+                stateEntity: {
+                    value: 'stateEntity',
+                    name: 'alias.filter-type-state-entity'
+                },
+                assetType: {
+                    value: 'assetType',
+                    name: 'alias.filter-type-asset-type'
+                },
+                deviceType: {
+                    value: 'deviceType',
+                    name: 'alias.filter-type-device-type'
+                },
+                relationsQuery: {
+                    value: 'relationsQuery',
+                    name: 'alias.filter-type-relations-query'
+                },
+                assetSearchQuery: {
+                    value: 'assetSearchQuery',
+                    name: 'alias.filter-type-asset-search-query'
+                },
+                deviceSearchQuery: {
+                    value: 'deviceSearchQuery',
+                    name: 'alias.filter-type-device-search-query'
+                }
+            },
             position: {
                 top: {
                     value: "top",
@@ -79,12 +214,13 @@ export default angular.module('thingsboard.types', [])
             },
             datasourceType: {
                 function: "function",
-                device: "device"
+                entity: "entity"
             },
             dataKeyType: {
                 timeseries: "timeseries",
                 attribute: "attribute",
-                function: "function"
+                function: "function",
+                alarm: "alarm"
             },
             componentType: {
                 filter: "FILTER",
@@ -93,17 +229,81 @@ export default angular.module('thingsboard.types', [])
                 plugin: "PLUGIN"
             },
             entityType: {
-                tenant: "TENANT",
                 device: "DEVICE",
-                customer: "CUSTOMER",
+                asset: "ASSET",
                 rule: "RULE",
-                plugin: "PLUGIN"
+                plugin: "PLUGIN",
+                tenant: "TENANT",
+                customer: "CUSTOMER",
+                user: "USER",
+                dashboard: "DASHBOARD",
+                alarm: "ALARM"
+            },
+            entityTypeTranslations: {
+                "DEVICE": {
+                    type: 'entity.type-device',
+                    typePlural: 'entity.type-devices',
+                    list: 'entity.list-of-devices',
+                    nameStartsWith: 'entity.device-name-starts-with'
+                },
+                "ASSET": {
+                    type: 'entity.type-asset',
+                    typePlural: 'entity.type-assets',
+                    list: 'entity.list-of-assets',
+                    nameStartsWith: 'entity.asset-name-starts-with'
+                },
+                "RULE": {
+                    type: 'entity.type-rule',
+                    typePlural: 'entity.type-rules',
+                    list: 'entity.list-of-rules',
+                    nameStartsWith: 'entity.rule-name-starts-with'
+                },
+                "PLUGIN": {
+                    type: 'entity.type-plugin',
+                    typePlural: 'entity.type-plugins',
+                    list: 'entity.list-of-plugins',
+                    nameStartsWith: 'entity.plugin-name-starts-with'
+                },
+                "TENANT": {
+                    type: 'entity.type-tenant',
+                    typePlural: 'entity.type-tenants',
+                    list: 'entity.list-of-tenants',
+                    nameStartsWith: 'entity.tenant-name-starts-with'
+                },
+                "CUSTOMER": {
+                    type: 'entity.type-customer',
+                    typePlural: 'entity.type-customers',
+                    list: 'entity.list-of-customers',
+                    nameStartsWith: 'entity.customer-name-starts-with'
+                },
+                "USER": {
+                    type: 'entity.type-user',
+                    typePlural: 'entity.type-users',
+                    list: 'entity.list-of-users',
+                    nameStartsWith: 'entity.user-name-starts-with'
+                },
+                "DASHBOARD": {
+                    type: 'entity.type-dashboard',
+                    typePlural: 'entity.type-dashboards',
+                    list: 'entity.list-of-dashboards',
+                    nameStartsWith: 'entity.dashboard-name-starts-with'
+                },
+                "ALARM": {
+                    type: 'entity.type-alarm',
+                    typePlural: 'entity.type-alarms',
+                    list: 'entity.list-of-alarms',
+                    nameStartsWith: 'entity.alarm-name-starts-with'
+                }
+            },
+            entitySearchDirection: {
+                from: "FROM",
+                to: "TO"
+            },
+            entityRelationType: {
+                contains: "Contains",
+                manages: "Manages"
             },
             eventType: {
-                alarm: {
-                    value: "ALARM",
-                    name: "event.type-alarm"
-                },
                 error: {
                     value: "ERROR",
                     name: "event.type-error"
@@ -122,7 +322,7 @@ export default angular.module('thingsboard.types', [])
                 name: "attribute.scope-latest-telemetry",
                 clientSide: true
             },
-            deviceAttributesScope: {
+            attributesScope: {
                 client: {
                     value: "CLIENT_SCOPE",
                     name: "attribute.scope-client",
@@ -186,6 +386,14 @@ export default angular.module('thingsboard.types', [])
                         alias: "basic_gpio_control"
                     }
                 },
+                alarm: {
+                    value: "alarm",
+                    name: "widget.alarm",
+                    template: {
+                        bundleAlias: "alarm_widgets",
+                        alias: "alarms_table"
+                    }
+                },
                 static: {
                     value: "static",
                     name: "widget.static",
@@ -195,9 +403,37 @@ export default angular.module('thingsboard.types', [])
                     }
                 }
             },
+            widgetActionSources: {
+                headerButton: {
+                    name: 'widget-action.header-button',
+                    value: 'headerButton',
+                    multiple: true
+                }
+            },
+            widgetActionTypes: {
+                openDashboardState: {
+                    name: 'widget-action.open-dashboard-state',
+                    value: 'openDashboardState'
+                },
+                updateDashboardState: {
+                    name: 'widget-action.update-dashboard-state',
+                    value: 'updateDashboardState'
+                },
+                openDashboard: {
+                    name: 'widget-action.open-dashboard',
+                    value: 'openDashboard'
+                },
+                custom: {
+                    name: 'widget-action.custom',
+                    value: 'custom'
+                }
+            },
             systemBundleAlias: {
                 charts: "charts",
                 cards: "cards"
+            },
+            translate: {
+                customTranslationsPrefix: "custom."
             }
         }
     ).name;

@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface EventService {

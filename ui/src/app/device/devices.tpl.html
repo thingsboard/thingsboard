@@ -32,26 +32,39 @@
                        on-manage-credentials="vm.manageCredentials(event, vm.grid.detailsConfig.currentItem)"
                        on-delete-device="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-device>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'attribute.attributes' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
             <tb-attribute-table flex
-                            device-id="vm.grid.operatingItem().id.id"
-                            device-name="vm.grid.operatingItem().name"
-                            default-attribute-scope="{{vm.types.deviceAttributesScope.client.value}}">
+                                entity-id="vm.grid.operatingItem().id.id"
+                                entity-type="{{vm.types.entityType.device}}"
+                                entity-name="vm.grid.operatingItem().name"
+                                default-attribute-scope="{{vm.types.attributesScope.client.value}}">
             </tb-attribute-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'attribute.latest-telemetry' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.latest-telemetry' | translate }}">
             <tb-attribute-table flex
-                                device-id="vm.grid.operatingItem().id.id"
-                                device-name="vm.grid.operatingItem().name"
+                                entity-id="vm.grid.operatingItem().id.id"
+                                entity-type="{{vm.types.entityType.device}}"
+                                entity-name="vm.grid.operatingItem().name"
                                 default-attribute-scope="{{vm.types.latestTelemetry.value}}"
                                 disable-attribute-scope-selection="true">
             </tb-attribute-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" label="{{ 'device.events' | translate }}">
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'alarm.alarms' | translate }}">
+            <tb-alarm-table flex entity-type="vm.types.entityType.device"
+                            entity-id="vm.grid.operatingItem().id.id">
+            </tb-alarm-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'device.events' | translate }}">
             <tb-event-table flex entity-type="vm.types.entityType.device"
                             entity-id="vm.grid.operatingItem().id.id"
                             tenant-id="vm.grid.operatingItem().tenantId.id"
-                            default-event-type="{{vm.types.eventType.alarm.value}}">
+                            default-event-type="{{vm.types.eventType.error.value}}">
             </tb-event-table>
+        </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'relation.relations' | translate }}">
+            <tb-relation-table flex
+                               entity-id="vm.grid.operatingItem().id.id"
+                               entity-type="{{vm.types.entityType.device}}">
+            </tb-relation-table>
         </md-tab>
 </tb-grid>

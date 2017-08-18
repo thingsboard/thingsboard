@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.user;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -25,32 +26,34 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 
 public interface UserService {
 	
-	public User findUserById(UserId userId);
+	User findUserById(UserId userId);
 
-	public User findUserByEmail(String email);
-	
-	public User saveUser(User user);
+	ListenableFuture<User> findUserByIdAsync(UserId userId);
 
-	public UserCredentials findUserCredentialsByUserId(UserId userId);	
-	
-	public UserCredentials findUserCredentialsByActivateToken(String activateToken);
+	User findUserByEmail(String email);
 
-	public UserCredentials findUserCredentialsByResetToken(String resetToken);
+	User saveUser(User user);
 
-	public UserCredentials saveUserCredentials(UserCredentials userCredentials);
+	UserCredentials findUserCredentialsByUserId(UserId userId);
 	
-	public UserCredentials activateUserCredentials(String activateToken, String password);
-	
-	public UserCredentials requestPasswordReset(String email);
+	UserCredentials findUserCredentialsByActivateToken(String activateToken);
 
-	public void deleteUser(UserId userId);
+	UserCredentials findUserCredentialsByResetToken(String resetToken);
+
+	UserCredentials saveUserCredentials(UserCredentials userCredentials);
 	
-	public TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink);
+	UserCredentials activateUserCredentials(String activateToken, String password);
 	
-	public void deleteTenantAdmins(TenantId tenantId);
+	UserCredentials requestPasswordReset(String email);
+
+	void deleteUser(UserId userId);
 	
-	public TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+	TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink);
+	
+	void deleteTenantAdmins(TenantId tenantId);
+	
+	TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
 	    
-	public void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
+	void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
 	
 }

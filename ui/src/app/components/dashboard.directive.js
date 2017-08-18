@@ -16,10 +16,11 @@
 import './dashboard.scss';
 
 import $ from 'jquery';
+import 'javascript-detect-element-resize/detect-element-resize';
 import angularGridster from 'angular-gridster';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardApiWidget from '../api/widget.service';
-import thingsboardWidget from './widget.directive';
+import thingsboardWidget from './widget/widget.directive';
 import thingsboardToast from '../services/toast';
 import thingsboardTimewindow from './timewindow.directive';
 import thingsboardEvents from './tb-event-directives';
@@ -51,11 +52,16 @@ function Dashboard() {
         scope: true,
         bindToController: {
             widgets: '=',
-            aliasesInfo: '=',
+            widgetLayouts: '=?',
+            aliasController: '=',
+            stateController: '=',
             dashboardTimewindow: '=?',
             columns: '=',
             margins: '=',
             isEdit: '=',
+            autofillHeight: '=',
+            mobileAutofillHeight: '=?',
+            mobileRowHeight: '=?',
             isMobile: '=',
             isMobileDisabled: '=?',
             isEditActionEnabled: '=',
@@ -73,7 +79,8 @@ function Dashboard() {
             onInit: '&?',
             onInitFailed: '&?',
             dashboardStyle: '=?',
-            dashboardClass: '=?'
+            dashboardClass: '=?',
+            ignoreLoading: '=?'
         },
         controller: DashboardController,
         controllerAs: 'vm',
@@ -82,7 +89,7 @@ function Dashboard() {
 }
 
 /*@ngInject*/
-function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, timeService, types) {
+function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $mdUtil, $q, timeService, types, utils) {
 
     var highlightedMode = false;
     var highlightedWidget = null;
@@ -98,6 +105,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     vm.stDiff = 0;
 
     vm.isMobileDisabled = angular.isDefined(vm.isMobileDisabled) ? vm.isMobileDisabled : false;
+
+    vm.isMobileSize = false;
 
     if (!('dashboardTimewindow' in vm)) {
         vm.dashboardTimewindow = timeService.defaultTimewindow();
@@ -117,8 +126,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         maxRows: 100,
         columns: vm.columns ? vm.columns : 24,
         margins: vm.margins ? vm.margins : [10, 10],
-        minSizeX: 2,
-        minSizeY: 2,
+        minSizeX: 1,
+        minSizeY: 1,
         defaultSizeX: 8,
         defaultSizeY: 6,
         resizable: {
@@ -132,14 +141,26 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
 
     updateMobileOpts();
 
+    vm.widgetLayoutInfo = {
+    };
+
     vm.widgetItemMap = {
-        sizeX: 'vm.widgetSizeX(widget)',
-        sizeY: 'vm.widgetSizeY(widget)',
-        row: 'widget.row',
-        col: 'widget.col',
+        sizeX: 'vm.widgetLayoutInfo[widget.id].sizeX',
+        sizeY: 'vm.widgetLayoutInfo[widget.id].sizeY',
+        row: 'vm.widgetLayoutInfo[widget.id].row',
+        col: 'vm.widgetLayoutInfo[widget.id].col',
         minSizeY: 'widget.minSizeY',
         maxSizeY: 'widget.maxSizeY'
     };
+
+    /*vm.widgetItemMap = {
+        sizeX: 'vm.widgetSizeX(widget)',
+        sizeY: 'vm.widgetSizeY(widget)',
+        row: 'vm.widgetRow(widget)',
+        col: 'vm.widgetCol(widget)',
+        minSizeY: 'widget.minSizeY',
+        maxSizeY: 'widget.maxSizeY'
+    };*/
 
     vm.isWidgetExpanded = false;
     vm.isHighlighted = isHighlighted;
@@ -151,19 +172,29 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
 
     vm.onWidgetFullscreenChanged = onWidgetFullscreenChanged;
 
+    vm.isAutofillHeight = autofillHeight;
+
     vm.widgetMouseDown = widgetMouseDown;
     vm.widgetClicked = widgetClicked;
 
     vm.widgetSizeX = widgetSizeX;
     vm.widgetSizeY = widgetSizeY;
-    vm.widgetColor = widgetColor;
-    vm.widgetBackgroundColor = widgetBackgroundColor;
-    vm.widgetPadding = widgetPadding;
+    vm.widgetRow = widgetRow;
+    vm.widgetCol = widgetCol;
+    vm.widgetStyle = widgetStyle;
     vm.showWidgetTitle = showWidgetTitle;
+    vm.hasWidgetTitleTemplate = hasWidgetTitleTemplate;
+    vm.widgetTitleTemplate = widgetTitleTemplate;
+    vm.showWidgetTitlePanel = showWidgetTitlePanel;
+    vm.showWidgetActions = showWidgetActions;
     vm.widgetTitleStyle = widgetTitleStyle;
+    vm.widgetTitle = widgetTitle;
+    vm.customWidgetHeaderActions = customWidgetHeaderActions;
+    vm.widgetActions = widgetActions;
     vm.dropWidgetShadow = dropWidgetShadow;
     vm.enableWidgetFullscreen = enableWidgetFullscreen;
     vm.hasTimewindow = hasTimewindow;
+    vm.hasAggregation = hasAggregation;
     vm.editWidget = editWidget;
     vm.exportWidget = exportWidget;
     vm.removeWidget = removeWidget;
@@ -173,6 +204,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     vm.openWidgetContextMenu = openWidgetContextMenu;
 
     vm.getEventGridPosition = getEventGridPosition;
+    vm.reload = reload;
 
     vm.contextMenuItems = [];
     vm.contextMenuEvent = null;
@@ -199,6 +231,61 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         }
     };
 
+    addResizeListener(gridsterParent[0], onGirdsterParentResize); // eslint-disable-line no-undef
+
+    $scope.$on("$destroy", function () {
+        removeResizeListener(gridsterParent[0], onGirdsterParentResize); // eslint-disable-line no-undef
+    });
+
+    function onGirdsterParentResize() {
+        if (gridsterParent.height() && autofillHeight()) {
+            updateMobileOpts();
+        }
+    }
+
+    $scope.$watchCollection('vm.widgets', function () {
+        sortWidgets();
+        var ids = [];
+        for (var i=0;i<vm.widgets.length;i++) {
+            var widget = vm.widgets[i];
+            if (!widget.id) {
+                widget.id = utils.guid();
+            }
+            ids.push(widget.id);
+            var layoutInfoObject = vm.widgetLayoutInfo[widget.id];
+            if (!layoutInfoObject) {
+                layoutInfoObject = {
+                    widget: widget
+                };
+                Object.defineProperty(layoutInfoObject, 'sizeX', {
+                    get: function() { return widgetSizeX(this.widget) },
+                    set: function(newSizeX) { setWidgetSizeX(this.widget, newSizeX)}
+                });
+                Object.defineProperty(layoutInfoObject, 'sizeY', {
+                    get: function() { return widgetSizeY(this.widget) },
+                    set: function(newSizeY) { setWidgetSizeY(this.widget, newSizeY)}
+                });
+                Object.defineProperty(layoutInfoObject, 'row', {
+                    get: function() { return widgetRow(this.widget) },
+                    set: function(newRow) { setWidgetRow(this.widget, newRow)}
+                });
+                Object.defineProperty(layoutInfoObject, 'col', {
+                    get: function() { return widgetCol(this.widget) },
+                    set: function(newCol) { setWidgetCol(this.widget, newCol)}
+                });
+                vm.widgetLayoutInfo[widget.id] = layoutInfoObject;
+            }
+        }
+        for (var widgetId in vm.widgetLayoutInfo) {
+            if (ids.indexOf(widgetId) === -1) {
+                delete vm.widgetLayoutInfo[widgetId];
+            }
+        }
+        if (autofillHeight()) {
+            updateMobileOpts();
+        }
+    });
+
     //TODO: widgets visibility
     /*gridsterParent.scroll(function () {
         updateVisibleRect();
@@ -212,10 +299,11 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         var isMobileDisabled = vm.isMobileDisabled === true;
         var isMobile = vm.isMobile === true && !isMobileDisabled;
         var mobileBreakPoint = isMobileDisabled ? 0 : (isMobile ? 20000 : 960);
+
         if (!isMobile && !isMobileDisabled) {
             isMobile = !$mdMedia('gt-sm');
         }
-        var rowHeight = isMobile ? 70 : 'match';
+
         if (vm.gridsterOpts.isMobile != isMobile) {
             vm.gridsterOpts.isMobile = isMobile;
             vm.gridsterOpts.mobileModeEnabled = isMobile;
@@ -223,9 +311,23 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         if (vm.gridsterOpts.mobileBreakPoint != mobileBreakPoint) {
             vm.gridsterOpts.mobileBreakPoint = mobileBreakPoint;
         }
-        if (vm.gridsterOpts.rowHeight != rowHeight) {
-            vm.gridsterOpts.rowHeight = rowHeight;
+        detectRowSize(isMobile).then(
+            function(rowHeight) {
+                if (vm.gridsterOpts.rowHeight != rowHeight) {
+                    vm.gridsterOpts.rowHeight = rowHeight;
+                }
+            }
+        );
+        vm.isMobileSize = checkIsMobileSize();
+    }
+
+    function checkIsMobileSize() {
+        var isMobileDisabled = vm.isMobileDisabled === true;
+        var isMobileSize = vm.isMobile === true && !isMobileDisabled;
+        if (!isMobileSize && !isMobileDisabled) {
+            isMobileSize = !$mdMedia('gt-sm');
         }
+        return isMobileSize;
     }
 
     $scope.$watch(function() { return $mdMedia('gt-sm'); }, function() {
@@ -233,6 +335,18 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     });
 
     $scope.$watch('vm.isMobile', function () {
+        updateMobileOpts();
+    });
+
+    $scope.$watch('vm.autofillHeight', function () {
+        updateMobileOpts();
+    });
+
+    $scope.$watch('vm.mobileAutofillHeight', function () {
+        updateMobileOpts();
+    });
+
+    $scope.$watch('vm.mobileRowHeight', function () {
         updateMobileOpts();
     });
 
@@ -257,6 +371,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         var margins = vm.margins ? vm.margins : [10, 10];
         if (!angular.equals(vm.gridsterOpts.margins, margins)) {
             vm.gridsterOpts.margins = margins;
+            updateMobileOpts();
             if (vm.gridster) {
                 vm.gridster.margins = vm.margins;
                 updateGridsterParams();
@@ -272,13 +387,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
     });
 
-    $scope.$watch('vm.aliasesInfo.deviceAliases', function () {
-        $scope.$broadcast('deviceAliasListChanged', vm.aliasesInfo);
-    }, true);
+    $scope.$watch('vm.isMobileSize', function (newVal, prevVal) {
+        if (!angular.equals(newVal, prevVal)) {
+            $scope.$broadcast('mobileModeChanged', vm.isMobileSize);
+        }
+    });
 
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {
         if (checkIsLocalGridsterElement(theGridster)) {
             vm.gridster = theGridster;
+            vm.isResizing = false;
             //TODO: widgets visibility
             //updateVisibleRect(false, true);
         }
@@ -287,13 +405,15 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     $scope.$on('gridster-mobile-changed', function (event, theGridster) {
         if (checkIsLocalGridsterElement(theGridster)) {
             vm.gridster = theGridster;
-            var rowHeight = vm.gridster.isMobile ? 70 : 'match';
-            if (vm.gridsterOpts.rowHeight != rowHeight) {
-                vm.gridsterOpts.rowHeight = rowHeight;
-                updateGridsterParams();
-            }
-
-            $scope.$broadcast('mobileModeChanged', vm.gridster.isMobile);
+            detectRowSize(vm.gridster.isMobile).then(
+                function(rowHeight) {
+                    if (vm.gridsterOpts.rowHeight != rowHeight) {
+                        vm.gridsterOpts.rowHeight = rowHeight;
+                        updateGridsterParams();
+                    }
+                }
+            );
+            vm.isMobileSize = checkIsMobileSize();
 
             //TODO: widgets visibility
             /*$timeout(function () {
@@ -302,29 +422,101 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         }
     });
 
+    function autofillHeight() {
+        if (vm.gridsterOpts.isMobile) {
+            return angular.isDefined(vm.mobileAutofillHeight) ? vm.mobileAutofillHeight : false;
+        } else {
+            return angular.isDefined(vm.autofillHeight) ? vm.autofillHeight : false;
+        }
+    }
+
+    function detectViewportHeight() {
+        var deferred = $q.defer();
+        var viewportHeight = gridsterParent.height();
+        if (viewportHeight) {
+            deferred.resolve(viewportHeight);
+        } else {
+            $scope.viewportHeightWatch = $scope.$watch(function() { return gridsterParent.height(); },
+                function(viewportHeight) {
+                    if (viewportHeight) {
+                        $scope.viewportHeightWatch();
+                        deferred.resolve(viewportHeight);
+                    }
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    function detectRowSize(isMobile) {
+        var deferred = $q.defer();
+        var rowHeight;
+        if (autofillHeight()) {
+            detectViewportHeight().then(
+                function(viewportHeight) {
+                    var totalRows = 0;
+                    for (var i = 0; i < vm.widgets.length; i++) {
+                        var w = vm.widgets[i];
+                        var sizeY = widgetSizeY(w);
+                        if (isMobile) {
+                            totalRows += sizeY;
+                        } else {
+                            var row = widgetRow(w);
+                            var bottom = row + sizeY;
+                            totalRows = Math.max(totalRows, bottom);
+                        }
+                    }
+                    rowHeight = (viewportHeight - vm.gridsterOpts.margins[1]*(vm.widgets.length+1) + vm.gridsterOpts.margins[0]*vm.widgets.length) / totalRows;
+                    deferred.resolve(rowHeight);
+                }
+            );
+        } else if (isMobile) {
+            rowHeight = angular.isDefined(vm.mobileRowHeight) ? vm.mobileRowHeight : 70;
+            deferred.resolve(rowHeight);
+        } else {
+            rowHeight = 'match';
+            deferred.resolve(rowHeight);
+        }
+        return deferred.promise;
+    }
+
+    function widgetOrder(widget) {
+        var order;
+        var hasLayout = vm.widgetLayouts && vm.widgetLayouts[widget.id];
+        if (hasLayout && angular.isDefined(vm.widgetLayouts[widget.id].mobileOrder)
+                && vm.widgetLayouts[widget.id].mobileOrder >= 0) {
+            order = vm.widgetLayouts[widget.id].mobileOrder;
+        } else if (angular.isDefined(widget.config.mobileOrder) && widget.config.mobileOrder >= 0) {
+            order = widget.config.mobileOrder;
+        } else if (hasLayout) {
+            order = vm.widgetLayouts[widget.id].row;
+        } else {
+            order = widget.row;
+        }
+        return order;
+    }
+
     $scope.$on('widgetPositionChanged', function () {
+        sortWidgets();
+    });
+
+    loadStDiff();
+
+    function sortWidgets() {
         vm.widgets.sort(function (widget1, widget2) {
-            var row1;
-            var row2;
-            if (angular.isDefined(widget1.config.mobileOrder)) {
-                row1 = widget1.config.mobileOrder;
-            } else {
-                row1 = widget1.row;
-            }
-            if (angular.isDefined(widget2.config.mobileOrder)) {
-                row2 = widget2.config.mobileOrder;
-            } else {
-                row2 = widget2.row;
-            }
+            var row1 = widgetOrder(widget1);
+            var row2 = widgetOrder(widget2);
             var res = row1 - row2;
             if (res === 0) {
                 res = widget1.col - widget2.col;
             }
             return res;
         });
-    });
+    }
 
-    loadStDiff();
+    function reload() {
+        loadStDiff();
+    }
 
     function loadStDiff() {
         if (vm.getStDiff) {
@@ -443,9 +635,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function widgetClicked ($event, widget) {
-        if ($event) {
-            $event.stopPropagation();
-        }
         if (vm.onWidgetClicked) {
             vm.onWidgetClicked({event: $event, widget: widget});
         }
@@ -568,19 +757,102 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function widgetSizeX(widget) {
-        return widget.sizeX;
+        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+            return vm.widgetLayouts[widget.id].sizeX;
+        } else {
+            return widget.sizeX;
+        }
+    }
+
+    function setWidgetSizeX(widget, sizeX) {
+        if (!vm.gridsterOpts.isMobile) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].sizeX = sizeX;
+            } else {
+                widget.sizeX = sizeX;
+            }
+        }
     }
 
     function widgetSizeY(widget) {
-        if (vm.gridsterOpts.isMobile) {
-            if (widget.config.mobileHeight) {
-                return widget.config.mobileHeight;
+        if (vm.gridsterOpts.isMobile && !vm.mobileAutofillHeight) {
+            var mobileHeight;
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                mobileHeight = vm.widgetLayouts[widget.id].mobileHeight;
+            }
+            if (!mobileHeight && widget.config.mobileHeight) {
+                mobileHeight = widget.config.mobileHeight;
+            }
+            if (mobileHeight) {
+                return mobileHeight;
             } else {
                 return widget.sizeY * 24 / vm.gridsterOpts.columns;
             }
         } else {
-            return widget.sizeY;
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                return vm.widgetLayouts[widget.id].sizeY;
+            } else {
+                return widget.sizeY;
+            }
         }
+    }
+
+    function setWidgetSizeY(widget, sizeY) {
+        if (!vm.gridsterOpts.isMobile && !vm.autofillHeight) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].sizeY = sizeY;
+            } else {
+                widget.sizeY = sizeY;
+            }
+        }
+    }
+
+    function widgetRow(widget) {
+        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+            return vm.widgetLayouts[widget.id].row;
+        } else {
+            return widget.row;
+        }
+    }
+
+    function setWidgetRow(widget, row) {
+        if (!vm.gridsterOpts.isMobile) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].row = row;
+            } else {
+                widget.row = row;
+            }
+        }
+    }
+
+    function widgetCol(widget) {
+        if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+            return vm.widgetLayouts[widget.id].col;
+        } else {
+            return widget.col;
+        }
+    }
+
+    function setWidgetCol(widget, col) {
+        if (!vm.gridsterOpts.isMobile) {
+            if (vm.widgetLayouts && vm.widgetLayouts[widget.id]) {
+                vm.widgetLayouts[widget.id].col = col;
+            } else {
+                widget.col = col;
+            }
+        }
+    }
+
+    function widgetStyle(widget) {
+        var style = {cursor: 'pointer',
+                     color: widgetColor(widget),
+                     backgroundColor: widgetBackgroundColor(widget),
+                     padding: widgetPadding(widget),
+                     margin: widgetMargin(widget)};
+        if (angular.isDefined(widget.config.widgetStyle)) {
+            Object.assign(style, widget.config.widgetStyle);
+        }
+        return style;
     }
 
     function widgetColor(widget) {
@@ -607,9 +879,53 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         }
     }
 
+    function widgetMargin(widget) {
+        if (widget.config.margin) {
+            return widget.config.margin;
+        } else {
+            return '0px';
+        }
+    }
+
     function showWidgetTitle(widget) {
         if (angular.isDefined(widget.config.showTitle)) {
             return widget.config.showTitle;
+        } else {
+            return true;
+        }
+    }
+
+    function hasWidgetTitleTemplate(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitleTemplate) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function widgetTitleTemplate(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitleTemplate) {
+            return ctx.widgetTitleTemplate;
+        } else {
+            return '';
+        }
+    }
+
+    function showWidgetTitlePanel(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.hideTitlePanel) {
+            return false;
+        } else {
+            return hasWidgetTitleTemplate(widget) || showWidgetTitle(widget) || hasTimewindow(widget);
+        }
+    }
+
+    function showWidgetActions(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.hideTitlePanel) {
+            return false;
         } else {
             return true;
         }
@@ -621,6 +937,42 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         } else {
             return {};
         }
+    }
+
+    function widgetTitle(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetTitle
+            && ctx.widgetTitle.length) {
+            return ctx.widgetTitle;
+        } else {
+            return widget.config.title;
+        }
+    }
+
+    function customWidgetHeaderActions(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.customHeaderActions && ctx.customHeaderActions.length) {
+            return ctx.customHeaderActions;
+        } else {
+            return [];
+        }
+    }
+
+    function widgetActions(widget) {
+        var ctx = widgetContext(widget);
+        if (ctx && ctx.widgetActions && ctx.widgetActions.length) {
+            return ctx.widgetActions;
+        } else {
+            return [];
+        }
+    }
+
+    function widgetContext(widget) {
+        var context;
+        if (widget.$ctx) {
+            context = widget.$ctx();
+        }
+        return context;
     }
 
     function dropWidgetShadow(widget) {
@@ -640,7 +992,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function hasTimewindow(widget) {
-        if (widget.type === types.widgetType.timeseries.value) {
+        if (widget.type === types.widgetType.timeseries.value || widget.type === types.widgetType.alarm.value) {
             return angular.isDefined(widget.config.useDashboardTimewindow) ?
                 !widget.config.useDashboardTimewindow : false;
         } else {
@@ -648,12 +1000,16 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
         }
     }
 
+    function hasAggregation(widget) {
+        return widget.type === types.widgetType.timeseries.value;
+    }
+
     function adoptMaxRows() {
         if (vm.widgets) {
             var maxRows = vm.gridsterOpts.maxRows;
             for (var i = 0; i < vm.widgets.length; i++) {
                 var w = vm.widgets[i];
-                var bottom = w.row + w.sizeY;
+                var bottom = widgetRow(w) + widgetSizeY(w);
                 maxRows = Math.max(maxRows, bottom);
             }
             vm.gridsterOpts.maxRows = Math.max(maxRows, vm.gridsterOpts.maxRows);
@@ -661,24 +1017,41 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, t
     }
 
     function dashboardLoaded() {
-        $timeout(function () {
-            $scope.$watch('vm.dashboardTimewindow', function () {
+        $mdUtil.nextTick(function () {
+            if (vm.dashboardTimewindowWatch) {
+                vm.dashboardTimewindowWatch();
+                vm.dashboardTimewindowWatch = null;
+            }
+            vm.dashboardTimewindowWatch = $scope.$watch('vm.dashboardTimewindow', function () {
                 $scope.$broadcast('dashboardTimewindowChanged', vm.dashboardTimewindow);
             }, true);
             adoptMaxRows();
             vm.dashboardLoading = false;
-            $timeout(function () {
-                var gridsterScope = gridsterElement.scope();
-                vm.gridster = gridsterScope.gridster;
-                if (vm.onInit) {
-                    vm.onInit({dashboard: vm});
+            if ($scope.gridsterScopeWatcher) {
+                $scope.gridsterScopeWatcher();
+            }
+            $scope.gridsterScopeWatcher = $scope.$watch(
+                function() {
+                    var hasScope = gridsterElement.scope() ? true : false;
+                    return hasScope;
+                },
+                function(hasScope) {
+                    if (hasScope) {
+                        $scope.gridsterScopeWatcher();
+                        $scope.gridsterScopeWatcher = null;
+                        var gridsterScope = gridsterElement.scope();
+                        vm.gridster = gridsterScope.gridster;
+                        if (vm.onInit) {
+                            vm.onInit({dashboard: vm});
+                        }
+                    }
                 }
-            }, 0, false);
-        }, 0, false);
+            );
+        });
     }
 
     function loading() {
-        return $rootScope.loading;
+        return !vm.ignoreLoading && $rootScope.loading;
     }
 
 }

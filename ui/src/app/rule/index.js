@@ -17,7 +17,6 @@ import uiRouter from 'angular-ui-router';
 import thingsboardGrid from '../components/grid.directive';
 import thingsboardPluginSelect from '../components/plugin-select.directive';
 import thingsboardComponent from '../component';
-import thingsboardEvent from '../event';
 import thingsboardApiRule from '../api/rule.service';
 import thingsboardApiPlugin from '../api/plugin.service';
 import thingsboardApiComponentDescriptor from '../api/component-descriptor.service';
@@ -31,7 +30,6 @@ export default angular.module('thingsboard.rule', [
     thingsboardGrid,
     thingsboardPluginSelect,
     thingsboardComponent,
-    thingsboardEvent,
     thingsboardApiRule,
     thingsboardApiPlugin,
     thingsboardApiComponentDescriptor

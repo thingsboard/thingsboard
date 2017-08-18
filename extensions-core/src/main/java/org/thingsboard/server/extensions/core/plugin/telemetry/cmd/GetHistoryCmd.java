@@ -28,7 +28,8 @@ import lombok.NoArgsConstructor;
 public class GetHistoryCmd implements TelemetryPluginCmd {
 
     private int cmdId;
-    private String deviceId;
+    private String entityType;
+    private String entityId;
     private String keys;
     private long startTs;
     private long endTs;

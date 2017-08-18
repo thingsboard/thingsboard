@@ -16,7 +16,7 @@
 import './dashboard-settings.scss';
 
 /*@ngInject*/
-export default function DashboardSettingsController($scope, $mdDialog, gridSettings) {
+export default function DashboardSettingsController($scope, $mdDialog, statesControllerService, settings, gridSettings) {
 
     var vm = this;
 
@@ -25,32 +25,58 @@ export default function DashboardSettingsController($scope, $mdDialog, gridSetti
     vm.imageAdded = imageAdded;
     vm.clearImage = clearImage;
 
-    vm.gridSettings = gridSettings || {};
+    vm.stateControllerIdChanged = stateControllerIdChanged;
 
-    if (angular.isUndefined(vm.gridSettings.showTitle)) {
-        vm.gridSettings.showTitle = true;
+    vm.settings = settings;
+    vm.gridSettings = gridSettings;
+    vm.stateControllers = statesControllerService.getStateControllers();
+
+    if (vm.settings) {
+        if (angular.isUndefined(vm.settings.stateControllerId)) {
+            vm.settings.stateControllerId = 'entity';
+        }
+
+        if (angular.isUndefined(vm.settings.showTitle)) {
+            vm.settings.showTitle = false;
+        }
+
+        if (angular.isUndefined(vm.settings.titleColor)) {
+            vm.settings.titleColor = 'rgba(0,0,0,0.870588)';
+        }
+
+        if (angular.isUndefined(vm.settings.showDashboardsSelect)) {
+            vm.settings.showDashboardsSelect = true;
+        }
+
+        if (angular.isUndefined(vm.settings.showEntitiesSelect)) {
+            vm.settings.showEntitiesSelect = true;
+        }
+
+        if (angular.isUndefined(vm.settings.showDashboardTimewindow)) {
+            vm.settings.showDashboardTimewindow = true;
+        }
+
+        if (angular.isUndefined(vm.settings.showDashboardExport)) {
+            vm.settings.showDashboardExport = true;
+        }
+
+        if (angular.isUndefined(vm.settings.toolbarAlwaysOpen)) {
+            vm.settings.toolbarAlwaysOpen = true;
+        }
     }
 
-    if (angular.isUndefined(vm.gridSettings.showDevicesSelect)) {
-        vm.gridSettings.showDevicesSelect = true;
+    if (vm.gridSettings) {
+        vm.gridSettings.backgroundColor = vm.gridSettings.backgroundColor || 'rgba(0,0,0,0)';
+        vm.gridSettings.color = vm.gridSettings.color || 'rgba(0,0,0,0.870588)';
+        vm.gridSettings.columns = vm.gridSettings.columns || 24;
+        vm.gridSettings.margins = vm.gridSettings.margins || [10, 10];
+        vm.gridSettings.autoFillHeight = angular.isDefined(vm.gridSettings.autoFillHeight) ? vm.gridSettings.autoFillHeight : false;
+        vm.gridSettings.mobileAutoFillHeight = angular.isDefined(vm.gridSettings.mobileAutoFillHeight) ? vm.gridSettings.mobileAutoFillHeight : false;
+        vm.gridSettings.mobileRowHeight = angular.isDefined(vm.gridSettings.mobileRowHeight) ? vm.gridSettings.mobileRowHeight : 70;
+        vm.hMargin = vm.gridSettings.margins[0];
+        vm.vMargin = vm.gridSettings.margins[1];
+        vm.gridSettings.backgroundSizeMode = vm.gridSettings.backgroundSizeMode || '100%';
     }
-
-    if (angular.isUndefined(vm.gridSettings.showDashboardTimewindow)) {
-        vm.gridSettings.showDashboardTimewindow = true;
-    }
-
-    if (angular.isUndefined(vm.gridSettings.showDashboardExport)) {
-        vm.gridSettings.showDashboardExport = true;
-    }
-
-    vm.gridSettings.backgroundColor = vm.gridSettings.backgroundColor || 'rgba(0,0,0,0)';
-    vm.gridSettings.titleColor = vm.gridSettings.titleColor || 'rgba(0,0,0,0.870588)';
-    vm.gridSettings.columns = vm.gridSettings.columns || 24;
-    vm.gridSettings.margins = vm.gridSettings.margins || [10, 10];
-    vm.hMargin = vm.gridSettings.margins[0];
-    vm.vMargin = vm.gridSettings.margins[1];
-
-    vm.gridSettings.backgroundSizeMode = vm.gridSettings.backgroundSizeMode || '100%';
 
     function cancel() {
         $mdDialog.cancel();
@@ -74,9 +100,22 @@ export default function DashboardSettingsController($scope, $mdDialog, gridSetti
         vm.gridSettings.backgroundImageUrl = null;
     }
 
+    function stateControllerIdChanged() {
+        if (vm.settings.stateControllerId != 'default') {
+            vm.settings.toolbarAlwaysOpen = true;
+        }
+    }
+
     function save() {
         $scope.theForm.$setPristine();
-        vm.gridSettings.margins = [vm.hMargin, vm.vMargin];
-        $mdDialog.hide(vm.gridSettings);
+        if (vm.gridSettings) {
+            vm.gridSettings.margins = [vm.hMargin, vm.vMargin];
+        }
+        $mdDialog.hide(
+            {
+                settings: vm.settings,
+                gridSettings: vm.gridSettings
+            }
+        );
     }
 }

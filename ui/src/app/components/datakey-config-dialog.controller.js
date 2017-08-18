@@ -20,14 +20,14 @@ export default angular.module('thingsboard.dialogs.datakeyConfigDialog', [things
     .name;
 
 /*@ngInject*/
-function DatakeyConfigDialogController($scope, $mdDialog, deviceService, dataKey, dataKeySettingsSchema, deviceAlias, deviceAliases) {
+function DatakeyConfigDialogController($scope, $mdDialog, $q, entityService, dataKey, dataKeySettingsSchema, entityAlias, aliasController) {
 
     var vm = this;
 
     vm.dataKey = dataKey;
     vm.dataKeySettingsSchema = dataKeySettingsSchema;
-    vm.deviceAlias = deviceAlias;
-    vm.deviceAliases = deviceAliases;
+    vm.entityAlias = entityAlias;
+    vm.aliasController = aliasController;
 
     vm.hide = function () {
         $mdDialog.hide();
@@ -37,13 +37,29 @@ function DatakeyConfigDialogController($scope, $mdDialog, deviceService, dataKey
         $mdDialog.cancel();
     };
 
-    vm.fetchDeviceKeys = function (deviceAliasId, query, type) {
-        var alias = vm.deviceAliases[deviceAliasId];
-        if (alias) {
-            return deviceService.getDeviceKeys(alias.deviceId, query, type);
-        } else {
-            return [];
-        }
+    vm.fetchEntityKeys = function (entityAliasId, query, type) {
+        var deferred = $q.defer();
+        vm.aliasController.getAliasInfo(entityAliasId).then(
+            function success(aliasInfo) {
+                var entity = aliasInfo.currentEntity;
+                if (entity) {
+                    entityService.getEntityKeys(entity.entityType, entity.id, query, type).then(
+                        function success(keys) {
+                            deferred.resolve(keys);
+                        },
+                        function fail() {
+                            deferred.resolve([]);
+                        }
+                    );
+                } else {
+                    deferred.resolve([]);
+                }
+            },
+            function fail() {
+                deferred.resolve([]);
+            }
+        );
+        return deferred.promise;
     };
 
     vm.save = function () {

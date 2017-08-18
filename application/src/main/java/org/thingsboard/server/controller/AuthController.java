@@ -107,7 +107,7 @@ public class AuthController extends BaseController {
             try {
                 URI location = new URI(createPasswordURI + "?activateToken=" + activateToken);
                 headers.setLocation(location);
-                responseStatus = HttpStatus.PERMANENT_REDIRECT;
+                responseStatus = HttpStatus.SEE_OTHER;
             } catch (URISyntaxException e) {
                 log.error("Unable to create URI with address [{}]", createPasswordURI);
                 responseStatus = HttpStatus.BAD_REQUEST;
@@ -146,7 +146,7 @@ public class AuthController extends BaseController {
             try {
                 URI location = new URI(resetPasswordURI + "?resetToken=" + resetToken);
                 headers.setLocation(location);
-                responseStatus = HttpStatus.PERMANENT_REDIRECT;
+                responseStatus = HttpStatus.SEE_OTHER;
             } catch (URISyntaxException e) {
                 log.error("Unable to create URI with address [{}]", resetPasswordURI);
                 responseStatus = HttpStatus.BAD_REQUEST;
@@ -173,7 +173,12 @@ public class AuthController extends BaseController {
             String baseUrl = constructBaseUrl(request);
             String loginUrl = String.format("%s/login", baseUrl);
             String email = user.getEmail();
-            mailService.sendAccountActivatedEmail(loginUrl, email);
+
+            try {
+                mailService.sendAccountActivatedEmail(loginUrl, email);
+            } catch (Exception e) {
+                log.info("Unable to send account activation email [{}]", e.getMessage());
+            }
 
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);

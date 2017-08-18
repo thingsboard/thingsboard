@@ -15,7 +15,6 @@
  */
 import uiRouter from 'angular-ui-router';
 import thingsboardGrid from '../components/grid.directive';
-import thingsboardEvent from '../event';
 import thingsboardApiUser from '../api/user.service';
 import thingsboardApiDevice from '../api/device.service';
 import thingsboardApiCustomer from '../api/customer.service';
@@ -25,15 +24,11 @@ import {DeviceController, DeviceCardController} from './device.controller';
 import AssignDeviceToCustomerController from './assign-to-customer.controller';
 import AddDevicesToCustomerController from './add-devices-to-customer.controller';
 import ManageDeviceCredentialsController from './device-credentials.controller';
-import AddAttributeDialogController from './attribute/add-attribute-dialog.controller';
-import AddWidgetToDashboardDialogController from './attribute/add-widget-to-dashboard-dialog.controller';
 import DeviceDirective from './device.directive';
-import AttributeTableDirective from './attribute/attribute-table.directive';
 
 export default angular.module('thingsboard.device', [
     uiRouter,
     thingsboardGrid,
-    thingsboardEvent,
     thingsboardApiUser,
     thingsboardApiDevice,
     thingsboardApiCustomer
@@ -44,8 +39,5 @@ export default angular.module('thingsboard.device', [
     .controller('AssignDeviceToCustomerController', AssignDeviceToCustomerController)
     .controller('AddDevicesToCustomerController', AddDevicesToCustomerController)
     .controller('ManageDeviceCredentialsController', ManageDeviceCredentialsController)
-    .controller('AddAttributeDialogController', AddAttributeDialogController)
-    .controller('AddWidgetToDashboardDialogController', AddWidgetToDashboardDialogController)
     .directive('tbDevice', DeviceDirective)
-    .directive('tbAttributeTable', AttributeTableDirective)
     .name;

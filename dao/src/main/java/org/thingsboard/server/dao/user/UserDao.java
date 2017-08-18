@@ -15,15 +15,14 @@
  */
 package org.thingsboard.server.dao.user;
 
-import java.util.List;
-import java.util.UUID;
-
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.model.UserEntity;
 
-public interface UserDao extends Dao<UserEntity> {
+import java.util.List;
+import java.util.UUID;
+
+public interface UserDao extends Dao<User> {
 
     /**
      * Save or update user object
@@ -31,7 +30,7 @@ public interface UserDao extends Dao<UserEntity> {
      * @param user the user object
      * @return saved user entity
      */
-    UserEntity save(User user);
+    User save(User user);
 
     /**
      * Find user by email.
@@ -39,7 +38,7 @@ public interface UserDao extends Dao<UserEntity> {
      * @param email the email
      * @return the user entity
      */
-    UserEntity findByEmail(String email);
+    User findByEmail(String email);
     
     /**
      * Find tenant admin users by tenantId and page link.
@@ -48,7 +47,7 @@ public interface UserDao extends Dao<UserEntity> {
      * @param pageLink the page link
      * @return the list of user entities
      */
-    List<UserEntity> findTenantAdmins(UUID tenantId, TextPageLink pageLink);
+    List<User> findTenantAdmins(UUID tenantId, TextPageLink pageLink);
     
     /**
      * Find customer users by tenantId, customerId and page link.
@@ -58,6 +57,6 @@ public interface UserDao extends Dao<UserEntity> {
      * @param pageLink the page link
      * @return the list of user entities
      */
-    List<UserEntity> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink);
+    List<User> findCustomerUsers(UUID tenantId, UUID customerId, TextPageLink pageLink);
     
 }

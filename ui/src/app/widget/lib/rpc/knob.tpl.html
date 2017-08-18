@@ -1,0 +1,46 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<div class="tb-knob" layout="column" ng-style="{'pointerEvents': vm.ctx.isEdit ? 'none' : 'all'}">
+    <div id="knob-container" flex layout="column" layout-align="center center">
+        <div class="knob">
+            <div class="value-container" layout="row" layout-align="center center">
+                <span class="knob-value">{{ vm.value }}</span>
+            </div>
+            <div class="canvas-background"></div>
+            <canvas id="canvasBar"></canvas>
+            <div class="top-pointer-container">
+                <div class="top-pointer"></div>
+            </div>
+            <div class="top"></div>
+            <div class="error-container" ng-style="{'background': vm.error.length ? 'rgba(255,255,255,0.25)' : 'none'}"
+                 layout="row" layout-align="center center">
+                <span class="knob-error">{{ vm.error }}</span>
+            </div>
+            <div class="title-container" layout="row" layout-align="center center">
+                <span class="knob-title">{{ vm.title }}</span>
+            </div>
+            <div class="minmax-container" layout="row" layout-align="start center">
+                <span class="minmax-label">min</span>
+                <span flex></span>
+                <span class="minmax-label">max</span>
+            </div>
+            <div id="text-measure"></div>
+        </div>
+    </div>
+</div>

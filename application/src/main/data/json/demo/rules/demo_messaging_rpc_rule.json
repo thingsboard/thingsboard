@@ -1,0 +1,38 @@
+{
+  "name": "Demo Messaging RPC Rule",
+  "state": "ACTIVE",
+  "weight": 0,
+  "pluginToken": "messaging",
+  "filters": [
+    {
+      "configuration": {
+        "messageTypes": [
+          "RPC_REQUEST"
+        ]
+      },
+      "name": "RPC Request Filter",
+      "clazz": "org.thingsboard.server.extensions.core.filter.MsgTypeFilter"
+    },
+    {
+      "configuration": {
+        "methodNames": [
+          {
+            "name": "getDevices"
+          },
+          {
+            "name": "sendMsg"
+          }
+        ]
+      },
+      "name": "Messaging methods filter",
+      "clazz": "org.thingsboard.server.extensions.core.filter.MethodNameFilter"
+    }
+  ],
+  "processor": null,
+  "action": {
+    "configuration": {},
+    "clazz": "org.thingsboard.server.extensions.core.action.rpc.RpcPluginAction",
+    "name": "Messaging RPC Action"
+  },
+  "additionalInfo": null
+}

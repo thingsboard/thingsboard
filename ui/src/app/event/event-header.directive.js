@@ -18,7 +18,6 @@
 import eventHeaderLcEventTemplate from './event-header-lc-event.tpl.html';
 import eventHeaderStatsTemplate from './event-header-stats.tpl.html';
 import eventHeaderErrorTemplate from './event-header-error.tpl.html';
-import eventHeaderAlarmTemplate from './event-header-alarm.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -38,9 +37,6 @@ export default function EventHeaderDirective($compile, $templateCache, types) {
                     break;
                 case types.eventType.error.value:
                     template = eventHeaderErrorTemplate;
-                    break;
-                case types.eventType.alarm.value:
-                    template = eventHeaderAlarmTemplate;
                     break;
             }
             return $templateCache.get(template);

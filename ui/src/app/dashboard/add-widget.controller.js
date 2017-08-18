@@ -15,17 +15,18 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import deviceAliasesTemplate from './device-aliases.tpl.html';
+import entityAliasDialogTemplate from '../entity/alias/entity-alias-dialog.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function AddWidgetController($scope, widgetService, deviceService, $mdDialog, $q, $document, types, dashboard, aliasesInfo, widget, widgetInfo) {
+export default function AddWidgetController($scope, widgetService, entityService, $mdDialog, $q, $document, types, dashboard,
+                                            aliasController, widget, widgetInfo) {
 
     var vm = this;
 
     vm.dashboard = dashboard;
-    vm.aliasesInfo = aliasesInfo;
+    vm.aliasController = aliasController;
     vm.widget = widget;
     vm.widgetInfo = widgetInfo;
 
@@ -34,10 +35,17 @@ export default function AddWidgetController($scope, widgetService, deviceService
     vm.helpLinkIdForWidgetType = helpLinkIdForWidgetType;
     vm.add = add;
     vm.cancel = cancel;
-    vm.fetchDeviceKeys = fetchDeviceKeys;
-    vm.createDeviceAlias = createDeviceAlias;
+    vm.fetchEntityKeys = fetchEntityKeys;
+    vm.fetchDashboardStates = fetchDashboardStates;
+    vm.createEntityAlias = createEntityAlias;
 
-    vm.widgetConfig = vm.widget.config;
+    vm.widgetConfig = {
+        config: vm.widget.config,
+        layout: {}
+    };
+
+    vm.widgetConfig.layout.mobileOrder = vm.widget.config.mobileOrder;
+    vm.widgetConfig.layout.mobileHeight = vm.widget.config.mobileHeight;
 
     var settingsSchema = vm.widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
     var dataKeySettingsSchema = vm.widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
@@ -69,6 +77,10 @@ export default function AddWidgetController($scope, widgetService, deviceService
                     link = 'widgetsConfigRpc';
                     break;
                 }
+                case types.widgetType.alarm.value: {
+                    link = 'widgetsConfigAlarm';
+                    break;
+                }
                 case types.widgetType.static.value: {
                     link = 'widgetsConfigStatic';
                     break;
@@ -79,58 +91,87 @@ export default function AddWidgetController($scope, widgetService, deviceService
     }
 
     function cancel () {
-        $mdDialog.cancel({aliasesInfo: vm.aliasesInfo});
+        $mdDialog.cancel();
     }
 
     function add () {
         if ($scope.theForm.$valid) {
             $scope.theForm.$setPristine();
-            vm.widget.config = vm.widgetConfig;
-            $mdDialog.hide({widget: vm.widget, aliasesInfo: vm.aliasesInfo});
+            vm.widget.config = vm.widgetConfig.config;
+            vm.widget.config.mobileOrder = vm.widgetConfig.layout.mobileOrder;
+            vm.widget.config.mobileHeight = vm.widgetConfig.layout.mobileHeight;
+            $mdDialog.hide({widget: vm.widget});
         }
     }
 
-    function fetchDeviceKeys (deviceAliasId, query, type) {
-        var deviceAlias = vm.aliasesInfo.deviceAliases[deviceAliasId];
-        if (deviceAlias && deviceAlias.deviceId) {
-            return deviceService.getDeviceKeys(deviceAlias.deviceId, query, type);
+    function fetchEntityKeys (entityAliasId, query, type) {
+        var deferred = $q.defer();
+        vm.aliasController.getAliasInfo(entityAliasId).then(
+            function success(aliasInfo) {
+                var entity = aliasInfo.currentEntity;
+                if (entity) {
+                    entityService.getEntityKeys(entity.entityType, entity.id, query, type).then(
+                        function success(keys) {
+                            deferred.resolve(keys);
+                        },
+                        function fail() {
+                            deferred.resolve([]);
+                        }
+                    );
+                } else {
+                    deferred.resolve([]);
+                }
+            },
+            function fail() {
+                deferred.resolve([]);
+            }
+        );
+        return deferred.promise;
+    }
+
+    function fetchDashboardStates (query) {
+        var deferred = $q.defer();
+        var stateIds = Object.keys(vm.dashboard.configuration.states);
+        var result = query ? stateIds.filter(
+            createFilterForDashboardState(query)) : stateIds;
+        if (result && result.length) {
+            deferred.resolve(result);
         } else {
-            return $q.when([]);
+            deferred.resolve([query]);
         }
+        return deferred.promise;
     }
 
-    function createDeviceAlias (event, alias) {
+    function createFilterForDashboardState (query) {
+        var lowercaseQuery = angular.lowercase(query);
+        return function filterFn(stateId) {
+            return (angular.lowercase(stateId).indexOf(lowercaseQuery) === 0);
+        };
+    }
+
+    function createEntityAlias (event, alias, allowedEntityTypes) {
 
         var deferred = $q.defer();
-        var singleDeviceAlias = {id: null, alias: alias, deviceFilter: null};
+        var singleEntityAlias = {id: null, alias: alias, filter: {}};
 
         $mdDialog.show({
-            controller: 'DeviceAliasesController',
+            controller: 'EntityAliasDialogController',
             controllerAs: 'vm',
-            templateUrl: deviceAliasesTemplate,
+            templateUrl: entityAliasDialogTemplate,
             locals: {
-                config: {
-                    deviceAliases: angular.copy(vm.dashboard.configuration.deviceAliases),
-                    widgets: null,
-                    isSingleDeviceAlias: true,
-                    singleDeviceAlias: singleDeviceAlias
-                }
+                isAdd: true,
+                allowedEntityTypes: allowedEntityTypes,
+                entityAliases: vm.dashboard.configuration.entityAliases,
+                alias: singleEntityAlias
             },
             parent: angular.element($document[0].body),
             fullscreen: true,
             skipHide: true,
             targetEvent: event
-        }).then(function (singleDeviceAlias) {
-            vm.dashboard.configuration.deviceAliases[singleDeviceAlias.id] =
-                { alias: singleDeviceAlias.alias, deviceFilter: singleDeviceAlias.deviceFilter };
-            deviceService.processDeviceAliases(vm.dashboard.configuration.deviceAliases).then(
-                function(resolution) {
-                    if (!resolution.error) {
-                        vm.aliasesInfo = resolution.aliasesInfo;
-                    }
-                    deferred.resolve(singleDeviceAlias);
-                }
-            );
+        }).then(function (singleEntityAlias) {
+            vm.dashboard.configuration.entityAliases[singleEntityAlias.id] = singleEntityAlias;
+            vm.aliasController.updateEntityAliases(vm.dashboard.configuration.entityAliases);
+            deferred.resolve(singleEntityAlias);
         }, function () {
             deferred.reject();
         });

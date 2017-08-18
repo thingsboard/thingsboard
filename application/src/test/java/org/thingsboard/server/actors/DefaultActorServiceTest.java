@@ -145,7 +145,7 @@ public class DefaultActorServiceTest {
         ReflectionTestUtils.setField(actorContext, "eventService", eventService);
 
 
-        when(routingService.resolve(any())).thenReturn(Optional.empty());
+        when(routingService.resolveById((EntityId) any())).thenReturn(Optional.empty());
 
         when(discoveryService.getCurrentServer()).thenReturn(serverInstance);
 
@@ -239,7 +239,7 @@ public class DefaultActorServiceTest {
         List<TsKvEntry> expected = new ArrayList<>();
         expected.add(new BasicTsKvEntry(ts, entry1));
         expected.add(new BasicTsKvEntry(ts, entry2));
-        verify(tsService, Mockito.timeout(5000)).save(DataConstants.DEVICE, deviceId, expected);
+        verify(tsService, Mockito.timeout(5000)).save(deviceId, expected, 0L);
     }
 
 }

@@ -39,6 +39,9 @@ export default class Subscription {
         this.cafs = {};
         this.registrations = [];
 
+        var subscription = this;
+        var deferred = this.ctx.$q.defer();
+
         if (this.type === this.ctx.types.widgetType.rpc.value) {
             this.callbacks.rpcStateChanged = this.callbacks.rpcStateChanged || function(){};
             this.callbacks.onRpcSuccess = this.callbacks.onRpcSuccess || function(){};
@@ -56,7 +59,50 @@ export default class Subscription {
             this.rpcEnabled = false;
             this.executingRpcRequest = false;
             this.executingPromises = [];
-            this.initRpc();
+            this.initRpc().then(
+                function() {
+                    deferred.resolve(subscription);
+                }
+            );
+        } else if (this.type === this.ctx.types.widgetType.alarm.value) {
+            this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || function(){};
+            this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || function(){};
+            this.callbacks.dataLoading = this.callbacks.dataLoading || function(){};
+            this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || function(){};
+            this.alarmSource = options.alarmSource;
+
+            this.alarmSearchStatus = angular.isDefined(options.alarmSearchStatus) ?
+                options.alarmSearchStatus : this.ctx.types.alarmSearchStatus.any;
+            this.alarmsPollingInterval = angular.isDefined(options.alarmsPollingInterval) ?
+                options.alarmsPollingInterval : 5000;
+
+            this.alarmSourceListener = null;
+            this.alarms = [];
+
+            this.originalTimewindow = null;
+            this.timeWindow = {
+                stDiff: this.ctx.stDiff
+            }
+            this.useDashboardTimewindow = options.useDashboardTimewindow;
+
+            if (this.useDashboardTimewindow) {
+                this.timeWindowConfig = angular.copy(options.dashboardTimewindow);
+            } else {
+                this.timeWindowConfig = angular.copy(options.timeWindowConfig);
+            }
+
+            this.subscriptionTimewindow = null;
+
+            this.loadingData = false;
+            this.displayLegend = false;
+            this.initAlarmSubscription().then(
+                function success() {
+                    deferred.resolve(subscription);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
         } else {
             this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || function(){};
             this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || function(){};
@@ -64,8 +110,17 @@ export default class Subscription {
             this.callbacks.legendDataUpdated = this.callbacks.legendDataUpdated || function(){};
             this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || function(){};
 
-            this.datasources = options.datasources;
+            this.datasources = this.ctx.utils.validateDatasources(options.datasources);
             this.datasourceListeners = [];
+
+            /*
+             *   data = array of datasourceData
+             *   datasourceData = {
+             *   			tbDatasource,
+             *   			dataKey,     { name, config }
+             *   			data = array of [time, value]
+             *   }
+             */
             this.data = [];
             this.hiddenData = [];
             this.originalTimewindow = null;
@@ -103,16 +158,126 @@ export default class Subscription {
                 this.legendConfig.showMax === true ||
                 this.legendConfig.showAvg === true ||
                 this.legendConfig.showTotal === true);
-            this.initDataSubscription();
+            this.initDataSubscription().then(
+                function success() {
+                    deferred.resolve(subscription);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+
+        return deferred.promise;
+    }
+
+    getFirstEntityInfo() {
+        var entityId;
+        var entityName;
+        if (this.type === this.ctx.types.widgetType.rpc.value) {
+            if (this.targetDeviceId) {
+                entityId = {
+                    entityType: this.ctx.entityType.device,
+                    id: this.targetDeviceId
+                }
+                entityName = this.targetDeviceName;
+            }
+        } else if (this.type == this.ctx.types.widgetType.alarm.value) {
+            if (this.alarmSource && this.alarmSource.entityType && this.alarmSource.entityId) {
+                entityId = {
+                    entityType: this.alarmSource.entityType,
+                    id: this.alarmSource.entityId
+                }
+                entityName = this.alarmSource.entityName;
+            }
+        } else {
+            for (var i=0;i<this.datasources.length;i++) {
+                var datasource = this.datasources[i];
+                if (datasource && datasource.entityType && datasource.entityId) {
+                    entityId = {
+                        entityType: datasource.entityType,
+                        id: datasource.entityId
+                    }
+                    entityName = datasource.entityName;
+                    break;
+                }
+            }
+        }
+        if (entityId) {
+            return {
+                entityId: entityId,
+                entityName: entityName
+            };
+        } else {
+            return null;
+        }
+    }
+
+    initAlarmSubscription() {
+        var deferred = this.ctx.$q.defer();
+        if (!this.ctx.aliasController) {
+            this.configureAlarmsData();
+            deferred.resolve();
+        } else {
+            var subscription = this;
+            this.ctx.aliasController.resolveAlarmSource(this.alarmSource).then(
+                function success(alarmSource) {
+                    subscription.alarmSource = alarmSource;
+                    subscription.configureAlarmsData();
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    configureAlarmsData() {
+        var subscription = this;
+        var registration;
+        if (this.useDashboardTimewindow) {
+            registration = this.ctx.$scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
+                if (!angular.equals(subscription.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
+                    subscription.timeWindowConfig = angular.copy(newDashboardTimewindow);
+                    subscription.update();
+                }
+            });
+            this.registrations.push(registration);
+        } else {
+            this.startWatchingTimewindow();
         }
     }
 
     initDataSubscription() {
+        var deferred = this.ctx.$q.defer();
+        if (!this.ctx.aliasController) {
+            this.configureData();
+            deferred.resolve();
+        } else {
+            var subscription = this;
+            this.ctx.aliasController.resolveDatasources(this.datasources).then(
+                function success(datasources) {
+                    subscription.datasources = datasources;
+                    subscription.configureData();
+                    deferred.resolve();
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    configureData() {
         var dataIndex = 0;
         for (var i = 0; i < this.datasources.length; i++) {
             var datasource = this.datasources[i];
             for (var a = 0; a < datasource.dataKeys.length; a++) {
                 var dataKey = datasource.dataKeys[a];
+                dataKey.hidden = false;
                 dataKey.pattern = angular.copy(dataKey.label);
                 var datasourceData = {
                     datasource: datasource,
@@ -146,11 +311,11 @@ export default class Subscription {
             this.legendData.keys = this.ctx.$filter('orderBy')(this.legendData.keys, '+label');
             registration = this.ctx.$scope.$watch(
                 function() {
-                    return subscription.legendData.data;
+                    return subscription.legendData.keys;
                 },
                 function (newValue, oldValue) {
                     for(var i = 0; i < newValue.length; i++) {
-                        if(newValue[i].hidden != oldValue[i].hidden) {
+                        if(newValue[i].dataKey.hidden != oldValue[i].dataKey.hidden) {
                             subscription.updateDataVisibility(i);
                         }
                     }
@@ -163,8 +328,7 @@ export default class Subscription {
                 registration = this.ctx.$scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
                     if (!angular.equals(subscription.timeWindowConfig, newDashboardTimewindow) && newDashboardTimewindow) {
                         subscription.timeWindowConfig = angular.copy(newDashboardTimewindow);
-                        subscription.unsubscribe();
-                        subscription.subscribe();
+                        subscription.update();
                     }
                 });
                 this.registrations.push(registration);
@@ -172,12 +336,21 @@ export default class Subscription {
                 this.startWatchingTimewindow();
             }
         }
+    }
 
-        registration = this.ctx.$scope.$on('deviceAliasListChanged', function () {
-            subscription.checkSubscriptions();
-        });
-
-        this.registrations.push(registration);
+    resetData() {
+        for (var i=0;i<this.data.length;i++) {
+            this.data[i].data = [];
+            this.hiddenData[i].data = [];
+            if (this.displayLegend) {
+                this.legendData.data[i].min = null;
+                this.legendData.data[i].max = null;
+                this.legendData.data[i].avg = null;
+                this.legendData.data[i].total = null;
+                this.legendData.data[i].hidden = false;
+            }
+        }
+        this.onDataUpdated();
     }
 
     startWatchingTimewindow() {
@@ -186,8 +359,7 @@ export default class Subscription {
             return subscription.timeWindowConfig;
         }, function (newTimewindow, prevTimewindow) {
             if (!angular.equals(newTimewindow, prevTimewindow)) {
-                subscription.unsubscribe();
-                subscription.subscribe();
+                subscription.update();
             }
         }, true);
         this.registrations.push(this.timeWindowWatchRegistration);
@@ -204,39 +376,47 @@ export default class Subscription {
     }
 
     initRpc() {
-
+        var deferred = this.ctx.$q.defer();
         if (this.targetDeviceAliasIds && this.targetDeviceAliasIds.length > 0) {
             this.targetDeviceAliasId = this.targetDeviceAliasIds[0];
-            if (this.ctx.aliasesInfo.deviceAliases[this.targetDeviceAliasId]) {
-                this.targetDeviceId = this.ctx.aliasesInfo.deviceAliases[this.targetDeviceAliasId].deviceId;
-            }
             var subscription = this;
-            var registration = this.ctx.$scope.$on('deviceAliasListChanged', function () {
-                var deviceId = null;
-                if (subscription.ctx.aliasesInfo.deviceAliases[subscription.targetDeviceAliasId]) {
-                    deviceId = subscription.ctx.aliasesInfo.deviceAliases[subscription.targetDeviceAliasId].deviceId;
-                }
-                if (!angular.equals(deviceId, subscription.targetDeviceId)) {
-                    subscription.targetDeviceId = deviceId;
-                    if (subscription.targetDeviceId) {
-                        subscription.rpcEnabled = true;
+            this.ctx.aliasController.getAliasInfo(this.targetDeviceAliasId).then(
+                function success(aliasInfo) {
+                    if (aliasInfo.currentEntity && aliasInfo.currentEntity.entityType == subscription.ctx.types.entityType.device) {
+                        subscription.targetDeviceId = aliasInfo.currentEntity.id;
+                        subscription.targetDeviceName = aliasInfo.currentEntity.name;
+                        if (subscription.targetDeviceId) {
+                            subscription.rpcEnabled = true;
+                        } else {
+                            subscription.rpcEnabled = subscription.ctx.$scope.widgetEditMode ? true : false;
+                        }
+                        subscription.callbacks.rpcStateChanged(subscription);
+                        deferred.resolve();
                     } else {
-                        subscription.rpcEnabled = subscription.ctx.$scope.widgetEditMode ? true : false;
+                        subscription.rpcEnabled = false;
+                        subscription.callbacks.rpcStateChanged(subscription);
+                        deferred.resolve();
                     }
+                },
+                function fail () {
+                    subscription.rpcEnabled = false;
                     subscription.callbacks.rpcStateChanged(subscription);
+                    deferred.resolve();
                 }
-            });
-            this.registrations.push(registration);
-        } else if (this.targetDeviceIds && this.targetDeviceIds.length > 0) {
-            this.targetDeviceId = this.targetDeviceIds[0];
+            );
+        } else  {
+            if (this.targetDeviceIds && this.targetDeviceIds.length > 0) {
+                this.targetDeviceId = this.targetDeviceIds[0];
+            }
+            if (this.targetDeviceId) {
+                this.rpcEnabled = true;
+            } else {
+                this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
+            }
+            this.callbacks.rpcStateChanged(this);
+            deferred.resolve();
         }
-
-        if (this.targetDeviceId) {
-            this.rpcEnabled = true;
-        } else {
-            this.rpcEnabled = this.ctx.$scope.widgetEditMode ? true : false;
-        }
-        this.callbacks.rpcStateChanged(this);
+        return deferred.promise;
     }
 
     clearRpcError() {
@@ -331,7 +511,7 @@ export default class Subscription {
     }
 
     updateDataVisibility(index) {
-        var hidden = this.legendData.data[index].hidden;
+        var hidden = this.legendData.keys[index].dataKey.hidden;
         if (hidden) {
             this.hiddenData[index].data = this.data[index].data;
             this.data[index].data = [];
@@ -340,6 +520,16 @@ export default class Subscription {
             this.hiddenData[index].data = [];
         }
         this.onDataUpdated();
+    }
+
+    onAliasesChanged(aliasIds) {
+        if (this.type === this.ctx.types.widgetType.rpc.value) {
+            return this.checkRpcTarget(aliasIds);
+        } else if (this.type === this.ctx.types.widgetType.alarm.value) {
+            return this.checkAlarmSource(aliasIds);
+        } else {
+            return this.checkSubscriptions(aliasIds);
+        }
     }
 
     onDataUpdated(apply) {
@@ -373,8 +563,7 @@ export default class Subscription {
                 this.timeWindowConfig = angular.copy(this.originalTimewindow);
                 this.originalTimewindow = null;
                 this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
-                this.unsubscribe();
-                this.subscribe();
+                this.update();
                 this.startWatchingTimewindow();
             }
         }
@@ -390,8 +579,7 @@ export default class Subscription {
             }
             this.timeWindowConfig = this.ctx.timeService.toHistoryTimewindow(this.timeWindowConfig, startTimeMs, endTimeMs);
             this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
-            this.unsubscribe();
-            this.subscribe();
+            this.update();
             this.startWatchingTimewindow();
         }
     }
@@ -434,14 +622,16 @@ export default class Subscription {
         this.notifyDataLoaded();
         var update = true;
         var currentData;
-        if (this.displayLegend && this.legendData.data[datasourceIndex + dataKeyIndex].hidden) {
+        if (this.displayLegend && this.legendData.keys[datasourceIndex + dataKeyIndex].dataKey.hidden) {
             currentData = this.hiddenData[datasourceIndex + dataKeyIndex];
         } else {
             currentData = this.data[datasourceIndex + dataKeyIndex];
         }
         if (this.type === this.ctx.types.widgetType.latest.value) {
             var prevData = currentData.data;
-            if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
+            if (!sourceData.data.length) {
+                update = false;
+            } else if (prevData && prevData[0] && prevData[0].length > 1 && sourceData.data.length > 0) {
                 var prevValue = prevData[0][1];
                 if (prevValue === sourceData.data[0][1]) {
                     update = false;
@@ -460,132 +650,194 @@ export default class Subscription {
         }
     }
 
+    alarmsUpdated(alarms, apply) {
+        this.notifyDataLoaded();
+        this.alarms = alarms;
+        if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
+            this.updateTimewindow();
+        }
+        this.onDataUpdated(apply);
+    }
+
     updateLegend(dataIndex, data, apply) {
+        var dataKey = this.legendData.keys[dataIndex].dataKey;
+        var decimals = angular.isDefined(dataKey.decimals) ? dataKey.decimals : this.decimals;
+        var units = dataKey.units && dataKey.units.length ? dataKey.units : this.units;
         var legendKeyData = this.legendData.data[dataIndex];
         if (this.legendConfig.showMin) {
-            legendKeyData.min = this.ctx.widgetUtils.formatValue(calculateMin(data), this.decimals, this.units);
+            legendKeyData.min = this.ctx.widgetUtils.formatValue(calculateMin(data), decimals, units);
         }
         if (this.legendConfig.showMax) {
-            legendKeyData.max = this.ctx.widgetUtils.formatValue(calculateMax(data), this.decimals, this.units);
+            legendKeyData.max = this.ctx.widgetUtils.formatValue(calculateMax(data), decimals, units);
         }
         if (this.legendConfig.showAvg) {
-            legendKeyData.avg = this.ctx.widgetUtils.formatValue(calculateAvg(data), this.decimals, this.units);
+            legendKeyData.avg = this.ctx.widgetUtils.formatValue(calculateAvg(data), decimals, units);
         }
         if (this.legendConfig.showTotal) {
-            legendKeyData.total = this.ctx.widgetUtils.formatValue(calculateTotal(data), this.decimals, this.units);
+            legendKeyData.total = this.ctx.widgetUtils.formatValue(calculateTotal(data), decimals, units);
         }
         this.callbacks.legendDataUpdated(this, apply !== false);
+    }
+
+    update() {
+        this.unsubscribe();
+        this.subscribe();
     }
 
     subscribe() {
         if (this.type === this.ctx.types.widgetType.rpc.value) {
             return;
         }
+        if (this.type === this.ctx.types.widgetType.alarm.value) {
+            this.alarmsSubscribe();
+        } else {
+            this.notifyDataLoading();
+            if (this.type === this.ctx.types.widgetType.timeseries.value && this.timeWindowConfig) {
+                this.updateRealtimeSubscription();
+                if (this.subscriptionTimewindow.fixedWindow) {
+                    this.onDataUpdated();
+                }
+            }
+            var index = 0;
+            for (var i = 0; i < this.datasources.length; i++) {
+                var datasource = this.datasources[i];
+                if (angular.isFunction(datasource))
+                    continue;
+
+                var subscription = this;
+
+                var listener = {
+                    subscriptionType: this.type,
+                    subscriptionTimewindow: this.subscriptionTimewindow,
+                    datasource: datasource,
+                    entityType: datasource.entityType,
+                    entityId: datasource.entityId,
+                    dataUpdated: function (data, datasourceIndex, dataKeyIndex, apply) {
+                        subscription.dataUpdated(data, datasourceIndex, dataKeyIndex, apply);
+                    },
+                    updateRealtimeSubscription: function () {
+                        this.subscriptionTimewindow = subscription.updateRealtimeSubscription();
+                        return this.subscriptionTimewindow;
+                    },
+                    setRealtimeSubscription: function (subscriptionTimewindow) {
+                        subscription.updateRealtimeSubscription(angular.copy(subscriptionTimewindow));
+                    },
+                    datasourceIndex: index
+                };
+
+                for (var a = 0; a < datasource.dataKeys.length; a++) {
+                    this.data[index + a].data = [];
+                }
+
+                index += datasource.dataKeys.length;
+
+                this.datasourceListeners.push(listener);
+
+                if (datasource.dataKeys.length) {
+                    this.ctx.datasourceService.subscribeToDatasource(listener);
+                }
+
+                var forceUpdate = false;
+                if (datasource.unresolvedStateEntity ||
+                    !datasource.dataKeys.length ||
+                    (datasource.type === this.ctx.types.datasourceType.entity && !datasource.entityId)
+                ) {
+                    forceUpdate = true;
+                }
+
+                if (forceUpdate) {
+                    this.notifyDataLoaded();
+                    this.onDataUpdated();
+                }
+            }
+        }
+    }
+
+    alarmsSubscribe() {
         this.notifyDataLoading();
-        if (this.type === this.ctx.types.widgetType.timeseries.value && this.timeWindowConfig) {
+        if (this.timeWindowConfig) {
             this.updateRealtimeSubscription();
             if (this.subscriptionTimewindow.fixedWindow) {
                 this.onDataUpdated();
             }
         }
-        var index = 0;
-        for (var i = 0; i < this.datasources.length; i++) {
-            var datasource = this.datasources[i];
-            if (angular.isFunction(datasource))
-                continue;
-            var deviceId = null;
-            if (datasource.type === this.ctx.types.datasourceType.device) {
-                var aliasName = null;
-                var deviceName = null;
-                if (datasource.deviceId) {
-                    deviceId = datasource.deviceId;
-                    datasource.name = datasource.deviceName;
-                    aliasName = datasource.deviceName;
-                    deviceName = datasource.deviceName;
-                } else if (datasource.deviceAliasId && this.ctx.aliasesInfo.deviceAliases[datasource.deviceAliasId]) {
-                    deviceId = this.ctx.aliasesInfo.deviceAliases[datasource.deviceAliasId].deviceId;
-                    datasource.name = this.ctx.aliasesInfo.deviceAliases[datasource.deviceAliasId].alias;
-                    aliasName = this.ctx.aliasesInfo.deviceAliases[datasource.deviceAliasId].alias;
-                    deviceName = '';
-                    var devicesInfo = this.ctx.aliasesInfo.deviceAliasesInfo[datasource.deviceAliasId];
-                    for (var d = 0; d < devicesInfo.length; d++) {
-                        if (devicesInfo[d].id === deviceId) {
-                            deviceName = devicesInfo[d].name;
-                            break;
-                        }
-                    }
-                }
-            } else {
-                datasource.name = datasource.name || this.ctx.types.datasourceType.function;
+        var subscription = this;
+        this.alarmSourceListener = {
+            subscriptionTimewindow: this.subscriptionTimewindow,
+            alarmSource: this.alarmSource,
+            alarmSearchStatus: this.alarmSearchStatus,
+            alarmsPollingInterval: this.alarmsPollingInterval,
+            alarmsUpdated: function(alarms, apply) {
+                subscription.alarmsUpdated(alarms, apply);
             }
-            for (var dk = 0; dk < datasource.dataKeys.length; dk++) {
-                updateDataKeyLabel(datasource.dataKeys[dk], datasource.name, deviceName, aliasName);
-            }
+        }
+        this.alarms = [];
 
-            var subscription = this;
+        this.ctx.alarmService.subscribeForAlarms(this.alarmSourceListener);
 
-            var listener = {
-                subscriptionType: this.type,
-                subscriptionTimewindow: this.subscriptionTimewindow,
-                datasource: datasource,
-                deviceId: deviceId,
-                dataUpdated: function (data, datasourceIndex, dataKeyIndex, apply) {
-                    subscription.dataUpdated(data, datasourceIndex, dataKeyIndex, apply);
-                },
-                updateRealtimeSubscription: function () {
-                    this.subscriptionTimewindow = subscription.updateRealtimeSubscription();
-                    return this.subscriptionTimewindow;
-                },
-                setRealtimeSubscription: function (subscriptionTimewindow) {
-                    subscription.updateRealtimeSubscription(angular.copy(subscriptionTimewindow));
-                },
-                datasourceIndex: index
-            };
+        var forceUpdate = false;
+        if (this.alarmSource.unresolvedStateEntity ||
+            (this.alarmSource.type === this.ctx.types.datasourceType.entity && !this.alarmSource.entityId)
+        ) {
+            forceUpdate = true;
+        }
 
-            for (var a = 0; a < datasource.dataKeys.length; a++) {
-                this.data[index + a].data = [];
-            }
-
-            index += datasource.dataKeys.length;
-
-            this.datasourceListeners.push(listener);
-            this.ctx.datasourceService.subscribeToDatasource(listener);
+        if (forceUpdate) {
+            this.notifyDataLoaded();
+            this.onDataUpdated();
         }
     }
 
     unsubscribe() {
         if (this.type !== this.ctx.types.widgetType.rpc.value) {
-            for (var i = 0; i < this.datasourceListeners.length; i++) {
-                var listener = this.datasourceListeners[i];
-                this.ctx.datasourceService.unsubscribeFromDatasource(listener);
+            if (this.type == this.ctx.types.widgetType.alarm.value) {
+                this.alarmsUnsubscribe();
+            } else {
+                for (var i = 0; i < this.datasourceListeners.length; i++) {
+                    var listener = this.datasourceListeners[i];
+                    this.ctx.datasourceService.unsubscribeFromDatasource(listener);
+                }
+                this.datasourceListeners = [];
+                this.resetData();
             }
-            this.datasourceListeners = [];
         }
     }
 
-    checkSubscriptions() {
+    alarmsUnsubscribe() {
+        if (this.alarmSourceListener) {
+            this.ctx.alarmService.unsubscribeFromAlarms(this.alarmSourceListener);
+            this.alarmSourceListener = null;
+        }
+    }
+
+    checkRpcTarget(aliasIds) {
+        if (aliasIds.indexOf(this.targetDeviceAliasId) > -1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    checkAlarmSource(aliasIds) {
+        if (this.alarmSource && this.alarmSource.entityAliasId) {
+            return aliasIds.indexOf(this.alarmSource.entityAliasId) > -1;
+        } else {
+            return false;
+        }
+    }
+
+    checkSubscriptions(aliasIds) {
         var subscriptionsChanged = false;
         for (var i = 0; i < this.datasourceListeners.length; i++) {
             var listener = this.datasourceListeners[i];
-            var deviceId = null;
-            var aliasName = null;
-            if (listener.datasource.type === this.ctx.types.datasourceType.device) {
-                if (listener.datasource.deviceAliasId &&
-                    this.ctx.aliasesInfo.deviceAliases[listener.datasource.deviceAliasId]) {
-                    deviceId = this.ctx.aliasesInfo.deviceAliases[listener.datasource.deviceAliasId].deviceId;
-                    aliasName = this.ctx.aliasesInfo.deviceAliases[listener.datasource.deviceAliasId].alias;
-                }
-                if (!angular.equals(deviceId, listener.deviceId) ||
-                    !angular.equals(aliasName, listener.datasource.name)) {
+            if (listener.datasource.entityAliasId) {
+                if (aliasIds.indexOf(listener.datasource.entityAliasId) > -1) {
                     subscriptionsChanged = true;
                     break;
                 }
             }
         }
-        if (subscriptionsChanged) {
-            this.unsubscribe();
-            this.subscribe();
-        }
+        return subscriptionsChanged;
     }
 
     destroy() {
@@ -602,27 +854,6 @@ export default class Subscription {
         this.registrations = [];
     }
 
-}
-
-const varsRegex = /\$\{([^\}]*)\}/g;
-
-function updateDataKeyLabel(dataKey, dsName, deviceName, aliasName) {
-    var pattern = dataKey.pattern;
-    var label = dataKey.pattern;
-    var match = varsRegex.exec(pattern);
-    while (match !== null) {
-        var variable = match[0];
-        var variableName = match[1];
-        if (variableName === 'dsName') {
-            label = label.split(variable).join(dsName);
-        } else if (variableName === 'deviceName') {
-            label = label.split(variable).join(deviceName);
-        } else if (variableName === 'aliasName') {
-            label = label.split(variable).join(aliasName);
-        }
-        match = varsRegex.exec(pattern);
-    }
-    dataKey.label = label;
 }
 
 function calculateMin(data) {

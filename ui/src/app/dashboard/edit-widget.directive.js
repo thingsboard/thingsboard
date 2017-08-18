@@ -15,13 +15,13 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
-import deviceAliasesTemplate from './device-aliases.tpl.html';
+import entityAliasDialogTemplate from '../entity/alias/entity-alias-dialog.tpl.html';
 import editWidgetTemplate from './edit-widget.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EditWidgetDirective($compile, $templateCache, widgetService, deviceService, $q, $document, $mdDialog) {
+export default function EditWidgetDirective($compile, $templateCache, types, widgetService, entityService, $q, $document, $mdDialog) {
 
     var linker = function (scope, element) {
         var template = $templateCache.get(editWidgetTemplate);
@@ -34,10 +34,15 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
                     scope.widget.isSystemType).then(
                     function(widgetInfo) {
                         scope.$applyAsync(function(scope) {
-                            scope.widgetConfig = scope.widget.config;
+                            scope.widgetConfig = {
+                                config: scope.widget.config,
+                                layout: scope.widgetLayout
+                            };
                             var settingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
                             var dataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
-                            scope.isDataEnabled = !widgetInfo.useCustomDatasources;
+                            scope.typeParameters = widgetInfo.typeParameters;
+                            scope.actionSources = widgetInfo.actionSources;
+                            scope.isDataEnabled = !widgetInfo.typeParameters.useCustomDatasources;
                             if (!settingsSchema || settingsSchema === '') {
                                 scope.settingsSchema = {};
                             } else {
@@ -58,47 +63,80 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
             }
         });
 
-        scope.fetchDeviceKeys = function (deviceAliasId, query, type) {
-            var deviceAlias = scope.aliasesInfo.deviceAliases[deviceAliasId];
-            if (deviceAlias && deviceAlias.deviceId) {
-                return deviceService.getDeviceKeys(deviceAlias.deviceId, query, type);
-            } else {
-                return $q.when([]);
+        scope.$watch('widgetLayout', function () {
+            if (scope.widgetLayout && scope.widgetConfig) {
+                scope.widgetConfig.layout = scope.widgetLayout;
             }
+        });
+
+        scope.fetchEntityKeys = function (entityAliasId, query, type) {
+            var deferred = $q.defer();
+            scope.aliasController.getAliasInfo(entityAliasId).then(
+                function success(aliasInfo) {
+                    var entity = aliasInfo.currentEntity;
+                    if (entity) {
+                        entityService.getEntityKeys(entity.entityType, entity.id, query, type).then(
+                            function success(keys) {
+                                deferred.resolve(keys);
+                            },
+                            function fail() {
+                                deferred.resolve([]);
+                            }
+                        );
+                    } else {
+                        deferred.resolve([]);
+                    }
+                },
+                function fail() {
+                    deferred.resolve([]);
+                }
+            );
+            return deferred.promise;
         };
 
-        scope.createDeviceAlias = function (event, alias) {
+        scope.fetchDashboardStates = function(query) {
+            var deferred = $q.defer();
+            var stateIds = Object.keys(scope.dashboard.configuration.states);
+            var result = query ? stateIds.filter(
+                createFilterForDashboardState(query)) : stateIds;
+            if (result && result.length) {
+                deferred.resolve(result);
+            } else {
+                deferred.resolve([query]);
+            }
+            return deferred.promise;
+        }
+
+        function createFilterForDashboardState (query) {
+            var lowercaseQuery = angular.lowercase(query);
+            return function filterFn(stateId) {
+                return (angular.lowercase(stateId).indexOf(lowercaseQuery) === 0);
+            };
+        }
+
+        scope.createEntityAlias = function (event, alias, allowedEntityTypes) {
 
             var deferred = $q.defer();
-            var singleDeviceAlias = {id: null, alias: alias, deviceFilter: null};
+            var singleEntityAlias = {id: null, alias: alias, filter: {}};
 
             $mdDialog.show({
-                controller: 'DeviceAliasesController',
+                controller: 'EntityAliasDialogController',
                 controllerAs: 'vm',
-                templateUrl: deviceAliasesTemplate,
+                templateUrl: entityAliasDialogTemplate,
                 locals: {
-                    config: {
-                        deviceAliases: angular.copy(scope.dashboard.configuration.deviceAliases),
-                        widgets: null,
-                        isSingleDeviceAlias: true,
-                        singleDeviceAlias: singleDeviceAlias
-                    }
+                    isAdd: true,
+                    allowedEntityTypes: allowedEntityTypes,
+                    entityAliases: scope.dashboard.configuration.entityAliases,
+                    alias: singleEntityAlias
                 },
                 parent: angular.element($document[0].body),
                 fullscreen: true,
                 skipHide: true,
                 targetEvent: event
-            }).then(function (singleDeviceAlias) {
-                scope.dashboard.configuration.deviceAliases[singleDeviceAlias.id] =
-                            { alias: singleDeviceAlias.alias, deviceFilter: singleDeviceAlias.deviceFilter };
-                deviceService.processDeviceAliases(scope.dashboard.configuration.deviceAliases).then(
-                    function(resolution) {
-                        if (!resolution.error) {
-                            scope.aliasesInfo = resolution.aliasesInfo;
-                        }
-                        deferred.resolve(singleDeviceAlias);
-                    }
-                );
+            }).then(function (singleEntityAlias) {
+                scope.dashboard.configuration.entityAliases[singleEntityAlias.id] = singleEntityAlias;
+                scope.aliasController.updateEntityAliases(scope.dashboard.configuration.entityAliases);
+                deferred.resolve(singleEntityAlias);
             }, function () {
                 deferred.reject();
             });
@@ -114,8 +152,10 @@ export default function EditWidgetDirective($compile, $templateCache, widgetServ
         link: linker,
         scope: {
             dashboard: '=',
-            aliasesInfo: '=',
+            aliasController: '=',
+            widgetEditMode: '=',
             widget: '=',
+            widgetLayout: '=',
             theForm: '='
         }
     };

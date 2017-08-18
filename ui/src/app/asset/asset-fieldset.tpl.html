@@ -1,0 +1,71 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-button ng-click="onMakePublic({event: $event})"
+           ng-show="!isEdit && assetScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+           class="md-raised md-primary">{{ 'asset.make-public' | translate }}</md-button>
+<md-button ng-click="onAssignToCustomer({event: $event})"
+           ng-show="!isEdit && assetScope === 'tenant' && !isAssignedToCustomer"
+           class="md-raised md-primary">{{ 'asset.assign-to-customer' | translate }}</md-button>
+<md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
+           ng-show="!isEdit && (assetScope === 'customer' || assetScope === 'tenant') && isAssignedToCustomer"
+           class="md-raised md-primary">{{ isPublic ? 'asset.make-private' : 'asset.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onDeleteAsset({event: $event})"
+           ng-show="!isEdit && assetScope === 'tenant'"
+           class="md-raised md-primary">{{ 'asset.delete' | translate }}</md-button>
+
+<div layout="row">
+    <md-button ngclipboard data-clipboard-action="copy"
+               ngclipboard-success="onAssetIdCopied(e)"
+               data-clipboard-text="{{asset.id.id}}" ng-show="!isEdit"
+               class="md-raised">
+        <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
+        <span translate>asset.copyId</span>
+    </md-button>
+</div>
+
+<md-content class="md-padding" layout="column">
+    <md-input-container class="md-block"
+                        ng-show="!isEdit && isAssignedToCustomer && !isPublic && assetScope === 'tenant'">
+        <label translate>asset.assignedToCustomer</label>
+        <input ng-model="assignedCustomer.title" disabled>
+    </md-input-container>
+    <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"
+         ng-show="!isEdit && isPublic && (assetScope === 'customer' || assetScope === 'tenant')">
+        {{ 'asset.asset-public' | translate }}
+    </div>
+    <fieldset ng-disabled="loading || !isEdit">
+        <md-input-container class="md-block">
+            <label translate>asset.name</label>
+            <input required name="name" ng-model="asset.name">
+            <div ng-messages="theForm.name.$error">
+                <div translate ng-message="required">asset.name-required</div>
+            </div>
+        </md-input-container>
+        <tb-entity-subtype-autocomplete
+                ng-disabled="loading || !isEdit"
+                tb-required="true"
+                the-form="theForm"
+                ng-model="asset.type"
+                entity-type="types.entityType.asset">
+        </tb-entity-subtype-autocomplete>
+        <md-input-container class="md-block">
+            <label translate>asset.description</label>
+            <textarea ng-model="asset.additionalInfo.description" rows="2"></textarea>
+        </md-input-container>
+    </fieldset>
+</md-content>

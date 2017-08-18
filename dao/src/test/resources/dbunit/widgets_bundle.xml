@@ -1,0 +1,47 @@
+<dataset>
+    <widgets_bundle
+        id="uuid'250ac7b4-2825-11e7-93ae-92361f002671'"
+        tenant_id="uuid'250aca8e-2825-11e7-93ae-92361f002671'"
+        alias="WB1"
+        title="Widgets Bundle 1"
+        search_text="WB SEARCH TEXT 1"
+    />
+    <widgets_bundle
+        id="uuid'3269c18a-2825-11e7-93ae-92361f002671'"
+        tenant_id="uuid'3269c18a-2825-11e7-93ae-92361f002671'"
+        alias="WB2"
+        title="Widgets Bundle 2"
+        search_text="WB SEARCH TEXT 2"
+    />
+    <widgets_bundle
+        id="uuid'44e6af4e-2825-11e7-93ae-92361f002671'"
+        tenant_id="uuid'250aca8e-2825-11e7-93ae-92361f002671'"
+        alias="WB3"
+        title="Widgets Bundle 3"
+        search_text="WB SEARCH TEXT 3"
+    />
+    <widgets_bundle
+        id="uuid'696dc9b4-2830-11e7-93ae-92361f002671'"
+        alias="WB4"
+        title="Widgets Bundle 4"
+        search_text="SYSTEM BUNDLE 1"
+    />
+    <widgets_bundle
+        id="uuid'1a83fc50-2840-11e7-93ae-92361f002671'"
+        alias="WB5"
+        title="Widgets Bundle 5"
+        search_text="SYSTEM BUNDLE 2"
+    />
+    <widgets_bundle
+        id="uuid'6a593dde-2841-11e7-93ae-92361f002671'"
+        alias="WB6"
+        title="Widgets Bundle 6"
+        search_text="SYSTEM BUNDLE 1"
+    />
+    <widgets_bundle
+        id="uuid'3beb4b1a-294d-11e7-93ae-92361f002671'"
+        alias="WB6"
+        title="Widgets Bundle 7"
+        search_text="ABC DEF"
+    />
+</dataset>

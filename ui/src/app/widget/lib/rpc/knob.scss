@@ -1,0 +1,154 @@
+/**
+ * Copyright © 2016-2017 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+$knob-img: url('./svg/knob.svg');
+
+$bars-margin-pct: percentage(0.033);
+$background-margin-pct: percentage(0.05);
+$value-container-margin-pct: percentage(0.35);
+$error-height: percentage(0.05);
+$title-height: percentage(0.066);
+$title-container-margin-pct: percentage(0.2);
+$title-container-margin-bottom-pct: percentage(0.05);
+$minmax-height: percentage(0.04);
+$minmax-container-margin-pct: percentage(0.18);
+$minmax-container-margin-bottom-pct: percentage(0.12);
+
+$background-color: #e6e7e8;
+
+.tb-knob {
+  width:100%;
+  height:100%;
+  background: $background-color;
+
+  .knob {
+    position: relative;
+    &[draggable] {
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    #canvasBar {
+      position:absolute;
+      top:0;
+      left:0;
+      bottom: 0;
+      right: 0;
+      z-index: 2;
+    }
+    .canvas-background {
+      position:absolute;
+      top: $background-margin-pct;
+      left: $background-margin-pct;
+      bottom: $background-margin-pct;
+      right: $background-margin-pct;
+      border-radius: 50%;
+      background: #3f4346;
+      z-index:2;
+    }
+    .value-container {
+      position:absolute;
+      top: $value-container-margin-pct;
+      left: $value-container-margin-pct;
+      bottom: $value-container-margin-pct;
+      right: $value-container-margin-pct;
+      z-index:4;
+      .knob-value {
+        color: #fff;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+    }
+    .error-container {
+      position:absolute;
+      top: 1%;
+      left: 0;
+      right: 0;
+      z-index:4;
+      height: $error-height;
+      .knob-error {
+        color: #ff3315;
+        white-space: nowrap;
+      }
+    }
+    .title-container {
+      position:absolute;
+      left: $title-container-margin-pct;
+      bottom: $title-container-margin-bottom-pct;
+      right: $title-container-margin-pct;
+      z-index:4;
+      height: $title-height;
+      .knob-title {
+        color: #757575;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+    }
+    .minmax-container {
+      position:absolute;
+      left: $minmax-container-margin-pct;
+      bottom: $minmax-container-margin-bottom-pct;
+      right: $minmax-container-margin-pct;
+      z-index:4;
+      height: $minmax-height;
+      .minmax-label {
+        color: #757575;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+    }
+    .top-pointer-container {
+      position:absolute;
+      top: $bars-margin-pct;
+      left: $bars-margin-pct;
+      bottom: $bars-margin-pct;
+      right: $bars-margin-pct;
+      z-index:3;
+      cursor:pointer !important;
+      .top-pointer {
+        content:'';
+        width:5%;
+        height:5%;
+        background-color:#b5b5b5;
+        position:absolute;
+        top:50%;
+        left:22%;
+        margin-top:-2.5%;
+        border-radius: 50%;
+        cursor:pointer !important;
+        box-shadow: 1px 0 2px #040404;
+      }
+    }
+    .top{
+      position:absolute;
+      top: $bars-margin-pct;
+      left: $bars-margin-pct;
+      bottom: $bars-margin-pct;
+      right: $bars-margin-pct;
+      background:$knob-img no-repeat;
+      background-size: contain;
+      z-index:2;
+      cursor:pointer !important;
+    }
+    #text-measure {
+      position: absolute;
+      visibility: hidden;
+      height: auto;
+      width: auto;
+      white-space: nowrap;
+    }
+  }
+}

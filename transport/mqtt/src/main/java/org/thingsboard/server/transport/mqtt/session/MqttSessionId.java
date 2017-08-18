@@ -45,6 +45,13 @@ public class MqttSessionId implements SessionId {
     }
 
     @Override
+    public String toString() {
+        return "MqttSessionId{" +
+                "id=" + id +
+                '}';
+    }
+
+    @Override
     public int hashCode() {
         return (int) (id ^ (id >>> 32));
     }

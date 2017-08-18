@@ -1,0 +1,31 @@
+<dataset>
+    <widget_type
+        id="uuid'2b7e4c91-2dfe-11e7-94aa-f7f6dbfb4833'"
+        tenant_id="uuid'2b7e4c90-2dfe-11e7-94aa-f7f6dbfb4833'"
+        bundle_alias="BUNDLE_ALIAS_1"
+        alias="ALIAS1"
+        name="ALIAS1"
+    />
+    <widget_type
+        id="uuid'2b7e4c92-2dfe-11e7-94aa-f7f6dbfb4833'"
+        tenant_id="uuid'2b7e4c90-2dfe-11e7-94aa-f7f6dbfb4833'"
+        bundle_alias="BUNDLE_ALIAS_1"
+        alias="ALIAS2"
+        name="ALIAS2"
+    />
+    <widget_type
+        id="uuid'2b7e4c93-2dfe-11e7-94aa-f7f6dbfb4833'"
+        tenant_id="uuid'2b7e4c90-2dfe-11e7-94aa-f7f6dbfb4833'"
+        bundle_alias="BUNDLE_ALIAS_1"
+        alias="ALIAS3"
+        name="ALIAS3"
+    />
+    <widget_type
+        id="uuid'2b7e4c94-2dfe-11e7-94aa-f7f6dbfb4833'"
+        tenant_id="uuid'2b7e4c90-2dfe-11e7-94aa-f7f6dbfb4833'"
+        bundle_alias="BUNDLE_ALIAS_2"
+        alias="ALIAS4"
+        name="ALIAS4"
+    />
+
+</dataset>

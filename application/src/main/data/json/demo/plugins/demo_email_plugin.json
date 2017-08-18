@@ -1,0 +1,28 @@
+{
+  "apiToken": "mail",
+  "name": "Demo Email Plugin",
+  "clazz": "org.thingsboard.server.extensions.core.plugin.mail.MailPlugin",
+  "publicAccess": true,
+  "state": "ACTIVE",
+  "configuration": {
+    "host": "smtp.sendgrid.net",
+    "port": 2525,
+    "username": "apikey",
+    "password": "your_api_key",
+    "otherProperties": [
+      {
+        "key": "mail.smtp.auth",
+        "value": "true"
+      },
+      {
+        "key": "mail.smtp.timeout",
+        "value": "10000"
+      },
+      {
+        "key": "mail.smtp.starttls.enable",
+        "value": "true"
+      }
+    ]
+  },
+  "additionalInfo": null
+}

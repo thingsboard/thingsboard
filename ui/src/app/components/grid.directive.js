@@ -26,6 +26,7 @@ import gridTemplate from './grid.tpl.html';
 
 export default angular.module('thingsboard.directives.grid', [thingsboardScopeElement, thingsboardDetailsSidenav])
     .directive('tbGrid', Grid)
+    .controller('AddItemController', AddItemController)
     .controller('ItemCardController', ItemCardController)
     .directive('tbGridCardContent', GridCardContent)
     .filter('range', RangeFilter)
@@ -124,7 +125,7 @@ function Grid() {
 }
 
 /*@ngInject*/
-function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $translate, $mdMedia, $templateCache) {
+function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $translate, $mdMedia, $templateCache, $window) {
 
     var vm = this;
 
@@ -155,6 +156,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
     vm.refreshList = refreshList;
     vm.saveItem = saveItem;
     vm.toggleItemSelection = toggleItemSelection;
+    vm.triggerResize = triggerResize;
 
     $scope.$watch(function () {
         return $mdMedia('xs') || $mdMedia('sm');
@@ -197,7 +199,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         },
 
         getLength: function () {
-            if (vm.items.hasNext) {
+            if (vm.items.hasNext && !vm.items.pending) {
                 return vm.items.rowData.length + pageSize;
             } else {
                 return vm.items.rowData.length;
@@ -206,7 +208,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
 
         fetchMoreItems_: function () {
             if (vm.items.hasNext && !vm.items.pending) {
-                var promise = vm.fetchItemsFunc(vm.items.nextPageLink);
+                var promise = vm.fetchItemsFunc(vm.items.nextPageLink, $scope.searchConfig.searchEntitySubtype);
                 if (promise) {
                     vm.items.pending = true;
                     promise.then(
@@ -341,6 +343,11 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         } else {
             vm.itemCardController = 'ItemCardController';
         }
+        if (vm.config.addItemController) {
+            vm.addItemController =  vm.config.addItemController;
+        } else {
+            vm.addItemController = 'AddItemController';
+        }
 
         vm.parentCtl = vm.config.parentCtl || vm;
 
@@ -433,6 +440,10 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         reload();
     });
 
+    $scope.$on('searchEntitySubtypeUpdated', function () {
+        reload();
+    });
+
     vm.onGridInited(vm);
 
     vm.itemRows.getItemAtIndex(pageSize);
@@ -441,18 +452,16 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
         if (vm.items && vm.items.pending) {
             vm.items.reloadPending = true;
         } else {
-            vm.items = {
-                data: [],
-                rowData: [],
-                nextPageLink: {
-                    limit: pageSize,
-                    textSearch: $scope.searchConfig.searchText
-                },
-                selections: {},
-                selectedCount: 0,
-                hasNext: true,
-                pending: false
+            vm.items.data.length = 0;
+            vm.items.rowData.length = 0;
+            vm.items.nextPageLink = {
+                limit: pageSize,
+                textSearch: $scope.searchConfig.searchText
             };
+            vm.items.selections = {};
+            vm.items.selectedCount = 0;
+            vm.items.hasNext = true;
+            vm.items.pending = false;
             vm.detailsConfig.isDetailsOpen = false;
             vm.items.reloadPending = false;
             vm.itemRows.getItemAtIndex(pageSize);
@@ -465,7 +474,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
 
     function addItem($event) {
         $mdDialog.show({
-            controller: AddItemController,
+            controller: vm.addItemController,
             controllerAs: 'vm',
             templateUrl: vm.addItemTemplateUrl,
             parent: angular.element($document[0].body),
@@ -596,6 +605,11 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
             delete vm.items.selections[item.id.id];
             vm.items.selectedCount--;
         }
+    }
+
+    function triggerResize() {
+        var w = angular.element($window);
+        w.triggerHandler('resize');
     }
 
     function moveToTop() {

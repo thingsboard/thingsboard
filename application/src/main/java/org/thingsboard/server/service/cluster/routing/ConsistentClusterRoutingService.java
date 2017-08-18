@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
@@ -31,6 +32,7 @@ import org.thingsboard.server.utils.MiscUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -77,13 +79,18 @@ public class ConsistentClusterRoutingService implements ClusterRoutingService, D
     }
 
     @Override
-    public Optional<ServerAddress> resolve(UUIDBased entityId) {
-        Assert.notNull(entityId);
+    public Optional<ServerAddress> resolveById(EntityId entityId) {
+        return resolveByUuid(entityId.getId());
+    }
+
+    @Override
+    public Optional<ServerAddress> resolveByUuid(UUID uuid) {
+        Assert.notNull(uuid);
         if (circle.isEmpty()) {
             return Optional.empty();
         }
-        Long hash = hashFunction.newHasher().putLong(entityId.getId().getMostSignificantBits())
-                .putLong(entityId.getId().getLeastSignificantBits()).hash().asLong();
+        Long hash = hashFunction.newHasher().putLong(uuid.getMostSignificantBits())
+                .putLong(uuid.getLeastSignificantBits()).hash().asLong();
         if (!circle.containsKey(hash)) {
             ConcurrentNavigableMap<Long, ServerInstance> tailMap =
                     circle.tailMap(hash);

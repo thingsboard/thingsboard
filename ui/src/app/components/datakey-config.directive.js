@@ -63,6 +63,12 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
         element.html(template);
 
         scope.types = types;
+
+        scope.alarmFields = [];
+        for (var alarmField in types.alarmFields) {
+            scope.alarmFields.push(alarmField);
+        }
+
         scope.selectedKey = null;
         scope.keySearchText = null;
         scope.usePostProcessing = false;
@@ -76,6 +82,8 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
                 scope.model.name = ngModelCtrl.$viewValue.name;
                 scope.model.label = ngModelCtrl.$viewValue.label;
                 scope.model.color = ngModelCtrl.$viewValue.color;
+                scope.model.units = ngModelCtrl.$viewValue.units;
+                scope.model.decimals = ngModelCtrl.$viewValue.decimals;
                 scope.model.funcBody = ngModelCtrl.$viewValue.funcBody;
                 scope.model.postFuncBody = ngModelCtrl.$viewValue.postFuncBody;
                 scope.model.usePostProcessing = scope.model.postFuncBody ? true : false;
@@ -97,6 +105,8 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
                 value.name = scope.model.name;
                 value.label = scope.model.label;
                 value.color = scope.model.color;
+                value.units = scope.model.units;
+                value.decimals = scope.model.decimals;
                 value.funcBody = scope.model.funcBody;
                 if (!scope.model.postFuncBody) {
                     delete value.postFuncBody;
@@ -108,19 +118,37 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
         }, true);
 
         scope.keysSearch = function (searchText) {
-            if (scope.deviceAlias) {
-                var deferred = $q.defer();
-                scope.fetchDeviceKeys({deviceAliasId: scope.deviceAlias.id, query: searchText, type: scope.model.type})
-                    .then(function (keys) {
-                        keys.push(searchText);
-                        deferred.resolve(keys);
-                    }, function (e) {
-                        deferred.reject(e);
-                    });
-                return deferred.promise;
+            if (scope.model.type === types.dataKeyType.alarm) {
+                var dataKeys = searchText ? scope.alarmFields.filter(
+                    scope.createFilterForDataKey(searchText)) : scope.alarmFields;
+                dataKeys.push(searchText);
+                return dataKeys;
             } else {
-                return $q.when([]);
+                if (scope.entityAlias) {
+                    var deferred = $q.defer();
+                    scope.fetchEntityKeys({
+                        entityAliasId: scope.entityAlias.id,
+                        query: searchText,
+                        type: scope.model.type
+                    })
+                        .then(function (keys) {
+                            keys.push(searchText);
+                            deferred.resolve(keys);
+                        }, function (e) {
+                            deferred.reject(e);
+                        });
+                    return deferred.promise;
+                } else {
+                    return $q.when([]);
+                }
             }
+        };
+
+        scope.createFilterForDataKey = function (query) {
+            var lowercaseQuery = angular.lowercase(query);
+            return function filterFn(dataKey) {
+                return (angular.lowercase(dataKey).indexOf(lowercaseQuery) === 0);
+            };
         };
 
         $compile(element.contents())(scope);
@@ -130,8 +158,8 @@ function DatakeyConfig($compile, $templateCache, $q, types) {
         restrict: 'E',
         require: '^ngModel',
         scope: {
-            deviceAlias: '=',
-            fetchDeviceKeys: '&',
+            entityAlias: '=',
+            fetchEntityKeys: '&',
             datakeySettingsSchema: '='
         },
         link: linker

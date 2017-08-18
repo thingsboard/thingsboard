@@ -17,7 +17,7 @@ import './datasource.scss';
 
 import thingsboardTypes from '../common/types.constant';
 import thingsboardDatasourceFunc from './datasource-func.directive'
-import thingsboardDatasourceDevice from './datasource-device.directive';
+import thingsboardDatasourceEntity from './datasource-entity.directive';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -25,12 +25,12 @@ import datasourceTemplate from './datasource.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
-export default angular.module('thingsboard.directives.datasource', [thingsboardTypes, thingsboardDatasourceFunc, thingsboardDatasourceDevice])
+export default angular.module('thingsboard.directives.datasource', [thingsboardTypes, thingsboardDatasourceFunc, thingsboardDatasourceEntity])
     .directive('tbDatasource', Datasource)
     .name;
 
 /*@ngInject*/
-function Datasource($compile, $templateCache, types) {
+function Datasource($compile, $templateCache, utils, types) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -42,7 +42,7 @@ function Datasource($compile, $templateCache, types) {
         if (scope.functionsOnly) {
             scope.datasourceTypes = [types.datasourceType.function];
         } else{
-            scope.datasourceTypes = [types.datasourceType.device, types.datasourceType.function];
+            scope.datasourceTypes = [types.datasourceType.entity, types.datasourceType.function];
         }
 
         scope.updateView = function () {
@@ -53,8 +53,12 @@ function Datasource($compile, $templateCache, types) {
         }
 
         scope.$watch('model.type', function (newType, prevType) {
-            if (newType != prevType) {
-                scope.model.dataKeys = [];
+            if (newType && prevType && newType != prevType) {
+                if (scope.widgetType == types.widgetType.alarm.value) {
+                    scope.model.dataKeys = utils.getDefaultAlarmDataKeys();
+                } else {
+                    scope.model.dataKeys = [];
+                }
             }
         });
 
@@ -63,9 +67,10 @@ function Datasource($compile, $templateCache, types) {
         }, true);
 
         ngModelCtrl.$render = function () {
-            scope.model = {};
             if (ngModelCtrl.$viewValue) {
                 scope.model = ngModelCtrl.$viewValue;
+            } else {
+                scope.model = {};
             }
         };
 
@@ -76,13 +81,15 @@ function Datasource($compile, $templateCache, types) {
         restrict: "E",
         require: "^ngModel",
         scope: {
-            deviceAliases: '=',
+            aliasController: '=',
+            maxDataKeys: '=',
+            optDataKeys: '=',
             widgetType: '=',
             functionsOnly: '=',
             datakeySettingsSchema: '=',
             generateDataKey: '&',
-            fetchDeviceKeys: '&',
-            onCreateDeviceAlias: '&'
+            fetchEntityKeys: '&',
+            onCreateEntityAlias: '&'
         },
         link: linker
     };

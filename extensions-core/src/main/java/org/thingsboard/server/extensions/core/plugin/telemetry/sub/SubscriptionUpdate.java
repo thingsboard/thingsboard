@@ -32,11 +32,7 @@ public class SubscriptionUpdate {
         this.subscriptionId = subscriptionId;
         this.data = new TreeMap<>();
         for (TsKvEntry tsEntry : data) {
-            List<Object> values = this.data.get(tsEntry.getKey());
-            if (values == null) {
-                values = new ArrayList<>();
-                this.data.put(tsEntry.getKey(), values);
-            }
+            List<Object> values = this.data.computeIfAbsent(tsEntry.getKey(), k -> new ArrayList<>());
             Object[] value = new Object[2];
             value[0] = tsEntry.getTs();
             value[1] = tsEntry.getValueAsString();

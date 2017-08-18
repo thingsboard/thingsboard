@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 
 import javax.annotation.PostConstruct;
@@ -55,6 +56,9 @@ public class MqttTransportService {
 
     @Autowired(required = false)
     private DeviceAuthService authService;
+
+    @Autowired(required = false)
+    private RelationService relationService;
 
     @Autowired(required = false)
     private MqttSslHandlerProvider sslHandlerProvider;
@@ -95,7 +99,7 @@ public class MqttTransportService {
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new MqttTransportServerInitializer(processor, deviceService, authService, adaptor, sslHandlerProvider));
+                .childHandler(new MqttTransportServerInitializer(processor, deviceService, authService, relationService, adaptor, sslHandlerProvider));
 
         serverChannel = b.bind(host, port).sync().channel();
         log.info("Mqtt transport started!");

@@ -1,0 +1,107 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-dialog aria-label="{{ 'alarm.alarm-details' | translate }}">
+    <md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2 translate>alarm.alarm-details</h2>
+            <span flex></span>
+            <md-button class="md-icon-button" ng-click="vm.close()">
+                <ng-md-icon icon="close" aria-label="{{ 'dialog.close' | translate }}"></ng-md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+    <md-dialog-content>
+        <div class="md-dialog-content" layout="column">
+            <div layout="row">
+                <md-input-container class="md-block">
+                    <label translate>alarm.created-time</label>
+                    <input ng-model="vm.createdTime" readonly>
+                </md-input-container>
+                <md-input-container flex class="md-block">
+                    <label translate>alarm.originator</label>
+                    <input ng-model="vm.alarm.originatorName" readonly>
+                </md-input-container>
+            </div>
+            <div layout="row" ng-if="vm.startTime || vm.endTime">
+                <md-input-container ng-if="vm.startTime" flex class="md-block">
+                    <label translate>alarm.start-time</label>
+                    <input ng-model="vm.startTime" readonly>
+                </md-input-container>
+                <md-input-container ng-if="vm.endTime" flex class="md-block">
+                    <label translate>alarm.end-time</label>
+                    <input ng-model="vm.endTime" readonly>
+                </md-input-container>
+                <span flex ng-if="!vm.startTime || !vm.endTime"></span>
+            </div>
+            <div layout="row" ng-if="vm.ackTime || vm.clearTime">
+                <md-input-container ng-if="vm.ackTime" flex class="md-block">
+                    <label translate>alarm.ack-time</label>
+                    <input ng-model="vm.ackTime" readonly>
+                </md-input-container>
+                <md-input-container ng-if="vm.clearTime" flex class="md-block">
+                    <label translate>alarm.clear-time</label>
+                    <input ng-model="vm.clearTime" readonly>
+                </md-input-container>
+                <span flex ng-if="!vm.ackTime || !vm.clearTime"></span>
+            </div>
+            <div layout="row">
+                <md-input-container flex class="md-block">
+                    <label translate>alarm.type</label>
+                    <input ng-model="vm.alarm.type" readonly>
+                </md-input-container>
+                <md-input-container flex class="md-block">
+                    <label translate>alarm.severity</label>
+                    <input class="tb-severity" ng-class="vm.types.alarmSeverity[vm.alarm.severity].class"
+                           ng-model="vm.alarmSeverity" readonly>
+                </md-input-container>
+                <md-input-container flex class="md-block">
+                    <label translate>alarm.status</label>
+                    <input ng-model="vm.alarmStatus" readonly>
+                </md-input-container>
+            </div>
+            <div class="md-caption" style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>alarm.details</div>
+            <div flex class="tb-alarm-details-panel" layout="column">
+                <div flex id="tb-alarm-details" readonly
+                     ui-ace="vm.alarmDetailsOptions"
+                     ng-model="vm.alarmDetails">
+                </div>
+            </div>
+        </div>
+    </md-dialog-content>
+    <md-dialog-actions layout="row">
+        <md-button ng-if="vm.allowAcknowledgment && (vm.alarm.status==vm.types.alarmStatus.activeUnack ||
+                          vm.alarm.status==vm.types.alarmStatus.clearedUnack)"
+                   class="md-raised md-primary"
+                   ng-disabled="loading"
+                   ng-click="vm.acknowledge()"
+                   style="margin-right:20px;">{{ 'alarm.acknowledge' |
+            translate }}
+        </md-button>
+        <md-button ng-if="vm.allowClear && (vm.alarm.status==vm.types.alarmStatus.activeAck ||
+                          vm.alarm.status==vm.types.alarmStatus.activeUnack)"
+                   class="md-raised md-primary"
+                   ng-disabled="loading"
+                   ng-click="vm.clear()">{{ 'alarm.clear' |
+            translate }}
+        </md-button>
+        <span flex></span>
+        <md-button ng-disabled="loading" ng-click="vm.close()" style="margin-right:20px;">{{ 'action.close' |
+            translate }}
+        </md-button>
+    </md-dialog-actions>
+</md-dialog>

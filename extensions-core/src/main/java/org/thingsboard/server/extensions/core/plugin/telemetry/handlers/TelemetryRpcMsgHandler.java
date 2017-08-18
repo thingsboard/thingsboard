@@ -18,7 +18,8 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.handlers;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
@@ -44,9 +45,10 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
 
     private static final int SUBSCRIPTION_CLAZZ = 1;
     private static final int ATTRIBUTES_UPDATE_CLAZZ = 2;
-    private static final int SUBSCRIPTION_UPDATE_CLAZZ = 3;
-    private static final int SESSION_CLOSE_CLAZZ = 4;
-    private static final int SUBSCRIPTION_CLOSE_CLAZZ = 5;
+    private static final int TIMESERIES_UPDATE_CLAZZ = 3;
+    private static final int SUBSCRIPTION_UPDATE_CLAZZ = 4;
+    private static final int SESSION_CLOSE_CLAZZ = 5;
+    private static final int SUBSCRIPTION_CLOSE_CLAZZ = 6;
 
     @Override
     public void process(PluginContext ctx, RpcMsg msg) {
@@ -59,6 +61,9 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
                 break;
             case ATTRIBUTES_UPDATE_CLAZZ:
                 processAttributeUpdate(ctx, msg);
+                break;
+            case TIMESERIES_UPDATE_CLAZZ:
+                processTimeseriesUpdate(ctx, msg);
                 break;
             case SESSION_CLOSE_CLAZZ:
                 processSessionClose(ctx, msg);
@@ -88,8 +93,19 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }
-        subscriptionManager.onAttributesUpdateFromServer(ctx, DeviceId.fromString(proto.getDeviceId()), proto.getScope(),
+        subscriptionManager.onAttributesUpdateFromServer(ctx, EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()), proto.getScope(),
                 proto.getDataList().stream().map(this::toAttribute).collect(Collectors.toList()));
+    }
+
+    private void processTimeseriesUpdate(PluginContext ctx, RpcMsg msg) {
+        TimeseriesUpdateProto proto;
+        try {
+            proto = TimeseriesUpdateProto.parseFrom(msg.getMsgData());
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+        subscriptionManager.onTimeseriesUpdateFromServer(ctx, EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()),
+                proto.getDataList().stream().map(this::toTimeseries).collect(Collectors.toList()));
     }
 
     private void processSubscriptionCmd(PluginContext ctx, RpcMsg msg) {
@@ -101,7 +117,7 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         }
         Map<String, Long> statesMap = proto.getKeyStatesList().stream().collect(Collectors.toMap(SubscriptionKetStateProto::getKey, SubscriptionKetStateProto::getTs));
         Subscription subscription = new Subscription(
-                new SubscriptionState(proto.getSessionId(), proto.getSubscriptionId(), DeviceId.fromString(proto.getDeviceId()), SubscriptionType.valueOf(proto.getType()), proto.getAllKeys(), statesMap),
+                new SubscriptionState(proto.getSessionId(), proto.getSubscriptionId(), EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()), SubscriptionType.valueOf(proto.getType()), proto.getAllKeys(), statesMap),
                 false, msg.getServerAddress());
         subscriptionManager.addRemoteWsSubscription(ctx, msg.getServerAddress(), proto.getSessionId(), subscription);
     }
@@ -110,7 +126,8 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         SubscriptionProto.Builder builder = SubscriptionProto.newBuilder();
         builder.setSessionId(sessionId);
         builder.setSubscriptionId(cmd.getSubscriptionId());
-        builder.setDeviceId(cmd.getDeviceId().toString());
+        builder.setEntityType(cmd.getEntityId().getEntityType().name());
+        builder.setEntityId(cmd.getEntityId().getId().toString());
         builder.setType(cmd.getType().name());
         builder.setAllKeys(cmd.isAllKeys());
         cmd.getKeyStates().entrySet().forEach(e -> builder.addKeyStates(SubscriptionKetStateProto.newBuilder().setKey(e.getKey()).setTs(e.getValue()).build()));
@@ -195,41 +212,62 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         }
     }
 
-    public void onAttributesUpdate(PluginContext ctx, ServerAddress address, DeviceId deviceId, String scope, List<AttributeKvEntry> attributes) {
-        ctx.sendPluginRpcMsg(new RpcMsg(address, ATTRIBUTES_UPDATE_CLAZZ, getAttributesUpdateProto(deviceId, scope, attributes).toByteArray()));
+    public void onAttributesUpdate(PluginContext ctx, ServerAddress address, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+        ctx.sendPluginRpcMsg(new RpcMsg(address, ATTRIBUTES_UPDATE_CLAZZ, getAttributesUpdateProto(entityId, scope, attributes).toByteArray()));
     }
 
-    private AttributeUpdateProto getAttributesUpdateProto(DeviceId deviceId, String scope, List<AttributeKvEntry> attributes) {
-        AttributeUpdateProto.Builder builder = AttributeUpdateProto.newBuilder();
-        builder.setDeviceId(deviceId.toString());
-        builder.setScope(scope);
-        attributes.forEach(
-                attr -> {
-                    AttributeUpdateValueListProto.Builder dataBuilder = AttributeUpdateValueListProto.newBuilder();
-                    dataBuilder.setKey(attr.getKey());
-                    dataBuilder.setTs(attr.getLastUpdateTs());
-                    dataBuilder.setValueType(attr.getDataType().ordinal());
-                    switch (attr.getDataType()) {
-                        case BOOLEAN:
-                            dataBuilder.setBoolValue(attr.getBooleanValue().get());
-                            break;
-                        case LONG:
-                            dataBuilder.setLongValue(attr.getLongValue().get());
-                            break;
-                        case DOUBLE:
-                            dataBuilder.setDoubleValue(attr.getDoubleValue().get());
-                            break;
-                        case STRING:
-                            dataBuilder.setStrValue(attr.getStrValue().get());
-                            break;
-                    }
-                    builder.addData(dataBuilder.build());
-                }
-        );
+    public void onTimeseriesUpdate(PluginContext ctx, ServerAddress address, EntityId entityId, List<TsKvEntry> tsKvEntries) {
+        ctx.sendPluginRpcMsg(new RpcMsg(address, TIMESERIES_UPDATE_CLAZZ, getTimeseriesUpdateProto(entityId, tsKvEntries).toByteArray()));
+    }
+
+    private TimeseriesUpdateProto getTimeseriesUpdateProto(EntityId entityId, List<TsKvEntry> tsKvEntries) {
+        TimeseriesUpdateProto.Builder builder = TimeseriesUpdateProto.newBuilder();
+        builder.setEntityId(entityId.getId().toString());
+        builder.setEntityType(entityId.getEntityType().name());
+        tsKvEntries.forEach(attr -> builder.addData(toKeyValueProto(attr.getTs(), attr).build()));
         return builder.build();
     }
 
-    private AttributeKvEntry toAttribute(AttributeUpdateValueListProto proto) {
+    private AttributeUpdateProto getAttributesUpdateProto(EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+        AttributeUpdateProto.Builder builder = AttributeUpdateProto.newBuilder();
+        builder.setEntityId(entityId.getId().toString());
+        builder.setEntityType(entityId.getEntityType().name());
+        builder.setScope(scope);
+        attributes.forEach(attr -> builder.addData(toKeyValueProto(attr.getLastUpdateTs(), attr).build()));
+        return builder.build();
+    }
+
+    private KeyValueProto.Builder toKeyValueProto(long ts, KvEntry attr) {
+        KeyValueProto.Builder dataBuilder = KeyValueProto.newBuilder();
+        dataBuilder.setKey(attr.getKey());
+        dataBuilder.setTs(ts);
+        dataBuilder.setValueType(attr.getDataType().ordinal());
+        switch (attr.getDataType()) {
+            case BOOLEAN:
+                dataBuilder.setBoolValue(attr.getBooleanValue().get());
+                break;
+            case LONG:
+                dataBuilder.setLongValue(attr.getLongValue().get());
+                break;
+            case DOUBLE:
+                dataBuilder.setDoubleValue(attr.getDoubleValue().get());
+                break;
+            case STRING:
+                dataBuilder.setStrValue(attr.getStrValue().get());
+                break;
+        }
+        return dataBuilder;
+    }
+
+    private AttributeKvEntry toAttribute(KeyValueProto proto) {
+        return new BaseAttributeKvEntry(getKvEntry(proto), proto.getTs());
+    }
+
+    private TsKvEntry toTimeseries(KeyValueProto proto) {
+        return new BasicTsKvEntry(proto.getTs(), getKvEntry(proto));
+    }
+
+    private KvEntry getKvEntry(KeyValueProto proto) {
         KvEntry entry = null;
         DataType type = DataType.values()[proto.getValueType()];
         switch (type) {
@@ -246,7 +284,7 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
                 entry = new StringDataEntry(proto.getKey(), proto.getStrValue());
                 break;
         }
-        return new BaseAttributeKvEntry(entry, proto.getTs());
+        return entry;
     }
 
 }

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.*;
 
@@ -60,7 +61,9 @@ public class DeviceActor extends ContextAwareActor {
             } else if (msg instanceof ToDeviceRpcRequestPluginMsg) {
                 processor.processRpcRequest(context(), (ToDeviceRpcRequestPluginMsg) msg);
             } else if (msg instanceof DeviceCredentialsUpdateNotificationMsg){
-                processor.processCredentialsUpdate(context(), (DeviceCredentialsUpdateNotificationMsg) msg);
+                processor.processCredentialsUpdate();
+            } else if (msg instanceof DeviceNameOrTypeUpdateMsg){
+                processor.processNameOrTypeUpdate((DeviceNameOrTypeUpdateMsg) msg);
             }
         } else if (msg instanceof TimeoutMsg) {
             processor.processTimeout(context(), (TimeoutMsg) msg);

@@ -15,23 +15,29 @@
  */
 @import '../../scss/constants';
 
-.tb-func-datakey-autocomplete {
-  .tb-not-found {
-    display: block;
-    line-height: 1.5;
-    height: 48px;
-    .tb-no-entries {
-      line-height: 48px;
-    }
-  }
-  li {
-    height: auto !important;
-    white-space: normal !important;
-  }
-}
-
-tb-datasource-func {
+.tb-datasource-func {
   @media (min-width: $layout-breakpoint-gt-sm) {
     padding-left: 8px;
+  }
+
+  md-input-container.tb-datasource-name {
+    .md-errors-spacer {
+        display: none;
+    }
+  }
+
+  .tb-func-datakey-autocomplete, .tb-alarm-datakey-autocomplete {
+    .tb-not-found {
+      display: block;
+      line-height: 1.5;
+      height: 48px;
+      .tb-no-entries {
+        line-height: 48px;
+      }
+    }
+    li {
+      height: auto !important;
+      white-space: normal !important;
+    }
   }
 }

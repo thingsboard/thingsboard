@@ -19,13 +19,11 @@ import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.rule.ChainProcessingContext;
-import org.thingsboard.server.actors.rule.ChainProcessingMetaData;
-import org.thingsboard.server.actors.rule.RuleProcessingMsg;
-import org.thingsboard.server.actors.rule.RulesProcessedMsg;
+import org.thingsboard.server.actors.rule.*;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.actors.tenant.RuleChainDeviceMsg;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
@@ -39,9 +37,7 @@ import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.MsgType;
 import org.thingsboard.server.common.msg.session.SessionType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
-import org.thingsboard.server.extensions.api.device.DeviceAttributes;
-import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
-import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.extensions.api.device.*;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutIntMsg;
@@ -71,6 +67,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private final Map<Integer, ToDeviceRpcRequestMetadata> rpcPendingMap;
 
     private int rpcSeq = 0;
+    private String deviceName;
+    private String deviceType;
     private DeviceAttributes deviceAttributes;
 
     public DeviceActorMessageProcessor(ActorSystemContext systemContext, LoggingAdapter logger, DeviceId deviceId) {
@@ -84,6 +82,10 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private void initAttributes() {
+        //TODO: add invalidation of deviceType cache.
+        Device device = systemContext.getDeviceService().findDeviceById(deviceId);
+        this.deviceName = device.getName();
+        this.deviceType = device.getType();
         this.deviceAttributes = new DeviceAttributes(fetchAttributes(DataConstants.CLIENT_SCOPE),
                 fetchAttributes(DataConstants.SERVER_SCOPE), fetchAttributes(DataConstants.SHARED_SCOPE));
     }
@@ -230,7 +232,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     void process(ActorContext context, RuleChainDeviceMsg srcMsg) {
         ChainProcessingMetaData md = new ChainProcessingMetaData(srcMsg.getRuleChain(),
-                srcMsg.getToDeviceActorMsg(), deviceAttributes, context.self());
+                srcMsg.getToDeviceActorMsg(), new DeviceMetaData(deviceId, deviceName, deviceType, deviceAttributes), context.self());
         ChainProcessingContext ctx = new ChainProcessingContext(md);
         if (ctx.getChainLength() > 0) {
             RuleProcessingMsg msg = new RuleProcessingMsg(ctx);
@@ -367,11 +369,16 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    public void processCredentialsUpdate(ActorContext context, DeviceCredentialsUpdateNotificationMsg msg) {
+    public void processCredentialsUpdate() {
         sessions.forEach((k, v) -> {
             sendMsgToSessionActor(new BasicToDeviceSessionActorMsg(new SessionCloseNotification(), k), v.getServer());
         });
         attributeSubscriptions.clear();
         rpcSubscriptions.clear();
+    }
+
+    public void processNameOrTypeUpdate(DeviceNameOrTypeUpdateMsg msg) {
+        this.deviceName = msg.getDeviceName();
+        this.deviceType = msg.getDeviceType();
     }
 }

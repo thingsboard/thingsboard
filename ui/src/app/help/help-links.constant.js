@@ -78,6 +78,7 @@ export default angular.module('thingsboard.help', [])
                 pluginActionRestApiCall: helpBaseUrl + "/docs/reference/actions/rest-api-call-plugin-action",
                 tenants: helpBaseUrl + "/docs/user-guide/ui/tenants",
                 customers: helpBaseUrl + "/docs/user-guide/ui/customers",
+                assets: helpBaseUrl + "/docs/user-guide/ui/assets",
                 devices: helpBaseUrl + "/docs/user-guide/ui/devices",
                 dashboards: helpBaseUrl + "/docs/user-guide/ui/dashboards",
                 users: helpBaseUrl + "/docs/user-guide/ui/users",
@@ -86,6 +87,7 @@ export default angular.module('thingsboard.help', [])
                 widgetsConfigTimeseries:  helpBaseUrl + "/docs/user-guide/ui/dashboards#timeseries",
                 widgetsConfigLatest: helpBaseUrl +  "/docs/user-guide/ui/dashboards#latest",
                 widgetsConfigRpc: helpBaseUrl +  "/docs/user-guide/ui/dashboards#rpc",
+                widgetsConfigAlarm: helpBaseUrl +  "/docs/user-guide/ui/dashboards#alarm",
                 widgetsConfigStatic: helpBaseUrl +  "/docs/user-guide/ui/dashboards#static",
             },
             getPluginLink: function(plugin) {

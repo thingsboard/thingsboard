@@ -1,0 +1,190 @@
+#
+# Copyright © 2016-2017 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: zk-headless
+  labels:
+    app: zk-headless
+spec:
+  ports:
+  - port: 2888
+    name: server
+  - port: 3888
+    name: leader-election
+  clusterIP: None
+  selector:
+    app: zk
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zk-config
+data:
+  ensemble: "zk-0;zk-1;zk-2"
+  replicas: "3"
+  jvm.heap: "500m"
+  tick: "2000"
+  init: "10"
+  sync: "5"
+  client.cnxns: "60"
+  snap.retain: "3"
+  purge.interval: "1"
+  client.port: "2181"
+  server.port: "2888"
+  election.port: "3888"
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: zk-budget
+spec:
+  selector:
+    matchLabels:
+      app: zk
+  minAvailable: 3
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: zk
+spec:
+  serviceName: zk-headless
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: zk
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      nodeSelector:
+        machinetype: other
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                    - zk-headless
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: zk
+        imagePullPolicy: Always
+        image: thingsboard/zk:1.3.0
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: server
+        - containerPort: 3888
+          name: leader-election
+        env:
+        - name : ZK_ENSEMBLE
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: ensemble
+        - name : ZK_REPLICAS
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: replicas
+        - name : ZK_HEAP_SIZE
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: jvm.heap
+        - name : ZK_TICK_TIME
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: tick
+        - name : ZK_INIT_LIMIT
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: init
+        - name : ZK_SYNC_LIMIT
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: tick
+        - name : ZK_MAX_CLIENT_CNXNS
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: client.cnxns
+        - name: ZK_SNAP_RETAIN_COUNT
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: snap.retain
+        - name: ZK_PURGE_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: purge.interval
+        - name: ZK_CLIENT_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: client.port
+        - name: ZK_SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: server.port
+        - name: ZK_ELECTION_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: zk-config
+              key: election.port
+        command:
+        - sh
+        - -c
+        - zk-gen-config.sh && zkServer.sh start-foreground
+        readinessProbe:
+          exec:
+            command:
+            - "zk-ok.sh"
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - "zk-ok.sh"
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: zkdatadir
+          mountPath: /var/lib/zookeeper
+      securityContext:
+        runAsUser: 1000
+        fsGroup: 1000
+  volumeClaimTemplates:
+  - metadata:
+      name: zkdatadir
+      annotations:
+        volume.beta.kubernetes.io/storage-class: slow
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

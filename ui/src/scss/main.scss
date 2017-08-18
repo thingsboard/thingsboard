@@ -236,6 +236,15 @@ div {
   }
 }
 
+.md-caption {
+  &.tb-required:after {
+    content: ' *';
+    font-size: 10px;
+    vertical-align: top;
+    color: rgba(0,0,0,0.54);
+  }
+}
+
 pre.tb-highlight {
   background-color: #f7f7f7;
   display: block;
@@ -261,6 +270,117 @@ pre.tb-highlight {
   font-size: 16px;
 }
 
+.tb-data-table {
+  md-toolbar {
+    z-index: 0;
+  }
+  span.no-data-found {
+    position: relative;
+    height: calc(100% - 57px);
+    text-transform: uppercase;
+    display: flex;
+  }
+  table.md-table {
+    &.md-row-select td.md-cell,
+    &.md-row-select th.md-column {
+      &:first-child {
+        width: 20px;
+        padding: 0 0 0 12px;
+      }
+
+      &:nth-child(2) {
+        padding: 0 12px;
+      }
+
+      &:nth-child(n+3):nth-last-child(n+2) {
+        padding: 0 28px 0 0;
+      }
+    }
+
+    &:not(.md-row-select) td.md-cell,
+    &:not(.md-row-select) th.md-column {
+      &:first-child {
+        padding: 0 12px;
+      }
+
+      &:nth-child(n+2):nth-last-child(n+2) {
+        padding: 0 28px 0 0;
+      }
+    }
+
+    td.md-cell,
+    th.md-column {
+
+      &:last-child {
+        padding: 0 12px 0 0;
+      }
+
+    }
+  }
+
+  table.md-table, table.md-table.md-row-select {
+    tbody {
+      &.md-body {
+        tr {
+          &.md-row:not([disabled]) {
+            outline: none;
+            &:hover {
+              background-color: rgba(221, 221, 221, 0.3) !important;
+            }
+            &.md-selected {
+              background-color: rgba(221, 221, 221, 0.5) !important;
+            }
+            &.tb-current, &.tb-current:hover{
+              background-color: rgba(221, 221, 221, 0.65) !important;
+            }
+          }
+        }
+      }
+      tr {
+        td {
+          &.tb-action-cell {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 72px;
+            max-width: 72px;
+            width: 72px;
+            .md-button {
+              &.md-icon-button {
+                margin: 0;
+                padding: 6px;
+                width: 36px;
+                height: 36px;
+              }
+            }
+            .tb-spacer {
+              padding-left: 38px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.tb-severity {
+  font-weight: bold;
+  &.tb-critical {
+    color: red !important;
+  }
+  &.tb-major {
+    color: orange !important;
+  }
+  &.tb-minor {
+    color: #ffca3d !important;
+  }
+  &.tb-warning {
+    color: #abab00 !important;
+  }
+  &.tb-indeterminate {
+    color: green !important;
+  }
+}
 
 /***********************
  * Flow
@@ -280,8 +400,11 @@ $previewSize: 100px;
   overflow: hidden;
   label {
     width: 100%;
-    font-size: 24px;
+    font-size: 16px;
     text-align: center;
+    @media (min-width: $layout-breakpoint-sm) {
+      font-size: 24px;
+    }
   }
 }
 
@@ -369,6 +492,19 @@ md-tabs.tb-headless {
   }
 }
 
+.md-button.tb-layout-button {
+  width: 100%;
+  height: 100%;
+  max-width: 240px;
+  span {
+    padding: 40px;
+    font-size: 18px;
+    font-weight: 400;
+    white-space: normal;
+    line-height: 18px;
+  }
+}
+
 .md-button.tb-add-new-widget {
   border-style: dashed;
   border-width: 2px;
@@ -381,6 +517,7 @@ md-tabs.tb-headless {
  ***********************/
 
 section.tb-header-buttons {
+  pointer-events: none;
   position: absolute;
   right: 0px;
   top: 86px;

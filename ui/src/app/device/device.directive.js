@@ -25,6 +25,7 @@ export default function DeviceDirective($compile, $templateCache, toast, $transl
         var template = $templateCache.get(deviceFieldsetTemplate);
         element.html(template);
 
+        scope.types = types;
         scope.isAssignedToCustomer = false;
         scope.isPublic = false;
         scope.assignedCustomer = null;

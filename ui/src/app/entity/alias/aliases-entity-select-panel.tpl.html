@@ -1,0 +1,33 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-content flex layout="column">
+    <section flex layout="column">
+        <md-content flex class="md-padding" layout="column">
+            <div flex layout="row" ng-repeat="(aliasId, entityAliasInfo) in vm.entityAliasesInfo">
+                <md-input-container flex>
+                    <label>{{entityAliasInfo.alias}}</label>
+                    <md-select ng-model="entityAliasInfo.selectedId" ng-change="vm.currentAliasEntityChanged(aliasId, entityAliasInfo.selectedId)">
+                        <md-option ng-repeat="resolvedEntity in entityAliasInfo.resolvedEntities" ng-value="resolvedEntity.id">
+                            {{resolvedEntity.name}}
+                        </md-option>
+                    </md-select>
+                </md-input-container>
+            </div>
+        </md-content>
+    </section>
+</md-content>

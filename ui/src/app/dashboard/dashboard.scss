@@ -63,75 +63,45 @@ tb-details-sidenav.tb-widget-details-sidenav {
 section.tb-dashboard-toolbar {
   position: absolute;
   top: 0px;
-  left: -100%;
+  left: 0px;
   z-index: 3;
   pointer-events: none;
   &.tb-dashboard-toolbar-opened {
     right: 0px;
-    @include transition(right .3s cubic-bezier(.55,0,.55,.2));
+   // @include transition(right .3s cubic-bezier(.55,0,.55,.2));
   }
   &.tb-dashboard-toolbar-closed {
     right: 18px;
     @include transition(right .3s cubic-bezier(.55,0,.55,.2) .2s);
   }
-  md-fab-toolbar {
-    &.md-is-open {
-      md-fab-trigger {
-        .md-button {
-          &.md-fab {
-            opacity: 1;
-            @include transition(opacity .3s cubic-bezier(.55,0,.55,.2));
-          }
-        }
-      }
-    }
-    md-fab-trigger {
-      .md-button {
-        &.md-fab {
-          line-height: 36px;
-          width: 36px;
-          height: 36px;
-          margin: 4px 0 0 4px;
-          opacity: 0.5;
-          @include transition(opacity .3s cubic-bezier(.55,0,.55,.2) .2s);
-          md-icon {
-            position: absolute;
-            top: 25%;
-            margin: 0;
-            line-height: 18px;
-            height: 18px;
-            width: 18px;
-            min-height: 18px;
-            min-width: 18px;
-          }
-        }
-      }
-    }
-    .md-fab-toolbar-wrapper {
-      height: 50px;
-      md-toolbar {
-        min-height: 46px;
-        height: 46px;
-        md-fab-actions {
-          font-size: 16px;
-          margin-top: 0px;
-          .close-action {
-            margin-right: -18px;
-          }
-        }
-      }
-    }
-  }
 }
 
 .tb-dashboard-container {
    &.tb-dashboard-toolbar-opened {
-     margin-top: 50px;
-     @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2));
+     &.is-fullscreen {
+       margin-top: 64px;
+     }
+     &:not(.is-fullscreen) {
+       margin-top: 50px;
+       @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2));
+     }
    }
    &.tb-dashboard-toolbar-closed {
      margin-top: 0px;
      @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2) .2s);
+  }
+  .tb-dashboard-layouts {
+    md-backdrop {
+      z-index: 1;
+    }
+    #tb-main-layout {
+
+    }
+    #tb-right-layout {
+      md-sidenav {
+        z-index: 1;
+      }
+    }
   }
 }
 

@@ -34,6 +34,11 @@
             </excludes>
         </fileSet>
         <fileSet>
+            <directory>${pkg.win.dist}/install</directory>
+            <outputDirectory>install</outputDirectory>
+            <lineEnding>windows</lineEnding>
+        </fileSet>
+        <fileSet>
             <directory>${pkg.win.dist}/conf</directory>
             <outputDirectory>conf</outputDirectory>
             <lineEnding>windows</lineEnding>
@@ -72,6 +77,11 @@
         </file>
         <file>
             <source>${pkg.win.dist}/uninstall.bat</source>
+            <outputDirectory/>
+            <lineEnding>windows</lineEnding>
+        </file>
+        <file>
+            <source>${pkg.win.dist}/upgrade.bat</source>
             <outputDirectory/>
             <lineEnding>windows</lineEnding>
         </file>

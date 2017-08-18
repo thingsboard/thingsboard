@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +32,10 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DatabaseException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.RuleMetaDataEntity;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -45,15 +46,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @Slf4j
-public class BaseRuleService implements RuleService {
+public class BaseRuleService extends AbstractEntityService implements RuleService {
 
     private final TenantId systemTenantId = new TenantId(NULL_UUID);
 
@@ -74,7 +73,7 @@ public class BaseRuleService implements RuleService {
             rule.setTenantId(systemTenantId);
         }
         if (rule.getId() != null) {
-            RuleMetaData oldVersion = getData(ruleDao.findById(rule.getId()));
+            RuleMetaData oldVersion = ruleDao.findById(rule.getId());
             if (rule.getState() == null) {
                 rule.setState(oldVersion.getState());
             } else if (rule.getState() != oldVersion.getState()) {
@@ -92,9 +91,11 @@ public class BaseRuleService implements RuleService {
         if (rule.getProcessor() != null && !rule.getProcessor().isNull()) {
             validateComponentJson(rule.getProcessor(), ComponentType.PROCESSOR);
         }
-        validateComponentJson(rule.getAction(), ComponentType.ACTION);
+        if (rule.getAction() != null && !rule.getAction().isNull()) {
+            validateComponentJson(rule.getAction(), ComponentType.ACTION);
+        }
         validateRuleAndPluginState(rule);
-        return getData(ruleDao.save(rule));
+        return ruleDao.save(rule);
     }
 
     private void validateFilters(JsonNode filtersJson) {
@@ -130,6 +131,9 @@ public class BaseRuleService implements RuleService {
     }
 
     private void validateRuleAndPluginState(RuleMetaData rule) {
+        if (org.springframework.util.StringUtils.isEmpty(rule.getPluginToken())) {
+            return;
+        }
         PluginMetaData pluginMd = pluginService.findPluginByApiToken(rule.getPluginToken());
         if (pluginMd == null) {
             throw new IncorrectParameterException("Rule points to non-existent plugin!");
@@ -163,30 +167,33 @@ public class BaseRuleService implements RuleService {
     @Override
     public RuleMetaData findRuleById(RuleId ruleId) {
         validateId(ruleId, "Incorrect rule id for search rule request.");
-        return getData(ruleDao.findById(ruleId.getId()));
+        return ruleDao.findById(ruleId.getId());
+    }
+
+    @Override
+    public ListenableFuture<RuleMetaData> findRuleByIdAsync(RuleId ruleId) {
+        validateId(ruleId, "Incorrect rule id for search rule request.");
+        return ruleDao.findByIdAsync(ruleId.getId());
     }
 
     @Override
     public List<RuleMetaData> findPluginRules(String pluginToken) {
-        List<RuleMetaDataEntity> ruleEntities = ruleDao.findRulesByPlugin(pluginToken);
-        return convertDataList(ruleEntities);
+        return ruleDao.findRulesByPlugin(pluginToken);
     }
 
     @Override
     public TextPageData<RuleMetaData> findSystemRules(TextPageLink pageLink) {
         validatePageLink(pageLink, "Incorrect PageLink object for search rule request.");
-        List<RuleMetaDataEntity> ruleEntities = ruleDao.findByTenantIdAndPageLink(systemTenantId, pageLink);
-        List<RuleMetaData> plugins = convertDataList(ruleEntities);
-        return new TextPageData<>(plugins, pageLink);
+        List<RuleMetaData> rules = ruleDao.findByTenantIdAndPageLink(systemTenantId, pageLink);
+        return new TextPageData<>(rules, pageLink);
     }
 
     @Override
     public TextPageData<RuleMetaData> findTenantRules(TenantId tenantId, TextPageLink pageLink) {
         validateId(tenantId, "Incorrect tenant id for search rule request.");
         validatePageLink(pageLink, "Incorrect PageLink object for search rule request.");
-        List<RuleMetaDataEntity> ruleEntities = ruleDao.findByTenantIdAndPageLink(tenantId, pageLink);
-        List<RuleMetaData> plugins = convertDataList(ruleEntities);
-        return new TextPageData<>(plugins, pageLink);
+        List<RuleMetaData> rules = ruleDao.findByTenantIdAndPageLink(tenantId, pageLink);
+        return new TextPageData<>(rules, pageLink);
     }
 
     @Override
@@ -210,8 +217,7 @@ public class BaseRuleService implements RuleService {
         log.trace("Executing findAllTenantRulesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<RuleMetaDataEntity> rulesEntities = ruleDao.findAllTenantRulesByTenantId(tenantId.getId(), pageLink);
-        List<RuleMetaData> rules = convertDataList(rulesEntities);
+        List<RuleMetaData> rules = ruleDao.findAllTenantRulesByTenantId(tenantId.getId(), pageLink);
         return new TextPageData<>(rules, pageLink);
     }
 
@@ -235,13 +241,13 @@ public class BaseRuleService implements RuleService {
     @Override
     public void deleteRuleById(RuleId ruleId) {
         validateId(ruleId, "Incorrect rule id for delete rule request.");
+        deleteEntityRelations(ruleId);
         ruleDao.deleteById(ruleId);
     }
 
     @Override
     public void activateRuleById(RuleId ruleId) {
         updateLifeCycleState(ruleId, ComponentLifecycleState.ACTIVE);
-
     }
 
     @Override
@@ -251,10 +257,10 @@ public class BaseRuleService implements RuleService {
 
     private void updateLifeCycleState(RuleId ruleId, ComponentLifecycleState state) {
         Validator.validateId(ruleId, "Incorrect rule id for state change request.");
-        RuleMetaDataEntity rule = ruleDao.findById(ruleId);
+        RuleMetaData rule = ruleDao.findById(ruleId);
         if (rule != null) {
             rule.setState(state);
-            validateRuleAndPluginState(getData(rule));
+            validateRuleAndPluginState(rule);
             ruleDao.save(rule);
         } else {
             throw new DatabaseException("Plugin not found!");
@@ -264,7 +270,7 @@ public class BaseRuleService implements RuleService {
     @Override
     public void deleteRulesByTenantId(TenantId tenantId) {
         validateId(tenantId, "Incorrect tenant id for delete rules request.");
-        tenantRulesRemover.removeEntitites(tenantId);
+        tenantRulesRemover.removeEntities(tenantId);
     }
 
     private DataValidator<RuleMetaData> ruleValidator =
@@ -277,17 +283,17 @@ public class BaseRuleService implements RuleService {
                 }
             };
 
-    private PaginatedRemover<TenantId, RuleMetaDataEntity> tenantRulesRemover =
-            new PaginatedRemover<TenantId, RuleMetaDataEntity>() {
+    private PaginatedRemover<TenantId, RuleMetaData> tenantRulesRemover =
+            new PaginatedRemover<TenantId, RuleMetaData>() {
 
                 @Override
-                protected List<RuleMetaDataEntity> findEntities(TenantId id, TextPageLink pageLink) {
+                protected List<RuleMetaData> findEntities(TenantId id, TextPageLink pageLink) {
                     return ruleDao.findByTenantIdAndPageLink(id, pageLink);
                 }
 
                 @Override
-                protected void removeEntity(RuleMetaDataEntity entity) {
-                    ruleDao.deleteById(entity.getId());
+                protected void removeEntity(RuleMetaData entity) {
+                    ruleDao.deleteById(entity.getUuidId());
                 }
             };
 

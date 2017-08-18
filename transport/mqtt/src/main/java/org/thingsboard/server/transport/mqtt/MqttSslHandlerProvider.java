@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.EncryptionUtil;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -41,10 +42,11 @@ import java.security.cert.X509Certificate;
  */
 @Slf4j
 @Component("MqttSslHandlerProvider")
-@ConditionalOnProperty(prefix = "mqtt.ssl", value = "key-store", havingValue = "", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "mqtt.ssl", value = "enabled", havingValue = "true", matchIfMissing = false)
 public class MqttSslHandlerProvider {
 
-    public static final String TLS = "TLS";
+    @Value("${mqtt.ssl.protocol}")
+    private String sslProtocol;
     @Value("${mqtt.ssl.key_store}")
     private String keyStoreFile;
     @Value("${mqtt.ssl.key_store_password}")
@@ -53,7 +55,7 @@ public class MqttSslHandlerProvider {
     private String keyPassword;
     @Value("${mqtt.ssl.key_store_type}")
     private String keyStoreType;
-    
+
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
 
@@ -79,7 +81,10 @@ public class MqttSslHandlerProvider {
             KeyManager[] km = kmf.getKeyManagers();
             TrustManager x509wrapped = getX509TrustManager(tmFactory);
             TrustManager[] tm = {x509wrapped};
-            SSLContext sslContext = SSLContext.getInstance(TLS);
+            if (StringUtils.isEmpty(sslProtocol)) {
+                sslProtocol = "TLS";
+            }
+            SSLContext sslContext = SSLContext.getInstance(sslProtocol);
             sslContext.init(km, tm, null);
             SSLEngine sslEngine = sslContext.createSSLEngine();
             sslEngine.setUseClientMode(false);

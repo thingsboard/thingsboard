@@ -27,8 +27,9 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 import org.thingsboard.server.extensions.api.rules.RuleProcessingMetaData;
-import org.thingsboard.server.extensions.core.filter.DeviceAttributesFilter;
+import org.thingsboard.server.extensions.core.filter.NashornJsEvaluator;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -64,18 +65,24 @@ public class VelocityUtils {
         return context;
     }
 
-    public static VelocityContext createContext(DeviceAttributes deviceAttributes, FromDeviceMsg payload) {
+    public static VelocityContext createContext(DeviceMetaData deviceMetaData, FromDeviceMsg payload) {
         VelocityContext context = new VelocityContext();
         context.put("date", new DateTool());
-        pushAttributes(context, deviceAttributes.getClientSideAttributes(), DeviceAttributesFilter.CLIENT_SIDE);
-        pushAttributes(context, deviceAttributes.getServerSideAttributes(), DeviceAttributesFilter.SERVER_SIDE);
-        pushAttributes(context, deviceAttributes.getServerSidePublicAttributes(), DeviceAttributesFilter.SHARED);
+        DeviceAttributes deviceAttributes = deviceMetaData.getDeviceAttributes();
+
+        pushAttributes(context, deviceAttributes.getClientSideAttributes(), NashornJsEvaluator.CLIENT_SIDE);
+        pushAttributes(context, deviceAttributes.getServerSideAttributes(), NashornJsEvaluator.SERVER_SIDE);
+        pushAttributes(context, deviceAttributes.getServerSidePublicAttributes(), NashornJsEvaluator.SHARED);
 
         switch (payload.getMsgType()) {
             case POST_TELEMETRY_REQUEST:
                 pushTsEntries(context, (TelemetryUploadRequest) payload);
                 break;
         }
+
+        context.put("deviceId", deviceMetaData.getDeviceId().getId().toString());
+        context.put("deviceName", deviceMetaData.getDeviceName());
+        context.put("deviceType", deviceMetaData.getDeviceType());
 
         return context;
     }

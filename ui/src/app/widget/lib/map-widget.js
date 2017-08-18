@@ -172,6 +172,7 @@ export default class TbMapWidget {
                         showLabel: subscriptionLocationSettings.showLabel !== false,
                         displayTooltip: subscriptionLocationSettings.displayTooltip !== false,
                         label: datasource.name,
+                        labelText: datasource.name,
                         labelColor: subscriptionLocationSettings.labelColor || this.ctx.widgetConfig.color || '#000000',
                         color: "#FE7569",
                         useColorFunction: false,
@@ -218,6 +219,7 @@ export default class TbMapWidget {
                 showLabel: true,
                 displayTooltip: true,
                 label: "",
+                labelText: "",
                 labelColor: this.ctx.widgetConfig.color || '#000000',
                 color: "#FE7569",
                 useColorFunction: false,
@@ -246,6 +248,7 @@ export default class TbMapWidget {
 
                 this.locationsSettings[i].showLabel = configuredLocationsSettings[i].showLabel !== false;
                 this.locationsSettings[i].label = configuredLocationsSettings[i].label || this.locationsSettings[i].label;
+                this.locationsSettings[i].labelText = this.locationsSettings[i].label;
                 this.locationsSettings[i].color = configuredLocationsSettings[i].color ? tinycolor(configuredLocationsSettings[i].color).toHexString() : this.locationsSettings[i].color;
 
                 this.locationsSettings[i].useColorFunction = configuredLocationsSettings[i].useColorFunction === true;

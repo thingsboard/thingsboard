@@ -6,6 +6,7 @@
     <logpath>${pkg.winWrapperLogFolder}</logpath>
     <logmode>rotate</logmode>
     <env name="LOADER_PATH" value="%BASE%\conf,%BASE%\extensions" />
+    <env name="SQL_DATA_FOLDER" value="%BASE%\data\sql" />
     <executable>java</executable>
     <startargument>-Dplatform=windows</startargument>
     <startargument>-jar</startargument>

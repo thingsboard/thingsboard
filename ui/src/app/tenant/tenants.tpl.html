@@ -15,13 +15,54 @@
     limitations under the License.
 
 -->
+
 <tb-grid grid-configuration="vm.tenantGridConfig">
 	<details-buttons tb-help="'tenants'" help-container-id="help-container">
 		<div id="help-container"></div>
 	</details-buttons>
-	<tb-tenant tenant="vm.grid.operatingItem()"
-			   is-edit="vm.grid.detailsConfig.isDetailsEditMode"
-			   the-form="vm.grid.detailsForm"
-			   on-manage-users="vm.openTenantUsers(event, vm.grid.detailsConfig.currentItem)"
-			   on-delete-tenant="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-tenant>
+	<md-tabs ng-class="{'tb-headless': vm.grid.detailsConfig.isDetailsEditMode}"
+			 id="tabs" md-border-bottom flex class="tb-absolute-fill">
+		<md-tab label="{{ 'tenant.details' | translate }}">
+			<tb-tenant tenant="vm.grid.operatingItem()"
+				   is-edit="vm.grid.detailsConfig.isDetailsEditMode"
+				   the-form="vm.grid.detailsForm"
+				   on-manage-users="vm.openTenantUsers(event, vm.grid.detailsConfig.currentItem)"
+				   on-delete-tenant="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-tenant>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
+			<tb-attribute-table flex
+								entity-id="vm.grid.operatingItem().id.id"
+								entity-type="{{vm.types.entityType.tenant}}"
+								entity-name="vm.grid.operatingItem().title"
+								default-attribute-scope="{{vm.types.attributesScope.server.value}}">
+			</tb-attribute-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.latest-telemetry' | translate }}">
+			<tb-attribute-table flex
+								entity-id="vm.grid.operatingItem().id.id"
+								entity-type="{{vm.types.entityType.tenant}}"
+								entity-name="vm.grid.operatingItem().title"
+								default-attribute-scope="{{vm.types.latestTelemetry.value}}"
+								disable-attribute-scope-selection="true">
+			</tb-attribute-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'alarm.alarms' | translate }}">
+			<tb-alarm-table flex entity-type="vm.types.entityType.tenant"
+							entity-id="vm.grid.operatingItem().id.id">
+			</tb-alarm-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'tenant.events' | translate }}">
+			<tb-event-table flex entity-type="vm.types.entityType.tenant"
+							entity-id="vm.grid.operatingItem().id.id"
+							tenant-id="vm.types.id.nullUid"
+							default-event-type="{{vm.types.eventType.error.value}}">
+			</tb-event-table>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'relation.relations' | translate }}">
+			<tb-relation-table flex
+							   entity-id="vm.grid.operatingItem().id.id"
+							   entity-type="{{vm.types.entityType.tenant}}">
+			</tb-relation-table>
+		</md-tab>
+	</md-tabs>
 </tb-grid>

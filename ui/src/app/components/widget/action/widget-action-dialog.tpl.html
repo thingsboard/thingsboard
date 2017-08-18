@@ -1,0 +1,141 @@
+<!--
+
+    Copyright © 2016-2017 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-dialog class="tb-widget-action-dialog" aria-label="{{'widget-config.action' | translate }}" style="min-width: 600px;">
+    <form name="theForm" ng-submit="vm.save()">
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2>{{ (vm.isAdd ? 'widget-config.add-action' : 'widget-config.edit-action') | translate }}</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="vm.cancel()">
+                    <ng-md-icon icon="close" aria-label="{{ 'action.close' | translate }}"></ng-md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
+        <span style="min-height: 5px;" flex="" ng-show="!loading"></span>
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                <md-content class="md-padding" layout="column">
+                    <fieldset ng-disabled="loading" layout="column">
+                        <md-input-container class="md-block">
+                            <label translate>widget-config.action-source</label>
+                            <md-select name="actionSource" required aria-label="{{ 'widget-config.action-source' | translate }}" ng-model="vm.action.actionSourceId">
+                                <md-option ng-repeat="(actionSourceId, actionSource) in vm.actionSources" ng-value="actionSourceId">
+                                    {{vm.actionSourceName(actionSource)}}
+                                </md-option>
+                            </md-select>
+                            <div ng-messages="theForm.actionSource.$error">
+                                <div ng-message="required" translate>widget-config.action-source-required</div>
+                            </div>
+                        </md-input-container>
+                        <md-input-container class="md-block">
+                            <label translate>widget-config.action-name</label>
+                            <input name="name" required ng-model="vm.action.name">
+                            <div ng-messages="theForm.name.$error">
+                                <div ng-message="required" translate>widget-config.action-name-required</div>
+                                <div ng-message="actionNameNotUnique" translate>widget-config.action-name-not-unique</div>
+                            </div>
+                        </md-input-container>
+                        <tb-material-icon-select ng-model="vm.action.icon">
+                        </tb-material-icon-select>
+                        <md-input-container class="md-block">
+                            <label translate>widget-config.action-type</label>
+                            <md-select name="actionType" required aria-label="{{ 'widget-config.action-type' | translate }}" ng-model="vm.action.type">
+                                <md-option ng-repeat="actionType in vm.types.widgetActionTypes" ng-value="actionType.value">
+                                    {{ actionType.name | translate }}
+                                </md-option>
+                            </md-select>
+                            <div ng-messages="theForm.actionType.$error">
+                                <div ng-message="required" translate>widget-config.action-type-required</div>
+                            </div>
+                        </md-input-container>
+                        <div layout="column"
+                             style="padding-bottom: 20px;"
+                             ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboard.value">
+                            <div class="md-caption tb-required"
+                                 style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>widget-action.target-dashboard</div>
+                            <tb-dashboard-autocomplete the-form="theForm"
+                                                       tb-required="true"
+                                                       ng-model="vm.action.targetDashboardId"
+                                                       select-first-dashboard="false">
+                            </tb-dashboard-autocomplete>
+                        </div>
+                        <md-autocomplete ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.openDashboard.value"
+                                         ng-required="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value"
+                                         md-no-cache="true"
+                                         md-input-name="targetDashboardState"
+                                         ng-model="vm.action.targetDashboardStateId"
+                                         md-selected-item="vm.action.targetDashboardStateId"
+                                         md-search-text="vm.targetDashboardStateSearchText"
+                                         md-search-text-change="vm.targetDashboardStateSearchTextChanged()"
+                                         md-items="item in vm.dashboardStateSearch(vm.targetDashboardStateSearchText)"
+                                         md-item-text="item"
+                                         md-min-length="0"
+                                         md-floating-label="{{ 'widget-action.target-dashboard-state' | translate }}"
+                                         md-select-on-match="true">
+                            <md-item-template>
+                                <div>
+                                    <span md-highlight-text="vm.targetDashboardStateSearchText" md-highlight-flags="^i">{{item}}</span>
+                                </div>
+                            </md-item-template>
+                            <div ng-messages="theForm.targetDashboardState.$error">
+                                <div translate ng-message="required">widget-action.target-dashboard-state-required</div>
+                            </div>
+                        </md-autocomplete>
+                        <md-checkbox ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
+                                            vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value"
+                                     flex aria-label="{{ 'widget-action.open-right-layout' | translate }}"
+                                     ng-model="vm.action.openRightLayout">{{ 'widget-action.open-right-layout' | translate }}
+                        </md-checkbox>
+                        <div flex layout="column" ng-if="vm.action.type == vm.types.widgetActionTypes.openDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.updateDashboardState.value ||
+                                                vm.action.type == vm.types.widgetActionTypes.openDashboard.value">
+                            <md-checkbox flex aria-label="{{ 'widget-action.set-entity-from-widget' | translate }}"
+                                         ng-model="vm.action.setEntityId">{{ 'widget-action.set-entity-from-widget' | translate }}
+                            </md-checkbox>
+                            <md-input-container ng-if="vm.action.setEntityId" class="md-block">
+                                <label translate>alias.state-entity-parameter-name</label>
+                                <input name="stateEntityParamName"
+                                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                                       ng-model="vm.action.stateEntityParamName"
+                                       aria-label="{{ 'alias.state-entity-parameter-name' | translate }}">
+                            </md-input-container>
+                        </div>
+                        <tb-js-func ng-if="vm.action.type == vm.types.widgetActionTypes.custom.value"
+                                    ng-model="vm.action.customFunction"
+                                    function-args="{{ ['$event', 'widgetContext', 'entityId'] }}"
+                                    validation-args="{{ [] }}">
+                        </tb-js-func>
+                    </fieldset>
+                </md-content>
+            </div>
+        </md-dialog-content>
+        <md-dialog-actions layout="row">
+            <span flex></span>
+            <md-button ng-disabled="loading || theForm.$invalid || !theForm.$dirty" type="submit"
+                       class="md-raised md-primary">
+                {{ (vm.isAdd ? 'action.add' : 'action.save') | translate }}
+            </md-button>
+            <md-button ng-disabled="loading" ng-click="vm.cancel()" style="margin-right:20px;">
+                {{ 'action.cancel' | translate }}
+            </md-button>
+        </md-dialog-actions>
+    </form>
+</md-dialog>

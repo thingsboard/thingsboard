@@ -38,7 +38,7 @@ public class ValidationCallback implements PluginCallback<Boolean> {
         if (value) {
             action.accept(ctx);
         } else {
-            onFailure(ctx, new UnauthorizedException());
+            onFailure(ctx, new UnauthorizedException("Permission denied."));
         }
     }
 

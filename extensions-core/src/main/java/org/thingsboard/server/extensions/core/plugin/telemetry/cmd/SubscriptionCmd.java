@@ -26,7 +26,8 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionT
 public abstract class SubscriptionCmd implements TelemetryPluginCmd {
 
     private int cmdId;
-    private String deviceId;
+    private String entityType;
+    private String entityId;
     private String keys;
     private String scope;
     private boolean unsubscribe;
@@ -35,7 +36,7 @@ public abstract class SubscriptionCmd implements TelemetryPluginCmd {
 
     @Override
     public String toString() {
-        return "SubscriptionCmd [deviceId=" + deviceId + ", tags=" + keys + ", unsubscribe=" + unsubscribe + "]";
+        return "SubscriptionCmd [entityType=" + entityType  + ", entityId=" + entityId + ", tags=" + keys + ", unsubscribe=" + unsubscribe + "]";
     }
 
 }

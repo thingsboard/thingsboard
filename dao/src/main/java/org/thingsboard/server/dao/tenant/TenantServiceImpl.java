@@ -15,49 +15,51 @@
  */
 package org.thingsboard.server.dao.tenant;
 
-import static org.thingsboard.server.dao.DaoUtil.convertDataList;
-import static org.thingsboard.server.dao.DaoUtil.getData;
-
-import java.util.List;
-
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.model.TenantEntity;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
-import org.thingsboard.server.dao.user.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+
+import java.util.List;
+
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
-public class TenantServiceImpl implements TenantService {
-    
+public class TenantServiceImpl extends AbstractEntityService implements TenantService {
+
     private static final String DEFAULT_TENANT_REGION = "Global";
 
     @Autowired
     private TenantDao tenantDao;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private CustomerService customerService;
-    
+
+    @Autowired
+    private AssetService assetService;
+
     @Autowired
     private DeviceService deviceService;
 
@@ -72,13 +74,19 @@ public class TenantServiceImpl implements TenantService {
 
     @Autowired
     private PluginService pluginService;
-    
+
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
         Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        TenantEntity tenantEntity = tenantDao.findById(tenantId.getId());
-        return getData(tenantEntity);
+        return tenantDao.findById(tenantId.getId());
+    }
+
+    @Override
+    public ListenableFuture<Tenant> findTenantByIdAsync(TenantId tenantId) {
+        log.trace("Executing TenantIdAsync [{}]", tenantId);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        return tenantDao.findByIdAsync(tenantId.getId());
     }
 
     @Override
@@ -86,8 +94,7 @@ public class TenantServiceImpl implements TenantService {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
         tenantValidator.validate(tenant);
-        TenantEntity tenantEntity = tenantDao.save(tenant);
-        return getData(tenantEntity);
+        return tenantDao.save(tenant);
     }
 
     @Override
@@ -97,26 +104,27 @@ public class TenantServiceImpl implements TenantService {
         customerService.deleteCustomersByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
         dashboardService.deleteDashboardsByTenantId(tenantId);
+        assetService.deleteAssetsByTenantId(tenantId);
         deviceService.deleteDevicesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
         ruleService.deleteRulesByTenantId(tenantId);
         pluginService.deletePluginsByTenantId(tenantId);
         tenantDao.removeById(tenantId.getId());
+        deleteEntityRelations(tenantId);
     }
 
     @Override
     public TextPageData<Tenant> findTenants(TextPageLink pageLink) {
         log.trace("Executing findTenants pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
-        List<TenantEntity> tenantEntities = tenantDao.findTenantsByRegion(DEFAULT_TENANT_REGION, pageLink);
-        List<Tenant> tenants = convertDataList(tenantEntities);
-        return new TextPageData<Tenant>(tenants, pageLink);
+        List<Tenant> tenants = tenantDao.findTenantsByRegion(DEFAULT_TENANT_REGION, pageLink);
+        return new TextPageData<>(tenants, pageLink);
     }
 
     @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
-        tenantsRemover.removeEntitites(DEFAULT_TENANT_REGION);
+        tenantsRemover.removeEntities(DEFAULT_TENANT_REGION);
     }
 
     private DataValidator<Tenant> tenantValidator =
@@ -131,18 +139,18 @@ public class TenantServiceImpl implements TenantService {
                     }
                 }
     };
-    
-    private PaginatedRemover<String, TenantEntity> tenantsRemover =
-            new PaginatedRemover<String, TenantEntity>() {
-        
+
+    private PaginatedRemover<String, Tenant> tenantsRemover =
+            new PaginatedRemover<String, Tenant>() {
+
         @Override
-        protected List<TenantEntity> findEntities(String region, TextPageLink pageLink) {
+        protected List<Tenant> findEntities(String region, TextPageLink pageLink) {
             return tenantDao.findTenantsByRegion(region, pageLink);
         }
 
         @Override
-        protected void removeEntity(TenantEntity entity) {
-            deleteTenant(new TenantId(entity.getId()));
+        protected void removeEntity(Tenant entity) {
+            deleteTenant(new TenantId(entity.getUuidId()));
         }
     };
 }

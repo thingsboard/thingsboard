@@ -18,9 +18,9 @@ package org.thingsboard.server.dao.exception;
 
 public class IncorrectParameterException extends RuntimeException {
 
-	private static final long serialVersionUID = 601995650578985289L;
+    private static final long serialVersionUID = 601995650578985289L;
 
-	public IncorrectParameterException(String message) {
+    public IncorrectParameterException(String message) {
         super(message);
     }
 

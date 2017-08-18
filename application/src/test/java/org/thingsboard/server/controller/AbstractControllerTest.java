@@ -22,20 +22,20 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.IntegrationTest;
-import org.springframework.boot.test.SpringApplicationContextLoader;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.context.SpringBootContextLoader;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -48,7 +48,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -66,11 +66,9 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
-import org.thingsboard.server.exception.ThingsboardException;
-import org.thingsboard.server.service.mail.MailService;
 import org.thingsboard.server.service.mail.TestMailService;
-import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
+import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -81,37 +79,35 @@ import java.util.List;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @ActiveProfiles("test")
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes=AbstractControllerTest.class, loader=SpringApplicationContextLoader.class)
-@TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:thingsboard-test.properties"})
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = AbstractControllerTest.class, loader = SpringBootContextLoader.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
-@EnableAutoConfiguration
 @ComponentScan({"org.thingsboard.server"})
 @WebAppConfiguration
-@IntegrationTest("server.port:0")
+@SpringBootTest
+@Slf4j
 public abstract class AbstractControllerTest {
+
+    protected static final String TEST_TENANT_NAME = "TEST TENANT";
 
     protected static final String SYS_ADMIN_EMAIL = "sysadmin@thingsboard.org";
     private static final String SYS_ADMIN_PASSWORD = "sysadmin";
     
-    protected static final String TENANT_ADMIN_EMAIL = "tenant@thingsboard.org";
+    protected static final String TENANT_ADMIN_EMAIL = "testtenant@thingsboard.org";
     private static final String TENANT_ADMIN_PASSWORD = "tenant";
 
-    protected static final String CUSTOMER_USER_EMAIL = "customer@thingsboard.org";
+    protected static final String CUSTOMER_USER_EMAIL = "testcustomer@thingsboard.org";
     private static final String CUSTOMER_USER_PASSWORD = "customer";
     
     protected MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
             Charset.forName("utf8"));
 
-    
     protected MockMvc mockMvc;
     
     protected String token;
@@ -125,6 +121,17 @@ public abstract class AbstractControllerTest {
     
     @Autowired
     private WebApplicationContext webApplicationContext;
+
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            log.info("Starting test: {}", description.getMethodName());
+        }
+
+        protected void finished(Description description) {
+            log.info("Finished test: {}", description.getMethodName());
+        }
+    };
     
     @Autowired
     void setConverters(HttpMessageConverter<?>[] converters) {
@@ -140,6 +147,7 @@ public abstract class AbstractControllerTest {
     
     @Before
     public void setup() throws Exception {
+        log.info("Executing setup");
         if (this.mockMvc == null) {
             this.mockMvc = webAppContextSetup(webApplicationContext)
                     .apply(springSecurity()).build();
@@ -147,7 +155,7 @@ public abstract class AbstractControllerTest {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
-        tenant.setTitle("Tenant");
+        tenant.setTitle(TEST_TENANT_NAME);
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
@@ -173,13 +181,16 @@ public abstract class AbstractControllerTest {
         createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
 
         logout();
+        log.info("Executed setup");
     }
 
     @After
     public void teardown() throws Exception {
+        log.info("Executing teardown");
         loginSysAdmin();
         doDelete("/api/tenant/"+tenantId.getId().toString())
                 .andExpect(status().isOk());
+        log.info("Executed teardown");
     }
 
     protected void loginSysAdmin() throws Exception {
@@ -198,7 +209,7 @@ public abstract class AbstractControllerTest {
         User savedUser = doPost("/api/user", user, User.class);
         logout();
         doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
-        .andExpect(status().isPermanentRedirect())
+        .andExpect(status().isSeeOther())
         .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
         JsonNode tokenInfo = readResponse(doPost("/api/noauth/activate", "activateToken", TestMailService.currentActivateToken, "password", password).andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenInfo, user.getEmail());
@@ -303,7 +314,7 @@ public abstract class AbstractControllerTest {
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
-    
+
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doDelete(urlTemplate, params).andExpect(status().isOk()), responseClass);
     }
@@ -362,8 +373,8 @@ public abstract class AbstractControllerTest {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readerFor(type).readValue(content);
     }
-     
-    class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
+
+    public class IdComparator<D extends BaseData<? extends UUIDBased>> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {
             return o1.getId().getId().compareTo(o2.getId().getId());

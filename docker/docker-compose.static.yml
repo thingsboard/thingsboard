@@ -17,10 +17,13 @@
 version: '2'
 
 services:
-  db:
+  cassandra:
     ports:
       - "9042:9042"
       - "9160:9160"
   zk:
     ports:
       - "2181:2181"
+  postgres:
+    ports:
+      - "5432:5432"

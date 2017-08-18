@@ -95,6 +95,15 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
             options.value = options.minValue;
         }
 
+        if (options.gaugeType === 'donut') {
+            if (!options.donutStartAngle) {
+                options.donutStartAngle = 1.5 * Math.PI;
+            }
+            if (!options.donutEndAngle) {
+                options.donutEndAngle = options.donutStartAngle + 2 * Math.PI;
+            }
+        }
+
         var colorsCount = options.levelColors.length;
         var inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
         options.colorsRange = [];
@@ -171,7 +180,9 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
 
                 drawDigitalTitle(context, options);
 
-                drawDigitalLabel(context, options);
+                if (!options.showTimestamp) {
+                    drawDigitalLabel(context, options);
+                }
 
                 drawDigitalMinMax(context, options);
 
@@ -188,6 +199,10 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
                 context.save();
 
                 drawDigitalValue(context, options, this.value);
+
+                if (options.showTimestamp) {
+                    drawDigitalLabel(context, options);
+                }
 
                 this.elementValueClone.initialized = true;
                 this.elementValueClone.renderedValue = this.value;
@@ -232,6 +247,21 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
         return this;
     }
 
+    getValueColor() {
+        if (this.contextProgressClone) {
+            var color = this.contextProgressClone.currentColor;
+            if (!color) {
+                if (this.options.neonGlowBrightness) {
+                    color = getProgressColor(0, this.options.neonColorsRange);
+                } else {
+                    color = getProgressColor(0, this.options.colorsRange);
+                }
+            }
+            return color;
+        } else {
+            return '#000';
+        }
+    }
 }
 
 /* eslint-disable angular/document-service */
@@ -308,6 +338,8 @@ function barDimensions(context, options, x, y, w, h) {
         bd.height = w / aspect;
     }
 
+    bd.origBaseX = bd.baseX;
+    bd.origBaseY = bd.baseY;
     bd.baseX += (w - bd.width) / 2;
     bd.baseY += (h - bd.height) / 2;
 
@@ -402,15 +434,15 @@ function barDimensions(context, options, x, y, w, h) {
 
         if (options.hideMinMax && options.label === '') {
             bd.labelY = bd.barBottom;
-            bd.barLeft = options.fontMinMaxSize/3 * bd.fontSizeFactor;
-            bd.barRight = bd.width - options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.barLeft = bd.origBaseX + options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.barRight = bd.bd.origBaseX + w + /*bd.width*/ - options.fontMinMaxSize/3 * bd.fontSizeFactor;
         } else {
             context.font = canvasGauges.drawings.font(options, 'MinMax', bd.fontSizeFactor);
             var minTextWidth  = context.measureText(options.minValue+'').width;
             var maxTextWidth  = context.measureText(options.maxValue+'').width;
             var maxW = Math.max(minTextWidth, maxTextWidth);
-            bd.minX = bd.baseX + maxW/2 + options.fontMinMaxSize/3 * bd.fontSizeFactor;
-            bd.maxX = bd.baseX + bd.width - maxW/2 - options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.minX = bd.origBaseX + maxW/2 + options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.maxX = bd.origBaseX + w + /*bd.width*/ - maxW/2 - options.fontMinMaxSize/3 * bd.fontSizeFactor;
             bd.barLeft = bd.minX;
             bd.barRight = bd.maxX;
             bd.labelY = bd.barBottom + (8 + options.fontLabelSize) * bd.fontSizeFactor;
@@ -473,7 +505,7 @@ function drawBackground(context, options) {
         context.lineCap = 'round';
     }
     if (options.gaugeType === 'donut') {
-        context.arc(context.barDimensions.Cx, context.barDimensions.Cy, context.barDimensions.Rm, 1.5 * Math.PI, 3.5 * Math.PI);
+        context.arc(context.barDimensions.Cx, context.barDimensions.Cy, context.barDimensions.Rm, options.donutStartAngle, options.donutEndAngle);
         context.stroke();
     } else if (options.gaugeType === 'arc') {
         context.arc(context.barDimensions.Cx, context.barDimensions.Cy, context.barDimensions.Rm, Math.PI, 2*Math.PI);
@@ -605,7 +637,7 @@ function getProgressColor(progress, colorsRange) {
     }
 }
 
-function drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, color, progress, isDonut) {
+function drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, color, progress, isDonut, donutStartAngle, donutEndAngle) {
     context.setLineDash([]);
     var strokeWidth = Ro - Ri;
     var blur = 0.55;
@@ -623,7 +655,7 @@ function drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, color, progress, isDonut) {
     context.beginPath();
     var e = 0.01 * Math.PI;
     if (isDonut) {
-        context.arc(Cx, Cy, Rm, 1.5 * Math.PI - e, 1.5 * Math.PI + 2 * Math.PI * progress + e);
+        context.arc(Cx, Cy, Rm, donutStartAngle - e, donutStartAngle + (donutEndAngle - donutStartAngle) * progress + e);
     } else {
         context.arc(Cx, Cy, Rm, Math.PI - e, Math.PI + Math.PI * progress + e);
     }
@@ -660,9 +692,9 @@ function drawBarGlow(context, startX, startY, endX, endY, color, strokeWidth, is
 function drawProgress(context, options, progress) {
     var neonColor;
     if (options.neonGlowBrightness) {
-        neonColor = getProgressColor(progress, options.neonColorsRange);
+        context.currentColor = neonColor = getProgressColor(progress, options.neonColorsRange);
     } else {
-        context.strokeStyle = getProgressColor(progress, options.colorsRange);
+        context.currentColor = context.strokeStyle = getProgressColor(progress, options.colorsRange);
     }
 
     let {barLeft, barRight, barTop, baseX, width, barBottom, Cx, Cy, Rm, Ro, Ri, strokeWidth} =
@@ -682,10 +714,10 @@ function drawProgress(context, options, progress) {
             context.strokeStyle = neonColor;
         }
         context.beginPath();
-        context.arc(Cx, Cy, Rm, 1.5 * Math.PI, 1.5 * Math.PI + 2 * Math.PI * progress);
+        context.arc(Cx, Cy, Rm, options.donutStartAngle, options.donutStartAngle + (options.donutEndAngle - options.donutStartAngle) * progress);
         context.stroke();
         if (options.neonGlowBrightness && !options.isMobile) {
-            drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, true);
+            drawArcGlow(context, Cx, Cy, Ri, Rm, Ro, neonColor, progress, true, options.donutStartAngle, options.donutEndAngle);
         }
     } else if (options.gaugeType === 'arc') {
         if (options.neonGlowBrightness) {

@@ -1,0 +1,50 @@
+{
+  "schema": {
+    "title": "Telemetry Plugin Action Configuration",
+    "type": "object",
+    "properties": {
+      "timeUnit": {
+        "title": "Time Unit",
+        "type": "string",
+        "default": "DAYS"
+      },
+      "ttlValue": {
+        "title": "TTL",
+        "type": "integer",
+        "default": 365,
+        "minimum": 0,
+        "maximum": 100000
+      }
+    },
+    "required": [
+      "timeUnit",
+      "ttlValue"
+    ]
+  },
+  "form": [
+    {
+      "key": "timeUnit",
+      "type": "rc-select",
+      "multiple": false,
+      "items": [
+        {
+          "value": "SECONDS",
+          "label": "Seconds"
+        },
+        {
+          "value": "MINUTES",
+          "label": "Minutes"
+        },
+        {
+          "value": "HOURS",
+          "label": "Hours"
+        },
+        {
+          "value": "DAYS",
+          "label": "Days"
+        }
+      ]
+    },
+    "ttlValue"
+  ]
+}

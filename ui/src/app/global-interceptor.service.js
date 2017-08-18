@@ -174,7 +174,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             }
         }
 
-        if (unhandled) {
+        if (unhandled && !ignoreErrors) {
             if (rejection.data && !rejection.data.message) {
                 getToast().showError(rejection.data);
             } else if (rejection.data && rejection.data.message) {

@@ -15,25 +15,18 @@
  */
 package org.thingsboard.server.dao.device;
 
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-
-import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 
 public interface DeviceCredentialsService {
 
     DeviceCredentials findDeviceCredentialsByDeviceId(DeviceId deviceId);
 
-    @Cacheable(cacheNames = DEVICE_CREDENTIALS_CACHE, unless="#result == null")
     DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId);
 
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, keyGenerator="previousDeviceCredentialsId", beforeInvocation = true)
     DeviceCredentials updateDeviceCredentials(DeviceCredentials deviceCredentials);
 
     DeviceCredentials createDeviceCredentials(DeviceCredentials deviceCredentials);
 
-    @CacheEvict(cacheNames = DEVICE_CREDENTIALS_CACHE, key="#deviceCredentials.credentialsId")
     void deleteDeviceCredentials(DeviceCredentials deviceCredentials);
 }

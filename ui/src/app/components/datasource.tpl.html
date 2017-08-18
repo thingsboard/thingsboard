@@ -27,20 +27,25 @@
         <tb-datasource-func flex
                             ng-switch-default
                             ng-model="model"
+                            max-data-keys="maxDataKeys"
+                            opt-data-keys="optDataKeys"
                             datakey-settings-schema="datakeySettingsSchema"
                             ng-required="model.type === types.datasourceType.function"
+                            widget-type="widgetType"
                             generate-data-key="generateDataKey({chip: chip, type: type})">
         </tb-datasource-func>
-        <tb-datasource-device flex
+        <tb-datasource-entity flex
                               ng-model="model"
+                              max-data-keys="maxDataKeys"
+                              opt-data-keys="optDataKeys"
                               datakey-settings-schema="datakeySettingsSchema"
-                              ng-switch-when="device"
-                              ng-required="model.type === types.datasourceType.device"
+                              ng-switch-when="entity"
+                              ng-required="model.type === types.datasourceType.entity"
                               widget-type="widgetType"
-                              device-aliases="deviceAliases"
+                              alias-controller="aliasController"
                               generate-data-key="generateDataKey({chip: chip, type: type})"
-                              fetch-device-keys="fetchDeviceKeys({deviceAliasId: deviceAliasId, query: query, type: type})"
-                              on-create-device-alias="onCreateDeviceAlias({event: event, alias: alias})">
-        </tb-datasource-device>
+                              fetch-entity-keys="fetchEntityKeys({entityAliasId: entityAliasId, query: query, type: type})"
+                              on-create-entity-alias="onCreateEntityAlias({event: event, alias: alias})">
+        </tb-datasource-entity>
     </section>
 </section>

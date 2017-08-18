@@ -30,7 +30,7 @@
             <td><span class="tb-legend-line"  ng-style="{backgroundColor: legendKey.dataKey.color}"></span></td>
             <td class="tb-legend-label"
                 ng-click="toggleHideData(legendKey.dataIndex)"
-                ng-class="{ 'tb-hidden-label': legendData.data[legendKey.dataIndex].hidden, 'tb-horizontal': isHorizontal }">
+                ng-class="{ 'tb-hidden-label': legendData.keys[legendKey.dataIndex].dataKey.hidden, 'tb-horizontal': isHorizontal }">
                 {{ legendKey.dataKey.label }}
             </td>
             <td class="tb-legend-value" ng-if="legendConfig.showMin === true">{{ legendData.data[legendKey.dataIndex].min }}</td>

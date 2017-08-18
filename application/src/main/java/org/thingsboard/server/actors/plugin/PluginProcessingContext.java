@@ -15,35 +15,30 @@
  */
 package org.thingsboard.server.actors.plugin;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
+import akka.actor.ActorRef;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
-import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
-import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
+import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.msg.PluginToRuleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequest;
@@ -52,10 +47,12 @@ import org.thingsboard.server.extensions.api.plugins.rpc.RpcMsg;
 import org.thingsboard.server.extensions.api.plugins.ws.PluginWebsocketSessionRef;
 import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
 
-import akka.actor.ActorRef;
-import org.w3c.dom.Attr;
-
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 public final class PluginProcessingContext implements PluginContext {
@@ -91,114 +88,114 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
-    public void saveAttributes(final TenantId tenantId, final DeviceId deviceId, final String scope, final List<AttributeKvEntry> attributes, final PluginCallback<Void> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.attributesService.save(deviceId, scope, attributes);
-            Futures.addCallback(rsListFuture, getListCallback(callback, v -> {
-                onDeviceAttributesChanged(tenantId, deviceId, scope, attributes);
+    public void saveAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<AttributeKvEntry> attributes, final PluginCallback<Void> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<Void>> futures = pluginCtx.attributesService.save(entityId, scope, attributes);
+            Futures.addCallback(futures, getListCallback(callback, v -> {
+                if (entityId.getEntityType() == EntityType.DEVICE) {
+                    onDeviceAttributesChanged(tenantId, new DeviceId(entityId.getId()), scope, attributes);
+                }
                 return null;
             }), executor);
         }));
     }
 
     @Override
-    public void removeAttributes(final TenantId tenantId, final DeviceId deviceId, final String scope, final List<String> keys, final PluginCallback<Void> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> future = pluginCtx.attributesService.removeAll(deviceId, scope, keys);
-            Futures.addCallback(future, getCallback(callback, v -> null), executor);
-            onDeviceAttributesDeleted(tenantId, deviceId, keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
+    public void removeAttributes(final TenantId tenantId, final EntityId entityId, final String scope, final List<String> keys, final PluginCallback<Void> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<Void>> futures = pluginCtx.attributesService.removeAll(entityId, scope, keys);
+            Futures.addCallback(futures, getCallback(callback, v -> null), executor);
+            if (entityId.getEntityType() == EntityType.DEVICE) {
+                onDeviceAttributesDeleted(tenantId, new DeviceId(entityId.getId()), keys.stream().map(key -> new AttributeKey(scope, key)).collect(Collectors.toSet()));
+            }
         }));
     }
 
     @Override
-    public void loadAttribute(DeviceId deviceId, String attributeType, String attributeKey, final PluginCallback<Optional<AttributeKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<Optional<AttributeKvEntry>> future = pluginCtx.attributesService.find(deviceId, attributeType, attributeKey);
+    public void loadAttribute(EntityId entityId, String attributeType, String attributeKey, final PluginCallback<Optional<AttributeKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<Optional<AttributeKvEntry>> future = pluginCtx.attributesService.find(entityId, attributeType, attributeKey);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
 
     @Override
-    public void loadAttributes(DeviceId deviceId, String attributeType, Collection<String> attributeKeys, final PluginCallback<List<AttributeKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.find(deviceId, attributeType, attributeKeys);
+    public void loadAttributes(EntityId entityId, String attributeType, Collection<String> attributeKeys, final PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.find(entityId, attributeType, attributeKeys);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
 
     @Override
-    public void loadAttributes(DeviceId deviceId, String attributeType, PluginCallback<List<AttributeKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.findAll(deviceId, attributeType);
+    public void loadAttributes(EntityId entityId, String attributeType, PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.findAll(entityId, attributeType);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
 
     @Override
-    public void loadAttributes(final DeviceId deviceId, final Collection<String> attributeTypes, final PluginCallback<List<AttributeKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
+    public void loadAttributes(final EntityId entityId, final Collection<String> attributeTypes, final PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
             List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-            attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.findAll(deviceId, attributeType)));
+            attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.findAll(entityId, attributeType)));
             convertFuturesAndAddCallback(callback, futures);
         }));
     }
 
     @Override
-    public void loadAttributes(final DeviceId deviceId, final Collection<String> attributeTypes, final Collection<String> attributeKeys, final PluginCallback<List<AttributeKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
+    public void loadAttributes(final EntityId entityId, final Collection<String> attributeTypes, final Collection<String> attributeKeys, final PluginCallback<List<AttributeKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
             List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-            attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.find(deviceId, attributeType, attributeKeys)));
+            attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.find(entityId, attributeType, attributeKeys)));
             convertFuturesAndAddCallback(callback, futures);
         }));
     }
 
     @Override
-    public void saveTsData(final DeviceId deviceId, final TsKvEntry entry, final PluginCallback<Void> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(DataConstants.DEVICE, deviceId, entry);
+    public void saveTsData(final EntityId entityId, final TsKvEntry entry, final PluginCallback<Void> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<Void>> rsListFuture = pluginCtx.tsService.save(entityId, entry);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
 
     @Override
-    public void saveTsData(final DeviceId deviceId, final List<TsKvEntry> entries, final PluginCallback<Void> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.save(DataConstants.DEVICE, deviceId, entries);
+    public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, final PluginCallback<Void> callback) {
+        saveTsData(entityId, entries, 0L, callback);
+    }
+
+    @Override
+    public void saveTsData(final EntityId entityId, final List<TsKvEntry> entries, long ttl, final PluginCallback<Void> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<Void>> rsListFuture = pluginCtx.tsService.save(entityId, entries, ttl);
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
     }
 
+
     @Override
-    public void loadTimeseries(final DeviceId deviceId, final List<TsKvQuery> queries, final PluginCallback<List<TsKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAll(DataConstants.DEVICE, deviceId, queries);
+    public void loadTimeseries(final EntityId entityId, final List<TsKvQuery> queries, final PluginCallback<List<TsKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAll(entityId, queries);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
 
     @Override
-    public void loadLatestTimeseries(final DeviceId deviceId, final PluginCallback<List<TsKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ResultSetFuture future = pluginCtx.tsService.findAllLatest(DataConstants.DEVICE, deviceId);
-            Futures.addCallback(future, getCallback(callback, pluginCtx.tsService::convertResultSetToTsKvEntryList), executor);
+    public void loadLatestTimeseries(final EntityId entityId, final PluginCallback<List<TsKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAllLatest(entityId);
+            Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
 
     @Override
-    public void loadLatestTimeseries(final DeviceId deviceId, final Collection<String> keys, final PluginCallback<List<TsKvEntry>> callback) {
-        validate(deviceId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<ResultSet>> rsListFuture = pluginCtx.tsService.findLatest(DataConstants.DEVICE, deviceId, keys);
-            Futures.addCallback(rsListFuture, getListCallback(callback, rsList ->
-            {
-                List<TsKvEntry> result = new ArrayList<>();
-                for (ResultSet rs : rsList) {
-                    Row row = rs.one();
-                    if (row != null) {
-                        result.add(pluginCtx.tsService.convertResultToTsKvEntry(row));
-                    }
-                }
-                return result;
-            }), executor);
+    public void loadLatestTimeseries(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<TsKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<TsKvEntry>> rsListFuture = pluginCtx.tsService.findLatest(entityId, keys);
+            Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);
         }));
     }
 
@@ -225,10 +222,10 @@ public final class PluginProcessingContext implements PluginContext {
         pluginCtx.toDeviceActor(DeviceAttributesEventNotificationMsg.onUpdate(tenantId, deviceId, scope, values));
     }
 
-    private <T> FutureCallback<List<ResultSet>> getListCallback(final PluginCallback<T> callback, Function<List<ResultSet>, T> transformer) {
-        return new FutureCallback<List<ResultSet>>() {
+    private <T, R> FutureCallback<List<T>> getListCallback(final PluginCallback<R> callback, Function<List<T>, R> transformer) {
+        return new FutureCallback<List<T>>() {
             @Override
-            public void onSuccess(@Nullable List<ResultSet> result) {
+            public void onSuccess(@Nullable List<T> result) {
                 pluginCtx.self().tell(PluginCallbackMessage.onSuccess(callback, transformer.apply(result)), ActorRef.noSender());
             }
 
@@ -270,24 +267,125 @@ public final class PluginProcessingContext implements PluginContext {
         validate(deviceId, new ValidationCallback(callback, ctx -> callback.onSuccess(ctx, null)));
     }
 
-    private void validate(DeviceId deviceId, ValidationCallback callback) {
+    private void validate(EntityId entityId, ValidationCallback callback) {
         if (securityCtx.isPresent()) {
             final PluginApiCallSecurityContext ctx = securityCtx.get();
-            if (ctx.isTenantAdmin() || ctx.isCustomerUser()) {
-                ListenableFuture<Device> deviceFuture = pluginCtx.deviceService.findDeviceByIdAsync(deviceId);
-                Futures.addCallback(deviceFuture, getCallback(callback, device -> {
-                    if (device == null) {
-                        return Boolean.FALSE;
-                    } else {
-                        if (!device.getTenantId().equals(ctx.getTenantId())) {
-                            return Boolean.FALSE;
-                        } else if (ctx.isCustomerUser() && !device.getCustomerId().equals(ctx.getCustomerId())) {
-                            return Boolean.FALSE;
+            if (ctx.isTenantAdmin() || ctx.isCustomerUser() || ctx.isSystemAdmin()) {
+                switch (entityId.getEntityType()) {
+                    case DEVICE:
+                        if (ctx.isSystemAdmin()) {
+                            callback.onSuccess(this, Boolean.FALSE);
                         } else {
-                            return Boolean.TRUE;
+                            ListenableFuture<Device> deviceFuture = pluginCtx.deviceService.findDeviceByIdAsync(new DeviceId(entityId.getId()));
+                            Futures.addCallback(deviceFuture, getCallback(callback, device -> {
+                                if (device == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (!device.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isCustomerUser() && !device.getCustomerId().equals(ctx.getCustomerId())) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
                         }
-                    }
-                }));
+                        return;
+                    case ASSET:
+                        if (ctx.isSystemAdmin()) {
+                            callback.onSuccess(this, Boolean.FALSE);
+                        } else {
+                            ListenableFuture<Asset> assetFuture = pluginCtx.assetService.findAssetByIdAsync(new AssetId(entityId.getId()));
+                            Futures.addCallback(assetFuture, getCallback(callback, asset -> {
+                                if (asset == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (!asset.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isCustomerUser() && !asset.getCustomerId().equals(ctx.getCustomerId())) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
+                        }
+                        return;
+                    case RULE:
+                        if (ctx.isCustomerUser()) {
+                            callback.onSuccess(this, Boolean.FALSE);
+                        } else {
+                            ListenableFuture<RuleMetaData> ruleFuture = pluginCtx.ruleService.findRuleByIdAsync(new RuleId(entityId.getId()));
+                            Futures.addCallback(ruleFuture, getCallback(callback, rule -> {
+                                if (rule == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (ctx.isTenantAdmin() && !rule.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isSystemAdmin() && !rule.getTenantId().isNullUid()) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
+                        }
+                        return;
+                    case PLUGIN:
+                        if (ctx.isCustomerUser()) {
+                            callback.onSuccess(this, Boolean.FALSE);
+                        } else {
+                            ListenableFuture<PluginMetaData> pluginFuture = pluginCtx.pluginService.findPluginByIdAsync(new PluginId(entityId.getId()));
+                            Futures.addCallback(pluginFuture, getCallback(callback, plugin -> {
+                                if (plugin == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (ctx.isTenantAdmin() && !plugin.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isSystemAdmin() && !plugin.getTenantId().isNullUid()) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
+                        }
+                        return;
+                    case CUSTOMER:
+                        if (ctx.isSystemAdmin()) {
+                            callback.onSuccess(this, Boolean.FALSE);
+                        } else {
+                            ListenableFuture<Customer> customerFuture = pluginCtx.customerService.findCustomerByIdAsync(new CustomerId(entityId.getId()));
+                            Futures.addCallback(customerFuture, getCallback(callback, customer -> {
+                                if (customer == null) {
+                                    return Boolean.FALSE;
+                                } else {
+                                    if (!customer.getTenantId().equals(ctx.getTenantId())) {
+                                        return Boolean.FALSE;
+                                    } else if (ctx.isCustomerUser() && !customer.getId().equals(ctx.getCustomerId())) {
+                                        return Boolean.FALSE;
+                                    } else {
+                                        return Boolean.TRUE;
+                                    }
+                                }
+                            }));
+                        }
+                        return;
+                    case TENANT:
+                        if (ctx.isCustomerUser()) {
+                            callback.onSuccess(this, Boolean.FALSE);
+                        } else if (ctx.isSystemAdmin()) {
+                            callback.onSuccess(this, Boolean.TRUE);
+                        } else {
+                            ListenableFuture<Tenant> tenantFuture = pluginCtx.tenantService.findTenantByIdAsync(new TenantId(entityId.getId()));
+                            Futures.addCallback(tenantFuture, getCallback(callback, tenant -> tenant != null && tenant.getId().equals(ctx.getTenantId())));
+                        }
+                        return;
+                    default:
+                        //TODO: add support of other entities
+                        throw new IllegalStateException("Not Implemented!");
+                }
             } else {
                 callback.onSuccess(this, Boolean.FALSE);
             }
@@ -297,8 +395,8 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
-    public Optional<ServerAddress> resolve(DeviceId deviceId) {
-        return pluginCtx.routingService.resolve(deviceId);
+    public Optional<ServerAddress> resolve(EntityId entityId) {
+        return pluginCtx.routingService.resolveById(entityId);
     }
 
     @Override

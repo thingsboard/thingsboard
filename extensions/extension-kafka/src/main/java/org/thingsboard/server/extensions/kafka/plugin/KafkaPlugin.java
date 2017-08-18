@@ -68,6 +68,7 @@ public class KafkaPlugin extends AbstractPlugin<KafkaPluginConfiguration> {
             this.producer.close();
         } catch (Exception e) {
             log.error("Failed to close producer during destroy()", e);
+            throw new RuntimeException(e);
         }
     }
 

@@ -19,12 +19,18 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8080}"
-# Uncomment the following section to enable ssl
-#  ssl:
-#    key-store: classpath:keystore/keystore.p12
-#    key-store-password: thingsboard
-#    keyStoreType: PKCS12
-#    keyAlias: tomcat
+  # Server SSL configuration
+  ssl:
+    # Enable/disable SSL support
+    enabled: "${SSL_ENABLED:false}"
+    # Path to the key store that holds the SSL certificate
+    key-store: "${SSL_KEY_STORE:classpath:keystore/keystore.p12}"
+    # Password used to access the key store
+    key-store-password: "${SSL_KEY_STORE_PASSWORD:thingsboard}"
+    # Type of the key store
+    key-store-type: "${SSL_KEY_STORE_TYPE:PKCS12}"
+    # Alias that identifies the key in the key store
+    key-alias: "${SSL_KEY_ALIAS:tomcat}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
@@ -60,8 +66,8 @@ plugins:
 
 # JWT Token parameters
 security.jwt:
-  tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:900}" # Number of seconds (15 mins)
-  refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:3600}" # Seconds (1 hour)
+  tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000000}" # Number of seconds (15 mins)
+  refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:36000000}" # Seconds (1 hour)
   tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
   tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
 
@@ -79,12 +85,20 @@ mqtt:
     leak_detector_level: "${NETTY_LEASK_DETECTOR_LVL:DISABLED}"
     boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
     worker_group_thread_count: "${NETTY_WORKER_GROUP_THREADS:12}"
-# Uncomment the following lines to enable ssl for MQTT
-#  ssl:
-#    key_store: mqttserver.jks
-#    key_store_password: server_ks_password
-#    key_password: server_key_password
-#    key_store_type: JKS
+  # MQTT SSL configuration
+  ssl:
+    # Enable/disable SSL support
+    enabled: "${MQTT_SSL_ENABLED:false}"
+    # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+    protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
+    # Path to the key store that holds the SSL certificate
+    key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
+    # Password used to access the key store
+    key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
+    # Password used to access the key
+    key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
+    # Type of the key store
+    key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
 
 # CoAP server parameters
 coap:
@@ -92,6 +106,9 @@ coap:
   bind_port: "${COAP_BIND_PORT:5683}"
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
   timeout: "${COAP_TIMEOUT:10000}"
+
+database:
+  type: "${DATABASE_TYPE:sql}" # cassandra OR sql
 
 # Cassandra driver configuration parameters
 cassandra:
@@ -139,8 +156,6 @@ cassandra:
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
     # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
-    # Specify max data points per request
-    min_aggregation_step_ms: "${TS_KV_MIN_AGGREGATION_STEP_MS:100}"
 
 # Actor system parameters
 actors:
@@ -163,7 +178,7 @@ actors:
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
-    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:60000}"
+    persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 
 # Cache parameters
 cache:
@@ -189,7 +204,7 @@ updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
   
-  # spring CORS configuration
+# spring CORS configuration
 spring.mvc.cors:
    mappings:
      # Intercept path
@@ -210,3 +225,36 @@ spring.mvc.cors:
          allowed-headers: "*"
          max-age: "1800"
          allow-credentials: "true"
+
+# HSQLDB DAO Configuration
+spring:
+  data:
+    jpa:
+      repositories:
+        enabled: "true"
+  jpa:
+    hibernate:
+      ddl-auto: "validate"
+    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
+  datasource:
+    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false}"
+    username: "${SPRING_DATASOURCE_USERNAME:sa}"
+    password: "${SPRING_DATASOURCE_PASSWORD:}"
+
+
+# PostgreSQL DAO Configuration
+#spring:
+#  data:
+#    jpa:
+#      repositories:
+#        enabled: "true"
+#  jpa:
+#    hibernate:
+#      ddl-auto: "validate"
+#    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
+#  datasource:
+#    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+#    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+#    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+#    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"

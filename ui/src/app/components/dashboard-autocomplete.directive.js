@@ -53,7 +53,15 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
                     promise = $q.when({data: []});
                 }
             } else {
-                promise = dashboardService.getTenantDashboards(pageLink);
+                if (userService.getAuthority() === 'SYS_ADMIN') {
+                    if (scope.tenantId) {
+                        promise = dashboardService.getTenantDashboardsByTenantId(scope.tenantId, pageLink);
+                    } else {
+                        promise = $q.when({data: []});
+                    }
+                } else {
+                    promise = dashboardService.getTenantDashboards(pageLink);
+                }
             }
 
             promise.then(function success(result) {
@@ -76,26 +84,35 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
 
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
-                dashboardService.getDashboard(ngModelCtrl.$viewValue).then(
+                dashboardService.getDashboardInfo(ngModelCtrl.$viewValue).then(
                     function success(dashboard) {
                         scope.dashboard = dashboard;
+                        startWatchers();
                     },
                     function fail() {
                         scope.dashboard = null;
+                        scope.updateView();
+                        startWatchers();
                     }
                 );
             } else {
                 scope.dashboard = null;
+                startWatchers();
             }
         }
 
-        scope.$watch('dashboard', function () {
-            scope.updateView();
-        });
-
-        scope.$watch('disabled', function () {
-            scope.updateView();
-        });
+        function startWatchers() {
+            scope.$watch('dashboard', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    scope.updateView();
+                }
+            });
+            scope.$watch('disabled', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    scope.updateView();
+                }
+            });
+        }
 
         if (scope.selectFirstDashboard) {
             var pageLink = {limit: 1, textSearch: ''};
@@ -103,6 +120,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
                 var dashboards = result.data;
                 if (dashboards.length > 0) {
                     scope.dashboard = dashboards[0];
+                    scope.updateView();
                 }
             }, function fail() {
             });
@@ -117,6 +135,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
         link: linker,
         scope: {
             dashboardsScope: '@',
+            tenantId: '=',
             customerId: '=',
             theForm: '=?',
             tbRequired: '=?',

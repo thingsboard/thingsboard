@@ -28,6 +28,10 @@ export default function UserDirective($compile, $templateCache/*, dashboardServi
         var template = $templateCache.get(userFieldsetTemplate);
         element.html(template);
 
+        scope.isTenantAdmin = function() {
+            return scope.user && scope.user.authority === 'TENANT_ADMIN';
+        }
+
         scope.isCustomerUser = function() {
             return scope.user && scope.user.authority === 'CUSTOMER_USER';
         }
@@ -41,6 +45,7 @@ export default function UserDirective($compile, $templateCache/*, dashboardServi
             user: '=',
             isEdit: '=',
             theForm: '=',
+            onDisplayActivationLink: '&',
             onResendActivation: '&',
             onDeleteUser: '&'
         }
