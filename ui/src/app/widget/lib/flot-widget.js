@@ -193,7 +193,7 @@ export default class TbFlot {
             }
 
             ctx.yAxisTickFormatter = function(value/*, axis*/) {
-                if (settings.yaxis.showLabels === false) {
+                if (settings.yaxis && settings.yaxis.showLabels === false) {
                     return '';
                 }
                 var factor = this.tickDecimals ? Math.pow(10, this.tickDecimals) : 1,

@@ -155,6 +155,10 @@ function DashboardUtils(types, utils, timeService) {
                 delete datasource.deviceAliasId;
             }
         });
+        //TODO: Temp workaround
+        if (widget.isSystemType  && widget.bundleAlias == 'charts' && widget.typeAlias == 'timeseries') {
+            widget.typeAlias = 'basic_timeseries';
+        }
         return widget;
     }
 
@@ -197,9 +201,13 @@ function DashboardUtils(types, utils, timeService) {
                 if (!widget.id) {
                     widget.id = utils.guid();
                 }
-                widgetsMap[widget.id] = validateAndUpdateWidget(widget);
+                widgetsMap[widget.id] = widget;
             });
             dashboard.configuration.widgets = widgetsMap;
+        }
+        for (var id in dashboard.configuration.widgets) {
+            var widget = dashboard.configuration.widgets[id];
+            dashboard.configuration.widgets[id] = validateAndUpdateWidget(widget);
         }
         if (angular.isUndefined(dashboard.configuration.states)) {
             dashboard.configuration.states = {
@@ -207,8 +215,8 @@ function DashboardUtils(types, utils, timeService) {
             };
 
             var mainLayout = dashboard.configuration.states['default'].layouts['main'];
-            for (var id in dashboard.configuration.widgets) {
-                var widget = dashboard.configuration.widgets[id];
+            for (id in dashboard.configuration.widgets) {
+                widget = dashboard.configuration.widgets[id];
                 mainLayout.widgets[id] = {
                     sizeX: widget.sizeX,
                     sizeY: widget.sizeY,
