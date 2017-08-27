@@ -58,14 +58,14 @@ export default function AppConfig($provide,
     addLocaleSpanish(locales);
 
     var $window = angular.injector(['ng']).get('$window');
-    var lang = $window.navigator.language || $window.navigator.userLanguage;
-    if (lang === 'ko') {
+    var lang = ($window.navigator.language || $window.navigator.userLanguage).toLowerCase();
+    if (lang === 'ko' || lang === 'ko_kr') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('ko_KR');
-    } else if (lang === 'zh') {
+    } else if (lang === 'zh' || lang === 'zh-cn') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('zh_CN');
-    } else if (lang === 'es') {
+    } else if (lang === 'es' || lang === 'es_es') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('es_ES');
     }
