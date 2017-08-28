@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,9 +29,7 @@ import java.util.List;
 public class DeviceSearchQuery {
 
     private RelationsSearchParameters parameters;
-    @Nullable
     private String relationType;
-    @Nullable
     private List<String> deviceTypes;
 
     public EntityRelationsQuery toEntitySearchQuery() {
