@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
@@ -51,6 +52,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -119,6 +121,9 @@ public abstract class AbstractControllerTest {
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
 
+    @SuppressWarnings("rawtypes")
+    private HttpMessageConverter stringHttpMessageConverter;
+
     @Autowired
     private WebApplicationContext webApplicationContext;
 
@@ -138,6 +143,11 @@ public abstract class AbstractControllerTest {
 
         this.mappingJackson2HttpMessageConverter = Arrays.stream(converters)
                 .filter(hmc -> hmc instanceof MappingJackson2HttpMessageConverter)
+                .findAny()
+                .get();
+
+        this.stringHttpMessageConverter = Arrays.stream(converters)
+                .filter(hmc -> hmc instanceof StringHttpMessageConverter)
                 .findAny()
                 .get();
 
@@ -277,6 +287,17 @@ public abstract class AbstractControllerTest {
         return readResponse(doGet(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
     }
 
+    protected <T> T doGetAsync(String urlTemplate, Class<T> responseClass, Object... urlVariables) throws Exception {
+        return readResponse(doGetAsync(urlTemplate, urlVariables).andExpect(status().isOk()), responseClass);
+    }
+
+    protected ResultActions doGetAsync(String urlTemplate, Object... urlVariables) throws Exception {
+        MockHttpServletRequestBuilder getRequest;
+        getRequest = get(urlTemplate, urlVariables);
+        setJwtToken(getRequest);
+        return mockMvc.perform(asyncDispatch(mockMvc.perform(getRequest).andExpect(request().asyncStarted()).andReturn()));
+    }
+
     protected <T> T doGetTyped(String urlTemplate, TypeReference<T> responseType, Object... urlVariables) throws Exception {
         return readResponse(doGet(urlTemplate, urlVariables).andExpect(status().isOk()), responseType);
     }
@@ -311,8 +332,16 @@ public abstract class AbstractControllerTest {
         return readResponse(doPost(urlTemplate, params).andExpect(status().isOk()), responseClass);
     }
 
+    protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
+        return readResponse(doPost(urlTemplate, params).andExpect(resultMatcher), responseClass);
+    }
+
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+    }
+
+    protected <T> T doPostAsync(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
+        return readResponse(doPostAsync(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
     }
 
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
@@ -331,8 +360,16 @@ public abstract class AbstractControllerTest {
         setJwtToken(postRequest);
         String json = json(content);
         postRequest.contentType(contentType).content(json);
-        populateParams(postRequest, params);
         return mockMvc.perform(postRequest);
+    }
+
+    protected <T> ResultActions doPostAsync(String urlTemplate, T content, String... params)  throws Exception {
+        MockHttpServletRequestBuilder postRequest = post(urlTemplate);
+        setJwtToken(postRequest);
+        String json = json(content);
+        postRequest.contentType(contentType).content(json);
+        MvcResult result = mockMvc.perform(postRequest).andReturn();
+        return mockMvc.perform(asyncDispatch(result));
     }
 
     protected ResultActions doDelete(String urlTemplate, String... params) throws Exception {
@@ -356,8 +393,9 @@ public abstract class AbstractControllerTest {
     @SuppressWarnings("unchecked")
     protected String json(Object o) throws IOException {
         MockHttpOutputMessage mockHttpOutputMessage = new MockHttpOutputMessage();
-        this.mappingJackson2HttpMessageConverter.write(
-                o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
+
+        HttpMessageConverter converter = o instanceof String ? stringHttpMessageConverter : mappingJackson2HttpMessageConverter;
+        converter.write(o, MediaType.APPLICATION_JSON, mockHttpOutputMessage);
         return mockHttpOutputMessage.getBodyAsString();
     }
 
@@ -365,7 +403,8 @@ public abstract class AbstractControllerTest {
     protected <T> T readResponse(ResultActions result, Class<T> responseClass) throws Exception {
         byte[] content = result.andReturn().getResponse().getContentAsByteArray();
         MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
-        return (T) this.mappingJackson2HttpMessageConverter.read(responseClass, mockHttpInputMessage);
+        HttpMessageConverter converter = responseClass.equals(String.class) ? stringHttpMessageConverter : mappingJackson2HttpMessageConverter;
+        return (T) converter.read(responseClass, mockHttpInputMessage);
     }
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {

@@ -18,8 +18,9 @@
 import paho.mqtt.client as mqtt
 
 # The callback for when the client receives a CONNACK response from the server.
-def on_connect(client, userdata, rc):
+def on_connect(client, userdata, rc, *extra_params):
    print('Connected with result code '+str(rc))
+   #print('***' + str(r))
    # Subscribing in on_connect() means that if we lose the connection and
    # reconnect then subscriptions will be renewed.
    client.subscribe('v1/devices/me/attributes')
