@@ -78,11 +78,13 @@ public class AppActor extends ContextAwareActor {
             ruleManager.init(this.context());
             pluginManager.init(this.context());
 
-            PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(link -> tenantService.findTenants(link), ENTITY_PACK_LIMIT);
-            for (Tenant tenant : tenantIterator) {
-                logger.debug("[{}] Creating tenant actor", tenant.getId());
-                getOrCreateTenantActor(tenant.getId());
-                logger.debug("Tenant actor created.");
+            if (systemContext.isTenantComponentsInitEnabled()) {
+                PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
+                for (Tenant tenant : tenantIterator) {
+                    logger.debug("[{}] Creating tenant actor", tenant.getId());
+                    getOrCreateTenantActor(tenant.getId());
+                    logger.debug("Tenant actor created.");
+                }
             }
 
             logger.info("Main system actor started.");
@@ -181,13 +183,8 @@ public class AppActor extends ContextAwareActor {
     }
 
     private ActorRef getOrCreateTenantActor(TenantId tenantId) {
-        ActorRef tenantActor = tenantActors.get(tenantId);
-        if (tenantActor == null) {
-            tenantActor = context().actorOf(Props.create(new TenantActor.ActorCreator(systemContext, tenantId))
-                    .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), tenantId.toString());
-            tenantActors.put(tenantId, tenantActor);
-        }
-        return tenantActor;
+        return tenantActors.computeIfAbsent(tenantId, k -> context().actorOf(Props.create(new TenantActor.ActorCreator(systemContext, tenantId))
+                .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), tenantId.toString()));
     }
 
     private void processTermination(Terminated message) {

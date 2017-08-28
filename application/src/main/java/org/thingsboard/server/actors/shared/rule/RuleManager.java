@@ -44,7 +44,7 @@ public abstract class RuleManager {
     protected final Map<RuleId, ActorRef> ruleActors;
     protected final TenantId tenantId;
 
-    Map<RuleMetaData, RuleActorMetaData> ruleMap = new HashMap<>();
+    private Map<RuleMetaData, RuleActorMetaData> ruleMap;
     private RuleActorChain ruleChain;
 
     public RuleManager(ActorSystemContext systemContext, TenantId tenantId) {
@@ -55,6 +55,10 @@ public abstract class RuleManager {
     }
 
     public void init(ActorContext context) {
+        doInit(context);
+    }
+
+    private void doInit(ActorContext context) {
         PageDataIterable<RuleMetaData> ruleIterator = new PageDataIterable<>(getFetchRulesFunction(),
                 ContextAwareActor.ENTITY_PACK_LIMIT);
         ruleMap = new HashMap<>();
@@ -62,8 +66,7 @@ public abstract class RuleManager {
         for (RuleMetaData rule : ruleIterator) {
             log.debug("[{}] Creating rule actor {}", rule.getId(), rule);
             ActorRef ref = getOrCreateRuleActor(context, rule.getId());
-            RuleActorMetaData actorMd = RuleActorMetaData.systemRule(rule.getId(), rule.getWeight(), ref);
-            ruleMap.put(rule, actorMd);
+            ruleMap.put(rule, RuleActorMetaData.systemRule(rule.getId(), rule.getWeight(), ref));
             log.debug("[{}] Rule actor created.", rule.getId());
         }
 
@@ -72,7 +75,7 @@ public abstract class RuleManager {
 
     public Optional<ActorRef> update(ActorContext context, RuleId ruleId, ComponentLifecycleEvent event) {
         if (ruleMap == null) {
-            init(context);
+            doInit(context);
         }
         RuleMetaData rule;
         if (event != ComponentLifecycleEvent.DELETED) {
@@ -114,8 +117,8 @@ public abstract class RuleManager {
     }
 
     public RuleActorChain getRuleChain(ActorContext context) {
-        if (ruleMap == null) {
-            init(context);
+        if (ruleChain == null) {
+            doInit(context);
         }
         return ruleChain;
     }

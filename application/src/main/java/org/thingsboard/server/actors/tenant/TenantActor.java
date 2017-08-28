@@ -151,7 +151,8 @@ public class TenantActor extends ContextAwareActor {
     private void process(RuleChainDeviceMsg msg) {
         ToDeviceActorMsg toDeviceActorMsg = msg.getToDeviceActorMsg();
         ActorRef deviceActor = getOrCreateDeviceActor(toDeviceActorMsg.getDeviceId());
-        RuleActorChain chain = new ComplexRuleActorChain(msg.getRuleChain(), ruleManager.getRuleChain(this.context()));
+        RuleActorChain tenantChain = ruleManager.getRuleChain(this.context());
+        RuleActorChain chain = new ComplexRuleActorChain(msg.getRuleChain(), tenantChain);
         deviceActor.tell(new RuleChainDeviceMsg(toDeviceActorMsg, chain), context().self());
     }
 

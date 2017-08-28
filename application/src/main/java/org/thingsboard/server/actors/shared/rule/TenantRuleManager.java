@@ -28,6 +28,7 @@ public class TenantRuleManager extends RuleManager {
         super(systemContext, tenantId);
     }
 
+    @Override
     public void init(ActorContext context) {
         if (systemContext.isTenantComponentsInitEnabled()) {
             super.init(context);
