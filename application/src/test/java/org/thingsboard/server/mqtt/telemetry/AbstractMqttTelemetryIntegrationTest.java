@@ -26,11 +26,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.service.DaoNoSqlTest;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -39,7 +38,7 @@ import static org.junit.Assert.assertNotNull;
  * @author Valerii Sosliuk
  */
 @Slf4j
-public class MqttTelemetryIntegrationTest extends AbstractControllerTest {
+public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractControllerTest {
 
     private static final String MQTT_URL = "tcp://localhost:1883";
 
@@ -64,7 +63,6 @@ public class MqttTelemetryIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    @Ignore
     public void testPushMqttRpcData() throws Exception {
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
@@ -80,13 +78,16 @@ public class MqttTelemetryIntegrationTest extends AbstractControllerTest {
         String deviceId = savedDevice.getId().getId().toString();
 
         Thread.sleep(1000);
-        Object keys = doGet("/api/plugins/telemetry/" + deviceId +  "/keys/timeseries", Object.class);
-        assertEquals(Arrays.asList("key1", "key2", "key3", "key4"), keys);
+        List<String> actualKeys = doGetAsync("/api/plugins/telemetry/DEVICE/" + deviceId +  "/keys/timeseries", List.class);
+        Set<String> actualKeySet = new HashSet<>(actualKeys);
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl("/api/plugins/telemetry/" + deviceId +  "/values/timeseries")
-                .queryParam("keys", String.join(",", (CharSequence[]) keys));
-        URI uri = builder.build().encode().toUri();
-        Map<String, List<Map<String, String>>> values = doGet(uri.getPath(), Map.class);
+        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4");
+        Set<String> expectedKeySet = new HashSet<>(expectedKeys);
+
+        assertEquals(expectedKeySet, actualKeySet);
+
+        String getTelemetryValuesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId +  "/values/timeseries?keys=" + String.join(",", actualKeySet);
+        Map<String, List<Map<String, String>>> values = doGetAsync(getTelemetryValuesUrl, Map.class);
 
         assertEquals("value1", values.get("key1").get(0).get("value"));
         assertEquals("true", values.get("key2").get(0).get("value"));

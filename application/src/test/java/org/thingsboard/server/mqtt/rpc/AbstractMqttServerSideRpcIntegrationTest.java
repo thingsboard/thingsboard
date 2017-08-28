@@ -16,6 +16,7 @@
 package org.thingsboard.server.mqtt.rpc;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.*;
 import org.junit.*;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.service.DaoNoSqlTest;
 
 import java.util.UUID;
 
@@ -37,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Valerii Sosliuk
  */
 @Slf4j
-public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
+public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractControllerTest {
 
     private static final String MQTT_URL = "tcp://localhost:1883";
     private static final String FAIL_MSG_IF_HTTP_CLIENT_ERROR_NOT_ENCOUNTERED = "HttpClientErrorException expected, but not encountered";
@@ -67,13 +69,13 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        if (savedTenant != null) {
+            doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test
-    @Ignore
     public void testServerMqttOneWayRpc() throws Exception {
         Device device = new Device();
         device.setName("Test One-Way Server-Side RPC");
@@ -95,12 +97,12 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
-        String result = doPost("api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class);
-        Assert.assertNull(result);
+        String result = doPostAsync("/api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        Assert.assertTrue(StringUtils.isEmpty(result));
     }
 
     @Test
-    @Ignore
+    @Ignore // TODO: figure out the right error code for this case. Ignored due to failure: expected 408 but was: 200
     public void testServerMqttOneWayRpcDeviceOffline() throws Exception {
         Device device = new Device();
         device.setName("Test One-Way Server-Side RPC Device Offline");
@@ -114,7 +116,7 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
         try {
-            doPost("api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class);
+            doPost("/api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().is(408));
             Assert.fail(FAIL_MSG_IF_HTTP_CLIENT_ERROR_NOT_ENCOUNTERED);
         } catch (HttpClientErrorException e) {
             log.error(e.getMessage(), e);
@@ -124,12 +126,12 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    @Ignore
+    @Ignore // TODO: figure out the right error code for this case. Ignored due to failure: expected 400 (404?) but was: 401
     public void testServerMqttOneWayRpcDeviceDoesNotExist() throws Exception {
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String nonExistentDeviceId = UUID.randomUUID().toString();
         try {
-            doPost("api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class);
+            doPostAsync("/api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class, status().is(400));
             Assert.fail(FAIL_MSG_IF_HTTP_CLIENT_ERROR_NOT_ENCOUNTERED);
         } catch (HttpClientErrorException e) {
             log.error(e.getMessage(), e);
@@ -139,7 +141,6 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    @Ignore
     public void testServerMqttTwoWayRpc() throws Exception {
         Device device = new Device();
         device.setName("Test Two-Way Server-Side RPC");
@@ -161,12 +162,13 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
-        String result = getStringResult(setGpioRequest, "twoway", deviceId);
+
+        String result = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         Assert.assertEquals("{\"value1\":\"A\",\"value2\":\"B\"}", result);
     }
 
     @Test
-    @Ignore
+    @Ignore // TODO: figure out the right error code for this case. Ignored due to failure: expected 408 but was: 200
     public void testServerMqttTwoWayRpcDeviceOffline() throws Exception {
         Device device = new Device();
         device.setName("Test Two-Way Server-Side RPC Device Offline");
@@ -180,7 +182,7 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
         try {
-            doPost("api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class);
+            doPost("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().is(408));
             Assert.fail(FAIL_MSG_IF_HTTP_CLIENT_ERROR_NOT_ENCOUNTERED);
         } catch (HttpClientErrorException e) {
             log.error(e.getMessage(), e);
@@ -190,12 +192,12 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    @Ignore
+    @Ignore // TODO: figure out the right error code for this case. Ignored due to failure: expected 400 (404?) but was: 401
     public void testServerMqttTwoWayRpcDeviceDoesNotExist() throws Exception {
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String nonExistentDeviceId = UUID.randomUUID().toString();
         try {
-            doPost("api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class);
+            doPostAsync("/api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class, status().is(400));
             Assert.fail(FAIL_MSG_IF_HTTP_CLIENT_ERROR_NOT_ENCOUNTERED);
         } catch (HttpClientErrorException e) {
             log.error(e.getMessage(), e);
@@ -210,10 +212,6 @@ public class MqttServerSideRpcIntegrationTest extends AbstractControllerTest {
 
     private DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
         return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-    }
-
-    private String getStringResult(String requestData, String callType, String deviceId) throws Exception {
-        return doPost("api/plugins/rpc/" + callType + "/" + deviceId, requestData, String.class);
     }
 
     private static class TestMqttCallback implements MqttCallback {
