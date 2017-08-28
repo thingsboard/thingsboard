@@ -151,18 +151,13 @@ public class TenantActor extends ContextAwareActor {
     private void process(RuleChainDeviceMsg msg) {
         ToDeviceActorMsg toDeviceActorMsg = msg.getToDeviceActorMsg();
         ActorRef deviceActor = getOrCreateDeviceActor(toDeviceActorMsg.getDeviceId());
-        RuleActorChain chain = new ComplexRuleActorChain(msg.getRuleChain(), ruleManager.getRuleChain());
+        RuleActorChain chain = new ComplexRuleActorChain(msg.getRuleChain(), ruleManager.getRuleChain(this.context()));
         deviceActor.tell(new RuleChainDeviceMsg(toDeviceActorMsg, chain), context().self());
     }
 
     private ActorRef getOrCreateDeviceActor(DeviceId deviceId) {
-        ActorRef deviceActor = deviceActors.get(deviceId);
-        if (deviceActor == null) {
-            deviceActor = context().actorOf(Props.create(new DeviceActor.ActorCreator(systemContext, tenantId, deviceId))
-                    .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), deviceId.toString());
-            deviceActors.put(deviceId, deviceActor);
-        }
-        return deviceActor;
+        return deviceActors.computeIfAbsent(deviceId, k -> context().actorOf(Props.create(new DeviceActor.ActorCreator(systemContext, tenantId, deviceId))
+                .withDispatcher(DefaultActorService.CORE_DISPATCHER_NAME), deviceId.toString()));
     }
 
     public static class ActorCreator extends ContextBasedCreator<TenantActor> {

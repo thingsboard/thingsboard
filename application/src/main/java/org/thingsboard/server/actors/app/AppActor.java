@@ -174,7 +174,7 @@ public class AppActor extends ContextAwareActor {
         TenantId tenantId = toDeviceActorMsg.getTenantId();
         ActorRef tenantActor = getOrCreateTenantActor(tenantId);
         if (toDeviceActorMsg.getPayload().getMsgType().requiresRulesProcessing()) {
-            tenantActor.tell(new RuleChainDeviceMsg(toDeviceActorMsg, ruleManager.getRuleChain()), context().self());
+            tenantActor.tell(new RuleChainDeviceMsg(toDeviceActorMsg, ruleManager.getRuleChain(this.context())), context().self());
         } else {
             tenantActor.tell(toDeviceActorMsg, context().self());
         }

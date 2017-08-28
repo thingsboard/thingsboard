@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.asset;
+package org.thingsboard.server.common.data.device;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
@@ -26,24 +26,21 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by ashvayka on 03.05.17.
- */
 @Data
-public class AssetSearchQuery {
+public class DeviceSearchQuery {
 
     private RelationsSearchParameters parameters;
     @Nullable
     private String relationType;
     @Nullable
-    private List<String> assetTypes;
+    private List<String> deviceTypes;
 
     public EntityRelationsQuery toEntitySearchQuery() {
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(parameters);
         query.setFilters(
                 Collections.singletonList(new EntityTypeFilter(relationType == null ? EntityRelation.CONTAINS_TYPE : relationType,
-                        Collections.singletonList(EntityType.ASSET))));
+                        Collections.singletonList(EntityType.DEVICE))));
         return query;
     }
 }

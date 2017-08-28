@@ -159,6 +159,8 @@ cassandra:
 
 # Actor system parameters
 actors:
+  tenant:
+    create_components_on_init: true
   session:
     sync:
       # Default timeout for processing request using synchronous session (HTTP, CoAP) in milliseconds

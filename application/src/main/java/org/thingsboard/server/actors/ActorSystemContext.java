@@ -136,6 +136,9 @@ public class ActorSystemContext {
     @Value("${actors.statistics.persist_frequency}")
     @Getter private long statisticsPersistFrequency;
 
+    @Value("${actors.tenant.create_components_on_init}")
+    @Getter private boolean tenantComponentsInitEnabled;
+
     @Getter @Setter private ActorSystem actorSystem;
 
     @Getter @Setter private ActorRef appActor;

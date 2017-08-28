@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.shared.rule;
 
+import akka.actor.ActorContext;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -25,6 +26,12 @@ public class TenantRuleManager extends RuleManager {
     
     public TenantRuleManager(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext, tenantId);
+    }
+
+    public void init(ActorContext context) {
+        if (systemContext.isTenantComponentsInitEnabled()) {
+            super.init(context);
+        }
     }
 
     @Override

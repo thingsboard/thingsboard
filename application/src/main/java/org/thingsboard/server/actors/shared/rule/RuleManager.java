@@ -25,7 +25,6 @@ import org.thingsboard.server.actors.rule.RuleActorChain;
 import org.thingsboard.server.actors.rule.RuleActorMetaData;
 import org.thingsboard.server.actors.rule.SimpleRuleActorChain;
 import org.thingsboard.server.actors.service.ContextAwareActor;
-import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -72,6 +71,9 @@ public abstract class RuleManager {
     }
 
     public Optional<ActorRef> update(ActorContext context, RuleId ruleId, ComponentLifecycleEvent event) {
+        if (ruleMap == null) {
+            init(context);
+        }
         RuleMetaData rule;
         if (event != ComponentLifecycleEvent.DELETED) {
             rule = systemContext.getRuleService().findRuleById(ruleId);
@@ -111,10 +113,12 @@ public abstract class RuleManager {
                         .withDispatcher(getDispatcherName()), rId.toString()));
     }
 
-    public RuleActorChain getRuleChain() {
+    public RuleActorChain getRuleChain(ActorContext context) {
+        if (ruleMap == null) {
+            init(context);
+        }
         return ruleChain;
     }
-
 
     private void refreshRuleChain() {
         Set<RuleActorMetaData> activeRuleSet = new HashSet<>();
