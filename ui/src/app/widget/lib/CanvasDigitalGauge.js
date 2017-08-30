@@ -157,7 +157,13 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
 
     draw() {
         try {
+
             let canvas = this.canvas;
+
+            if (!canvas.drawWidth || !canvas.drawHeight) {
+                return this;
+            }
+
             let [x, y, w, h] = [
                 -canvas.drawX,
                 -canvas.drawY,

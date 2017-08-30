@@ -52,7 +52,7 @@
     position: relative;
     margin: auto;
     background: transparent no-repeat scroll 0 0;
-    background-size: cover;
+    background-size: 100% 100%;
 
     &.is-pointer {
       cursor: pointer !important;

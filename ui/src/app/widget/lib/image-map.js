@@ -58,14 +58,17 @@ export default class TbImageMap {
         }
 
         var imageMap = this;
-        var testImage = new Image(); // eslint-disable-line no-undef
+        var testImage = document.createElement('img'); // eslint-disable-line
+        testImage.style.visibility = 'hidden';
         testImage.onload = function() {
             imageMap.aspect = testImage.width / testImage.height;
+            document.body.removeChild(testImage); //eslint-disable-line
             imageMap.onresize();
             if (initCallback) {
                 setTimeout(initCallback, 0); //eslint-disable-line
             }
         }
+        document.body.appendChild(testImage); //eslint-disable-line
         testImage.src = imageUrl;
     }
 

@@ -839,7 +839,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             subscription.destroy();
         }
         subscriptionInited = false;
-        widgetContext.subscriptions = [];
+        widgetContext.subscriptions = {};
         if (widgetContext.inited) {
             widgetContext.inited = false;
             for (var cafId in cafs) {

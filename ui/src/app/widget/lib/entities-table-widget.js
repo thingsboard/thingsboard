@@ -167,7 +167,7 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
         vm.displayPagination = angular.isDefined(vm.settings.displayPagination) ? vm.settings.displayPagination : true;
 
         var pageSize = vm.settings.defaultPageSize;
-        if (angular.isDefined(pageSize) && Number.isInteger(pageSize) && pageSize > 0) {
+        if (angular.isDefined(pageSize) && angular.isNumber(pageSize) && pageSize > 0) {
             vm.defaultPageSize = pageSize;
         }
 

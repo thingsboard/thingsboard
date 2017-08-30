@@ -15,6 +15,9 @@
  */
 
 import './ie.support';
+
+import 'event-source-polyfill';
+
 import angular from 'angular';
 import ngMaterial from 'angular-material';
 import ngMdIcons from 'angular-material-icons';
