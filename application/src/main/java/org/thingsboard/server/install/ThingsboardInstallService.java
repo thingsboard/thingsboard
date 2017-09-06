@@ -70,7 +70,7 @@ public class ThingsboardInstallService {
 
                 switch (upgradeFromVersion) {
                     case "1.2.3":
-                        log.info("Upgrading ThingsBoard from version {} to 1.3.0 ...", upgradeFromVersion);
+                        log.info("Upgrading ThingsBoard from version 1.2.3 to 1.3.0 ...");
 
                         databaseUpgradeService.upgradeDatabase(upgradeFromVersion);
 
@@ -83,6 +83,21 @@ public class ThingsboardInstallService {
                         systemDataLoaderService.deleteSystemWidgetBundle("digital_gauges");
                         systemDataLoaderService.deleteSystemWidgetBundle("gpio_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("alarm_widgets");
+
+                    case "1.3.0":
+                        log.info("Upgrading ThingsBoard from version 1.3.0 to 1.3.1 ...");
+
+                        log.info("Updating system data...");
+
+                        systemDataLoaderService.deleteSystemWidgetBundle("charts");
+                        systemDataLoaderService.deleteSystemWidgetBundle("cards");
+                        systemDataLoaderService.deleteSystemWidgetBundle("maps");
+                        systemDataLoaderService.deleteSystemWidgetBundle("analogue_gauges");
+                        systemDataLoaderService.deleteSystemWidgetBundle("digital_gauges");
+                        systemDataLoaderService.deleteSystemWidgetBundle("gpio_widgets");
+                        systemDataLoaderService.deleteSystemWidgetBundle("alarm_widgets");
+                        systemDataLoaderService.deleteSystemWidgetBundle("control_widgets");
+                        systemDataLoaderService.deleteSystemWidgetBundle("maps_v2");
 
                         systemDataLoaderService.loadSystemWidgets();
 

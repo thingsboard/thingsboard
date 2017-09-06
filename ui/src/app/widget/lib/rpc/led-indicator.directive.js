@@ -116,6 +116,20 @@ function LedIndicatorController($element, $scope, $timeout, utils, types) {
         if (vm.ctx.settings.requestTimeout) {
             vm.requestTimeout = vm.ctx.settings.requestTimeout;
         }
+        vm.retrieveValueMethod = 'attribute';
+        if (vm.ctx.settings.retrieveValueMethod && vm.ctx.settings.retrieveValueMethod.length) {
+            vm.retrieveValueMethod = vm.ctx.settings.retrieveValueMethod;
+        }
+
+        vm.parseValueFunction = (data) => data ? true : false;
+        if (vm.ctx.settings.parseValueFunction && vm.ctx.settings.parseValueFunction.length) {
+            try {
+                vm.parseValueFunction = new Function('data', vm.ctx.settings.parseValueFunction);
+            } catch (e) {
+                vm.parseValueFunction = (data) => data ? true : false;
+            }
+        }
+
         vm.checkStatusMethod = 'checkStatus';
         if (vm.ctx.settings.checkStatusMethod && vm.ctx.settings.checkStatusMethod.length) {
             vm.checkStatusMethod = vm.ctx.settings.checkStatusMethod;
@@ -222,11 +236,19 @@ function LedIndicatorController($element, $scope, $timeout, utils, types) {
         var subscriptionsInfo = [{
             type: types.datasourceType.entity,
             entityType: types.entityType.device,
-            entityId: vm.ctx.defaultSubscription.targetDeviceId,
-            attributes: [
-                {name: vm.valueAttribute}
-            ]
+            entityId: vm.ctx.defaultSubscription.targetDeviceId
         }];
+
+        if (vm.retrieveValueMethod == 'attribute') {
+            subscriptionsInfo[0].attributes = [
+                {name: vm.valueAttribute}
+            ];
+        } else {
+            subscriptionsInfo[0].timeseries = [
+                {name: vm.valueAttribute}
+            ];
+        }
+
         vm.ctx.subscriptionApi.createSubscriptionFromInfo (
             types.widgetType.latest.value, subscriptionsInfo, vm.subscriptionOptions, false, true).then(
             function(subscription) {
@@ -245,7 +267,7 @@ function LedIndicatorController($element, $scope, $timeout, utils, types) {
                 if (attrValue) {
                     var parsed = null;
                     try {
-                        parsed = angular.fromJson(attrValue);
+                        parsed = vm.parseValueFunction(angular.fromJson(attrValue));
                     } catch (e){/**/}
                     value = parsed ? true : false;
                 }

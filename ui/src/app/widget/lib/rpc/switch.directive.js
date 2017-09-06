@@ -41,7 +41,7 @@ function Switch() {
 }
 
 /*@ngInject*/
-function SwitchController($element, $scope) {
+function SwitchController($element, $scope, types, utils) {
     let vm = this;
 
     vm.showTitle = false;
@@ -63,9 +63,17 @@ function SwitchController($element, $scope) {
 
     vm.onValue = onValue;
 
+    vm.valueSubscription = null;
+
     $scope.$watch('vm.ctx', () => {
         if (vm.ctx) {
             init();
+        }
+    });
+
+    $scope.$on('$destroy', () => {
+        if (vm.valueSubscription) {
+            vm.ctx.subscriptionApi.removeSubscription(vm.valueSubscription.id);
         }
     });
 
@@ -90,6 +98,35 @@ function SwitchController($element, $scope) {
         if (vm.ctx.settings.requestTimeout) {
             vm.requestTimeout = vm.ctx.settings.requestTimeout;
         }
+
+        vm.retrieveValueMethod = 'rpc';
+        if (vm.ctx.settings.retrieveValueMethod && vm.ctx.settings.retrieveValueMethod.length) {
+            vm.retrieveValueMethod = vm.ctx.settings.retrieveValueMethod;
+        }
+
+        vm.valueKey = 'value';
+        if (vm.ctx.settings.valueKey && vm.ctx.settings.valueKey.length) {
+            vm.valueKey = vm.ctx.settings.valueKey;
+        }
+
+        vm.parseValueFunction = (data) => data ? true : false;
+        if (vm.ctx.settings.parseValueFunction && vm.ctx.settings.parseValueFunction.length) {
+            try {
+                vm.parseValueFunction = new Function('data', vm.ctx.settings.parseValueFunction);
+            } catch (e) {
+                vm.parseValueFunction = (data) => data ? true : false;
+            }
+        }
+
+        vm.convertValueFunction = (value) => value;
+        if (vm.ctx.settings.convertValueFunction && vm.ctx.settings.convertValueFunction.length) {
+            try {
+                vm.convertValueFunction = new Function('value', vm.ctx.settings.convertValueFunction);
+            } catch (e) {
+                vm.convertValueFunction = (value) => value;
+            }
+        }
+
         vm.getValueMethod = 'getValue';
         if (vm.ctx.settings.getValueMethod && vm.ctx.settings.getValueMethod.length) {
             vm.getValueMethod = vm.ctx.settings.getValueMethod;
@@ -102,7 +139,11 @@ function SwitchController($element, $scope) {
             onError('Target device is not set!');
         } else {
             if (!vm.isSimulated) {
-                rpcRequestValue();
+                if (vm.retrieveValueMethod == 'rpc') {
+                    rpcRequestValue();
+                } else if (vm.retrieveValueMethod == 'attribute' || vm.retrieveValueMethod == 'timeseries') {
+                    subscribeForValue();
+                }
             }
         }
     }
@@ -144,6 +185,66 @@ function SwitchController($element, $scope) {
         setFontSize(switchError, vm.error, switchErrorContainer.height(), switchErrorContainer.width());
     }
 
+    function subscribeForValue() {
+        var valueSubscriptionInfo = [{
+            type: types.datasourceType.entity,
+            entityType: types.entityType.device,
+            entityId: vm.ctx.defaultSubscription.targetDeviceId
+        }];
+        if (vm.retrieveValueMethod == 'attribute') {
+            valueSubscriptionInfo[0].attributes = [
+                {name: vm.valueKey}
+            ];
+        } else {
+            valueSubscriptionInfo[0].timeseries = [
+                {name: vm.valueKey}
+            ];
+        }
+        var subscriptionOptions = {
+            callbacks: {
+                onDataUpdated: onDataUpdated,
+                onDataUpdateError: onDataUpdateError
+            }
+        };
+        vm.ctx.subscriptionApi.createSubscriptionFromInfo (
+            types.widgetType.latest.value, valueSubscriptionInfo, subscriptionOptions, false, true).then(
+            (subscription) => {
+                vm.valueSubscription = subscription;
+            }
+        );
+    }
+
+    function onDataUpdated(subscription, apply) {
+        var value = false;
+        var data = subscription.data;
+        if (data.length) {
+            var keyData = data[0];
+            if (keyData && keyData.data && keyData.data[0]) {
+                var attrValue = keyData.data[0][1];
+                if (attrValue) {
+                    var parsed = null;
+                    try {
+                        parsed = vm.parseValueFunction(angular.fromJson(attrValue));
+                    } catch (e){/**/}
+                    value = parsed ? true : false;
+                }
+            }
+        }
+        setValue(value);
+        if (apply) {
+            $scope.$digest();
+        }
+    }
+
+    function onDataUpdateError(subscription, e) {
+        var exceptionData = utils.parseException(e);
+        var errorText = exceptionData.name;
+        if (exceptionData.message) {
+            errorText += ': ' + exceptionData.message;
+        }
+        onError(errorText);
+    }
+
     function setValue(value) {
         vm.value = value ? true : false;
     }
@@ -178,7 +279,7 @@ function SwitchController($element, $scope) {
         vm.error = '';
         vm.ctx.controlApi.sendTwoWayCommand(vm.getValueMethod, null, vm.requestTimeout).then(
             (responseBody) => {
-                setValue(responseBody);
+                setValue(vm.parseValueFunction(responseBody));
             },
             () => {
                 var errorText = vm.ctx.defaultSubscription.rpcErrorText;
@@ -197,7 +298,7 @@ function SwitchController($element, $scope) {
             vm.executingUpdateValue = true;
         }
         vm.error = '';
-        vm.ctx.controlApi.sendOneWayCommand(vm.setValueMethod, value, vm.requestTimeout).then(
+        vm.ctx.controlApi.sendOneWayCommand(vm.setValueMethod, vm.convertValueFunction(value), vm.requestTimeout).then(
             () => {
                 vm.executingUpdateValue = false;
                 if (vm.scheduledValue != null && vm.scheduledValue != vm.rpcValue) {
