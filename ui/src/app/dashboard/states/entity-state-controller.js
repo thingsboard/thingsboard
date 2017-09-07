@@ -25,6 +25,7 @@ export default function EntityStateController($scope, $location, $state, $stateP
 
     vm.openState = openState;
     vm.updateState = updateState;
+    vm.resetState = resetState;
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
@@ -75,6 +76,12 @@ export default function EntityStateController($scope, $location, $state, $stateP
                 }
             );
         }
+    }
+
+    function resetState() {
+        var rootStateId = dashboardUtils.getRootStateId(vm.states);
+        vm.stateObject = [ { id: rootStateId, params: {} } ];
+        gotoState(rootStateId, true);
     }
 
     function navigatePrevState(index) {
@@ -192,9 +199,9 @@ export default function EntityStateController($scope, $location, $state, $stateP
         if (!result[0].id) {
             result[0].id = rootStateId;
         }
-        if (result[0].id !== rootStateId) {
-            result = [ { id: rootStateId, params: {} } ];
-        }
+        //if (result[0].id !== rootStateId) {
+        //    result = [ { id: rootStateId, params: {} } ];
+        //}
         return result;
     }
 

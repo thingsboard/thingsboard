@@ -23,6 +23,7 @@ export default function DefaultStateController($scope, $location, $state, $state
 
     vm.openState = openState;
     vm.updateState = updateState;
+    vm.resetState = resetState;
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
@@ -68,6 +69,12 @@ export default function DefaultStateController($scope, $location, $state, $state
             gotoState(vm.stateObject[0].id, true, openRightLayout);
             watchStateObject();
         }
+    }
+
+    function resetState() {
+        var rootStateId = dashboardUtils.getRootStateId(vm.states);
+        vm.stateObject = [ { id: rootStateId, params: {} } ];
+        gotoState(rootStateId, true);
     }
 
     function navigatePrevState(index) {
