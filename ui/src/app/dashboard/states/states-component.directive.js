@@ -41,6 +41,12 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                 }
             }
 
+            stateController.resetState = function() {
+                if (scope.statesController) {
+                    scope.statesController.resetState();
+                }
+            }
+
             stateController.navigatePrevState = function(index) {
                 if (scope.statesController) {
                     scope.statesController.navigatePrevState(index);

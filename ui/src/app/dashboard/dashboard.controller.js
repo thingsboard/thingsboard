@@ -994,7 +994,6 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         vm.isEdit = isEdit;
         if (vm.isEdit) {
             vm.prevDashboard = angular.copy(vm.dashboard);
-            vm.prevDashboardState = vm.dashboardCtx.state;
         } else {
             if (vm.widgetEditMode) {
                 if (revert) {
@@ -1006,11 +1005,11 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     vm.dashboard = vm.prevDashboard;
                     vm.dashboardConfiguration = vm.dashboard.configuration;
                     vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
-                    openDashboardState(vm.prevDashboardState);
                     entityAliasesUpdated();
                 } else {
                     vm.dashboard.configuration.timewindow = vm.dashboardCtx.dashboardTimewindow;
                 }
+                vm.dashboardCtx.stateController.resetState();
             }
         }
     }
