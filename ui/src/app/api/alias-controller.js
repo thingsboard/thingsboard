@@ -78,6 +78,16 @@ export default class AliasController {
         return this.entityAliases;
     }
 
+    getEntityAliasId(aliasName) {
+        for (var aliasId in this.entityAliases) {
+            var alias = this.entityAliases[aliasId];
+            if (alias.alias == aliasName) {
+                return aliasId;
+            }
+        }
+        return null;
+    }
+
     getAliasInfo(aliasId) {
         var deferred = this.$q.defer();
         var aliasInfo = this.resolvedAliases[aliasId];

@@ -123,7 +123,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             getActionDescriptors: getActionDescriptors,
             handleWidgetAction: handleWidgetAction
         },
-        stateController: stateController
+        stateController: stateController,
+        aliasController: aliasController
     };
 
     widgetContext.customHeaderActions = [];
