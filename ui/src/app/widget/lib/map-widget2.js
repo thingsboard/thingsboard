@@ -130,7 +130,7 @@ export default class TbMapWidgetV2 {
         this.locationSettings.tooltipPattern = this.ctx.settings.tooltipPattern || "<b>${entityName}</b><br/><br/><b>Latitude:</b> ${"+this.locationSettings.latKeyName+":7}<br/><b>Longitude:</b> ${"+this.locationSettings.lngKeyName+":7}";
 
         this.locationSettings.showLabel = this.ctx.settings.showLabel !== false;
-        this.locationSettings.displayTooltip = true;
+        this.locationSettings.displayTooltip = this.ctx.settings.showTooltip !== false;
         this.locationSettings.labelColor = this.ctx.widgetConfig.color || '#000000',
         this.locationSettings.label = this.ctx.settings.label || "${entityName}";
         this.locationSettings.color = this.ctx.settings.color ? tinycolor(this.ctx.settings.color).toHexString() : "#FE7569";
@@ -581,6 +581,11 @@ const commonMapSettingsSchema =
                     "type":"string",
                     "default":"${entityName}"
                 },
+                "showTooltip": {
+                    "title": "Show tooltip",
+                    "type":"boolean",
+                    "default":true
+                },
                 "tooltipPattern":{
                     "title":"Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
                     "type":"string",
@@ -635,6 +640,7 @@ const commonMapSettingsSchema =
             "lngKeyName",
             "showLabel",
             "label",
+            "showTooltip",
             {
                 "key": "tooltipPattern",
                 "type": "textarea"
@@ -737,6 +743,11 @@ const imageMapSettingsSchema =
                 "type":"string",
                 "default":"${entityName}"
             },
+            "showTooltip": {
+                "title": "Show tooltip",
+                "type":"boolean",
+                "default":true
+            },
             "tooltipPattern":{
                 "title":"Tooltip (for ex. 'Text ${keyName} units.' or <link-act name='my-action'>Link text</link-act>')",
                 "type":"string",
@@ -810,6 +821,7 @@ const imageMapSettingsSchema =
         "yPosKeyName",
         "showLabel",
         "label",
+        "showTooltip",
         {
             "key": "tooltipPattern",
             "type": "textarea"
