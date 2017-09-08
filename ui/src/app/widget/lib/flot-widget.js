@@ -168,7 +168,7 @@ export default class TbFlot {
             }
         };
 
-        if (this.chartType === 'line' || this.chartType === 'bar') {
+        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'stepped') {
             options.xaxis = {
                 mode: 'time',
                 timezone: 'browser',
@@ -270,6 +270,14 @@ export default class TbFlot {
                         fill: 0.9
                 }
             }
+
+            if (this.chartType === 'stepped') {
+                options.series.lines = {
+                    steps: true,
+                    show: true
+                }
+            }
+
         } else if (this.chartType === 'pie') {
             options.series = {
                 pie: {
@@ -381,7 +389,7 @@ export default class TbFlot {
 
         this.options.colors = colors;
         this.options.yaxes = angular.copy(this.yaxes);
-        if (this.chartType === 'line' || this.chartType === 'bar') {
+        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'stepped') {
             if (this.chartType === 'bar') {
                 this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
             }
@@ -434,7 +442,7 @@ export default class TbFlot {
         }
         if (this.subscription) {
             if (!this.isMouseInteraction && this.ctx.plot) {
-                if (this.chartType === 'line' || this.chartType === 'bar') {
+                if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'stepped') {
 
                     var axisVisibilityChanged = false;
                     if (this.yaxis) {

@@ -16,7 +16,8 @@
 
 export default class DataAggregator {
 
-    constructor(onDataCb, tsKeyNames, startTs, limit, aggregationType, timeWindow, interval, types, $timeout, $filter) {
+    constructor(onDataCb, tsKeyNames, startTs, limit, aggregationType, timeWindow, interval,
+                steppedChart, types, $timeout, $filter) {
         this.onDataCb = onDataCb;
         this.tsKeyNames = tsKeyNames;
         this.dataBuffer = {};
@@ -34,6 +35,8 @@ export default class DataAggregator {
         this.limit = limit;
         this.timeWindow = timeWindow;
         this.interval = interval;
+        this.steppedChart = steppedChart;
+        this.firstStepDataReceived = !this.steppedChart;
         this.aggregationTimeout = Math.max(this.interval, 1000);
         switch (aggregationType) {
             case types.aggregation.min.value:
@@ -76,6 +79,10 @@ export default class DataAggregator {
         this.intervalTimeoutHandle = this.$timeout(function() {
             self.onInterval();
         }, this.aggregationTimeout, false);
+    }
+
+    onFirstStepData(data) {
+        this.firstStepData = data;
     }
 
     onData(data, update, history, apply) {

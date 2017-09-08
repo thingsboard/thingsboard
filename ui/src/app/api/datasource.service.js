@@ -23,6 +23,8 @@ export default angular.module('thingsboard.api.datasource', [thingsboardApiDevic
     .factory('datasourceService', DatasourceService)
     .name;
 
+const YEAR = 1000 * 60 * 60 * 24 * 365;
+
 /*@ngInject*/
 function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, types, utils) {
 
@@ -280,6 +282,10 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     telemetryWebsocketService.subscribe(subscriber);
                     subscribers[subscriber.historyCommand.cmdId] = subscriber;
 
+                    if (subsTw.aggregation.steppedChart) {
+                        createFirstStepSubscription(subsTw, tsKeys);
+                    }
+
                 } else {
 
                     subscriptionCommand = {
@@ -312,6 +318,11 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                             updateRealtimeSubscriptionCommand(this.subscriptionCommand, newSubsTw);
                             dataAggregator.reset(newSubsTw.startTs,  newSubsTw.aggregation.timeWindow, newSubsTw.aggregation.interval);
                         }
+
+                        if (subsTw.aggregation.steppedChart) {
+                            createFirstStepSubscription(subsTw, tsKeys);
+                        }
+
                     } else {
                         subscriber.onReconnected = function() {}
                         subscriber.onData = function(data) {
@@ -377,6 +388,37 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
     }
 
+    function createFirstStepSubscription(subsTw, tsKeys) {
+        var startStepCommand = {
+            entityType: datasourceSubscription.entityType,
+            entityId: datasourceSubscription.entityId,
+            keys: tsKeys,
+            startTs: subsTw.fixedWindow.startTimeMs - YEAR,
+            endTs: subsTw.fixedWindow.startTimeMs,
+            interval: subsTw.aggregation.interval,
+            limit: 1,
+            agg: subsTw.aggregation.type
+        };
+        var subscriber = {
+            historyCommand: startStepCommand,
+            type: types.dataKeyType.timeseries,
+            onData: function (data) {
+                if (data.data) {
+                    for (var key in data.data) {
+                        var keyData = data.data[key];
+                        data.data[key] = $filter('orderBy')(keyData, '+this[0]');
+                    }
+                    //onData(data.data, types.dataKeyType.timeseries, true);
+                    //TODO: onStartStepData
+                }
+            },
+            onReconnected: function() {}
+        };
+
+        telemetryWebsocketService.subscribe(subscriber);
+        subscribers[subscriber.historyCommand.cmdId] = subscriber;
+    }
+
     function createRealtimeDataAggregator(subsTw, tsKeyNames, dataKeyType) {
         return new DataAggregator(
             function(data, apply) {
@@ -388,6 +430,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
             subsTw.aggregation.type,
             subsTw.aggregation.timeWindow,
             subsTw.aggregation.interval,
+            subsTw.aggregation.steppedChart,
             types,
             $timeout,
             $filter
