@@ -433,7 +433,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         } else {
             prevSeries = [0, 0];
         }
-        for (var time = startTime; time <= endTime; time += frequency) {
+        for (var time = startTime; time <= endTime && (timer || history); time += frequency) {
             var series = [];
             series.push(time);
             var value = dataKey.func(time, prevSeries[1]);
@@ -485,7 +485,6 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
         if (timer) {
             $timeout.cancel(timer);
-            timer = null;
         }
 
         var key;
@@ -504,7 +503,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
             tickElapsed = tickElapsed - deltaElapsed;
             for (key in dataKeys) {
                 var dataKeyList = dataKeys[key];
-                for (var index = 0; index < dataKeyList.length; index ++) {
+                for (var index = 0; index < dataKeyList.length && (timer || history); index ++) {
                     var dataKey = dataKeyList[index];
                     if (!startTime) {
                         if (realtime) {
@@ -514,6 +513,10 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                             } else {
                                 startTime = datasourceSubscription.subscriptionTimewindow.startTs;
                                 endTime = startTime + datasourceSubscription.subscriptionTimewindow.realtimeWindowMs + frequency;
+                                if (datasourceSubscription.subscriptionTimewindow.aggregation.type == types.aggregation.none.value) {
+                                    var time = endTime - frequency * datasourceSubscription.subscriptionTimewindow.aggregation.limit;
+                                    startTime = Math.max(time, startTime);
+                                }
                             }
                         } else {
                             startTime = datasourceSubscription.subscriptionTimewindow.fixedWindow.startTimeMs;
@@ -524,7 +527,9 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     generatedData.data[dataKey.name+'_'+dataKey.index] = data;
                 }
             }
-            dataAggregator.onData(generatedData, true, history, apply);
+            if (dataAggregator) {
+                dataAggregator.onData(generatedData, true, history, apply);
+            }
         } else if (datasourceSubscription.type === types.widgetType.latest.value) {
             for (key in dataKeys) {
                 generateLatest(dataKeys[key], apply);
