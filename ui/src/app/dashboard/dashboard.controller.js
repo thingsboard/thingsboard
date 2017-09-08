@@ -264,6 +264,10 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         }
     });
 
+    $scope.$on("$destroy", function () {
+        vm.dashboardCtx.stateController.cleanupPreservedStates();
+    });
+
     loadDashboard();
 
     function loadWidgetLibrary() {

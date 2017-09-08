@@ -54,6 +54,10 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                 }
             }
 
+            stateController.cleanupPreservedStates = function() {
+                statesControllerService.cleanupPreservedStates();
+            }
+
             stateController.navigatePrevState = function(index) {
                 if (scope.statesController) {
                     scope.statesController.navigatePrevState(index);
