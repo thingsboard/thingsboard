@@ -40,7 +40,9 @@ export default function StatesControllerService() {
     var service = {
         registerStatesController: registerStatesController,
         getStateControllers: getStateControllers,
-        getStateController: getStateController
+        getStateController: getStateController,
+        preserveStateControllerState: preserveStateControllerState,
+        withdrawStateControllerState: withdrawStateControllerState
     };
 
     return service;
@@ -55,6 +57,16 @@ export default function StatesControllerService() {
 
     function getStateController(id) {
         return statesControllers[id];
+    }
+
+    function preserveStateControllerState(id, state) {
+        statesControllers[id].state = angular.copy(state);
+    }
+
+    function withdrawStateControllerState(id) {
+        var state = statesControllers[id].state;
+        statesControllers[id].state = null;
+        return state;
     }
 
 }

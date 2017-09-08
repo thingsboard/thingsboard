@@ -15,7 +15,8 @@
  */
 
 /*@ngInject*/
-export default function DefaultStateController($scope, $location, $state, $stateParams, utils, types, dashboardUtils) {
+export default function DefaultStateController($scope, $timeout, $location, $state,
+                                               $stateParams, utils, types, dashboardUtils, preservedState) {
 
     var vm = this;
 
@@ -24,6 +25,7 @@ export default function DefaultStateController($scope, $location, $state, $state
     vm.openState = openState;
     vm.updateState = updateState;
     vm.resetState = resetState;
+    vm.getStateObject = getStateObject;
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
@@ -75,6 +77,10 @@ export default function DefaultStateController($scope, $location, $state, $state
         var rootStateId = dashboardUtils.getRootStateId(vm.states);
         vm.stateObject = [ { id: rootStateId, params: {} } ];
         gotoState(rootStateId, true);
+    }
+
+    function getStateObject() {
+        return vm.stateObject;
     }
 
     function navigatePrevState(index) {
@@ -168,27 +174,33 @@ export default function DefaultStateController($scope, $location, $state, $state
     }
 
     function init() {
-        var initialState = $stateParams.state;
-        vm.stateObject = parseState(initialState);
+        if (preservedState) {
+            vm.stateObject = preservedState;
+            gotoState(vm.stateObject[0].id, true);
+        } else {
+            var initialState = $stateParams.state;
+            vm.stateObject = parseState(initialState);
+            gotoState(vm.stateObject[0].id, false);
+        }
 
-        gotoState(vm.stateObject[0].id, false);
+        $timeout(() => {
+            $scope.$watchCollection(function () {
+                return $state.params;
+            }, function () {
+                var currentState = $state.params.state;
+                vm.stateObject = parseState(currentState);
+            });
 
-        $scope.$watchCollection(function(){
-            return $state.params;
-        }, function(){
-            var currentState = $state.params.state;
-            vm.stateObject = parseState(currentState);
+            $scope.$watch('vm.dashboardCtrl.dashboardCtx.state', function () {
+                if (vm.stateObject[0].id !== vm.dashboardCtrl.dashboardCtx.state) {
+                    stopWatchStateObject();
+                    vm.stateObject[0].id = vm.dashboardCtrl.dashboardCtx.state;
+                    updateLocation();
+                    watchStateObject();
+                }
+            });
+            watchStateObject();
         });
-
-        $scope.$watch('vm.dashboardCtrl.dashboardCtx.state', function() {
-            if (vm.stateObject[0].id !== vm.dashboardCtrl.dashboardCtx.state) {
-                stopWatchStateObject();
-                vm.stateObject[0].id = vm.dashboardCtrl.dashboardCtx.state;
-                updateLocation();
-                watchStateObject();
-            }
-        });
-        watchStateObject();
     }
 
     function stopWatchStateObject() {

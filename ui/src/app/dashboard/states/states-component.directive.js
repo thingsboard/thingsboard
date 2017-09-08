@@ -47,6 +47,13 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                 }
             }
 
+            stateController.preserveState = function() {
+                if (scope.statesController) {
+                    var state = scope.statesController.getStateObject();
+                    statesControllerService.preserveStateControllerState(scope.statesControllerId, state);
+                }
+            }
+
             stateController.navigatePrevState = function(index) {
                 if (scope.statesController) {
                     scope.statesController.navigatePrevState(index);
@@ -109,7 +116,12 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                 }
                 var template = $templateCache.get(statesControllerInfo.templateUrl);
                 element.html(template);
-                var locals = {};
+
+                var preservedState = statesControllerService.withdrawStateControllerState(scope.statesControllerId);
+
+                var locals = {
+                    preservedState: preservedState
+                };
                 angular.extend(locals, {$scope: scope, $element: element});
                 var controller = $controller(statesControllerInfo.controller, locals, true, 'vm');
                 controller.instance = controller();

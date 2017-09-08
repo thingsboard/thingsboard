@@ -17,7 +17,8 @@
 import './entity-state-controller.scss';
 
 /*@ngInject*/
-export default function EntityStateController($scope, $location, $state, $stateParams, $q, $translate, utils, types, dashboardUtils, entityService) {
+export default function EntityStateController($scope, $timeout, $location, $state, $stateParams,
+                                              $q, $translate, utils, types, dashboardUtils, entityService, preservedState) {
 
     var vm = this;
 
@@ -26,6 +27,7 @@ export default function EntityStateController($scope, $location, $state, $stateP
     vm.openState = openState;
     vm.updateState = updateState;
     vm.resetState = resetState;
+    vm.getStateObject = getStateObject;
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
     vm.getStateParams = getStateParams;
@@ -82,6 +84,10 @@ export default function EntityStateController($scope, $location, $state, $stateP
         var rootStateId = dashboardUtils.getRootStateId(vm.states);
         vm.stateObject = [ { id: rootStateId, params: {} } ];
         gotoState(rootStateId, true);
+    }
+
+    function getStateObject() {
+        return vm.stateObject;
     }
 
     function navigatePrevState(index) {
@@ -212,41 +218,49 @@ export default function EntityStateController($scope, $location, $state, $stateP
     });
 
     function init() {
-        var initialState = $stateParams.state;
-        vm.stateObject = parseState(initialState);
-        vm.selectedStateIndex = vm.stateObject.length-1;
-        gotoState(vm.stateObject[vm.stateObject.length-1].id, false);
-
-        $scope.$watchCollection(function() {
-            return $state.params;
-        }, function(){
-            var currentState = $state.params.state;
-            vm.stateObject = parseState(currentState);
-        });
-
-        $scope.$watch('vm.dashboardCtrl.dashboardCtx.state', function() {
-            if (vm.stateObject[vm.stateObject.length-1].id !== vm.dashboardCtrl.dashboardCtx.state) {
-                stopWatchStateObject();
-                vm.stateObject[vm.stateObject.length-1].id = vm.dashboardCtrl.dashboardCtx.state;
-                updateLocation();
-                watchStateObject();
-            }
-        });
-
-        watchStateObject();
-
-        if (vm.dashboardCtrl.isMobile) {
-            watchSelectedStateIndex();
+        if (preservedState) {
+            vm.stateObject = preservedState;
+            vm.selectedStateIndex = vm.stateObject.length-1;
+            gotoState(vm.stateObject[vm.stateObject.length-1].id, true);
+        } else {
+            var initialState = $stateParams.state;
+            vm.stateObject = parseState(initialState);
+            vm.selectedStateIndex = vm.stateObject.length-1;
+            gotoState(vm.stateObject[vm.stateObject.length-1].id, false);
         }
 
-        $scope.$watch('vm.dashboardCtrl.isMobile', function(newVal, prevVal) {
-            if (!angular.equals(newVal, prevVal)) {
-                if (vm.dashboardCtrl.isMobile) {
-                    watchSelectedStateIndex();
-                } else {
-                    stopWatchSelectedStateIndex();
+        $timeout(() => {
+            $scope.$watchCollection(function () {
+                return $state.params;
+            }, function () {
+                var currentState = $state.params.state;
+                vm.stateObject = parseState(currentState);
+            });
+
+            $scope.$watch('vm.dashboardCtrl.dashboardCtx.state', function () {
+                if (vm.stateObject[vm.stateObject.length - 1].id !== vm.dashboardCtrl.dashboardCtx.state) {
+                    stopWatchStateObject();
+                    vm.stateObject[vm.stateObject.length - 1].id = vm.dashboardCtrl.dashboardCtx.state;
+                    updateLocation();
+                    watchStateObject();
                 }
+            });
+
+            watchStateObject();
+
+            if (vm.dashboardCtrl.isMobile) {
+                watchSelectedStateIndex();
             }
+
+            $scope.$watch('vm.dashboardCtrl.isMobile', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    if (vm.dashboardCtrl.isMobile) {
+                        watchSelectedStateIndex();
+                    } else {
+                        stopWatchSelectedStateIndex();
+                    }
+                }
+            });
         });
 
     }
