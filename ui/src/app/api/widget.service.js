@@ -561,7 +561,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
                                 maxDatasources: -1, //unlimited
                                 maxDataKeys: -1, //unlimited
                                 dataKeysOptional: false,
-                                steppedChart: false
+                                stateData: false
                            };
          '    }\n\n' +
 
@@ -632,8 +632,8 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
             if (angular.isUndefined(result.typeParameters.dataKeysOptional)) {
                 result.typeParameters.dataKeysOptional = false;
             }
-            if (angular.isUndefined(result.typeParameters.steppedChart)) {
-                result.typeParameters.steppedChart = false;
+            if (angular.isUndefined(result.typeParameters.stateData)) {
+                result.typeParameters.stateData = false;
             }
             if (angular.isFunction(widgetTypeInstance.actionSources)) {
                 result.actionSources = widgetTypeInstance.actionSources();

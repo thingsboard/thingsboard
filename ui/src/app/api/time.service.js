@@ -261,7 +261,7 @@ function TimeService($translate, types) {
         return historyTimewindow;
     }
 
-    function createSubscriptionTimewindow(timewindow, stDiff, steppedChart) {
+    function createSubscriptionTimewindow(timewindow, stDiff, stateData) {
 
         var subscriptionTimewindow = {
             fixedWindow: null,
@@ -273,12 +273,12 @@ function TimeService($translate, types) {
             }
         };
         var aggTimewindow = 0;
-        if (steppedChart) {
+        if (stateData) {
             subscriptionTimewindow.aggregation = {
                 interval: SECOND,
                 limit: MAX_LIMIT,
                 type: types.aggregation.none.value,
-                steppedChart: true
+                stateData: true
             };
         } else {
             subscriptionTimewindow.aggregation = {
@@ -288,7 +288,7 @@ function TimeService($translate, types) {
             };
         }
 
-        if (angular.isDefined(timewindow.aggregation) && !steppedChart) {
+        if (angular.isDefined(timewindow.aggregation) && !stateData) {
             subscriptionTimewindow.aggregation = {
                 type: timewindow.aggregation.type || types.aggregation.avg.value,
                 limit: timewindow.aggregation.limit || AVG_LIMIT
