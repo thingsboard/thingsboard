@@ -261,7 +261,7 @@ function TimeService($translate, types) {
         return historyTimewindow;
     }
 
-    function createSubscriptionTimewindow(timewindow, stDiff) {
+    function createSubscriptionTimewindow(timewindow, stDiff, stateData) {
 
         var subscriptionTimewindow = {
             fixedWindow: null,
@@ -273,8 +273,22 @@ function TimeService($translate, types) {
             }
         };
         var aggTimewindow = 0;
+        if (stateData) {
+            subscriptionTimewindow.aggregation = {
+                interval: SECOND,
+                limit: MAX_LIMIT,
+                type: types.aggregation.none.value,
+                stateData: true
+            };
+        } else {
+            subscriptionTimewindow.aggregation = {
+                interval: SECOND,
+                limit: AVG_LIMIT,
+                type: types.aggregation.avg.value
+            };
+        }
 
-        if (angular.isDefined(timewindow.aggregation)) {
+        if (angular.isDefined(timewindow.aggregation) && !stateData) {
             subscriptionTimewindow.aggregation = {
                 type: timewindow.aggregation.type || types.aggregation.avg.value,
                 limit: timewindow.aggregation.limit || AVG_LIMIT

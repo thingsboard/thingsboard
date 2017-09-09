@@ -339,7 +339,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         var deferred = $q.defer();
         if (widget.type !== types.widgetType.rpc.value && widget.type !== types.widgetType.static.value) {
             options = {
-                type: widget.type
+                type: widget.type,
+                stateData: vm.typeParameters.stateData
             }
             if (widget.type == types.widgetType.alarm.value) {
                 options.alarmSource = angular.copy(widget.config.alarmSource);

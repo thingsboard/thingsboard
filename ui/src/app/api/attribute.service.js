@@ -186,7 +186,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
                 types.dataKeyType.timeseries : types.dataKeyType.attribute;
 
             var subscriber = {
-                subscriptionCommand: subscriptionCommand,
+                subscriptionCommands: [subscriptionCommand],
                 type: type,
                 onData: function (data) {
                     if (data.data) {

@@ -128,7 +128,7 @@ export default class Subscription {
                 stDiff: this.ctx.stDiff
             }
             this.useDashboardTimewindow = options.useDashboardTimewindow;
-
+            this.stateData = options.stateData;
             if (this.useDashboardTimewindow) {
                 this.timeWindowConfig = angular.copy(options.dashboardTimewindow);
             } else {
@@ -612,7 +612,7 @@ export default class Subscription {
             this.subscriptionTimewindow =
                 this.ctx.timeService.createSubscriptionTimewindow(
                     this.timeWindowConfig,
-                    this.timeWindow.stDiff);
+                    this.timeWindow.stDiff, this.stateData);
         }
         this.updateTimewindow();
         return this.subscriptionTimewindow;

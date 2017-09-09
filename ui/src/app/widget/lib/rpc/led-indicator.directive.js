@@ -130,15 +130,22 @@ function LedIndicatorController($element, $scope, $timeout, utils, types) {
             }
         }
 
-        vm.checkStatusMethod = 'checkStatus';
-        if (vm.ctx.settings.checkStatusMethod && vm.ctx.settings.checkStatusMethod.length) {
-            vm.checkStatusMethod = vm.ctx.settings.checkStatusMethod;
+        vm.performCheckStatus = vm.ctx.settings.performCheckStatus != false;
+        if (vm.performCheckStatus) {
+            vm.checkStatusMethod = 'checkStatus';
+            if (vm.ctx.settings.checkStatusMethod && vm.ctx.settings.checkStatusMethod.length) {
+                vm.checkStatusMethod = vm.ctx.settings.checkStatusMethod;
+            }
         }
         if (!rpcEnabled) {
             onError('Target device is not set!');
         } else {
             if (!vm.isSimulated) {
-                rpcCheckStatus();
+                if (vm.performCheckStatus) {
+                    rpcCheckStatus();
+                } else {
+                    subscribeForValue();
+                }
             }
         }
     }

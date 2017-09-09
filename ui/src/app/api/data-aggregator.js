@@ -16,7 +16,8 @@
 
 export default class DataAggregator {
 
-    constructor(onDataCb, tsKeyNames, startTs, limit, aggregationType, timeWindow, interval, types, $timeout, $filter) {
+    constructor(onDataCb, tsKeyNames, startTs, limit, aggregationType, timeWindow, interval,
+                stateData, types, $timeout, $filter) {
         this.onDataCb = onDataCb;
         this.tsKeyNames = tsKeyNames;
         this.dataBuffer = {};
@@ -34,6 +35,10 @@ export default class DataAggregator {
         this.limit = limit;
         this.timeWindow = timeWindow;
         this.interval = interval;
+        this.stateData = stateData;
+        if (this.stateData) {
+            this.lastPrevKvPairData = {};
+        }
         this.aggregationTimeout = Math.max(this.interval, 1000);
         switch (aggregationType) {
             case types.aggregation.min.value:
@@ -151,6 +156,10 @@ export default class DataAggregator {
             var keyData = this.dataBuffer[key];
             for (var aggTimestamp in aggKeyData) {
                 if (aggTimestamp <= this.startTs) {
+                    if (this.stateData &&
+                        (!this.lastPrevKvPairData[key] || this.lastPrevKvPairData[key][0] < aggTimestamp)) {
+                        this.lastPrevKvPairData[key] = [Number(aggTimestamp), aggKeyData[aggTimestamp].aggValue];
+                    }
                     delete aggKeyData[aggTimestamp];
                 } else if (aggTimestamp <= this.endTs) {
                     var aggData = aggKeyData[aggTimestamp];
@@ -159,12 +168,43 @@ export default class DataAggregator {
                 }
             }
             keyData = this.$filter('orderBy')(keyData, '+this[0]');
+            if (this.stateData) {
+                this.updateStateBounds(keyData, angular.copy(this.lastPrevKvPairData[key]));
+            }
             if (keyData.length > this.limit) {
                 keyData = keyData.slice(keyData.length - this.limit);
             }
             this.dataBuffer[key] = keyData;
         }
         return this.dataBuffer;
+    }
+
+    updateStateBounds(keyData, lastPrevKvPair) {
+        if (lastPrevKvPair) {
+            lastPrevKvPair[0] = this.startTs;
+        }
+        var firstKvPair;
+        if (!keyData.length) {
+            if (lastPrevKvPair) {
+                firstKvPair = lastPrevKvPair;
+                keyData.push(firstKvPair);
+            }
+        } else {
+            firstKvPair = keyData[0];
+        }
+        if (firstKvPair && firstKvPair[0] > this.startTs) {
+            if (lastPrevKvPair) {
+                keyData.unshift(lastPrevKvPair);
+            }
+        }
+        if (keyData.length) {
+            var lastKvPair = keyData[keyData.length-1];
+            if (lastKvPair[0] < this.endTs) {
+                lastKvPair = angular.copy(lastKvPair);
+                lastKvPair[0] = this.endTs;
+                keyData.push(lastKvPair);
+            }
+        }
     }
 
     destroy() {
