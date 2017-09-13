@@ -446,6 +446,10 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         } else {
             dataKey.color = genNextColor(datasources);
         }
+        if (keyInfo.postFuncBody && keyInfo.postFuncBody.length) {
+            dataKey.usePostProcessing = true;
+            dataKey.postFuncBody = keyInfo.postFuncBody;
+        }
         return dataKey;
     }
 

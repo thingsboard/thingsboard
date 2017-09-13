@@ -222,6 +222,8 @@ export default class TbFlot {
 
             if (settings.yaxis) {
                 this.yaxis.font.color = settings.yaxis.color || this.yaxis.font.color;
+                this.yaxis.min = angular.isDefined(settings.yaxis.min) ? settings.yaxis.min : null;
+                this.yaxis.max = angular.isDefined(settings.yaxis.max) ? settings.yaxis.max : null;
                 this.yaxis.label = settings.yaxis.title || null;
                 this.yaxis.labelFont.color = this.yaxis.font.color;
                 this.yaxis.labelFont.size = this.yaxis.font.size+2;
@@ -457,7 +459,12 @@ export default class TbFlot {
         var tickDecimals = angular.isDefined(keySettings.axisTickDecimals) ? keySettings.axisTickDecimals : 0;
         var position = keySettings.axisPosition && keySettings.axisPosition.length ? keySettings.axisPosition : "left";
 
+        var min = angular.isDefined(keySettings.axisMin) ? keySettings.axisMin : yaxis.min;
+        var max = angular.isDefined(keySettings.axisMax) ? keySettings.axisMax : yaxis.max;
+
         yaxis.label = label;
+        yaxis.min = min;
+        yaxis.max = max;
         yaxis.tickUnits = units;
         yaxis.tickDecimals = tickDecimals;
         yaxis.alignTicksWithAxis = position == "right" ? 1 : null;
@@ -765,6 +772,16 @@ export default class TbFlot {
                         "title": "Y axis settings",
                         "type": "object",
                         "properties": {
+                            "min": {
+                                "title": "Minimum value on the scale",
+                                "type": "number",
+                                "default": null
+                            },
+                            "max": {
+                                "title": "Maximum value on the scale",
+                                "type": "number",
+                                "default": null
+                            },
                             "showLabels": {
                                 "title": "Show labels",
                                 "type": "boolean",
@@ -845,6 +862,8 @@ export default class TbFlot {
                 {
                     "key": "yaxis",
                     "items": [
+                        "yaxis.min",
+                        "yaxis.max",
                         "yaxis.showLabels",
                         "yaxis.title",
                         "yaxis.titleAngle",
@@ -898,6 +917,16 @@ export default class TbFlot {
                         "type": "boolean",
                         "default": false
                     },
+                    "axisMin": {
+                        "title": "Minimum value on the axis scale",
+                        "type": "number",
+                        "default": null
+                    },
+                    "axisMax": {
+                        "title": "Maximum value on the axis scale",
+                        "type": "number",
+                        "default": null
+                    },
                     "axisTitle": {
                         "title": "Axis title",
                         "type": "string",
@@ -930,6 +959,8 @@ export default class TbFlot {
                     "type": "javascript"
                 },
                 "showSeparateAxis",
+                "axisMin",
+                "axisMax",
                 "axisTitle",
                 "axisTickDecimals",
                 {
