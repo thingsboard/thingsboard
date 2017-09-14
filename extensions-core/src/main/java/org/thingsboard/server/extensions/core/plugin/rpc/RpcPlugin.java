@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2017 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.extensions.api.component.Plugin;
 import org.thingsboard.server.extensions.api.plugins.AbstractPlugin;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
+import org.thingsboard.server.extensions.api.plugins.handlers.DefaultRuleMsgHandler;
 import org.thingsboard.server.extensions.api.plugins.handlers.RestMsgHandler;
+import org.thingsboard.server.extensions.api.plugins.handlers.RuleMsgHandler;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
+import org.thingsboard.server.extensions.core.action.rpc.ServerSideRpcCallAction;
 import org.thingsboard.server.extensions.core.plugin.rpc.handlers.RpcRestMsgHandler;
 
 /**
  * @author Andrew Shvayka
  */
-@Plugin(name = "RPC Plugin", actions = {}, descriptor = "RpcPluginDescriptor.json", configuration = RpcPluginConfiguration.class)
+@Plugin(name = "RPC Plugin", actions = {ServerSideRpcCallAction.class}, descriptor = "RpcPluginDescriptor.json", configuration = RpcPluginConfiguration.class)
 @Slf4j
 public class RpcPlugin extends AbstractPlugin<RpcPluginConfiguration> {
 
@@ -58,6 +61,11 @@ public class RpcPlugin extends AbstractPlugin<RpcPluginConfiguration> {
     @Override
     public void init(RpcPluginConfiguration configuration) {
         restMsgHandler.setDefaultTimeout(configuration.getDefaultTimeout());
+    }
+
+    @Override
+    protected RuleMsgHandler getRuleMsgHandler() {
+        return new DefaultRuleMsgHandler();
     }
 
     @Override

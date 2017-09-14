@@ -1,0 +1,45 @@
+{
+  "schema": {
+    "title": "Send Mail Action Configuration",
+    "type": "object",
+    "properties": {
+      "sendFlag": {
+        "title": "Send flag",
+        "type": "string"
+      },
+      "deviceIdTemplate": {
+        "title": "Device ID template",
+        "type": "string"
+      },
+      "deviceRelationTemplate": {
+        "title": "Device Relation template",
+        "type": "string"
+      },
+      "rpcCallMethodTemplate": {
+        "title": "RPC Call template",
+        "type": "string"
+      },
+      "rpcCallBodyTemplate": {
+        "title": "RPC Call Body template",
+        "type": "string"
+      }
+    },
+    "required": [
+      "deviceIdTemplate",
+      "deviceRelationTemplate",
+      "rpcCallMethodTemplate",
+      "rpcCallBodyTemplate"
+    ]
+  },
+  "form": [
+    "sendFlag",
+    "deviceIdTemplate",
+    "deviceRelationTemplate",
+    "rpcCallMethodTemplate",
+    {
+      "key": "rpcCallBodyTemplate",
+      "type": "textarea",
+      "rows": 5
+    }
+  ]
+}
