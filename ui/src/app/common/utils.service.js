@@ -441,6 +441,12 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             settings: {},
             _hash: Math.random()
         }
+        if (keyInfo.units) {
+            dataKey.units = keyInfo.units;
+        }
+        if (angular.isDefined(keyInfo.decimals)) {
+            dataKey.decimals = keyInfo.decimals;
+        }
         if (keyInfo.color) {
             dataKey.color = keyInfo.color;
         } else {
