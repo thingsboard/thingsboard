@@ -26,7 +26,9 @@ public class ServerSideRpcCallActionConfiguration {
     private String sendFlag;
 
     private String deviceIdTemplate;
-    private String deviceRelationTemplate;
     private String rpcCallMethodTemplate;
     private String rpcCallBodyTemplate;
+    private long rpcCallTimeoutInSec;
+    private String fromDeviceRelationTemplate;
+    private String toDeviceRelationTemplate;
 }

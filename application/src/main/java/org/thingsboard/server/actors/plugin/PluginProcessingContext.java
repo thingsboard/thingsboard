@@ -33,6 +33,8 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
@@ -392,6 +394,16 @@ public final class PluginProcessingContext implements PluginContext {
         } else {
             callback.onSuccess(this, Boolean.TRUE);
         }
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType) {
+        return this.pluginCtx.relationService.findByFromAndType(from, relationType, RelationTypeGroup.COMMON);
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelation>> findByToAndType(EntityId from, String relationType) {
+        return this.pluginCtx.relationService.findByToAndType(from, relationType, RelationTypeGroup.COMMON);
     }
 
     @Override

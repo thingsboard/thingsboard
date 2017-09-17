@@ -4,16 +4,13 @@
     "type": "object",
     "properties": {
       "sendFlag": {
-        "title": "Send flag",
+        "title": "Send flag (empty or 'isNewAlarm', 'isExistingAlarm', 'isClearedAlarm', 'isNewOrClearedAlarm')",
         "type": "string"
       },
       "deviceIdTemplate": {
         "title": "Device ID template",
-        "type": "string"
-      },
-      "deviceRelationTemplate": {
-        "title": "Device Relation template",
-        "type": "string"
+        "type": "string",
+        "default": "$deviceId"
       },
       "rpcCallMethodTemplate": {
         "title": "RPC Call template",
@@ -22,24 +19,39 @@
       "rpcCallBodyTemplate": {
         "title": "RPC Call Body template",
         "type": "string"
+      },
+      "rpcCallTimeoutInSec": {
+        "title": "RPC Call timeout in seconds",
+        "type": "integer",
+        "default": 60
+      },
+      "fromDeviceRelationTemplate": {
+        "title": "From Device Relation template",
+        "type": "string"
+      },
+      "toDeviceRelationTemplate": {
+        "title": "To Device Relation template",
+        "type": "string"
       }
     },
     "required": [
       "deviceIdTemplate",
-      "deviceRelationTemplate",
       "rpcCallMethodTemplate",
-      "rpcCallBodyTemplate"
+      "rpcCallBodyTemplate",
+      "rpcCallTimeoutInSec"
     ]
   },
   "form": [
     "sendFlag",
     "deviceIdTemplate",
-    "deviceRelationTemplate",
     "rpcCallMethodTemplate",
     {
       "key": "rpcCallBodyTemplate",
       "type": "textarea",
       "rows": 5
-    }
+    },
+    "rpcCallTimeoutInSec",
+    "fromDeviceRelationTemplate",
+    "toDeviceRelationTemplate"
   ]
 }

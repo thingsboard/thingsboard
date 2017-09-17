@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2017 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.extensions.core.action.rpc;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +43,8 @@ public class ServerSideRpcCallAction extends SimpleRuleLifecycleComponent implem
 
     private ServerSideRpcCallActionConfiguration configuration;
     private Optional<Template> deviceIdTemplate;
-    private Optional<Template> deviceRelationTemplate;
+    private Optional<Template> fromDeviceRelationTemplate;
+    private Optional<Template> toDeviceRelationTemplate;
     private Optional<Template> rpcCallMethodTemplate;
     private Optional<Template> rpcCallBodyTemplate;
 
@@ -37,7 +53,8 @@ public class ServerSideRpcCallAction extends SimpleRuleLifecycleComponent implem
         this.configuration = configuration;
         try {
             deviceIdTemplate = toTemplate(configuration.getDeviceIdTemplate(), "Device Id Template");
-            deviceRelationTemplate = toTemplate(configuration.getDeviceRelationTemplate(), "Device Relation Template");
+            fromDeviceRelationTemplate = toTemplate(configuration.getFromDeviceRelationTemplate(), "From Device Relation Template");
+            toDeviceRelationTemplate = toTemplate(configuration.getToDeviceRelationTemplate(), "To Device Relation Template");
             rpcCallMethodTemplate = toTemplate(configuration.getRpcCallMethodTemplate(), "RPC Call Method Template");
             rpcCallBodyTemplate = toTemplate(configuration.getRpcCallBodyTemplate(), "RPC Call Body Template");
         } catch (ParseException e) {
@@ -55,7 +72,8 @@ public class ServerSideRpcCallAction extends SimpleRuleLifecycleComponent implem
             ServerSideRpcCallActionMsg.ServerSideRpcCallActionMsgBuilder builder = ServerSideRpcCallActionMsg.builder();
 
             deviceIdTemplate.ifPresent(t -> builder.deviceId(VelocityUtils.merge(t, context)));
-            deviceRelationTemplate.ifPresent(t -> builder.deviceRelation(VelocityUtils.merge(t, context)));
+            fromDeviceRelationTemplate.ifPresent(t -> builder.fromDeviceRelation(VelocityUtils.merge(t, context)));
+            toDeviceRelationTemplate.ifPresent(t -> builder.toDeviceRelation(VelocityUtils.merge(t, context)));
             rpcCallMethodTemplate.ifPresent(t -> builder.rpcCallMethod(VelocityUtils.merge(t, context)));
             rpcCallBodyTemplate.ifPresent(t -> builder.rpcCallBody(VelocityUtils.merge(t, context)));
             return Optional.of(new ServerSideRpcCallRuleToPluginActionMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(), toDeviceActorMsg.getDeviceId(),

@@ -4,7 +4,7 @@
     "type": "object",
     "properties": {
       "sendFlag": {
-        "title": "Send flag",
+        "title": "Send flag (empty or 'isNewAlarm', 'isExistingAlarm', 'isClearedAlarm', 'isNewOrClearedAlarm')",
         "type": "string"
       },
       "fromTemplate": {
