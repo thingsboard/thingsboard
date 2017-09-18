@@ -7,13 +7,13 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server" level="INFO"/>
+    <logger name="org.thingsboard.server" level="WARN"/>
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.boot.test" level="DEBUG"/>
     <logger name="org.apache.cassandra" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
 
-    <logger name="akka" level="DEBUG" />
+    <logger name="akka" level="INFO" />
 
     <root level="WARN">
         <appender-ref ref="console"/>

@@ -1,0 +1,57 @@
+{
+  "schema": {
+    "title": "Send Mail Action Configuration",
+    "type": "object",
+    "properties": {
+      "sendFlag": {
+        "title": "Send flag (empty or 'isNewAlarm', 'isExistingAlarm', 'isClearedAlarm', 'isNewOrClearedAlarm')",
+        "type": "string"
+      },
+      "deviceIdTemplate": {
+        "title": "Device ID template",
+        "type": "string",
+        "default": "$deviceId"
+      },
+      "rpcCallMethodTemplate": {
+        "title": "RPC Call template",
+        "type": "string"
+      },
+      "rpcCallBodyTemplate": {
+        "title": "RPC Call Body template",
+        "type": "string"
+      },
+      "rpcCallTimeoutInSec": {
+        "title": "RPC Call timeout in seconds",
+        "type": "integer",
+        "default": 60
+      },
+      "fromDeviceRelationTemplate": {
+        "title": "From Device Relation template",
+        "type": "string"
+      },
+      "toDeviceRelationTemplate": {
+        "title": "To Device Relation template",
+        "type": "string"
+      }
+    },
+    "required": [
+      "deviceIdTemplate",
+      "rpcCallMethodTemplate",
+      "rpcCallBodyTemplate",
+      "rpcCallTimeoutInSec"
+    ]
+  },
+  "form": [
+    "sendFlag",
+    "deviceIdTemplate",
+    "rpcCallMethodTemplate",
+    {
+      "key": "rpcCallBodyTemplate",
+      "type": "textarea",
+      "rows": 5
+    },
+    "rpcCallTimeoutInSec",
+    "fromDeviceRelationTemplate",
+    "toDeviceRelationTemplate"
+  ]
+}
