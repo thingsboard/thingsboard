@@ -19,7 +19,7 @@
 dpkg -i /thingsboard.deb
 
 if [ "$DATABASE_TYPE" == "cassandra" ]; then
-    until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open"
+    until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open\|filtered"
     do
       echo "Wait for cassandra db to start..."
       sleep 10
@@ -28,7 +28,7 @@ fi
 
 if [ "$DATABASE_TYPE" == "sql" ]; then
     if [ "$SPRING_DRIVER_CLASS_NAME" == "org.postgresql.Driver" ]; then
-        until nmap $POSTGRES_HOST -p $POSTGRES_PORT | grep "$POSTGRES_PORT/tcp open"
+        until nmap $POSTGRES_HOST -p $POSTGRES_PORT | grep "$POSTGRES_PORT/tcp open\filtered"
         do
           echo "Waiting for postgres db to start..."
           sleep 10
