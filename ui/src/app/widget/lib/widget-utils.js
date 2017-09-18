@@ -146,12 +146,16 @@ export function toLabelValueMap(data, datasources) {
         var dataKey = data[i].dataKey;
         var label = dataKey.label;
         var keyData = data[i].data;
+        var ts = null;
         var val = null;
         if (keyData.length > 0) {
+            ts = keyData[keyData.length-1][0];
             val = keyData[keyData.length-1][1];
         }
+        dataMap[label+'|ts'] = ts;
         dataMap[label] = val;
         var dsIndex = datasources.indexOf(data[i].datasource);
+        dsDataMap[dsIndex][label+'|ts'] = ts;
         dsDataMap[dsIndex][label] = val;
     }
     return {
