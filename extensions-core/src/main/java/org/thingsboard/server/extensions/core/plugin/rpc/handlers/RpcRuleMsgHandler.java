@@ -70,7 +70,7 @@ public class RpcRuleMsgHandler implements RuleMsgHandler {
                         deviceIds = relations.stream().map(EntityRelation::getFrom).collect(Collectors.toList());
                     }
                     ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(msg.getRpcCallMethod(), msg.getRpcCallBody());
-                    long expirationTime = System.currentTimeMillis() + msg.getRpcCallTimeoutInSec();
+                    long expirationTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(msg.getRpcCallTimeoutInSec());
                     for (EntityId address : deviceIds) {
                         DeviceId tmpId = new DeviceId(address.getId());
                         ctx.checkAccess(tmpId, new PluginCallback<Void>() {
