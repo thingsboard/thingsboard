@@ -76,6 +76,7 @@ public class ServerSideRpcCallAction extends SimpleRuleLifecycleComponent implem
             toDeviceRelationTemplate.ifPresent(t -> builder.toDeviceRelation(VelocityUtils.merge(t, context)));
             rpcCallMethodTemplate.ifPresent(t -> builder.rpcCallMethod(VelocityUtils.merge(t, context)));
             rpcCallBodyTemplate.ifPresent(t -> builder.rpcCallBody(VelocityUtils.merge(t, context)));
+            builder.rpcCallTimeoutInSec(configuration.getRpcCallTimeoutInSec());
             return Optional.of(new ServerSideRpcCallRuleToPluginActionMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(), toDeviceActorMsg.getDeviceId(),
                     builder.build()));
         } else {
