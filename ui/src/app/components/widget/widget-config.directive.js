@@ -24,6 +24,8 @@ import thingsboardJsonForm from '../json-form.directive';
 import thingsboardManageWidgetActions from './action/manage-widget-actions.directive';
 import 'angular-ui-ace';
 
+import './widget-config.scss';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import widgetConfigTemplate from './widget-config.tpl.html';
@@ -136,7 +138,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                             scope.datasources = [];
                         }
                         if (config.datasources) {
-                            for (var i in config.datasources) {
+                            for (var i = 0; i < config.datasources.length; i++) {
                                 scope.datasources.push({value: config.datasources[i]});
                             }
                         }
@@ -308,7 +310,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.datasources = [];
                 }
                 if (scope.datasources) {
-                    for (var i in scope.datasources) {
+                    for (var i = 0; i < scope.datasources.length; i++) {
                         config.datasources.push(scope.datasources[i].value);
                     }
                 }
