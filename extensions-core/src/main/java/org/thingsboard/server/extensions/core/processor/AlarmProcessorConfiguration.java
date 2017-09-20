@@ -32,6 +32,7 @@ public class AlarmProcessorConfiguration {
     private String alarmSeverity;
     private String alarmStatus;
     private boolean alarmPropagateFlag;
+    private boolean newAlarmFlag;
 
     private String alarmDetailsTemplate;
 
