@@ -33,7 +33,7 @@
       "newAlarmFlag": {
         "title": "New Alarm on each event",
         "type": "boolean",
-        "default": true
+        "default": false
       },
       "alarmDetailsTemplate": {
         "title": "Alarm details (JSON)",
