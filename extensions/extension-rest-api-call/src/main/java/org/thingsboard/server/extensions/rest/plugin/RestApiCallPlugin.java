@@ -34,7 +34,7 @@ public class RestApiCallPlugin extends AbstractPlugin<RestApiCallPluginConfigura
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
     private static final String AUTHORIZATION_HEADER_FORMAT = "Basic %s";
     private static final String CREDENTIALS_TEMPLATE = "%s:%s";
-    private static final String BASE_URL_TEMPLATE = "http://%s:%d%s";
+    private static final String BASE_URL_TEMPLATE = "%s%s:%d%s";
     private RestApiCallMsgHandler handler;
     private String baseUrl;
     private HttpHeaders headers = new HttpHeaders();
@@ -43,6 +43,7 @@ public class RestApiCallPlugin extends AbstractPlugin<RestApiCallPluginConfigura
     public void init(RestApiCallPluginConfiguration configuration) {
         this.baseUrl = String.format(
                 BASE_URL_TEMPLATE,
+                configuration.getProtocol(),
                 configuration.getHost(),
                 configuration.getPort(),
                 configuration.getBasePath());
