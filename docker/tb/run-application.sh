@@ -19,7 +19,7 @@
 dpkg -i /thingsboard.deb
 
 if [ "$DATABASE_TYPE" == "cassandra" ]; then
-    until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open"
+    until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open\|filtered"
     do
       echo "Wait for cassandra db to start..."
       sleep 10
