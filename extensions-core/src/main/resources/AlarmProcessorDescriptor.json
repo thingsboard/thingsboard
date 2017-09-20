@@ -30,6 +30,11 @@
         "type": "boolean",
         "default": true
       },
+      "newAlarmFlag": {
+        "title": "New Alarm on each event",
+        "type": "boolean",
+        "default": true
+      },
       "alarmDetailsTemplate": {
         "title": "Alarm details (JSON)",
         "type": "string",
@@ -106,6 +111,7 @@
     },
     "alarmTypeTemplate",
     "alarmPropagateFlag",
+    "newAlarmFlag",
     {
       "key": "alarmDetailsTemplate",
       "type": "textarea",

@@ -41,6 +41,7 @@ import javax.script.Bindings;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Andrew Shvayka
@@ -131,6 +132,16 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
         Alarm existing = null;
         if (isActiveAlarm) {
             Alarm alarm = buildAlarm(ctx, msg);
+            if (configuration.isNewAlarmFlag()) {
+                Optional<Alarm> oldAlarmOpt = ctx.findLatestAlarm(alarm.getOriginator(), alarm.getType());
+                if (oldAlarmOpt.isPresent() && !oldAlarmOpt.get().getStatus().isCleared()) {
+                    try {
+                        ctx.clearAlarm(oldAlarmOpt.get().getId(), oldAlarmOpt.get().getEndTs()).get();
+                    } catch (Exception e) {
+                        throw new RuleException("Failed to clear old alarm", e);
+                    }
+                }
+            }
             existing = ctx.createOrUpdateAlarm(alarm);
             if (existing.getStartTs() == alarm.getStartTs()) {
                 log.debug("[{}][{}] New Active Alarm detected", ctx.getRuleId(), existing.getId());
@@ -140,7 +151,7 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
                 log.debug("[{}][{}] Existing Active Alarm detected", ctx.getRuleId(), existing.getId());
                 md.put(IS_EXISTING_ALARM, Boolean.TRUE);
             }
-        } else if (isClearedAlarm) {
+        } else {
             String alarmType = VelocityUtils.merge(alarmTypeTemplate, context);
             Optional<Alarm> alarm = ctx.findLatestAlarm(ctx.getDeviceMetaData().getDeviceId(), alarmType);
             if (alarm.isPresent()) {
