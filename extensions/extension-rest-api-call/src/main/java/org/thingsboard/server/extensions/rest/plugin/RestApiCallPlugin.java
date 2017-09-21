@@ -41,9 +41,18 @@ public class RestApiCallPlugin extends AbstractPlugin<RestApiCallPluginConfigura
 
     @Override
     public void init(RestApiCallPluginConfiguration configuration) {
+        String aHost = configuration.getHost();
+        String aBase = BASE_URL_TEMPLATE;
+        int i = aHost.indexOf("://");
+
+        if(i>0){
+            aBase = aHost.substring(0,i+3)+"%s:%d%s";
+            aHost = aHost.substring(i+3);
+        }
+
         this.baseUrl = String.format(
-                BASE_URL_TEMPLATE,
-                configuration.getHost(),
+                aBase,//BASE_URL_TEMPLAT,
+                aHost,//configuration.getHost(),
                 configuration.getPort(),
                 configuration.getBasePath());
 
