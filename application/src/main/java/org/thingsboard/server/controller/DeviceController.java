@@ -27,10 +27,12 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -55,12 +57,21 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDevice(@RequestBody Device device) throws ThingsboardException {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
+            if (getCurrentUser().getAuthority() == Authority.CUSTOMER_USER) {
+                if (device.getId() == null || device.getId().isNullUid() ||
+                    device.getCustomerId() == null || device.getCustomerId().isNullUid()) {
+                    throw new ThingsboardException("You don't have permission to perform this operation!",
+                            ThingsboardErrorCode.PERMISSION_DENIED);
+                } else {
+                    checkCustomerId(device.getCustomerId());
+                }
+            }
             Device savedDevice = checkNotNull(deviceService.saveDevice(device));
             actorService
                     .onDeviceNameOrTypeUpdate(
