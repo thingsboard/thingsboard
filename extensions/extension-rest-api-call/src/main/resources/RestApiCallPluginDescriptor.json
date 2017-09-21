@@ -3,6 +3,10 @@
     "title": "REST API Call Plugin Configuration",
     "type": "object",
     "properties": {
+      "protocol": {
+        "title": "URI Scheme name",
+        "type": "string"
+      },
       "host": {
         "title": "Host",
         "type": "string"
@@ -51,6 +55,7 @@
       }
     },
     "required": [
+      "protocol",
       "host",
       "port",
       "basePath",
@@ -58,6 +63,21 @@
     ]
   },
   "form": [
+    {
+      "key": "protocol",
+      "type": "rc-select",
+      "multiple": false,
+      "items": [
+        {
+          "value": "http://",
+          "label": "HTTP"
+        },
+        {
+          "value": "https://",
+          "label": "HTTPS"
+        }
+      ]
+    },
     "host",
     "port",
     "basePath",
