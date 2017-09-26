@@ -78,7 +78,7 @@
         "sizeY": 6.5,
         "resources": [],
         "templateHtml": "",
-        "templateCss": ".error {\n    color: red;\n}\n.tb-labels {\n  color: #222;\n  font: 12px/1.5 \"Helvetica Neue\", Arial, Helvetica, sans-serif;\n  text-align: center;\n  width: 200px;\n  white-space: nowrap;\n}",
+        "templateCss": ".leaflet-zoom-box {\n\tz-index: 9;\n}\n\n.leaflet-pane         { z-index: 4; }\n\n.leaflet-tile-pane    { z-index: 2; }\n.leaflet-overlay-pane { z-index: 4; }\n.leaflet-shadow-pane  { z-index: 5; }\n.leaflet-marker-pane  { z-index: 6; }\n.leaflet-tooltip-pane   { z-index: 7; }\n.leaflet-popup-pane   { z-index: 8; }\n\n.leaflet-map-pane canvas { z-index: 1; }\n.leaflet-map-pane svg    { z-index: 2; }\n\n.leaflet-control {\n\tz-index: 9;\n}\n.leaflet-top,\n.leaflet-bottom {\n\tz-index: 11;\n}\n\n.tb-marker-label {\n    border: none;\n    background: none;\n    box-shadow: none;\n}\n\n.tb-marker-label:before {\n    border: none;\n    background: none;\n}\n",
         "controllerScript": "self.onInit = function() {\n    self.ctx.map = new TbMapWidgetV2('image-map', false, self.ctx);\n}\n\nself.onDataUpdated = function() {\n    self.ctx.map.update();\n}\n\nself.onResize = function() {\n    self.ctx.map.resize();\n}\n\nself.getSettingsSchema = function() {\n    return TbMapWidgetV2.settingsSchema('image-map');\n}\n\nself.getDataKeySettingsSchema = function() {\n    return TbMapWidgetV2.dataKeySettingsSchema('image-map');\n}\n\nself.actionSources = function() {\n    return TbMapWidgetV2.actionSources();\n}\n\nself.onDestroy = function() {\n}\n",
         "settingsSchema": "{}",
         "dataKeySettingsSchema": "{}\n",

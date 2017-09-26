@@ -118,7 +118,7 @@ export default class TbOpenStreetMap {
         }
 
         if (settings.displayTooltip) {
-            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, markerArgs);
+            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, settings.autocloseTooltip, markerArgs);
         }
 
         if (onClickListener) {
@@ -132,10 +132,10 @@ export default class TbOpenStreetMap {
         this.map.removeLayer(marker);
     }
 
-    createTooltip(marker, pattern, replaceInfo, markerArgs) {
+    createTooltip(marker, pattern, replaceInfo, autoClose, markerArgs) {
         var popup = L.popup();
         popup.setContent('');
-        marker.bindPopup(popup, {autoClose: false, closeOnClick: false});
+        marker.bindPopup(popup, {autoClose: autoClose, closeOnClick: false});
         this.tooltips.push( {
             markerArgs: markerArgs,
             popup: popup,

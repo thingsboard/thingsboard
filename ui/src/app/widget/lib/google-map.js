@@ -224,7 +224,7 @@ export default class TbGoogleMap {
         }
 
         if (settings.displayTooltip) {
-            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, markerArgs);
+            this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, settings.autocloseTooltip, markerArgs);
         }
 
         if (onClickListener) {
@@ -241,11 +241,17 @@ export default class TbGoogleMap {
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
-    createTooltip(marker, pattern, replaceInfo, markerArgs) {
+    createTooltip(marker, pattern, replaceInfo, autoClose, markerArgs) {
         var popup = new google.maps.InfoWindow({
             content: ''
         });
+        var map = this;
         marker.addListener('click', function() {
+            if (autoClose) {
+                map.tooltips.forEach((tooltip) => {
+                    tooltip.popup.close();
+                });
+            }
             popup.open(this.map, marker);
         });
         this.tooltips.push( {
