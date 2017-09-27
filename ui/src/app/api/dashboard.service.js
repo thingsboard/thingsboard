@@ -17,7 +17,14 @@ export default angular.module('thingsboard.api.dashboard', [])
     .factory('dashboardService', DashboardService).name;
 
 /*@ngInject*/
-function DashboardService($http, $q, $location, customerService) {
+function DashboardService($rootScope, $http, $q, $location, customerService) {
+
+    var stDiffPromise;
+
+    $rootScope.dadshboardServiceStateChangeStartHandle = $rootScope.$on('$stateChangeStart', function () {
+        stDiffPromise = undefined;
+    });
+
 
     var service = {
         assignDashboardToCustomer: assignDashboardToCustomer,
@@ -113,18 +120,23 @@ function DashboardService($http, $q, $location, customerService) {
     }
 
     function getServerTimeDiff() {
-        var deferred = $q.defer();
-        var url = '/api/dashboard/serverTime';
-        var ct1 = Date.now();
-        $http.get(url, { ignoreLoading: true }).then(function success(response) {
-            var ct2 = Date.now();
-            var st = response.data;
-            var stDiff = Math.ceil(st - (ct1+ct2)/2);
-            deferred.resolve(stDiff);
-        }, function fail() {
-            deferred.reject();
-        });
-        return deferred.promise;
+        if (stDiffPromise) {
+            return stDiffPromise;
+        } else {
+            var deferred = $q.defer();
+            stDiffPromise = deferred.promise;
+            var url = '/api/dashboard/serverTime';
+            var ct1 = Date.now();
+            $http.get(url, {ignoreLoading: true}).then(function success(response) {
+                var ct2 = Date.now();
+                var st = response.data;
+                var stDiff = Math.ceil(st - (ct1 + ct2) / 2);
+                deferred.resolve(stDiff);
+            }, function fail() {
+                deferred.reject();
+            });
+        }
+        return stDiffPromise;
     }
 
     function getDashboard(dashboardId) {

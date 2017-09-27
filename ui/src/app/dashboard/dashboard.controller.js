@@ -170,7 +170,6 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         }
     }
 
-    vm.getServerTimeDiff = getServerTimeDiff;
     vm.addWidget = addWidget;
     vm.addWidgetFromType = addWidgetFromType;
     vm.exportDashboard = exportDashboard;
@@ -332,10 +331,6 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                 }
             );
         }
-    }
-
-    function getServerTimeDiff() {
-        return dashboardService.getServerTimeDiff();
     }
 
     function loadDashboard() {
