@@ -75,7 +75,6 @@ function Dashboard() {
             prepareDashboardContextMenu: '&?',
             prepareWidgetContextMenu: '&?',
             loadWidgets: '&?',
-            getStDiff: '&?',
             onInit: '&?',
             onInitFailed: '&?',
             dashboardStyle: '=?',
@@ -101,8 +100,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     var vm = this;
 
     vm.gridster = null;
-
-    vm.stDiff = 0;
 
     vm.isMobileDisabled = angular.isDefined(vm.isMobileDisabled) ? vm.isMobileDisabled : false;
 
@@ -500,7 +497,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         sortWidgets();
     });
 
-    loadStDiff();
+    loadDashboard();
 
     function sortWidgets() {
         vm.widgets.sort(function (widget1, widget2) {
@@ -515,28 +512,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     }
 
     function reload() {
-        loadStDiff();
-    }
-
-    function loadStDiff() {
-        if (vm.getStDiff) {
-            var promise = vm.getStDiff();
-            if (promise) {
-                promise.then(function (stDiff) {
-                    vm.stDiff = stDiff;
-                    loadDashboard();
-                }, function () {
-                    vm.stDiff = 0;
-                    loadDashboard();
-                });
-            } else {
-                vm.stDiff = 0;
-                loadDashboard();
-            }
-        } else {
-            vm.stDiff = 0;
-            loadDashboard();
-        }
+        loadDashboard();
     }
 
     function loadDashboard() {
