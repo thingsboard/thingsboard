@@ -149,7 +149,7 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.headers().cacheControl().disable().frameOptions().disable()
+        http.headers().cacheControl().and().frameOptions().disable()
                 .and()
                 .cors()
                 .and()
