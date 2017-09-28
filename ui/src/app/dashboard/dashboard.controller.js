@@ -68,7 +68,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     Object.defineProperty(vm, 'toolbarOpened', {
         get: function() {
             return !vm.widgetEditMode &&
-                (toolbarAlwaysOpen() || $scope.forceFullscreen || vm.isToolbarOpened || vm.isEdit || vm.showRightLayoutSwitch()); },
+                (toolbarAlwaysOpen() || vm.isToolbarOpened || vm.isEdit || vm.showRightLayoutSwitch()); },
         set: function() { }
     });
 
@@ -114,7 +114,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     }
 
     vm.showCloseToolbar = function() {
-        return !vm.toolbarAlwaysOpen() && !$scope.forceFullscreen && !vm.isEdit && !vm.showRightLayoutSwitch();
+        return !vm.toolbarAlwaysOpen() && !vm.isEdit && !vm.showRightLayoutSwitch();
     }
 
     vm.toolbarAlwaysOpen = toolbarAlwaysOpen;

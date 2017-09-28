@@ -15,22 +15,27 @@
  */
 
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet/dist/leaflet';
+import * as L from 'leaflet';
+import 'leaflet-providers';
 
 export default class TbOpenStreetMap {
 
-    constructor($containerElement, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel) {
+    constructor($containerElement, initCallback, defaultZoomLevel, dontFitMapBounds, minZoomLevel, mapProvider) {
 
         this.defaultZoomLevel = defaultZoomLevel;
         this.dontFitMapBounds = dontFitMapBounds;
         this.minZoomLevel = minZoomLevel;
         this.tooltips = [];
 
+        if (!mapProvider) {
+            mapProvider = "OpenStreetMap.Mapnik";
+        }
+
         this.map = L.map($containerElement[0]).setView([0, 0], this.defaultZoomLevel || 8);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(this.map);
+        var tileLayer = L.tileLayer.provider(mapProvider);
+
+        tileLayer.addTo(this.map);
 
         if (initCallback) {
             setTimeout(initCallback, 0); //eslint-disable-line
@@ -63,11 +68,13 @@ export default class TbOpenStreetMap {
     }
 
     updateMarkerImage(marker, settings, image, maxSize) {
-        var testImage = new Image(); // eslint-disable-line no-undef
+        var testImage = document.createElement('img'); // eslint-disable-line
+        testImage.style.visibility = 'hidden';
         testImage.onload = function() {
             var width;
             var height;
             var aspect = testImage.width / testImage.height;
+            document.body.removeChild(testImage); //eslint-disable-line
             if (aspect > 1) {
                 width = maxSize;
                 height = maxSize / aspect;
@@ -89,6 +96,7 @@ export default class TbOpenStreetMap {
                     { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
             }
         }
+        document.body.appendChild(testImage); //eslint-disable-line
         testImage.src = image;
     }
 

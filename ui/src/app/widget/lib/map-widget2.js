@@ -77,7 +77,7 @@ export default class TbMapWidgetV2 {
         if (mapProvider === 'google-map') {
             this.map = new TbGoogleMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
         } else if (mapProvider === 'openstreet-map') {
-            this.map = new TbOpenStreetMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
+            this.map = new TbOpenStreetMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
         } else if (mapProvider === 'image-map') {
             this.map = new TbImageMap(this.ctx, $element, initCallback,
                 settings.mapImageUrl,
@@ -539,11 +539,51 @@ const openstreetMapSettingsSchema =
             "title":"Openstreet Map Configuration",
             "type":"object",
             "properties":{
+                "mapProvider":{
+                    "title":"Map provider",
+                    "type":"string",
+                    "default":"OpenStreetMap.Mapnik"
+                }
             },
             "required":[
             ]
         },
         "form":[
+            {
+                "key":"mapProvider",
+                "type":"rc-select",
+                "multiple":false,
+                "items":[
+                    {
+                        "value":"OpenStreetMap.Mapnik",
+                        "label":"OpenStreetMap.Mapnik (Default)"
+                    },
+                    {
+                        "value":"OpenStreetMap.BlackAndWhite",
+                        "label":"OpenStreetMap.BlackAndWhite"
+                    },
+                    {
+                        "value":"OpenStreetMap.HOT",
+                        "label":"OpenStreetMap.HOT"
+                    },
+                    {
+                        "value":"Esri.WorldStreetMap",
+                        "label":"Esri.WorldStreetMap"
+                    },
+                    {
+                        "value":"Esri.WorldTopoMap",
+                        "label":"Esri.WorldTopoMap"
+                    },
+                    {
+                        "value":"CartoDB.Positron",
+                        "label":"CartoDB.Positron"
+                    },
+                    {
+                        "value":"CartoDB.DarkMatter",
+                        "label":"CartoDB.DarkMatter"
+                    }
+                ]
+            }
         ]
     };
 

@@ -18,7 +18,7 @@
 
 <md-fab-toolbar md-open="vm.toolbarOpened"
                 md-direction="left"
-                ng-class="{'is-fullscreen': vm.forceFullscreen, 'md-whiteframe-z1': vm.forceFullscreen}">
+                ng-class="{'is-fullscreen': vm.forceFullscreen, 'md-whiteframe-z1': vm.forceFullscreen && vm.toolbarOpened }">
     <md-fab-trigger class="align-with-text">
         <md-button aria-label="menu" class="md-fab md-primary" ng-click="vm.onTriggerClick()">
             <md-tooltip ng-show="!vm.toolbarOpened" md-direction="bottom">

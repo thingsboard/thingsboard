@@ -60,6 +60,7 @@
     "js-beautify": "^1.6.4",
     "json-schema-defaults": "^0.2.0",
     "leaflet": "^1.0.3",
+    "leaflet-providers": "^1.1.17",
     "material-ui": "^0.16.1",
     "material-ui-number-input": "^5.0.16",
     "md-color-picker": "^0.2.6",

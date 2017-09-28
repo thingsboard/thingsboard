@@ -162,11 +162,13 @@ export default class TbGoogleMap {
 
     /* eslint-disable no-undef */
     updateMarkerImage(marker, settings, image, maxSize) {
-        var testImage = new Image();
+        var testImage = document.createElement('img'); // eslint-disable-line
+        testImage.style.visibility = 'hidden';
         testImage.onload = function() {
             var width;
             var height;
             var aspect = testImage.width / testImage.height;
+            document.body.removeChild(testImage); //eslint-disable-line
             if (aspect > 1) {
                 width = maxSize;
                 height = maxSize / aspect;
@@ -183,6 +185,7 @@ export default class TbGoogleMap {
                 marker.set('labelAnchor', new google.maps.Point(100, height + 20));
             }
         }
+        document.body.appendChild(testImage); //eslint-disable-line
         testImage.src = image;
     }
     /* eslint-enable no-undef */
