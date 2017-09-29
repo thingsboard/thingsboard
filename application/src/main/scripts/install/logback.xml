@@ -48,6 +48,14 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
+    <logger name="org.thingsboard.server.ThingsboardInstallApplication" level="ERROR">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+    <logger name="org.apache.tomcat.jdbc.pool" level="ERROR">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
     <logger name="org.thingsboard.server" level="INFO" />
     <logger name="akka" level="INFO" />
 
