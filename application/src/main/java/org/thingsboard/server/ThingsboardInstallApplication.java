@@ -16,6 +16,7 @@
 
 package org.thingsboard.server;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -24,6 +25,7 @@ import org.thingsboard.server.install.ThingsboardInstallService;
 
 import java.util.Arrays;
 
+@Slf4j
 @SpringBootConfiguration
 @ComponentScan({"org.thingsboard.server.install",
         "org.thingsboard.server.service.component",
@@ -35,10 +37,15 @@ public class ThingsboardInstallApplication {
     private static final String DEFAULT_SPRING_CONFIG_PARAM = SPRING_CONFIG_NAME_KEY + "=" + "thingsboard";
 
     public static void main(String[] args) {
-        SpringApplication application = new SpringApplication(ThingsboardInstallApplication.class);
-        application.setAdditionalProfiles("install");
-        ConfigurableApplicationContext context = application.run(updateArguments(args));
-        context.getBean(ThingsboardInstallService.class).performInstall();
+        try {
+            SpringApplication application = new SpringApplication(ThingsboardInstallApplication.class);
+            application.setAdditionalProfiles("install");
+            ConfigurableApplicationContext context = application.run(updateArguments(args));
+            context.getBean(ThingsboardInstallService.class).performInstall();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            System.exit(1);
+        }
     }
 
     private static String[] updateArguments(String[] args) {
