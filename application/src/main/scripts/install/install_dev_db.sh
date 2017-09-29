@@ -25,7 +25,7 @@ loadDemo=true
 
 export JAVA_OPTS="$JAVA_OPTS -Dplatform=@pkg.platform@"
 export LOADER_PATH=${BASE}/conf,${BASE}/extensions
-export SQL_DATA_FOLDER=/tmp
+export SQL_DATA_FOLDER=${SQL_DATA_FOLDER:-/tmp}
 
 
 run_user=thingsboard
