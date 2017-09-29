@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import jsonSchemaDefaults from 'json-schema-defaults';
+
 import thingsboardTypes from '../../common/types.constant';
 import thingsboardUtils from '../../common/utils.service';
 import thingsboardEntityAliasSelect from '../entity-alias-select.directive';
@@ -421,7 +421,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
             }
 
             if (angular.isDefined(scope.datakeySettingsSchema.schema)) {
-                result.settings = jsonSchemaDefaults(scope.datakeySettingsSchema.schema);
+                result.settings = utils.generateObjectFromJsonSchema(scope.datakeySettingsSchema.schema);
             }
 
             return result;
