@@ -294,9 +294,9 @@ export default angular.module('thingsboard.locale', [])
                 "contact": {
                     "country": "Country",
                     "city": "City",
-                    "state": "State",
-                    "postal-code": "Postal code",
-                    "postal-code-invalid": "Only digits are allowed.",
+                    "state": "State / Province",
+                    "postal-code": "Zip / Postal Code",
+                    "postal-code-invalid": "Invalid Zip / Postal Code format.",
                     "address": "Address",
                     "address2": "Address 2",
                     "phone": "Phone",
