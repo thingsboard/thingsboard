@@ -21,7 +21,7 @@ java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplic
                     -Dlogging.config=%BASE%\windows\install\logback.xml^
                     org.springframework.boot.loader.PropertiesLauncher
 
-if NOT %errorlevel% == 0 (
+if errorlevel 1 (
    @echo ThingsBoard DB installation failed!
    POPD
    exit /b %errorlevel%
