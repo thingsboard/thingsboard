@@ -103,13 +103,11 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
         if (publicCustomer == null) {
             throw new UsernameNotFoundException("Public entity not found by refresh token");
         }
-        boolean isPublic = false;
-        if (publicCustomer.getAdditionalInfo() != null && publicCustomer.getAdditionalInfo().has("isPublic")) {
-            isPublic = publicCustomer.getAdditionalInfo().get("isPublic").asBoolean();
-        }
-        if (!isPublic) {
+
+        if (!publicCustomer.isPublic()) {
             throw new BadCredentialsException("Refresh token is not valid");
         }
+
         User user = new User(new UserId(UUIDBased.EMPTY));
         user.setTenantId(publicCustomer.getTenantId());
         user.setCustomerId(publicCustomer.getId());

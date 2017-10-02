@@ -56,11 +56,7 @@ public class CustomerController extends BaseController {
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode infoObject = objectMapper.createObjectNode();
             infoObject.put("title", customer.getTitle());
-            boolean isPublic = false;
-            if (customer.getAdditionalInfo() != null && customer.getAdditionalInfo().has("isPublic")) {
-                isPublic = customer.getAdditionalInfo().get("isPublic").asBoolean();
-            }
-            infoObject.put("isPublic", isPublic);
+            infoObject.put("isPublic", customer.isPublic());
             return infoObject;
         } catch (Exception e) {
             throw handleException(e);
