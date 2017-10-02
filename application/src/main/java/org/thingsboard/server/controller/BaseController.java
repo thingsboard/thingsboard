@@ -239,6 +239,16 @@ public abstract class BaseController {
             throw handleException(e, false);
         }
     }
+    
+    public boolean isPublicCustomer(CustomerId customerId) {
+        Customer customer = customerService.findCustomerById(customerId);
+        try {
+            checkCustomer(customer);
+        } catch (ThingsboardException ex) {
+            return false;
+        }
+        return customer.isPublic();
+    }
 
     private void checkCustomer(Customer customer) throws ThingsboardException {
         checkNotNull(customer);
@@ -315,7 +325,8 @@ public abstract class BaseController {
     protected void checkDevice(Device device) throws ThingsboardException {
         checkNotNull(device);
         checkTenantId(device.getTenantId());
-        if (device.getCustomerId() != null && !device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+        if (device.getCustomerId() != null && !device.getCustomerId().getId().equals(ModelConstants.NULL_UUID) &&
+                !isPublicCustomer(device.getCustomerId())) {
             checkCustomerId(device.getCustomerId());
         }
     }
