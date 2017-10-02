@@ -63,7 +63,7 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     
     public boolean isPublic() {
         if (getAdditionalInfo() != null && getAdditionalInfo().has("isPublic")) {
-                return getAdditionalInfo().get("isPublic").asBoolean();
+            return getAdditionalInfo().get("isPublic").asBoolean();
         }
         
         return false;
