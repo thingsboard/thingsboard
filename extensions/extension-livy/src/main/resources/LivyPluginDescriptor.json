@@ -1,0 +1,46 @@
+{
+  "schema": {
+    "title": "Kafka Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "host": {
+        "title": "Host",
+        "type": "string"
+      },
+      "port": {
+        "title": "Port",
+        "type": "integer",
+        "default": 8080,
+        "minimum": 0,
+        "maximum": 65536
+      },
+      "headers": {
+        "title": "Request Headers",
+        "type": "array",
+        "items": {
+          "title": "Request Header",
+          "type": "object",
+          "properties": {
+            "key": {
+              "title": "Key",
+              "type": "string"
+            },
+            "value": {
+              "title": "Value",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "required": [
+      "host",
+      "port"
+    ]
+  },
+  "form": [
+    "host",
+    "port",
+    "headers"
+  ]
+}
