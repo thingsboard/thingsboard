@@ -269,6 +269,11 @@ public final class PluginProcessingContext implements PluginContext {
         validate(deviceId, new ValidationCallback(callback, ctx -> callback.onSuccess(ctx, null)));
     }
 
+    private boolean isPublicCustomer(CustomerId customerId) {
+        Customer customer = pluginCtx.systemContext.getCustomerService().findCustomerById(customerId);
+        return customer.isPublic();
+    }
+
     private void validate(EntityId entityId, ValidationCallback callback) {
         if (securityCtx.isPresent()) {
             final PluginApiCallSecurityContext ctx = securityCtx.get();
@@ -285,6 +290,8 @@ public final class PluginProcessingContext implements PluginContext {
                                 } else {
                                     if (!device.getTenantId().equals(ctx.getTenantId())) {
                                         return Boolean.FALSE;
+                                    } else if (isPublicCustomer(device.getCustomerId())) {  // Public device data should always be available
+                                        return Boolean.TRUE;
                                     } else if (ctx.isCustomerUser() && !device.getCustomerId().equals(ctx.getCustomerId())) {
                                         return Boolean.FALSE;
                                     } else {
