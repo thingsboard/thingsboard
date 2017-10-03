@@ -128,8 +128,9 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
         JsonObject result = new JsonObject();
         result.addProperty("id", response.getRequestId());
         result.addProperty("device", device.getName());
-        if (response.getData().isPresent()) {
-            AttributesKVMsg msg = response.getData().get();
+        Optional<AttributesKVMsg> responseData = response.getData();
+        if (responseData.isPresent()) {
+            AttributesKVMsg msg = responseData.get();
             if (msg.getClientAttributes() != null) {
                 msg.getClientAttributes().forEach(v -> addValueToJson(result, "value", v));
             }
@@ -143,16 +144,28 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
     private void addValueToJson(JsonObject json, String name, KvEntry entry) {
         switch (entry.getDataType()) {
             case BOOLEAN:
-                json.addProperty(name, entry.getBooleanValue().get());
+                Optional<Boolean> booleanValue = entry.getBooleanValue();
+                if (booleanValue.isPresent()) {
+                    json.addProperty(name, booleanValue.get());
+                }
                 break;
             case STRING:
-                json.addProperty(name, entry.getStrValue().get());
+                Optional<String> stringValue = entry.getStrValue();
+                if (stringValue.isPresent()) {
+                    json.addProperty(name, stringValue.get());
+                }
                 break;
             case DOUBLE:
-                json.addProperty(name, entry.getDoubleValue().get());
+                Optional<Double> doubleValue = entry.getDoubleValue();
+                if (doubleValue.isPresent()) {
+                    json.addProperty(name, doubleValue.get());
+                }
                 break;
             case LONG:
-                json.addProperty(name, entry.getLongValue().get());
+                Optional<Long> longValue = entry.getLongValue();
+                if (longValue.isPresent()) {
+                    json.addProperty(name, longValue.get());
+                }
                 break;
         }
     }

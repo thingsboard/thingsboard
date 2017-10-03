@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.page;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -54,7 +55,7 @@ public class PageDataIterable<T extends SearchTextBased<? extends UUIDBased>> im
                 fetch(nextPackLink);
             }
         }
-        return currentIdx != currentItems.size();
+        return currentIdx < currentItems.size();
     }
 
     private void fetch(TextPageLink link) {
@@ -67,6 +68,9 @@ public class PageDataIterable<T extends SearchTextBased<? extends UUIDBased>> im
 
     @Override
     public T next() {
+        if(!hasNext()){
+            throw new NoSuchElementException();
+        }
         return currentItems.get(currentIdx++);
     }
 

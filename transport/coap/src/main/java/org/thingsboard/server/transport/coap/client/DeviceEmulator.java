@@ -80,7 +80,7 @@ public class DeviceEmulator {
                         Thread.sleep(1000);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Error occurred while sending COAP requests", e);
                 }
             }
 
@@ -118,7 +118,7 @@ public class DeviceEmulator {
                             }, mapper.writeValueAsString(response), MediaTypeRegistry.APPLICATION_JSON);
 
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            log.error("Error occurred while processing COAP response", e);
                         }
                     }
 

@@ -71,7 +71,7 @@ public class DefaultWebsocketMsgHandler implements WebsocketMsgHandler {
                 wsSessionsMap.put(sessionId, new WsSessionMetaData(sessionRef));
                 break;
             case ERROR:
-                log.debug("[{}] Unknown websocket session error: {}. ", sessionId, event.getError().get());
+                log.debug("[{}] Unknown websocket session error: {}. ", sessionId, event.getError().orElse(null));
                 break;
             case CLOSED:
                 wsSessionsMap.remove(sessionId);

@@ -42,6 +42,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -136,7 +137,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 @Nullable
                 @Override
                 public List<TsKvEntry> apply(@Nullable List<Optional<TsKvEntry>> input) {
-                    return input.stream().filter(v -> v.isPresent()).map(v -> v.get()).collect(Collectors.toList());
+                    return input == null ? Collections.emptyList() : input.stream().filter(v -> v.isPresent()).map(v -> v.get()).collect(Collectors.toList());
                 }
             }, readResultsProcessingExecutor);
         }
@@ -189,7 +190,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             Futures.addCallback(executeAsyncRead(stmt), new FutureCallback<ResultSet>() {
                 @Override
                 public void onSuccess(@Nullable ResultSet result) {
-                    cursor.addData(convertResultToTsKvEntryList(result.all()));
+                    cursor.addData(convertResultToTsKvEntryList(result == null ? Collections.emptyList() : result.all()));
                     findAllAsyncSequentiallyWithLimit(cursor, resultFuture);
                 }
 
@@ -523,16 +524,28 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     private static void addValue(KvEntry kvEntry, BoundStatement stmt, int column) {
         switch (kvEntry.getDataType()) {
             case BOOLEAN:
-                stmt.setBool(column, kvEntry.getBooleanValue().get().booleanValue());
+                Optional<Boolean> booleanValue = kvEntry.getBooleanValue();
+                if (booleanValue.isPresent()) {
+                    stmt.setBool(column, booleanValue.get().booleanValue());
+                }
                 break;
             case STRING:
-                stmt.setString(column, kvEntry.getStrValue().get());
+                Optional<String> stringValue = kvEntry.getStrValue();
+                if (stringValue.isPresent()) {
+                    stmt.setString(column, stringValue.get());
+                }
                 break;
             case LONG:
-                stmt.setLong(column, kvEntry.getLongValue().get().longValue());
+                Optional<Long> longValue = kvEntry.getLongValue();
+                if (longValue.isPresent()) {
+                    stmt.setLong(column, longValue.get().longValue());
+                }
                 break;
             case DOUBLE:
-                stmt.setDouble(column, kvEntry.getDoubleValue().get().doubleValue());
+                Optional<Double> doubleValue = kvEntry.getDoubleValue();
+                if (doubleValue.isPresent()) {
+                    stmt.setDouble(column, doubleValue.get().doubleValue());
+                }
                 break;
         }
     }

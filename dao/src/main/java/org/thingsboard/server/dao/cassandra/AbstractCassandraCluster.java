@@ -153,6 +153,7 @@ public abstract class AbstractCassandraCluster {
                     Thread.sleep(initRetryInterval);
                 } catch (InterruptedException ie) {
                     log.warn("Failed to wait until retry", ie);
+                    Thread.currentThread().interrupt();
                 }
             }
         }

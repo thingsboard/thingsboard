@@ -139,7 +139,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     };
 
                     if (StringUtils.isEmpty(cmd.getScope())) {
-                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.ALL_SCOPES), keys, callback);
+                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.allScopes()), keys, callback);
                     } else {
                         ctx.loadAttributes(entityId, cmd.getScope(), keys, callback);
                     }
@@ -167,7 +167,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     };
 
                     if (StringUtils.isEmpty(cmd.getScope())) {
-                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.ALL_SCOPES), callback);
+                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.allScopes()), callback);
                     } else {
                         ctx.loadAttributes(entityId, cmd.getScope(), callback);
                     }

@@ -103,13 +103,13 @@ public class AuthController extends BaseController {
         HttpStatus responseStatus;
         UserCredentials userCredentials = userService.findUserCredentialsByActivateToken(activateToken);
         if (userCredentials != null) {
-            String createPasswordURI = "/login/createPassword";
+            String createURI = "/login/createPassword";
             try {
-                URI location = new URI(createPasswordURI + "?activateToken=" + activateToken);
+                URI location = new URI(createURI + "?activateToken=" + activateToken);
                 headers.setLocation(location);
                 responseStatus = HttpStatus.SEE_OTHER;
             } catch (URISyntaxException e) {
-                log.error("Unable to create URI with address [{}]", createPasswordURI);
+                log.error("Unable to create URI with address [{}]", createURI);
                 responseStatus = HttpStatus.BAD_REQUEST;
             }
         } else {
@@ -126,10 +126,10 @@ public class AuthController extends BaseController {
         try {
             UserCredentials userCredentials = userService.requestPasswordReset(email);
             String baseUrl = constructBaseUrl(request);
-            String resetPasswordUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
+            String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
             
-            mailService.sendResetPasswordEmail(resetPasswordUrl, email);
+            mailService.sendResetPasswordEmail(resetUrl, email);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -140,15 +140,15 @@ public class AuthController extends BaseController {
             @RequestParam(value = "resetToken") String resetToken) {
         HttpHeaders headers = new HttpHeaders();
         HttpStatus responseStatus;
-        String resetPasswordURI = "/login/resetPassword";
+        String resetURI = "/login/resetPassword";
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(resetToken);
         if (userCredentials != null) {
             try {
-                URI location = new URI(resetPasswordURI + "?resetToken=" + resetToken);
+                URI location = new URI(resetURI + "?resetToken=" + resetToken);
                 headers.setLocation(location);
                 responseStatus = HttpStatus.SEE_OTHER;
             } catch (URISyntaxException e) {
-                log.error("Unable to create URI with address [{}]", resetPasswordURI);
+                log.error("Unable to create URI with address [{}]", resetURI);
                 responseStatus = HttpStatus.BAD_REQUEST;
             }
         } else {

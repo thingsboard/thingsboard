@@ -29,10 +29,7 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.SubscriptionManag
 import org.thingsboard.server.extensions.core.plugin.telemetry.gen.TelemetryPluginProtos.*;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -244,16 +241,28 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         dataBuilder.setValueType(attr.getDataType().ordinal());
         switch (attr.getDataType()) {
             case BOOLEAN:
-                dataBuilder.setBoolValue(attr.getBooleanValue().get());
+                Optional<Boolean> booleanValue = attr.getBooleanValue();
+                if (booleanValue.isPresent()) {
+                    dataBuilder.setBoolValue(booleanValue.get());
+                }
                 break;
             case LONG:
-                dataBuilder.setLongValue(attr.getLongValue().get());
+                Optional<Long> longValue = attr.getLongValue();
+                if (longValue.isPresent()) {
+                    dataBuilder.setLongValue(longValue.get());
+                }
                 break;
             case DOUBLE:
-                dataBuilder.setDoubleValue(attr.getDoubleValue().get());
+                Optional<Double> doubleValue = attr.getDoubleValue();
+                if (doubleValue.isPresent()) {
+                    dataBuilder.setDoubleValue(doubleValue.get());
+                }
                 break;
             case STRING:
-                dataBuilder.setStrValue(attr.getStrValue().get());
+                Optional<String> stringValue = attr.getStrValue();
+                if (stringValue.isPresent()) {
+                    dataBuilder.setStrValue(stringValue.get());
+                }
                 break;
         }
         return dataBuilder;

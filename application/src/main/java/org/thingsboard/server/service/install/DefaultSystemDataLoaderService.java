@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -138,7 +139,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("timeout", "10000");
         node.put("enableTls", "false");
         node.put("username", "");
-        node.put("password", "");
+        node.put("password", ""); //NOSONAR, key used to identify password field (not password value itself)
         mailSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(mailSettings);
     }
@@ -146,33 +147,34 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void loadSystemWidgets() throws Exception {
         Path widgetBundlesDir = Paths.get(dataDir, JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
-        Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(".json"))
-                .forEach(
-                        path -> {
-                            try {
-                                JsonNode widgetsBundleDescriptorJson = objectMapper.readTree(path.toFile());
-                                JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
-                                WidgetsBundle widgetsBundle = objectMapper.treeToValue(widgetsBundleJson, WidgetsBundle.class);
-                                WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-                                JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
-                                widgetTypesArrayJson.forEach(
-                                        widgetTypeJson -> {
-                                            try {
-                                                WidgetType widgetType = objectMapper.treeToValue(widgetTypeJson, WidgetType.class);
-                                                widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-                                                widgetTypeService.saveWidgetType(widgetType);
-                                            } catch (Exception e) {
-                                                log.error("Unable to load widget type from json: [{}]", path.toString());
-                                                throw new RuntimeException("Unable to load widget type from json", e);
-                                            }
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(".json"))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode widgetsBundleDescriptorJson = objectMapper.readTree(path.toFile());
+                            JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
+                            WidgetsBundle widgetsBundle = objectMapper.treeToValue(widgetsBundleJson, WidgetsBundle.class);
+                            WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+                            JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
+                            widgetTypesArrayJson.forEach(
+                                    widgetTypeJson -> {
+                                        try {
+                                            WidgetType widgetType = objectMapper.treeToValue(widgetTypeJson, WidgetType.class);
+                                            widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
+                                            widgetTypeService.saveWidgetType(widgetType);
+                                        } catch (Exception e) {
+                                            log.error("Unable to load widget type from json: [{}]", path.toString());
+                                            throw new RuntimeException("Unable to load widget type from json", e);
                                         }
-                                );
-                            } catch (Exception e) {
-                                log.error("Unable to load widgets bundle from json: [{}]", path.toString());
-                                throw new RuntimeException("Unable to load widgets bundle from json", e);
-                            }
+                                    }
+                            );
+                        } catch (Exception e) {
+                            log.error("Unable to load widgets bundle from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load widgets bundle from json", e);
                         }
-                );
+                    }
+            );
+        }
     }
 
     @Override
@@ -279,67 +281,69 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     private void loadPlugins(Path pluginsDir, TenantId tenantId) throws Exception{
-        Files.newDirectoryStream(pluginsDir, path -> path.toString().endsWith(".json"))
-                .forEach(
-                        path -> {
-                            try {
-                                JsonNode pluginJson = objectMapper.readTree(path.toFile());
-                                PluginMetaData plugin = objectMapper.treeToValue(pluginJson, PluginMetaData.class);
-                                plugin.setTenantId(tenantId);
-                                if (plugin.getState() == ComponentLifecycleState.ACTIVE) {
-                                    plugin.setState(ComponentLifecycleState.SUSPENDED);
-                                    PluginMetaData savedPlugin = pluginService.savePlugin(plugin);
-                                    pluginService.activatePluginById(savedPlugin.getId());
-                                } else {
-                                    pluginService.savePlugin(plugin);
-                                }
-                            } catch (Exception e) {
-                                log.error("Unable to load plugin from json: [{}]", path.toString());
-                                throw new RuntimeException("Unable to load plugin from json", e);
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pluginsDir, path -> path.toString().endsWith(".json"))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode pluginJson = objectMapper.readTree(path.toFile());
+                            PluginMetaData plugin = objectMapper.treeToValue(pluginJson, PluginMetaData.class);
+                            plugin.setTenantId(tenantId);
+                            if (plugin.getState() == ComponentLifecycleState.ACTIVE) {
+                                plugin.setState(ComponentLifecycleState.SUSPENDED);
+                                PluginMetaData savedPlugin = pluginService.savePlugin(plugin);
+                                pluginService.activatePluginById(savedPlugin.getId());
+                            } else {
+                                pluginService.savePlugin(plugin);
                             }
+                        } catch (Exception e) {
+                            log.error("Unable to load plugin from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load plugin from json", e);
                         }
-                );
-
+                    }
+            );
+        }
     }
 
     private void loadRules(Path rulesDir, TenantId tenantId) throws Exception {
-        Files.newDirectoryStream(rulesDir, path -> path.toString().endsWith(".json"))
-                .forEach(
-                        path -> {
-                            try {
-                                JsonNode ruleJson = objectMapper.readTree(path.toFile());
-                                RuleMetaData rule = objectMapper.treeToValue(ruleJson, RuleMetaData.class);
-                                rule.setTenantId(tenantId);
-                                if (rule.getState() == ComponentLifecycleState.ACTIVE) {
-                                    rule.setState(ComponentLifecycleState.SUSPENDED);
-                                    RuleMetaData savedRule = ruleService.saveRule(rule);
-                                    ruleService.activateRuleById(savedRule.getId());
-                                } else {
-                                    ruleService.saveRule(rule);
-                                }
-                            } catch (Exception e) {
-                                log.error("Unable to load rule from json: [{}]", path.toString());
-                                throw new RuntimeException("Unable to load rule from json", e);
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(rulesDir, path -> path.toString().endsWith(".json"))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode ruleJson = objectMapper.readTree(path.toFile());
+                            RuleMetaData rule = objectMapper.treeToValue(ruleJson, RuleMetaData.class);
+                            rule.setTenantId(tenantId);
+                            if (rule.getState() == ComponentLifecycleState.ACTIVE) {
+                                rule.setState(ComponentLifecycleState.SUSPENDED);
+                                RuleMetaData savedRule = ruleService.saveRule(rule);
+                                ruleService.activateRuleById(savedRule.getId());
+                            } else {
+                                ruleService.saveRule(rule);
                             }
+                        } catch (Exception e) {
+                            log.error("Unable to load rule from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load rule from json", e);
                         }
-                );
+                    }
+            );
+        }
     }
 
     private void loadDashboards(Path dashboardsDir, TenantId tenantId, CustomerId customerId) throws Exception {
-        Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(".json"))
-                .forEach(
-                        path -> {
-                            try {
-                                JsonNode dashboardJson = objectMapper.readTree(path.toFile());
-                                Dashboard dashboard = objectMapper.treeToValue(dashboardJson, Dashboard.class);
-                                dashboard.setTenantId(tenantId);
-                                dashboard.setCustomerId(customerId);
-                                dashboardService.saveDashboard(dashboard);
-                            } catch (Exception e) {
-                                log.error("Unable to load dashboard from json: [{}]", path.toString());
-                                throw new RuntimeException("Unable to load dashboard from json", e);
-                            }
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(".json"))) {
+            dirStream.forEach(
+                    path -> {
+                        try {
+                            JsonNode dashboardJson = objectMapper.readTree(path.toFile());
+                            Dashboard dashboard = objectMapper.treeToValue(dashboardJson, Dashboard.class);
+                            dashboard.setTenantId(tenantId);
+                            dashboard.setCustomerId(customerId);
+                            dashboardService.saveDashboard(dashboard);
+                        } catch (Exception e) {
+                            log.error("Unable to load dashboard from json: [{}]", path.toString());
+                            throw new RuntimeException("Unable to load dashboard from json", e);
                         }
-                );
+                    }
+            );
+        }
     }
 }

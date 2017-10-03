@@ -267,9 +267,7 @@ public class EntityRelationController extends BaseController {
         if (strRelationTypeGroup != null && strRelationTypeGroup.trim().length()>0) {
             try {
                 result = RelationTypeGroup.valueOf(strRelationTypeGroup);
-            } catch (IllegalArgumentException e) {
-                result = defaultValue;
-            }
+            } catch (IllegalArgumentException e) { }
         }
         return result;
     }

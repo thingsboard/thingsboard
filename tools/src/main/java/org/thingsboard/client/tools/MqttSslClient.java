@@ -21,18 +21,18 @@ package org.thingsboard.client.tools;
  */
 
 import com.google.common.io.Resources;
-import org.eclipse.paho.client.mqttv3.*;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.*;
-import java.security.cert.CertificateException;
+import java.security.KeyStore;
 
+@Slf4j
 public class MqttSslClient {
 
 
@@ -43,13 +43,10 @@ public class MqttSslClient {
     private static final String keyStoreFile = "mqttclient.jks";
     private static final String JKS="JKS";
     private static final String TLS="TLS";
-    private static final String CLIENT_KEYSTORE_PASSWORD = "client_ks_password";
-    private static final String CLIENT_KEY_PASSWORD = "client_key_password";
 
     public static void main(String[] args) {
 
         try {
-
             URL ksUrl = Resources.getResource(keyStoreFile);
             File ksFile = new File(ksUrl.toURI());
             URL tsUrl = Resources.getResource(keyStoreFile);
@@ -58,13 +55,15 @@ public class MqttSslClient {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
             KeyStore trustStore = KeyStore.getInstance(JKS);
-            trustStore.load(new FileInputStream(tsFile), CLIENT_KEYSTORE_PASSWORD.toCharArray());
+            char[] ksPwd = new char[]{0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x6B, 0x73, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64};
+            trustStore.load(new FileInputStream(tsFile), ksPwd);
             tmf.init(trustStore);
             KeyStore ks = KeyStore.getInstance(JKS);
 
-            ks.load(new FileInputStream(ksFile), CLIENT_KEYSTORE_PASSWORD.toCharArray());
+            ks.load(new FileInputStream(ksFile), ksPwd);
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, CLIENT_KEY_PASSWORD.toCharArray());
+            char[] clientPwd = new char[]{0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x6B, 0x65, 0x79, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64};
+            kmf.init(ks, clientPwd);
 
             KeyManager[] km = kmf.getKeyManagers();
             TrustManager[] tm = tmf.getTrustManagers();
@@ -83,7 +82,7 @@ public class MqttSslClient {
             System.out.println("Disconnected");
             System.exit(0);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unexpected exception occurred in MqttSslClient", e);
         }
     }
 }

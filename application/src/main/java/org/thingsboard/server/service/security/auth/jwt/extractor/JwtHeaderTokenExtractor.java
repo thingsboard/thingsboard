@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @Component(value="jwtHeaderTokenExtractor")
 public class JwtHeaderTokenExtractor implements TokenExtractor {
-    public static String HEADER_PREFIX = "Bearer ";
+    public static final String HEADER_PREFIX = "Bearer ";
 
     @Override
     public String extract(HttpServletRequest request) {
