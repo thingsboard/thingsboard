@@ -18,7 +18,7 @@ import $ from 'jquery';
 
 /* eslint-disable import/no-unresolved, import/default */
 
-import logoSvg from '../../svg/tempus-logo.svg';
+import logoSvg from '../../svg/hm-tempus-logo.svg';
 
 /* eslint-enable import/no-unresolved, import/default */
 
