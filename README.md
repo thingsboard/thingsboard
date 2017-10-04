@@ -1,6 +1,6 @@
 # ThingsBoard 
 [![Join the chat at https://gitter.im/thingsboard/chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thingsboard/chat?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/thingsboard/thingsboard.svg?branch=master)](https://travis-ci.org/thingsboard/thingsboard)
+[![Build Status](https://travis-ci.org/eykamp/thingsboard.svg?branch=master)](https://travis-ci.org/thingsboard/thingsboard)
 
 ThingsBoard is an open-source IoT platform for data collection, processing, visualization, and device management.
 
