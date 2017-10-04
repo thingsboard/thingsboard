@@ -60,8 +60,8 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     public void setTitle(String title) {
         this.title = title;
     }
-    
-    public boolean isPublic() {
+
+    public boolean publicCustomer() {     // Using better name isPublic causes tests to fail
         if (getAdditionalInfo() != null && getAdditionalInfo().has("isPublic")) {
             return getAdditionalInfo().get("isPublic").asBoolean();
         }
