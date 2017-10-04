@@ -159,5 +159,4 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
         builder.append("]");
         return builder.toString();
     }
-
 }
