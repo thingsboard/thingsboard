@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -61,11 +62,12 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
         this.title = title;
     }
 
-    public boolean publicCustomer() {     // Using better name isPublic causes tests to fail
+    @JsonIgnore
+    public boolean isPublic() {
         if (getAdditionalInfo() != null && getAdditionalInfo().has("isPublic")) {
-            return getAdditionalInfo().get("isPublic").asBoolean();
+            return additionalInfo.get("isPublic").asBoolean();
         }
-        
+
         return false;
     }
 

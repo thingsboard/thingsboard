@@ -108,7 +108,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         if (publicCustomer == null) {
             throw new UsernameNotFoundException("Public entity not found: " + publicId);
         }
-        if (!publicCustomer.publicCustomer()) {
+        if (!publicCustomer.isPublic()) {
             throw new BadCredentialsException("Authentication Failed. Public Id is not valid.");
         }
         User user = new User(new UserId(UUIDBased.EMPTY));

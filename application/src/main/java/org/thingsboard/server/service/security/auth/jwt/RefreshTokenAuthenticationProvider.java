@@ -104,7 +104,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
             throw new UsernameNotFoundException("Public entity not found by refresh token");
         }
 
-        if (!publicCustomer.publicCustomer()) {
+        if (!publicCustomer.isPublic()) {
             throw new BadCredentialsException("Refresh token is not valid");
         }
 
