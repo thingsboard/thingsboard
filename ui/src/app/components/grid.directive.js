@@ -125,7 +125,7 @@ function Grid() {
 }
 
 /*@ngInject*/
-function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $translate, $mdMedia, $templateCache, $window) {
+function GridController($scope, $state, $mdDialog, $document, $q, $mdUtil, $timeout, $translate, $mdMedia, $templateCache, $window) {
 
     var vm = this;
 
@@ -237,6 +237,10 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
                                     vm.items.nextPageLink.limit = pageSize;
                                 }
                                 vm.items.pending = false;
+                                if (vm.items.loadCallback) {
+                                    vm.items.loadCallback();
+                                    vm.items.loadCallback = null;
+                                }
                             }
                         },
                         function fail() {
@@ -469,7 +473,25 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
     }
 
     function refreshList() {
-        $state.go($state.current, vm.refreshParamsFunc(), {reload: true});
+        let preservedTopIndex = vm.topIndex;
+        vm.items.data.length = 0;
+        vm.items.rowData.length = 0;
+        vm.items.nextPageLink = {
+            limit: preservedTopIndex + pageSize,
+            textSearch: $scope.searchConfig.searchText
+        };
+        vm.items.selections = {};
+        vm.items.selectedCount = 0;
+        vm.items.hasNext = true;
+        vm.items.pending = false;
+        vm.detailsConfig.isDetailsOpen = false;
+        vm.items.reloadPending = false;
+        vm.items.loadCallback = () => {
+            $mdUtil.nextTick(() => {
+                moveToIndex(preservedTopIndex);
+            });
+        };
+        vm.itemRows.getItemAtIndex(preservedTopIndex+pageSize);
     }
 
     function addItem($event) {

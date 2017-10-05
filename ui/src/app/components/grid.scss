@@ -22,10 +22,20 @@
 .tb-card-item {
   @include transition(all .2s ease-in-out);
   md-card-content {
+    padding-top: 0px;
     max-height: 53px;
   }
-  md-card-title-text {
-    max-height: 32px;
+  md-card-title {
+    width: 100%;
+    md-card-title-text {
+      max-height: 32px;
+      min-width: 50%;
+      .md-headline {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
   }
 }
 
