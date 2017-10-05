@@ -72,6 +72,22 @@ export default function StatesComponent($compile, $templateCache, $controller, s
                 }
             }
 
+            stateController.getStateIndex = function() {
+                if (scope.statesController) {
+                    return scope.statesController.getStateIndex();
+                } else {
+                    return -1;
+                }
+            }
+
+            stateController.getStateIdAtIndex = function(index) {
+                if (scope.statesController) {
+                    return scope.statesController.getStateIdAtIndex(index);
+                } else {
+                    return '';
+                }
+            }
+
             stateController.getStateParams = function() {
                 if (scope.statesController) {
                     return scope.statesController.getStateParams();
