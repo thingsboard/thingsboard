@@ -2,18 +2,8 @@ before_install:
   - sudo rm -f /etc/mavenrc
   - export M2_HOME=/usr/local/maven
   - export MAVEN_OPTS="-Dmaven.repo.local=$HOME/.m2/repository -Xms1024m -Xmx3072m"
-install: true
-addons:
-  sonarcloud:
-    organization: "thingsboard"
-    token:
-      secure: "J22he7cRP4N6yAHcAIqneFm63HBgXG4EN3phhhkqwUHJ8+Ft1fNcyGzm8J0fFllTnwecDZtDVwm9JlI2dvvnITvuuqDgzAwJKFBGjLIfQOzXSkIS6E0XyhNKx4HdpZedKD5ZwmJQ4rQdh7Y6nLqJ71Q3pD0h4VGefbrGeb8l9lUJ4Fc/w0vqub5t1yMMlBCesvWnZfv11AgcIdgDuamhMF6ThyZWJb0OcK1E7bQaJlAEllOxH96kdCzRlIERMFpisUopyYd7RIAwqNt7Kr26EfqbPFlYroJcSFPUcJtQEzNePmfAnKvV2ZoOt3nFGW4oLx+od9rx3U9xzYiZG86ebLSGDbbczTolkK0rXbr7utT3vVLIWimin/8k841w+2Kn5ODiSjUEx7m2JKt5zCduNtBMytjCAiJpj+YWAEZg0Mfy+sXYC+MlU137F2gklf4c5IAXkjwzNb8IuE15Gif5uWnK/ijiHM5hSRra1qJ/5PKSp0d0HEGJle8i+3uuFozwNZuffPS1RdrmuC55wM+2AadHhQKBt4OUlJJBrEnqdycGaBzQO5IM6GzLaaEZ3XYFElso3uFfCz23hScNVw5pUx2kdSIi91SxU8TS4ip2Bel8ZLbSfAigf1Glmskzea/xdEpTPKoE9EDHQr4VIpkR+VVdJfgFXhdJvHIbAmvCUaM="
 jdk:
  - oraclejdk8
 language: java
 sudo: required
-script: mvn clean package sonar:sonar
-cache:
-  directories:
-    - '$HOME/.m2/repository'
-    - '$HOME/.sonar/cache'
+script: mvn clean verify
