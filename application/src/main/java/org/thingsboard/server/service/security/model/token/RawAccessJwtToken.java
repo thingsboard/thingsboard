@@ -21,7 +21,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 
-public class RawAccessJwtToken implements JwtToken {
+import java.io.Serializable;
+
+public class RawAccessJwtToken implements JwtToken, Serializable {
+
+    private static final long serialVersionUID = -797397445703066079L;
+
     private static Logger logger = LoggerFactory.getLogger(RawAccessJwtToken.class);
 
     private String token;

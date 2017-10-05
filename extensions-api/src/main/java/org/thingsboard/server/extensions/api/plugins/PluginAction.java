@@ -28,7 +28,7 @@ import java.util.Optional;
 
 public interface PluginAction<T> extends ConfigurableComponent<T>, RuleLifecycleComponent {
 
-    Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd);
+    Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd);
 
     Optional<ToDeviceMsg> convert(PluginToRuleMsg<?> response);
 

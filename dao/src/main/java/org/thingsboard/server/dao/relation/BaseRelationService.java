@@ -208,16 +208,13 @@ public class BaseRelationService implements RelationService {
             ListenableFuture<Set<EntityRelation>> relationSet = findRelationsRecursively(params.getEntityId(), params.getDirection(), maxLvl, new ConcurrentHashMap<>());
             return Futures.transform(relationSet, (Function<Set<EntityRelation>, List<EntityRelation>>) input -> {
                 List<EntityRelation> relations = new ArrayList<>();
+                if (filters == null || filters.isEmpty()) {
+                    relations.addAll(input);
+                    return relations;
+                }
                 for (EntityRelation relation : input) {
-                    if (filters == null || filters.isEmpty()) {
+                    if (matchFilters(filters, relation, params.getDirection())) {
                         relations.add(relation);
-                    } else {
-                        for (EntityTypeFilter filter : filters) {
-                            if (match(filter, relation, params.getDirection())) {
-                                relations.add(relation);
-                                break;
-                            }
-                        }
                     }
                 }
                 return relations;
@@ -301,6 +298,15 @@ public class BaseRelationService implements RelationService {
                 return true;
             }
         };
+    }
+
+    private boolean matchFilters(List<EntityTypeFilter> filters, EntityRelation relation, EntitySearchDirection direction) {
+        for (EntityTypeFilter filter : filters) {
+            if (match(filter, relation, direction)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean match(EntityTypeFilter filter, EntityRelation relation, EntitySearchDirection direction) {

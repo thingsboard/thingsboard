@@ -42,6 +42,7 @@ public class ModelConstants {
     public static final String ALIAS_PROPERTY = "alias";
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
+    public static final String ENTITY_TYPE_PROPERTY = "entity_type";
 
     /**
      * Cassandra user constants.
@@ -155,7 +156,7 @@ public class ModelConstants {
      */
     public static final String ENTITY_SUBTYPE_COLUMN_FAMILY_NAME = "entity_subtype";
     public static final String ENTITY_SUBTYPE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY = ENTITY_TYPE_PROPERTY;
     public static final String ENTITY_SUBTYPE_TYPE_PROPERTY = "type";
 
     /**
@@ -250,7 +251,7 @@ public class ModelConstants {
     public static final String PLUGIN_API_TOKEN_PROPERTY = "api_token";
     public static final String PLUGIN_CLASS_PROPERTY = "plugin_class";
     public static final String PLUGIN_ACCESS_PROPERTY = "public_access";
-    public static final String PLUGIN_STATE_PROPERTY = "state";
+    public static final String PLUGIN_STATE_PROPERTY = STATE_PROPERTY;
     public static final String PLUGIN_CONFIGURATION_PROPERTY = "configuration";
 
     public static final String PLUGIN_BY_API_TOKEN_COLUMN_FAMILY_NAME = "plugin_by_api_token";
@@ -277,7 +278,7 @@ public class ModelConstants {
     public static final String RULE_COLUMN_FAMILY_NAME = "rule";
     public static final String RULE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String RULE_NAME_PROPERTY = "name";
-    public static final String RULE_STATE_PROPERTY = "state";
+    public static final String RULE_STATE_PROPERTY = STATE_PROPERTY;
     public static final String RULE_WEIGHT_PROPERTY = "weight";
     public static final String RULE_PLUGIN_TOKEN_PROPERTY = "plugin_token";
     public static final String RULE_FILTERS = "filters";
@@ -294,7 +295,7 @@ public class ModelConstants {
     public static final String EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String EVENT_TYPE_PROPERTY = "event_type";
     public static final String EVENT_UID_PROPERTY = "event_uid";
-    public static final String EVENT_ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String EVENT_ENTITY_TYPE_PROPERTY = ENTITY_TYPE_PROPERTY;
     public static final String EVENT_ENTITY_ID_PROPERTY = "entity_id";
     public static final String EVENT_BODY_PROPERTY = "body";
 
@@ -310,7 +311,7 @@ public class ModelConstants {
     public static final String TS_KV_LATEST_CF = "ts_kv_latest_cf";
 
 
-    public static final String ENTITY_TYPE_COLUMN = "entity_type";
+    public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
     public static final String ENTITY_ID_COLUMN = "entity_id";
     public static final String ATTRIBUTE_TYPE_COLUMN = "attribute_type";
     public static final String ATTRIBUTE_KEY_COLUMN = "attribute_key";

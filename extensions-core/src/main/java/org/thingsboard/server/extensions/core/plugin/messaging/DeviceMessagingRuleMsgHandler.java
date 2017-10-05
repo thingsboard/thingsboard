@@ -50,6 +50,7 @@ public class DeviceMessagingRuleMsgHandler implements RuleMsgHandler {
     private static final String ONEWAY = "oneway";
     private static final String TIMEOUT = "timeout";
     private static final String DEVICE_ID = "deviceId";
+    public static final String ERROR_PROPERTY = "error";
 
     private Map<UUID, PendingRpcRequestMetadata> pendingMsgs = new HashMap<>();
 
@@ -66,6 +67,7 @@ public class DeviceMessagingRuleMsgHandler implements RuleMsgHandler {
                 switch (request.getMethod()) {
                     case GET_DEVICE_LIST_METHOD_NAME:
                         processGetDeviceList(ctx, md);
+                        break;
                     case SEND_MSG_METHOD_NAME:
                         processSendMsg(ctx, md, request);
                         break;
@@ -198,7 +200,7 @@ public class DeviceMessagingRuleMsgHandler implements RuleMsgHandler {
 
     private String toJsonString(String error) {
         JsonObject errorObj = new JsonObject();
-        errorObj.addProperty("error", error);
+        errorObj.addProperty(ERROR_PROPERTY, error);
         return GSON.toJson(errorObj);
     }
 
@@ -206,19 +208,19 @@ public class DeviceMessagingRuleMsgHandler implements RuleMsgHandler {
         JsonObject errorObj = new JsonObject();
         switch (error) {
             case NOT_FOUND:
-                errorObj.addProperty("error", "Target device not found!");
+                errorObj.addProperty(ERROR_PROPERTY, "Target device not found!");
                 break;
             case NO_ACTIVE_CONNECTION:
-                errorObj.addProperty("error", "No active connection to remote device!");
+                errorObj.addProperty(ERROR_PROPERTY, "No active connection to remote device!");
                 break;
             case TIMEOUT:
-                errorObj.addProperty("error", "Timeout while waiting response from device!");
+                errorObj.addProperty(ERROR_PROPERTY, "Timeout while waiting response from device!");
                 break;
             case FORBIDDEN:
-                errorObj.addProperty("error", "This action is not allowed! Devices are unassigned or assigned to different customers!");
+                errorObj.addProperty(ERROR_PROPERTY, "This action is not allowed! Devices are unassigned or assigned to different customers!");
                 break;
             case INTERNAL:
-                errorObj.addProperty("error", "Internal server error!");
+                errorObj.addProperty(ERROR_PROPERTY, "Internal server error!");
                 break;
         }
         return GSON.toJson(errorObj);

@@ -45,6 +45,7 @@ import java.util.UUID;
 @Slf4j
 public class BasicRpcSessionListener implements GrpcSessionListener {
 
+    public static final String SESSION_RECEIVED_SESSION_ACTOR_MSG = "{} session [{}] received session actor msg {}";
     private final ActorSystemContext context;
     private final ActorService service;
     private final ActorRef manager;
@@ -93,25 +94,25 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
 
     @Override
     public void onToDeviceSessionActorRpcMsg(GrpcSession session, ClusterAPIProtos.ToDeviceSessionActorRpcMessage msg) {
-        log.trace("{} session [{}] received session actor msg {}", getType(session), session.getRemoteServer(), msg);
+        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
         service.onMsg((ToDeviceSessionActorMsg) deserialize(msg.getData().toByteArray()));
     }
 
     @Override
     public void onToDeviceRpcRequestRpcMsg(GrpcSession session, ClusterAPIProtos.ToDeviceRpcRequestRpcMessage msg) {
-        log.trace("{} session [{}] received session actor msg {}", getType(session), session.getRemoteServer(), msg);
+        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
         service.onMsg(deserialize(session.getRemoteServer(), msg));
     }
 
     @Override
     public void onFromDeviceRpcResponseRpcMsg(GrpcSession session, ClusterAPIProtos.ToPluginRpcResponseRpcMessage msg) {
-        log.trace("{} session [{}] received session actor msg {}", getType(session), session.getRemoteServer(), msg);
+        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
         service.onMsg(deserialize(session.getRemoteServer(), msg));
     }
 
     @Override
     public void onToAllNodesRpcMessage(GrpcSession session, ClusterAPIProtos.ToAllNodesRpcMessage msg) {
-        log.trace("{} session [{}] received session actor msg {}", getType(session), session.getRemoteServer(), msg);
+        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
         service.onMsg((ToAllNodesMsg) deserialize(msg.getData().toByteArray()));
     }
 

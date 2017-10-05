@@ -43,11 +43,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class AssetController extends BaseController {
 
+    public static final String ASSET_ID = "assetId";
+
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.GET)
     @ResponseBody
-    public Asset getAssetById(@PathVariable("assetId") String strAssetId) throws ThingsboardException {
-        checkParameter("assetId", strAssetId);
+    public Asset getAssetById(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
             return checkAssetId(assetId);
@@ -80,8 +82,8 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteAsset(@PathVariable("assetId") String strAssetId) throws ThingsboardException {
-        checkParameter("assetId", strAssetId);
+    public void deleteAsset(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
             checkAssetId(assetId);
@@ -95,9 +97,9 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/customer/{customerId}/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
     public Asset assignAssetToCustomer(@PathVariable("customerId") String strCustomerId,
-                                       @PathVariable("assetId") String strAssetId) throws ThingsboardException {
+                                       @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
-        checkParameter("assetId", strAssetId);
+        checkParameter(ASSET_ID, strAssetId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId);
@@ -114,8 +116,8 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Asset unassignAssetFromCustomer(@PathVariable("assetId") String strAssetId) throws ThingsboardException {
-        checkParameter("assetId", strAssetId);
+    public Asset unassignAssetFromCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId);
@@ -131,8 +133,8 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
-    public Asset assignAssetToPublicCustomer(@PathVariable("assetId") String strAssetId) throws ThingsboardException {
-        checkParameter("assetId", strAssetId);
+    public Asset assignAssetToPublicCustomer(@PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+        checkParameter(ASSET_ID, strAssetId);
         try {
             AssetId assetId = new AssetId(toUUID(strAssetId));
             Asset asset = checkAssetId(assetId);

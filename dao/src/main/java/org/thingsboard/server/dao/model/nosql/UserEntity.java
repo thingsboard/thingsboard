@@ -19,8 +19,9 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,11 +36,10 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = USER_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class UserEntity implements SearchTextEntity<User> {
 
-	@Transient
-	private static final long serialVersionUID = -7740338274987723489L;
-    
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
     private UUID id;
@@ -158,7 +158,7 @@ public final class UserEntity implements SearchTextEntity<User> {
 	
     @Override
     public String getSearchTextSource() {
-        return email;
+        return getEmail();
     }
 
     @Override
@@ -168,93 +168,6 @@ public final class UserEntity implements SearchTextEntity<User> {
     
     public String getSearchText() {
         return searchText;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((additionalInfo == null) ? 0 : additionalInfo.hashCode());
-        result = prime * result + ((authority == null) ? 0 : authority.hashCode());
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((email == null) ? 0 : email.hashCode());
-        result = prime * result + ((firstName == null) ? 0 : firstName.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((lastName == null) ? 0 : lastName.hashCode());
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        UserEntity other = (UserEntity) obj;
-        if (additionalInfo == null) {
-            if (other.additionalInfo != null)
-                return false;
-        } else if (!additionalInfo.equals(other.additionalInfo))
-            return false;
-        if (authority != other.authority)
-            return false;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
-        if (email == null) {
-            if (other.email != null)
-                return false;
-        } else if (!email.equals(other.email))
-            return false;
-        if (firstName == null) {
-            if (other.firstName != null)
-                return false;
-        } else if (!firstName.equals(other.firstName))
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        if (lastName == null) {
-            if (other.lastName != null)
-                return false;
-        } else if (!lastName.equals(other.lastName))
-            return false;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("UserEntity [id=");
-        builder.append(id);
-        builder.append(", authority=");
-        builder.append(authority);
-        builder.append(", tenantId=");
-        builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
-        builder.append(", email=");
-        builder.append(email);
-        builder.append(", firstName=");
-        builder.append(firstName);
-        builder.append(", lastName=");
-        builder.append(lastName);
-        builder.append(", additionalInfo=");
-        builder.append(additionalInfo);
-        builder.append("]");
-        return builder.toString();
     }
 
     @Override

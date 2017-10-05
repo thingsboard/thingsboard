@@ -30,7 +30,7 @@ public class BasicPluginWebsocketSessionRef implements PluginWebsocketSessionRef
     private final String sessionId;
     private final PluginApiCallSecurityContext securityCtx;
     private final URI uri;
-    private final Map<String, Object> attributes;
+    private final transient Map<String, Object> attributes;
     private final InetSocketAddress localAddress;
     private final InetSocketAddress remoteAddress;
 

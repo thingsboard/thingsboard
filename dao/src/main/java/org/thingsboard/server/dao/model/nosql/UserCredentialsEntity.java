@@ -19,7 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -30,11 +30,9 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = USER_CREDENTIALS_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
 public final class UserCredentialsEntity implements BaseEntity<UserCredentials> {
 
-    @Transient
-    private static final long serialVersionUID = 1348221414123438374L;
-    
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
     private UUID id;
@@ -117,58 +115,6 @@ public final class UserCredentialsEntity implements BaseEntity<UserCredentials> 
 
     public void setResetToken(String resetToken) {
         this.resetToken = resetToken;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((activateToken == null) ? 0 : activateToken.hashCode());
-        result = prime * result + (enabled ? 1231 : 1237);
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((password == null) ? 0 : password.hashCode());
-        result = prime * result + ((resetToken == null) ? 0 : resetToken.hashCode());
-        result = prime * result + ((userId == null) ? 0 : userId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        UserCredentialsEntity other = (UserCredentialsEntity) obj;
-        if (activateToken == null) {
-            if (other.activateToken != null)
-                return false;
-        } else if (!activateToken.equals(other.activateToken))
-            return false;
-        if (enabled != other.enabled)
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        if (password == null) {
-            if (other.password != null)
-                return false;
-        } else if (!password.equals(other.password))
-            return false;
-        if (resetToken == null) {
-            if (other.resetToken != null)
-                return false;
-        } else if (!resetToken.equals(other.resetToken))
-            return false;
-        if (userId == null) {
-            if (other.userId != null)
-                return false;
-        } else if (!userId.equals(other.userId))
-            return false;
-        return true;
     }
 
     @Override

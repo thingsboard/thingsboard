@@ -76,6 +76,8 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
             case RULE_ENGINE_ERROR:
                 reply((RuleEngineErrorMsg) msg);
                 return;
+            default:
+                break;
         }
     }
 
@@ -142,7 +144,7 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
 
     @Override
     public void onMsg(SessionCtrlMsg msg) throws SessionException {
-
+        //Do nothing
     }
 
     @Override

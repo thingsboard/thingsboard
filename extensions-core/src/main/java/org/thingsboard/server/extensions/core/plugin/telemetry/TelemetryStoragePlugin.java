@@ -53,7 +53,7 @@ public class TelemetryStoragePlugin extends AbstractPlugin<EmptyComponentConfigu
 
     @Override
     public void init(EmptyComponentConfiguration configuration) {
-
+        //Do nothing
     }
 
     @Override

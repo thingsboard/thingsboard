@@ -32,7 +32,7 @@ import java.util.Optional;
 public class RabbitMqPluginAction extends AbstractTemplatePluginAction<RabbitMqPluginActionConfiguration> {
 
     @Override
-    protected Optional<RuleToPluginMsg<?>> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
+    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         RabbitMqActionPayload.RabbitMqActionPayloadBuilder builder = RabbitMqActionPayload.builder();
         builder.sync(configuration.isSync());
         builder.exchange(configuration.getExchange());

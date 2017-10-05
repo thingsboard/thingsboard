@@ -58,6 +58,10 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implements TimeseriesDao {
 
     private static final int MIN_AGGREGATION_STEP_MS = 1000;
+    public static final String INSERT_INTO = "INSERT INTO ";
+    public static final String GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID = "Generated query [{}] for entityType {} and entityId {}";
+    public static final String SELECT_PREFIX = "SELECT ";
+    public static final String EQUALS_PARAM = " = ? ";
 
     @Autowired
     private Environment environment;
@@ -238,7 +242,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     stmt.setLong(3, partition);
                     stmt.setLong(4, startTs);
                     stmt.setLong(5, endTs);
-                    log.debug("Generated query [{}] for entityType {} and entityId {}", stmt, entityId.getEntityType(), entityId.getId());
+                    log.debug(GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID, stmt, entityId.getEntityType(), entityId.getId());
                     futures.add(executeAsyncRead(stmt));
                 }
                 return Futures.allAsList(futures);
@@ -255,7 +259,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         stmt.setString(0, entityId.getEntityType().name());
         stmt.setUUID(1, entityId.getId());
         stmt.setString(2, key);
-        log.debug("Generated query [{}] for entityType {} and entityId {}", stmt, entityId.getEntityType(), entityId.getId());
+        log.debug(GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID, stmt, entityId.getEntityType(), entityId.getId());
         return getFuture(executeAsyncRead(stmt), rs -> convertResultToTsKvEntry(key, rs.one()));
     }
 
@@ -264,7 +268,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         BoundStatement stmt = getFindAllLatestStmt().bind();
         stmt.setString(0, entityId.getEntityType().name());
         stmt.setUUID(1, entityId.getId());
-        log.debug("Generated query [{}] for entityType {} and entityId {}", stmt, entityId.getEntityType(), entityId.getId());
+        log.debug(GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID, stmt, entityId.getEntityType(), entityId.getId());
         return getFuture(executeAsyncRead(stmt), rs -> convertResultToTsKvEntryList(rs.all()));
     }
 
@@ -377,7 +381,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         if (saveStmts == null) {
             saveStmts = new PreparedStatement[DataType.values().length];
             for (DataType type : DataType.values()) {
-                saveStmts[type.ordinal()] = getSession().prepare("INSERT INTO " + ModelConstants.TS_KV_CF +
+                saveStmts[type.ordinal()] = getSession().prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
                         "(" + ModelConstants.ENTITY_TYPE_COLUMN +
                         "," + ModelConstants.ENTITY_ID_COLUMN +
                         "," + ModelConstants.KEY_COLUMN +
@@ -394,7 +398,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         if (saveTtlStmts == null) {
             saveTtlStmts = new PreparedStatement[DataType.values().length];
             for (DataType type : DataType.values()) {
-                saveTtlStmts[type.ordinal()] = getSession().prepare("INSERT INTO " + ModelConstants.TS_KV_CF +
+                saveTtlStmts[type.ordinal()] = getSession().prepare(INSERT_INTO + ModelConstants.TS_KV_CF +
                         "(" + ModelConstants.ENTITY_TYPE_COLUMN +
                         "," + ModelConstants.ENTITY_ID_COLUMN +
                         "," + ModelConstants.KEY_COLUMN +
@@ -416,12 +420,12 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                 } else if (type == Aggregation.AVG && fetchStmts[Aggregation.SUM.ordinal()] != null) {
                     fetchStmts[type.ordinal()] = fetchStmts[Aggregation.SUM.ordinal()];
                 } else {
-                    fetchStmts[type.ordinal()] = getSession().prepare("SELECT " +
+                    fetchStmts[type.ordinal()] = getSession().prepare(SELECT_PREFIX +
                             String.join(", ", ModelConstants.getFetchColumnNames(type)) + " FROM " + ModelConstants.TS_KV_CF
-                            + " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + " = ? "
-                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + " = ? "
-                            + "AND " + ModelConstants.KEY_COLUMN + " = ? "
-                            + "AND " + ModelConstants.PARTITION_COLUMN + " = ? "
+                            + " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
+                            + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
                             + "AND " + ModelConstants.TS_COLUMN + " > ? "
                             + "AND " + ModelConstants.TS_COLUMN + " <= ?"
                             + (type == Aggregation.NONE ? " ORDER BY " + ModelConstants.TS_COLUMN + " DESC LIMIT ?" : ""));
@@ -435,7 +439,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         if (latestInsertStmts == null) {
             latestInsertStmts = new PreparedStatement[DataType.values().length];
             for (DataType type : DataType.values()) {
-                latestInsertStmts[type.ordinal()] = getSession().prepare("INSERT INTO " + ModelConstants.TS_KV_LATEST_CF +
+                latestInsertStmts[type.ordinal()] = getSession().prepare(INSERT_INTO + ModelConstants.TS_KV_LATEST_CF +
                         "(" + ModelConstants.ENTITY_TYPE_COLUMN +
                         "," + ModelConstants.ENTITY_ID_COLUMN +
                         "," + ModelConstants.KEY_COLUMN +
@@ -450,7 +454,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     private PreparedStatement getPartitionInsertStmt() {
         if (partitionInsertStmt == null) {
-            partitionInsertStmt = getSession().prepare("INSERT INTO " + ModelConstants.TS_KV_PARTITIONS_CF +
+            partitionInsertStmt = getSession().prepare(INSERT_INTO + ModelConstants.TS_KV_PARTITIONS_CF +
                     "(" + ModelConstants.ENTITY_TYPE_COLUMN +
                     "," + ModelConstants.ENTITY_ID_COLUMN +
                     "," + ModelConstants.PARTITION_COLUMN +
@@ -462,7 +466,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     private PreparedStatement getPartitionInsertTtlStmt() {
         if (partitionInsertTtlStmt == null) {
-            partitionInsertTtlStmt = getSession().prepare("INSERT INTO " + ModelConstants.TS_KV_PARTITIONS_CF +
+            partitionInsertTtlStmt = getSession().prepare(INSERT_INTO + ModelConstants.TS_KV_PARTITIONS_CF +
                     "(" + ModelConstants.ENTITY_TYPE_COLUMN +
                     "," + ModelConstants.ENTITY_ID_COLUMN +
                     "," + ModelConstants.PARTITION_COLUMN +
@@ -475,7 +479,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     private PreparedStatement getFindLatestStmt() {
         if (findLatestStmt == null) {
-            findLatestStmt = getSession().prepare("SELECT " +
+            findLatestStmt = getSession().prepare(SELECT_PREFIX +
                     ModelConstants.KEY_COLUMN + "," +
                     ModelConstants.TS_COLUMN + "," +
                     ModelConstants.STRING_VALUE_COLUMN + "," +
@@ -483,16 +487,16 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     ModelConstants.LONG_VALUE_COLUMN + "," +
                     ModelConstants.DOUBLE_VALUE_COLUMN + " " +
                     "FROM " + ModelConstants.TS_KV_LATEST_CF + " " +
-                    "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + " = ? " +
-                    "AND " + ModelConstants.ENTITY_ID_COLUMN + " = ? " +
-                    "AND " + ModelConstants.KEY_COLUMN + " = ? ");
+                    "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM);
         }
         return findLatestStmt;
     }
 
     private PreparedStatement getFindAllLatestStmt() {
         if (findAllLatestStmt == null) {
-            findAllLatestStmt = getSession().prepare("SELECT " +
+            findAllLatestStmt = getSession().prepare(SELECT_PREFIX +
                     ModelConstants.KEY_COLUMN + "," +
                     ModelConstants.TS_COLUMN + "," +
                     ModelConstants.STRING_VALUE_COLUMN + "," +
@@ -500,8 +504,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     ModelConstants.LONG_VALUE_COLUMN + "," +
                     ModelConstants.DOUBLE_VALUE_COLUMN + " " +
                     "FROM " + ModelConstants.TS_KV_LATEST_CF + " " +
-                    "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + " = ? " +
-                    "AND " + ModelConstants.ENTITY_ID_COLUMN + " = ? ");
+                    "WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM +
+                    "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM);
         }
         return findAllLatestStmt;
     }

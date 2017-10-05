@@ -23,7 +23,7 @@ public abstract class ContextBasedCreator<T> implements Creator<T> {
 
     private static final long serialVersionUID = 1L;
 
-    protected final ActorSystemContext context;
+    protected final transient ActorSystemContext context;
 
     public ContextBasedCreator(ActorSystemContext context) {
         super();

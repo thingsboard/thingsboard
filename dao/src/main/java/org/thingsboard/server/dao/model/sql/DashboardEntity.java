@@ -33,7 +33,6 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -41,9 +40,6 @@ import javax.persistence.Transient;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard> {
-
-    @Transient
-    private static final long serialVersionUID = -4838084363113078898L;
 
     @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
     private String tenantId;

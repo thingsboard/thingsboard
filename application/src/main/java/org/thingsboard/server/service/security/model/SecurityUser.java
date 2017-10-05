@@ -46,7 +46,7 @@ public class SecurityUser extends User {
         this.userPrincipal = userPrincipal;
     }
 
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public Collection<GrantedAuthority> getAuthorities() {
         if (authorities == null) {
             authorities = Stream.of(SecurityUser.this.getAuthority())
                     .map(authority -> new SimpleGrantedAuthority(authority.name()))

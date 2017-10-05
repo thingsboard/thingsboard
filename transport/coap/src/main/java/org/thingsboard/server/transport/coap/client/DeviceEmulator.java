@@ -113,7 +113,7 @@ public class DeviceEmulator {
 
                                 @Override
                                 public void onError() {
-
+                                    //Do nothing
                                 }
                             }, mapper.writeValueAsString(response), MediaTypeRegistry.APPLICATION_JSON);
 
@@ -124,7 +124,7 @@ public class DeviceEmulator {
 
                     @Override
                     public void onError() {
-
+                        //Do nothing
                     }
                 });
             }

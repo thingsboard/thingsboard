@@ -47,12 +47,6 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 public class PluginApiController extends BaseController {
 
-    @Autowired
-    private ActorService actorService;
-
-    @Autowired
-    private PluginService pluginService;
-
     @SuppressWarnings("rawtypes")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{pluginToken}/**")

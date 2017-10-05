@@ -21,6 +21,8 @@ import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
@@ -30,17 +32,15 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import javax.persistence.Transient;
-import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = RULE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
 
-    @Transient
-    private static final long serialVersionUID = 4011728715100800304L;
     @PartitionKey
     @Column(name = ID_PROPERTY)
     private UUID id;
@@ -87,7 +87,7 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
 
     @Override
     public String getSearchTextSource() {
-        return searchText;
+        return getSearchText();
     }
 
     @Override
@@ -197,35 +197,4 @@ public class RuleMetaDataEntity implements SearchTextEntity<RuleMetaData> {
         return rule;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RuleMetaDataEntity that = (RuleMetaDataEntity) o;
-        return weight == that.weight &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(tenantId, that.tenantId) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(pluginToken, that.pluginToken) &&
-                Objects.equals(state, that.state) &&
-                Objects.equals(searchText, that.searchText);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, tenantId, name, pluginToken, state, weight, searchText);
-    }
-
-    @Override
-    public String toString() {
-        return "RuleMetaDataEntity{" +
-                "id=" + id +
-                ", tenantId=" + tenantId +
-                ", name='" + name + '\'' +
-                ", pluginToken='" + pluginToken + '\'' +
-                ", state='" + state + '\'' +
-                ", weight=" + weight +
-                ", searchText='" + searchText + '\'' +
-                '}';
-    }
 }

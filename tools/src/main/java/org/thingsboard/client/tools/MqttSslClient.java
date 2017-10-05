@@ -38,18 +38,17 @@ public class MqttSslClient {
 
     private static final String MQTT_URL = "ssl://localhost:1883";
 
-    private static final String clientId = "MQTT_SSL_JAVA_CLIENT";
-    private static final String accessToken = "C1_TEST_TOKEN";
-    private static final String keyStoreFile = "mqttclient.jks";
+    private static final String CLIENT_ID = "MQTT_SSL_JAVA_CLIENT";
+    private static final String KEY_STORE_FILE = "mqttclient.jks";
     private static final String JKS="JKS";
     private static final String TLS="TLS";
 
     public static void main(String[] args) {
 
         try {
-            URL ksUrl = Resources.getResource(keyStoreFile);
+            URL ksUrl = Resources.getResource(KEY_STORE_FILE);
             File ksFile = new File(ksUrl.toURI());
-            URL tsUrl = Resources.getResource(keyStoreFile);
+            URL tsUrl = Resources.getResource(KEY_STORE_FILE);
             File tsFile = new File(tsUrl.toURI());
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -72,14 +71,14 @@ public class MqttSslClient {
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setSocketFactory(sslContext.getSocketFactory());
-            MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
+            MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, CLIENT_ID);
             client.connect(options);
             Thread.sleep(3000);
             MqttMessage message = new MqttMessage();
             message.setPayload("{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4}".getBytes());
             client.publish("v1/devices/me/telemetry", message);
             client.disconnect();
-            System.out.println("Disconnected");
+            log.info("Disconnected");
             System.exit(0);
         } catch (Exception e) {
             log.error("Unexpected exception occurred in MqttSslClient", e);

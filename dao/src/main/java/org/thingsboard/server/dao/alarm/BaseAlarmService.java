@@ -37,7 +37,6 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
@@ -66,9 +65,6 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     @Autowired
     private TenantDao tenantDao;
-
-    @Autowired
-    private RelationService relationService;
 
     @Autowired
     private EntityService entityService;
@@ -272,7 +268,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         boolean hasNext = true;
         AlarmSeverity highestSeverity = null;
         AlarmQuery query;
-        while (hasNext) {
+        while (hasNext && AlarmSeverity.CRITICAL != highestSeverity) {
             query = new AlarmQuery(entityId, nextPageLink, alarmSearchStatus, alarmStatus, false);
             List<AlarmInfo> alarms;
             try {
@@ -286,23 +282,27 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
             if (hasNext) {
                 nextPageLink = new TimePageData<>(alarms, nextPageLink).getNextPageLink();
             }
-            if (alarms.isEmpty()) {
+            AlarmSeverity severity = detectHighestSeverity(alarms);
+            if (severity == null) {
                 continue;
+            }
+            if (severity == AlarmSeverity.CRITICAL || highestSeverity == null) {
+                highestSeverity = severity;
             } else {
-                List<AlarmInfo> sorted = new ArrayList(alarms);
-                sorted.sort((p1, p2) -> p1.getSeverity().compareTo(p2.getSeverity()));
-                AlarmSeverity severity = sorted.get(0).getSeverity();
-                if (severity == AlarmSeverity.CRITICAL) {
-                    highestSeverity = severity;
-                    break;
-                } else if (highestSeverity == null) {
-                    highestSeverity = severity;
-                } else {
-                    highestSeverity = highestSeverity.compareTo(severity) < 0 ? highestSeverity : severity;
-                }
+                highestSeverity = highestSeverity.compareTo(severity) < 0 ? highestSeverity : severity;
             }
         }
         return highestSeverity;
+    }
+
+    private AlarmSeverity detectHighestSeverity(List<AlarmInfo> alarms) {
+        if (!alarms.isEmpty()) {
+            List<AlarmInfo> sorted = new ArrayList(alarms);
+            sorted.sort((p1, p2) -> p1.getSeverity().compareTo(p2.getSeverity()));
+            return sorted.get(0).getSeverity();
+        } else {
+            return null;
+        }
     }
 
     private void deleteRelation(EntityRelation alarmRelation) throws ExecutionException, InterruptedException {

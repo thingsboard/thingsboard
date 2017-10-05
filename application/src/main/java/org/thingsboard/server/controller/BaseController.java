@@ -70,6 +70,8 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Slf4j
 public abstract class BaseController {
 
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
 
@@ -209,11 +211,11 @@ public abstract class BaseController {
     }
 
     void checkTenantId(TenantId tenantId) throws ThingsboardException {
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         SecurityUser authUser = getCurrentUser();
         if (authUser.getAuthority() != Authority.SYS_ADMIN &&
                 (authUser.getTenantId() == null || !authUser.getTenantId().equals(tenantId))) {
-            throw new ThingsboardException("You don't have permission to perform this operation!",
+            throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                     ThingsboardErrorCode.PERMISSION_DENIED);
         }
     }
@@ -229,7 +231,7 @@ public abstract class BaseController {
             if (authUser.getAuthority() == Authority.SYS_ADMIN ||
                     (authUser.getAuthority() != Authority.TENANT_ADMIN &&
                             (authUser.getCustomerId() == null || !authUser.getCustomerId().equals(customerId)))) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             Customer customer = customerService.findCustomerById(customerId);
@@ -382,7 +384,7 @@ public abstract class BaseController {
         if (widgetsBundle.getTenantId() != null && !widgetsBundle.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
             checkTenantId(widgetsBundle.getTenantId());
         } else if (modify && getCurrentUser().getAuthority() != Authority.SYS_ADMIN) {
-            throw new ThingsboardException("You don't have permission to perform this operation!",
+            throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                     ThingsboardErrorCode.PERMISSION_DENIED);
         }
     }
@@ -403,7 +405,7 @@ public abstract class BaseController {
         if (widgetType.getTenantId() != null && !widgetType.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
             checkTenantId(widgetType.getTenantId());
         } else if (modify && getCurrentUser().getAuthority() != Authority.SYS_ADMIN) {
-            throw new ThingsboardException("You don't have permission to perform this operation!",
+            throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                     ThingsboardErrorCode.PERMISSION_DENIED);
         }
     }
@@ -437,7 +439,7 @@ public abstract class BaseController {
         SecurityUser authUser = getCurrentUser();
         if (authUser.getAuthority() == Authority.CUSTOMER_USER) {
             if (dashboard.getCustomerId() == null || dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
         }
@@ -480,11 +482,11 @@ public abstract class BaseController {
         checkNotNull(plugin);
         SecurityUser authUser = getCurrentUser();
         TenantId tenantId = plugin.getTenantId();
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         if (authUser.getAuthority() != Authority.SYS_ADMIN) {
             if (authUser.getTenantId() == null ||
                     !tenantId.getId().equals(ModelConstants.NULL_UUID) && !authUser.getTenantId().equals(tenantId)) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
 
             } else if (tenantId.getId().equals(ModelConstants.NULL_UUID)) {
@@ -508,11 +510,11 @@ public abstract class BaseController {
         checkNotNull(rule);
         SecurityUser authUser = getCurrentUser();
         TenantId tenantId = rule.getTenantId();
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         if (authUser.getAuthority() != Authority.SYS_ADMIN) {
             if (authUser.getTenantId() == null ||
                     !tenantId.getId().equals(ModelConstants.NULL_UUID) && !authUser.getTenantId().equals(tenantId)) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
 
             }

@@ -52,7 +52,7 @@ public abstract class AbstractTemplatePluginAction<T extends TemplateActionConfi
     }
 
     @Override
-    public Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg msg, RuleProcessingMetaData deviceMsgMd) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg msg, RuleProcessingMetaData deviceMsgMd) {
         FromDeviceRequestMsg payload;
         if (msg.getPayload() instanceof FromDeviceRequestMsg) {
             payload = (FromDeviceRequestMsg) msg.getPayload();
@@ -76,7 +76,7 @@ public abstract class AbstractTemplatePluginAction<T extends TemplateActionConfi
         return VelocityUtils.merge(template, context);
     }
 
-    abstract protected Optional<RuleToPluginMsg<?>> buildRuleToPluginMsg(RuleContext ctx,
+    abstract protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx,
                                                                          ToDeviceActorMsg msg,
                                                                          FromDeviceRequestMsg payload);
 

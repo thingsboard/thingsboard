@@ -34,7 +34,6 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
@@ -44,9 +43,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ASSET_COLUMN_FAMILY_NAME)
 public final class AssetEntity extends BaseSqlEntity<Asset> implements SearchTextEntity<Asset> {
-
-    @Transient
-    private static final long serialVersionUID = -4089175869616037592L;
 
     @Column(name = ASSET_TENANT_ID_PROPERTY)
     private String tenantId;

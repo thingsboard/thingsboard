@@ -41,6 +41,8 @@ import java.util.List;
 public class WidgetsBundleServiceImpl implements WidgetsBundleService {
 
     private static final int DEFAULT_WIDGETS_BUNDLE_LIMIT = 300;
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
 
     @Autowired
     private WidgetsBundleDao widgetsBundleDao;
@@ -80,7 +82,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     @Override
     public WidgetsBundle findWidgetsBundleByTenantIdAndAlias(TenantId tenantId, String alias) {
         log.trace("Executing findWidgetsBundleByTenantIdAndAlias, tenantId [{}], alias [{}]", tenantId, alias);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Validator.validateString(alias, "Incorrect alias " + alias);
         return widgetsBundleDao.findWidgetsBundleByTenantIdAndAlias(tenantId.getId(), alias);
     }
@@ -88,7 +90,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     @Override
     public TextPageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TextPageLink pageLink) {
         log.trace("Executing findSystemWidgetsBundles, pageLink [{}]", pageLink);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        Validator.validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         return new TextPageData<>(widgetsBundleDao.findSystemWidgetsBundles(pageLink), pageLink);
     }
 
@@ -111,23 +113,23 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     @Override
     public TextPageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, TextPageLink pageLink) {
         log.trace("Executing findTenantWidgetsBundlesByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         return new TextPageData<>(widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId.getId(), pageLink), pageLink);
     }
 
     @Override
     public TextPageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink) {
         log.trace("Executing findAllTenantWidgetsBundlesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        Validator.validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         return new TextPageData<>(widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId.getId(), pageLink), pageLink);
     }
 
     @Override
     public List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(TenantId tenantId) {
         log.trace("Executing findAllTenantWidgetsBundlesByTenantId, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         List<WidgetsBundle> widgetsBundles = new ArrayList<>();
         TextPageLink pageLink = new TextPageLink(DEFAULT_WIDGETS_BUNDLE_LIMIT);
         TextPageData<WidgetsBundle> pageData;
@@ -144,7 +146,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     @Override
     public void deleteWidgetsBundlesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteWidgetsBundlesByTenantId, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantWidgetsBundleRemover.removeEntities(tenantId);
     }
 

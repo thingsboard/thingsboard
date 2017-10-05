@@ -47,6 +47,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 public class TenantServiceImpl extends AbstractEntityService implements TenantService {
 
     private static final String DEFAULT_TENANT_REGION = "Global";
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
     private TenantDao tenantDao;
@@ -78,14 +79,14 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return tenantDao.findById(tenantId.getId());
     }
 
     @Override
     public ListenableFuture<Tenant> findTenantByIdAsync(TenantId tenantId) {
         log.trace("Executing TenantIdAsync [{}]", tenantId);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return tenantDao.findByIdAsync(tenantId.getId());
     }
 
@@ -100,7 +101,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Override
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         customerService.deleteCustomersByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
         dashboardService.deleteDashboardsByTenantId(tenantId);

@@ -79,76 +79,81 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     private List<ComponentDescriptor> persist(Set<BeanDefinition> filterDefs, ComponentType type) {
         List<ComponentDescriptor> result = new ArrayList<>();
         for (BeanDefinition def : filterDefs) {
-            ComponentDescriptor scannedComponent = new ComponentDescriptor();
-            String clazzName = def.getBeanClassName();
-            try {
-                scannedComponent.setType(type);
-                Class<?> clazz = Class.forName(clazzName);
-                String descriptorResourceName;
-                switch (type) {
-                    case FILTER:
-                        Filter filterAnnotation = clazz.getAnnotation(Filter.class);
-                        scannedComponent.setName(filterAnnotation.name());
-                        scannedComponent.setScope(filterAnnotation.scope());
-                        descriptorResourceName = filterAnnotation.descriptor();
-                        break;
-                    case PROCESSOR:
-                        Processor processorAnnotation = clazz.getAnnotation(Processor.class);
-                        scannedComponent.setName(processorAnnotation.name());
-                        scannedComponent.setScope(processorAnnotation.scope());
-                        descriptorResourceName = processorAnnotation.descriptor();
-                        break;
-                    case ACTION:
-                        Action actionAnnotation = clazz.getAnnotation(Action.class);
-                        scannedComponent.setName(actionAnnotation.name());
-                        scannedComponent.setScope(actionAnnotation.scope());
-                        descriptorResourceName = actionAnnotation.descriptor();
-                        break;
-                    case PLUGIN:
-                        Plugin pluginAnnotation = clazz.getAnnotation(Plugin.class);
-                        scannedComponent.setName(pluginAnnotation.name());
-                        scannedComponent.setScope(pluginAnnotation.scope());
-                        descriptorResourceName = pluginAnnotation.descriptor();
-                        for (Class<?> actionClazz : pluginAnnotation.actions()) {
-                            ComponentDescriptor actionComponent = getComponent(actionClazz.getName())
-                                    .orElseThrow(() -> {
-                                        log.error("Can't initialize plugin {}, due to missing action {}!", def.getBeanClassName(), actionClazz.getName());
-                                        return new ClassNotFoundException("Action: " + actionClazz.getName() + "is missing!");
-                                    });
-                            if (actionComponent.getType() != ComponentType.ACTION) {
-                                log.error("Plugin {} action {} has wrong component type!", def.getBeanClassName(), actionClazz.getName(), actionComponent.getType());
-                                throw new RuntimeException("Plugin " + def.getBeanClassName() + "action " + actionClazz.getName() + " has wrong component type!");
-                            }
-                        }
-                        scannedComponent.setActions(Arrays.stream(pluginAnnotation.actions()).map(action -> action.getName()).collect(Collectors.joining(",")));
-                        break;
-                    default:
-                        throw new RuntimeException(type + " is not supported yet!");
-                }
-                scannedComponent.setConfigurationDescriptor(mapper.readTree(
-                        Resources.toString(Resources.getResource(descriptorResourceName), Charsets.UTF_8)));
-                scannedComponent.setClazz(clazzName);
-                log.info("Processing scanned component: {}", scannedComponent);
-            } catch (Exception e) {
-                log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
-                throw new RuntimeException(e);
-            }
-            ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(clazzName);
-            if (persistedComponent == null) {
-                log.info("Persisting new component: {}", scannedComponent);
-                scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
-            } else if (scannedComponent.equals(persistedComponent)) {
-                log.info("Component is already persisted: {}", persistedComponent);
-                scannedComponent = persistedComponent;
-            } else {
-                log.info("Component {} will be updated to {}", persistedComponent, scannedComponent);
-                componentDescriptorService.deleteByClazz(persistedComponent.getClazz());
-                scannedComponent.setId(persistedComponent.getId());
-                scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
-            }
+            ComponentDescriptor scannedComponent = scanAndPersistComponent(def, type);
             result.add(scannedComponent);
         }
         return result;
+    }
+
+    private ComponentDescriptor scanAndPersistComponent(BeanDefinition def, ComponentType type) {
+        ComponentDescriptor scannedComponent = new ComponentDescriptor();
+        String clazzName = def.getBeanClassName();
+        try {
+            scannedComponent.setType(type);
+            Class<?> clazz = Class.forName(clazzName);
+            String descriptorResourceName;
+            switch (type) {
+                case FILTER:
+                    Filter filterAnnotation = clazz.getAnnotation(Filter.class);
+                    scannedComponent.setName(filterAnnotation.name());
+                    scannedComponent.setScope(filterAnnotation.scope());
+                    descriptorResourceName = filterAnnotation.descriptor();
+                    break;
+                case PROCESSOR:
+                    Processor processorAnnotation = clazz.getAnnotation(Processor.class);
+                    scannedComponent.setName(processorAnnotation.name());
+                    scannedComponent.setScope(processorAnnotation.scope());
+                    descriptorResourceName = processorAnnotation.descriptor();
+                    break;
+                case ACTION:
+                    Action actionAnnotation = clazz.getAnnotation(Action.class);
+                    scannedComponent.setName(actionAnnotation.name());
+                    scannedComponent.setScope(actionAnnotation.scope());
+                    descriptorResourceName = actionAnnotation.descriptor();
+                    break;
+                case PLUGIN:
+                    Plugin pluginAnnotation = clazz.getAnnotation(Plugin.class);
+                    scannedComponent.setName(pluginAnnotation.name());
+                    scannedComponent.setScope(pluginAnnotation.scope());
+                    descriptorResourceName = pluginAnnotation.descriptor();
+                    for (Class<?> actionClazz : pluginAnnotation.actions()) {
+                        ComponentDescriptor actionComponent = getComponent(actionClazz.getName())
+                                .orElseThrow(() -> {
+                                    log.error("Can't initialize plugin {}, due to missing action {}!", def.getBeanClassName(), actionClazz.getName());
+                                    return new ClassNotFoundException("Action: " + actionClazz.getName() + "is missing!");
+                                });
+                        if (actionComponent.getType() != ComponentType.ACTION) {
+                            log.error("Plugin {} action {} has wrong component type!", def.getBeanClassName(), actionClazz.getName(), actionComponent.getType());
+                            throw new RuntimeException("Plugin " + def.getBeanClassName() + "action " + actionClazz.getName() + " has wrong component type!");
+                        }
+                    }
+                    scannedComponent.setActions(Arrays.stream(pluginAnnotation.actions()).map(action -> action.getName()).collect(Collectors.joining(",")));
+                    break;
+                default:
+                    throw new RuntimeException(type + " is not supported yet!");
+            }
+            scannedComponent.setConfigurationDescriptor(mapper.readTree(
+                    Resources.toString(Resources.getResource(descriptorResourceName), Charsets.UTF_8)));
+            scannedComponent.setClazz(clazzName);
+            log.info("Processing scanned component: {}", scannedComponent);
+        } catch (Exception e) {
+            log.error("Can't initialize component {}, due to {}", def.getBeanClassName(), e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+        ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(clazzName);
+        if (persistedComponent == null) {
+            log.info("Persisting new component: {}", scannedComponent);
+            scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
+        } else if (scannedComponent.equals(persistedComponent)) {
+            log.info("Component is already persisted: {}", persistedComponent);
+            scannedComponent = persistedComponent;
+        } else {
+            log.info("Component {} will be updated to {}", persistedComponent, scannedComponent);
+            componentDescriptorService.deleteByClazz(persistedComponent.getClazz());
+            scannedComponent.setId(persistedComponent.getId());
+            scannedComponent = componentDescriptorService.saveComponent(scannedComponent);
+        }
+        return scannedComponent;
     }
 
     private Set<BeanDefinition> getBeanDefinitions(Class<? extends Annotation> componentType) {

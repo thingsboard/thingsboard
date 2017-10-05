@@ -19,7 +19,8 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -32,11 +33,10 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentials> {
 
-    @Transient
-    private static final long serialVersionUID = -2667310560260623272L;
-    
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
     private UUID id;
@@ -107,69 +107,6 @@ public final class DeviceCredentialsEntity implements BaseEntity<DeviceCredentia
 
     public void setCredentialsValue(String credentialsValue) {
         this.credentialsValue = credentialsValue;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((credentialsId == null) ? 0 : credentialsId.hashCode());
-        result = prime * result + ((credentialsType == null) ? 0 : credentialsType.hashCode());
-        result = prime * result + ((credentialsValue == null) ? 0 : credentialsValue.hashCode());
-        result = prime * result + ((deviceId == null) ? 0 : deviceId.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        DeviceCredentialsEntity other = (DeviceCredentialsEntity) obj;
-        if (credentialsId == null) {
-            if (other.credentialsId != null)
-                return false;
-        } else if (!credentialsId.equals(other.credentialsId))
-            return false;
-        if (credentialsType != other.credentialsType)
-            return false;
-        if (credentialsValue == null) {
-            if (other.credentialsValue != null)
-                return false;
-        } else if (!credentialsValue.equals(other.credentialsValue))
-            return false;
-        if (deviceId == null) {
-            if (other.deviceId != null)
-                return false;
-        } else if (!deviceId.equals(other.deviceId))
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("DeviceCredentialsEntity [id=");
-        builder.append(id);
-        builder.append(", deviceId=");
-        builder.append(deviceId);
-        builder.append(", credentialsType=");
-        builder.append(credentialsType);
-        builder.append(", credentialsId=");
-        builder.append(credentialsId);
-        builder.append(", credentialsValue=");
-        builder.append(credentialsValue);
-        builder.append("]");
-        return builder.toString();
     }
 
     @Override

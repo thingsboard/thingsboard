@@ -44,11 +44,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class DeviceController extends BaseController {
 
+    public static final String DEVICE_ID = "deviceId";
+
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
-    public Device getDeviceById(@PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
-        checkParameter("deviceId", strDeviceId);
+    public Device getDeviceById(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             return checkDeviceId(deviceId);
@@ -88,8 +90,8 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteDevice(@PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
-        checkParameter("deviceId", strDeviceId);
+    public void deleteDevice(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             checkDeviceId(deviceId);
@@ -103,9 +105,9 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/customer/{customerId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
     public Device assignDeviceToCustomer(@PathVariable("customerId") String strCustomerId,
-                                         @PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
+                                         @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
-        checkParameter("deviceId", strDeviceId);
+        checkParameter(DEVICE_ID, strDeviceId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId);
@@ -122,8 +124,8 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Device unassignDeviceFromCustomer(@PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
-        checkParameter("deviceId", strDeviceId);
+    public Device unassignDeviceFromCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId);
@@ -139,8 +141,8 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public Device assignDeviceToPublicCustomer(@PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
-        checkParameter("deviceId", strDeviceId);
+    public Device assignDeviceToPublicCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId);
@@ -154,8 +156,8 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}/credentials", method = RequestMethod.GET)
     @ResponseBody
-    public DeviceCredentials getDeviceCredentialsByDeviceId(@PathVariable("deviceId") String strDeviceId) throws ThingsboardException {
-        checkParameter("deviceId", strDeviceId);
+    public DeviceCredentials getDeviceCredentialsByDeviceId(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+        checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             checkDeviceId(deviceId);

@@ -70,6 +70,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private static final String DASHBOARDS_DIR = "dashboards";
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final String JSON_EXT = ".json";
+    public static final String CUSTOMER_CRED = "customer";
+    public static final String DEFAULT_DEVICE_TYPE = "default";
 
     @Value("${install.data_dir}")
     private String dataDir;
@@ -147,7 +150,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void loadSystemWidgets() throws Exception {
         Path widgetBundlesDir = Paths.get(dataDir, JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(".json"))) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
@@ -208,21 +211,21 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         customerC.setTenantId(demoTenant.getId());
         customerC.setTitle("Customer C");
         customerC = customerService.saveCustomer(customerC);
-        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerA.getId(), "customer@thingsboard.org", "customer");
-        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerA.getId(), "customerA@thingsboard.org", "customer");
-        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerB.getId(), "customerB@thingsboard.org", "customer");
-        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerC.getId(), "customerC@thingsboard.org", "customer");
+        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerA.getId(), "customer@thingsboard.org", CUSTOMER_CRED);
+        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerA.getId(), "customerA@thingsboard.org", CUSTOMER_CRED);
+        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerB.getId(), "customerB@thingsboard.org", CUSTOMER_CRED);
+        createUser(Authority.CUSTOMER_USER, demoTenant.getId(), customerC.getId(), "customerC@thingsboard.org", CUSTOMER_CRED);
 
-        createDevice(demoTenant.getId(), customerA.getId(), "default", "Test Device A1", "A1_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerA.getId(), "default", "Test Device A2", "A2_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerA.getId(), "default", "Test Device A3", "A3_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerB.getId(), "default", "Test Device B1", "B1_TEST_TOKEN", null);
-        createDevice(demoTenant.getId(), customerC.getId(), "default", "Test Device C1", "C1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A1", "A1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A2", "A2_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerA.getId(), DEFAULT_DEVICE_TYPE, "Test Device A3", "A3_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerB.getId(), DEFAULT_DEVICE_TYPE, "Test Device B1", "B1_TEST_TOKEN", null);
+        createDevice(demoTenant.getId(), customerC.getId(), DEFAULT_DEVICE_TYPE, "Test Device C1", "C1_TEST_TOKEN", null);
 
-        createDevice(demoTenant.getId(), null, "default", "DHT11 Demo Device", "DHT11_DEMO_TOKEN", "Demo device that is used in sample " +
+        createDevice(demoTenant.getId(), null, DEFAULT_DEVICE_TYPE, "DHT11 Demo Device", "DHT11_DEMO_TOKEN", "Demo device that is used in sample " +
                 "applications that upload data from DHT11 temperature and humidity sensor");
 
-        createDevice(demoTenant.getId(), null, "default", "Raspberry Pi Demo Device", "RASPBERRY_PI_DEMO_TOKEN", "Demo device that is used in " +
+        createDevice(demoTenant.getId(), null, DEFAULT_DEVICE_TYPE, "Raspberry Pi Demo Device", "RASPBERRY_PI_DEMO_TOKEN", "Demo device that is used in " +
                 "Raspberry Pi GPIO control sample application");
 
         loadPlugins(Paths.get(dataDir, JSON_DIR, DEMO_DIR, PLUGINS_DIR), demoTenant.getId());
@@ -281,7 +284,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     private void loadPlugins(Path pluginsDir, TenantId tenantId) throws Exception{
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pluginsDir, path -> path.toString().endsWith(".json"))) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pluginsDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
@@ -305,7 +308,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     private void loadRules(Path rulesDir, TenantId tenantId) throws Exception {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(rulesDir, path -> path.toString().endsWith(".json"))) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(rulesDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
@@ -329,7 +332,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     private void loadDashboards(Path dashboardsDir, TenantId tenantId, CustomerId customerId) throws Exception {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(".json"))) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {

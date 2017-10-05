@@ -19,8 +19,9 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -32,10 +33,9 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = WIDGET_TYPE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
-
-    @Transient
-    private static final long serialVersionUID = 3591054897680176342L;
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
@@ -123,45 +123,6 @@ public final class WidgetTypeEntity implements BaseEntity<WidgetType> {
 
     public void setDescriptor(JsonNode descriptor) {
         this.descriptor = descriptor;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (tenantId != null ? tenantId.hashCode() : 0);
-        result = 31 * result + (bundleAlias != null ? bundleAlias.hashCode() : 0);
-        result = 31 * result + (alias != null ? alias.hashCode() : 0);
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (descriptor != null ? descriptor.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        WidgetTypeEntity that = (WidgetTypeEntity) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (tenantId != null ? !tenantId.equals(that.tenantId) : that.tenantId != null) return false;
-        if (bundleAlias != null ? !bundleAlias.equals(that.bundleAlias) : that.bundleAlias != null) return false;
-        if (alias != null ? !alias.equals(that.alias) : that.alias != null) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        return descriptor != null ? descriptor.equals(that.descriptor) : that.descriptor == null;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("WidgetTypeEntity{");
-        sb.append("id=").append(id);
-        sb.append(", tenantId=").append(tenantId);
-        sb.append(", bundleAlias='").append(bundleAlias).append('\'');
-        sb.append(", alias='").append(alias).append('\'');
-        sb.append(", name ='").append(name).append('\'');
-        sb.append(", descriptor=").append(descriptor);
-        sb.append('}');
-        return sb.toString();
     }
 
     @Override

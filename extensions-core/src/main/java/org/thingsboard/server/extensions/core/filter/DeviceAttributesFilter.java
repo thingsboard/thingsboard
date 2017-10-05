@@ -46,6 +46,8 @@ public class DeviceAttributesFilter extends BasicJsFilter {
                 case POST_ATTRIBUTES_REQUEST:
                     bindings = NashornJsEvaluator.updateBindings(bindings, (UpdateAttributesRequest) msg);
                     break;
+                default:
+                    break;
             }
         }
 

@@ -19,7 +19,6 @@ package org.thingsboard.server.dao.model;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,9 +30,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = ENTITY_SUBTYPE_COLUMN_FAMILY_NAME)
 public class EntitySubtypeEntity {
-
-    @Transient
-    private static final long serialVersionUID = -1268181961886910152L;
 
     @PartitionKey(value = 0)
     @Column(name = ENTITY_SUBTYPE_TENANT_ID_PROPERTY)

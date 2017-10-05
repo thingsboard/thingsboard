@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.security.model.token;
 
-public interface JwtToken {
+import java.io.Serializable;
+
+public interface JwtToken extends Serializable {
     String getToken();
 }

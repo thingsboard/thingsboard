@@ -35,10 +35,10 @@ public class RuleMetaData extends SearchTextBased<RuleId> implements HasName {
     private ComponentLifecycleState state;
     private int weight;
     private String pluginToken;
-    private JsonNode filters;
-    private JsonNode processor;
-    private JsonNode action;
-    private JsonNode additionalInfo;
+    private transient JsonNode filters;
+    private transient JsonNode processor;
+    private transient JsonNode action;
+    private transient JsonNode additionalInfo;
 
     public RuleMetaData() {
         super();
@@ -63,7 +63,7 @@ public class RuleMetaData extends SearchTextBased<RuleId> implements HasName {
 
     @Override
     public String getSearchText() {
-        return name;
+        return getName();
     }
 
     @Override

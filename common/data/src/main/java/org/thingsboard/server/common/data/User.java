@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.security.Authority;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+@EqualsAndHashCode(callSuper = true)
 public class User extends SearchTextBased<UserId> implements HasName {
 
     private static final long serialVersionUID = 8250339805336035966L;
@@ -33,7 +35,7 @@ public class User extends SearchTextBased<UserId> implements HasName {
     private Authority authority;
     private String firstName;
     private String lastName;
-    private JsonNode additionalInfo;
+    private transient JsonNode additionalInfo;
 
     public User() {
         super();
@@ -118,65 +120,7 @@ public class User extends SearchTextBased<UserId> implements HasName {
     
     @Override
     public String getSearchText() {
-        return email;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((additionalInfo == null) ? 0 : additionalInfo.hashCode());
-        result = prime * result + ((authority == null) ? 0 : authority.hashCode());
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((email == null) ? 0 : email.hashCode());
-        result = prime * result + ((firstName == null) ? 0 : firstName.hashCode());
-        result = prime * result + ((lastName == null) ? 0 : lastName.hashCode());
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        User other = (User) obj;
-        if (additionalInfo == null) {
-            if (other.additionalInfo != null)
-                return false;
-        } else if (!additionalInfo.equals(other.additionalInfo))
-            return false;
-        if (authority != other.authority)
-            return false;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
-        if (email == null) {
-            if (other.email != null)
-                return false;
-        } else if (!email.equals(other.email))
-            return false;
-        if (firstName == null) {
-            if (other.firstName != null)
-                return false;
-        } else if (!firstName.equals(other.firstName))
-            return false;
-        if (lastName == null) {
-            if (other.lastName != null)
-                return false;
-        } else if (!lastName.equals(other.lastName))
-            return false;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
-            return false;
-        return true;
+        return getEmail();
     }
 
     @Override
