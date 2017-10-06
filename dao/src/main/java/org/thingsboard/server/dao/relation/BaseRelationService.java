@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 
 /**
@@ -61,29 +62,80 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public ListenableFuture<Boolean> saveRelation(EntityRelation relation) {
+    public boolean saveRelation(EntityRelation relation) {
         log.trace("Executing saveRelation [{}]", relation);
         validate(relation);
         return relationDao.saveRelation(relation);
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelation(EntityRelation relation) {
+    public ListenableFuture<Boolean> saveRelationAsync(EntityRelation relation) {
+        log.trace("Executing saveRelationAsync [{}]", relation);
+        validate(relation);
+        return relationDao.saveRelationAsync(relation);
+    }
+
+    @Override
+    public boolean deleteRelation(EntityRelation relation) {
         log.trace("Executing deleteRelation [{}]", relation);
         validate(relation);
         return relationDao.deleteRelation(relation);
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<Boolean> deleteRelationAsync(EntityRelation relation) {
+        log.trace("Executing deleteRelationAsync [{}]", relation);
+        validate(relation);
+        return relationDao.deleteRelationAsync(relation);
+    }
+
+    @Override
+    public boolean deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing deleteRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
         return relationDao.deleteRelation(from, to, relationType, typeGroup);
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteEntityRelations(EntityId entity) {
+    public ListenableFuture<Boolean> deleteRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("Executing deleteRelationAsync [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        validate(from, to, relationType, typeGroup);
+        return relationDao.deleteRelationAsync(from, to, relationType, typeGroup);
+    }
+
+    @Override
+    public boolean deleteEntityRelations(EntityId entity) {
         log.trace("Executing deleteEntityRelations [{}]", entity);
+        validate(entity);
+        List<ListenableFuture<List<EntityRelation>>> inboundRelationsList = new ArrayList<>();
+        for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
+            inboundRelationsList.add(relationDao.findAllByTo(entity, typeGroup));
+        }
+        ListenableFuture<List<List<EntityRelation>>> inboundRelations = Futures.allAsList(inboundRelationsList);
+        ListenableFuture<List<Boolean>> inboundDeletions = Futures.transform(inboundRelations, new Function<List<List<EntityRelation>>, List<Boolean>>() {
+            @Override
+            public List<Boolean> apply(List<List<EntityRelation>> relations) {
+                List<Boolean> results = new ArrayList<>();
+                for (List<EntityRelation> relationList : relations) {
+                    relationList.stream().forEach(relation -> results.add(relationDao.deleteRelation(relation)));
+                }
+                return results;
+            }
+        });
+        ListenableFuture<Boolean> inboundFuture = Futures.transform(inboundDeletions, getListToBooleanFunction());
+        boolean inboundDeleteResult = false;
+        try {
+            inboundDeleteResult = inboundFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error deleting entity inbound relations", e);
+        }
+        boolean outboundDeleteResult = relationDao.deleteOutboundRelations(entity);
+        return inboundDeleteResult && outboundDeleteResult;
+    }
+
+    @Override
+    public ListenableFuture<Boolean> deleteEntityRelationsAsync(EntityId entity) {
+        log.trace("Executing deleteEntityRelationsAsync [{}]", entity);
         validate(entity);
         List<ListenableFuture<List<EntityRelation>>> inboundRelationsList = new ArrayList<>();
         for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
@@ -95,7 +147,7 @@ public class BaseRelationService implements RelationService {
             public ListenableFuture<List<Boolean>> apply(List<List<EntityRelation>> relations) throws Exception {
                 List<ListenableFuture<Boolean>> results = new ArrayList<>();
                 for (List<EntityRelation> relationList : relations) {
-                    relationList.stream().forEach(relation -> results.add(relationDao.deleteRelation(relation)));
+                    relationList.stream().forEach(relation -> results.add(relationDao.deleteRelationAsync(relation)));
                 }
                 return Futures.allAsList(results);
             }
@@ -103,7 +155,7 @@ public class BaseRelationService implements RelationService {
 
         ListenableFuture<Boolean> inboundFuture = Futures.transform(inboundDeletions, getListToBooleanFunction());
 
-        ListenableFuture<Boolean> outboundFuture = relationDao.deleteOutboundRelations(entity);
+        ListenableFuture<Boolean> outboundFuture = relationDao.deleteOutboundRelationsAsync(entity);
 
         return Futures.transform(Futures.allAsList(Arrays.asList(inboundFuture, outboundFuture)), getListToBooleanFunction());
     }

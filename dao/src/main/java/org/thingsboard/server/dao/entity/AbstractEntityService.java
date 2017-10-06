@@ -31,12 +31,7 @@ public abstract class AbstractEntityService {
 
     protected void deleteEntityRelations(EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
-        try {
-            relationService.deleteEntityRelations(entityId).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+        relationService.deleteEntityRelations(entityId);
     }
-
 
 }

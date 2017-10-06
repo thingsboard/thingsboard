@@ -307,12 +307,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private void deleteRelation(EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
         log.debug("Deleting Alarm relation: {}", alarmRelation);
-        relationService.deleteRelation(alarmRelation).get();
+        relationService.deleteRelationAsync(alarmRelation).get();
     }
 
     private void createRelation(EntityRelation alarmRelation) throws ExecutionException, InterruptedException {
         log.debug("Creating Alarm relation: {}", alarmRelation);
-        relationService.saveRelation(alarmRelation).get();
+        relationService.saveRelationAsync(alarmRelation).get();
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {

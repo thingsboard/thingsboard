@@ -51,7 +51,7 @@ public class EntityRelationController extends BaseController {
             if (relation.getTypeGroup() == null) {
                 relation.setTypeGroup(RelationTypeGroup.COMMON);
             }
-            relationService.saveRelation(relation).get();
+            relationService.saveRelation(relation);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -76,7 +76,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(toId);
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            Boolean found = relationService.deleteRelation(fromId, toId, strRelationType, relationTypeGroup).get();
+            Boolean found = relationService.deleteRelation(fromId, toId, strRelationType, relationTypeGroup);
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
@@ -95,7 +95,7 @@ public class EntityRelationController extends BaseController {
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId);
         try {
-            relationService.deleteEntityRelations(entityId).get();
+            relationService.deleteEntityRelations(entityId);
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -75,13 +75,13 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         saveRelation(relationA);
         saveRelation(relationB);
 
-        Assert.assertTrue(relationService.deleteRelation(relationA).get());
+        Assert.assertTrue(relationService.deleteRelationAsync(relationA).get());
 
         Assert.assertFalse(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
         Assert.assertTrue(relationService.checkRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
-        Assert.assertTrue(relationService.deleteRelation(childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+        Assert.assertTrue(relationService.deleteRelationAsync(childId, subChildId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
     }
 
     @Test
@@ -96,7 +96,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         saveRelation(relationA);
         saveRelation(relationB);
 
-        Assert.assertTrue(relationService.deleteEntityRelations(childId).get());
+        Assert.assertTrue(relationService.deleteEntityRelationsAsync(childId).get());
 
         Assert.assertFalse(relationService.checkRelation(parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
@@ -152,7 +152,7 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
     }
 
     private Boolean saveRelation(EntityRelation relationA1) throws ExecutionException, InterruptedException {
-        return relationService.saveRelation(relationA1).get();
+        return relationService.saveRelationAsync(relationA1).get();
     }
 
     @Test
