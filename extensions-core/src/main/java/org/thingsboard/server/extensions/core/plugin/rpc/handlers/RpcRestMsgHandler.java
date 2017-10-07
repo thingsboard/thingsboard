@@ -110,8 +110,9 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
     }
 
     public void reply(PluginContext ctx, DeferredResult<ResponseEntity> responseWriter, FromDeviceRpcResponse response) {
-        if (response.getError().isPresent()) {
-            RpcError error = response.getError().get();
+        Optional<RpcError> rpcError = response.getError();
+        if (rpcError.isPresent()) {
+            RpcError error = rpcError.get();
             switch (error) {
                 case TIMEOUT:
                     responseWriter.setResult(new ResponseEntity<>(HttpStatus.REQUEST_TIMEOUT));
@@ -124,8 +125,9 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
                     break;
             }
         } else {
-            if (response.getResponse().isPresent() && !StringUtils.isEmpty(response.getResponse().get())) {
-                String data = response.getResponse().get();
+            Optional<String> responseData = response.getResponse();
+            if (responseData.isPresent() && !StringUtils.isEmpty(responseData.get())) {
+                String data = responseData.get();
                 try {
                     responseWriter.setResult(new ResponseEntity<>(jsonMapper.readTree(data), HttpStatus.OK));
                 } catch (IOException e) {

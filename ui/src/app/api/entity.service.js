@@ -824,17 +824,27 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             var subscriptionInfo = validateSubscriptionInfo(subscriptionsInfo[index]);
             if (subscriptionInfo.type === types.datasourceType.entity) {
                 if (subscriptionInfo.entityId) {
-                    getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId, {ignoreLoading: true}).then(
-                        function success(entity) {
-                            createDatasourceFromSubscription(subscriptionInfo, datasources, entity);
-                            index++;
-                            processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
-                        },
-                        function fail() {
-                            index++;
-                            processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
-                        }
-                    );
+                    if (subscriptionInfo.entityName) {
+                        var entity = {
+                            id: {id: subscriptionInfo.entityId, entityType: subscriptionInfo.entityType},
+                            name: subscriptionInfo.entityName
+                        };
+                        createDatasourceFromSubscription(subscriptionInfo, datasources, entity);
+                        index++;
+                        processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                    } else {
+                        getEntity(subscriptionInfo.entityType, subscriptionInfo.entityId, {ignoreLoading: true}).then(
+                            function success(entity) {
+                                createDatasourceFromSubscription(subscriptionInfo, datasources, entity);
+                                index++;
+                                processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                            },
+                            function fail() {
+                                index++;
+                                processSubscriptionsInfo(index, subscriptionsInfo, datasources, deferred);
+                            }
+                        );
+                    }
                 } else if (subscriptionInfo.entityName || subscriptionInfo.entityNamePrefix
                     || subscriptionInfo.entityIds) {
                     var promise;

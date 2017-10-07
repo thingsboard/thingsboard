@@ -28,7 +28,6 @@ import org.thingsboard.server.service.install.DatabaseSchemaService;
 import org.thingsboard.server.service.install.DatabaseUpgradeService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @Service
@@ -69,7 +68,7 @@ public class ThingsboardInstallService {
                 log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
 
                 switch (upgradeFromVersion) {
-                    case "1.2.3":
+                    case "1.2.3": //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion
                         log.info("Upgrading ThingsBoard from version 1.2.3 to 1.3.0 ...");
 
                         databaseUpgradeService.upgradeDatabase(upgradeFromVersion);
@@ -115,7 +114,7 @@ public class ThingsboardInstallService {
                 if (this.dataDir == null) {
                     throw new RuntimeException("'install.data_dir' property should specified!");
                 }
-                if (!Files.isDirectory(Paths.get(this.dataDir))) {
+                if (!Paths.get(this.dataDir).toFile().isDirectory()) {
                     throw new RuntimeException("'install.data_dir' property value is not a valid directory!");
                 }
 

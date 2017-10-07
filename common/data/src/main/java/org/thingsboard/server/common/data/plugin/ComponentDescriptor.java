@@ -32,7 +32,7 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
     @Getter @Setter private ComponentScope scope;
     @Getter @Setter private String name;
     @Getter @Setter private String clazz;
-    @Getter @Setter private JsonNode configurationDescriptor;
+    @Getter @Setter private transient JsonNode configurationDescriptor;
     @Getter @Setter private String actions;
 
     public ComponentDescriptor() {

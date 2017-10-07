@@ -28,16 +28,12 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> implements BaseEntity<UserCredentials> {
-
-    @Transient
-    private static final long serialVersionUID = -3989724854149114846L;
 
     @Column(name = ModelConstants.USER_CREDENTIALS_USER_ID_PROPERTY, unique = true)
     private String userId;

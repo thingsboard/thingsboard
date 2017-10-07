@@ -64,7 +64,7 @@ public class ServerSideRpcCallAction extends SimpleRuleLifecycleComponent implem
     }
 
     @Override
-    public Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData metadata) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData metadata) {
         String sendFlag = configuration.getSendFlag();
         if (StringUtils.isEmpty(sendFlag) || (Boolean) metadata.get(sendFlag).orElse(Boolean.FALSE)) {
             VelocityContext context = VelocityUtils.createContext(metadata);

@@ -127,6 +127,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         processDisconnect(ctx);
                     }
                     break;
+                default:
+                    break;
             }
         }
     }
@@ -142,26 +144,30 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (topicName.startsWith(BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionCtx != null) {
                 gatewaySessionCtx.setChannel(ctx);
-                try {
-                    if (topicName.equals(GATEWAY_TELEMETRY_TOPIC)) {
-                        gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
-                    } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
-                        gatewaySessionCtx.onDeviceAttributes(mqttMsg);
-                    } else if (topicName.equals(GATEWAY_ATTRIBUTES_REQUEST_TOPIC)) {
-                        gatewaySessionCtx.onDeviceAttributesRequest(mqttMsg);
-                    } else if (topicName.equals(GATEWAY_RPC_TOPIC)) {
-                        gatewaySessionCtx.onDeviceRpcResponse(mqttMsg);
-                    } else if (topicName.equals(GATEWAY_CONNECT_TOPIC)) {
-                        gatewaySessionCtx.onDeviceConnect(mqttMsg);
-                    } else if (topicName.equals(GATEWAY_DISCONNECT_TOPIC)) {
-                        gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
-                    }
-                } catch (RuntimeException | AdaptorException e) {
-                    log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-                }
+                handleMqttPublishMsg(topicName, msgId, mqttMsg);
             }
         } else {
             processDevicePublish(ctx, mqttMsg, topicName, msgId);
+        }
+    }
+
+    private void handleMqttPublishMsg(String topicName, int msgId, MqttPublishMessage mqttMsg) {
+        try {
+            if (topicName.equals(GATEWAY_TELEMETRY_TOPIC)) {
+                gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
+            } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
+                gatewaySessionCtx.onDeviceAttributes(mqttMsg);
+            } else if (topicName.equals(GATEWAY_ATTRIBUTES_REQUEST_TOPIC)) {
+                gatewaySessionCtx.onDeviceAttributesRequest(mqttMsg);
+            } else if (topicName.equals(GATEWAY_RPC_TOPIC)) {
+                gatewaySessionCtx.onDeviceRpcResponse(mqttMsg);
+            } else if (topicName.equals(GATEWAY_CONNECT_TOPIC)) {
+                gatewaySessionCtx.onDeviceConnect(mqttMsg);
+            } else if (topicName.equals(GATEWAY_DISCONNECT_TOPIC)) {
+                gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
+            }
+        } catch (RuntimeException | AdaptorException e) {
+            log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
         }
     }
 

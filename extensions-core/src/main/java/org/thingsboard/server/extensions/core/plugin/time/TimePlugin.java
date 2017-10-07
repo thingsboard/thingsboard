@@ -72,17 +72,17 @@ public class TimePlugin extends AbstractPlugin<TimePluginConfiguration> implemen
 
     @Override
     public void resume(PluginContext ctx) {
-
+        //Do nothing
     }
 
     @Override
     public void suspend(PluginContext ctx) {
-
+        //Do nothing
     }
 
     @Override
     public void stop(PluginContext ctx) {
-
+        //Do nothing
     }
 
     @Override

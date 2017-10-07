@@ -29,6 +29,7 @@ import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -75,6 +76,8 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
             case RULE_ENGINE_ERROR:
                 reply((RuleEngineErrorMsg) msg);
                 return;
+            default:
+                break;
         }
     }
 
@@ -94,10 +97,14 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
     }
 
     private <T> void reply(ResponseMsg<? extends T> msg, Consumer<T> f) {
-        if (!msg.getError().isPresent()) {
-            f.accept(msg.getData().get());
+        Optional<Exception> msgError = msg.getError();
+        if (!msgError.isPresent()) {
+            Optional<? extends T> msgData = msg.getData();
+            if (msgData.isPresent()) {
+                f.accept(msgData.get());
+            }
         } else {
-            Exception e = msg.getError().get();
+            Exception e = msgError.get();
             responseWriter.setResult(new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
@@ -137,7 +144,7 @@ public class HttpSessionCtx extends DeviceAwareSessionContext {
 
     @Override
     public void onMsg(SessionCtrlMsg msg) throws SessionException {
-
+        //Do nothing
     }
 
     @Override

@@ -33,6 +33,7 @@ public class MvcCorsProperties {
     private Map<String, CorsConfiguration> mappings = new HashMap<>();
 
     public MvcCorsProperties() {
+        super();
     }
 
     public Map<String, CorsConfiguration> getMappings() {

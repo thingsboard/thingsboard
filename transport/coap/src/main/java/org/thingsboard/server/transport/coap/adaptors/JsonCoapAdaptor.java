@@ -167,7 +167,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     private FromDeviceMsg convertToGetAttributesRequest(SessionContext ctx, Request inbound) throws AdaptorException {
         List<String> queryElements = inbound.getOptions().getUriQuery();
-        if (queryElements != null || queryElements.size() > 0) {
+        if (queryElements != null && queryElements.size() > 0) {
             Set<String> clientKeys = toKeys(ctx, queryElements, "clientKeys");
             Set<String> sharedKeys = toKeys(ctx, queryElements, "sharedKeys");
             return new BasicGetAttributesRequest(0, clientKeys, sharedKeys);
@@ -184,7 +184,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
                 keys = queryItem[1];
             }
         }
-        if (!StringUtils.isEmpty(keys)) {
+        if (keys != null && !StringUtils.isEmpty(keys)) {
             return new HashSet<>(Arrays.asList(keys.split(",")));
         } else {
             return null;
@@ -202,14 +202,14 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     private Response convertStatusCodeResponse(StatusCodeResponse msg) {
         if (msg.isSuccess()) {
-            Integer code = msg.getData().get();
-            if (code == 200) {
+            Optional<Integer> code = msg.getData();
+            if (code.isPresent() && code.get() == 200) {
                 return new Response(ResponseCode.VALID);
             } else {
                 return new Response(ResponseCode.CREATED);
             }
         } else {
-            return convertError(msg.getError().get());
+            return convertError(msg.getError());
         }
     }
 
@@ -229,30 +229,34 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
             response.setPayload(result.toString());
             return response;
         } else {
-            return convertError(new RuntimeException("Server RPC response is empty!"));
+            return convertError(Optional.of(new RuntimeException("Server RPC response is empty!")));
         }
     }
 
     private Response convertGetAttributesResponse(GetAttributesResponse msg) {
         if (msg.isSuccess()) {
-            AttributesKVMsg payload = msg.getData().get();
-            if (payload.getClientAttributes().isEmpty() && payload.getSharedAttributes().isEmpty()) {
+            Optional<AttributesKVMsg> payload = msg.getData();
+            if (!payload.isPresent() || (payload.get().getClientAttributes().isEmpty() && payload.get().getSharedAttributes().isEmpty())) {
                 return new Response(ResponseCode.NOT_FOUND);
             } else {
                 Response response = new Response(ResponseCode.CONTENT);
-                JsonObject result = JsonConverter.toJson(payload, false);
+                JsonObject result = JsonConverter.toJson(payload.get(), false);
                 response.setPayload(result.toString());
                 return response;
             }
         } else {
-            return convertError(msg.getError().get());
+            return convertError(msg.getError());
         }
     }
 
-    private Response convertError(Exception exception) {
-        log.warn("Converting exception: {}", exception.getMessage(), exception);
-        if (exception instanceof ProcessingTimeoutException) {
-            return new Response(ResponseCode.SERVICE_UNAVAILABLE);
+    private Response convertError(Optional<Exception> exception) {
+        if (exception.isPresent()) {
+            log.warn("Converting exception: {}", exception.get().getMessage(), exception.get());
+            if (exception.get() instanceof ProcessingTimeoutException) {
+                return new Response(ResponseCode.SERVICE_UNAVAILABLE);
+            } else {
+                return new Response(ResponseCode.INTERNAL_SERVER_ERROR);
+            }
         } else {
             return new Response(ResponseCode.INTERNAL_SERVER_ERROR);
         }

@@ -49,6 +49,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 @NoSqlDao
 public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearchTextDao<ComponentDescriptorEntity, ComponentDescriptor> implements ComponentDescriptorDao {
 
+    public static final String SEARCH_RESULT = "Search result: [{}]";
+
     @Override
     protected Class<ComponentDescriptorEntity> getColumnFamilyClass() {
         return ComponentDescriptorEntity.class;
@@ -79,7 +81,7 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}] for component entity [{}]", componentDescriptor != null, componentDescriptor);
         } else {
-            log.debug("Search result: [{}]", componentDescriptor != null);
+            log.debug(SEARCH_RESULT, componentDescriptor != null);
         }
         return componentDescriptor;
     }
@@ -93,7 +95,7 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}] for component entity [{}]", entity != null, entity);
         } else {
-            log.debug("Search result: [{}]", entity != null);
+            log.debug(SEARCH_RESULT, entity != null);
         }
         return DaoUtil.getData(entity);
     }
@@ -104,9 +106,9 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
         List<ComponentDescriptorEntity> entities = findPageWithTextSearch(ModelConstants.COMPONENT_DESCRIPTOR_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type)), pageLink);
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
+            log.trace(SEARCH_RESULT, Arrays.toString(entities.toArray()));
         } else {
-            log.debug("Search result: [{}]", entities.size());
+            log.debug(SEARCH_RESULT, entities.size());
         }
         return DaoUtil.convertDataList(entities);
     }
@@ -118,9 +120,9 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
                 Arrays.asList(eq(ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY, type),
                         eq(ModelConstants.COMPONENT_DESCRIPTOR_SCOPE_PROPERTY, scope.name())), pageLink);
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
+            log.trace(SEARCH_RESULT, Arrays.toString(entities.toArray()));
         } else {
-            log.debug("Search result: [{}]", entities.size());
+            log.debug(SEARCH_RESULT, entities.size());
         }
         return DaoUtil.convertDataList(entities);
     }

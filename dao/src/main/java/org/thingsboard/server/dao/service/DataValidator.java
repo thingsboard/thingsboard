@@ -57,12 +57,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     }
     
     protected boolean isSameData(D existentData, D actualData) {
-        if (actualData.getId() == null) {
-            return false;
-        } else if (!existentData.getId().equals(actualData.getId())) {
-            return false;
-        }
-        return true;
+        return actualData.getId() != null && existentData.getId().equals(actualData.getId());
     }
     
     protected static void validateEmail(String email) {

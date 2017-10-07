@@ -40,6 +40,12 @@ import java.util.List;
 public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
     private static final String SCHEMA_UPDATE_CQL = "schema_update.cql";
+    public static final String DEVICE = "device";
+    public static final String TENANT_ID = "tenant_id";
+    public static final String CUSTOMER_ID = "customer_id";
+    public static final String SEARCH_TEXT = "search_text";
+    public static final String ADDITIONAL_INFO = "additional_info";
+    public static final String ASSET = "asset";
 
     @Value("${install.data_dir}")
     private String dataDir;
@@ -63,22 +69,22 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 KeyspaceMetadata ks = cluster.getCluster().getMetadata().getKeyspace(cluster.getKeyspaceName());
 
                 log.info("Dumping devices ...");
-                Path devicesDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), "device",
-                        new String[]{"id", "tenant_id", "customer_id", "name", "search_text", "additional_info", "type"},
+                Path devicesDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), DEVICE,
+                        new String[]{"id", TENANT_ID, CUSTOMER_ID, "name", SEARCH_TEXT, ADDITIONAL_INFO, "type"},
                         new String[]{"", "", "", "", "", "", "default"},
                         "tb-devices");
                 log.info("Devices dumped.");
 
                 log.info("Dumping assets ...");
-                Path assetsDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), "asset",
-                        new String[]{"id", "tenant_id", "customer_id", "name", "search_text", "additional_info", "type"},
+                Path assetsDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), ASSET,
+                        new String[]{"id", TENANT_ID, CUSTOMER_ID, "name", SEARCH_TEXT, ADDITIONAL_INFO, "type"},
                         new String[]{"", "", "", "", "", "", "default"},
                         "tb-assets");
                 log.info("Assets dumped.");
 
                 log.info("Dumping relations ...");
                 Path relationsDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), "relation",
-                        new String[]{"from_id", "from_type", "to_id", "to_type", "relation_type", "additional_info", "relation_type_group"},
+                        new String[]{"from_id", "from_type", "to_id", "to_type", "relation_type", ADDITIONAL_INFO, "relation_type_group"},
                         new String[]{"", "", "", "", "", "", "COMMON"},
                         "tb-relations");
                 log.info("Relations dumped.");
@@ -92,15 +98,15 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
                 log.info("Restoring devices ...");
                 if (devicesDump != null) {
-                    CassandraDbHelper.loadCf(ks, cluster.getSession(), "device",
-                            new String[]{"id", "tenant_id", "customer_id", "name", "search_text", "additional_info", "type"}, devicesDump);
+                    CassandraDbHelper.loadCf(ks, cluster.getSession(), DEVICE,
+                            new String[]{"id", TENANT_ID, CUSTOMER_ID, "name", SEARCH_TEXT, ADDITIONAL_INFO, "type"}, devicesDump);
                     Files.deleteIfExists(devicesDump);
                 }
                 log.info("Devices restored.");
 
                 log.info("Dumping device types ...");
-                Path deviceTypesDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), "device",
-                        new String[]{"tenant_id", "type"},
+                Path deviceTypesDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), DEVICE,
+                        new String[]{TENANT_ID, "type"},
                         new String[]{"", ""},
                         "tb-device-types");
                 if (deviceTypesDump != null) {
@@ -110,22 +116,22 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Loading device types ...");
                 if (deviceTypesDump != null) {
                     CassandraDbHelper.loadCf(ks, cluster.getSession(), "entity_subtype",
-                            new String[]{"tenant_id", "type", "entity_type"}, deviceTypesDump);
+                            new String[]{TENANT_ID, "type", "entity_type"}, deviceTypesDump);
                     Files.deleteIfExists(deviceTypesDump);
                 }
                 log.info("Device types loaded.");
 
                 log.info("Restoring assets ...");
                 if (assetsDump != null) {
-                    CassandraDbHelper.loadCf(ks, cluster.getSession(), "asset",
-                            new String[]{"id", "tenant_id", "customer_id", "name", "search_text", "additional_info", "type"}, assetsDump);
+                    CassandraDbHelper.loadCf(ks, cluster.getSession(), ASSET,
+                            new String[]{"id", TENANT_ID, CUSTOMER_ID, "name", SEARCH_TEXT, ADDITIONAL_INFO, "type"}, assetsDump);
                     Files.deleteIfExists(assetsDump);
                 }
                 log.info("Assets restored.");
 
                 log.info("Dumping asset types ...");
-                Path assetTypesDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), "asset",
-                        new String[]{"tenant_id", "type"},
+                Path assetTypesDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), ASSET,
+                        new String[]{TENANT_ID, "type"},
                         new String[]{"", ""},
                         "tb-asset-types");
                 if (assetTypesDump != null) {
@@ -135,7 +141,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Loading asset types ...");
                 if (assetTypesDump != null) {
                     CassandraDbHelper.loadCf(ks, cluster.getSession(), "entity_subtype",
-                            new String[]{"tenant_id", "type", "entity_type"}, assetTypesDump);
+                            new String[]{TENANT_ID, "type", "entity_type"}, assetTypesDump);
                     Files.deleteIfExists(assetTypesDump);
                 }
                 log.info("Asset types loaded.");
@@ -143,7 +149,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Restoring relations ...");
                 if (relationsDump != null) {
                     CassandraDbHelper.loadCf(ks, cluster.getSession(), "relation",
-                            new String[]{"from_id", "from_type", "to_id", "to_type", "relation_type", "additional_info", "relation_type_group"}, relationsDump);
+                            new String[]{"from_id", "from_type", "to_id", "to_type", "relation_type", ADDITIONAL_INFO, "relation_type_group"}, relationsDump);
                     Files.deleteIfExists(relationsDump);
                 }
                 log.info("Relations restored.");

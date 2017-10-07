@@ -74,69 +74,88 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
 
         if (method.equals("keys")) {
-            if (feature == TelemetryFeature.TIMESERIES) {
-                ctx.loadLatestTimeseries(entityId, new PluginCallback<List<TsKvEntry>>() {
-                    @Override
-                    public void onSuccess(PluginContext ctx, List<TsKvEntry> value) {
-                        List<String> keys = value.stream().map(tsKv -> tsKv.getKey()).collect(Collectors.toList());
-                        msg.getResponseHolder().setResult(new ResponseEntity<>(keys, HttpStatus.OK));
-                    }
-
-                    @Override
-                    public void onFailure(PluginContext ctx, Exception e) {
-                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
-                    }
-                });
-            } else if (feature == TelemetryFeature.ATTRIBUTES) {
-                PluginCallback<List<AttributeKvEntry>> callback = getAttributeKeysPluginCallback(msg);
-                if (!StringUtils.isEmpty(scope)) {
-                    ctx.loadAttributes(entityId, scope, callback);
-                } else {
-                    ctx.loadAttributes(entityId, Arrays.asList(DataConstants.ALL_SCOPES), callback);
-                }
-            }
+            handleHttpGetKeysMethod(ctx, msg, feature, scope, entityId);
         } else if (method.equals("values")) {
-            if (feature == TelemetryFeature.TIMESERIES) {
-                String keysStr = request.getParameter("keys");
-                List<String> keys = Arrays.asList(keysStr.split(","));
+            handleHttpGetValuesMethod(ctx, msg, request, feature, scope, entityId);
+        }
+    }
 
-                Optional<Long> startTs = request.getLongParamValue("startTs");
-                Optional<Long> endTs = request.getLongParamValue("endTs");
-                Optional<Long> interval = request.getLongParamValue("interval");
-                Optional<Integer> limit = request.getIntParamValue("limit");
-
-                if (startTs.isPresent() || endTs.isPresent() || interval.isPresent() || limit.isPresent()) {
-                    if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent()) {
-                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
-                        return;
-                    }
-                    Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
-
-                    List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
-                            .collect(Collectors.toList());
-                    ctx.loadTimeseries(entityId, queries, getTsKvListCallback(msg));
-                } else {
-                    ctx.loadLatestTimeseries(entityId, keys, getTsKvListCallback(msg));
+    private void handleHttpGetKeysMethod(PluginContext ctx, PluginRestMsg msg, TelemetryFeature feature, String scope, EntityId entityId) {
+        if (feature == TelemetryFeature.TIMESERIES) {
+            ctx.loadLatestTimeseries(entityId, new PluginCallback<List<TsKvEntry>>() {
+                @Override
+                public void onSuccess(PluginContext ctx, List<TsKvEntry> value) {
+                    List<String> keys = value.stream().map(tsKv -> tsKv.getKey()).collect(Collectors.toList());
+                    msg.getResponseHolder().setResult(new ResponseEntity<>(keys, HttpStatus.OK));
                 }
-            } else if (feature == TelemetryFeature.ATTRIBUTES) {
-                String keys = request.getParameter("keys", "");
 
-                PluginCallback<List<AttributeKvEntry>> callback = getAttributeValuesPluginCallback(msg);
-                if (!StringUtils.isEmpty(scope)) {
-                    if (!StringUtils.isEmpty(keys)) {
-                        List<String> keyList = Arrays.asList(keys.split(","));
-                        ctx.loadAttributes(entityId, scope, keyList, callback);
-                    } else {
-                        ctx.loadAttributes(entityId, scope, callback);
-                    }
-                } else {
-                    if (!StringUtils.isEmpty(keys)) {
-                        List<String> keyList = Arrays.asList(keys.split(","));
-                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.ALL_SCOPES), keyList, callback);
-                    } else {
-                        ctx.loadAttributes(entityId, Arrays.asList(DataConstants.ALL_SCOPES), callback);
-                    }
+                @Override
+                public void onFailure(PluginContext ctx, Exception e) {
+                    msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                 }
+            });
+        } else if (feature == TelemetryFeature.ATTRIBUTES) {
+            PluginCallback<List<AttributeKvEntry>> callback = getAttributeKeysPluginCallback(msg);
+            if (!StringUtils.isEmpty(scope)) {
+                ctx.loadAttributes(entityId, scope, callback);
+            } else {
+                ctx.loadAttributes(entityId, Arrays.asList(DataConstants.allScopes()), callback);
+            }
+        }
+    }
+
+    private void handleHttpGetValuesMethod(PluginContext ctx, PluginRestMsg msg,
+                                           RestRequest request, TelemetryFeature feature,
+                                           String scope, EntityId entityId) throws ServletException {
+        if (feature == TelemetryFeature.TIMESERIES) {
+            handleHttpGetTimeseriesValues(ctx, msg, request, entityId);
+        } else if (feature == TelemetryFeature.ATTRIBUTES) {
+            handleHttpGetAttributesValues(ctx, msg, request, scope, entityId);
+        }
+    }
+
+    private void handleHttpGetTimeseriesValues(PluginContext ctx, PluginRestMsg msg, RestRequest request, EntityId entityId) throws ServletException {
+        String keysStr = request.getParameter("keys");
+        List<String> keys = Arrays.asList(keysStr.split(","));
+
+        Optional<Long> startTs = request.getLongParamValue("startTs");
+        Optional<Long> endTs = request.getLongParamValue("endTs");
+        Optional<Long> interval = request.getLongParamValue("interval");
+        Optional<Integer> limit = request.getIntParamValue("limit");
+
+        if (startTs.isPresent() || endTs.isPresent() || interval.isPresent() || limit.isPresent()) {
+            if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent()) {
+                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+                return;
+            }
+            Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
+
+            List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
+                    .collect(Collectors.toList());
+            ctx.loadTimeseries(entityId, queries, getTsKvListCallback(msg));
+        } else {
+            ctx.loadLatestTimeseries(entityId, keys, getTsKvListCallback(msg));
+        }
+    }
+
+    private void handleHttpGetAttributesValues(PluginContext ctx, PluginRestMsg msg,
+                                               RestRequest request, String scope, EntityId entityId) throws ServletException {
+        String keys = request.getParameter("keys", "");
+
+        PluginCallback<List<AttributeKvEntry>> callback = getAttributeValuesPluginCallback(msg);
+        if (!StringUtils.isEmpty(scope)) {
+            if (!StringUtils.isEmpty(keys)) {
+                List<String> keyList = Arrays.asList(keys.split(","));
+                ctx.loadAttributes(entityId, scope, keyList, callback);
+            } else {
+                ctx.loadAttributes(entityId, scope, callback);
+            }
+        } else {
+            if (!StringUtils.isEmpty(keys)) {
+                List<String> keyList = Arrays.asList(keys.split(","));
+                ctx.loadAttributes(entityId, Arrays.asList(DataConstants.allScopes()), keyList, callback);
+            } else {
+                ctx.loadAttributes(entityId, Arrays.asList(DataConstants.allScopes()), callback);
             }
         }
     }
@@ -172,70 +191,82 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                 return;
             }
             if (feature == TelemetryFeature.ATTRIBUTES) {
-                if (DataConstants.SERVER_SCOPE.equals(scope) ||
-                        DataConstants.SHARED_SCOPE.equals(scope)) {
-                    JsonNode jsonNode = jsonMapper.readTree(request.getRequestBody());
-                    if (jsonNode.isObject()) {
-                        long ts = System.currentTimeMillis();
-                        List<AttributeKvEntry> attributes = new ArrayList<>();
-                        jsonNode.fields().forEachRemaining(entry -> {
-                            String key = entry.getKey();
-                            JsonNode value = entry.getValue();
-                            if (entry.getValue().isTextual()) {
-                                attributes.add(new BaseAttributeKvEntry(new StringDataEntry(key, value.textValue()), ts));
-                            } else if (entry.getValue().isBoolean()) {
-                                attributes.add(new BaseAttributeKvEntry(new BooleanDataEntry(key, value.booleanValue()), ts));
-                            } else if (entry.getValue().isDouble()) {
-                                attributes.add(new BaseAttributeKvEntry(new DoubleDataEntry(key, value.doubleValue()), ts));
-                            } else if (entry.getValue().isNumber()) {
-                                attributes.add(new BaseAttributeKvEntry(new LongDataEntry(key, value.longValue()), ts));
-                            }
-                        });
-                        if (attributes.size() > 0) {
-                            ctx.saveAttributes(ctx.getSecurityCtx().orElseThrow(() -> new IllegalArgumentException()).getTenantId(), entityId, scope, attributes, new PluginCallback<Void>() {
-                                @Override
-                                public void onSuccess(PluginContext ctx, Void value) {
-                                    msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
-                                    subscriptionManager.onAttributesUpdateFromServer(ctx, entityId, scope, attributes);
-                                }
-
-                                @Override
-                                public void onFailure(PluginContext ctx, Exception e) {
-                                    log.error("Failed to save attributes", e);
-                                    msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
-                                }
-                            });
-                            return;
-                        }
-                    }
+                if (handleHttpPostAttributes(ctx, msg, request, entityId, scope)) {
+                    return;
                 }
             } else if (feature == TelemetryFeature.TIMESERIES) {
-                TelemetryUploadRequest telemetryRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(request.getRequestBody()));
-                List<TsKvEntry> entries = new ArrayList<>();
-                for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.getData().entrySet()) {
-                    for (KvEntry kv : entry.getValue()) {
-                        entries.add(new BasicTsKvEntry(entry.getKey(), kv));
-                    }
-                }
-                ctx.saveTsData(entityId, entries, ttl, new PluginCallback<Void>() {
-                    @Override
-                    public void onSuccess(PluginContext ctx, Void value) {
-                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
-                        subscriptionManager.onTimeseriesUpdateFromServer(ctx, entityId, entries);
-                    }
-
-                    @Override
-                    public void onFailure(PluginContext ctx, Exception e) {
-                        log.error("Failed to save attributes", e);
-                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
-                    }
-                });
+                handleHttpPostTimeseries(ctx, msg, request, entityId, ttl);
                 return;
             }
         } catch (IOException | RuntimeException e) {
             log.debug("Failed to process POST request due to exception", e);
         }
         msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+    }
+
+    private boolean handleHttpPostAttributes(PluginContext ctx, PluginRestMsg msg, RestRequest request,
+                                          EntityId entityId, String scope) throws ServletException, IOException {
+        if (DataConstants.SERVER_SCOPE.equals(scope) ||
+                DataConstants.SHARED_SCOPE.equals(scope)) {
+            JsonNode jsonNode = jsonMapper.readTree(request.getRequestBody());
+            if (jsonNode.isObject()) {
+                long ts = System.currentTimeMillis();
+                List<AttributeKvEntry> attributes = new ArrayList<>();
+                jsonNode.fields().forEachRemaining(entry -> {
+                    String key = entry.getKey();
+                    JsonNode value = entry.getValue();
+                    if (entry.getValue().isTextual()) {
+                        attributes.add(new BaseAttributeKvEntry(new StringDataEntry(key, value.textValue()), ts));
+                    } else if (entry.getValue().isBoolean()) {
+                        attributes.add(new BaseAttributeKvEntry(new BooleanDataEntry(key, value.booleanValue()), ts));
+                    } else if (entry.getValue().isDouble()) {
+                        attributes.add(new BaseAttributeKvEntry(new DoubleDataEntry(key, value.doubleValue()), ts));
+                    } else if (entry.getValue().isNumber()) {
+                        attributes.add(new BaseAttributeKvEntry(new LongDataEntry(key, value.longValue()), ts));
+                    }
+                });
+                if (attributes.size() > 0) {
+                    ctx.saveAttributes(ctx.getSecurityCtx().orElseThrow(() -> new IllegalArgumentException()).getTenantId(), entityId, scope, attributes, new PluginCallback<Void>() {
+                        @Override
+                        public void onSuccess(PluginContext ctx, Void value) {
+                            msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
+                            subscriptionManager.onAttributesUpdateFromServer(ctx, entityId, scope, attributes);
+                        }
+
+                        @Override
+                        public void onFailure(PluginContext ctx, Exception e) {
+                            log.error("Failed to save attributes", e);
+                            msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                        }
+                    });
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void handleHttpPostTimeseries(PluginContext ctx, PluginRestMsg msg, RestRequest request, EntityId entityId, long ttl) {
+        TelemetryUploadRequest telemetryRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(request.getRequestBody()));
+        List<TsKvEntry> entries = new ArrayList<>();
+        for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.getData().entrySet()) {
+            for (KvEntry kv : entry.getValue()) {
+                entries.add(new BasicTsKvEntry(entry.getKey(), kv));
+            }
+        }
+        ctx.saveTsData(entityId, entries, ttl, new PluginCallback<Void>() {
+            @Override
+            public void onSuccess(PluginContext ctx, Void value) {
+                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
+                subscriptionManager.onTimeseriesUpdateFromServer(ctx, entityId, entries);
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to save attributes", e);
+                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            }
+        });
     }
 
     @Override

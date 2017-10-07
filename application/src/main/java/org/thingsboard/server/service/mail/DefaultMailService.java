@@ -44,6 +44,9 @@ import java.util.Properties;
 @Slf4j
 public class DefaultMailService implements MailService {
 
+    public static final String MAIL_PROP = "mail.";
+    public static final String TARGET_EMAIL = "targetEmail";
+    public static final String UTF_8 = "UTF-8";
     @Autowired
     private MessageSource messages;
     
@@ -89,11 +92,11 @@ public class DefaultMailService implements MailService {
         Properties javaMailProperties = new Properties();
         String protocol = jsonConfig.get("smtpProtocol").asText();
         javaMailProperties.put("mail.transport.protocol", protocol);
-        javaMailProperties.put("mail." + protocol + ".host", jsonConfig.get("smtpHost").asText());
-        javaMailProperties.put("mail." + protocol + ".port", jsonConfig.get("smtpPort").asText());
-        javaMailProperties.put("mail." + protocol + ".timeout", jsonConfig.get("timeout").asText());
-        javaMailProperties.put("mail." + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(jsonConfig.get("username").asText())));
-        javaMailProperties.put("mail." + protocol + ".starttls.enable", jsonConfig.get("enableTls"));
+        javaMailProperties.put(MAIL_PROP + protocol + ".host", jsonConfig.get("smtpHost").asText());
+        javaMailProperties.put(MAIL_PROP + protocol + ".port", jsonConfig.get("smtpPort").asText());
+        javaMailProperties.put(MAIL_PROP + protocol + ".timeout", jsonConfig.get("timeout").asText());
+        javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(jsonConfig.get("username").asText())));
+        javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", jsonConfig.get("enableTls"));
         return javaMailProperties;
     }
     
@@ -117,10 +120,10 @@ public class DefaultMailService implements MailService {
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
         
         Map<String, Object> model = new HashMap<String, Object>();
-        model.put("targetEmail", email);
+        model.put(TARGET_EMAIL, email);
         
         String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
-                "test.vm", "UTF-8", model);
+                "test.vm", UTF_8, model);
         
         sendMail(testMailSender, mailFrom, email, subject, message); 
     }
@@ -132,10 +135,10 @@ public class DefaultMailService implements MailService {
         
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("activationLink", activationLink);
-        model.put("targetEmail", email);
+        model.put(TARGET_EMAIL, email);
         
         String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
-                "activation.vm", "UTF-8", model);
+                "activation.vm", UTF_8, model);
         
         sendMail(mailSender, mailFrom, email, subject, message); 
     }
@@ -147,10 +150,10 @@ public class DefaultMailService implements MailService {
         
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("loginLink", loginLink);
-        model.put("targetEmail", email);
+        model.put(TARGET_EMAIL, email);
         
         String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
-                "account.activated.vm", "UTF-8", model);
+                "account.activated.vm", UTF_8, model);
         
         sendMail(mailSender, mailFrom, email, subject, message); 
     }
@@ -162,10 +165,10 @@ public class DefaultMailService implements MailService {
         
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("passwordResetLink", passwordResetLink);
-        model.put("targetEmail", email);
+        model.put(TARGET_EMAIL, email);
         
         String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
-                "reset.password.vm", "UTF-8", model);
+                "reset.password.vm", UTF_8, model);
         
         sendMail(mailSender, mailFrom, email, subject, message); 
     }
@@ -177,10 +180,10 @@ public class DefaultMailService implements MailService {
         
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("loginLink", loginLink);
-        model.put("targetEmail", email);
+        model.put(TARGET_EMAIL, email);
         
         String message = VelocityEngineUtils.mergeTemplateIntoString(this.engine,
-                "password.was.reset.vm", "UTF-8", model);
+                "password.was.reset.vm", UTF_8, model);
         
         sendMail(mailSender, mailFrom, email, subject, message); 
     }
@@ -191,7 +194,7 @@ public class DefaultMailService implements MailService {
             String subject, String message) throws ThingsboardException {
         try {
             MimeMessage mimeMsg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMsg, "UTF-8");
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMsg, UTF_8);
             helper.setFrom(mailFrom);
             helper.setTo(email);
             helper.setSubject(subject);

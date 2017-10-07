@@ -234,54 +234,68 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         removeResizeListener(gridsterParent[0], onGirdsterParentResize); // eslint-disable-line no-undef
     });
 
+    watchWidgets();
+
     function onGirdsterParentResize() {
         if (gridsterParent.height() && autofillHeight()) {
             updateMobileOpts();
         }
     }
 
-    $scope.$watchCollection('vm.widgets', function () {
-        sortWidgets();
-        var ids = [];
-        for (var i=0;i<vm.widgets.length;i++) {
-            var widget = vm.widgets[i];
-            if (!widget.id) {
-                widget.id = utils.guid();
+    function watchWidgets() {
+        $scope.widgetsCollectionWatch = $scope.$watchCollection('vm.widgets', function () {
+            var ids = [];
+            for (var i=0;i<vm.widgets.length;i++) {
+                var widget = vm.widgets[i];
+                if (!widget.id) {
+                    widget.id = utils.guid();
+                }
+                ids.push(widget.id);
+                var layoutInfoObject = vm.widgetLayoutInfo[widget.id];
+                if (!layoutInfoObject) {
+                    layoutInfoObject = {
+                        widget: widget
+                    };
+                    Object.defineProperty(layoutInfoObject, 'sizeX', {
+                        get: function() { return widgetSizeX(this.widget) },
+                        set: function(newSizeX) { setWidgetSizeX(this.widget, newSizeX)}
+                    });
+                    Object.defineProperty(layoutInfoObject, 'sizeY', {
+                        get: function() { return widgetSizeY(this.widget) },
+                        set: function(newSizeY) { setWidgetSizeY(this.widget, newSizeY)}
+                    });
+                    Object.defineProperty(layoutInfoObject, 'row', {
+                        get: function() { return widgetRow(this.widget) },
+                        set: function(newRow) { setWidgetRow(this.widget, newRow)}
+                    });
+                    Object.defineProperty(layoutInfoObject, 'col', {
+                        get: function() { return widgetCol(this.widget) },
+                        set: function(newCol) { setWidgetCol(this.widget, newCol)}
+                    });
+                    vm.widgetLayoutInfo[widget.id] = layoutInfoObject;
+                }
             }
-            ids.push(widget.id);
-            var layoutInfoObject = vm.widgetLayoutInfo[widget.id];
-            if (!layoutInfoObject) {
-                layoutInfoObject = {
-                    widget: widget
-                };
-                Object.defineProperty(layoutInfoObject, 'sizeX', {
-                    get: function() { return widgetSizeX(this.widget) },
-                    set: function(newSizeX) { setWidgetSizeX(this.widget, newSizeX)}
-                });
-                Object.defineProperty(layoutInfoObject, 'sizeY', {
-                    get: function() { return widgetSizeY(this.widget) },
-                    set: function(newSizeY) { setWidgetSizeY(this.widget, newSizeY)}
-                });
-                Object.defineProperty(layoutInfoObject, 'row', {
-                    get: function() { return widgetRow(this.widget) },
-                    set: function(newRow) { setWidgetRow(this.widget, newRow)}
-                });
-                Object.defineProperty(layoutInfoObject, 'col', {
-                    get: function() { return widgetCol(this.widget) },
-                    set: function(newCol) { setWidgetCol(this.widget, newCol)}
-                });
-                vm.widgetLayoutInfo[widget.id] = layoutInfoObject;
+            for (var widgetId in vm.widgetLayoutInfo) {
+                if (ids.indexOf(widgetId) === -1) {
+                    delete vm.widgetLayoutInfo[widgetId];
+                }
             }
+            $mdUtil.nextTick(function () {
+                sortWidgets();
+                if (autofillHeight()) {
+                    updateMobileOpts();
+                }
+            });
+        });
+    }
+
+    function stopWatchWidgets() {
+        if ($scope.widgetsCollectionWatch) {
+            $scope.widgetsCollectionWatch();
+            $scope.widgetsCollectionWatch = null;
         }
-        for (var widgetId in vm.widgetLayoutInfo) {
-            if (ids.indexOf(widgetId) === -1) {
-                delete vm.widgetLayoutInfo[widgetId];
-            }
-        }
-        if (autofillHeight()) {
-            updateMobileOpts();
-        }
-    });
+    }
+
 
     //TODO: widgets visibility
     /*gridsterParent.scroll(function () {
@@ -500,6 +514,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     loadDashboard();
 
     function sortWidgets() {
+        stopWatchWidgets();
         vm.widgets.sort(function (widget1, widget2) {
             var row1 = widgetOrder(widget1);
             var row2 = widgetOrder(widget2);
@@ -509,6 +524,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             }
             return res;
         });
+        watchWidgets();
     }
 
     function reload() {

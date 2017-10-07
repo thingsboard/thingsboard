@@ -19,8 +19,9 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -33,11 +34,10 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = DEVICE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class DeviceEntity implements SearchTextEntity<Device> {
 
-    @Transient
-    private static final long serialVersionUID = -1265181166886910152L;
-    
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
     private UUID id;
@@ -132,7 +132,7 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     
     @Override
     public String getSearchTextSource() {
-        return name;
+        return getName();
     }
 
     @Override
@@ -142,80 +142,6 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     
     public String getSearchText() {
         return searchText;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((additionalInfo == null) ? 0 : additionalInfo.hashCode());
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        result = prime * result + ((type == null) ? 0 : type.hashCode());
-        result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        DeviceEntity other = (DeviceEntity) obj;
-        if (additionalInfo == null) {
-            if (other.additionalInfo != null)
-                return false;
-        } else if (!additionalInfo.equals(other.additionalInfo))
-            return false;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
-            return false;
-        if (type == null) {
-            if (other.type != null)
-                return false;
-        } else if (!type.equals(other.type))
-            return false;
-        if (tenantId == null) {
-            if (other.tenantId != null)
-                return false;
-        } else if (!tenantId.equals(other.tenantId))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("DeviceEntity [id=");
-        builder.append(id);
-        builder.append(", tenantId=");
-        builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
-        builder.append(", name=");
-        builder.append(name);
-        builder.append(", type=");
-        builder.append(type);
-        builder.append(", additionalInfo=");
-        builder.append(additionalInfo);
-        builder.append("]");
-        return builder.toString();
     }
 
     @Override

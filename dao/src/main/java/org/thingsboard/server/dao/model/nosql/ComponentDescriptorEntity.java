@@ -36,8 +36,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Table(name = COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
 public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
 
-    private static final long serialVersionUID = 1L;
-
     @PartitionKey
     @Column(name = ID_PROPERTY)
     private UUID id;
@@ -160,6 +158,6 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
 
     @Override
     public String getSearchTextSource() {
-        return searchText;
+        return getSearchText();
     }
 }

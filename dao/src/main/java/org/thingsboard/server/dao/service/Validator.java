@@ -117,11 +117,7 @@ public class Validator {
      * @param errorMessage the error message for exception
      */
     public static void validatePageLink(TextPageLink pageLink, String errorMessage) {
-        if (pageLink == null) {
-            throw new IncorrectParameterException(errorMessage);
-        } else if (pageLink.getLimit() < 1) {
-            throw new IncorrectParameterException(errorMessage);
-        } else if (pageLink.getIdOffset() != null && pageLink.getIdOffset().version() != 1) {
+        if (pageLink == null || pageLink.getLimit() < 1 || (pageLink.getIdOffset() != null && pageLink.getIdOffset().version() != 1)) {
             throw new IncorrectParameterException(errorMessage);
         }
     }

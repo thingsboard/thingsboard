@@ -47,12 +47,6 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 public class PluginApiController extends BaseController {
 
-    @Autowired
-    private ActorService actorService;
-
-    @Autowired
-    private PluginService pluginService;
-
     @SuppressWarnings("rawtypes")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{pluginToken}/**")
@@ -71,7 +65,7 @@ public class PluginApiController extends BaseController {
             TenantId tenantId = getCurrentUser().getTenantId();
             CustomerId customerId = getCurrentUser().getCustomerId();
             if (validatePluginAccess(pluginMd, tenantId, customerId)) {
-                if(ModelConstants.NULL_UUID.equals(tenantId.getId())){
+                if(tenantId != null && ModelConstants.NULL_UUID.equals(tenantId.getId())){
                     tenantId = null;
                 }
                 PluginApiCallSecurityContext securityCtx = new PluginApiCallSecurityContext(pluginMd.getTenantId(), pluginMd.getId(), tenantId, customerId);
@@ -97,7 +91,7 @@ public class PluginApiController extends BaseController {
                 validUser = true;
             }
         } else {
-            if ((pluginMd.isPublicAccess() || tenantAdministrator) && tenantId.equals(pluginMd.getTenantId())) {
+            if ((pluginMd.isPublicAccess() || tenantAdministrator) && tenantId != null && tenantId.equals(pluginMd.getTenantId())) {
                 // All tenant users can access public tenant plugins. Only tenant
                 // administrator can access private tenant plugins
                 validUser = true;

@@ -28,6 +28,8 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
     vm.getStateObject = getStateObject;
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
+    vm.getStateIndex = getStateIndex;
+    vm.getStateIdAtIndex = getStateIdAtIndex;
     vm.getStateParams = getStateParams;
     vm.getStateParamsByStateId = getStateParamsByStateId;
     vm.getEntityId = getEntityId;
@@ -95,6 +97,22 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
     function getStateId() {
         if (vm.stateObject && vm.stateObject.length) {
             return vm.stateObject[vm.stateObject.length-1].id;
+        } else {
+            return '';
+        }
+    }
+
+    function getStateIndex() {
+        if (vm.stateObject && vm.stateObject.length) {
+            return vm.stateObject.length-1;
+        } else {
+            return -1;
+        }
+    }
+
+    function getStateIdAtIndex(index) {
+        if (vm.stateObject && vm.stateObject[index]) {
+            return vm.stateObject[index].id;
         } else {
             return '';
         }

@@ -33,6 +33,7 @@ import java.util.Map;
 @Slf4j
 public class DefaultWebsocketMsgHandler implements WebsocketMsgHandler {
 
+    public static final String PROCESSING_MSG = "[{}] Processing: {}";
     protected final ObjectMapper jsonMapper = new ObjectMapper();
 
     protected final Map<String, WsSessionMetaData> wsSessionsMap = new HashMap<>();
@@ -41,9 +42,9 @@ public class DefaultWebsocketMsgHandler implements WebsocketMsgHandler {
     public void process(PluginContext ctx, PluginWebsocketMsg<?> wsMsg) {
         PluginWebsocketSessionRef sessionRef = wsMsg.getSessionRef();
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Processing: {}", sessionRef.getSessionId(), wsMsg);
+            log.trace(PROCESSING_MSG, sessionRef.getSessionId(), wsMsg);
         } else {
-            log.debug("[{}] Processing: {}", sessionRef.getSessionId(), wsMsg.getClass().getSimpleName());
+            log.debug(PROCESSING_MSG, sessionRef.getSessionId(), wsMsg.getClass().getSimpleName());
         }
         if (wsMsg instanceof SessionEventPluginWebSocketMsg) {
             handleWebSocketSessionEvent(ctx, sessionRef, (SessionEventPluginWebSocketMsg) wsMsg);
@@ -59,19 +60,19 @@ public class DefaultWebsocketMsgHandler implements WebsocketMsgHandler {
     }
 
     protected void cleanupWebSocketSession(PluginContext ctx, String sessionId) {
-
+        //Do nothing
     }
 
     protected void handleWebSocketSessionEvent(PluginContext ctx, PluginWebsocketSessionRef sessionRef, SessionEventPluginWebSocketMsg wsMsg) {
         String sessionId = sessionRef.getSessionId();
         SessionEvent event = wsMsg.getPayload();
-        log.debug("[{}] Processing: {}", sessionId, event);
+        log.debug(PROCESSING_MSG, sessionId, event);
         switch (event.getEventType()) {
             case ESTABLISHED:
                 wsSessionsMap.put(sessionId, new WsSessionMetaData(sessionRef));
                 break;
             case ERROR:
-                log.debug("[{}] Unknown websocket session error: {}. ", sessionId, event.getError().get());
+                log.debug("[{}] Unknown websocket session error: {}. ", sessionId, event.getError().orElse(null));
                 break;
             case CLOSED:
                 wsSessionsMap.remove(sessionId);

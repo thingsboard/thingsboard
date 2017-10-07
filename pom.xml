@@ -77,6 +77,7 @@
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
         <postgresql.driver.version>9.4.1211</postgresql.driver.version>
+        <sonar.exclusions>org/thingsboard/server/gen/**/*, org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*</sonar.exclusions>
     </properties>
 
     <modules>

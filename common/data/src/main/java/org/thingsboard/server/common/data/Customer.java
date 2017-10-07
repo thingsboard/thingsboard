@@ -29,7 +29,7 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     
     private String title;
     private TenantId tenantId;
-    private JsonNode additionalInfo;
+    private transient JsonNode additionalInfo;
     
     public Customer() {
         super();
@@ -87,7 +87,7 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     
     @Override
     public String getSearchText() {
-        return title;
+        return getTitle();
     }
 
     @Override

@@ -33,13 +33,21 @@ public interface RelationService {
 
     ListenableFuture<EntityRelation> getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<Boolean> saveRelation(EntityRelation relation);
+    boolean saveRelation(EntityRelation relation);
 
-    ListenableFuture<Boolean> deleteRelation(EntityRelation relation);
+    ListenableFuture<Boolean> saveRelationAsync(EntityRelation relation);
 
-    ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+    boolean deleteRelation(EntityRelation relation);
 
-    ListenableFuture<Boolean> deleteEntityRelations(EntityId entity);
+    ListenableFuture<Boolean> deleteRelationAsync(EntityRelation relation);
+
+    boolean deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+
+    ListenableFuture<Boolean> deleteRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+
+    boolean deleteEntityRelations(EntityId entity);
+
+    ListenableFuture<Boolean> deleteEntityRelationsAsync(EntityId entity);
 
     ListenableFuture<List<EntityRelation>> findByFrom(EntityId from, RelationTypeGroup typeGroup);
 

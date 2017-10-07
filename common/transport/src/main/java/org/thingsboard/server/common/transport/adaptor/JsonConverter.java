@@ -30,6 +30,7 @@ import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 public class JsonConverter {
 
     private static final Gson GSON = new Gson();
+    public static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
 
     public static TelemetryUploadRequest convertToTelemetry(JsonElement jsonObject) throws JsonSyntaxException {
         return convertToTelemetry(jsonObject, BasicRequest.DEFAULT_REQUEST_ID);
@@ -45,11 +46,11 @@ public class JsonConverter {
                 if (je.isJsonObject()) {
                     parseObject(request, systemTs, je.getAsJsonObject());
                 } else {
-                    throw new JsonSyntaxException("Can't parse value: " + je);
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
             });
         } else {
-            throw new JsonSyntaxException("Can't parse value: " + jsonObject);
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonObject);
         }
         return request;
     }
@@ -99,10 +100,10 @@ public class JsonConverter {
                         result.add(new LongDataEntry(valueEntry.getKey(), value.getAsLong()));
                     }
                 } else {
-                    throw new JsonSyntaxException("Can't parse value: " + value);
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
             } else {
-                throw new JsonSyntaxException("Can't parse value: " + element);
+                throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
             }
         }
         return result;
@@ -119,7 +120,7 @@ public class JsonConverter {
             request.add(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
             return request;
         } else {
-            throw new JsonSyntaxException("Can't parse value: " + element);
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);
         }
     }
 

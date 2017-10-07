@@ -38,9 +38,6 @@ import javax.persistence.*;
 @Table(name = ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
 public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor> implements SearchTextEntity<ComponentDescriptor> {
 
-    @Transient
-    private static final long serialVersionUID = 253590350877992402L;
-
     @Enumerated(EnumType.STRING)
     @Column(name = ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY)
     private ComponentType type;
@@ -104,6 +101,6 @@ public class ComponentDescriptorEntity extends BaseSqlEntity<ComponentDescriptor
 
     @Override
     public String getSearchTextSource() {
-        return searchText;
+        return getSearchText();
     }
 }

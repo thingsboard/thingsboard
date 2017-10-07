@@ -43,9 +43,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @NoArgsConstructor
 public class EventEntity  extends BaseSqlEntity<Event> implements BaseEntity<Event> {
 
-    @Transient
-    private static final long serialVersionUID = -5717830061727466727L;
-
     @Column(name = EVENT_TENANT_ID_PROPERTY)
     private String tenantId;
 

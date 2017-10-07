@@ -44,7 +44,7 @@ public class CQLStatementsParser {
     public CQLStatementsParser(Path cql) throws IOException {
         try {
             List<String> lines = Files.readAllLines(cql);
-            StringBuffer t = new StringBuffer();
+            StringBuilder t = new StringBuilder();
             for (String l : lines) {
                 t.append(l.trim());
                 t.append('\n');
@@ -68,36 +68,14 @@ public class CQLStatementsParser {
 
     private void parseStatements() {
         this.statements = new ArrayList<>();
-        StringBuffer statementUnderConstruction = new StringBuffer();
+        StringBuilder statementUnderConstruction = new StringBuilder();
 
         char c;
         while ((c = getChar()) != 0) {
             switch (state) {
                 case DEFAULT:
-                    if (c == '/' && peekAhead() == '/') {
-                        state = State.INSINGLELINECOMMENT;
-                        advance();
-                    } else if (c == '-' && peekAhead() == '-') {
-                        state = State.INSINGLELINECOMMENT;
-                        advance();
-                    } else if (c == '/' && peekAhead() == '*') {
-                        state = State.INMULTILINECOMMENT;
-                        advance();
-                    } else if (c == '\n') {
-                        statementUnderConstruction.append(' ');
-                    } else {
-                        statementUnderConstruction.append(c);
-                        if (c == '\"') {
-                            state = State.INQUOTESTRING;
-                        } else if (c == '\'') {
-                            state = State.INSQUOTESTRING;
-                        } else if (c == ';') {
-                            statements.add(statementUnderConstruction.toString().trim());
-                            statementUnderConstruction.setLength(0);
-                        }
-                    }
+                    processDefaultState(c, statementUnderConstruction);
                     break;
-
                 case INSINGLELINECOMMENT:
                     if (c == '\n') {
                         state = State.DEFAULT;
@@ -112,25 +90,10 @@ public class CQLStatementsParser {
                     break;
 
                 case INQUOTESTRING:
-                    statementUnderConstruction.append(c);
-                    if (c == '"') {
-                        if (peekAhead() == '"') {
-                            statementUnderConstruction.append(getChar());
-                        } else {
-                            state = State.DEFAULT;
-                        }
-                    }
+                    processInQuoteStringState(c, statementUnderConstruction);
                     break;
-
                 case INSQUOTESTRING:
-                    statementUnderConstruction.append(c);
-                    if (c == '\'') {
-                        if (peekAhead() == '\'') {
-                            statementUnderConstruction.append(getChar());
-                        } else {
-                            state = State.DEFAULT;
-                        }
-                    }
+                    processInSQuoteStringState(c, statementUnderConstruction);
                     break;
             }
 
@@ -138,6 +101,50 @@ public class CQLStatementsParser {
         String tmp = statementUnderConstruction.toString().trim();
         if (tmp.length() > 0) {
             this.statements.add(tmp);
+        }
+    }
+
+    private void processDefaultState(char c, StringBuilder statementUnderConstruction) {
+        if ((c == '/' && peekAhead() == '/') || (c == '-' && peekAhead() == '-')) {
+            state = State.INSINGLELINECOMMENT;
+            advance();
+        } else if (c == '/' && peekAhead() == '*') {
+            state = State.INMULTILINECOMMENT;
+            advance();
+        } else if (c == '\n') {
+            statementUnderConstruction.append(' ');
+        } else {
+            statementUnderConstruction.append(c);
+            if (c == '\"') {
+                state = State.INQUOTESTRING;
+            } else if (c == '\'') {
+                state = State.INSQUOTESTRING;
+            } else if (c == ';') {
+                statements.add(statementUnderConstruction.toString().trim());
+                statementUnderConstruction.setLength(0);
+            }
+        }
+    }
+
+    private void processInQuoteStringState(char c, StringBuilder statementUnderConstruction) {
+        statementUnderConstruction.append(c);
+        if (c == '"') {
+            if (peekAhead() == '"') {
+                statementUnderConstruction.append(getChar());
+            } else {
+                state = State.DEFAULT;
+            }
+        }
+    }
+
+    private void processInSQuoteStringState(char c, StringBuilder statementUnderConstruction) {
+        statementUnderConstruction.append(c);
+        if (c == '\'') {
+            if (peekAhead() == '\'') {
+                statementUnderConstruction.append(getChar());
+            } else {
+                state = State.DEFAULT;
+            }
         }
     }
 

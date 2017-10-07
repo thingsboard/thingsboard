@@ -38,19 +38,22 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/api")
 public class UserController extends BaseController {
 
+    public static final String USER_ID = "userId";
+    public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
+    public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
     @Autowired
     private MailService mailService;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/user/{userId}", method = RequestMethod.GET)
     @ResponseBody
-    public User getUserById(@PathVariable("userId") String strUserId) throws ThingsboardException {
-        checkParameter("userId", strUserId);
+    public User getUserById(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
+        checkParameter(USER_ID, strUserId);
         try {
             UserId userId = new UserId(toUUID(strUserId));
             SecurityUser authUser = getCurrentUser();
             if (authUser.getAuthority() == Authority.CUSTOMER_USER && !authUser.getId().equals(userId)) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             return checkUserId(userId);
@@ -68,7 +71,7 @@ public class UserController extends BaseController {
         try {
             SecurityUser authUser = getCurrentUser();
             if (authUser.getAuthority() == Authority.CUSTOMER_USER && !authUser.getId().equals(user.getId())) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             boolean sendEmail = user.getId() == null && sendActivationMail;
@@ -79,7 +82,7 @@ public class UserController extends BaseController {
             if (sendEmail) {
                 UserCredentials userCredentials = userService.findUserCredentialsByUserId(savedUser.getId());
                 String baseUrl = constructBaseUrl(request);
-                String activateUrl = String.format("%s/api/noauth/activate?activateToken=%s", baseUrl,
+                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
                         userCredentials.getActivateToken());
                 String email = savedUser.getEmail();
                 try {
@@ -106,7 +109,7 @@ public class UserController extends BaseController {
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
             if (!userCredentials.isEnabled()) {
                 String baseUrl = constructBaseUrl(request);
-                String activateUrl = String.format("%s/api/noauth/activate?activateToken=%s", baseUrl,
+                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
                         userCredentials.getActivateToken());
                 mailService.sendActivationEmail(activateUrl, email);
             } else {
@@ -121,21 +124,21 @@ public class UserController extends BaseController {
     @RequestMapping(value = "/user/{userId}/activationLink", method = RequestMethod.GET, produces = "text/plain")
     @ResponseBody
     public String getActivationLink(
-            @PathVariable("userId") String strUserId,
+            @PathVariable(USER_ID) String strUserId,
             HttpServletRequest request) throws ThingsboardException {
-        checkParameter("userId", strUserId);
+        checkParameter(USER_ID, strUserId);
         try {
             UserId userId = new UserId(toUUID(strUserId));
             SecurityUser authUser = getCurrentUser();
             if (authUser.getAuthority() == Authority.CUSTOMER_USER && !authUser.getId().equals(userId)) {
-                throw new ThingsboardException("You don't have permission to perform this operation!",
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
             User user = checkUserId(userId);
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getId());
             if (!userCredentials.isEnabled()) {
                 String baseUrl = constructBaseUrl(request);
-                String activateUrl = String.format("%s/api/noauth/activate?activateToken=%s", baseUrl,
+                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
                         userCredentials.getActivateToken());
                 return activateUrl;
             } else {
@@ -149,8 +152,8 @@ public class UserController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/user/{userId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteUser(@PathVariable("userId") String strUserId) throws ThingsboardException {
-        checkParameter("userId", strUserId);
+    public void deleteUser(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
+        checkParameter(USER_ID, strUserId);
         try {
             UserId userId = new UserId(toUUID(strUserId));
             checkUserId(userId);

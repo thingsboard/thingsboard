@@ -71,16 +71,16 @@ public class RpcPlugin extends AbstractPlugin<RpcPluginConfiguration> {
 
     @Override
     public void resume(PluginContext ctx) {
-
+        //Do nothing
     }
 
     @Override
     public void suspend(PluginContext ctx) {
-
+        //Do nothing
     }
 
     @Override
     public void stop(PluginContext ctx) {
-
+        //Do nothing
     }
 }

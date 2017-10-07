@@ -46,6 +46,7 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
     private static final Gson GSON = new Gson();
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
+    public static final String DEVICE_PROPERTY = "device";
 
     private GatewaySessionCtx parent;
     private final MqttSessionId sessionId;
@@ -101,13 +102,15 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
             case TO_DEVICE_RPC_REQUEST:
                 ToDeviceRpcRequestMsg rpcRequest = (ToDeviceRpcRequestMsg) msg;
                 return Optional.of(createMqttPublishMsg(MqttTopics.GATEWAY_RPC_TOPIC, rpcRequest));
+            default:
+                break;
         }
         return Optional.empty();
     }
 
     @Override
     public void onMsg(SessionCtrlMsg msg) throws SessionException {
-
+        //Do nothing
     }
 
     @Override
@@ -127,9 +130,10 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
     private MqttMessage createMqttPublishMsg(String topic, GetAttributesResponse response) {
         JsonObject result = new JsonObject();
         result.addProperty("id", response.getRequestId());
-        result.addProperty("device", device.getName());
-        if (response.getData().isPresent()) {
-            AttributesKVMsg msg = response.getData().get();
+        result.addProperty(DEVICE_PROPERTY, device.getName());
+        Optional<AttributesKVMsg> responseData = response.getData();
+        if (responseData.isPresent()) {
+            AttributesKVMsg msg = responseData.get();
             if (msg.getClientAttributes() != null) {
                 msg.getClientAttributes().forEach(v -> addValueToJson(result, "value", v));
             }
@@ -143,30 +147,42 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
     private void addValueToJson(JsonObject json, String name, KvEntry entry) {
         switch (entry.getDataType()) {
             case BOOLEAN:
-                json.addProperty(name, entry.getBooleanValue().get());
+                Optional<Boolean> booleanValue = entry.getBooleanValue();
+                if (booleanValue.isPresent()) {
+                    json.addProperty(name, booleanValue.get());
+                }
                 break;
             case STRING:
-                json.addProperty(name, entry.getStrValue().get());
+                Optional<String> stringValue = entry.getStrValue();
+                if (stringValue.isPresent()) {
+                    json.addProperty(name, stringValue.get());
+                }
                 break;
             case DOUBLE:
-                json.addProperty(name, entry.getDoubleValue().get());
+                Optional<Double> doubleValue = entry.getDoubleValue();
+                if (doubleValue.isPresent()) {
+                    json.addProperty(name, doubleValue.get());
+                }
                 break;
             case LONG:
-                json.addProperty(name, entry.getLongValue().get());
+                Optional<Long> longValue = entry.getLongValue();
+                if (longValue.isPresent()) {
+                    json.addProperty(name, longValue.get());
+                }
                 break;
         }
     }
 
     private MqttMessage createMqttPublishMsg(String topic, AttributesKVMsg data) {
         JsonObject result = new JsonObject();
-        result.addProperty("device", device.getName());
+        result.addProperty(DEVICE_PROPERTY, device.getName());
         result.add("data", JsonConverter.toJson(data, false));
         return createMqttPublishMsg(topic, result);
     }
 
     private MqttMessage createMqttPublishMsg(String topic, ToDeviceRpcRequestMsg data) {
         JsonObject result = new JsonObject();
-        result.addProperty("device", device.getName());
+        result.addProperty(DEVICE_PROPERTY, device.getName());
         result.add("data", JsonConverter.toJson(data, true));
         return createMqttPublishMsg(topic, result);
     }

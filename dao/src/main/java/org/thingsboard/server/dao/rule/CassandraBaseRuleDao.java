@@ -40,6 +40,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @NoSqlDao
 public class CassandraBaseRuleDao extends CassandraAbstractSearchTextDao<RuleMetaDataEntity, RuleMetaData> implements RuleDao {
 
+    public static final String SEARCH_RESULT = "Search result: [{}]";
+
     @Override
     protected Class<RuleMetaDataEntity> getColumnFamilyClass() {
         return RuleMetaDataEntity.class;
@@ -61,9 +63,9 @@ public class CassandraBaseRuleDao extends CassandraAbstractSearchTextDao<RuleMet
         List<RuleMetaDataEntity> entities = findPageWithTextSearch(ModelConstants.RULE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
                 Arrays.asList(eq(ModelConstants.RULE_TENANT_ID_PROPERTY, tenantId.getId())), pageLink);
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
+            log.trace(SEARCH_RESULT, Arrays.toString(entities.toArray()));
         } else {
-            log.debug("Search result: [{}]", entities.size());
+            log.debug(SEARCH_RESULT, entities.size());
         }
         return DaoUtil.convertDataList(entities);
     }
@@ -75,9 +77,9 @@ public class CassandraBaseRuleDao extends CassandraAbstractSearchTextDao<RuleMet
                 Arrays.asList(in(ModelConstants.RULE_TENANT_ID_PROPERTY, Arrays.asList(NULL_UUID, tenantId))),
                 pageLink);
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
+            log.trace(SEARCH_RESULT, Arrays.toString(entities.toArray()));
         } else {
-            log.debug("Search result: [{}]", entities.size());
+            log.debug(SEARCH_RESULT, entities.size());
         }
         return DaoUtil.convertDataList(entities);
     }

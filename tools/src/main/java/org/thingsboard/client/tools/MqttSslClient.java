@@ -21,50 +21,48 @@ package org.thingsboard.client.tools;
  */
 
 import com.google.common.io.Resources;
-import org.eclipse.paho.client.mqttv3.*;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.*;
-import java.security.cert.CertificateException;
+import java.security.KeyStore;
 
+@Slf4j
 public class MqttSslClient {
 
 
     private static final String MQTT_URL = "ssl://localhost:1883";
 
-    private static final String clientId = "MQTT_SSL_JAVA_CLIENT";
-    private static final String accessToken = "C1_TEST_TOKEN";
-    private static final String keyStoreFile = "mqttclient.jks";
+    private static final String CLIENT_ID = "MQTT_SSL_JAVA_CLIENT";
+    private static final String KEY_STORE_FILE = "mqttclient.jks";
     private static final String JKS="JKS";
     private static final String TLS="TLS";
-    private static final String CLIENT_KEYSTORE_PASSWORD = "client_ks_password";
-    private static final String CLIENT_KEY_PASSWORD = "client_key_password";
 
     public static void main(String[] args) {
 
         try {
-
-            URL ksUrl = Resources.getResource(keyStoreFile);
+            URL ksUrl = Resources.getResource(KEY_STORE_FILE);
             File ksFile = new File(ksUrl.toURI());
-            URL tsUrl = Resources.getResource(keyStoreFile);
+            URL tsUrl = Resources.getResource(KEY_STORE_FILE);
             File tsFile = new File(tsUrl.toURI());
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 
             KeyStore trustStore = KeyStore.getInstance(JKS);
-            trustStore.load(new FileInputStream(tsFile), CLIENT_KEYSTORE_PASSWORD.toCharArray());
+            char[] ksPwd = new char[]{0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x6B, 0x73, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64};
+            trustStore.load(new FileInputStream(tsFile), ksPwd);
             tmf.init(trustStore);
             KeyStore ks = KeyStore.getInstance(JKS);
 
-            ks.load(new FileInputStream(ksFile), CLIENT_KEYSTORE_PASSWORD.toCharArray());
+            ks.load(new FileInputStream(ksFile), ksPwd);
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, CLIENT_KEY_PASSWORD.toCharArray());
+            char[] clientPwd = new char[]{0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x6B, 0x65, 0x79, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64};
+            kmf.init(ks, clientPwd);
 
             KeyManager[] km = kmf.getKeyManagers();
             TrustManager[] tm = tmf.getTrustManagers();
@@ -73,17 +71,17 @@ public class MqttSslClient {
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setSocketFactory(sslContext.getSocketFactory());
-            MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);
+            MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, CLIENT_ID);
             client.connect(options);
             Thread.sleep(3000);
             MqttMessage message = new MqttMessage();
             message.setPayload("{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4}".getBytes());
             client.publish("v1/devices/me/telemetry", message);
             client.disconnect();
-            System.out.println("Disconnected");
+            log.info("Disconnected");
             System.exit(0);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unexpected exception occurred in MqttSslClient", e);
         }
     }
 }

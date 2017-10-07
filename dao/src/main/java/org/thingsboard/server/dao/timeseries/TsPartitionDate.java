@@ -25,7 +25,7 @@ public enum TsPartitionDate {
     MINUTES("yyyy-MM-dd-HH-mm", ChronoUnit.MINUTES), HOURS("yyyy-MM-dd-HH", ChronoUnit.HOURS), DAYS("yyyy-MM-dd", ChronoUnit.DAYS), MONTHS("yyyy-MM", ChronoUnit.MONTHS), YEARS("yyyy", ChronoUnit.YEARS);
 
     private final String pattern;
-    private final TemporalUnit truncateUnit;
+    private final transient TemporalUnit truncateUnit;
 
     TsPartitionDate(String pattern, TemporalUnit truncateUnit) {
         this.pattern = pattern;

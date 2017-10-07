@@ -41,9 +41,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Table(name = EVENT_COLUMN_FAMILY_NAME)
 public class EventEntity implements BaseEntity<Event> {
 
-    @Transient
-    private static final long serialVersionUID = -1265181166886910153L;
-
     @Column(name = ID_PROPERTY)
     private UUID id;
 
