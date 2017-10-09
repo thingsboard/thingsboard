@@ -16,28 +16,37 @@
 package org.thingsboard.server.extensions.livy.plugin;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
+import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.RuleMsgHandler;
-import org.thingsboard.server.extensions.api.plugins.msg.ResponsePluginToRuleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
 import org.thingsboard.server.extensions.api.rules.RuleException;
 import org.thingsboard.server.extensions.livy.action.LivyActionMessage;
 import org.thingsboard.server.extensions.livy.action.LivyActionPayload;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 @RequiredArgsConstructor
 public class LivyMessageHandler implements RuleMsgHandler {
 
+    private static final String SPARK_JOB_KEY = "spark_";
     private final String baseUrl;
     private final HttpHeaders headers;
+    private final Object lock = new Object();
+    private final AtomicBoolean isSparkJobRunning = new AtomicBoolean(false);
+
 
     @Override
     public void process(PluginContext ctx, TenantId tenantId, RuleId ruleId, RuleToPluginMsg<?> msg) throws RuleException {
@@ -45,15 +54,54 @@ public class LivyMessageHandler implements RuleMsgHandler {
             throw new RuleException("Unsupported message type " + msg.getClass().getName() + "!");
         }
         LivyActionPayload payload = ((LivyActionMessage)msg).getPayload();
-        try {
-            new RestTemplate().exchange(
-                    baseUrl + payload.getActionPath(),
-                    HttpMethod.POST, //TODO: Make it Configurable option
-                    new HttpEntity<>(payload.getMsgBody(), headers),
-                    Void.class);
+        final String sparkApplication = SPARK_JOB_KEY + payload.getSparkApplication().toString();
+        if(!isSparkJobRunning.get()) {
+            synchronized (lock) {
+                ctx.loadAttributes(ruleId, DataConstants.SERVER_SCOPE, Collections.singleton(sparkApplication),
+                        new PluginCallback<List<AttributeKvEntry>>() {
+                            @Override
+                            public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
+                                for (AttributeKvEntry e : values) {
+                                    if (e.getKey().equalsIgnoreCase(sparkApplication) && e.getBooleanValue().get()) {
+                                        isSparkJobRunning.set(true);
+                                    }
+                                }
+                                if (!isSparkJobRunning.get()) {
+                                    try {
+                                        log.warn("giving a rest call to Livy service");
+                                        new RestTemplate().exchange(
+                                                baseUrl + payload.getActionPath(),
+                                                HttpMethod.POST, //TODO: Make it Configurable option
+                                                new HttpEntity<>(payload.getMsgBody(), headers),
+                                                Void.class);
 
-        } catch (RestClientException e) {
-            throw new RuleException(e.getMessage(), e);
+                                    } catch (RestClientException e) {
+                                        log.error("Error occurred while rest call", e);
+                                    }
+                                    long ts = System.currentTimeMillis();
+                                    ctx.saveAttributes(tenantId, ruleId, DataConstants.SERVER_SCOPE,
+                                            Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(sparkApplication, true), ts)),
+                                            new PluginCallback<Void>() {
+                                                @Override
+                                                public void onSuccess(PluginContext ctx, Void value) {
+                                                    isSparkJobRunning.set(true);
+                                                    log.warn("Updated attribute for Spark application {}", sparkApplication);
+                                                }
+
+                                                @Override
+                                                public void onFailure(PluginContext ctx, Exception e) {
+                                                    log.error("Failed to save attributes {}", e);
+                                                }
+                                            });
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(PluginContext ctx, Exception e) {
+                                log.error("Failed to fetch application status for tenant. {}", e);
+                            }
+                        });
+            }
         }
     }
 }

@@ -21,9 +21,9 @@ import org.thingsboard.server.extensions.api.component.Plugin;
 import org.thingsboard.server.extensions.api.plugins.AbstractPlugin;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.RuleMsgHandler;
-import org.thingsboard.server.extensions.livy.action.LivyPluginAction;
+import org.thingsboard.server.extensions.livy.action.SampleSparkAppAction;
 
-@Plugin(name = "Livy Plugin", actions = {LivyPluginAction.class},
+@Plugin(name = "Livy Plugin", actions = {SampleSparkAppAction.class},
         descriptor = "LivyPluginDescriptor.json", configuration = LivyPluginConfiguration.class)
 @Slf4j
 public class LivyPlugin extends AbstractPlugin<LivyPluginConfiguration> {
@@ -47,6 +47,7 @@ public class LivyPlugin extends AbstractPlugin<LivyPluginConfiguration> {
                 this.headers.add(h.getKey(), h.getValue());
             });
         }
+        init();
     }
 
     private void init() {

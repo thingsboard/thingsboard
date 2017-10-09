@@ -19,9 +19,10 @@ import lombok.Data;
 import org.thingsboard.server.common.data.SparkApplication;
 
 @Data
-public class LivyPluginActionConfiguration {
-    private SparkApplication application;
-    private String gatewayApiToken;
-    private String actionPath;
-    private String endpoint; //MQTT endpoint to send data back to Thingsboard
+public class SampleSparkAppConfiguration extends LivyPluginActionConfiguration{
+    private SparkApplication application = SparkApplication.SAMPLE;
+    private String zkUrl;
+    private String kafkaBrokers;
+    private String topic;
+    private long window;
 }

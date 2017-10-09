@@ -16,5 +16,5 @@
 package org.thingsboard.server.common.data;
 
 public enum SparkApplication {
-    ROLLING_AVERAGE, ARIMA, BACKFILL
+    SAMPLE, ROLLING_AVERAGE, ARIMA, BACKFILL
 }

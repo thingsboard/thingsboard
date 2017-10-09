@@ -1,0 +1,54 @@
+/**
+ * Copyright © 2016-2017 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.extensions.livy.action;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.extensions.api.component.Action;
+
+@Action(name = "Sample Spark Livy Action",
+        descriptor = "SampleSparkApplicationDescriptor.json", configuration = SampleSparkAppConfiguration.class)
+@Slf4j
+public class SampleSparkAppAction extends AbstractSparkAppAction<SampleSparkAppConfiguration> {
+
+    @Override
+    protected String buildLivyRequest() {
+        LivyRequest.LivyRequestBuilder builder = LivyRequest.builder();
+        builder.file("/usr/local/apps/spark-kafka-streaming-integration-1.0.0.jar");
+        builder.className("org.thingsboard.samples.spark.SparkKafkaStreamingDemoMain");
+        builder.executorCores(1);
+        builder.driverCores(1);
+        builder.args(args());
+        LivyRequest livyRequest = builder.build();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        String msgBody;
+        try {
+            msgBody = mapper.writeValueAsString(livyRequest);
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
+        return msgBody;
+    }
+
+    @Override
+    protected String[] args() {
+        return new String[]{configuration.getTopic(), Long.toString(configuration.getWindow()),
+                configuration.getEndpoint(), configuration.getKafkaBrokers(), configuration.getGatewayApiToken()};
+    }
+}

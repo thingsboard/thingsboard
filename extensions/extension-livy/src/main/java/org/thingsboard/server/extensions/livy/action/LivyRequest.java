@@ -17,15 +17,18 @@ package org.thingsboard.server.extensions.livy.action;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
+
 import java.io.Serializable;
 
 @Data
 @Builder
+@ToString
 public class LivyRequest implements Serializable{
     private final String[] jars;
     private final String file;
     private final String className;
-    private final int executoCores;
+    private final int executorCores;
     private final String executorMemory;
     private final int driverCores;
     private final String driverMemory;
