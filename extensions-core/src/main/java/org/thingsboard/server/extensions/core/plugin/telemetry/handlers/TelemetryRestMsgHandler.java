@@ -16,6 +16,7 @@
 package org.thingsboard.server.extensions.core.plugin.telemetry.handlers;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
@@ -214,7 +215,12 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                                           EntityId entityId, String scope) throws ServletException, IOException {
         if (DataConstants.SERVER_SCOPE.equals(scope) ||
                 DataConstants.SHARED_SCOPE.equals(scope)) {
-            JsonNode jsonNode = jsonMapper.readTree(request.getRequestBody());
+            JsonNode jsonNode;
+            try {
+                jsonNode = jsonMapper.readTree(request.getRequestBody());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Unable to parse attributes payload: Invalid JSON body!");
+            }
             if (jsonNode.isObject()) {
                 List<AttributeKvEntry> attributes = extractRequestAttributes(jsonNode);
                 if (attributes.isEmpty()) {
@@ -264,10 +270,16 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
 
     private void handleHttpPostTimeseries(PluginContext ctx, PluginRestMsg msg, RestRequest request, EntityId entityId, long ttl) {
         TelemetryUploadRequest telemetryRequest;
+        JsonElement telemetryJson;
         try {
-            telemetryRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(request.getRequestBody()));
+            telemetryJson = new JsonParser().parse(request.getRequestBody());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Unable to parse timeseries payload: Invalid JSON body!");
+        }
+        try {
+            telemetryRequest = JsonConverter.convertToTelemetry(telemetryJson);
         } catch (JsonSyntaxException e) {
-            throw new UncheckedApiException(new InvalidParametersException(e.getMessage()));
+            throw new IllegalArgumentException(e.getMessage());
         }
         List<TsKvEntry> entries = new ArrayList<>();
         if (entries.isEmpty()) {
