@@ -17,10 +17,20 @@ package org.thingsboard.server.extensions.api.exception;
 
 import org.springframework.http.ResponseEntity;
 
-import java.io.Serializable;
+import java.util.Objects;
 
-public interface ToErrorResponseEntity extends Serializable {
+public class UncheckedApiException extends RuntimeException implements ToErrorResponseEntity {
 
-    ResponseEntity<String> toErrorResponseEntity();
+    private final ToErrorResponseEntity cause;
 
+    public <T extends Exception & ToErrorResponseEntity> UncheckedApiException(T cause) {
+        super(cause.getMessage(), Objects.requireNonNull(cause));
+        this.cause = cause;
+    }
+
+    @Override
+    public ResponseEntity<String> toErrorResponseEntity() {
+        return cause.toErrorResponseEntity();
+    }
 }
+

@@ -94,11 +94,7 @@ public class JsonConverter {
                 } else if (value.isBoolean()) {
                     result.add(new BooleanDataEntry(valueEntry.getKey(), value.getAsBoolean()));
                 } else if (value.isNumber()) {
-                    if (value.getAsString().contains(".")) {
-                        result.add(new DoubleDataEntry(valueEntry.getKey(), value.getAsDouble()));
-                    } else {
-                        result.add(new LongDataEntry(valueEntry.getKey(), value.getAsLong()));
-                    }
+                    parseNumericValue(result, valueEntry, value);
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + value);
                 }
@@ -107,6 +103,19 @@ public class JsonConverter {
             }
         }
         return result;
+    }
+
+    private static void parseNumericValue(List<KvEntry> result, Entry<String, JsonElement> valueEntry, JsonPrimitive value) {
+        if (value.getAsString().contains(".")) {
+            result.add(new DoubleDataEntry(valueEntry.getKey(), value.getAsDouble()));
+        } else {
+            try {
+                long longValue = Long.parseLong(value.getAsString());
+                result.add(new LongDataEntry(valueEntry.getKey(), longValue));
+            } catch (NumberFormatException e) {
+                throw new JsonSyntaxException("Big integer values are not supported!");
+            }
+        }
     }
 
     public static UpdateAttributesRequest convertToAttributes(JsonElement element) {
