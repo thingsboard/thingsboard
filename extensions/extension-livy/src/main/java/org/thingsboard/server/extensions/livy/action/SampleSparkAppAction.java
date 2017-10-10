@@ -29,14 +29,12 @@ public class SampleSparkAppAction extends AbstractSparkAppAction<SampleSparkAppC
     @Override
     protected String buildLivyRequest() {
         LivyRequest.LivyRequestBuilder builder = LivyRequest.builder();
-        builder.file("/usr/local/apps/spark-kafka-streaming-integration-1.0.0.jar");
+        builder.file("/usr/livy-server-0.3.0/upload/spark-kafka-streaming-integration-1.0.0.jar");
         builder.className("org.thingsboard.samples.spark.SparkKafkaStreamingDemoMain");
-        builder.executorCores(1);
-        builder.driverCores(1);
         builder.args(args());
         LivyRequest livyRequest = builder.build();
         ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
         String msgBody;
         try {
             msgBody = mapper.writeValueAsString(livyRequest);
