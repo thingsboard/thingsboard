@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.sql.application;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM, APPLICATION
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.ApplicationEntity;
+import org.thingsboard.server.dao.util.SqlDao;
+
+@SqlDao
+public interface ApplicationRepository extends CrudRepository<ApplicationEntity, String> {
+
+
 }

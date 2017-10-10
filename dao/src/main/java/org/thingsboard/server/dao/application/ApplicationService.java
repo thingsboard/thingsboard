@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.application;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM, APPLICATION
+import org.thingsboard.server.common.data.Application;
+import org.thingsboard.server.common.data.id.ApplicationId;
+
+public interface ApplicationService {
+
+    Application saveApplication(Application application);
+
+    Application findApplicationById(ApplicationId applicationId);
+
+    void deleteApplication(ApplicationId applicationId);
 }
