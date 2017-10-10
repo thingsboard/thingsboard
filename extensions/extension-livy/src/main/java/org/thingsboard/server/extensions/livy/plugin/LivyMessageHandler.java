@@ -61,38 +61,10 @@ public class LivyMessageHandler implements RuleMsgHandler {
                         new PluginCallback<List<AttributeKvEntry>>() {
                             @Override
                             public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
-                                for (AttributeKvEntry e : values) {
-                                    if (e.getKey().equalsIgnoreCase(sparkApplication) && e.getBooleanValue().get()) {
-                                        isSparkJobRunning.set(true);
-                                    }
-                                }
+                                setSparkJobRunning(values, sparkApplication);
                                 if (!isSparkJobRunning.get()) {
-                                    try {
-                                        log.warn("giving a rest call to Livy service");
-                                        new RestTemplate().exchange(
-                                                baseUrl + payload.getActionPath(),
-                                                HttpMethod.POST, //TODO: Make it Configurable option
-                                                new HttpEntity<>(payload.getMsgBody(), headers),
-                                                Void.class);
-
-                                    } catch (RestClientException e) {
-                                        log.error("Error occurred while rest call", e);
-                                    }
-                                    long ts = System.currentTimeMillis();
-                                    ctx.saveAttributes(tenantId, ruleId, DataConstants.SERVER_SCOPE,
-                                            Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(sparkApplication, true), ts)),
-                                            new PluginCallback<Void>() {
-                                                @Override
-                                                public void onSuccess(PluginContext ctx, Void value) {
-                                                    isSparkJobRunning.set(true);
-                                                    log.warn("Updated attribute for Spark application {}", sparkApplication);
-                                                }
-
-                                                @Override
-                                                public void onFailure(PluginContext ctx, Exception e) {
-                                                    log.error("Failed to save attributes {}", e);
-                                                }
-                                            });
+                                    postSparkJob(payload);
+                                    updateRuleAttribute(ctx, tenantId, ruleId, sparkApplication);
                                 }
                             }
 
@@ -101,6 +73,46 @@ public class LivyMessageHandler implements RuleMsgHandler {
                                 log.error("Failed to fetch application status for tenant. {}", e);
                             }
                         });
+            }
+        }
+    }
+
+    private void updateRuleAttribute(PluginContext ctx, TenantId tenantId, RuleId ruleId, String sparkApplication) {
+        long ts = System.currentTimeMillis();
+        ctx.saveAttributes(tenantId, ruleId, DataConstants.SERVER_SCOPE,
+                Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(sparkApplication, true), ts)),
+                new PluginCallback<Void>() {
+                    @Override
+                    public void onSuccess(PluginContext ctx, Void value) {
+                        isSparkJobRunning.set(true);
+                        log.warn("Updated attribute for Spark application {}", sparkApplication);
+                    }
+
+                    @Override
+                    public void onFailure(PluginContext ctx, Exception e) {
+                        log.error("Failed to save attributes {}", e);
+                    }
+                });
+    }
+
+    private void postSparkJob(LivyActionPayload payload) {
+        try {
+            log.warn("giving a rest call to Livy service");
+            new RestTemplate().exchange(
+                    baseUrl + payload.getActionPath(),
+                    HttpMethod.POST,
+                    new HttpEntity<>(payload.getMsgBody(), headers),
+                    Void.class);
+
+        } catch (RestClientException e) {
+            log.error("Error occurred while rest call", e);
+        }
+    }
+
+    private void setSparkJobRunning(List<AttributeKvEntry> values, String sparkApplication) {
+        for (AttributeKvEntry e : values) {
+            if (e.getKey().equalsIgnoreCase(sparkApplication) && e.getBooleanValue().get()) {
+                isSparkJobRunning.set(true);
             }
         }
     }
