@@ -217,22 +217,23 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
             JsonNode jsonNode = jsonMapper.readTree(request.getRequestBody());
             if (jsonNode.isObject()) {
                 List<AttributeKvEntry> attributes = extractRequestAttributes(jsonNode);
-                if (!attributes.isEmpty()) {
-                    ctx.saveAttributes(ctx.getSecurityCtx().orElseThrow(IllegalArgumentException::new).getTenantId(), entityId, scope, attributes, new PluginCallback<Void>() {
-                        @Override
-                        public void onSuccess(PluginContext ctx, Void value) {
-                            msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
-                            subscriptionManager.onAttributesUpdateFromServer(ctx, entityId, scope, attributes);
-                        }
-
-                        @Override
-                        public void onFailure(PluginContext ctx, Exception e) {
-                            log.error("Failed to save attributes", e);
-                            handleError(e, msg, HttpStatus.BAD_REQUEST);
-                        }
-                    });
-                    return true;
+                if (attributes.isEmpty()) {
+                    throw new IllegalArgumentException("No attributes data found in request body!");
                 }
+                ctx.saveAttributes(ctx.getSecurityCtx().orElseThrow(IllegalArgumentException::new).getTenantId(), entityId, scope, attributes, new PluginCallback<Void>() {
+                    @Override
+                    public void onSuccess(PluginContext ctx, Void value) {
+                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
+                        subscriptionManager.onAttributesUpdateFromServer(ctx, entityId, scope, attributes);
+                    }
+
+                    @Override
+                    public void onFailure(PluginContext ctx, Exception e) {
+                        log.error("Failed to save attributes", e);
+                        handleError(e, msg, HttpStatus.BAD_REQUEST);
+                    }
+                });
+                return true;
             }
         }
         return false;
@@ -269,6 +270,9 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
             throw new UncheckedApiException(new InvalidParametersException(e.getMessage()));
         }
         List<TsKvEntry> entries = new ArrayList<>();
+        if (entries.isEmpty()) {
+            throw new IllegalArgumentException("No timeseries data found in request body!");
+        }
         for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.getData().entrySet()) {
             for (KvEntry kv : entry.getValue()) {
                 entries.add(new BasicTsKvEntry(entry.getKey(), kv));
@@ -398,7 +402,9 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
     private void handleError(Exception e, PluginRestMsg msg, HttpStatus defaultErrorStatus) {
         ResponseEntity responseEntity;
         if (e != null && e instanceof ToErrorResponseEntity) {
-            responseEntity = ((ToErrorResponseEntity)e).toErrorResponseEntity();
+            responseEntity = ((ToErrorResponseEntity) e).toErrorResponseEntity();
+        } else if (e != null && e instanceof IllegalArgumentException) {
+            responseEntity = new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } else {
             responseEntity = new ResponseEntity<>(defaultErrorStatus);
         }
