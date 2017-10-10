@@ -46,7 +46,8 @@ public class SampleSparkAppAction extends AbstractSparkAppAction<SampleSparkAppC
 
     @Override
     protected String[] args() {
-        return new String[]{configuration.getTopic(), Long.toString(configuration.getWindow()),
-                configuration.getEndpoint(), configuration.getKafkaBrokers(), configuration.getGatewayApiToken()};
+        return new String[]{"--topic", configuration.getTopic(), "--window", Long.toString(configuration.getWindow()),
+                "--mqttbroker", configuration.getEndpoint(), "--kafka", configuration.getKafkaBrokers(),
+                "--token", configuration.getGatewayApiToken()};
     }
 }
