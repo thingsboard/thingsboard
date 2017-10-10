@@ -41,7 +41,7 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
     @Override
     public Application findApplicationById(ApplicationId applicationId) {
         log.trace("Executing findApplicationById [{}]", applicationId);
-        validateId(applicationId, "Incorrect deviceId " + applicationId);
+        validateId(applicationId, "Incorrect applicationId " + applicationId);
         return applicationDao.findById(applicationId.getId());
     }
 

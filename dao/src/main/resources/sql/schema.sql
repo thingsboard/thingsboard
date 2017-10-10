@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS dashboard (
 CREATE TABLE IF NOT EXISTS device (
     id varchar(31) NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
     additional_info varchar,
-    varchar(31),
+    customer_id varchar(31),
     type varchar(255),
     name varchar(255),
     search_text varchar(255),
@@ -243,6 +243,8 @@ CREATE TABLE IF NOT EXISTS widgets_bundle (
 
 CREATE TABLE IF NOT EXISTS application (
     id varchar(31) NOT NULL CONSTRAINT application_pkey PRIMARY KEY,
+    customer_id varchar(31),
+    tenant_id varchar(31),
     mini_widget varchar,
     search_text varchar(255),
     dashboard varchar,

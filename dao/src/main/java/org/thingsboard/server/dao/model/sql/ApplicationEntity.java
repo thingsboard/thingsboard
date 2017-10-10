@@ -23,6 +23,8 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Application;
 import org.thingsboard.server.common.data.id.ApplicationId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -40,6 +42,12 @@ public class ApplicationEntity extends BaseSqlEntity<Application> implements Sea
 
     @Transient
     private static final long serialVersionUID = -3873737406462009031L;
+
+    @Column(name = ModelConstants.APPLICATION_TENANT_ID_PROPERTY)
+    private String tenantId;
+
+    @Column(name = ModelConstants.APPLICATION_CUSTOMER_ID_PROPERTY)
+    private String customerId;
 
     @Type(type = "json")
     @Column(name = ModelConstants.APPLICATION_MINI_WIDGET)
@@ -73,6 +81,16 @@ public class ApplicationEntity extends BaseSqlEntity<Application> implements Sea
     }
 
     public ApplicationEntity(Application application){
+        if (application.getId() != null) {
+            this.setId(application.getId().getId());
+        }
+        if (application.getTenantId() != null) {
+            this.tenantId = toString(application.getTenantId().getId());
+        }
+        if (application.getCustomerId() != null) {
+            this.customerId = toString(application.getCustomerId().getId());
+        }
+
         this.miniWidget = application.getMiniWidget();
         this.dashboard = application.getDashboard();
         this.rules = application.getRules();
@@ -95,6 +113,12 @@ public class ApplicationEntity extends BaseSqlEntity<Application> implements Sea
     public Application toData() {
         Application application = new Application(new ApplicationId(getId()));
         application.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        if (tenantId != null) {
+            application.setTenantId(new TenantId(toUUID(tenantId)));
+        }
+        if (customerId != null) {
+            application.setCustomerId(new CustomerId(toUUID(customerId)));
+        }
         application.setMiniWidget(miniWidget);
         application.setDashboard(dashboard);
         application.setRules(rules);

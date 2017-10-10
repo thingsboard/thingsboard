@@ -145,7 +145,8 @@ public class ModelConstants {
     public static final String APPLICATION_DEVICE_TYPES_TABLE = "application_device_types";
     public static final String APPLICATION_ID_COLUMN = "application_id";
     public static final String APPLICATION_DEVICE_TYPES = "device_type";
-
+    public static final String APPLICATION_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String APPLICATION_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     /**
      * Cassandra asset constants.
      */

@@ -31,6 +31,7 @@ public class ApplicationController extends BaseController {
     @ResponseBody
     public Application saveApplication(@RequestBody Application application) throws ThingsboardException {
         try{
+            application.setTenantId(getCurrentUser().getTenantId());
             Application savedApplication = checkNotNull(applicationService.saveApplication(application));
             return savedApplication;
         } catch (Exception e) {
