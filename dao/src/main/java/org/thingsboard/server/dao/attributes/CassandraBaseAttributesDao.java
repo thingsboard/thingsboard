@@ -109,18 +109,21 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
         stmt.setString(3, attribute.getKey());
         stmt.setLong(4, attribute.getLastUpdateTs());
         stmt.setString(5, attribute.getStrValue().orElse(null));
-        if (attribute.getBooleanValue().isPresent()) {
-            stmt.setBool(6, attribute.getBooleanValue().get());
+        Optional<Boolean> booleanValue = attribute.getBooleanValue();
+        if (booleanValue.isPresent()) {
+            stmt.setBool(6, booleanValue.get());
         } else {
             stmt.setToNull(6);
         }
-        if (attribute.getLongValue().isPresent()) {
-            stmt.setLong(7, attribute.getLongValue().get());
+        Optional<Long> longValue = attribute.getLongValue();
+        if (longValue.isPresent()) {
+            stmt.setLong(7, longValue.get());
         } else {
             stmt.setToNull(7);
         }
-        if (attribute.getDoubleValue().isPresent()) {
-            stmt.setDouble(8, attribute.getDoubleValue().get());
+        Optional<Double> doubleValue = attribute.getDoubleValue();
+        if (doubleValue.isPresent()) {
+            stmt.setDouble(8, doubleValue.get());
         } else {
             stmt.setToNull(8);
         }

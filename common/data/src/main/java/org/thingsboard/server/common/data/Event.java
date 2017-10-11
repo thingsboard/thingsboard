@@ -31,7 +31,7 @@ public class Event extends BaseData<EventId> {
     private String type;
     private String uid;
     private EntityId entityId;
-    private JsonNode body;
+    private transient JsonNode body;
 
     public Event() {
         super();

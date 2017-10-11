@@ -78,24 +78,28 @@ public class CoapTransportResource extends CoapResource {
             log.trace("Can't fetch/subscribe to timeseries updates");
             exchange.respond(ResponseCode.BAD_REQUEST);
         } else if (exchange.getRequestOptions().hasObserve()) {
-            boolean unsubscribe = exchange.getRequestOptions().getObserve() == 1;
-            MsgType msgType;
-            if (featureType.get() == FeatureType.RPC) {
-                msgType = unsubscribe ? MsgType.UNSUBSCRIBE_RPC_COMMANDS_REQUEST : MsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
-            } else {
-                msgType = unsubscribe ? MsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST : MsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
-            }
-            Optional<SessionId> sessionId = processRequest(exchange, msgType);
-            if (sessionId.isPresent()) {
-                if (exchange.getRequestOptions().getObserve() == 1) {
-                    exchange.respond(ResponseCode.VALID);
-                }
-            }
+            processExchangeGetRequest(exchange, featureType.get());
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
             processRequest(exchange, MsgType.GET_ATTRIBUTES_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(ResponseCode.BAD_REQUEST);
+        }
+    }
+
+    private void processExchangeGetRequest(CoapExchange exchange, FeatureType featureType) {
+        boolean unsubscribe = exchange.getRequestOptions().getObserve() == 1;
+        MsgType msgType;
+        if (featureType == FeatureType.RPC) {
+            msgType = unsubscribe ? MsgType.UNSUBSCRIBE_RPC_COMMANDS_REQUEST : MsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
+        } else {
+            msgType = unsubscribe ? MsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST : MsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
+        }
+        Optional<SessionId> sessionId = processRequest(exchange, msgType);
+        if (sessionId.isPresent()) {
+            if (exchange.getRequestOptions().getObserve() == 1) {
+                exchange.respond(ResponseCode.VALID);
+            }
         }
     }
 
@@ -159,6 +163,9 @@ public class CoapTransportResource extends CoapResource {
                 case SUBSCRIBE_RPC_COMMANDS_REQUEST:
                     ExchangeObserver systemObserver = (ExchangeObserver) observerField.get(advanced);
                     advanced.setObserver(new CoapExchangeObserverProxy(systemObserver, ctx));
+                    ctx.setSessionType(SessionType.ASYNC);
+                    msg = adaptor.convertToActorMsg(ctx, type, request);
+                    break;
                 case UNSUBSCRIBE_ATTRIBUTES_REQUEST:
                 case UNSUBSCRIBE_RPC_COMMANDS_REQUEST:
                     ctx.setSessionType(SessionType.ASYNC);

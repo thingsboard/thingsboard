@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -28,7 +29,7 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     
     private String title;
     private TenantId tenantId;
-    private JsonNode additionalInfo;
+    private transient JsonNode additionalInfo;
     
     public Customer() {
         super();
@@ -60,12 +61,13 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     public void setTitle(String title) {
         this.title = title;
     }
-    
+
+    @JsonIgnore
     public boolean isPublic() {
         if (getAdditionalInfo() != null && getAdditionalInfo().has("isPublic")) {
-            return getAdditionalInfo().get("isPublic").asBoolean();
+            return additionalInfo.get("isPublic").asBoolean();
         }
-        
+
         return false;
     }
 
@@ -85,7 +87,7 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
     
     @Override
     public String getSearchText() {
-        return title;
+        return getTitle();
     }
 
     @Override
@@ -157,5 +159,4 @@ public class Customer extends ContactBased<CustomerId> implements HasName {
         builder.append("]");
         return builder.toString();
     }
-
 }

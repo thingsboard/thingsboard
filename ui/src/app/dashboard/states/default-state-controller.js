@@ -22,12 +22,16 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
 
     vm.inited = false;
 
+    vm.skipStateChange = false;
+
     vm.openState = openState;
     vm.updateState = updateState;
     vm.resetState = resetState;
     vm.getStateObject = getStateObject;
     vm.navigatePrevState = navigatePrevState;
     vm.getStateId = getStateId;
+    vm.getStateIndex = getStateIndex;
+    vm.getStateIdAtIndex = getStateIdAtIndex;
     vm.getStateParams = getStateParams;
     vm.getStateParamsByStateId = getStateParamsByStateId;
     vm.getEntityId = getEntityId;
@@ -46,10 +50,9 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
                 params: params
             }
             //append new state
-            stopWatchStateObject();
             vm.stateObject[0] = newState;
             gotoState(vm.stateObject[0].id, true, openRightLayout);
-            watchStateObject();
+            vm.skipStateChange = true;
         }
     }
 
@@ -66,10 +69,9 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
                 params: params
             }
             //replace with new state
-            stopWatchStateObject();
             vm.stateObject[0] = newState;
             gotoState(vm.stateObject[0].id, true, openRightLayout);
-            watchStateObject();
+            vm.skipStateChange = true;
         }
     }
 
@@ -85,16 +87,31 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
 
     function navigatePrevState(index) {
         if (index < vm.stateObject.length-1) {
-            stopWatchStateObject();
             vm.stateObject.splice(index+1, vm.stateObject.length-index-1);
             gotoState(vm.stateObject[vm.stateObject.length-1].id, true);
-            watchStateObject();
+            vm.skipStateChange = true;
         }
     }
 
     function getStateId() {
         if (vm.stateObject && vm.stateObject.length) {
             return vm.stateObject[vm.stateObject.length-1].id;
+        } else {
+            return '';
+        }
+    }
+
+    function getStateIndex() {
+        if (vm.stateObject && vm.stateObject.length) {
+            return vm.stateObject.length-1;
+        } else {
+            return -1;
+        }
+    }
+
+    function getStateIdAtIndex(index) {
+        if (vm.stateObject && vm.stateObject[index]) {
+            return vm.stateObject[index].id;
         } else {
             return '';
         }
@@ -203,29 +220,21 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
 
             $scope.$watch('vm.dashboardCtrl.dashboardCtx.state', function () {
                 if (vm.stateObject[0].id !== vm.dashboardCtrl.dashboardCtx.state) {
-                    stopWatchStateObject();
                     vm.stateObject[0].id = vm.dashboardCtrl.dashboardCtx.state;
                     updateLocation();
-                    watchStateObject();
+                    vm.skipStateChange = true;
                 }
             });
-            watchStateObject();
+            $scope.$watch('vm.stateObject', function(newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal) && newVal) {
+                    if (vm.skipStateChange) {
+                        vm.skipStateChange = false;
+                    } else {
+                        gotoState(vm.stateObject[0].id, true);
+                    }
+                }
+            }, true);
         });
-    }
-
-    function stopWatchStateObject() {
-        if (vm.stateObjectWatcher) {
-            vm.stateObjectWatcher();
-            vm.stateObjectWatcher = null;
-        }
-    }
-
-    function watchStateObject() {
-        vm.stateObjectWatcher = $scope.$watch('vm.stateObject', function(newVal, prevVal) {
-            if (!angular.equals(newVal, prevVal) && newVal) {
-                gotoState(vm.stateObject[0].id, true);
-            }
-        }, true);
     }
 
     function gotoState(stateId, update, openRightLayout) {

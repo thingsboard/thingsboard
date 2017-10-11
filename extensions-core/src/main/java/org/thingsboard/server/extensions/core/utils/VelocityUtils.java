@@ -78,6 +78,8 @@ public class VelocityUtils {
             case POST_TELEMETRY_REQUEST:
                 pushTsEntries(context, (TelemetryUploadRequest) payload);
                 break;
+            default:
+                break;
         }
 
         context.put("deviceId", deviceMetaData.getDeviceId().getId().toString());

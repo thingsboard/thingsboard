@@ -42,9 +42,6 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @Table(name = ModelConstants.PLUGIN_COLUMN_FAMILY_NAME)
 public class PluginMetaDataEntity extends BaseSqlEntity<PluginMetaData> implements SearchTextEntity<PluginMetaData> {
 
-    @Transient
-    private static final long serialVersionUID = -6164321050824823149L;
-
     @Column(name = ModelConstants.PLUGIN_API_TOKEN_PROPERTY)
     private String apiToken;
 

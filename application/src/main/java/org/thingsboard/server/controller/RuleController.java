@@ -34,11 +34,13 @@ import java.util.List;
 @RequestMapping("/api")
 public class RuleController extends BaseController {
 
+    public static final String RULE_ID = "ruleId";
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/rule/{ruleId}", method = RequestMethod.GET)
     @ResponseBody
-    public RuleMetaData getRuleById(@PathVariable("ruleId") String strRuleId) throws ThingsboardException {
-        checkParameter("ruleId", strRuleId);
+    public RuleMetaData getRuleById(@PathVariable(RULE_ID) String strRuleId) throws ThingsboardException {
+        checkParameter(RULE_ID, strRuleId);
         try {
             RuleId ruleId = new RuleId(toUUID(strRuleId));
             return checkRule(ruleService.findRuleById(ruleId));
@@ -80,8 +82,8 @@ public class RuleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/rule/{ruleId}/activate", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void activateRuleById(@PathVariable("ruleId") String strRuleId) throws ThingsboardException {
-        checkParameter("ruleId", strRuleId);
+    public void activateRuleById(@PathVariable(RULE_ID) String strRuleId) throws ThingsboardException {
+        checkParameter(RULE_ID, strRuleId);
         try {
             RuleId ruleId = new RuleId(toUUID(strRuleId));
             RuleMetaData rule = checkRule(ruleService.findRuleById(ruleId));
@@ -95,8 +97,8 @@ public class RuleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/rule/{ruleId}/suspend", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void suspendRuleById(@PathVariable("ruleId") String strRuleId) throws ThingsboardException {
-        checkParameter("ruleId", strRuleId);
+    public void suspendRuleById(@PathVariable(RULE_ID) String strRuleId) throws ThingsboardException {
+        checkParameter(RULE_ID, strRuleId);
         try {
             RuleId ruleId = new RuleId(toUUID(strRuleId));
             RuleMetaData rule = checkRule(ruleService.findRuleById(ruleId));
@@ -178,8 +180,8 @@ public class RuleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/rule/{ruleId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteRule(@PathVariable("ruleId") String strRuleId) throws ThingsboardException {
-        checkParameter("ruleId", strRuleId);
+    public void deleteRule(@PathVariable(RULE_ID) String strRuleId) throws ThingsboardException {
+        checkParameter(RULE_ID, strRuleId);
         try {
             RuleId ruleId = new RuleId(toUUID(strRuleId));
             RuleMetaData rule = checkRule(ruleService.findRuleById(ruleId));

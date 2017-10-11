@@ -73,7 +73,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
 
     @Override
     public String getSearchText() {
-        return title;
+        return getTitle();
     }
 
     @Override

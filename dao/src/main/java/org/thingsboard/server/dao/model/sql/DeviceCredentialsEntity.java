@@ -34,9 +34,6 @@ import javax.persistence.*;
 @Table(name = ModelConstants.DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentials> implements BaseEntity<DeviceCredentials> {
 
-    @Transient
-    private static final long serialVersionUID = -2512362753385470464L;
-
     @Column(name = ModelConstants.DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY)
     private String deviceId;
 

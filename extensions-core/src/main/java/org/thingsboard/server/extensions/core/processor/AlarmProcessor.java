@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.extensions.core.processor;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
-import org.apache.velocity.runtime.parser.ParseException;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -33,7 +30,10 @@ import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Processor;
-import org.thingsboard.server.extensions.api.rules.*;
+import org.thingsboard.server.extensions.api.rules.RuleContext;
+import org.thingsboard.server.extensions.api.rules.RuleException;
+import org.thingsboard.server.extensions.api.rules.RuleProcessingMetaData;
+import org.thingsboard.server.extensions.api.rules.RuleProcessor;
 import org.thingsboard.server.extensions.core.filter.NashornJsEvaluator;
 import org.thingsboard.server.extensions.core.utils.VelocityUtils;
 
@@ -41,7 +41,7 @@ import javax.script.Bindings;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Optional;
 
 /**
  * @author Andrew Shvayka
@@ -129,38 +129,11 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
             return md;
         }
 
-        Alarm existing = null;
+        Alarm existing;
         if (isActiveAlarm) {
-            Alarm alarm = buildAlarm(ctx, msg);
-            if (configuration.isNewAlarmFlag()) {
-                Optional<Alarm> oldAlarmOpt = ctx.findLatestAlarm(alarm.getOriginator(), alarm.getType());
-                if (oldAlarmOpt.isPresent() && !oldAlarmOpt.get().getStatus().isCleared()) {
-                    try {
-                        ctx.clearAlarm(oldAlarmOpt.get().getId(), oldAlarmOpt.get().getEndTs()).get();
-                    } catch (Exception e) {
-                        throw new RuleException("Failed to clear old alarm", e);
-                    }
-                }
-            }
-            existing = ctx.createOrUpdateAlarm(alarm);
-            if (existing.getStartTs() == alarm.getStartTs()) {
-                log.debug("[{}][{}] New Active Alarm detected", ctx.getRuleId(), existing.getId());
-                md.put(IS_NEW_ALARM, Boolean.TRUE);
-                md.put(IS_NEW_OR_CLEARED_ALARM, Boolean.TRUE);
-            } else {
-                log.debug("[{}][{}] Existing Active Alarm detected", ctx.getRuleId(), existing.getId());
-                md.put(IS_EXISTING_ALARM, Boolean.TRUE);
-            }
+            existing = processActiveAlarm(ctx, msg, md);
         } else {
-            String alarmType = VelocityUtils.merge(alarmTypeTemplate, context);
-            Optional<Alarm> alarm = ctx.findLatestAlarm(ctx.getDeviceMetaData().getDeviceId(), alarmType);
-            if (alarm.isPresent()) {
-                ctx.clearAlarm(alarm.get().getId(), System.currentTimeMillis());
-                log.debug("[{}][{}] Existing Active Alarm cleared");
-                md.put(IS_CLEARED_ALARM, Boolean.TRUE);
-                md.put(IS_NEW_OR_CLEARED_ALARM, Boolean.TRUE);
-                existing = alarm.get();
-            }
+            existing = processInactiveAlarm(ctx, md, context);
         }
 
         if (existing != null) {
@@ -179,6 +152,44 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
         }
 
         return md;
+    }
+
+    private Alarm processActiveAlarm(RuleContext ctx, FromDeviceMsg msg, RuleProcessingMetaData md) throws RuleException {
+        Alarm alarm = buildAlarm(ctx, msg);
+        if (configuration.isNewAlarmFlag()) {
+            Optional<Alarm> oldAlarmOpt = ctx.findLatestAlarm(alarm.getOriginator(), alarm.getType());
+            if (oldAlarmOpt.isPresent() && !oldAlarmOpt.get().getStatus().isCleared()) {
+                try {
+                    ctx.clearAlarm(oldAlarmOpt.get().getId(), oldAlarmOpt.get().getEndTs()).get();
+                } catch (Exception e) {
+                    throw new RuleException("Failed to clear old alarm", e);
+                }
+            }
+        }
+        Alarm existing = ctx.createOrUpdateAlarm(alarm);
+        if (existing.getStartTs() == alarm.getStartTs()) {
+            log.debug("[{}][{}] New Active Alarm detected", ctx.getRuleId(), existing.getId());
+            md.put(IS_NEW_ALARM, Boolean.TRUE);
+            md.put(IS_NEW_OR_CLEARED_ALARM, Boolean.TRUE);
+        } else {
+            log.debug("[{}][{}] Existing Active Alarm detected", ctx.getRuleId(), existing.getId());
+            md.put(IS_EXISTING_ALARM, Boolean.TRUE);
+        }
+        return existing;
+    }
+
+    private Alarm processInactiveAlarm(RuleContext ctx, RuleProcessingMetaData md, VelocityContext context) throws RuleException {
+        Alarm existing = null;
+        String alarmType = VelocityUtils.merge(alarmTypeTemplate, context);
+        Optional<Alarm> alarm = ctx.findLatestAlarm(ctx.getDeviceMetaData().getDeviceId(), alarmType);
+        if (alarm.isPresent()) {
+            ctx.clearAlarm(alarm.get().getId(), System.currentTimeMillis());
+            log.debug("[{}][{}] Existing Active Alarm cleared");
+            md.put(IS_CLEARED_ALARM, Boolean.TRUE);
+            md.put(IS_NEW_OR_CLEARED_ALARM, Boolean.TRUE);
+            existing = alarm.get();
+        }
+        return existing;
     }
 
     private Alarm buildAlarm(RuleContext ctx, FromDeviceMsg msg) throws RuleException {
@@ -215,6 +226,9 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
                     for (List<KvEntry> entries : telemetryMsg.getData().values()) {
                         bindings = NashornJsEvaluator.toBindings(bindings, entries);
                     }
+                    break;
+                default:
+                    break;
             }
         }
         return bindings;

@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.security;
 
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 
+@EqualsAndHashCode(callSuper = true)
 public class UserCredentials extends BaseData<UserCredentialsId> {
 
     private static final long serialVersionUID = -2108436378880529163L;
@@ -84,52 +86,6 @@ public class UserCredentials extends BaseData<UserCredentialsId> {
 
     public void setResetToken(String resetToken) {
         this.resetToken = resetToken;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((activateToken == null) ? 0 : activateToken.hashCode());
-        result = prime * result + (enabled ? 1231 : 1237);
-        result = prime * result + ((password == null) ? 0 : password.hashCode());
-        result = prime * result + ((resetToken == null) ? 0 : resetToken.hashCode());
-        result = prime * result + ((userId == null) ? 0 : userId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        UserCredentials other = (UserCredentials) obj;
-        if (activateToken == null) {
-            if (other.activateToken != null)
-                return false;
-        } else if (!activateToken.equals(other.activateToken))
-            return false;
-        if (enabled != other.enabled)
-            return false;
-        if (password == null) {
-            if (other.password != null)
-                return false;
-        } else if (!password.equals(other.password))
-            return false;
-        if (resetToken == null) {
-            if (other.resetToken != null)
-                return false;
-        } else if (!resetToken.equals(other.resetToken))
-            return false;
-        if (userId == null) {
-            if (other.userId != null)
-                return false;
-        } else if (!userId.equals(other.userId))
-            return false;
-        return true;
     }
 
     @Override

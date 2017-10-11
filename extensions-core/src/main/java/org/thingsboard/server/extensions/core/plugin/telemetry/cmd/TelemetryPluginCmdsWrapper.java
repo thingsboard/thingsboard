@@ -29,6 +29,7 @@ public class TelemetryPluginCmdsWrapper {
     private List<GetHistoryCmd> historyCmds;
 
     public TelemetryPluginCmdsWrapper() {
+        super();
     }
 
     public List<AttributesSubscriptionCmd> getAttrSubCmds() {

@@ -40,9 +40,6 @@ import javax.persistence.*;
 @Table(name = ModelConstants.RULE_COLUMN_FAMILY_NAME)
 public class RuleMetaDataEntity extends BaseSqlEntity<RuleMetaData> implements SearchTextEntity<RuleMetaData> {
 
-    @Transient
-    private static final long serialVersionUID = -1506905644259463884L;
-
     @Column(name = ModelConstants.RULE_TENANT_ID_PROPERTY)
     private String tenantId;
 

@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.model;
 import java.io.Serializable;
 import java.util.UUID;
 
-public interface BaseEntity<D> extends ToData<D>, Serializable {
+public interface BaseEntity<D> extends ToData<D> {
 
     UUID getId();
 

@@ -16,7 +16,9 @@
 
 package org.thingsboard.server.service.security.model;
 
-public class UserPrincipal {
+import java.io.Serializable;
+
+public class UserPrincipal implements Serializable {
 
     private final Type type;
     private final String value;

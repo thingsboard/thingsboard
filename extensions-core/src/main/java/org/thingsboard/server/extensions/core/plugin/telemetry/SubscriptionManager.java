@@ -134,37 +134,42 @@ public class SubscriptionManager {
         if (sessionSubscriptions != null) {
             Subscription subscription = sessionSubscriptions.remove(subscriptionId);
             if (subscription != null) {
-                EntityId entityId = subscription.getEntityId();
-                if (subscription.isLocal() && subscription.getServer() != null) {
-                    rpcHandler.onSubscriptionClose(ctx, subscription.getServer(), sessionId, subscription.getSubscriptionId());
-                }
-                if (sessionSubscriptions.isEmpty()) {
-                    log.debug("[{}] Removed last subscription for particular session.", sessionId);
-                    subscriptionsByWsSessionId.remove(sessionId);
-                } else {
-                    log.debug("[{}] Removed session subscription.", sessionId);
-                }
-                Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
-                if (deviceSubscriptions != null) {
-                    boolean result = deviceSubscriptions.remove(subscription);
-                    if (result) {
-                        if (deviceSubscriptions.size() == 0) {
-                            log.debug("[{}] Removed last subscription for particular device.", sessionId);
-                            subscriptionsByEntityId.remove(entityId);
-                        } else {
-                            log.debug("[{}] Removed device subscription.", sessionId);
-                        }
-                    } else {
-                        log.debug("[{}] Subscription not found!", sessionId);
-                    }
-                } else {
-                    log.debug("[{}] No device subscriptions found!", sessionId);
-                }
+                processSubscriptionRemoval(ctx, sessionId, sessionSubscriptions, subscription);
             } else {
                 log.debug("[{}][{}] Subscription not found!", sessionId, subscriptionId);
             }
         } else {
             log.debug("[{}] No session subscriptions found!", sessionId);
+        }
+    }
+
+    private void processSubscriptionRemoval(PluginContext ctx, String sessionId,
+                                            Map<Integer, Subscription> sessionSubscriptions, Subscription subscription) {
+        EntityId entityId = subscription.getEntityId();
+        if (subscription.isLocal() && subscription.getServer() != null) {
+            rpcHandler.onSubscriptionClose(ctx, subscription.getServer(), sessionId, subscription.getSubscriptionId());
+        }
+        if (sessionSubscriptions.isEmpty()) {
+            log.debug("[{}] Removed last subscription for particular session.", sessionId);
+            subscriptionsByWsSessionId.remove(sessionId);
+        } else {
+            log.debug("[{}] Removed session subscription.", sessionId);
+        }
+        Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
+        if (deviceSubscriptions != null) {
+            boolean result = deviceSubscriptions.remove(subscription);
+            if (result) {
+                if (deviceSubscriptions.size() == 0) {
+                    log.debug("[{}] Removed last subscription for particular device.", sessionId);
+                    subscriptionsByEntityId.remove(entityId);
+                } else {
+                    log.debug("[{}] Removed device subscription.", sessionId);
+                }
+            } else {
+                log.debug("[{}] Subscription not found!", sessionId);
+            }
+        } else {
+            log.debug("[{}] No device subscriptions found!", sessionId);
         }
     }
 
@@ -272,20 +277,24 @@ public class SubscriptionManager {
             log.debug("[{}] Removed {} subscriptions for particular session.", sessionId, sessionSubscriptionSize);
 
             if (localSession) {
-                Set<ServerAddress> affectedServers = new HashSet<>();
-                for (Subscription subscription : sessionSubscriptions.values()) {
-                    if (subscription.getServer() != null) {
-                        affectedServers.add(subscription.getServer());
-                    }
-                }
-                for (ServerAddress address : affectedServers) {
-                    log.debug("[{}] Going to onSubscriptionUpdate [{}] server about session close event", sessionId, address);
-                    rpcHandler.onSessionClose(ctx, address, sessionId);
-                }
+                notifyWsSubscriptionClosed(ctx, sessionId, sessionSubscriptions);
             }
         } else {
             log.debug("[{}] No subscriptions found!", sessionId);
         }
+    }
+
+    private void notifyWsSubscriptionClosed(PluginContext ctx, String sessionId, Map<Integer, Subscription> sessionSubscriptions) {
+         Set<ServerAddress> affectedServers = new HashSet<>();
+            for (Subscription subscription : sessionSubscriptions.values()) {
+                if (subscription.getServer() != null) {
+                    affectedServers.add(subscription.getServer());
+                }
+            }
+            for (ServerAddress address : affectedServers) {
+                log.debug("[{}] Going to onSubscriptionUpdate [{}] server about session close event", sessionId, address);
+                rpcHandler.onSessionClose(ctx, address, sessionId);
+         }
     }
 
     public void onClusterUpdate(PluginContext ctx) {
@@ -296,39 +305,49 @@ public class SubscriptionManager {
             Set<Subscription> subscriptions = e.getValue();
             Optional<ServerAddress> newAddressOptional = ctx.resolve(e.getKey());
             if (newAddressOptional.isPresent()) {
-                ServerAddress newAddress = newAddressOptional.get();
-                Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
-                while (subscriptionIterator.hasNext()) {
-                    Subscription s = subscriptionIterator.next();
-                    if (s.isLocal()) {
-                        if (!newAddress.equals(s.getServer())) {
-                            log.trace("[{}] Local subscription is now handled on new server [{}]", s.getWsSessionId(), newAddress);
-                            s.setServer(newAddress);
-                            rpcHandler.onNewSubscription(ctx, newAddress, s.getWsSessionId(), s);
-                        }
-                    } else {
-                        log.trace("[{}] Remote subscription is now handled on new server address: [{}]", s.getWsSessionId(), newAddress);
-                        subscriptionIterator.remove();
-                        //TODO: onUpdate state of subscription by WsSessionId and other maps.
-                    }
-                }
+                checkSubsciptionsNewAddress(ctx, newAddressOptional, subscriptions);
             } else {
-                Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
-                while (subscriptionIterator.hasNext()) {
-                    Subscription s = subscriptionIterator.next();
-                    if (s.isLocal()) {
-                        if (s.getServer() != null) {
-                            log.trace("[{}] Local subscription is no longer handled on remote server address [{}]", s.getWsSessionId(), s.getServer());
-                            s.setServer(null);
-                        }
-                    } else {
-                        log.trace("[{}] Remote subscription is on up to date server address.", s.getWsSessionId());
-                    }
-                }
+                checkSubsciptionsPrevAddress(subscriptions);
             }
             if (subscriptions.size() == 0) {
                 log.trace("[{}] No more subscriptions for this device on current server.", e.getKey());
                 deviceIterator.remove();
+            }
+        }
+    }
+
+    private void checkSubsciptionsNewAddress(PluginContext ctx, Optional<ServerAddress> newAddressOptional, Set<Subscription> subscriptions) {
+        if (newAddressOptional.isPresent()) {
+            ServerAddress newAddress = newAddressOptional.get();
+            Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
+            while (subscriptionIterator.hasNext()) {
+                Subscription s = subscriptionIterator.next();
+                if (s.isLocal()) {
+                    if (!newAddress.equals(s.getServer())) {
+                        log.trace("[{}] Local subscription is now handled on new server [{}]", s.getWsSessionId(), newAddress);
+                        s.setServer(newAddress);
+                        rpcHandler.onNewSubscription(ctx, newAddress, s.getWsSessionId(), s);
+                    }
+                } else {
+                    log.trace("[{}] Remote subscription is now handled on new server address: [{}]", s.getWsSessionId(), newAddress);
+                    subscriptionIterator.remove();
+                    //TODO: onUpdate state of subscription by WsSessionId and other maps.
+                }
+            }
+        }
+    }
+
+    private void checkSubsciptionsPrevAddress(Set<Subscription> subscriptions) {
+        Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
+        while (subscriptionIterator.hasNext()) {
+            Subscription s = subscriptionIterator.next();
+            if (s.isLocal()) {
+                if (s.getServer() != null) {
+                    log.trace("[{}] Local subscription is no longer handled on remote server address [{}]", s.getWsSessionId(), s.getServer());
+                    s.setServer(null);
+                }
+            } else {
+                log.trace("[{}] Remote subscription is on up to date server address.", s.getWsSessionId());
             }
         }
     }

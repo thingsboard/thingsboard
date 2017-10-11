@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 @Data
 @Slf4j
-final public class GrpcSession implements Closeable {
+public final class GrpcSession implements Closeable {
     private final UUID sessionId;
     private final boolean client;
     private final GrpcSessionListener listener;
@@ -59,36 +59,14 @@ final public class GrpcSession implements Closeable {
         this.inputStream = new StreamObserver<ClusterAPIProtos.ToRpcServerMessage>() {
             @Override
             public void onNext(ClusterAPIProtos.ToRpcServerMessage msg) {
-                if (!connected) {
-                    if (msg.hasConnectMsg()) {
-                        connected = true;
-                        ClusterAPIProtos.ServerAddress rpcAddress = msg.getConnectMsg().getServerAddress();
-                        remoteServer = new ServerAddress(rpcAddress.getHost(), rpcAddress.getPort());
-                        listener.onConnected(GrpcSession.this);
-                    }
+                if (!connected && msg.hasConnectMsg()) {
+                    connected = true;
+                    ClusterAPIProtos.ServerAddress rpcAddress = msg.getConnectMsg().getServerAddress();
+                    remoteServer = new ServerAddress(rpcAddress.getHost(), rpcAddress.getPort());
+                    listener.onConnected(GrpcSession.this);
                 }
                 if (connected) {
-                    if (msg.hasToPluginRpcMsg()) {
-                        listener.onToPluginRpcMsg(GrpcSession.this, msg.getToPluginRpcMsg());
-                    }
-                    if (msg.hasToDeviceActorRpcMsg()) {
-                        listener.onToDeviceActorRpcMsg(GrpcSession.this, msg.getToDeviceActorRpcMsg());
-                    }
-                    if (msg.hasToDeviceSessionActorRpcMsg()) {
-                        listener.onToDeviceSessionActorRpcMsg(GrpcSession.this, msg.getToDeviceSessionActorRpcMsg());
-                    }
-                    if (msg.hasToDeviceActorNotificationRpcMsg()) {
-                        listener.onToDeviceActorNotificationRpcMsg(GrpcSession.this, msg.getToDeviceActorNotificationRpcMsg());
-                    }
-                    if (msg.hasToDeviceRpcRequestRpcMsg()) {
-                        listener.onToDeviceRpcRequestRpcMsg(GrpcSession.this, msg.getToDeviceRpcRequestRpcMsg());
-                    }
-                    if (msg.hasToPluginRpcResponseRpcMsg()) {
-                        listener.onFromDeviceRpcResponseRpcMsg(GrpcSession.this, msg.getToPluginRpcResponseRpcMsg());
-                    }
-                    if (msg.hasToAllNodesRpcMsg()) {
-                        listener.onToAllNodesRpcMessage(GrpcSession.this, msg.getToAllNodesRpcMsg());
-                    }
+                    handleToRpcServerMessage(msg);
                 }
             }
 
@@ -103,6 +81,30 @@ final public class GrpcSession implements Closeable {
                 listener.onDisconnected(GrpcSession.this);
             }
         };
+    }
+
+    private void handleToRpcServerMessage(ClusterAPIProtos.ToRpcServerMessage msg) {
+        if (msg.hasToPluginRpcMsg()) {
+            listener.onToPluginRpcMsg(GrpcSession.this, msg.getToPluginRpcMsg());
+        }
+        if (msg.hasToDeviceActorRpcMsg()) {
+            listener.onToDeviceActorRpcMsg(GrpcSession.this, msg.getToDeviceActorRpcMsg());
+        }
+        if (msg.hasToDeviceSessionActorRpcMsg()) {
+            listener.onToDeviceSessionActorRpcMsg(GrpcSession.this, msg.getToDeviceSessionActorRpcMsg());
+        }
+        if (msg.hasToDeviceActorNotificationRpcMsg()) {
+            listener.onToDeviceActorNotificationRpcMsg(GrpcSession.this, msg.getToDeviceActorNotificationRpcMsg());
+        }
+        if (msg.hasToDeviceRpcRequestRpcMsg()) {
+            listener.onToDeviceRpcRequestRpcMsg(GrpcSession.this, msg.getToDeviceRpcRequestRpcMsg());
+        }
+        if (msg.hasToPluginRpcResponseRpcMsg()) {
+            listener.onFromDeviceRpcResponseRpcMsg(GrpcSession.this, msg.getToPluginRpcResponseRpcMsg());
+        }
+        if (msg.hasToAllNodesRpcMsg()) {
+            listener.onToAllNodesRpcMessage(GrpcSession.this, msg.getToAllNodesRpcMsg());
+        }
     }
 
     public void initOutputStream() {

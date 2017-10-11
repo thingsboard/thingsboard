@@ -37,10 +37,11 @@ import java.util.Optional;
 public class RpcPluginAction extends SimpleRuleLifecycleComponent implements PluginAction<EmptyComponentConfiguration> {
 
     public void init(EmptyComponentConfiguration configuration) {
+        //Do nothing
     }
 
     @Override
-    public Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd) {
         FromDeviceMsg msg = toDeviceActorMsg.getPayload();
         if (msg.getMsgType() == MsgType.TO_SERVER_RPC_REQUEST) {
             ToServerRpcRequestMsg payload = (ToServerRpcRequestMsg) msg;

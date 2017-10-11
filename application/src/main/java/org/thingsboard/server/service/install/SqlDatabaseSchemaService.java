@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 
 @Service
 @Profile("install")
@@ -58,7 +59,7 @@ public class SqlDatabaseSchemaService implements DatabaseSchemaService {
         Path schemaFile = Paths.get(this.dataDir, SQL_DIR, SCHEMA_SQL);
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             String sql = new String(Files.readAllBytes(schemaFile), Charset.forName("UTF-8"));
-            conn.createStatement().execute(sql);
+            conn.prepareStatement(sql).execute(); //NOSONAR, ignoring because method used to load initial thingsboard database schema
         }
 
     }

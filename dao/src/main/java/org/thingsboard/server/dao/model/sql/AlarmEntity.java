@@ -45,9 +45,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Table(name = ALARM_COLUMN_FAMILY_NAME)
 public final class AlarmEntity extends BaseSqlEntity<Alarm> implements BaseEntity<Alarm> {
 
-    @Transient
-    private static final long serialVersionUID = -339979717281685984L;
-
     @Column(name = ALARM_TENANT_ID_PROPERTY)
     private String tenantId;
 

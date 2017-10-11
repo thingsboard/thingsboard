@@ -44,10 +44,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
@@ -58,6 +55,10 @@ import static org.thingsboard.server.dao.service.Validator.*;
 @Slf4j
 public class DeviceServiceImpl extends AbstractEntityService implements DeviceService {
 
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+    public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
+    public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
+    public static final String INCORRECT_DEVICE_ID = "Incorrect deviceId ";
     @Autowired
     private DeviceDao deviceDao;
 
@@ -73,21 +74,21 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public Device findDeviceById(DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
-        validateId(deviceId, "Incorrect deviceId " + deviceId);
+        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
         return deviceDao.findById(deviceId.getId());
     }
 
     @Override
     public ListenableFuture<Device> findDeviceByIdAsync(DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
-        validateId(deviceId, "Incorrect deviceId " + deviceId);
+        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
         return deviceDao.findByIdAsync(deviceId.getId());
     }
 
     @Override
     public Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findDeviceByTenantIdAndName [{}][{}]", tenantId, name);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Optional<Device> deviceOpt = deviceDao.findDeviceByTenantIdAndName(tenantId.getId(), name);
         if (deviceOpt.isPresent()) {
             return Optional.of(deviceOpt.get());
@@ -128,7 +129,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public void deleteDevice(DeviceId deviceId) {
         log.trace("Executing deleteDevice [{}]", deviceId);
-        validateId(deviceId, "Incorrect deviceId " + deviceId);
+        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(deviceId);
         if (deviceCredentials != null) {
             deviceCredentialsService.deleteDeviceCredentials(deviceCredentials);
@@ -140,8 +141,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public TextPageData<Device> findDevicesByTenantId(TenantId tenantId, TextPageLink pageLink) {
         log.trace("Executing findDevicesByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
-        validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         List<Device> devices = deviceDao.findDevicesByTenantId(tenantId.getId(), pageLink);
         return new TextPageData<>(devices, pageLink);
     }
@@ -149,9 +150,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public TextPageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, TextPageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateString(type, "Incorrect type " + type);
-        validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         List<Device> devices = deviceDao.findDevicesByTenantIdAndType(tenantId.getId(), type, pageLink);
         return new TextPageData<>(devices, pageLink);
     }
@@ -159,7 +160,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds) {
         log.trace("Executing findDevicesByTenantIdAndIdsAsync, tenantId [{}], deviceIds [{}]", tenantId, deviceIds);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
         return deviceDao.findDevicesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceIds));
     }
@@ -168,16 +169,16 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public void deleteDevicesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantDevicesRemover.removeEntities(tenantId);
     }
 
     @Override
     public TextPageData<Device> findDevicesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
-        validateId(customerId, "Incorrect customerId " + customerId);
-        validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         List<Device> devices = deviceDao.findDevicesByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
         return new TextPageData<>(devices, pageLink);
     }
@@ -185,10 +186,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public TextPageData<Device> findDevicesByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, TextPageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}], type [{}], pageLink [{}]", tenantId, customerId, type, pageLink);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
-        validateId(customerId, "Incorrect customerId " + customerId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validateString(type, "Incorrect type " + type);
-        validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         List<Device> devices =  deviceDao.findDevicesByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
         return new TextPageData<>(devices, pageLink);
     }
@@ -196,8 +197,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds) {
         log.trace("Executing findDevicesByTenantIdCustomerIdAndIdsAsync, tenantId [{}], customerId [{}], deviceIds [{}]", tenantId, customerId, deviceIds);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
-        validateId(customerId, "Incorrect customerId " + customerId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validateIds(deviceIds, "Incorrect deviceIds " + deviceIds);
         return deviceDao.findDevicesByTenantIdCustomerIdAndIdsAsync(tenantId.getId(),
                 customerId.getId(), toUUIDs(deviceIds));
@@ -206,8 +207,8 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public void unassignCustomerDevices(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing unassignCustomerDevices, tenantId [{}], customerId [{}]", tenantId, customerId);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
-        validateId(customerId, "Incorrect customerId " + customerId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         new CustomerDevicesUnassigner(tenantId).removeEntities(customerId);
     }
 
@@ -230,7 +231,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             @Nullable
             @Override
             public List<Device> apply(@Nullable List<Device> deviceList) {
-                return deviceList.stream().filter(device -> query.getDeviceTypes().contains(device.getType())).collect(Collectors.toList());
+                return deviceList == null ? Collections.emptyList() : deviceList.stream().filter(device -> query.getDeviceTypes().contains(device.getType())).collect(Collectors.toList());
             }
         });
 
@@ -240,7 +241,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findDeviceTypesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         ListenableFuture<List<EntitySubtype>> tenantDeviceTypes = deviceDao.findTenantDeviceTypesAsync(tenantId.getId());
         return Futures.transform(tenantDeviceTypes,
             (Function<List<EntitySubtype>, List<EntitySubtype>>) deviceTypes -> {

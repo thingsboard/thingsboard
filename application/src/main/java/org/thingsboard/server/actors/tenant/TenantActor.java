@@ -32,6 +32,8 @@ import org.thingsboard.server.actors.shared.plugin.TenantPluginManager;
 import org.thingsboard.server.actors.shared.rule.RuleManager;
 import org.thingsboard.server.actors.shared.rule.TenantRuleManager;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.PluginId;
+import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
@@ -126,16 +128,18 @@ public class TenantActor extends ContextAwareActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        if (msg.getPluginId().isPresent()) {
-            ActorRef pluginActor = pluginManager.getOrCreatePluginActor(this.context(), msg.getPluginId().get());
+        Optional<PluginId> pluginId = msg.getPluginId();
+        Optional<RuleId> ruleId = msg.getRuleId();
+        if (pluginId.isPresent()) {
+            ActorRef pluginActor = pluginManager.getOrCreatePluginActor(this.context(), pluginId.get());
             pluginActor.tell(msg, ActorRef.noSender());
-        } else if (msg.getRuleId().isPresent()) {
+        } else if (ruleId.isPresent()) {
             ActorRef target;
-            Optional<ActorRef> ref = ruleManager.update(this.context(), msg.getRuleId().get(), msg.getEvent());
+            Optional<ActorRef> ref = ruleManager.update(this.context(), ruleId.get(), msg.getEvent());
             if (ref.isPresent()) {
                 target = ref.get();
             } else {
-                logger.debug("Failed to find actor for rule: [{}]", msg.getRuleId());
+                logger.debug("Failed to find actor for rule: [{}]", ruleId);
                 return;
             }
             target.tell(msg, ActorRef.noSender());

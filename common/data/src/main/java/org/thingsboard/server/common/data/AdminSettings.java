@@ -24,7 +24,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> {
     private static final long serialVersionUID = -7670322981725511892L;
     
     private String key;
-    private JsonNode jsonValue;
+    private transient JsonNode jsonValue;
     
     public AdminSettings() {
         super();

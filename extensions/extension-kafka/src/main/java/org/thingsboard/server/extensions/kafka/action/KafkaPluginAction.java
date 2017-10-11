@@ -30,7 +30,7 @@ import java.util.Optional;
 public class KafkaPluginAction extends AbstractTemplatePluginAction<KafkaPluginActionConfiguration> {
 
     @Override
-    protected Optional<RuleToPluginMsg<?>> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
+    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         KafkaActionPayload.KafkaActionPayloadBuilder builder = KafkaActionPayload.builder();
         builder.msgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());

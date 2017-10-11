@@ -42,7 +42,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName {
     private long endTs;
     private long ackTs;
     private long clearTs;
-    private JsonNode details;
+    private transient JsonNode details;
     private boolean propagate;
 
     public Alarm() {

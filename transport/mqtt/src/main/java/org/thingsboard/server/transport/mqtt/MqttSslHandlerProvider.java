@@ -32,6 +32,7 @@ import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
@@ -69,12 +70,15 @@ public class MqttSslHandlerProvider {
 
             TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             KeyStore trustStore = KeyStore.getInstance(keyStoreType);
-            trustStore.load(new FileInputStream(tsFile), keyStorePassword.toCharArray());
+            try (InputStream tsFileInputStream = new FileInputStream(tsFile)) {
+                trustStore.load(tsFileInputStream, keyStorePassword.toCharArray());
+            }
             tmFactory.init(trustStore);
 
             KeyStore ks = KeyStore.getInstance(keyStoreType);
-
-            ks.load(new FileInputStream(ksFile), keyStorePassword.toCharArray());
+            try (InputStream ksFileInputStream = new FileInputStream(ksFile)) {
+                ks.load(ksFileInputStream, keyStorePassword.toCharArray());
+            }
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             kmf.init(ks, keyPassword.toCharArray());
 

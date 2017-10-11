@@ -333,6 +333,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
                     alarmId: alarm.id.id,
                     allowAcknowledgment: vm.allowAcknowledgment,
                     allowClear: vm.allowClear,
+                    displayDetails: true,
                     showingCallback: onShowingCallback
                 },
                 parent: angular.element($document[0].body),

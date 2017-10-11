@@ -283,6 +283,12 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
             );
         }
 
+        function updateUserLang() {
+            if (currentUserDetails.additionalInfo && currentUserDetails.additionalInfo.lang) {
+                $translate.use(currentUserDetails.additionalInfo.lang);
+            }
+        }
+
         function procceedJwtTokenValidate() {
             validateJwtToken(doTokenRefresh).then(function success() {
                 var jwtToken = store.get('jwt_token');
@@ -299,6 +305,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
                     getUser(currentUser.userId).then(
                         function success(user) {
                             currentUserDetails = user;
+                            updateUserLang();
                             $rootScope.forceFullscreen = false;
                             if (userForceFullscreen()) {
                                 $rootScope.forceFullscreen = true;

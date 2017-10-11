@@ -46,6 +46,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 @SqlDao
 public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEntity, PluginMetaData> implements PluginDao {
 
+    public static final String SEARCH_RESULT = "Search result: [{}]";
     @Autowired
     private PluginMetaDataRepository pluginMetaDataRepository;
 
@@ -66,7 +67,7 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}] for plugin entity [{}]", pluginMetaData != null, pluginMetaData);
         } else {
-            log.debug("Search result: [{}]", pluginMetaData != null);
+            log.debug(SEARCH_RESULT, pluginMetaData != null);
         }
         return pluginMetaData;
     }
@@ -78,7 +79,7 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
         if (log.isTraceEnabled()) {
             log.trace("Search result: [{}] for plugin entity [{}]", entity != null, entity);
         } else {
-            log.debug("Search result: [{}]", entity != null);
+            log.debug(SEARCH_RESULT, entity != null);
         }
         return DaoUtil.getData(entity);
     }
@@ -104,9 +105,9 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
                         pageLink.getIdOffset() == null ? NULL_UUID_STR :  UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
+            log.trace(SEARCH_RESULT, Arrays.toString(entities.toArray()));
         } else {
-            log.debug("Search result: [{}]", entities.size());
+            log.debug(SEARCH_RESULT, entities.size());
         }
         return DaoUtil.convertDataList(entities);
     }
@@ -122,9 +123,9 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
                         pageLink.getIdOffset() == null ? NULL_UUID_STR :  UUIDConverter.fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit()));
         if (log.isTraceEnabled()) {
-            log.trace("Search result: [{}]", Arrays.toString(entities.toArray()));
+            log.trace(SEARCH_RESULT, Arrays.toString(entities.toArray()));
         } else {
-            log.debug("Search result: [{}]", entities.size());
+            log.debug(SEARCH_RESULT, entities.size());
         }
         return DaoUtil.convertDataList(entities);
     }

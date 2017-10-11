@@ -32,11 +32,14 @@ import org.thingsboard.server.exception.ThingsboardException;
 @RequestMapping("/api")
 public class CustomerController extends BaseController {
 
+    public static final String CUSTOMER_ID = "customerId";
+    public static final String IS_PUBLIC = "isPublic";
+
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}", method = RequestMethod.GET)
     @ResponseBody
-    public Customer getCustomerById(@PathVariable("customerId") String strCustomerId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
+    public Customer getCustomerById(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
+        checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             return checkCustomerId(customerId);
@@ -48,15 +51,15 @@ public class CustomerController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/shortInfo", method = RequestMethod.GET)
     @ResponseBody
-    public JsonNode getShortCustomerInfoById(@PathVariable("customerId") String strCustomerId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
+    public JsonNode getShortCustomerInfoById(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
+        checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId);
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode infoObject = objectMapper.createObjectNode();
             infoObject.put("title", customer.getTitle());
-            infoObject.put("isPublic", customer.isPublic());
+            infoObject.put(IS_PUBLIC, customer.isPublic());
             return infoObject;
         } catch (Exception e) {
             throw handleException(e);
@@ -66,8 +69,8 @@ public class CustomerController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/title", method = RequestMethod.GET, produces = "application/text")
     @ResponseBody
-    public String getCustomerTitleById(@PathVariable("customerId") String strCustomerId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
+    public String getCustomerTitleById(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
+        checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId);
@@ -92,8 +95,8 @@ public class CustomerController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteCustomer(@PathVariable("customerId") String strCustomerId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
+    public void deleteCustomer(@PathVariable(CUSTOMER_ID) String strCustomerId) throws ThingsboardException {
+        checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId);

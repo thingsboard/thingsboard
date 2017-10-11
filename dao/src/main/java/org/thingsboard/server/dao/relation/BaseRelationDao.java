@@ -62,6 +62,7 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
     public static final String AND = " AND ";
 
     private static final RelationTypeGroupCodec relationTypeGroupCodec = new RelationTypeGroupCodec();
+    public static final String EQUAL_TO_PARAM = " = ? ";
 
     private PreparedStatement saveStmt;
     private PreparedStatement findAllByFromStmt;
@@ -139,9 +140,21 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         return getFuture(executeAsyncRead(stmt), rs -> rs != null ? getEntityRelation(rs.one()) : null);
     }
 
+    @Override
+    public boolean saveRelation(EntityRelation relation) {
+        BoundStatement stmt = getSaveRelationStatement(relation);
+        ResultSet rs = executeWrite(stmt);
+        return rs.wasApplied();
+    }
 
     @Override
-    public ListenableFuture<Boolean> saveRelation(EntityRelation relation) {
+    public ListenableFuture<Boolean> saveRelationAsync(EntityRelation relation) {
+        BoundStatement stmt = getSaveRelationStatement(relation);
+        ResultSetFuture future = executeAsyncWrite(stmt);
+        return getBooleanListenableFuture(future);
+    }
+
+    private BoundStatement getSaveRelationStatement(EntityRelation relation) {
         BoundStatement stmt = getSaveStmt().bind()
                 .setUUID(0, relation.getFrom().getId())
                 .setString(1, relation.getFrom().getEntityType().name())
@@ -150,17 +163,34 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
                 .set(4, relation.getTypeGroup(), relationTypeGroupCodec)
                 .setString(5, relation.getType())
                 .set(6, relation.getAdditionalInfo(), JsonNode.class);
-        ResultSetFuture future = executeAsyncWrite(stmt);
-        return getBooleanListenableFuture(future);
+        return stmt;
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelation(EntityRelation relation) {
+    public boolean deleteRelation(EntityRelation relation) {
         return deleteRelation(relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public ListenableFuture<Boolean> deleteRelationAsync(EntityRelation relation) {
+        return deleteRelationAsync(relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
+    }
+
+    @Override
+    public boolean deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        BoundStatement stmt = getDeleteRelationStatement(from, to, relationType, typeGroup);
+        ResultSet rs = executeWrite(stmt);
+        return rs.wasApplied();
+    }
+
+    @Override
+    public ListenableFuture<Boolean> deleteRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        BoundStatement stmt = getDeleteRelationStatement(from, to, relationType, typeGroup);
+        ResultSetFuture future = executeAsyncWrite(stmt);
+        return getBooleanListenableFuture(future);
+    }
+
+    private BoundStatement getDeleteRelationStatement(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         BoundStatement stmt = getDeleteStmt().bind()
                 .setUUID(0, from.getId())
                 .setString(1, from.getEntityType().name())
@@ -168,12 +198,21 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
                 .setString(3, to.getEntityType().name())
                 .set(4, typeGroup, relationTypeGroupCodec)
                 .setString(5, relationType);
-        ResultSetFuture future = executeAsyncWrite(stmt);
-        return getBooleanListenableFuture(future);
+        return stmt;
     }
 
     @Override
-    public ListenableFuture<Boolean> deleteOutboundRelations(EntityId entity) {
+    public boolean deleteOutboundRelations(EntityId entity) {
+        BoundStatement stmt = getDeleteAllByEntityStmt().bind()
+                .setUUID(0, entity.getId())
+                .setString(1, entity.getEntityType().name());
+        ResultSet rs = executeWrite(stmt);
+        return rs.wasApplied();
+    }
+
+
+    @Override
+    public ListenableFuture<Boolean> deleteOutboundRelationsAsync(EntityId entity) {
         BoundStatement stmt = getDeleteAllByEntityStmt().bind()
                 .setUUID(0, entity.getId())
                 .setString(1, entity.getEntityType().name());
@@ -242,9 +281,9 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         if (findAllByFromStmt == null) {
             findAllByFromStmt = getSession().prepare(SELECT_COLUMNS + " " +
                     FROM + ModelConstants.RELATION_COLUMN_FAMILY_NAME + " " +
-                    WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? ");
+                    WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + EQUAL_TO_PARAM);
         }
         return findAllByFromStmt;
     }
@@ -253,10 +292,10 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         if (findAllByFromAndTypeStmt == null) {
             findAllByFromAndTypeStmt = getSession().prepare(SELECT_COLUMNS + " " +
                     FROM + ModelConstants.RELATION_COLUMN_FAMILY_NAME + " " +
-                    WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_PROPERTY + " = ? ");
+                    WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_PROPERTY + EQUAL_TO_PARAM);
         }
         return findAllByFromAndTypeStmt;
     }
@@ -266,9 +305,9 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         if (findAllByToStmt == null) {
             findAllByToStmt = getSession().prepare(SELECT_COLUMNS + " " +
                     FROM + ModelConstants.RELATION_REVERSE_VIEW_NAME + " " +
-                    WHERE + ModelConstants.RELATION_TO_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? ");
+                    WHERE + ModelConstants.RELATION_TO_ID_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + EQUAL_TO_PARAM);
         }
         return findAllByToStmt;
     }
@@ -277,10 +316,10 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         if (findAllByToAndTypeStmt == null) {
             findAllByToAndTypeStmt = getSession().prepare(SELECT_COLUMNS + " " +
                     FROM + ModelConstants.RELATION_REVERSE_VIEW_NAME + " " +
-                    WHERE + ModelConstants.RELATION_TO_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_PROPERTY + " = ? ");
+                    WHERE + ModelConstants.RELATION_TO_ID_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_PROPERTY + EQUAL_TO_PARAM);
         }
         return findAllByToAndTypeStmt;
     }
@@ -290,12 +329,12 @@ public class BaseRelationDao extends CassandraAbstractAsyncDao implements Relati
         if (checkRelationStmt == null) {
             checkRelationStmt = getSession().prepare(SELECT_COLUMNS + " " +
                     FROM + ModelConstants.RELATION_COLUMN_FAMILY_NAME + " " +
-                    WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TO_ID_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + " = ? " +
-                    AND + ModelConstants.RELATION_TYPE_PROPERTY + " = ? ");
+                    WHERE + ModelConstants.RELATION_FROM_ID_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_FROM_TYPE_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TO_ID_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TO_TYPE_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_GROUP_PROPERTY + EQUAL_TO_PARAM +
+                    AND + ModelConstants.RELATION_TYPE_PROPERTY + EQUAL_TO_PARAM);
         }
         return checkRelationStmt;
     }

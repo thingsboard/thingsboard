@@ -50,7 +50,7 @@ public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implemen
     }
 
     @Override
-    public Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd) {
         FromDeviceMsg msg = toDeviceActorMsg.getPayload();
         if (msg.getMsgType() == MsgType.POST_TELEMETRY_REQUEST) {
             TelemetryUploadRequest payload = (TelemetryUploadRequest) msg;

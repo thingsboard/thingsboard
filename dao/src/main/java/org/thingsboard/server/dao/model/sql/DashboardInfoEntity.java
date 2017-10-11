@@ -29,16 +29,12 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements SearchTextEntity<DashboardInfo> {
-
-    @Transient
-    private static final long serialVersionUID = -5525675905528050250L;
 
     @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
     private String tenantId;

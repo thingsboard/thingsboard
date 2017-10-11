@@ -78,15 +78,17 @@ public class MqttPlugin extends AbstractPlugin<MqttPluginConfiguration> {
 
                             @Override
                             public void onFailure(IMqttToken iMqttToken, Throwable e) {
+                                //Do nothing
                             }
                         }).waitForCompletion();
                     } catch (MqttException e) {
                         log.warn("Failed to connect to requested mqtt host  [{}]!", mqttClient.getServerURI(), e);
                         if (!mqttClient.isConnected()) {
                             try {
-                                Thread.sleep(retryInterval);
+                                connectLock.wait(retryInterval);
                             } catch (InterruptedException e1) {
                                 log.trace("Failed to wait for retry interval!", e);
+                                Thread.currentThread().interrupt();
                             }
                         }
                     }

@@ -34,6 +34,12 @@ import java.util.List;
 @RequestMapping("/api")
 public class EntityRelationController extends BaseController {
 
+    public static final String TO_TYPE = "toType";
+    public static final String FROM_ID = "fromId";
+    public static final String FROM_TYPE = "fromType";
+    public static final String RELATION_TYPE = "relationType";
+    public static final String TO_ID = "toId";
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relation", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
@@ -45,32 +51,32 @@ public class EntityRelationController extends BaseController {
             if (relation.getTypeGroup() == null) {
                 relation.setTypeGroup(RelationTypeGroup.COMMON);
             }
-            relationService.saveRelation(relation).get();
+            relationService.saveRelation(relation);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relation", method = RequestMethod.DELETE, params = {"fromId", "fromType", "relationType", "toId", "toType"})
+    @RequestMapping(value = "/relation", method = RequestMethod.DELETE, params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteRelation(@RequestParam("fromId") String strFromId,
-                               @RequestParam("fromType") String strFromType,
-                               @RequestParam("relationType") String strRelationType,
+    public void deleteRelation(@RequestParam(FROM_ID) String strFromId,
+                               @RequestParam(FROM_TYPE) String strFromType,
+                               @RequestParam(RELATION_TYPE) String strRelationType,
                                @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
-                               @RequestParam("toId") String strToId, @RequestParam("toType") String strToType) throws ThingsboardException {
-        checkParameter("fromId", strFromId);
-        checkParameter("fromType", strFromType);
-        checkParameter("relationType", strRelationType);
-        checkParameter("toId", strToId);
-        checkParameter("toType", strToType);
+                               @RequestParam(TO_ID) String strToId, @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
+        checkParameter(FROM_ID, strFromId);
+        checkParameter(FROM_TYPE, strFromType);
+        checkParameter(RELATION_TYPE, strRelationType);
+        checkParameter(TO_ID, strToId);
+        checkParameter(TO_TYPE, strToType);
         EntityId fromId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
         EntityId toId = EntityIdFactory.getByTypeAndId(strToType, strToId);
         checkEntityId(fromId);
         checkEntityId(toId);
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            Boolean found = relationService.deleteRelation(fromId, toId, strRelationType, relationTypeGroup).get();
+            Boolean found = relationService.deleteRelation(fromId, toId, strRelationType, relationTypeGroup);
             if (!found) {
                 throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
@@ -89,26 +95,26 @@ public class EntityRelationController extends BaseController {
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId);
         try {
-            relationService.deleteEntityRelations(entityId).get();
+            relationService.deleteEntityRelations(entityId);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relation", method = RequestMethod.GET, params = {"fromId", "fromType", "relationType", "toId", "toType"})
+    @RequestMapping(value = "/relation", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
     @ResponseBody
-    public EntityRelation getRelation(@RequestParam("fromId") String strFromId,
-                              @RequestParam("fromType") String strFromType,
-                              @RequestParam("relationType") String strRelationType,
-                              @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
-                              @RequestParam("toId") String strToId, @RequestParam("toType") String strToType) throws ThingsboardException {
+    public EntityRelation getRelation(@RequestParam(FROM_ID) String strFromId,
+                                      @RequestParam(FROM_TYPE) String strFromType,
+                                      @RequestParam(RELATION_TYPE) String strRelationType,
+                                      @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                      @RequestParam(TO_ID) String strToId, @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
         try {
-            checkParameter("fromId", strFromId);
-            checkParameter("fromType", strFromType);
-            checkParameter("relationType", strRelationType);
-            checkParameter("toId", strToId);
-            checkParameter("toType", strToType);
+            checkParameter(FROM_ID, strFromId);
+            checkParameter(FROM_TYPE, strFromType);
+            checkParameter(RELATION_TYPE, strRelationType);
+            checkParameter(TO_ID, strToId);
+            checkParameter(TO_TYPE, strToType);
             EntityId fromId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
             EntityId toId = EntityIdFactory.getByTypeAndId(strToType, strToId);
             checkEntityId(fromId);
@@ -121,13 +127,13 @@ public class EntityRelationController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {"fromId", "fromType"})
+    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE})
     @ResponseBody
-    public List<EntityRelation> findByFrom(@RequestParam("fromId") String strFromId,
-                                           @RequestParam("fromType") String strFromType,
+    public List<EntityRelation> findByFrom(@RequestParam(FROM_ID) String strFromId,
+                                           @RequestParam(FROM_TYPE) String strFromType,
                                            @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
-        checkParameter("fromId", strFromId);
-        checkParameter("fromType", strFromType);
+        checkParameter(FROM_ID, strFromId);
+        checkParameter(FROM_TYPE, strFromType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
@@ -139,13 +145,13 @@ public class EntityRelationController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {"fromId", "fromType"})
+    @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE})
     @ResponseBody
-    public List<EntityRelationInfo> findInfoByFrom(@RequestParam("fromId") String strFromId,
-                                                   @RequestParam("fromType") String strFromType,
+    public List<EntityRelationInfo> findInfoByFrom(@RequestParam(FROM_ID) String strFromId,
+                                                   @RequestParam(FROM_TYPE) String strFromType,
                                                    @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
-        checkParameter("fromId", strFromId);
-        checkParameter("fromType", strFromType);
+        checkParameter(FROM_ID, strFromId);
+        checkParameter(FROM_TYPE, strFromType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
@@ -157,15 +163,15 @@ public class EntityRelationController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {"fromId", "fromType", "relationType"})
+    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE, RELATION_TYPE})
     @ResponseBody
-    public List<EntityRelation> findByFrom(@RequestParam("fromId") String strFromId,
-                                           @RequestParam("fromType") String strFromType,
-                                           @RequestParam("relationType") String strRelationType,
+    public List<EntityRelation> findByFrom(@RequestParam(FROM_ID) String strFromId,
+                                           @RequestParam(FROM_TYPE) String strFromType,
+                                           @RequestParam(RELATION_TYPE) String strRelationType,
                                            @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
-        checkParameter("fromId", strFromId);
-        checkParameter("fromType", strFromType);
-        checkParameter("relationType", strRelationType);
+        checkParameter(FROM_ID, strFromId);
+        checkParameter(FROM_TYPE, strFromType);
+        checkParameter(RELATION_TYPE, strRelationType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
@@ -177,13 +183,13 @@ public class EntityRelationController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {"toId", "toType"})
+    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {TO_ID, TO_TYPE})
     @ResponseBody
-    public List<EntityRelation> findByTo(@RequestParam("toId") String strToId,
-                                         @RequestParam("toType") String strToType,
+    public List<EntityRelation> findByTo(@RequestParam(TO_ID) String strToId,
+                                         @RequestParam(TO_TYPE) String strToType,
                                          @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
-        checkParameter("toId", strToId);
-        checkParameter("toType", strToType);
+        checkParameter(TO_ID, strToId);
+        checkParameter(TO_TYPE, strToType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strToType, strToId);
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
@@ -195,13 +201,13 @@ public class EntityRelationController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {"toId", "toType"})
+    @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {TO_ID, TO_TYPE})
     @ResponseBody
-    public List<EntityRelationInfo> findInfoByTo(@RequestParam("toId") String strToId,
-                                                   @RequestParam("toType") String strToType,
+    public List<EntityRelationInfo> findInfoByTo(@RequestParam(TO_ID) String strToId,
+                                                   @RequestParam(TO_TYPE) String strToType,
                                                    @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
-        checkParameter("toId", strToId);
-        checkParameter("toType", strToType);
+        checkParameter(TO_ID, strToId);
+        checkParameter(TO_TYPE, strToType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strToType, strToId);
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
@@ -213,15 +219,15 @@ public class EntityRelationController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {"toId", "toType", "relationType"})
+    @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {TO_ID, TO_TYPE, RELATION_TYPE})
     @ResponseBody
-    public List<EntityRelation> findByTo(@RequestParam("toId") String strToId,
-                                         @RequestParam("toType") String strToType,
-                                         @RequestParam("relationType") String strRelationType,
+    public List<EntityRelation> findByTo(@RequestParam(TO_ID) String strToId,
+                                         @RequestParam(TO_TYPE) String strToType,
+                                         @RequestParam(RELATION_TYPE) String strRelationType,
                                          @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
-        checkParameter("toId", strToId);
-        checkParameter("toType", strToType);
-        checkParameter("relationType", strRelationType);
+        checkParameter(TO_ID, strToId);
+        checkParameter(TO_TYPE, strToType);
+        checkParameter(RELATION_TYPE, strRelationType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strToType, strToId);
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
@@ -267,9 +273,7 @@ public class EntityRelationController extends BaseController {
         if (strRelationTypeGroup != null && strRelationTypeGroup.trim().length()>0) {
             try {
                 result = RelationTypeGroup.valueOf(strRelationTypeGroup);
-            } catch (IllegalArgumentException e) {
-                result = defaultValue;
-            }
+            } catch (IllegalArgumentException e) { }
         }
         return result;
     }

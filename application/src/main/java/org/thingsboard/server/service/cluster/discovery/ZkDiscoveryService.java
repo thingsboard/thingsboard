@@ -202,6 +202,8 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
             case CHILD_REMOVED:
                 listeners.forEach(listener -> listener.onServerRemoved(instance));
                 break;
+            default:
+                break;
         }
     }
 }

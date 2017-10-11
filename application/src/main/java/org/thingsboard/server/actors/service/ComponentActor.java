@@ -104,6 +104,9 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
                     break;
                 case DELETED:
                     processor.onStop(context());
+                    break;
+                default:
+                    break;
             }
             logLifecycleEvent(msg.getEvent());
         } catch (Exception e) {

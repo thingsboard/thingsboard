@@ -20,7 +20,8 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.Transient;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -32,10 +33,9 @@ import java.util.UUID;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Table(name = WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
 public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle> {
-
-    @Transient
-    private static final long serialVersionUID = -8842195928585650849L;
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
@@ -119,7 +119,7 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
 
     @Override
     public String getSearchTextSource() {
-        return title;
+        return getTitle();
     }
 
     @Override
@@ -129,46 +129,6 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
 
     public String getSearchText() {
         return searchText;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (tenantId != null ? tenantId.hashCode() : 0);
-        result = 31 * result + (alias != null ? alias.hashCode() : 0);
-        result = 31 * result + (title != null ? title.hashCode() : 0);
-        result = 31 * result + (searchText != null ? searchText.hashCode() : 0);
-        result = 31 * result + (image != null ? image.hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        WidgetsBundleEntity that = (WidgetsBundleEntity) o;
-
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (tenantId != null ? !tenantId.equals(that.tenantId) : that.tenantId != null) return false;
-        if (alias != null ? !alias.equals(that.alias) : that.alias != null) return false;
-        if (title != null ? !title.equals(that.title) : that.title != null) return false;
-        if (searchText != null ? !searchText.equals(that.searchText) : that.searchText != null) return false;
-        return image != null ? image.equals(that.image) : that.image == null;
-
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("WidgetsBundleEntity{");
-        sb.append("id=").append(id);
-        sb.append(", tenantId=").append(tenantId);
-        sb.append(", alias='").append(alias).append('\'');
-        sb.append(", title='").append(title).append('\'');
-        sb.append(", searchText='").append(searchText).append('\'');
-        sb.append(", image=").append(image);
-        sb.append('}');
-        return sb.toString();
     }
 
     @Override

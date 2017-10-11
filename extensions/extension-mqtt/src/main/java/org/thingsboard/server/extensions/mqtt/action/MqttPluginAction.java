@@ -28,7 +28,7 @@ import java.util.Optional;
 public class MqttPluginAction extends AbstractTemplatePluginAction<MqttPluginActionConfiguration> {
 
     @Override
-    protected Optional<RuleToPluginMsg<?>> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
+    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         MqttActionPayload.MqttActionPayloadBuilder builder = MqttActionPayload.builder();
         builder.sync(configuration.isSync());
         builder.msgType(payload.getMsgType());

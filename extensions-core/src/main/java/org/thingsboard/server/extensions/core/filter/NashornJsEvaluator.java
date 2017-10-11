@@ -85,13 +85,13 @@ public class NashornJsEvaluator {
     protected static Object getValue(KvEntry attr) {
         switch (attr.getDataType()) {
             case STRING:
-                return attr.getStrValue().get();
+                return attr.getStrValue().orElse(null);
             case LONG:
-                return attr.getLongValue().get();
+                return attr.getLongValue().orElse(null);
             case DOUBLE:
-                return attr.getDoubleValue().get();
+                return attr.getDoubleValue().orElse(null);
             case BOOLEAN:
-                return attr.getBooleanValue().get();
+                return attr.getBooleanValue().orElse(null);
         }
         return null;
     }

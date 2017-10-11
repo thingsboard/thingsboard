@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.security;
 
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 
+@EqualsAndHashCode(callSuper = true)
 public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements DeviceCredentialsFilter {
 
     private static final long serialVersionUID = -7869261127032877765L;
@@ -76,46 +78,6 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
 
     public void setCredentialsValue(String credentialsValue) {
         this.credentialsValue = credentialsValue;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((credentialsId == null) ? 0 : credentialsId.hashCode());
-        result = prime * result + ((credentialsType == null) ? 0 : credentialsType.hashCode());
-        result = prime * result + ((credentialsValue == null) ? 0 : credentialsValue.hashCode());
-        result = prime * result + ((deviceId == null) ? 0 : deviceId.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        DeviceCredentials other = (DeviceCredentials) obj;
-        if (credentialsId == null) {
-            if (other.credentialsId != null)
-                return false;
-        } else if (!credentialsId.equals(other.credentialsId))
-            return false;
-        if (credentialsType != other.credentialsType)
-            return false;
-        if (credentialsValue == null) {
-            if (other.credentialsValue != null)
-                return false;
-        } else if (!credentialsValue.equals(other.credentialsValue))
-            return false;
-        if (deviceId == null) {
-            if (other.deviceId != null)
-                return false;
-        } else if (!deviceId.equals(other.deviceId))
-            return false;
-        return true;
     }
 
     @Override

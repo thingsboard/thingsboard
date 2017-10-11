@@ -30,13 +30,16 @@ import org.thingsboard.server.exception.ThingsboardException;
 @RequestMapping("/api")
 public class AlarmController extends BaseController {
 
+    public static final String ALARM_ID = "alarmId";
+
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}", method = RequestMethod.GET)
     @ResponseBody
-    public Alarm getAlarmById(@PathVariable("alarmId") String strAlarmId) throws ThingsboardException {
-        checkParameter("alarmId", strAlarmId);
+    public Alarm getAlarmById(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+        checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
+
             return checkAlarmId(alarmId);
         } catch (Exception e) {
             throw handleException(e);
@@ -46,8 +49,8 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/info/{alarmId}", method = RequestMethod.GET)
     @ResponseBody
-    public AlarmInfo getAlarmInfoById(@PathVariable("alarmId") String strAlarmId) throws ThingsboardException {
-        checkParameter("alarmId", strAlarmId);
+    public AlarmInfo getAlarmInfoById(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+        checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             return checkAlarmInfoId(alarmId);
@@ -71,8 +74,8 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/ack", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void ackAlarm(@PathVariable("alarmId") String strAlarmId) throws ThingsboardException {
-        checkParameter("alarmId", strAlarmId);
+    public void ackAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+        checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             checkAlarmId(alarmId);
@@ -85,8 +88,8 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/clear", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void clearAlarm(@PathVariable("alarmId") String strAlarmId) throws ThingsboardException {
-        checkParameter("alarmId", strAlarmId);
+    public void clearAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+        checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             checkAlarmId(alarmId);

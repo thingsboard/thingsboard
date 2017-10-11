@@ -31,6 +31,7 @@ public class TenantPluginManager extends PluginManager {
         this.tenantId = tenantId;
     }
 
+    @Override
     public void init(ActorContext context) {
         if (systemContext.isTenantComponentsInitEnabled()) {
             super.init(context);
