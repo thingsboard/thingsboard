@@ -44,6 +44,7 @@ export default function AlarmRowDirective($compile, $templateCache, types, $mdDi
                     alarmId: scope.alarm.id.id,
                     allowAcknowledgment: true,
                     allowClear: true,
+                    displayDetails: true,
                     showingCallback: onShowingCallback
                 },
                 parent: angular.element($document[0].body),
