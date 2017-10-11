@@ -273,6 +273,10 @@ public final class PluginProcessingContext implements PluginContext {
 
     private boolean isPublicCustomer(CustomerId customerId) {
         Customer customer = pluginCtx.systemContext.getCustomerService().findCustomerById(customerId);
+
+        if (customer == null)
+            return false;
+
         return customer.isPublic();
     }
 
