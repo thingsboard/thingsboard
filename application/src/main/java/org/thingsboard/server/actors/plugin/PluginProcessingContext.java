@@ -324,7 +324,7 @@ public final class PluginProcessingContext implements PluginContext {
                         return ValidationResult.accessDenied("Device doesn't belong to the current Tenant!");
                     } else if (isPublicCustomer(device.getCustomerId())) {
                         return ValidationResult.ok();       // Public device data should always be available
-                } else if (ctx.isCustomerUser() && !device.getCustomerId().equals(ctx.getCustomerId())) {
+                    } else if (ctx.isCustomerUser() && !device.getCustomerId().equals(ctx.getCustomerId())) {
                         return ValidationResult.accessDenied("Device doesn't belong to the current Customer!");
                     } else {
                         return ValidationResult.ok();
