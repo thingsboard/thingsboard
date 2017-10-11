@@ -46,7 +46,7 @@ export default function AppConfig($provide,
     $urlRouterProvider.otherwise(UrlHandler);
     storeProvider.setCaching(false);
 
-    $translateProvider.useSanitizeValueStrategy('sce');
+    $translateProvider.useSanitizeValueStrategy(null);
     $translateProvider.preferredLanguage('en_US');
     $translateProvider.useLocalStorage();
     $translateProvider.useMissingTranslationHandler('tbMissingTranslationHandler');
@@ -59,15 +59,17 @@ export default function AppConfig($provide,
 
     var $window = angular.injector(['ng']).get('$window');
     var lang = $window.navigator.language || $window.navigator.userLanguage;
-    if (lang === 'ko') {
-        $translateProvider.useSanitizeValueStrategy(null);
-        $translateProvider.preferredLanguage('ko_KR');
-    } else if (lang === 'zh') {
-        $translateProvider.useSanitizeValueStrategy(null);
-        $translateProvider.preferredLanguage('zh_CN');
-    } else if (lang === 'es') {
-        $translateProvider.useSanitizeValueStrategy(null);
-        $translateProvider.preferredLanguage('es_ES');
+    if (lang) {
+        lang = lang.toLowerCase();
+        if (lang.startsWith('ko')) {
+            $translateProvider.preferredLanguage('ko_KR');
+        } else if (lang.startsWith('zh')) {
+            $translateProvider.preferredLanguage('zh_CN');
+        } else if (lang.startsWith('es')) {
+            $translateProvider.preferredLanguage('es_ES');
+        } else if (lang.startsWith('ru')) {
+            $translateProvider.preferredLanguage('ru_RU');
+        }
     }
 
     for (var langKey in locales) {
