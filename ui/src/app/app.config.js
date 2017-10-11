@@ -62,7 +62,8 @@ export default function AppConfig($provide,
     if (lang === 'ko') {
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('ko_KR');
-    } else if (lang === 'zh') {
+    } else if (lang.startsWith('zh')) {
+        // zh-CN or zh-TW
         $translateProvider.useSanitizeValueStrategy(null);
         $translateProvider.preferredLanguage('zh_CN');
     } else if (lang === 'es') {
