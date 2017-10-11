@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.extensions.core.plugin.rpc.handlers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -26,6 +27,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.extensions.api.exception.ToErrorResponseEntity;
 import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
@@ -65,7 +67,7 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
             if (pathParams.length == 2) {
                 String method = pathParams[0].toUpperCase();
                 if (DataConstants.ONEWAY.equals(method) || DataConstants.TWOWAY.equals(method)) {
-                    DeviceId deviceId = DeviceId.fromString(pathParams[1]);
+                    final TenantId tenantId = ctx.getSecurityCtx().orElseThrow(() -> new IllegalStateException("Security context is empty!")).getTenantId();
                     JsonNode rpcRequestBody = jsonMapper.readTree(request.getRequestBody());
 
                     RpcRequest cmd = new RpcRequest(rpcRequestBody.get("method").asText(),
@@ -74,29 +76,10 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
                         cmd.setTimeout(rpcRequestBody.get("timeout").asLong());
                     }
 
-                    final TenantId tenantId = ctx.getSecurityCtx().orElseThrow(() -> new IllegalStateException("Security context is empty!")).getTenantId();
+                    boolean oneWay = DataConstants.ONEWAY.equals(method);
 
-                    ctx.checkAccess(deviceId, new PluginCallback<Void>() {
-                        @Override
-                        public void onSuccess(PluginContext ctx, Void value) {
-                            long timeout = cmd.getTimeout() != null ? cmd.getTimeout() : defaultTimeout;
-                            ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
-                            ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(UUID.randomUUID(),
-                                    tenantId,
-                                    deviceId,
-                                    DataConstants.ONEWAY.equals(method),
-                                    System.currentTimeMillis() + timeout,
-                                    body
-                            );
-                            rpcManager.process(ctx, new LocalRequestMetaData(rpcRequest, msg.getResponseHolder()));
-                        }
-
-                        @Override
-                        public void onFailure(PluginContext ctx, Exception e) {
-                            msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
-                        }
-                    });
-                    valid = true;
+                    DeviceId deviceId = DeviceId.fromString(pathParams[1]);
+                    valid = handleDeviceRPCRequest(ctx, msg, tenantId, deviceId, cmd, oneWay);
                 }
             }
         } catch (IOException e) {
@@ -107,6 +90,36 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
         if (!valid) {
             msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
         }
+    }
+
+    private boolean handleDeviceRPCRequest(PluginContext ctx, final PluginRestMsg msg, TenantId tenantId, DeviceId deviceId, RpcRequest cmd, boolean oneWay) throws JsonProcessingException {
+        long timeout = System.currentTimeMillis() + (cmd.getTimeout() != null ? cmd.getTimeout() : defaultTimeout);
+        ctx.checkAccess(deviceId, new PluginCallback<Void>() {
+            @Override
+            public void onSuccess(PluginContext ctx, Void value) {
+                ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
+                ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(UUID.randomUUID(),
+                        tenantId,
+                        deviceId,
+                        oneWay,
+                        timeout,
+                        body
+                );
+                rpcManager.process(ctx, new LocalRequestMetaData(rpcRequest, msg.getResponseHolder()));
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                ResponseEntity response;
+                if (e instanceof ToErrorResponseEntity) {
+                    response = ((ToErrorResponseEntity)e).toErrorResponseEntity();
+                } else {
+                    response = new ResponseEntity(HttpStatus.UNAUTHORIZED);
+                }
+                msg.getResponseHolder().setResult(response);
+            }
+        });
+        return true;
     }
 
     public void reply(PluginContext ctx, DeferredResult<ResponseEntity> responseWriter, FromDeviceRpcResponse response) {
