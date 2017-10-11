@@ -16,5 +16,5 @@
 package org.thingsboard.server.extensions.livy.model;
 
 public enum LivyStatus {
-    NOT_FOUND, RUNNING
+    NOT_FOUND, RUNNING, STARTING, UNKNOWN
 }

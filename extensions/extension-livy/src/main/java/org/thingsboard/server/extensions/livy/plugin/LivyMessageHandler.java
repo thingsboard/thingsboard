@@ -44,12 +44,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class LivyMessageHandler implements RuleMsgHandler {
 
-    private static final String SPARK_JOB_KEY = "spark_";
-    private static final String batchStateURI = "/batches/%d/state";
+    private static final String SPARK_APP_KEY = "sparkApplication_";
+    private static final String batchStateURI = "/batches/%d";
     private final String baseUrl;
     private final HttpHeaders headers;
-    private final Object lock = new Object();
-    private final Map<String, String> sparkJobsSessions = new ConcurrentHashMap<>();
+    private volatile Map<String, String> sparkAppsForTenant = new ConcurrentHashMap<>();
 
     @Override
     public void process(PluginContext ctx, TenantId tenantId, RuleId ruleId, RuleToPluginMsg<?> msg) throws RuleException {
@@ -57,29 +56,90 @@ public class LivyMessageHandler implements RuleMsgHandler {
             throw new RuleException("Unsupported message type " + msg.getClass().getName() + "!");
         }
         LivyActionPayload payload = ((LivyActionMessage)msg).getPayload();
-        final String sparkApplication = SPARK_JOB_KEY + payload.getSparkApplication().toString();
-        if(!isSparkJobRunning(sparkApplication)) {
-            synchronized (lock) {
-                ctx.loadAttributes(ruleId, DataConstants.SERVER_SCOPE, Collections.singleton(sparkApplication),
-                        new PluginCallback<List<AttributeKvEntry>>() {
-                            @Override
-                            public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
-                                setSparkJobStatusFromAttributes(values, sparkApplication);
-                                if (!isSparkJobRunning(sparkApplication)) {
-                                    Batch batch = postSparkJob(payload);
-                                    if(batch != null) {
-                                        updateRuleAttribute(ctx, tenantId, ruleId, sparkApplication, batch.getId());
-                                    }
-                                }
-                            }
+        PluginCallback<List<AttributeKvEntry>> callback = pluginCallback(tenantId, ruleId, payload);
+        if(!isSparkAppRunning(sparkApplicationKey(payload))) {
+            ctx.loadAttributes(ruleId, DataConstants.SERVER_SCOPE, Collections.singleton(sparkApplicationKey(payload)), callback);
+        }
+    }
 
-                            @Override
-                            public void onFailure(PluginContext ctx, Exception e) {
-                                log.error("Failed to fetch application status for tenant. {}", e);
-                            }
-                        });
+    private PluginCallback<List<AttributeKvEntry>> pluginCallback(TenantId tenantId, RuleId ruleId, LivyActionPayload payload) {
+        return new PluginCallback<List<AttributeKvEntry>>() {
+            @Override
+            public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
+                final String sparkApplication = sparkApplicationKey(payload);
+                if (!isSparkAppRunning(sparkApplication)) {
+                    onPluginCallbackSuccess(ctx, values, payload, tenantId, ruleId);
+                }
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to fetch application status for tenant.", e);
+            }
+        };
+    }
+
+    private String sparkApplicationKey(LivyActionPayload payload) {
+        return SPARK_APP_KEY + payload.getSparkApplication().toString();
+    }
+
+    private boolean isSparkAppRunning(String sparkApplication){
+        return !StringUtils.isEmpty(sparkAppsForTenant.get(sparkApplication));
+    }
+
+    private void onPluginCallbackSuccess(PluginContext ctx, List<AttributeKvEntry> values, LivyActionPayload payload, TenantId tenantId, RuleId ruleId) {
+        final String sparkApplication = sparkApplicationKey(payload);
+        setSparkJobStatusFromAttributes(values, sparkApplication);
+        Batch batch = postSparkApplication(payload, sparkApplication);
+        if (batch != null) {
+            updateRuleAttribute(ctx, tenantId, ruleId, sparkApplication, batch.getId());
+        }
+    }
+
+    private void setSparkJobStatusFromAttributes(List<AttributeKvEntry> values, String sparkApplication) {
+        for (AttributeKvEntry e : values) {
+            if (e.getKey().equalsIgnoreCase(sparkApplication) &&
+                    !StringUtils.isEmpty(e.getValueAsString())) {
+                LivyStatus status = fetchSparkJobStatus(Integer.parseInt(e.getValueAsString()));
+                if(status == LivyStatus.RUNNING || status == LivyStatus.STARTING) {
+                    sparkAppsForTenant.putIfAbsent(sparkApplication, e.getValueAsString());
+                }
             }
         }
+    }
+
+    private LivyStatus fetchSparkJobStatus(int batchId){
+        String url = String.format(this.baseUrl + batchStateURI, batchId);
+        try {
+            ResponseEntity<Batch> response = new RestTemplate().exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), Batch.class);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                return LivyStatus.RUNNING;
+            }
+        }catch (RestClientException e){
+            return LivyStatus.NOT_FOUND;
+        }
+        return LivyStatus.UNKNOWN; //TODO: Throw an exception in this case
+    }
+
+    private synchronized Batch postSparkApplication(LivyActionPayload payload, String sparkApplication) {
+        if (!isSparkAppRunning(sparkApplication)) {
+            try {
+                ResponseEntity<Batch> response = new RestTemplate().exchange(
+                        baseUrl + payload.getActionPath(),
+                        HttpMethod.POST,
+                        new HttpEntity<>(payload.getMsgBody(), headers),
+                        Batch.class);
+                if (response.getStatusCode() == HttpStatus.CREATED) {
+                    Batch res =  response.getBody();
+                    sparkAppsForTenant.putIfAbsent(sparkApplication, String.valueOf(res.getId()));
+                    return res;
+                }
+            } catch (RestClientException e) {
+                log.error("Error occurred while rest call", e);
+            }
+        }
+        return null;
     }
 
     private void updateRuleAttribute(PluginContext ctx, TenantId tenantId, RuleId ruleId, String sparkApplication, int batchId) {
@@ -97,46 +157,5 @@ public class LivyMessageHandler implements RuleMsgHandler {
                         log.error("Failed to save attributes {}", e);
                     }
                 });
-    }
-
-    private Batch postSparkJob(LivyActionPayload payload) {
-        try {
-            log.warn("Giving a rest call to Livy service with url {} and body {}", baseUrl+payload.getActionPath(), payload.getMsgBody());
-            ResponseEntity<Batch> response = new RestTemplate().exchange(
-                    baseUrl + payload.getActionPath(),
-                    HttpMethod.POST,
-                    new HttpEntity<>(payload.getMsgBody(), headers),
-                    Batch.class);
-            if(response.getStatusCode() == HttpStatus.CREATED){
-                return response.getBody();
-            }
-        } catch (RestClientException e) {
-            log.error("Error occurred while rest call", e);
-        }
-        return null;
-    }
-
-    private LivyStatus fetchSparkJobStatus(int batchId){
-        String url = String.format(this.baseUrl + batchStateURI, batchId);
-        ResponseEntity<String> response = new RestTemplate().exchange(
-                url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-        if(response.getStatusCode() == HttpStatus.NOT_FOUND){
-            return LivyStatus.NOT_FOUND;
-        }else{
-            return LivyStatus.RUNNING;
-        }
-    }
-
-    private void setSparkJobStatusFromAttributes(List<AttributeKvEntry> values, String sparkApplication) {
-        for (AttributeKvEntry e : values) {
-            if (e.getKey().equalsIgnoreCase(sparkApplication) &&
-                    !StringUtils.isEmpty(e.getValueAsString())) {
-                sparkJobsSessions.put(sparkApplication, e.getValueAsString());
-            }
-        }
-    }
-
-    private boolean isSparkJobRunning(String sparkApplication){
-        return !StringUtils.isEmpty(sparkJobsSessions.get(sparkApplication));
     }
 }
