@@ -13,13 +13,16 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.thingsboard.device.shadow.models.TagList;
 
+@Service("restService")
 public class RestService {
     Logger logger = LoggerFactory.getLogger(RestService.class);
     private String tbURL = "http://localhost:8080/api/v1/";
     private String getOpcDataUrl = "http://localhost:8088/contentListener";
 
+    //Not used.
     public void postToThingsBoard(String token) throws IOException, RuntimeException {
 
         String tbAttributesJson = createTBArributeRequest(token);
@@ -54,7 +57,7 @@ public class RestService {
         return tbAttributesJson;
     }
 
-    public void postToGetOPCData(TagList tagList) throws IOException, RuntimeException {
+    public boolean postToGetOPCData(TagList tagList) throws IOException, RuntimeException {
 
         String tagsStr = createTagStr(tagList);
         logger.error("opca msg" + tagsStr);
@@ -69,7 +72,9 @@ public class RestService {
         if (response.getStatusLine().getStatusCode() != 200) {
             throw new RuntimeException("Failed : HTTP error code : "
                     + response.getStatusLine().getStatusCode());
+            //return false;
         }
+        return true;
     }
 
     public String createTagStr(TagList tagList){

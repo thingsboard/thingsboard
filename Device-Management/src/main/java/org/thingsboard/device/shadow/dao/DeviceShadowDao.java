@@ -13,6 +13,9 @@ public interface DeviceShadowDao {
     public void updateByDeviceToken(String token);
     public TagList getReportedTagsForDeviceToken(String token) throws SQLException;
     public void updateAvailableTags(DeviceShadow deviceShadow) throws SQLException;
-    public boolean deleteByToken(String deviceToken) throws SQLException;
+    //public boolean deleteByToken(String deviceToken) throws SQLException;
     public void updateDeviceState(TagList tagList) throws  SQLException;
+    public boolean checkIfTagExists(String token, String tag) throws SQLException;
+    public void updateReportedTags(String token, String tag) throws SQLException;
+    public TagList getAllTagsForDeviceToken(String token) throws SQLException;
 }

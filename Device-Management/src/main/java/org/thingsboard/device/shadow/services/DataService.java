@@ -5,85 +5,110 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.thingsboard.device.shadow.dao.DeviceShadowDao;
-import org.thingsboard.device.shadow.dao.DeviceShadowDaoImp;
 import org.thingsboard.device.shadow.models.DeviceShadow;
 import org.thingsboard.device.shadow.models.TagList;
 
 import java.sql.SQLException;
+import java.util.Set;
 
 
 /**
  * Created by himanshu on 3/10/17.
  */
+
+@Service("dataService")
 public class DataService {
 
-    Logger logger = LoggerFactory.getLogger(DataService.class);
-    DeviceShadowDao shadowDao = new DeviceShadowDaoImp();
-    RestService restService = new RestService();
+    private  Logger logger = LoggerFactory.getLogger(DataService.class);
+    //DeviceShadowDao shadowDao = new DeviceShadowDaoImp();
+    @Autowired
+    private DeviceShadowDao shadowDao;
+    @Autowired
+    private RestService restService;
+    //private RestService restService = new RestService();
 
-    public JSONObject updateAvailableTags(JSONObject availableTags) throws Exception{
+    public void updateAvailableTags(JSONObject availableTags){
         JSONParser parser = new JSONParser();
         String tagList = null;
         String deviceToken = "";
-
         try {
-            //tagList = (JSONArray) parser.parse(availableTags.get("tags").toString());
             deviceToken = availableTags.get("token").toString();
         }catch (Exception e){
-
+            logger.error("Exception is : " + e);
         }
         if (!availableTags.get("tags").toString().contentEquals("")) {
             //Spliting the tagList.
             tagList = availableTags.get("tags").toString();
             String[] list = tagList.split(",");
             try {
-                shadowDao.deleteByToken(deviceToken);
+                //shadowDao.deleteByToken(deviceToken);
                 for (int itr = 0; itr < list.length; itr++) {
-                    DeviceShadow deviceShadow = new DeviceShadow(deviceToken, list[itr], false, true);
-                    shadowDao.updateAvailableTags(deviceShadow);
+                    DeviceShadow deviceShadow = new DeviceShadow(deviceToken, list[itr], false, false);
+                    if(!shadowDao.checkIfTagExists(deviceToken, list[itr]))
+                        shadowDao.updateAvailableTags(deviceShadow);
                 }
-            } catch (Exception SQLException) {
-
+            } catch (SQLException e) {
+                logger.error("Error updating availableTags : " + e);
             }
         }
-        else {
+        /*else {
             try {
                 shadowDao.deleteByToken(deviceToken);
             }catch (SQLException e){
-
+                logger.error("Error in deleting tags before updation : " + e);
             }
-        }
+        }*/
         //DeviceShadow deviceShadow = new DeviceShadow();
-        return availableTags;
     }
 
     public void desiredTags(TagList tagList)throws Exception{
-        logger.error("here I am! desired tags");
         shadowDao.updateDeviceState(tagList);
     }
     public String getAvailableTagsBytoken(String token){
         TagList tagList = null;
         String jsontTagList = "";
         try {
-            tagList = shadowDao.getReportedTagsForDeviceToken(token);
+            tagList = shadowDao.getAllTagsForDeviceToken(token);
             ObjectMapper mapper = new ObjectMapper();
             jsontTagList = mapper.writeValueAsString(tagList);
         }catch (Exception e){
-
+            logger.error("Error in getting available tags : " + e);
+            return "{\"error\": \"" + e + "\"}";
         }
         //JSONObject tagListJson = new JSONObject(tagList.getClass());
         return jsontTagList;
     }
 
-    public void deleteById(String token)throws SQLException{
+    public String updateReportedTags(JSONObject jsonObject){
+        String reportedTags = jsonObject.get("values").toString();
+        String token = jsonObject.get("token").toString();
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObjectTagsOnly = null;
+        String ret = "";
+        try {
+            jsonObjectTagsOnly = (JSONObject) parser.parse(reportedTags);
+            Set<String> keys = jsonObjectTagsOnly.keySet();
+            for (String key : keys){
+                shadowDao.updateReportedTags(token, key);
+            }
+
+        }catch (Exception e){
+            logger.error("Exception updating tags : " + e);
+        }
+        return ret;
+    }
+    /*public String deleteById(String token)throws SQLException{
         if(shadowDao.deleteByToken(token)){
             try {
                 restService.postToThingsBoard(token);
             }catch (Exception e){
-
+                logger.error("Error deleting attributes in thingsboard : " + e);
+                return "{\"error\": \"" + e + "\"}";
             }
         }
-    }
-
+        return "\"status\":\"deleted\"";
+    }*/
 }
