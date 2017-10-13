@@ -13,31 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../scss/constants';
 
-.tb-datasource-func {
-  @media (min-width: $layout-breakpoint-sm) {
-    padding-left: 8px;
-  }
-
-  md-input-container.tb-datasource-name {
-    .md-errors-spacer {
-        display: none;
-    }
-  }
-
-  .tb-func-datakey-autocomplete, .tb-alarm-datakey-autocomplete {
-    .tb-not-found {
-      display: block;
-      line-height: 1.5;
-      height: 48px;
-      .tb-no-entries {
-        line-height: 48px;
-      }
-    }
-    li {
-      height: auto !important;
-      white-space: normal !important;
-    }
-  }
+md-select.default-state-controller {
+  margin: 0px;
 }

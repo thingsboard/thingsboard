@@ -17,6 +17,10 @@
 @import "~compass-sass-mixins/lib/compass";
 @import '../../scss/constants';
 
+$toolbar-height: 50px;
+$fullscreen-toolbar-height: 64px;
+$mobile-toolbar-height: 84px;
+
 section.tb-dashboard-title {
   position: absolute;
   top: 0;
@@ -44,10 +48,10 @@ div.tb-shrinked {
 
 tb-details-sidenav.tb-widget-details-sidenav {
   md-sidenav.tb-sidenav-details {
-    @media (min-width: $layout-breakpoint-gt-sm) {
+    @media (min-width: $layout-breakpoint-sm) {
       width: 85% !important;
     }
-    @media (min-width: $layout-breakpoint-gt-md) {
+    @media (min-width: $layout-breakpoint-md) {
       width: 75% !important;
     }
     @media (min-width: $layout-breakpoint-lg) {
@@ -64,7 +68,7 @@ section.tb-dashboard-toolbar {
   position: absolute;
   top: 0px;
   left: 0px;
-  z-index: 3;
+  z-index: 13;
   pointer-events: none;
   &.tb-dashboard-toolbar-opened {
     right: 0px;
@@ -79,10 +83,16 @@ section.tb-dashboard-toolbar {
 .tb-dashboard-container {
    &.tb-dashboard-toolbar-opened {
      &.is-fullscreen {
-       margin-top: 64px;
+       margin-top: $mobile-toolbar-height;
+       @media (min-width: $layout-breakpoint-sm) {
+         margin-top: $fullscreen-toolbar-height;
+       }
      }
      &:not(.is-fullscreen) {
-       margin-top: 50px;
+       margin-top: $mobile-toolbar-height;
+       @media (min-width: $layout-breakpoint-sm) {
+         margin-top: $toolbar-height;
+       }
        @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2));
      }
    }

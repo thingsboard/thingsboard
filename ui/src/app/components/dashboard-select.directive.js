@@ -21,16 +21,20 @@ import thingsboardApiUser from '../api/user.service';
 /* eslint-disable import/no-unresolved, import/default */
 
 import dashboardSelectTemplate from './dashboard-select.tpl.html';
+import dashboardSelectPanelTemplate from './dashboard-select-panel.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
+
+import DashboardSelectPanelController from './dashboard-select-panel.controller';
 
 
 export default angular.module('thingsboard.directives.dashboardSelect', [thingsboardApiDashboard, thingsboardApiUser])
     .directive('tbDashboardSelect', DashboardSelect)
+    .controller('DashboardSelectPanelController', DashboardSelectPanelController)
     .name;
 
 /*@ngInject*/
-function DashboardSelect($compile, $templateCache, $q, types, dashboardService, userService) {
+function DashboardSelect($compile, $templateCache, $q, $mdMedia, $mdPanel, $document, types, dashboardService, userService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(dashboardSelectTemplate);
@@ -73,6 +77,59 @@ function DashboardSelect($compile, $templateCache, $q, types, dashboardService, 
         scope.$watch('dashboardId', function () {
             scope.updateView();
         });
+
+        scope.openDashboardSelectPanel = function (event) {
+            if (scope.disabled) {
+                return;
+            }
+            var position;
+            var panelHeight = $mdMedia('min-height: 350px') ? 250 : 150;
+            var panelWidth = 300;
+            var offset = element[0].getBoundingClientRect();
+            var bottomY = offset.bottom - $(window).scrollTop(); //eslint-disable-line
+            var leftX = offset.left - $(window).scrollLeft(); //eslint-disable-line
+            var yPosition;
+            var xPosition;
+            if (bottomY + panelHeight > $( window ).height()) { //eslint-disable-line
+                yPosition = $mdPanel.yPosition.ABOVE;
+            } else {
+                yPosition = $mdPanel.yPosition.BELOW;
+            }
+            if (leftX + panelWidth > $( window ).width()) { //eslint-disable-line
+                xPosition = $mdPanel.xPosition.CENTER;
+            } else {
+                xPosition = $mdPanel.xPosition.ALIGN_START;
+            }
+            position = $mdPanel.newPanelPosition()
+                .relativeTo(element)
+                .addPanelPosition(xPosition, yPosition);
+            var config = {
+                attachTo: angular.element($document[0].body),
+                controller: 'DashboardSelectPanelController',
+                controllerAs: 'vm',
+                templateUrl: dashboardSelectPanelTemplate,
+                panelClass: 'tb-dashboard-select-panel',
+                position: position,
+                fullscreen: false,
+                locals: {
+                    dashboards: scope.dashboards,
+                    dashboardId: scope.dashboardId,
+                    onDashboardSelected: (dashboardId) => {
+                        if (scope.panelRef) {
+                            scope.panelRef.close();
+                        }
+                        scope.dashboardId = dashboardId;
+                    }
+                },
+                openFrom: event,
+                clickOutsideToClose: true,
+                escapeToClose: true,
+                focusOnOpen: false
+            };
+            $mdPanel.open(config).then(function(result) {
+                scope.panelRef = result;
+            });
+        }
 
         $compile(element.contents())(scope);
     }

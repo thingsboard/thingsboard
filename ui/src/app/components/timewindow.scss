@@ -59,8 +59,16 @@
 }
 
 tb-timewindow {
-  span {
-    pointer-events: all;
-    cursor: pointer;
+  min-width: 52px;
+  section.tb-timewindow {
+    min-height: 32px;
+    padding: 0 6px;
+    span {
+      pointer-events: all;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }

@@ -69,7 +69,7 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
         scope.isToolbar = angular.isDefined(attrs.isToolbar);
 
         scope.hideLabel = function() {
-            return scope.isToolbar && !$mdMedia('gt-sm');
+            return scope.isToolbar && !$mdMedia('gt-md');
         }
 
         var translationPending = false;

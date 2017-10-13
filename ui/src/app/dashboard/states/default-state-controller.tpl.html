@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-select ng-show="vm.displayStateSelection()" aria-label="{{ 'dashboard.state' | translate }}" ng-model="vm.stateObject[0].id">
+<md-select class="default-state-controller" ng-show="vm.displayStateSelection()" aria-label="{{ 'dashboard.state' | translate }}" ng-model="vm.stateObject[0].id">
     <md-option ng-repeat="(stateId, state) in vm.states" ng-value="stateId">
         {{vm.getStateName(stateId, state)}}
     </md-option>

@@ -21,10 +21,10 @@
     padding-bottom: 8px;
   }
   tb-dashboard-autocomplete {
-    @media (min-width: $layout-breakpoint-gt-sm) {
+    @media (min-width: $layout-breakpoint-sm) {
       padding-right: 12px;
     }
-    @media (max-width: $layout-breakpoint-gt-sm) {
+    @media (max-width: $layout-breakpoint-sm) {
       padding-bottom: 12px;
     }
   }

@@ -74,8 +74,8 @@
                     <input ng-model="vm.alarmStatus" readonly>
                 </md-input-container>
             </div>
-            <div ng-if="vm.displayDetails" class="md-caption" style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>alarm.details</div>
-            <div ng-if="vm.displayDetails" flex class="tb-alarm-details-panel" layout="column">
+            <div ng-show="vm.displayDetails" class="md-caption" style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>alarm.details</div>
+            <div ng-show="vm.displayDetails" flex class="tb-alarm-details-panel" layout="column">
                 <div flex id="tb-alarm-details" readonly
                      ui-ace="vm.alarmDetailsOptions"
                      ng-model="vm.alarmDetails">

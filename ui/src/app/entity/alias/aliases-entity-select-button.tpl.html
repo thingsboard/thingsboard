@@ -16,14 +16,14 @@
 
 -->
 
-<section class="tb-aliases-entity-select" layout='row' layout-align="start center" ng-style="{minHeight: '32px', padding: '0 6px'}">
+<section class="tb-aliases-entity-select" layout='row' layout-align="start center">
     <md-button class="md-icon-button" aria-label="{{ 'entity.select-entities' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'entity.select-entities' | translate }}
         </md-tooltip>
         <md-icon aria-label="{{ 'entity.select-entities' | translate }}" class="material-icons">devices_other</md-icon>
     </md-button>
-    <span hide-xs hide-sm ng-click="openEditMode($event)">
+    <span hide-xs hide-sm hide-md ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'entity.select-entities' | translate }}
         </md-tooltip>

@@ -16,7 +16,8 @@
 
 -->
 
-<md-select ng-required="tbRequired"
+<md-select hide-xs hide-sm hide-md
+           ng-required="tbRequired"
            ng-disabled="disabled"
            ng-model="dashboardId"
            aria-label="{{ 'dashboard.dashboard' | translate }}">
@@ -24,3 +25,11 @@
         {{dashboard.title}}
     </md-option>
 </md-select>
+<section hide-gt-md class="tb-dashboard-select">
+    <md-button class="md-icon-button" aria-label="{{ 'dashboard.select-dashboard' | translate }}" ng-click="openDashboardSelectPanel($event)">
+        <md-tooltip md-direction="{{tooltipDirection}}">
+            {{ 'dashboard.select-dashboard' | translate }}
+        </md-tooltip>
+        <md-icon aria-label="{{ 'dashboard.select-dashboard' | translate }}" class="material-icons">dashboards</md-icon>
+    </md-button>
+</section>

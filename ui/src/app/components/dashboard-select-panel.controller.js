@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright © 2016-2017 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,34 +14,19 @@
  * limitations under the License.
  */
 
-@import '../../../scss/constants';
+/*@ngInject*/
+export default function DashboardSelectPanelController(mdPanelRef, $scope, $filter, dashboards, dashboardId, onDashboardSelected) {
 
-tb-states-component {
-    min-width: 0px;
-}
+    var vm = this;
+    vm._mdPanelRef = mdPanelRef;
+    vm.dashboards = dashboards;
+    vm.dashboardId = dashboardId;
 
-.entity-state-controller {
-    .state-divider {
-        font-size: 18px;
-        padding-left: 15px;
-        padding-right: 15px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        pointer-events: none;
-    }
-    .state-entry {
-        font-size: 18px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        outline: none;
-    }
-    md-select {
-        margin: 0px;
-        .md-text {
-            font-size: 18px;
-            font-weight: bold;
+    vm.dashboardSelected = dashboardSelected;
+
+    function dashboardSelected(dashboardId) {
+        if (onDashboardSelected) {
+            onDashboardSelected(dashboardId);
         }
     }
 }

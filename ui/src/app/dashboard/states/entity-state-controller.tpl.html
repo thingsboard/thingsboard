@@ -15,15 +15,13 @@
     limitations under the License.
 
 -->
-<div class="entity-state-controller">
+<div class="entity-state-controller" layout="row" layout-align="start center">
     <div ng-if="!vm.dashboardCtrl.isMobile || vm.stateObject.length===1" layout="row" layout-align="start center">
-        <div layout="row" layout-align="start center" ng-repeat="state in vm.stateObject track by $index">
-            <span class='state-divider' ng-if="$index"> > </span>
-            <span class='state-entry' ng-style="{fontWeight: $last ? 'bold' : 'normal',
-                             cursor: $last ? 'default' : 'pointer'}" ng-click="vm.navigatePrevState($index)">
-                {{vm.getStateName($index)}}
-            </span>
-        </div>
+        <span ng-repeat="state in vm.stateObject track by $index" class='state-entry' ng-style="{fontWeight: $last ? 'bold' : 'normal',
+                         cursor: $last ? 'default' : 'pointer'}" ng-click="vm.navigatePrevState($index)">
+            {{vm.getStateName($index)}}
+            <span class='state-divider' ng-hide="$last"> > </span>
+        </span>
     </div>
     <md-select ng-if="vm.dashboardCtrl.isMobile && vm.stateObject.length > 1" aria-label="{{ 'dashboard.state' | translate }}" ng-model="vm.selectedStateIndex">
         <md-option ng-repeat="state in vm.stateObject track by $index" ng-value="$index">

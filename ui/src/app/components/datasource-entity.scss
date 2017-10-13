@@ -31,12 +31,12 @@
 }
 
 tb-datasource-entity {
-  @media (min-width: $layout-breakpoint-gt-sm) {
+  @media (min-width: $layout-breakpoint-sm) {
     padding-left: 4px;
     padding-right: 4px;
   }
   tb-entity-alias-select {
-    @media (min-width: $layout-breakpoint-gt-sm) {
+    @media (min-width: $layout-breakpoint-sm) {
       width: 200px;
       max-width: 200px;
     }

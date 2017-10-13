@@ -21,14 +21,16 @@
              ng-class="{ 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">
         <tb-dashboard-toolbar ng-show="!vm.widgetEditMode" force-fullscreen="forceFullscreen"
                               toolbar-opened="vm.toolbarOpened" on-trigger-click="vm.openToolbar()">
-            <div class="tb-dashboard-action-panels" flex layout="row" layout-align="start center">
-                <div class="tb-dashboard-action-panel" flex="50" layout="row" layout-align="start center">
+            <div class="tb-dashboard-action-panels" layout-gt-sm="row" layout-align-gt-sm="space-between center" layout="column" layout-align="center stretch">
+                <div class="tb-dashboard-action-panel" flex-md="30" layout="row" layout-align-gt-sm="start center" layout-align="space-between center">
                     <md-button ng-show="vm.showCloseToolbar()" aria-label="close-toolbar" class="md-icon-button close-action" ng-click="vm.closeToolbar()">
                         <md-tooltip md-direction="bottom">
                             {{ 'dashboard.close-toolbar' | translate }}
                         </md-tooltip>
                         <md-icon aria-label="close-toolbar" class="material-icons">arrow_forward</md-icon>
                     </md-button>
+                    <tb-user-menu ng-if="!vm.isPublicUser() && forceFullscreen" hide-xs hide-sm display-user-info="true">
+                    </tb-user-menu>
                     <md-button ng-show="vm.showRightLayoutSwitch()" aria-label="switch-layouts" class="md-icon-button" ng-click="vm.toggleLayouts()">
                         <ng-md-icon icon="{{vm.isRightLayoutOpened ? 'arrow_back' : 'menu'}}" options='{"easing": "circ-in-out", "duration": 375, "rotation": "none"}'></ng-md-icon>
                         <md-tooltip md-direction="bottom">
@@ -39,8 +41,6 @@
                                aria-label="{{ 'fullscreen.fullscreen' | translate }}"
                                class="md-icon-button">
                     </md-button>
-                    <tb-user-menu ng-if="!vm.isPublicUser() && forceFullscreen" display-user-info="true">
-                    </tb-user-menu>
                     <md-button ng-show="vm.isEdit || vm.displayExport()"
                                aria-label="{{ 'action.export' | translate }}" class="md-icon-button"
                                ng-click="vm.exportDashboard($event)">
@@ -79,8 +79,10 @@
                                            customer-id="vm.currentCustomerId">
                     </tb-dashboard-select>
                 </div>
-                <div class="tb-dashboard-action-panel" flex="50" layout="row" layout-align="end center">
-                    <div layout="row" layout-align="start center" ng-show="vm.isEdit">
+                <div class="tb-dashboard-action-panel" flex-md="70" layout="row" layout-align-gt-sm="end center" layout-align="space-between center">
+                    <tb-user-menu ng-if="!vm.isPublicUser() && forceFullscreen" hide-gt-sm display-user-info="true">
+                    </tb-user-menu>
+                    <div flex-xs flex-sm layout="row" layout-align-gt-sm="start center" layout-align="space-between center" ng-show="vm.isEdit">
                         <md-button aria-label="{{ 'dashboard.manage-states' | translate }}" class="md-icon-button"
                                    ng-click="vm.manageDashboardStates($event)">
                             <md-tooltip md-direction="bottom">
@@ -96,14 +98,12 @@
                             <md-icon aria-label="{{ 'layout.manage' | translate }}" class="material-icons">view_compact</md-icon>
                         </md-button>
                     </div>
-                    <div layout="row" layout-align="start center">
-                        <tb-states-component ng-if="vm.isEdit" states-controller-id="'default'"
-                                             dashboard-ctrl="vm" states="vm.dashboardConfiguration.states">
-                        </tb-states-component>
-                        <tb-states-component ng-if="!vm.isEdit" states-controller-id="vm.dashboardConfiguration.settings.stateControllerId"
-                                             dashboard-ctrl="vm" states="vm.dashboardConfiguration.states">
-                        </tb-states-component>
-                    </div>
+                    <tb-states-component flex-xs flex-sm ng-if="vm.isEdit" states-controller-id="'default'"
+                                         dashboard-ctrl="vm" states="vm.dashboardConfiguration.states">
+                    </tb-states-component>
+                    <tb-states-component flex-xs flex-sm ng-if="!vm.isEdit" states-controller-id="vm.dashboardConfiguration.settings.stateControllerId"
+                                         dashboard-ctrl="vm" states="vm.dashboardConfiguration.states">
+                    </tb-states-component>
                  </div>
             </div>
         </tb-dashboard-toolbar>
@@ -146,7 +146,7 @@
                         ng-style="{minWidth: vm.rightLayoutWidth(),
                                    maxWidth: vm.rightLayoutWidth(),
                                    height: vm.rightLayoutHeight(),
-                                   zIndex: 1}"
+                                   zIndex: 12}"
                         md-component-id="right-dashboard-layout"
                         aria-label="Right dashboard layout"
                         md-is-open="vm.rightLayoutOpened"

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section layout='row' layout-align="start center" ng-style="{minHeight: '32px', padding: '0 6px'}">
+<section class="tb-timewindow" layout='row' layout-align="start center">
     <md-button ng-if="direction === 'left'" ng-disabled="disabled" class="md-icon-button tb-md-32" aria-label="{{ 'timewindow.edit' | translate }}" ng-click="openEditMode($event)">
         <md-tooltip md-direction="{{tooltipDirection}}">
             {{ 'timewindow.edit' | translate }}
@@ -33,5 +33,5 @@
             {{ 'timewindow.edit' | translate }}
         </md-tooltip>
         <ng-md-icon aria-label="{{ 'timewindow.date-range' | translate }}" icon="query_builder"></ng-md-icon>
-    </md-button>	
+    </md-button>
 </section>

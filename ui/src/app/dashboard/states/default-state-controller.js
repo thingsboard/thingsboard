@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import './default-state-controller.scss';
+
 /*@ngInject*/
 export default function DefaultStateController($scope, $timeout, $location, $state,
                                                $stateParams, utils, types, dashboardUtils, preservedState) {

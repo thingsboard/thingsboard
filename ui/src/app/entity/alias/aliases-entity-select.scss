@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+@import '../../../scss/constants';
+
+tb-aliases-entity-select {
+  min-width: 52px;
+}
+
 .md-panel {
   &.tb-aliases-entity-select-panel {
     position: absolute;
@@ -38,9 +44,18 @@
   }
 }
 
-.tb-aliases-entity-select {
+section.tb-aliases-entity-select {
+  min-height: 32px;
+  padding: 0 6px;
+  @media (max-width: $layout-breakpoint-sm) {
+    padding: 0px;
+  }
   span {
+    max-width: 200px;
     pointer-events: all;
     cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

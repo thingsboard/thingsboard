@@ -65,7 +65,7 @@
                     <v-pane-header>
                         <div layout="column">
                             <div>{{ 'widget-config.datasources' | translate }}</div>
-                            <div class="md-caption" style="color: rgba(0,0,0,0.57);" ng-if="typeParameters.maxDatasources != -1"
+                            <div class="md-caption" style="color: rgba(0,0,0,0.57);" ng-if="typeParameters.maxDatasources > -1"
                                  translate="widget-config.maximum-datasources"
                                  translate-values="{count: typeParameters.maxDatasources}"
                                  translate-interpolation="messageformat"
