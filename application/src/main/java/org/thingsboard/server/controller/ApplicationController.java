@@ -20,6 +20,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Application;
 import org.thingsboard.server.common.data.id.ApplicationId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
 
 @RestController
@@ -61,6 +67,61 @@ public class ApplicationController extends BaseController {
             ApplicationId applicationId = new ApplicationId(toUUID(strApplicationId));
             checkApplicationId(applicationId);
             applicationService.deleteApplication(applicationId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/applications", params = {"limit"}, method = RequestMethod.GET)
+    @ResponseBody
+    public TextPageData<Application> getTenantApplications(
+            @RequestParam int limit,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String idOffset,
+            @RequestParam(required = false) String textOffset) throws ThingsboardException {
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
+            return checkNotNull(applicationService.findApplicationsByTenantId(tenantId, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/{customerId}/application/{applicationId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Application assignApplicationToCustomer(@PathVariable("customerId") String strCustomerId,
+                                         @PathVariable("applicationId") String strApplicationId) throws ThingsboardException {
+        checkParameter("customerId", strCustomerId);
+        checkParameter("applicationId", strApplicationId);
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            checkCustomerId(customerId);
+
+            ApplicationId applicationId = new ApplicationId(toUUID(strApplicationId));
+            checkApplicationId(applicationId);
+
+            return checkNotNull(applicationService.assignApplicationToCustomer(applicationId, customerId));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/application/{applicationId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Application unassignApplicationFromCustomer(@PathVariable("applicationId") String strApplicationId) throws ThingsboardException {
+        checkParameter("applicationId", strApplicationId);
+        try {
+            ApplicationId applicationId = new ApplicationId(toUUID(strApplicationId));
+            Application application = checkApplicationId(applicationId);
+            if (application.getCustomerId() == null || application.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                throw new IncorrectParameterException("Application isn't assigned to any customer!");
+            }
+            return checkNotNull(applicationService.unassignApplicationFromCustomer(applicationId));
         } catch (Exception e) {
             throw handleException(e);
         }

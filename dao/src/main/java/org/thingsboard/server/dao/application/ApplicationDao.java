@@ -16,8 +16,19 @@
 package org.thingsboard.server.dao.application;
 
 import org.thingsboard.server.common.data.Application;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
-public interface ApplicationDao extends Dao<Application>{
+import java.util.List;
+import java.util.UUID;
 
+public interface ApplicationDao extends Dao<Application>{
+    /**
+     * Find devices by tenantId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of application objects
+     */
+    List<Application> findApplicationsByTenantId(UUID tenantId, TextPageLink pageLink);
 }

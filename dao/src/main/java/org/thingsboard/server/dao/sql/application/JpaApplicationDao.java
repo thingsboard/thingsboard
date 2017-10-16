@@ -16,13 +16,23 @@
 package org.thingsboard.server.dao.sql.application;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Application;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.application.ApplicationDao;
 import org.thingsboard.server.dao.model.sql.ApplicationEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 @Component
 @SqlDao
@@ -39,5 +49,16 @@ public class JpaApplicationDao extends JpaAbstractSearchTextDao<ApplicationEntit
     @Override
     protected CrudRepository<ApplicationEntity, String> getCrudRepository() {
         return applicationRepository;
+    }
+
+
+    @Override
+    public List<Application> findApplicationsByTenantId(UUID tenantId, TextPageLink pageLink) {
+        return DaoUtil.convertDataList(
+                applicationRepository.findByTenantId(
+                        fromTimeUUID(tenantId),
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())));
     }
 }

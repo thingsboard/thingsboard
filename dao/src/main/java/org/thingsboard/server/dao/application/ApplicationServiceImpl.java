@@ -20,9 +20,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Application;
 import org.thingsboard.server.common.data.id.ApplicationId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 
+import java.util.List;
+
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
 @Slf4j
@@ -53,5 +60,28 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
         applicationDao.removeById(applicationId.getId());
     }
 
+
+    @Override
+    public TextPageData<Application> findApplicationsByTenantId(TenantId tenantId, TextPageLink pageLink) {
+        log.trace("Executing findApplicationsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validatePageLink(pageLink, "Incorrect page link " + pageLink);
+        List<Application> applications = applicationDao.findApplicationsByTenantId(tenantId.getId(), pageLink);
+        return new TextPageData<>(applications, pageLink);
+    }
+
+    @Override
+    public Application assignApplicationToCustomer(ApplicationId applicationId, CustomerId customerId) {
+        Application application = findApplicationById(applicationId);
+        application.setCustomerId(customerId);
+        return saveApplication(application);
+    }
+
+    @Override
+    public Application unassignApplicationFromCustomer(ApplicationId deviceId) {
+        Application application = findApplicationById(deviceId);
+        application.setCustomerId(null);
+        return saveApplication(application);
+    }
 
 }

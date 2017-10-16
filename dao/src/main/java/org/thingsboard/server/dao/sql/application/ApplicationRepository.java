@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 package org.thingsboard.server.dao.sql.application;
-
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.ApplicationEntity;
 import org.thingsboard.server.dao.util.SqlDao;
+import org.springframework.data.domain.Pageable;
+import java.util.List;
 
 @SqlDao
 public interface ApplicationRepository extends CrudRepository<ApplicationEntity, String> {
 
-
+    @Query("SELECT a FROM ApplicationEntity a WHERE a.tenantId = :tenantId " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
+            "AND a.id > :idOffset ORDER BY a.id")
+    List<ApplicationEntity> findByTenantId(@Param("tenantId") String tenantId,
+                                           @Param("textSearch") String textSearch,
+                                           @Param("idOffset") String idOffset,
+                                           Pageable pageable);
 }

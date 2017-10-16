@@ -17,6 +17,10 @@ package org.thingsboard.server.dao.application;
 
 import org.thingsboard.server.common.data.Application;
 import org.thingsboard.server.common.data.id.ApplicationId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 
 public interface ApplicationService {
 
@@ -25,4 +29,11 @@ public interface ApplicationService {
     Application findApplicationById(ApplicationId applicationId);
 
     void deleteApplication(ApplicationId applicationId);
+
+    TextPageData<Application> findApplicationsByTenantId(TenantId tenantId, TextPageLink pageLink);
+
+    Application assignApplicationToCustomer(ApplicationId applicationId, CustomerId customerId);
+
+    Application unassignApplicationFromCustomer(ApplicationId applicationId);
+
 }
