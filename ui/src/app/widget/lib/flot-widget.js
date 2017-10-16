@@ -107,6 +107,14 @@ export default class TbFlot {
             return divElement;
         }
 
+        function seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex) {
+            var units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : tbFlot.ctx.trackUnits;
+            var decimals = angular.isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : tbFlot.ctx.trackDecimals;
+            var divElement = seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
+                seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction);
+            return divElement.prop('outerHTML');
+        }
+
         if (this.chartType === 'pie') {
             ctx.tooltipFormatter = function(item) {
                 var units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : tbFlot.ctx.trackUnits;
@@ -129,16 +137,42 @@ export default class TbFlot {
                     fontWeight: "700"
                 });
                 content += dateDiv.prop('outerHTML');
-                for (var i = 0; i < hoverInfo.seriesHover.length; i++) {
-                    var seriesHoverInfo = hoverInfo.seriesHover[i];
-                    if (tbFlot.ctx.tooltipIndividual && seriesHoverInfo.index !== seriesIndex) {
-                        continue;
+                if (tbFlot.ctx.tooltipIndividual) {
+                    var seriesHoverInfo = hoverInfo.seriesHover[seriesIndex];
+                    if (seriesHoverInfo) {
+                        content += seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
                     }
-                    var units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : tbFlot.ctx.trackUnits;
-                    var decimals = angular.isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : tbFlot.ctx.trackDecimals;
-                    var divElement = seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
-                        seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction);
-                    content += divElement.prop('outerHTML');
+                } else {
+                    var seriesDiv = $('<div></div>');
+                    seriesDiv.css({
+                        display: "flex",
+                        flexDirection: "row"
+                    });
+                    const maxRows = 15;
+                    var columns = Math.ceil(hoverInfo.seriesHover.length / maxRows);
+                    var columnsContent = '';
+                    for (var c = 0; c < columns; c++) {
+                        var columnDiv = $('<div></div>');
+                        columnDiv.css({
+                            display: "flex",
+                            flexDirection: "column"
+                        });
+                        var columnContent = '';
+                        for (var i = c*maxRows; i < (c+1)*maxRows; i++) {
+                            if (i == hoverInfo.seriesHover.length) {
+                                break;
+                            }
+                            seriesHoverInfo = hoverInfo.seriesHover[i];
+                            columnContent += seriesInfoDivFromInfo(seriesHoverInfo, seriesIndex);
+                        }
+                        columnDiv.html(columnContent);
+                        if (c > 0) {
+                            columnsContent += '<span style="width: 20px;"></span>';
+                        }
+                        columnsContent += columnDiv.prop('outerHTML');
+                    }
+                    seriesDiv.html(columnsContent);
+                    content += seriesDiv.prop('outerHTML');
                 }
                 return content;
             };
