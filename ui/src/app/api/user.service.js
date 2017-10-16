@@ -339,6 +339,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
                     updateAndValidateToken(refreshToken, 'refresh_token', false);
                     procceedJwtTokenValidate();
                 }, function fail() {
+                    $location.search('publicId', null);
                     deferred.reject();
                 });
             } else {

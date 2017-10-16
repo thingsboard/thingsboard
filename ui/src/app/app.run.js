@@ -111,7 +111,10 @@ export default function AppRun($rootScope, $window, $injector, $location, $log, 
                         }
                     }
                 } else {
-                    if (to.module === 'private') {
+                    if (publicId && publicId.length > 0) {
+                        evt.preventDefault();
+                        reloadUserFromPublicId();
+                    } else if (to.module === 'private') {
                         evt.preventDefault();
                         if (to.url === '/home' || to.url === '/') {
                             $state.go('login', params);
