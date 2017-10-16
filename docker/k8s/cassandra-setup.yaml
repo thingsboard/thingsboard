@@ -22,7 +22,7 @@ spec:
   containers:
   - name: cassandra-setup
     imagePullPolicy: Always
-    image: thingsboard/cassandra-setup:1.3.0
+    image: thingsboard/cassandra-setup:1.3.1
     env:
     - name: ADD_DEMO_DATA
       value: "true"
