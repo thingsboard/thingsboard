@@ -395,11 +395,13 @@ $previewSize: 100px;
   position: relative;
   border: dashed 2px;
   height: $previewSize;
-  display: flex;
-  align-items: center;
   overflow: hidden;
   label {
     width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     font-size: 16px;
     text-align: center;
     @media (min-width: $layout-breakpoint-sm) {
