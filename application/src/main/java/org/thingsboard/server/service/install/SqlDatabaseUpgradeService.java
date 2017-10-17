@@ -17,9 +17,17 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 @Service
 @Profile("install")
@@ -27,9 +35,32 @@ import org.thingsboard.server.dao.util.SqlDao;
 @SqlDao
 public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
 
+    private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
+
+    @Value("${install.data_dir}")
+    private String dataDir;
+
+    @Value("${spring.datasource.url}")
+    private String dbUrl;
+
+    @Value("${spring.datasource.username}")
+    private String dbUserName;
+
+    @Value("${spring.datasource.password}")
+    private String dbPassword;
+
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
         switch (fromVersion) {
+            case "1.3.0":
+                log.info("Updating schema ...");
+                Path schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.3.1", SCHEMA_UPDATE_SQL);
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    String sql = new String(Files.readAllBytes(schemaUpdateFile), Charset.forName("UTF-8"));
+                    conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+                }
+                log.info("Schema updated.");
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }

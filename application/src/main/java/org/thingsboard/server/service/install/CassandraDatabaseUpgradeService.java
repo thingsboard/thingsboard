@@ -155,6 +155,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Relations restored.");
 
                 break;
+            case "1.3.0":
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);
         }
