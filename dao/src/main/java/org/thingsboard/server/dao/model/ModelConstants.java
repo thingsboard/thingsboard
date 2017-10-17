@@ -137,12 +137,13 @@ public class ModelConstants {
      * Application constants
      */
     public static final String APPLICATION_TABLE_NAME = "application";
-    public static final String APPLICATION_MINI_WIDGET = "mini_widget";
-    public static final String APPLICATION_DASHBOARD = "dashboard";
-    public static final String APPLICATION_RULES = "rules";
+    public static final String APPLICATION_DASHBOARD_ID_PROPERTY = "dashboard_id";
+    public static final String APPLICATION_MINI_DASHBOARD_ID_PROPERTY = "mini_dashboard_id";
     public static final String APPLICATION_NAME = "name";
     public static final String APPLICATION_DESCRIPTION = "description";
     public static final String APPLICATION_DEVICE_TYPES_TABLE = "application_device_types";
+    public static final String APPLICATION_RULES_ASSOCIATION_TABLE = "application_associated_rules";
+    public static final String APPLICATION_RULE_ID_COLUMN= "application_rule_id";
     public static final String APPLICATION_ID_COLUMN = "application_id";
     public static final String APPLICATION_DEVICE_TYPES = "device_type";
     public static final String APPLICATION_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;

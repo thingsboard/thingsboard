@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Application;
 import org.thingsboard.server.common.data.id.ApplicationId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -126,4 +127,57 @@ public class ApplicationController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardType}/{dashboardId}/application/{applicationId}", method = RequestMethod.POST)
+    @ResponseBody
+    public Application assignDashboardToApplication(
+            @PathVariable("dashboardType") String dashboardType,
+            @PathVariable("dashboardId") String strDashboardId,
+            @PathVariable("applicationId") String strApplicationId) throws ThingsboardException {
+
+        checkParameter("dashboardType", dashboardType);
+        checkParameter("dashboardId", strDashboardId);
+        checkParameter("applicationId", strApplicationId);
+        try {
+            DashboardId dashboardId =  new DashboardId(toUUID(strDashboardId));
+            checkDashboardId(dashboardId);
+
+            ApplicationId applicationId = new ApplicationId(toUUID(strApplicationId));
+            checkApplicationId(applicationId);
+
+            return checkNotNull(applicationService.assignDashboardToApplication(applicationId, dashboardId, dashboardType));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardType}/application/{applicationId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Application unassignDashboardFromApplication(@PathVariable("dashboardType") String dashboardType, @PathVariable("applicationId") String strApplicationId) throws ThingsboardException {
+        checkParameter("applicationId", strApplicationId);
+        checkParameter("dashboardType", dashboardType);
+        try {
+            ApplicationId applicationId = new ApplicationId(toUUID(strApplicationId));
+            Application application = checkApplicationId(applicationId);
+            if(dashboardType.equals("mini")) {
+                if (application.getMiniDashboardId() == null || application.getMiniDashboardId().getId().equals(ModelConstants.NULL_UUID)) {
+                    throw new IncorrectParameterException("No mini dashboard assigned to an application!");
+                }
+                return checkNotNull(applicationService.unassignDashboardFromApplication(applicationId, dashboardType));
+            } else if(dashboardType.equals("main")) {
+                if (application.getDashboardId() == null || application.getDashboardId().getId().equals(ModelConstants.NULL_UUID)) {
+                    throw new IncorrectParameterException("No dashboard assigned to an application!");
+                }
+                return checkNotNull(applicationService.unassignDashboardFromApplication(applicationId, dashboardType));
+            } else {
+                throw new IncorrectParameterException("Incorrect Dashboard Type for an application");
+            }
+
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
 }

@@ -16,9 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.id.ApplicationId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 
 import java.util.List;
 
@@ -28,9 +26,9 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
 
     private TenantId tenantId;
     private CustomerId customerId;
-    private JsonNode miniWidget;
-    private JsonNode dashboard;
-    private JsonNode rules;
+    private DashboardId dashboardId;
+    private DashboardId miniDashboardId;
+    private List<RuleId> rules;
     private String name;
     private String description;
     private List<String> deviceTypes;
@@ -47,8 +45,8 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
         super(application);
         this.tenantId = application.tenantId;
         this.customerId = application.customerId;
-        this.miniWidget = application.miniWidget;
-        this.dashboard = application.dashboard;
+        this.dashboardId = application.dashboardId;
+        this.miniDashboardId = application.miniDashboardId;
         this.rules = application.rules;
         this.name = application.name;
         this.description = application.description;
@@ -69,27 +67,27 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
         return name;
     }
 
-    public JsonNode getMiniWidget() {
-        return miniWidget;
+    public DashboardId getDashboardId() {
+        return dashboardId;
     }
 
-    public void setMiniWidget(JsonNode miniWidget) {
-        this.miniWidget = miniWidget;
+    public void setDashboardId(DashboardId dashboardId) {
+        this.dashboardId = dashboardId;
     }
 
-    public JsonNode getDashboard() {
-        return dashboard;
+    public DashboardId getMiniDashboardId() {
+        return miniDashboardId;
     }
 
-    public void setDashboard(JsonNode dashboard) {
-        this.dashboard = dashboard;
+    public void setMiniDashboardId(DashboardId miniDashboardId) {
+        this.miniDashboardId = miniDashboardId;
     }
 
-    public JsonNode getRules() {
+    public List<RuleId> getRules() {
         return rules;
     }
 
-    public void setRules(JsonNode rules) {
+    public void setRules(List<RuleId> rules) {
         this.rules = rules;
     }
 
@@ -130,8 +128,8 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
         return "Application{" +
                 "tenantId=" + tenantId +
                 ", customerId=" + customerId +
-                ", miniWidget=" + miniWidget +
-                ", dashboard=" + dashboard +
+                ", miniDashboardId=" + miniDashboardId +
+                ", dashboardId=" + dashboardId +
                 ", rules=" + rules +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
@@ -149,8 +147,9 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
 
         if (tenantId != null ? !tenantId.equals(that.tenantId) : that.tenantId != null) return false;
         if (customerId != null ? !customerId.equals(that.customerId) : that.customerId != null) return false;
-        if (miniWidget != null ? !miniWidget.equals(that.miniWidget) : that.miniWidget != null) return false;
-        if (dashboard != null ? !dashboard.equals(that.dashboard) : that.dashboard != null) return false;
+        if (dashboardId != null ? !dashboardId.equals(that.dashboardId) : that.dashboardId != null) return false;
+        if (miniDashboardId != null ? !miniDashboardId.equals(that.miniDashboardId) : that.miniDashboardId != null)
+            return false;
         if (rules != null ? !rules.equals(that.rules) : that.rules != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
@@ -162,8 +161,8 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
         int result = super.hashCode();
         result = 31 * result + (tenantId != null ? tenantId.hashCode() : 0);
         result = 31 * result + (customerId != null ? customerId.hashCode() : 0);
-        result = 31 * result + (miniWidget != null ? miniWidget.hashCode() : 0);
-        result = 31 * result + (dashboard != null ? dashboard.hashCode() : 0);
+        result = 31 * result + (dashboardId != null ? dashboardId.hashCode() : 0);
+        result = 31 * result + (miniDashboardId != null ? miniDashboardId.hashCode() : 0);
         result = 31 * result + (rules != null ? rules.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);

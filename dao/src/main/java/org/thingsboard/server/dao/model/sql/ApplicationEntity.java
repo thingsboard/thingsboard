@@ -22,9 +22,7 @@ import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Application;
-import org.thingsboard.server.common.data.id.ApplicationId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -32,6 +30,7 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -49,17 +48,16 @@ public class ApplicationEntity extends BaseSqlEntity<Application> implements Sea
     @Column(name = ModelConstants.APPLICATION_CUSTOMER_ID_PROPERTY)
     private String customerId;
 
-    @Type(type = "json")
-    @Column(name = ModelConstants.APPLICATION_MINI_WIDGET)
-    private JsonNode miniWidget;
+    @Column(name = ModelConstants.APPLICATION_MINI_DASHBOARD_ID_PROPERTY)
+    private String miniDashboardId;
 
-    @Type(type = "json")
-    @Column(name = ModelConstants.APPLICATION_DASHBOARD)
-    private JsonNode dashboard;
+    @Column(name = ModelConstants.APPLICATION_DASHBOARD_ID_PROPERTY)
+    private String dashboardId;
 
-    @Type(type = "json")
-    @Column(name = ModelConstants.APPLICATION_RULES)
-    private JsonNode rules;
+    @ElementCollection
+    @CollectionTable(name = ModelConstants.APPLICATION_RULES_ASSOCIATION_TABLE, joinColumns = @JoinColumn(name = ModelConstants.APPLICATION_ID_COLUMN))
+    @Column(name = ModelConstants.APPLICATION_RULE_ID_COLUMN)
+    private List<String> rules;
 
     @Column(name = ModelConstants.APPLICATION_NAME)
     private String name;
@@ -91,9 +89,18 @@ public class ApplicationEntity extends BaseSqlEntity<Application> implements Sea
             this.customerId = toString(application.getCustomerId().getId());
         }
 
-        this.miniWidget = application.getMiniWidget();
-        this.dashboard = application.getDashboard();
-        this.rules = application.getRules();
+        if(application.getDashboardId() !=null) {
+            this.dashboardId = toString(application.getDashboardId().getId());
+        }
+
+        if(application.getMiniDashboardId() !=null) {
+            this.miniDashboardId = toString(application.getMiniDashboardId().getId());
+        }
+
+        if(application.getRules() !=null && application.getRules().size() !=0) {
+            this.rules = application.getRules().stream().map(r -> toString(r.getId())).collect(Collectors.toList());
+        }
+
         this.name = application.getName();
         this.description = application.getDescription();
         this.deviceTypes = application.getDeviceTypes();
@@ -119,9 +126,18 @@ public class ApplicationEntity extends BaseSqlEntity<Application> implements Sea
         if (customerId != null) {
             application.setCustomerId(new CustomerId(toUUID(customerId)));
         }
-        application.setMiniWidget(miniWidget);
-        application.setDashboard(dashboard);
-        application.setRules(rules);
+
+        if(dashboardId !=null) {
+           application.setDashboardId(new DashboardId(toUUID(dashboardId)));
+        }
+
+        if(miniDashboardId !=null) {
+            application.setMiniDashboardId(new DashboardId(toUUID(miniDashboardId)));
+        }
+
+        if(rules !=null && rules.size() !=0) {
+            application.setRules(rules.stream().map(r -> new RuleId(toUUID(r))).collect(Collectors.toList()));
+        }
         application.setName(name);
         application.setDescription(description);
         application.setDeviceTypes(deviceTypes);

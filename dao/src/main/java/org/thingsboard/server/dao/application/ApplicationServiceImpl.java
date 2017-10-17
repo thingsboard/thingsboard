@@ -21,10 +21,12 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Application;
 import org.thingsboard.server.common.data.id.ApplicationId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.List;
 
@@ -78,9 +80,37 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
     }
 
     @Override
-    public Application unassignApplicationFromCustomer(ApplicationId deviceId) {
-        Application application = findApplicationById(deviceId);
+    public Application unassignApplicationFromCustomer(ApplicationId applicationId) {
+        Application application = findApplicationById(applicationId);
         application.setCustomerId(null);
+        return saveApplication(application);
+    }
+
+    @Override
+    public Application assignDashboardToApplication(ApplicationId applicationId, DashboardId dashboardId, String dashboardType) {
+        Application application = findApplicationById(applicationId);
+        if(dashboardType.equals("mini")) {
+            application.setMiniDashboardId(dashboardId);
+        } else if(dashboardType.equals("main")) {
+            application.setDashboardId(dashboardId);
+        } else {
+            throw new IncorrectParameterException("Incorrect dashboard type: "+dashboardType);
+        }
+
+        return saveApplication(application);
+    }
+
+    @Override
+    public Application unassignDashboardFromApplication(ApplicationId applicationId, String dashboardType) {
+        Application application = findApplicationById(applicationId);
+        if(dashboardType.equals("mini")) {
+            application.setMiniDashboardId(null);
+        } else if(dashboardType.equals("main")) {
+            application.setDashboardId(null);
+        } else {
+            throw new IncorrectParameterException("Incorrect dashboard type: "+dashboardType);
+        }
+
         return saveApplication(application);
     }
 
