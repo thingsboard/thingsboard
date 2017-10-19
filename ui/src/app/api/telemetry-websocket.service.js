@@ -241,6 +241,10 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
                     }
                 }
             }
+            var index = reconnectSubscribers.indexOf(subscriber);
+            if (index > -1) {
+                reconnectSubscribers.splice(index, 1);
+            }
             subscribersCount--;
             publishCommands();
         }

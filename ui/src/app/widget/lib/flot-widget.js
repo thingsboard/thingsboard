@@ -480,10 +480,9 @@ export default class TbFlot {
                     ? this.subscription.data[i].data[0][1] : 0;
             }
             this.pieDataRendered();
-            this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
-        } else {
-            this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
         }
+        this.ctx.plotInited = true;
+        this.createPlot();
     }
 
     createYAxis(keySettings, units) {
@@ -578,16 +577,13 @@ export default class TbFlot {
                         if (this.chartType === 'bar') {
                             this.ctx.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
                         }
-                        this.ctx.plot.setData(this.subscription.data);
-                        this.ctx.plot.setupGrid();
-                        this.ctx.plot.draw();
+                        this.updateData();
                     }
                 } else if (this.chartType === 'pie') {
                     if (this.ctx.animatedPie) {
                         this.nextPieDataAnimation(true);
                     } else {
-                        this.ctx.plot.setData(this.subscription.data);
-                        this.ctx.plot.draw();
+                        this.updateData();
                     }
                 }
             } else if (this.isMouseInteraction && this.ctx.plot){
@@ -599,13 +595,105 @@ export default class TbFlot {
         }
     }
 
+    updateData() {
+        this.ctx.plot.setData(this.subscription.data);
+        if (this.chartType !== 'pie') {
+            this.ctx.plot.setupGrid();
+        }
+        this.ctx.plot.draw();
+    }
+
     resize() {
-        if (this.ctx.plot) {
-            this.ctx.plot.resize();
-            if (this.chartType !== 'pie') {
-                this.ctx.plot.setupGrid();
+        if (this.resizeTimeoutHandle) {
+            this.ctx.$scope.$timeout.cancel(this.resizeTimeoutHandle);
+            this.resizeTimeoutHandle = null;
+        }
+        if (this.ctx.plot && this.ctx.plotInited) {
+            var width = this.$element.width();
+            var height = this.$element.height();
+            if (width && height) {
+                this.ctx.plot.resize();
+                if (this.chartType !== 'pie') {
+                    this.ctx.plot.setupGrid();
+                }
+                this.ctx.plot.draw();
+            } else {
+                var tbFlot = this;
+                this.resizeTimeoutHandle = this.ctx.$scope.$timeout(function() {
+                    tbFlot.resize();
+                }, 30, false);
             }
-            this.ctx.plot.draw();
+        }
+    }
+
+
+    redrawPlot() {
+        if (this.ctx.plot && this.ctx.plotInited) {
+            this.ctx.plot.destroy();
+            this.ctx.plot = null;
+            this.createPlot();
+        }
+    }
+
+    createPlot() {
+        if (this.createPlotTimeoutHandle) {
+            this.ctx.$scope.$timeout.cancel(this.createPlotTimeoutHandle);
+            this.createPlotTimeoutHandle = null;
+        }
+        if (this.ctx.plotInited && !this.ctx.plot) {
+            var width = this.$element.width();
+            var height = this.$element.height();
+            if (width && height) {
+                if (this.chartType === 'pie' && this.ctx.animatedPie) {
+                    this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
+                } else {
+                    this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
+                }
+            } else {
+                var tbFlot = this;
+                this.createPlotTimeoutHandle = this.ctx.$scope.$timeout(function() {
+                    tbFlot.createPlot();
+                }, 30, false);
+            }
+        }
+    }
+
+    destroy() {
+        this.cleanup();
+        if (this.ctx.plot) {
+            this.ctx.plot.destroy();
+            this.ctx.plot = null;
+            this.ctx.plotInited = false;
+        }
+    }
+
+    cleanup() {
+        if (this.updateTimeoutHandle) {
+            this.ctx.$scope.$timeout.cancel(this.updateTimeoutHandle);
+            this.updateTimeoutHandle = null;
+        }
+        if (this.createPlotTimeoutHandle) {
+            this.ctx.$scope.$timeout.cancel(this.createPlotTimeoutHandle);
+            this.createPlotTimeoutHandle = null;
+        }
+        if (this.resizeTimeoutHandle) {
+            this.ctx.$scope.$timeout.cancel(this.resizeTimeoutHandle);
+            this.resizeTimeoutHandle = null;
+        }
+    }
+
+    checkMouseEvents() {
+        var enabled = !this.ctx.isMobile &&  !this.ctx.isEdit;
+        if (angular.isUndefined(this.mouseEventsEnabled) || this.mouseEventsEnabled != enabled) {
+            this.mouseEventsEnabled = enabled;
+            if (this.$element) {
+                if (enabled) {
+                    this.enableMouseEvents();
+                } else {
+                    this.disableMouseEvents();
+                }
+                this.redrawPlot();
+            }
         }
     }
 
@@ -1020,46 +1108,6 @@ export default class TbFlot {
         }
     }
 
-    checkMouseEvents() {
-        var enabled = !this.ctx.isMobile &&  !this.ctx.isEdit;
-        if (angular.isUndefined(this.mouseEventsEnabled) || this.mouseEventsEnabled != enabled) {
-            this.mouseEventsEnabled = enabled;
-            if (this.$element) {
-                if (enabled) {
-                    this.enableMouseEvents();
-                } else {
-                    this.disableMouseEvents();
-                }
-                if (this.ctx.plot) {
-                    this.ctx.plot.destroy();
-                    if (this.chartType === 'pie' && this.ctx.animatedPie) {
-                        this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
-                    } else {
-                        this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
-                    }
-                }
-            }
-        }
-    }
-
-    redrawPlot() {
-        if (this.ctx.plot) {
-            this.ctx.plot.destroy();
-            if (this.chartType === 'pie' && this.ctx.animatedPie) {
-                this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
-            } else {
-                this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
-            }
-        }
-    }
-
-    destroy() {
-        if (this.ctx.plot) {
-            this.ctx.plot.destroy();
-            this.ctx.plot = null;
-        }
-    }
-
     enableMouseEvents() {
         this.$element.css('pointer-events','');
         this.$element.addClass('mouse-events');
@@ -1069,6 +1117,9 @@ export default class TbFlot {
 
         if (!this.flotHoverHandler) {
             this.flotHoverHandler =  function (event, pos, item) {
+                if (!tbFlot.ctx.plot) {
+                    return;
+                }
                 if (!tbFlot.ctx.tooltipIndividual || item) {
 
                     var multipleModeTooltip = !tbFlot.ctx.tooltipIndividual;
@@ -1128,6 +1179,9 @@ export default class TbFlot {
 
         if (!this.flotSelectHandler) {
             this.flotSelectHandler =  function (event, ranges) {
+                if (!tbFlot.ctx.plot) {
+                    return;
+                }
                 tbFlot.ctx.plot.clearSelection();
                 tbFlot.subscription.onUpdateTimewindow(ranges.xaxis.from, ranges.xaxis.to);
             };
@@ -1153,6 +1207,9 @@ export default class TbFlot {
         }
         if (!this.mouseleaveHandler) {
             this.mouseleaveHandler =  function () {
+                if (!tbFlot.ctx.plot) {
+                    return;
+                }
                 tbFlot.ctx.tooltip.stop(true);
                 tbFlot.ctx.tooltip.hide();
                 tbFlot.ctx.plot.unhighlight();
