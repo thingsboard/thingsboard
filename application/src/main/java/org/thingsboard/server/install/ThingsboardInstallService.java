@@ -73,20 +73,13 @@ public class ThingsboardInstallService {
 
                         databaseUpgradeService.upgradeDatabase("1.2.3");
 
-                        log.info("Updating system data...");
-
-                        systemDataLoaderService.deleteSystemWidgetBundle("charts");
-                        systemDataLoaderService.deleteSystemWidgetBundle("cards");
-                        systemDataLoaderService.deleteSystemWidgetBundle("maps");
-                        systemDataLoaderService.deleteSystemWidgetBundle("analogue_gauges");
-                        systemDataLoaderService.deleteSystemWidgetBundle("digital_gauges");
-                        systemDataLoaderService.deleteSystemWidgetBundle("gpio_widgets");
-                        systemDataLoaderService.deleteSystemWidgetBundle("alarm_widgets");
-
-                    case "1.3.0":
+                    case "1.3.0":  //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion
                         log.info("Upgrading ThingsBoard from version 1.3.0 to 1.3.1 ...");
 
                         databaseUpgradeService.upgradeDatabase("1.3.0");
+
+                    case "1.3.1":
+                        log.info("Upgrading ThingsBoard from version 1.3.1 to 1.4.0 ...");
 
                         log.info("Updating system data...");
 
