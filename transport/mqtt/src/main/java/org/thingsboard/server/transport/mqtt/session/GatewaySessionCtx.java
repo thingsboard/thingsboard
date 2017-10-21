@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -89,6 +90,12 @@ public class GatewaySessionCtx {
         if (!devices.containsKey(deviceName)) {
             Optional<Device> deviceOpt = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
             Device device = deviceOpt.orElseGet(() -> {
+                JsonNode infoNode = gateway.getAdditionalInfo();
+                if (infoNode == null)
+                    return null;
+                JsonNode allowCreateDevice = infoNode.get("allow_create_device");
+                if (allowCreateDevice == null || !allowCreateDevice.asBoolean())
+                    return null;
                 Device newDevice = new Device();
                 newDevice.setTenantId(gateway.getTenantId());
                 newDevice.setName(deviceName);
@@ -97,6 +104,10 @@ public class GatewaySessionCtx {
                 relationService.saveRelationAsync(new EntityRelation(gateway.getId(), newDevice.getId(), "Created"));
                 return newDevice;
             });
+            if (null == device) {
+                log.debug("[{}] NOT allowed add to add device [{}] to the gateway session", gatewaySessionId, deviceName);
+                return;
+            }
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
             devices.put(deviceName, ctx);
             log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);

@@ -608,7 +608,8 @@ export default function addLocaleChinese(locales) {
             "assignedToCustomer": "分配给客户",
             "unable-delete-device-alias-title": "无法删除设备别名",
             "unable-delete-device-alias-text": "设备别名 '{{deviceAlias}}' 不能够被删除，因为它被下列部件所使用: <br/> {{widgetsList}}",
-            "is-gateway": "是网关",
+            "is-gateway": "网关",
+            "allow-gateway-create-device": "允许网关创建设备",
             "public": "公开",
             "device-public": "设备公开",
             "select-device": "选择设备"
