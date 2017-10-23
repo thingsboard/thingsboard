@@ -80,7 +80,7 @@
         </md-input-container>
         <md-input-container class="md-block">
             <md-checkbox ng-hide="loading || !device.additionalInfo.gateway || !(deviceScope === 'tenant')"  ng-disabled="loading || !isEdit" flex aria-label="{{ 'device.is-gateway' | translate }}"
-                         ng-model="device.additionalInfo.allow_create_device">{{ 'device.allow-gateway-create-device' | translate }}
+                         ng-model="device.additionalInfo.forbid_create_device">{{ 'device.forbid-gateway-create-device' | translate }}
             </md-checkbox>
         </md-input-container>
         <md-input-container class="md-block">

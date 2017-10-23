@@ -90,11 +90,8 @@ public class GatewaySessionCtx {
         if (!devices.containsKey(deviceName)) {
             Optional<Device> deviceOpt = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
             Device device = deviceOpt.orElseGet(() -> {
-                JsonNode infoNode = gateway.getAdditionalInfo();
-                if (infoNode == null)
-                    return null;
-                JsonNode allowCreateDevice = infoNode.get("allow_create_device");
-                if (allowCreateDevice == null || !allowCreateDevice.asBoolean())
+                JsonNode forbidCreateDevice = gateway.getAdditionalInfo().get("forbid_create_device");
+                if (forbidCreateDevice != null && forbidCreateDevice.asBoolean())
                     return null;
                 Device newDevice = new Device();
                 newDevice.setTenantId(gateway.getTenantId());
