@@ -19,10 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Application;
-import org.thingsboard.server.common.data.id.ApplicationId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -111,6 +108,13 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
             throw new IncorrectParameterException("Incorrect dashboard type: "+dashboardType);
         }
 
+        return saveApplication(application);
+    }
+
+    @Override
+    public Application assignRulesToApplication(ApplicationId applicationId, List<RuleId> ruleIdList) {
+        Application application = findApplicationById(applicationId);
+        application.setRules(ruleIdList);
         return saveApplication(application);
     }
 

@@ -15,22 +15,27 @@
  */
 package org.thingsboard.server.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Application;
-import org.thingsboard.server.common.data.id.ApplicationId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ApplicationRulesWrapper;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api")
+@Slf4j
 public class ApplicationController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -175,6 +180,23 @@ public class ApplicationController extends BaseController {
                 throw new IncorrectParameterException("Incorrect Dashboard Type for an application");
             }
 
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/app/assignRules", method = RequestMethod.POST,consumes = "application/json")
+    public Application assignRulesToApplication(@RequestBody ApplicationRulesWrapper applicationRulesWrapper) throws ThingsboardException {
+        checkParameter("applicationId", applicationRulesWrapper.getApplicationId());
+        try {
+            ApplicationId applicationId = new ApplicationId(toUUID(applicationRulesWrapper.getApplicationId()));
+            checkApplicationId(applicationId);
+            List<RuleId> ruleIds = Collections.emptyList();
+            if (applicationRulesWrapper != null) {
+                ruleIds = applicationRulesWrapper.getRules().stream().map(r -> new RuleId(toUUID(r))).collect(Collectors.toList());
+            }
+            return checkNotNull(applicationService.assignRulesToApplication(applicationId, ruleIds));
         } catch (Exception e) {
             throw handleException(e);
         }

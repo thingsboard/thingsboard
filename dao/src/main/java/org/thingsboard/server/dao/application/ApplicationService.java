@@ -16,12 +16,11 @@
 package org.thingsboard.server.dao.application;
 
 import org.thingsboard.server.common.data.Application;
-import org.thingsboard.server.common.data.id.ApplicationId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+
+import java.util.List;
 
 public interface ApplicationService {
 
@@ -40,5 +39,7 @@ public interface ApplicationService {
     Application assignDashboardToApplication(ApplicationId applicationId, DashboardId dashboardId, String dashboardType);
 
     Application unassignDashboardFromApplication(ApplicationId applicationId, String dashboardType);
+
+    Application assignRulesToApplication(ApplicationId applicationId, List<RuleId> ruleIdList);
 
 }
