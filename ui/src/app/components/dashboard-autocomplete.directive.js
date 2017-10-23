@@ -48,7 +48,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
             var promise;
             if (scope.dashboardsScope === 'customer' || userService.getAuthority() === 'CUSTOMER_USER') {
                 if (scope.customerId) {
-                    promise = dashboardService.getCustomerDashboards(scope.customerId, pageLink);
+                    promise = dashboardService.getCustomerDashboards(scope.customerId, pageLink, false);
                 } else {
                     promise = $q.when({data: []});
                 }
@@ -60,7 +60,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
                         promise = $q.when({data: []});
                     }
                 } else {
-                    promise = dashboardService.getTenantDashboards(pageLink);
+                    promise = dashboardService.getTenantDashboards(pageLink, false);
                 }
             }
 

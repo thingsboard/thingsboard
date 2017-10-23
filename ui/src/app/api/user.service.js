@@ -265,9 +265,9 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
             var pageLink = {limit: 100};
             var fetchDashboardsPromise;
             if (currentUser.authority === 'TENANT_ADMIN') {
-                fetchDashboardsPromise = dashboardService.getTenantDashboards(pageLink);
+                fetchDashboardsPromise = dashboardService.getTenantDashboards(pageLink, false);
             } else {
-                fetchDashboardsPromise = dashboardService.getCustomerDashboards(currentUser.customerId, pageLink);
+                fetchDashboardsPromise = dashboardService.getCustomerDashboards(currentUser.customerId, pageLink, false);
             }
             fetchDashboardsPromise.then(
                 function success(result) {

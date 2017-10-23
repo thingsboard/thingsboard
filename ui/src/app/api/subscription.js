@@ -674,11 +674,14 @@ export default class Subscription {
 
     alarmsUpdated(alarms, apply) {
         this.notifyDataLoaded();
+        var updated = !angular.equals(this.alarms, alarms);
         this.alarms = alarms;
         if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
             this.updateTimewindow();
         }
-        this.onDataUpdated(apply);
+        if (updated) {
+            this.onDataUpdated(apply);
+        }
     }
 
     updateLegend(dataIndex, data, apply) {
