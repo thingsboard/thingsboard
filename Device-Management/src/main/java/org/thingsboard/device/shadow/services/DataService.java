@@ -54,14 +54,7 @@ public class DataService {
                 logger.error("Error updating availableTags : " + e);
             }
         }
-        /*else {
-            try {
-                shadowDao.deleteByToken(deviceToken);
-            }catch (SQLException e){
-                logger.error("Error in deleting tags before updation : " + e);
-            }
-        }*/
-        //DeviceShadow deviceShadow = new DeviceShadow();
+
     }
 
     public void desiredTags(TagList tagList)throws Exception{
@@ -82,12 +75,11 @@ public class DataService {
         return jsontTagList;
     }
 
-    public String updateReportedTags(JSONObject jsonObject){
+    public void updateReportedTags(JSONObject jsonObject){
         String reportedTags = jsonObject.get("values").toString();
         String token = jsonObject.get("token").toString();
         JSONParser parser = new JSONParser();
         JSONObject jsonObjectTagsOnly = null;
-        String ret = "";
         try {
             jsonObjectTagsOnly = (JSONObject) parser.parse(reportedTags);
             Set<String> keys = jsonObjectTagsOnly.keySet();
@@ -98,17 +90,6 @@ public class DataService {
         }catch (Exception e){
             logger.error("Exception updating tags : " + e);
         }
-        return ret;
     }
-    /*public String deleteById(String token)throws SQLException{
-        if(shadowDao.deleteByToken(token)){
-            try {
-                restService.postToThingsBoard(token);
-            }catch (Exception e){
-                logger.error("Error deleting attributes in thingsboard : " + e);
-                return "{\"error\": \"" + e + "\"}";
-            }
-        }
-        return "\"status\":\"deleted\"";
-    }*/
+
 }

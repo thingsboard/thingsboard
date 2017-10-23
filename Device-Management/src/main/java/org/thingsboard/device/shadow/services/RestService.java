@@ -19,47 +19,12 @@ import org.thingsboard.device.shadow.models.TagList;
 @Service("restService")
 public class RestService {
     Logger logger = LoggerFactory.getLogger(RestService.class);
-    private String tbURL = "http://localhost:8080/api/v1/";
     private String getOpcDataUrl = "http://localhost:8088/contentListener";
-
-    //Not used.
-    public void postToThingsBoard(String token) throws IOException, RuntimeException {
-
-        String tbAttributesJson = createTBArributeRequest(token);
-        logger.debug("Attribute Json " + tbAttributesJson);
-        HttpPost postRequest = new HttpPost(tbURL + token + "/attributes");
-        StringEntity input = new StringEntity(tbAttributesJson);
-        input.setContentType("application/json");
-        postRequest.setEntity(input);
-
-        HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpResponse response = httpClient.execute(postRequest);
-
-        if (response.getStatusLine().getStatusCode() != 200) {
-            throw new RuntimeException("Failed : HTTP error code : "
-                    + response.getStatusLine().getStatusCode());
-        }
-        logger.error("Here I am!");
-    }
-
-    public String createTBArributeRequest(String token){
-        Map<String,String> tbAttributes = new HashMap<String, String>();
-        tbAttributes.put("token",token);
-        tbAttributes.put("tags","");
-        ObjectMapper mapper = new ObjectMapper();
-        String tbAttributesJson="";
-        try {
-            tbAttributesJson = mapper.writeValueAsString(tbAttributes);
-        }catch (Exception e){
-
-        }
-        logger.error("Here I am!");
-        return tbAttributesJson;
-    }
 
     public boolean postToGetOPCData(TagList tagList) throws IOException, RuntimeException {
 
         String tagsStr = createTagStr(tagList);
+        Boolean status = true;
         logger.error("opca msg" + tagsStr);
         HttpPost postRequest = new HttpPost(getOpcDataUrl);
         StringEntity input = new StringEntity(tagsStr);
@@ -70,11 +35,11 @@ public class RestService {
         HttpResponse response = httpClient.execute(postRequest);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            throw new RuntimeException("Failed : HTTP error code : "
-                    + response.getStatusLine().getStatusCode());
-            //return false;
+            status = false;
+            //throw new RuntimeException("Failed : HTTP error code : "
+                    //+ response.getStatusLine().getStatusCode());
         }
-        return true;
+        return status;
     }
 
     public String createTagStr(TagList tagList){

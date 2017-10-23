@@ -24,13 +24,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ShadowController {
 
     private final Logger logger = LoggerFactory.getLogger(ShadowController.class);
-    //@Autowired
-    //private DataService dataService = new DataService();
     @Autowired
     private DataService dataService;
     @Autowired
     private RestService restService;
-    //RestService restService = new RestService();
 
     @RequestMapping(value = "/update/available/tags", method = RequestMethod.POST)
     public String updateAvaliableTags(@RequestBody String availableTags){
@@ -66,17 +63,15 @@ public class ShadowController {
     public String updateReportedTags(@RequestBody String reportedTags){
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = null;
-        String ret = "";
 
         try {
             jsonObject = (JSONObject) parser.parse(reportedTags);
-            ret = dataService.updateReportedTags(jsonObject);
+            dataService.updateReportedTags(jsonObject);
         }catch (Exception e){
             logger.error("Exception updating tags : " + e);
             return "{\"error\":\""+e+"\"}";
         }
-        //return "{\"status\":\"updated\"}";
-        return ret;
+        return "{\"status\":\"updated\"}";
     }
 
     @RequestMapping(value = "/available/tags", produces = "application/json", method = RequestMethod.GET)
@@ -84,10 +79,4 @@ public class ShadowController {
         String jsonTagList = dataService.getAvailableTagsBytoken(token);
         return jsonTagList;
     }
-
-    /*@RequestMapping(value = "/available/tags", method = RequestMethod.DELETE)
-    public String deleteTagsByToken(@RequestParam(value="token") String token) throws SQLException{
-       return dataService.deleteById(token);
-    }*/
-
 }

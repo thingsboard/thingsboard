@@ -33,7 +33,7 @@ public class ShadowControllerTest {
     DeviceShadowDao mockDataSource;
 
     @Test
-    public void shadowControllerShouldReturnsUpdateStatus() throws Exception {
+    public void shadowControllerShouldReturnUpdateStatus() throws Exception {
         String json = "{\"token\":\"abc\",\"tags\":\"temp,pressure\"}";
         //String response = "{\"status\":\"updated\"}";
         this.mockMvc.perform(post("/update/available/tags").contentType(
@@ -44,7 +44,7 @@ public class ShadowControllerTest {
     }
 
     @Test
-    public void shadowControllerShouldReturnsErrorStatus() throws Exception {
+    public void shadowControllerShouldReturnErrorStatus() throws Exception {
         String json = "{\"sdc\":SDCSD}";
         //String response = "{\"status\":\"updated\"}";
         String response = "Unexpected character (S) at position 7.";
@@ -56,7 +56,7 @@ public class ShadowControllerTest {
     }
 
     @Test
-    public void shadowControllerShouldReturnsAvailableTags() throws Exception {
+    public void shadowControllerShouldReturnAvailableTags() throws Exception {
         mockDataSource.getReportedTagsForDeviceToken("qatvZF2q7p0kV7CdZYOk") ;
         this.mockMvc.perform(get("/available/tags").contentType(
                 MediaType.APPLICATION_JSON).param("token","qatvZF2q7p0kV7CdZYOk")).andExpect(
@@ -81,6 +81,16 @@ public class ShadowControllerTest {
                 status().isOk())
                 .andDo(print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("updated"));
+    }
+
+    @Test
+    public void shadowControllerShouldReturnErrorInDesiredTagStatus() throws Exception {
+        String json = "{\"token\":\"abc\",\"tags\":[\"temp\",\"pressure\"]}";
+        this.mockMvc.perform(post("/desired/tags").contentType(
+                MediaType.APPLICATION_JSON).content(json)).andExpect(
+                status().isOk())
+                .andDo(print()).andExpect(status().isOk())
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test

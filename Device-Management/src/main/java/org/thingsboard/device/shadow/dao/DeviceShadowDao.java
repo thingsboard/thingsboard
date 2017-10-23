@@ -9,8 +9,6 @@ import java.sql.SQLException;
  * Created by himanshu on 29/9/17.
  */
 public interface DeviceShadowDao {
-    //@Query("select s from Student s where s.age <= ?")
-    public void updateByDeviceToken(String token);
     public TagList getReportedTagsForDeviceToken(String token) throws SQLException;
     public void updateAvailableTags(DeviceShadow deviceShadow) throws SQLException;
     //public boolean deleteByToken(String deviceToken) throws SQLException;

@@ -46,8 +46,6 @@ public class DeviceShadowDaoImp implements DeviceShadowDao {
     final String updateStateOfTag = "UPDATE device_shadow set desired='TRUE' where " +
             "DEVICETOKEN=? and TAGNAME=?";
 
-    final String deleteByToken = "delete from device_shadow where DEVICETOKEN=?";
-
     final String checkTagExistence = "SELECT count(*) FROM device_shadow WHERE " +
             "DEVICETOKEN=? and TAGNAME=?";
 
@@ -55,12 +53,8 @@ public class DeviceShadowDaoImp implements DeviceShadowDao {
             "DEVICETOKEN=? and TAGNAME=?";
 
     String dummyStr = "ns=2;s=Simulation Examples.Functions.";
-    public void updateByDeviceToken(String token){
-
-    }
 
     public void updateAvailableTags(DeviceShadow deviceShadow) throws SQLException{
-        logger.error("Here I am !");
         PreparedStatement ps = connection.prepareStatement(insertAvailableTags);
         ps.setString(1, deviceShadow.getDeviceToken());
         ps.setString(2, deviceShadow.getTagName());
@@ -134,7 +128,6 @@ public class DeviceShadowDaoImp implements DeviceShadowDao {
     }
 
     public void updateReportedTags(String token, String tag) throws SQLException{
-        logger.error("Here I am !");
         PreparedStatement ps = connection.prepareStatement(updateReportedTags);
         ps.setString(1, token);
         ps.setString(2, dummyStr+tag);
