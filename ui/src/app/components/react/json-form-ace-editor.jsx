@@ -120,7 +120,7 @@ class ThingsboardAceEditor extends React.Component {
                                name={this.props.form.title}
                                value={this.state.value}
                                readOnly={this.props.form.readonly}
-                               editorProps={{$blockScrolling: true}}
+                               editorProps={{$blockScrolling: Infinity}}
                                enableBasicAutocompletion={true}
                                enableSnippets={true}
                                enableLiveAutocompletion={true}

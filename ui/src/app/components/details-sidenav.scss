@@ -45,14 +45,11 @@ md-sidenav.tb-sidenav-details {
   width: 100% !important;
   max-width: 100% !important;
   z-index: 59 !important;
-  @media (min-width: $layout-breakpoint-sm) {
+  @media (min-width: $layout-breakpoint-gt-sm) {
     width: 80% !important;
   }
-  @media (min-width: $layout-breakpoint-md) {
+  @media (min-width: $layout-breakpoint-gt-md) {
     width: 65% !important;
-  }
-  @media (min-width: $layout-breakpoint-lg) {
-    width: 45% !important;
   }
   tb-dashboard {
     md-content {
