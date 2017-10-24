@@ -86,13 +86,14 @@ public class GatewaySessionCtx {
         ack(msg);
     }
 
-    private void onDeviceConnect(String deviceName, String deviceType) {
+    private void onDeviceConnect(String deviceName, String deviceType) throws AdaptorException {
         if (!devices.containsKey(deviceName)) {
             Optional<Device> deviceOpt = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
             Device device = deviceOpt.orElseGet(() -> {
-                JsonNode forbidCreateDevice = gateway.getAdditionalInfo().get("forbid_create_device");
-                if (forbidCreateDevice != null && forbidCreateDevice.asBoolean())
+                JsonNode denyDeviceCreation = gateway.getAdditionalInfo().get("denyDeviceCreation");
+                if (denyDeviceCreation != null && denyDeviceCreation.asBoolean()) {
                     return null;
+                }
                 Device newDevice = new Device();
                 newDevice.setTenantId(gateway.getTenantId());
                 newDevice.setName(deviceName);
@@ -103,7 +104,7 @@ public class GatewaySessionCtx {
             });
             if (null == device) {
                 log.debug("[{}] NOT allowed add to add device [{}] to the gateway session", gatewaySessionId, deviceName);
-                return;
+                throw new AdaptorException(String.format("Device name[%s] not exists, automatic creation of devices are not allowed via this gateway", deviceName));
             }
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
             devices.put(deviceName, ctx);
@@ -217,7 +218,7 @@ public class GatewaySessionCtx {
         }
     }
 
-    private String checkDeviceConnected(String deviceName) {
+    private String checkDeviceConnected(String deviceName) throws AdaptorException {
         if (!devices.containsKey(deviceName)) {
             log.debug("[{}] Missing device [{}] for the gateway session", gatewaySessionId, deviceName);
             onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
