@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-content flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode || forceFullscreen" expand-button-id="dashboard-expand-button"
+<md-content style="padding-top: 150px;" flex tb-expand-fullscreen="vm.widgetEditMode || vm.iframeMode || forceFullscreen" expand-button-id="dashboard-expand-button"
             hide-expand-button="vm.widgetEditMode || vm.iframeMode || forceFullscreen" expand-tooltip-direction="bottom" ng-if="vm.dashboard">
     <section class="tb-dashboard-toolbar" ng-show="vm.showDashboardToolbar()"
              ng-class="{ 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">

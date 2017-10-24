@@ -22,7 +22,7 @@
             <div class="md-toolbar-tools">
                 <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}">
                     <md-icon aria-label="{{ 'action.search' | translate }}" class="material-icons">search</md-icon>
-                    <md-tooltip md-direction="top">
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
                         {{'alarm.search' | translate}}
                     </md-tooltip>
                 </md-button>
@@ -32,7 +32,7 @@
                 </md-input-container>
                 <md-button class="md-icon-button" aria-label="Close" ng-click="vm.exitFilterMode()">
                     <md-icon aria-label="Close" class="material-icons">close</md-icon>
-                    <md-tooltip md-direction="top">
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
                         {{ 'action.close' | translate }}
                     </md-tooltip>
                 </md-button>
@@ -46,13 +46,13 @@
                 <span flex></span>
                 <md-button ng-if="vm.allowAcknowledgment" class="md-icon-button" ng-click="vm.ackAlarms($event)">
                     <md-icon>done</md-icon>
-                    <md-tooltip md-direction="top">
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
                         {{ 'alarm.acknowledge' | translate }}
                     </md-tooltip>
                 </md-button>
                 <md-button ng-if="vm.allowClear" class="md-icon-button" ng-click="vm.clearAlarms($event)">
                     <md-icon>clear</md-icon>
-                    <md-tooltip md-direction="top">
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
                         {{ 'alarm.clear' | translate }}
                     </md-tooltip>
                 </md-button>

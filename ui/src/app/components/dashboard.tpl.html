@@ -55,7 +55,7 @@
 											   ng-show="!vm.isEdit"
 											   ng-click="action.onAction($event)"
 											   class="md-icon-button">
-										<md-tooltip md-direction="top">
+										<md-tooltip md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
 											{{action.displayName}}
 										</md-tooltip>
 										<ng-md-icon size="20" icon="{{action.icon}}"></ng-md-icon>
@@ -65,7 +65,7 @@
 											   ng-show="!vm.isEdit && action.show"
 											   ng-click="action.onAction($event)"
 											   class="md-icon-button">
-											   <md-tooltip md-direction="top">
+											   <md-tooltip md-direction="{{vm.isWidgetExpanded ? 'bottom' : 'top'}}">
 												   {{ action.name | translate }}
 											   </md-tooltip>
 											   <ng-md-icon size="20" icon="{{action.icon}}"></ng-md-icon>
@@ -114,7 +114,8 @@
 										 isEdit: vm.isEdit,
 										 isMobile: vm.isMobileSize,
 										 dashboardTimewindow: vm.dashboardTimewindow,
-										 dashboardTimewindowApi: vm.dashboardTimewindowApi }">
+										 dashboardTimewindowApi: vm.dashboardTimewindowApi,
+										 dashboard: vm }">
 									</div>
 								</div>
 							</div>

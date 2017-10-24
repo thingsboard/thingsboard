@@ -275,9 +275,11 @@ export default class TbMapWidgetV2 {
                         for (var i = 0; i < latData.length; i++) {
                             lat = latData[i][1];
                             lng = lngData[i][1];
-                            latLng = tbMap.map.createLatLng(lat, lng);
-                            if (i == 0 || !latLngs[latLngs.length - 1].equals(latLng)) {
-                                latLngs.push(latLng);
+                            if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
+                                latLng = tbMap.map.createLatLng(lat, lng);
+                                if (i == 0 || !latLngs[latLngs.length - 1].equals(latLng)) {
+                                    latLngs.push(latLng);
+                                }
                             }
                         }
                         if (latLngs.length > 0) {
@@ -308,24 +310,28 @@ export default class TbMapWidgetV2 {
                         // Create or update marker
                         lat = latData[latData.length - 1][1];
                         lng = lngData[lngData.length - 1][1];
-                        latLng = tbMap.map.createLatLng(lat, lng);
-                        if (!location.marker) {
-                            location.marker = tbMap.map.createMarker(latLng, location.settings,
-                                function (event) {
-                                    tbMap.callbacks.onLocationClick(location);
-                                    locationRowClick(event, location);
-                                }, [location.dsIndex]);
-                            tbMap.markers.push(location.marker);
-                            locationChanged = true;
-                        } else {
-                            var prevPosition = tbMap.map.getMarkerPosition(location.marker);
-                            if (!prevPosition.equals(latLng)) {
-                                tbMap.map.setMarkerPosition(location.marker, latLng);
+                        if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
+                            latLng = tbMap.map.createLatLng(lat, lng);
+                            if (!location.marker) {
+                                location.marker = tbMap.map.createMarker(latLng, location.settings,
+                                    function (event) {
+                                        tbMap.callbacks.onLocationClick(location);
+                                        locationRowClick(event, location);
+                                    }, [location.dsIndex]);
+                                tbMap.markers.push(location.marker);
                                 locationChanged = true;
+                            } else {
+                                var prevPosition = tbMap.map.getMarkerPosition(location.marker);
+                                if (!prevPosition.equals(latLng)) {
+                                    tbMap.map.setMarkerPosition(location.marker, latLng);
+                                    locationChanged = true;
+                                }
                             }
                         }
                     }
-                    updateLocationStyle(location, dataMap);
+                    if (location.marker) {
+                        updateLocationStyle(location, dataMap);
+                    }
                 }
             }
             return locationChanged;

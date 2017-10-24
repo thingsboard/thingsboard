@@ -267,9 +267,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.dashboard:
                 if (user.authority === 'CUSTOMER_USER') {
-                    promise = dashboardService.getCustomerDashboards(customerId, pageLink);
+                    promise = dashboardService.getCustomerDashboards(customerId, pageLink, false);
                 } else {
-                    promise = dashboardService.getTenantDashboards(pageLink);
+                    promise = dashboardService.getTenantDashboards(pageLink, false);
                 }
                 break;
             case types.entityType.user:

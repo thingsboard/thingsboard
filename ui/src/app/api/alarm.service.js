@@ -295,9 +295,8 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
                     if (alarmSourceListener.lastUpdateTs) {
                         var interval = now - alarmSourceListener.lastUpdateTs;
                         alarmSourceListener.alarmsQuery.startTime += interval;
-                    } else {
-                        alarmSourceListener.lastUpdateTs = now;
                     }
+                    alarmSourceListener.lastUpdateTs = now;
                 }
                 alarmSourceListener.alarmsUpdated(alarms, false);
             }

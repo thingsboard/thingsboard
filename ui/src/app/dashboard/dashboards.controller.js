@@ -167,7 +167,7 @@ export function DashboardsController(userService, dashboardService, customerServ
 
         if (vm.dashboardsScope === 'tenant') {
             fetchDashboardsFunction = function (pageLink) {
-                return dashboardService.getTenantDashboards(pageLink);
+                return dashboardService.getTenantDashboards(pageLink, true);
             };
             deleteDashboardFunction = function (dashboardId) {
                 return dashboardService.deleteDashboard(dashboardId);
@@ -290,7 +290,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             });
         } else if (vm.dashboardsScope === 'customer' || vm.dashboardsScope === 'customer_user') {
             fetchDashboardsFunction = function (pageLink) {
-                return dashboardService.getCustomerDashboards(customerId, pageLink);
+                return dashboardService.getCustomerDashboards(customerId, pageLink, true);
             };
             deleteDashboardFunction = function (dashboardId) {
                 return dashboardService.unassignDashboardFromCustomer(dashboardId);
@@ -468,7 +468,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             $event.stopPropagation();
         }
         var pageSize = 10;
-        dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''}).then(
+        dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''}, false).then(
             function success(_dashboards) {
                 var dashboards = {
                     pageSize: pageSize,

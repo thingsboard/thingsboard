@@ -22,7 +22,7 @@ import Subscription from '../../api/subscription';
 /*@ngInject*/
 export default function WidgetController($scope, $state, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
                                          datasourceService, alarmService, entityService, dashboardService, deviceService, visibleRect, isEdit, isMobile, dashboardTimewindow,
-                                         dashboardTimewindowApi, widget, aliasController, stateController, widgetInfo, widgetType) {
+                                         dashboardTimewindowApi, dashboard, widget, aliasController, stateController, widgetInfo, widgetType) {
 
     var vm = this;
 
@@ -67,6 +67,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         hideTitlePanel: false,
         isEdit: isEdit,
         isMobile: isMobile,
+        dashboard: dashboard,
         widgetConfig: widget.config,
         settings: widget.config.settings,
         units: widget.config.units || '',

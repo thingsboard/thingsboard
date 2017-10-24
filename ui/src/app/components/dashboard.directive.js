@@ -15,7 +15,6 @@
  */
 import './dashboard.scss';
 
-import $ from 'jquery';
 import 'javascript-detect-element-resize/detect-element-resize';
 import angularGridster from 'angular-gridster';
 import thingsboardTypes from '../common/types.constant';
@@ -94,8 +93,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     var highlightedWidget = null;
     var selectedWidget = null;
 
-    var gridsterParent = $('#gridster-parent', $element);
-    var gridsterElement = angular.element($('#gridster-child', gridsterParent));
+    var gridsterParent = angular.element('#gridster-parent', $element);
+    var gridsterElement = angular.element('#gridster-child', gridsterParent);
 
     var vm = this;
 
@@ -228,15 +227,15 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     };
 
-    addResizeListener(gridsterParent[0], onGirdsterParentResize); // eslint-disable-line no-undef
+    addResizeListener(gridsterParent[0], onGridsterParentResize); // eslint-disable-line no-undef
 
     $scope.$on("$destroy", function () {
-        removeResizeListener(gridsterParent[0], onGirdsterParentResize); // eslint-disable-line no-undef
+        removeResizeListener(gridsterParent[0], onGridsterParentResize); // eslint-disable-line no-undef
     });
 
     watchWidgets();
 
-    function onGirdsterParentResize() {
+    function onGridsterParentResize() {
         if (gridsterParent.height() && autofillHeight()) {
             updateMobileOpts();
         }
@@ -244,6 +243,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     function watchWidgets() {
         $scope.widgetsCollectionWatch = $scope.$watchCollection('vm.widgets', function () {
+            if (vm.skipInitialWidgetsWatch) {
+                $timeout(function() { vm.skipInitialWidgetsWatch = false; });
+                return;
+            }
             var ids = [];
             for (var i=0;i<vm.widgets.length;i++) {
                 var widget = vm.widgets[i];
@@ -524,6 +527,7 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             }
             return res;
         });
+        vm.skipInitialWidgetsWatch = true;
         watchWidgets();
     }
 
@@ -714,9 +718,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     function scrollToWidget(widget, delay) {
         if (vm.gridster) {
-            var item = $('.gridster-item', vm.gridster.$element)[vm.widgets.indexOf(widget)];
+            var item = angular.element('.gridster-item', vm.gridster.$element)[vm.widgets.indexOf(widget)];
             if (item) {
-                var height = $(item).outerHeight(true);
+                var height = angular.element(item).outerHeight(true);
                 var rectHeight = gridsterParent.height();
                 var offset = (rectHeight - height) / 2;
                 var scrollTop = item.offsetTop;

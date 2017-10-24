@@ -186,7 +186,7 @@
 				<div translate ng-message="entityKeys" ng-if="widgetType === types.widgetType.latest.value" class="tb-error-message">datakey.timeseries-or-attributes-required</div>
 			    <div translate ng-message="entityKeys" ng-if="widgetType === types.widgetType.alarm.value" class="tb-error-message">datakey.alarm-fields-required</div>
 			</div>
-		   <div class="md-caption" style="color: rgba(0,0,0,0.57);" ng-if="maxDataKeys != -1"
+		   <div class="md-caption" style="color: rgba(0,0,0,0.57);" ng-if="maxDataKeys > -1"
 				translate="datakey.maximum-timeseries-or-attributes"
 				translate-values="{count: maxDataKeys}"
 				translate-interpolation="messageformat"
