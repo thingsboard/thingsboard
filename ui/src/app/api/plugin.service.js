@@ -195,6 +195,7 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         var deferred = $q.defer();
         var url = '/api/plugin/' + pluginId + '/activate';
         $http.post(url, null).then(function success(response) {
+            invalidatePluginsCache();
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);
@@ -206,6 +207,7 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         var deferred = $q.defer();
         var url = '/api/plugin/' + pluginId + '/suspend';
         $http.post(url, null).then(function success(response) {
+            invalidatePluginsCache();
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);

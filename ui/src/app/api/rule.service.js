@@ -139,6 +139,7 @@ function RuleService($http, $q, $rootScope, $filter, types, utils) {
         var deferred = $q.defer();
         var url = '/api/rule';
         $http.post(url, rule).then(function success(response) {
+            invalidateRulesCache();
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);
@@ -150,6 +151,7 @@ function RuleService($http, $q, $rootScope, $filter, types, utils) {
         var deferred = $q.defer();
         var url = '/api/rule/' + ruleId;
         $http.delete(url).then(function success() {
+            invalidateRulesCache();
             deferred.resolve();
         }, function fail(response) {
             deferred.reject(response.data);
@@ -161,6 +163,7 @@ function RuleService($http, $q, $rootScope, $filter, types, utils) {
         var deferred = $q.defer();
         var url = '/api/rule/' + ruleId + '/activate';
         $http.post(url, null).then(function success(response) {
+            invalidateRulesCache();
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);
@@ -172,6 +175,7 @@ function RuleService($http, $q, $rootScope, $filter, types, utils) {
         var deferred = $q.defer();
         var url = '/api/rule/' + ruleId + '/suspend';
         $http.post(url, null).then(function success(response) {
+            invalidateRulesCache();
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);
