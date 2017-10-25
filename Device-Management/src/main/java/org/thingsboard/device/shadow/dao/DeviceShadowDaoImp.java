@@ -2,10 +2,13 @@ package org.thingsboard.device.shadow.dao;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.thingsboard.device.shadow.components.ConfigProperties;
 import org.thingsboard.device.shadow.models.DeviceShadow;
 import org.thingsboard.device.shadow.models.TagList;
 
+import javax.annotation.PostConstruct;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,17 +20,23 @@ import java.util.List;
 public class DeviceShadowDaoImp implements DeviceShadowDao {
 
     private Logger logger = LoggerFactory.getLogger(DeviceShadowDao.class);
-    Connection connection = null;
-    public DeviceShadowDaoImp(){
-        try {
-            String JDBC_DRIVER = "org.h2.Driver";
-            String DB_URL = "jdbc:h2:file:~/test2";
-            Class.forName(JDBC_DRIVER);
-            String USER = "sa";
-            String PASS = "";
-            connection = DriverManager.getConnection(DB_URL,USER,PASS);
-        }catch (Exception e){
 
+    @Autowired
+    private ConfigProperties configProperties;
+
+    Connection connection = null;
+
+    @PostConstruct
+    public void createDbConnection(){
+        try {
+            String DB_URL = configProperties.getDB_URL();
+            String USER = configProperties.getUSER();
+            String PASS = configProperties.getPASS();
+            connection = DriverManager.getConnection(DB_URL,USER,PASS);
+            logger.error("HMDC : Created h2 connection");
+        }catch (Exception e){
+            e.printStackTrace();
+            logger.error("Error in creating database connection " + e);
         }
     }
 
@@ -134,4 +143,5 @@ public class DeviceShadowDaoImp implements DeviceShadowDao {
         ps.executeUpdate();
         ps.close();
     }
+    
 }

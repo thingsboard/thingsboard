@@ -16,8 +16,6 @@ import org.thingsboard.device.shadow.models.TagList;
 import org.thingsboard.device.shadow.services.DataService;
 import org.thingsboard.device.shadow.services.RestService;
 
-import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 @RestController
