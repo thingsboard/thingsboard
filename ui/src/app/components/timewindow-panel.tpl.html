@@ -19,7 +19,7 @@
 	<fieldset ng-disabled="loading">
 		<md-content style="height: 100%" flex layout="column">
 			<section layout="column">
-				<md-tabs ng-class="{'tb-headless': vm.historyOnly}" flex md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom>
+				<md-tabs ng-class="{'tb-headless': vm.historyOnly}" md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom>
 					<md-tab label="{{ 'timewindow.realtime' | translate }}">
 						<md-content class="md-padding" layout="column">
 							<tb-timeinterval predefined-name="'timewindow.last'"
