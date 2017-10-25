@@ -69,6 +69,9 @@ md-icon.tb-logo-title {
   flex-shrink: 0;
   z-index: 2;
   white-space: nowrap;
+  .md-toolbar-tools {
+    flex-basis: auto;
+  }
 }
 
 .tb-side-menu-toolbar {
