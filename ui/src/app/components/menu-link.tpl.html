@@ -17,6 +17,6 @@
 -->
 <md-button 
 	ui-sref-active-eq="tb-active" ui-sref="{{section.state}}">
-	<md-icon ng-show="{{section.icon != null}}" aria-label="{{section.icon}}" class="material-icons">{{section.icon}}</md-icon>	
+	<md-icon ng-show="section.icon != null" aria-label="{{section.icon}}" class="material-icons">{{section.icon}}</md-icon>
 	{{section.name | translate}}
 </md-button>

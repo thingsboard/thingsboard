@@ -55,7 +55,7 @@
 }
 
 .tb-side-menu .md-button {
-  display: block;
+  display: flex;
   border-radius: 0;
   color: inherit;
   cursor: pointer;
@@ -66,8 +66,14 @@
   padding: 0px 16px;
   text-align: left;
   text-decoration: none;
-  white-space: normal;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   width: 100%;
+  span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }
 
 .tb-side-menu tb-menu-link span.md-toggle-icon {
@@ -77,8 +83,10 @@
 
 .tb-side-menu ng-md-icon {
   margin-right: 8px;
+  margin-left: 0px;
 }
 
 .tb-side-menu md-icon {
   margin-right: 8px;
+  margin-left: 0px;
 }

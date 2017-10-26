@@ -274,6 +274,14 @@ pre.tb-highlight {
   md-toolbar {
     z-index: 0;
   }
+  md-toolbar.md-table-toolbar.md-default-theme:not(.md-menu-toolbar).md-default .md-button[disabled],
+  md-toolbar.md-table-toolbar:not(.md-menu-toolbar).md-default .md-button[disabled] {
+    color: rgba(0,0,0,0.38);
+  }
+  md-toolbar.md-default-theme:not(.md-menu-toolbar) .md-button[disabled] md-icon,
+  md-toolbar:not(.md-menu-toolbar) .md-button[disabled] md-icon {
+    color: rgba(0,0,0,.28);
+  }
   span.no-data-found {
     position: relative;
     height: calc(100% - 57px);
