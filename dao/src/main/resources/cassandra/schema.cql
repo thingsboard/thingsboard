@@ -162,6 +162,29 @@ CREATE TABLE IF NOT EXISTS thingsboard.device (
     PRIMARY KEY (id, tenant_id, customer_id, type)
 );
 
+CREATE TABLE IF NOT EXISTS thingsboard.application (
+    id timeuuid,
+    tenant_id timeuuid,
+    customer_id timeuuid,
+    mini_dashboard_id timeuuid,
+    dashboard_id timeuuid,
+    search_text text,
+    name text,
+    description text,
+    device_type text,
+    application_rules list<timeuuid>,
+    application_device_types list<text>
+    PRIMARY KEY (id, tenant_id, customer_id)
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.application_by_tenant_and_search_text AS
+    SELECT *
+    from thingsboard.application
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, search_text, id, customer_id)
+    WITH CLUSTERING ORDER BY ( search_text ASC, id DESC, customer_id DESC);
+
+
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_tenant_and_name AS
     SELECT *
     from thingsboard.device
