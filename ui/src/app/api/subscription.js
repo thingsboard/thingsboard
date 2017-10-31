@@ -674,7 +674,7 @@ export default class Subscription {
 
     alarmsUpdated(alarms, apply) {
         this.notifyDataLoaded();
-        var updated = !angular.equals(this.alarms, alarms);
+        var updated = !this.alarms || !angular.equals(this.alarms, alarms);
         this.alarms = alarms;
         if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
             this.updateTimewindow();
@@ -796,7 +796,7 @@ export default class Subscription {
                 subscription.alarmsUpdated(alarms, apply);
             }
         }
-        this.alarms = [];
+        this.alarms = null;
 
         this.ctx.alarmService.subscribeForAlarms(this.alarmSourceListener);
 
