@@ -16,17 +16,27 @@
 package org.thingsboard.server.dao.application;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Application;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
 
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -37,9 +47,19 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
     @Autowired
     private ApplicationDao applicationDao;
 
+    @Autowired
+    private TenantDao tenantDao;
+
+    @Autowired
+    private CustomerDao customerDao;
+
+    @Autowired
+    private DashboardDao dashboardDao;
+
     @Override
     public Application saveApplication(Application application) {
         log.trace("Executing saveApplication [{}]", application);
+        applicationValidator.validate(application);
         Application savedApplication = applicationDao.save(application);
         return savedApplication;
     }
@@ -118,4 +138,72 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
         return saveApplication(application);
     }
 
+
+    private DataValidator<Application> applicationValidator =
+            new DataValidator<Application>() {
+
+                @Override
+                protected void validateCreate(Application application) {
+                    applicationDao.findApplicationByTenantIdAndName(application.getTenantId().getId(), application.getName()).ifPresent(
+                            d -> {
+                                throw new DataValidationException("Application with such name already exists!");
+                            }
+                    );
+                }
+
+                @Override
+                protected void validateUpdate(Application application) {
+                    applicationDao.findApplicationByTenantIdAndName(application.getTenantId().getId(), application.getName()).ifPresent(
+                            d -> {
+                                if (!d.getUuidId().equals(application.getUuidId())) {
+                                    throw new DataValidationException("Application with such name already exists!");
+                                }
+                            }
+                    );
+                }
+
+                @Override
+                protected void validateDataImpl(Application application) {
+                    if (StringUtils.isEmpty(application.getName())) {
+                        throw new DataValidationException("Application name should be specified!");
+                    }
+                    if (application.getTenantId() == null) {
+                        throw new DataValidationException("Application should be assigned to tenant!");
+                    } else {
+                        Tenant tenant = tenantDao.findById(application.getTenantId().getId());
+                        if (tenant == null) {
+                            throw new DataValidationException("Application is referencing to non-existent tenant!");
+                        }
+                    }
+                    if (application.getCustomerId() == null) {
+                        application.setCustomerId(new CustomerId(NULL_UUID));
+                    } else if (!application.getCustomerId().getId().equals(NULL_UUID)) {
+                        Customer customer = customerDao.findById(application.getCustomerId().getId());
+                        if (customer == null) {
+                            throw new DataValidationException("Can't assign application to non-existent customer!");
+                        }
+                        if (!customer.getTenantId().getId().equals(application.getTenantId().getId())) {
+                            throw new DataValidationException("Can't assign application to customer from different tenant!");
+                        }
+                    }
+
+                    if(application.getDashboardId() == null) {
+                        application.setDashboardId(new DashboardId(NULL_UUID));
+                    } else if(!application.getDashboardId().getId().equals(NULL_UUID)) {
+                        Dashboard dashboard = dashboardDao.findById(application.getDashboardId().getId());
+                        if(dashboard == null) {
+                            throw new DataValidationException("Can't assign application to non-existent dashboard!");
+                        }
+                    }
+
+                    if(application.getMiniDashboardId() == null) {
+                        application.setMiniDashboardId(new DashboardId(NULL_UUID));
+                    } else if(!application.getMiniDashboardId().getId().equals(NULL_UUID)) {
+                        Dashboard miniDashboard = dashboardDao.findById(application.getMiniDashboardId().getId());
+                        if(miniDashboard == null) {
+                            throw new DataValidationException("Can't assign application to non-existent mini dashboard!");
+                        }
+                    }
+                }
+            };
 }

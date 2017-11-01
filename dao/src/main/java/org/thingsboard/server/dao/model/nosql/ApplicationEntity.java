@@ -214,7 +214,9 @@ public final class ApplicationEntity implements SearchTextEntity<Application> {
         }
         application.setName(name);
         application.setDescription(description);
-        application.setDeviceTypes(deviceTypes);
+        if(deviceTypes !=null) {
+            application.setDeviceTypes(deviceTypes);
+        }
         return application;
     }
 

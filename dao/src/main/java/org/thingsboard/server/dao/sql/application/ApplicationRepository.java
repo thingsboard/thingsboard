@@ -32,4 +32,7 @@ public interface ApplicationRepository extends CrudRepository<ApplicationEntity,
                                            @Param("textSearch") String textSearch,
                                            @Param("idOffset") String idOffset,
                                            Pageable pageable);
+
+
+    ApplicationEntity findByTenantIdAndName(String tenantId, String name);
 }

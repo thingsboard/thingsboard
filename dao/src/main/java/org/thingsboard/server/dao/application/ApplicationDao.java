@@ -20,15 +20,26 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ApplicationDao extends Dao<Application>{
     /**
-     * Find devices by tenantId and page link.
+     * Find application by tenantId and page link.
      *
      * @param tenantId the tenantId
      * @param pageLink the page link
      * @return the list of application objects
      */
     List<Application> findApplicationsByTenantId(UUID tenantId, TextPageLink pageLink);
+
+
+    /**
+     * Find applications by tenantId and  name.
+     *
+     * @param tenantId the tenantId
+     * @param name the application name
+     * @return the optional application object
+     */
+    Optional<Application> findApplicationByTenantIdAndName(UUID tenantId, String name);
 }

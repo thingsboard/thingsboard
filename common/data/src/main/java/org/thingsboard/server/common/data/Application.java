@@ -18,6 +18,8 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.*;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.List;
 
 public class Application extends SearchTextBased<ApplicationId> implements HasName {
@@ -31,7 +33,7 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
     private List<RuleId> rules;
     private String name;
     private String description;
-    private List<String> deviceTypes;
+    private List<String> deviceTypes = Arrays.asList();
 
     public Application() {
         super();

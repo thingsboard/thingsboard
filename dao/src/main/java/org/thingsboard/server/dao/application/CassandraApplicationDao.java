@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.application;
 
+import com.datastax.driver.core.querybuilder.Select;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Application;
@@ -27,12 +28,12 @@ import org.thingsboard.server.dao.util.NoSqlDao;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static org.thingsboard.server.dao.model.ModelConstants.APPLICATION_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.APPLICATION_TABLE_NAME;
-import static org.thingsboard.server.dao.model.ModelConstants.APPLICATION_TENANT_ID_PROPERTY;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 @Component
 @Slf4j
@@ -55,6 +56,15 @@ public class CassandraApplicationDao extends CassandraAbstractSearchTextDao<Appl
         return DaoUtil.convertDataList(applicationEntities);
     }
 
+
+    @Override
+    public Optional<Application> findApplicationByTenantIdAndName(UUID tenantId, String applicationName) {
+        Select select = select().from(APPLICATION_BY_TENANT_AND_NAME_VIEW_NAME);
+        Select.Where query = select.where();
+        query.and(eq(APPLICATION_TENANT_ID_PROPERTY, tenantId));
+        query.and(eq(APPLICATION_NAME, applicationName));
+        return Optional.ofNullable(DaoUtil.getData(findOneByStatement(query)));
+    }
 
 
     @Override

@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -60,5 +61,12 @@ public class JpaApplicationDao extends JpaAbstractSearchTextDao<ApplicationEntit
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())));
+    }
+
+
+    @Override
+    public Optional<Application> findApplicationByTenantIdAndName(UUID tenantId, String name) {
+        Application application = DaoUtil.getData(applicationRepository.findByTenantIdAndName(fromTimeUUID(tenantId), name));
+        return Optional.ofNullable(application);
     }
 }

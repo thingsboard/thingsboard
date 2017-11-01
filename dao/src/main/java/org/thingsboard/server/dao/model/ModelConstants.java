@@ -151,6 +151,7 @@ public class ModelConstants {
     public static final String APPLICATION_RULES_COLUMN = "application_rules";
     public static final String APPLICATION_DEVICE_TYPES_COLUMN = "application_device_types";
     public static final String APPLICATION_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "application_by_tenant_and_search_text";
+    public static final String APPLICATION_BY_TENANT_AND_NAME_VIEW_NAME = "application_by_tenant_and_name";
 
     /**
      * Cassandra asset constants.
