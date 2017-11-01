@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.controller.nosql;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM, APPLICATION
+
+import org.thingsboard.server.controller.BaseApplicationControllerTest;
+import org.thingsboard.server.dao.service.DaoNoSqlTest;
+
+@DaoNoSqlTest
+public class ApplicationControllerNoSqlTest extends BaseApplicationControllerTest {
 }

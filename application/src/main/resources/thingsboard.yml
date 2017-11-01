@@ -108,7 +108,7 @@ coap:
   timeout: "${COAP_TIMEOUT:10000}"
 
 database:
-  type: "${DATABASE_TYPE:cassandra}" # cassandra OR sql
+  type: "${DATABASE_TYPE:sql}" # cassandra OR sql
 
 # Cassandra driver configuration parameters
 cassandra:
@@ -117,7 +117,7 @@ cassandra:
   # Thingsboard keyspace name
   keyspace_name: "${CASSANDRA_KEYSPACE_NAME:thingsboard}"
   # Specify node list
-  url: "${CASSANDRA_URL:cassandra:9042}"
+  url: "${CASSANDRA_URL:127.0.0.1:9042}"
   # Enable/disable secure connection
   ssl: "${CASSANDRA_USE_SSL:false}"
   # Enable/disable JMX
@@ -205,7 +205,7 @@ cache:
 updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
-
+  
 # spring CORS configuration
 spring.mvc.cors:
    mappings:
@@ -246,17 +246,17 @@ spring.mvc.cors:
 
 
 # PostgreSQL DAO Configuration
-#spring:
-#  data:
-#    jpa:
-#      repositories:
-#        enabled: "true"
-#  jpa:
-#    hibernate:
-#      ddl-auto: "validate"
-#    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
-#  datasource:
-#    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-#    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/thingsboard}"
-#    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-#    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+spring:
+  data:
+    jpa:
+      repositories:
+        enabled: "true"
+  jpa:
+    hibernate:
+      ddl-auto: "validate"
+    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
+  datasource:
+    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/thingsboard}"
+    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"

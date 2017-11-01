@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.application.ApplicationService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -57,6 +58,7 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import scala.App;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
@@ -114,6 +116,9 @@ public abstract class BaseController {
 
     @Autowired
     protected RelationService relationService;
+
+    @Autowired
+    protected ApplicationService applicationService;
 
 
     @ExceptionHandler(ThingsboardException.class)
@@ -300,6 +305,18 @@ public abstract class BaseController {
             throw handleException(e, false);
         }
     }
+
+    Application checkApplicationId(ApplicationId applicationId) throws ThingsboardException {
+        try{
+            validateId(applicationId, "Incorrect applicationId " + applicationId);
+            Application application = applicationService.findApplicationById(applicationId);
+            checkNotNull(application);
+            return application;
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
 
     Device checkDeviceId(DeviceId deviceId) throws ThingsboardException {
         try {

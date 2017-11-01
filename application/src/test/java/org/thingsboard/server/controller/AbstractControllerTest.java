@@ -340,6 +340,10 @@ public abstract class AbstractControllerTest {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
 
+    protected <T, R> R doPostWithDifferentResponse(String urlTemplate, T content, Class<R> responseClass, String... params) throws Exception {
+        return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+    }
+
     protected <T> T doPostAsync(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
         return readResponse(doPostAsync(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
     }
