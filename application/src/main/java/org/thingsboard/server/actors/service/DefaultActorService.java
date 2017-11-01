@@ -19,11 +19,13 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.Terminated;
+import akka.stream.ActorMaterializer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.app.AppActor;
+import org.thingsboard.server.actors.computation.SparkComputationActor;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
 import org.thingsboard.server.actors.rpc.RpcManagerActor;
 import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
@@ -39,6 +41,7 @@ import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
+import org.thingsboard.server.common.msg.computation.SparkComputationAdded;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
@@ -51,6 +54,7 @@ import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
+import org.thingsboard.server.service.computation.ComputationDiscoveryService;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -83,6 +87,9 @@ public class DefaultActorService implements ActorService {
     @Autowired
     private DiscoveryService discoveryService;
 
+    @Autowired
+    private ComputationDiscoveryService computationDiscoveryService;
+
     private ActorSystem system;
 
     private ActorRef appActor;
@@ -90,6 +97,8 @@ public class DefaultActorService implements ActorService {
     private ActorRef sessionManagerActor;
 
     private ActorRef rpcManagerActor;
+
+    private ActorRef sparkComputationActor;
 
     @PostConstruct
     public void initActorSystem() {
@@ -111,9 +120,13 @@ public class DefaultActorService implements ActorService {
         ActorRef statsActor = system.actorOf(Props.create(new StatsActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME), "statsActor");
         actorContext.setStatsActor(statsActor);
 
+        sparkComputationActor = system.actorOf(Props.create(new SparkComputationActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME),
+                "sparkComputationActor");
+
         rpcService.init(this);
 
         discoveryService.addListener(this);
+        computationDiscoveryService.init(this, ActorMaterializer.create(system));
         log.info("Actor system initialized.");
     }
 
@@ -192,6 +205,12 @@ public class DefaultActorService implements ActorService {
     public void onMsg(RpcBroadcastMsg msg) {
         log.trace("Processing broadcast rpc msg: {}", msg);
         rpcManagerActor.tell(msg, ActorRef.noSender());
+    }
+
+    @Override
+    public void onMsg(SparkComputationAdded msg){
+        log.trace("Processing new computation msg: {}", msg);
+        sparkComputationActor.tell(msg, ActorRef.noSender());
     }
 
     @Override

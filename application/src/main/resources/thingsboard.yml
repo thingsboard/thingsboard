@@ -64,6 +64,10 @@ plugins:
   # Comma seperated package list used during classpath scanning for plugins
   scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions}"
 
+spark:
+  jar_path: "${SPARK_COMPUTATIONS_PATH:/Users/jay/Poller}"
+  polling_interval: "${DIRECTORY_POLLING_INTERVAL:10}" # Number of Seconds
+
 # JWT Token parameters
 security.jwt:
   tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000000}" # Number of seconds (15 mins)
