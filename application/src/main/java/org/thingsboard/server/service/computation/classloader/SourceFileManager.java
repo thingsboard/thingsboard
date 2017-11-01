@@ -17,15 +17,18 @@ package org.thingsboard.server.service.computation.classloader;
 
 import lombok.extern.slf4j.Slf4j;
 
-import javax.tools.ForwardingJavaFileManager;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.StandardLocation;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import javax.tools.*;
+import javax.tools.JavaFileObject.Kind;
 
 @Slf4j
 public class SourceFileManager extends
@@ -34,9 +37,9 @@ public class SourceFileManager extends
      * Instance of JavaClassObject that will store the
      * compiled bytecode of our class
      */
-    /*private JavaClassObject jclassObject;
-    private final Map<URI, JavaFileObject> fileObjects = new HashMap<URI, JavaFileObject>();*/
-    Path dir;
+    private JavaClassObject jclassObject;
+    //private final Map<URI, JavaFileObject> fileObjects = new HashMap<URI, JavaFileObject>();
+    //File dir;
 
     /**
      * Will initialize the manager with the specified
@@ -45,13 +48,12 @@ public class SourceFileManager extends
      */
     public SourceFileManager(StandardJavaFileManager standardManager) {
         super(standardManager);
-        setClasspathLocation(standardManager);
+       // setClasspathLocation(standardManager);
     }
 
     private void setClasspathLocation(StandardJavaFileManager standardManager){
         try{
-            log.warn("Temporary Directory is: {} ", System.getProperty("java.io.tmpdir"));
-            dir = Files.createTempDirectory("spark");
+            Path dir = Files.createTempDirectory("spark");
             dir.toFile().deleteOnExit();
             standardManager.setLocation(StandardLocation.CLASS_OUTPUT, Arrays.asList(dir.toFile()));
             ArrayList<File> classPaths = new ArrayList<>();
@@ -70,7 +72,7 @@ public class SourceFileManager extends
      * byte code created by the compiler and stored in
      * the JavaClassObject, and returns the Class for it
      */
-    /*@Override
+    @Override
     public ClassLoader getClassLoader(Location location) {
         return new SecureClassLoader(Thread.currentThread().getContextClassLoader()) {
             @Override
@@ -81,16 +83,16 @@ public class SourceFileManager extends
                         .getBytes(), 0, b.length);
             }
         };
-    }*/
+    }
 
     /**
      * Gives the compiler an instance of the JavaClassObject
      * so that the compiler can write the byte code into it.
      */
-    /*public JavaFileObject getJavaFileForOutput(Location location,
+    public JavaFileObject getJavaFileForOutput(Location location,
                                                String className, Kind kind, FileObject sibling)
             throws IOException {
         jclassObject = new JavaClassObject(className, kind);
         return jclassObject;
-    }*/
+    }
 }

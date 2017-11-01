@@ -70,11 +70,9 @@ public class SparkComputationActor extends ContextAwareActor{
     }
 
     private void processResource(Path jarPath) throws Exception {
-        logger.warning("adding jar {} to classpath", jarPath.toFile().getName());
         URLClassLoader classLoader = (URLClassLoader) jarClassloader(jarPath);
-        logger.warning("Classpath is {}", System.getProperty("java.class.path").split(File.pathSeparator));
         logger.warning("starting annotation processing for jar {}", jarPath.toFile().getName());
-        AnnotationsProcessor processor = new AnnotationsProcessor(classLoader, compiler);
+        AnnotationsProcessor processor = new AnnotationsProcessor(classLoader, compiler, self());
         processor.processAnnotations(jarPath);
     }
 

@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.SparkApplication;
 
 @Data
 public class LivyPluginActionConfiguration {
-    private SparkApplication application;
+    private String application;
     private String gatewayApiToken;
     private String actionPath;
     private String endpoint; //MQTT endpoint to send data back to Thingsboard

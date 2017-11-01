@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.SparkApplication;
 
 @Data
 public class SampleSparkAppConfiguration extends LivyPluginActionConfiguration{
-    private SparkApplication application = SparkApplication.SAMPLE;
+    private String application = "Sample";
     private String zkUrl;
     private String kafkaBrokers;
     private String topic;

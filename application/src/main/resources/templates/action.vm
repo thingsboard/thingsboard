@@ -33,13 +33,13 @@ package ${model.getPackageName()};
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-#**import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.extensions.livy.action.LivyRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.extensions.api.component.Action;
 
 @Action(name = "${model.getName()}",
         descriptor = "${model.getDescriptor()}", configuration = ${model.getConfiguration().getClassName()}.class)
 @Slf4j
-*#
 public class ${model.getClassName()} extends org.thingsboard.server.extensions.livy.action.AbstractSparkAppAction<${model.getConfiguration().getClassName()}> {
 
     @Override
@@ -62,7 +62,7 @@ public class ${model.getClassName()} extends org.thingsboard.server.extensions.l
 
     @Override
     protected String[] args() {
-        return new String[]{"--topic", configuration.getTopic(), "--window", Long.toString(configuration.getWindow()),
+        return new String[]{"--window", Long.toString(configuration.getWindow()),
                 "--mqttbroker", configuration.getEndpoint(), "--kafka", configuration.getKafkaBrokers(),
                 "--token", configuration.getGatewayApiToken()};
     }

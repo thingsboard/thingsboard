@@ -24,7 +24,7 @@ import java.io.Serializable;
 @Builder
 public class LivyActionPayload implements Serializable{
     private final String actionPath;
-    private final SparkApplication sparkApplication;
+    private final String sparkApplication;
     //private final HttpMethod httpMethod;
     private final String msgBody;
     //private final Integer requestId;

@@ -80,7 +80,7 @@ public class LivyMessageHandler implements RuleMsgHandler {
     }
 
     private String sparkApplicationKey(LivyActionPayload payload) {
-        return SPARK_APP_KEY + payload.getSparkApplication().toString();
+        return SPARK_APP_KEY + payload.getSparkApplication();
     }
 
     private boolean isSparkAppRunning(String sparkApplication){

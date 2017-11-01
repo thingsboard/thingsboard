@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.computation.annotation;
 
+import akka.actor.ActorRef;
 import com.hashmap.annotations.ConfigurationMapping;
 import com.hashmap.annotations.Configurations;
 import com.hashmap.annotations.SparkAction;
@@ -42,10 +43,14 @@ import java.util.Properties;
 public class AnnotationsProcessor {
     private final URLClassLoader classLoader;
     private final DynamicCompiler compiler;
+    private final ActorRef parent;
 
-    public AnnotationsProcessor(URLClassLoader classLoader, DynamicCompiler compiler){
+    public AnnotationsProcessor(URLClassLoader classLoader,
+                                DynamicCompiler compiler,
+                                ActorRef parentActor){
         this.classLoader = classLoader;
         this.compiler = compiler;
+        this.parent = parentActor;
     }
 
     public void processAnnotations(Path jar) throws IOException {
@@ -64,7 +69,8 @@ public class AnnotationsProcessor {
                         model.setConfiguration(configurations(clazz));
                         model.setRequest(request(clazz));
                         log.warn("model created is {} generating Java Sources",model);
-                        generateJavaSource(model);
+                        processModel(model);
+                        //parent.tell("acd", ActorRef.noSender());
                         log.warn("Java Source creation and loading completed for {} ", clazz.getCanonicalName());
                     } catch (ClassNotFoundException e) {
                         log.error("Class not found", e);
@@ -121,7 +127,7 @@ public class AnnotationsProcessor {
         return actionRequest;
     }
 
-    private void generateJavaSource(SparkActionType model){
+    private void processModel(SparkActionType model){
         try {
             Properties props = new Properties();
             URL url = this.getClass().getClassLoader().getResource("velocity.properties");
@@ -132,9 +138,9 @@ public class AnnotationsProcessor {
             VelocityContext vc = new VelocityContext();
             vc.put("model", model);
             Template ct = ve.getTemplate("templates/config.vm");
-            generateSource(ct, vc, model.getPackageName() + "." + model.getConfiguration().getClassName());
+            Class<?> configClass = generateSource(ct, vc, model.getPackageName() + "." + model.getConfiguration().getClassName());
             Template at = ve.getTemplate("templates/action.vm");
-            generateSource(at, vc, model.getPackageName() + "." + model.getClassName());
+            Class<?> actionClass = generateSource(at, vc, model.getPackageName() + "." + model.getClassName());
         } catch (IOException e) {
             log.error("Exception occurred while generating java source", e);
         } catch (ClassNotFoundException e) {
@@ -142,18 +148,20 @@ public class AnnotationsProcessor {
         }
     }
 
-    private void generateSource(Template vt, VelocityContext vc, String sourceName) throws IOException, ClassNotFoundException {
+    private Class<?> generateSource(Template vt, VelocityContext vc, String sourceName) throws IOException, ClassNotFoundException {
         log.warn("Generating source for {}", sourceName);
         StringWriter writer = new StringWriter();
 
         vt.merge(vc, writer);
+        Class<?> clazz = null;
 
         try {
             compiler.compile(sourceName, writer.toString());
-            compiler.load(sourceName);
+            clazz = compiler.load(sourceName);
         }catch(Exception e){
             log.warn("Error occurred {}", e);
         }
         writer.close();
+        return clazz;
     }
 }

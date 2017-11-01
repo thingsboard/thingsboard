@@ -39,7 +39,7 @@ public abstract class AbstractSparkAppAction<T extends LivyPluginActionConfigura
 
     @Override
     public Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg msg, RuleProcessingMetaData deviceMsgMd) {
-        SparkApplication application = configuration.getApplication();
+        String application = configuration.getApplication();
         LivyActionPayload.LivyActionPayloadBuilder builder = LivyActionPayload.builder();
         builder.sparkApplication(application);
         builder.actionPath(configuration.getActionPath());

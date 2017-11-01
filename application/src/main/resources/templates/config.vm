@@ -30,9 +30,9 @@
  */
 package ${model.getPackageName()};
 
-##import lombok.Data;**
+import lombok.Data;
 
-## @Data**
+@Data
 public class ${model.getConfiguration().getClassName()} extends org.thingsboard.server.extensions.livy.action.LivyPluginActionConfiguration{
     private String application = "SAMPLE";
     #foreach ($mapEntry in $model.getConfiguration().getFields().entrySet())
