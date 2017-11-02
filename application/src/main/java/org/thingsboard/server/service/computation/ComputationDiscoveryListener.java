@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.computation;
 
-import org.thingsboard.server.common.msg.computation.SparkComputationAdded;
+import org.thingsboard.server.common.msg.computation.ComputationMsg;
 
 public interface ComputationDiscoveryListener {
-    void onMsg(SparkComputationAdded s);
+    void onMsg(ComputationMsg s);
 }

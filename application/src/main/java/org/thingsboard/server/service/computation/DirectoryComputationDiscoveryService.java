@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.thingsboard.server.common.msg.computation.ComputationScanFinished;
 import org.thingsboard.server.common.msg.computation.SparkComputationAdded;
 import org.thingsboard.server.utils.MiscUtils;
 import scala.concurrent.duration.FiniteDuration;
@@ -34,8 +35,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -57,17 +61,35 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
         this.listener = listener;
         this.materializer = materializer;
         processExistingComputations();
-        startPolling();
     }
 
     private void processExistingComputations(){
         final FileSystem fs = FileSystems.getDefault();
-        final Source<Path, NotUsed> source = Directory.walk(fs.getPath(libraryPath));
-        source.runForeach((Path p) -> {
+        //final Source<Path, NotUsed> source = Directory.walk(fs.getPath(libraryPath));
+        try {
+            List<Path> jars = Files.walk(fs.getPath(libraryPath)).collect(Collectors.toList());
+            for(Path j: jars){
+                if(isJar(j)) {
+                    listener.onMsg(new SparkComputationAdded(j));
+                }
+            }
+            listener.onMsg(new ComputationScanFinished());
+            startPolling();
+        } catch (IOException e) {
+            log.error("Error while reading jars", e);
+        }
+        /*source.runForeach((Path p) -> {
             if(isJar(p)) {
                 listener.onMsg(new SparkComputationAdded(p));
             }
-        }, materializer);
+        }, materializer).whenComplete((d, e) -> {
+            if(d != null){
+                listener.onMsg(new ComputationScanFinished());
+                startPolling();
+            }else{
+                log.error("Error occurred while reading jars from directory", e);
+            }
+        });*/
     }
 
     private void startPolling(){

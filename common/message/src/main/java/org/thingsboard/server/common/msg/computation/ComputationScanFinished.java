@@ -15,19 +15,5 @@
  */
 package org.thingsboard.server.common.msg.computation;
 
-import lombok.ToString;
-import java.io.Serializable;
-import java.nio.file.Path;
-
-@ToString
-public class SparkComputationAdded implements ComputationMsg{
-    private Path jarPath;
-
-    public SparkComputationAdded(Path jarPath) {
-        this.jarPath = jarPath;
-    }
-
-    public Path getJarPath() {
-        return jarPath;
-    }
+public class ComputationScanFinished implements ComputationMsg{
 }

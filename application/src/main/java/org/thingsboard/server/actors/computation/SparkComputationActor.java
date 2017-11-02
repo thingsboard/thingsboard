@@ -23,25 +23,27 @@ import akka.japi.Function;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
+import org.thingsboard.server.common.msg.computation.ComputationActionCompiled;
+import org.thingsboard.server.common.msg.computation.ComputationScanFinished;
 import org.thingsboard.server.common.msg.computation.SparkComputationAdded;
 import org.thingsboard.server.service.computation.annotation.AnnotationsProcessor;
 import org.thingsboard.server.service.computation.classloader.DynamicCompiler;
 import scala.concurrent.duration.Duration;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SparkComputationActor extends ContextAwareActor{
 
     private final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
 
     private DynamicCompiler compiler;
+    private final List<ComputationActionCompiled> compiledActions = new ArrayList<>();
+    private final String pluginClazz = "org.thingsboard.server.extensions.livy.plugin.LivyPlugin";
 
     public SparkComputationActor(ActorSystemContext systemContext) {
         super(systemContext);
@@ -64,6 +66,12 @@ public class SparkComputationActor extends ContextAwareActor{
         if(msg instanceof SparkComputationAdded){
             logger.warning("Message received {} ", msg);
             processResource(((SparkComputationAdded)msg).getJarPath());
+        }if(msg instanceof ComputationActionCompiled){
+            logger.warning("Computation compiled {}", msg);
+            compiledActions.add((ComputationActionCompiled)msg);
+        }if(msg instanceof ComputationScanFinished){
+            logger.warning("Computation scan for existing jars finished");
+            persistCompiledActions();
         }else{
             logger.warning("Unknown message: {}!", msg);
         }
@@ -78,6 +86,14 @@ public class SparkComputationActor extends ContextAwareActor{
 
     private ClassLoader jarClassloader(Path jarPath) throws MalformedURLException {
         return new URLClassLoader(new URL[]{jarPath.toFile().toURI().toURL()}, this.getClass().getClassLoader());
+    }
+
+    private void persistCompiledActions(){
+        try{
+            systemContext.getComponentService().updateActionsForPlugin(compiledActions, pluginClazz);
+        }catch(Exception e){
+            logger.error("Exception occured while loading components", e);
+        }
     }
 
     public static class ActorCreator extends ContextBasedCreator<SparkComputationActor> {

@@ -26,15 +26,22 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
+import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.msg.computation.ComputationActionCompiled;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.extensions.api.component.*;
+import org.thingsboard.server.service.computation.ComputationDiscoveryService;
 
 import javax.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 @Slf4j
@@ -48,6 +55,9 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     @Autowired
     private ComponentDescriptorService componentDescriptorService;
+
+    @Autowired
+    private ComputationDiscoveryService computationDiscoveryService;
 
     private Map<String, ComponentDescriptor> components = new HashMap<>();
 
@@ -187,6 +197,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     @Override
     public List<ComponentDescriptor> getPluginActions(String pluginClazz) {
         Optional<ComponentDescriptor> pluginOpt = getComponent(pluginClazz);
+        log.warn("Components are {} and components map {}", new PrettyPrintingMap<>(components), new PrettyPrintingMap<>(componentsMap));
         if (pluginOpt.isPresent()) {
             ComponentDescriptor plugin = pluginOpt.get();
             if (ComponentType.PLUGIN != plugin.getType()) {
@@ -201,4 +212,93 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             throw new IllegalArgumentException(pluginClazz + " is not a component!");
         }
     }
+
+    @Override
+    public void updateActionsForPlugin(List<ComputationActionCompiled> actions, String pluginClazz) {
+        List<ComponentDescriptor> actionDescriptors = new ArrayList<>();
+        for(ComputationActionCompiled action: actions){
+            if(!getComponent(action.getActionClazz()).isPresent()) {
+                log.warn("Component is not present {}", action.getActionClazz());
+                ComponentDescriptor descriptor = new ComponentDescriptor();
+                descriptor.setType(ComponentType.ACTION);
+                descriptor.setClazz(action.getActionClazz());
+                descriptor.setScope(ComponentScope.TENANT);
+                descriptor.setName(action.getName());
+                descriptor.setConfigurationDescriptor(action.getConfigurationDescriptor());
+                ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(action.getActionClazz());
+                if (persistedComponent == null) {
+                    log.warn("Persisted component {}", action.getActionClazz());
+                    descriptor = componentDescriptorService.saveComponent(descriptor);
+                } else {
+                    log.warn("Already persisted component found {}", persistedComponent);
+                    descriptor = persistedComponent;
+                }
+                components.putIfAbsent(action.getActionClazz(), descriptor);
+                actionDescriptors.add(descriptor);
+            }
+        }
+        updateCachedComponentsMap(actionDescriptors);
+        associateDescriptorWithPlugin(actionDescriptors, pluginClazz);
+    }
+
+    private void updateCachedComponentsMap(List<ComponentDescriptor> descriptors){
+        if(!descriptors.isEmpty()) {
+            List<ComponentDescriptor> componentDescriptors = componentsMap.get(ComponentType.ACTION);
+            componentDescriptors.addAll(descriptors);
+            componentsMap.put(ComponentType.ACTION, componentDescriptors);
+        }
+    }
+
+    private void associateDescriptorWithPlugin(List<ComponentDescriptor> descriptors, String pluginClazz){
+        if(!descriptors.isEmpty()) {
+            Optional<ComponentDescriptor> plugin = getComponent(pluginClazz);
+            if (plugin.isPresent()) {
+                ComponentDescriptor pluginDescriptor = plugin.get();
+                List<String> pluginActions = Arrays.asList(pluginDescriptor.getActions().split(","));
+                String actionsToAdd =
+                        descriptors.stream()
+                        .filter(d -> !pluginActions.contains(d.getClazz()))
+                        .map(ComponentDescriptor::getClazz).collect(Collectors.joining(","));
+                if(!StringUtils.isEmpty(actionsToAdd)) {
+                    pluginDescriptor.setActions(pluginDescriptor.getActions() + "," + actionsToAdd);
+                    components.put(pluginClazz, pluginDescriptor);
+                    List<ComponentDescriptor> plugins = componentsMap.get(ComponentType.PLUGIN).stream().map(o -> {
+                        if (o.getClazz().equals(pluginDescriptor.getClazz())) {
+                            return pluginDescriptor;
+                        } else {
+                            return o;
+                        }
+                    }).collect(toList());
+
+                    componentsMap.put(ComponentType.PLUGIN, plugins);
+                }
+            }
+        }
+    }
+
+    private class PrettyPrintingMap<K, V> {
+        private Map<K, V> map;
+
+        public PrettyPrintingMap(Map<K, V> map) {
+            this.map = map;
+        }
+
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            Iterator<Map.Entry<K, V>> iter = map.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<K, V> entry = iter.next();
+                sb.append(entry.getKey());
+                sb.append('=').append('"');
+                sb.append(entry.getValue());
+                sb.append('"');
+                if (iter.hasNext()) {
+                    sb.append(',').append(' ');
+                }
+            }
+            return sb.toString();
+
+        }
+    }
+
 }

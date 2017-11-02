@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -29,7 +30,7 @@ import javax.tools.*;
 
 @Slf4j
 public class DynamicCompiler {
-    private StandardJavaFileManager fileManager ;
+    private StandardJavaFileManager fileManager;
     private JavaCompiler compiler;
     private Path tempDir;
     private String classPath;
@@ -71,9 +72,9 @@ public class DynamicCompiler {
         return fileManager;
     }
 
-    private void initClassPath() throws IOException {
+    private void initClassPath() throws IOException, URISyntaxException {
         if(classPath == null) {
-            ArrayList<File> classPaths = new ArrayList<>();
+            Set<File> classPaths = new HashSet<>();
             addExistingManagerClasspath(classPaths);
             ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
             String cp = "";
@@ -82,9 +83,16 @@ public class DynamicCompiler {
                 addClassDirectoryToClassPath(load);
                 StringBuilder builder = new StringBuilder();
                 for (URL s : load.getURLs()) {
-                    classPaths.add(new File(s.getPath()));
+                    /*if ("file".equals(s.getProtocol())) {
+                        classPaths.add(new File(s.getFile()));
+                    }*/
+                    File f = new File(s.toURI());
+                    if(!f.exists()){
+                        log.warn("File doesn' exist {}", f);
+                    }
+                    classPaths.add(f);
                     builder.append(File.pathSeparator);
-                    builder.append(s.getPath());
+                    builder.append(f);
                 }
                 cp = builder.toString();
             }
@@ -93,7 +101,7 @@ public class DynamicCompiler {
         }
     }
 
-    private void addExistingManagerClasspath(ArrayList<File> classPaths) {
+    private void addExistingManagerClasspath(Set<File> classPaths) {
         for(File classPath : fileManager.getLocation((StandardLocation.CLASS_PATH)))
             classPaths.add(classPath);
         classPaths.add(tempDir.toFile());
@@ -115,11 +123,17 @@ public class DynamicCompiler {
                 initFileManager();
                 initClassPath();
             }
+            log.warn("Classpath entries are {}", this.classPath);
             DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
             File sourceFile = createSourceFile(fullName, sourceCode.toString());
 
-            List<String> options = new ArrayList<String>();
-            options.addAll(Arrays.asList("-classpath", classPath));
+            List<String> options = new ArrayList<>();
+            //options.addAll(Arrays.asList("-classpath", classPath));
+            /*options.add(System.getProperty("java.class.path") + File.pathSeparator +
+                    getClass().getProtectionDomain()
+                            .getCodeSource().getLocation()
+                            .toURI().toString()
+                            .replace("file:/", ""));*/
             log.warn("Starting to compile source code.");
 
             Iterable<? extends JavaFileObject> sourceObject = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFile));

@@ -16,6 +16,11 @@
 package org.thingsboard.server.service.computation.annotation;
 
 import akka.actor.ActorRef;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Resources;
 import com.hashmap.annotations.ConfigurationMapping;
 import com.hashmap.annotations.Configurations;
 import com.hashmap.annotations.SparkAction;
@@ -28,22 +33,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.thingsboard.server.common.msg.computation.ComputationActionCompiled;
 import org.thingsboard.server.service.computation.classloader.DynamicCompiler;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.Scanner;
 
 @Slf4j
 public class AnnotationsProcessor {
     private final URLClassLoader classLoader;
     private final DynamicCompiler compiler;
     private final ActorRef parent;
+    private ObjectMapper mapper = new ObjectMapper();
 
     public AnnotationsProcessor(URLClassLoader classLoader,
                                 DynamicCompiler compiler,
@@ -69,8 +79,8 @@ public class AnnotationsProcessor {
                         model.setConfiguration(configurations(clazz));
                         model.setRequest(request(clazz));
                         log.warn("model created is {} generating Java Sources",model);
-                        processModel(model);
-                        //parent.tell("acd", ActorRef.noSender());
+                        ComputationActionCompiled action = processModel(model);
+                        parent.tell(action, ActorRef.noSender());
                         log.warn("Java Source creation and loading completed for {} ", clazz.getCanonicalName());
                     } catch (ClassNotFoundException e) {
                         log.error("Class not found", e);
@@ -127,7 +137,7 @@ public class AnnotationsProcessor {
         return actionRequest;
     }
 
-    private void processModel(SparkActionType model){
+    private ComputationActionCompiled processModel(SparkActionType model){
         try {
             Properties props = new Properties();
             URL url = this.getClass().getClassLoader().getResource("velocity.properties");
@@ -138,14 +148,17 @@ public class AnnotationsProcessor {
             VelocityContext vc = new VelocityContext();
             vc.put("model", model);
             Template ct = ve.getTemplate("templates/config.vm");
-            Class<?> configClass = generateSource(ct, vc, model.getPackageName() + "." + model.getConfiguration().getClassName());
+            generateSource(ct, vc, model.getPackageName() + "." + model.getConfiguration().getClassName());
             Template at = ve.getTemplate("templates/action.vm");
-            Class<?> actionClass = generateSource(at, vc, model.getPackageName() + "." + model.getClassName());
+            generateSource(at, vc, model.getPackageName() + "." + model.getClassName());
+            JsonNode descriptor = descriptorNode(model.getDescriptor());
+            return new ComputationActionCompiled(model.getClassName(), model.getDescriptor(), model.getName(), descriptor);
         } catch (IOException e) {
             log.error("Exception occurred while generating java source", e);
         } catch (ClassNotFoundException e) {
             log.error("Exception while loading class", e);
         }
+        return null;
     }
 
     private Class<?> generateSource(Template vt, VelocityContext vc, String sourceName) throws IOException, ClassNotFoundException {
@@ -163,5 +176,15 @@ public class AnnotationsProcessor {
         }
         writer.close();
         return clazz;
+    }
+
+    private JsonNode descriptorNode(String descriptor) throws IOException {
+        InputStream descriptorResource = classLoader.getResourceAsStream(descriptor);
+        if(descriptorResource == null){
+           return mapper.readTree(
+                    Resources.toString(Resources.getResource(descriptor), Charsets.UTF_8));
+        }else{
+            return mapper.readTree(CharStreams.toString(new InputStreamReader(descriptorResource, "UTF-8")));
+        }
     }
 }

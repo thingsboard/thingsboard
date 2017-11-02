@@ -41,6 +41,7 @@ import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
+import org.thingsboard.server.common.msg.computation.ComputationMsg;
 import org.thingsboard.server.common.msg.computation.SparkComputationAdded;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
@@ -106,6 +107,10 @@ public class DefaultActorService implements ActorService {
         actorContext.setActorService(this);
         system = ActorSystem.create(ACTOR_SYSTEM_NAME, actorContext.getConfig());
         actorContext.setActorSystem(system);
+        sparkComputationActor = system.actorOf(Props.create(new SparkComputationActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME),
+                "sparkComputationActor");
+
+        computationDiscoveryService.init(this, ActorMaterializer.create(system));
 
         appActor = system.actorOf(Props.create(new AppActor.ActorCreator(actorContext)).withDispatcher(APP_DISPATCHER_NAME), "appActor");
         actorContext.setAppActor(appActor);
@@ -120,13 +125,9 @@ public class DefaultActorService implements ActorService {
         ActorRef statsActor = system.actorOf(Props.create(new StatsActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME), "statsActor");
         actorContext.setStatsActor(statsActor);
 
-        sparkComputationActor = system.actorOf(Props.create(new SparkComputationActor.ActorCreator(actorContext)).withDispatcher(CORE_DISPATCHER_NAME),
-                "sparkComputationActor");
-
         rpcService.init(this);
 
         discoveryService.addListener(this);
-        computationDiscoveryService.init(this, ActorMaterializer.create(system));
         log.info("Actor system initialized.");
     }
 
@@ -208,7 +209,7 @@ public class DefaultActorService implements ActorService {
     }
 
     @Override
-    public void onMsg(SparkComputationAdded msg){
+    public void onMsg(ComputationMsg msg){
         log.trace("Processing new computation msg: {}", msg);
         sparkComputationActor.tell(msg, ActorRef.noSender());
     }
