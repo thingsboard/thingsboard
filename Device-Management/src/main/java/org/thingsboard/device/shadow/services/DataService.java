@@ -1,6 +1,7 @@
 package org.thingsboard.device.shadow.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
@@ -12,12 +13,10 @@ import org.thingsboard.device.shadow.models.DeviceShadow;
 import org.thingsboard.device.shadow.models.TagList;
 
 import java.sql.SQLException;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 
-/**
- * Created by himanshu on 3/10/17.
- */
 
 @Service("dataService")
 public class DataService {
@@ -30,41 +29,44 @@ public class DataService {
     private RestService restService;
     //private RestService restService = new RestService();
 
-    public void updateAvailableTags(JSONObject availableTags){
+    public String updateAvailableTags(JSONObject availableTags){
         JSONParser parser = new JSONParser();
-        String tagList = null;
-        String deviceToken = "";
+        String availableTagList = null;
+        String deviceName = "";
+        String status = "";
         try {
-            deviceToken = availableTags.get("token").toString();
+            deviceName = availableTags.get("deviceName").toString();
         }catch (Exception e){
             logger.error("Exception is : " + e);
         }
         if (!availableTags.get("tags").toString().contentEquals("")) {
             //Spliting the tagList.
-            tagList = availableTags.get("tags").toString();
-            String[] list = tagList.split(",");
+            availableTagList = availableTags.get("tags").toString();
+            String desiredTagList = "";
+            String reportedTagList = "";
             try {
-                //shadowDao.deleteByToken(deviceToken);
-                for (int itr = 0; itr < list.length; itr++) {
-                    DeviceShadow deviceShadow = new DeviceShadow(deviceToken, list[itr], false, false);
-                    if(!shadowDao.checkIfTagExists(deviceToken, list[itr]))
-                        shadowDao.updateAvailableTags(deviceShadow);
-                }
+                    DeviceShadow deviceShadow = new DeviceShadow(deviceName, availableTagList, desiredTagList, reportedTagList);
+                    if(!shadowDao.ifDeviceExists(deviceName))
+                        status = shadowDao.insertAvailableTags(deviceShadow);
+                    else {
+                        status = shadowDao.updateAvailableTags(deviceShadow);
+                    }
             } catch (SQLException e) {
                 logger.error("Error updating availableTags : " + e);
+                status = "{\"error\" : \"" + e + "\"}";
             }
         }
-
+        return status;
     }
 
     public void desiredTags(TagList tagList)throws Exception{
-        shadowDao.updateDeviceState(tagList);
+        shadowDao.updateDeviceState(tagList, "desired");
     }
-    public String getAvailableTagsBytoken(String token){
+    public String getAvailableTagsByDevice(String device){
         TagList tagList = null;
         String jsontTagList = "";
         try {
-            tagList = shadowDao.getAllTagsForDeviceToken(token);
+            tagList = shadowDao.getAvailableTagsForDevice(device);
             ObjectMapper mapper = new ObjectMapper();
             jsontTagList = mapper.writeValueAsString(tagList);
         }catch (Exception e){
@@ -75,16 +77,33 @@ public class DataService {
         return jsontTagList;
     }
 
-    public void updateReportedTags(JSONObject jsonObject){
-        String reportedTags = jsonObject.get("values").toString();
-        String token = jsonObject.get("token").toString();
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObjectTagsOnly = null;
+    public String getDeviceShadow(String device){
+        String jsonShadow = "";
         try {
-            jsonObjectTagsOnly = (JSONObject) parser.parse(reportedTags);
-            Set<String> keys = jsonObjectTagsOnly.keySet();
-            for (String key : keys){
-                shadowDao.updateReportedTags(token, key);
+            DeviceShadow deviceShadow = shadowDao.getDeviceShadow(device);
+            ObjectMapper mapper = new ObjectMapper();
+            jsonShadow = mapper.writeValueAsString(deviceShadow);
+        }catch (Exception e){
+            logger.error("Error in getting device shadow : " + e);
+        }
+        return jsonShadow;
+    }
+
+    public void updateReportedTags(JSONObject jsonObject){
+        try {
+            Set<String> keys = jsonObject.keySet();
+            for (String key: keys) {
+                TagList tagList = new TagList();
+                tagList.setDeviceName(key);
+                JSONArray tags = (JSONArray)jsonObject.get(key);
+                List<String> reportedTags = new ArrayList<>();
+                for (Object tag:tags) {
+                    reportedTags.add(tag.toString());
+                }
+                //Update reported tags.
+                tagList.setTags(reportedTags);
+                shadowDao.updateDeviceState(tagList, "reported");
+                logger.error("reportedTags" + reportedTags);
             }
 
         }catch (Exception e){

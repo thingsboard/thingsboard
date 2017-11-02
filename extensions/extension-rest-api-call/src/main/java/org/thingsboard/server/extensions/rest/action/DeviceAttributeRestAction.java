@@ -3,6 +3,7 @@ package org.thingsboard.server.extensions.rest.action;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -17,12 +18,14 @@ import org.thingsboard.server.extensions.api.rules.RuleContext;
 import org.thingsboard.server.extensions.api.rules.RuleProcessingMetaData;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 @Action(name = "Device Attributes Rest Plugin Action",
         descriptor = "DeviceAttributeRestDescriptor.json", configuration = RestApiCallPluginActionConfiguration.class)
 @Slf4j
 public class DeviceAttributeRestAction implements PluginAction<RestApiCallPluginActionConfiguration>{
     private RestApiCallPluginActionConfiguration configuration;
+    private final org.slf4j.Logger logger = LoggerFactory.getLogger(DeviceAttributeRestAction.class);
     @Override
     public void resume() {
 
@@ -47,7 +50,7 @@ public class DeviceAttributeRestAction implements PluginAction<RestApiCallPlugin
     public Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg msg, RuleProcessingMetaData deviceMsgMd) {
         BasicUpdateAttributesRequest payload;
 
-
+        String device = ctx.getDeviceMetaData().getDeviceName();
         if (msg.getPayload() instanceof BasicUpdateAttributesRequest) {
             payload = (BasicUpdateAttributesRequest) msg.getPayload();
         } else {
@@ -55,9 +58,15 @@ public class DeviceAttributeRestAction implements PluginAction<RestApiCallPlugin
         }
 
         HashMap<String, String> attributes = new HashMap<>(payload.getAttributes().size());
+        attributes.put("deviceName",device);
+        String tagsStr = "";
+        //Comma separated tags.
         for(AttributeKvEntry attr: payload.getAttributes()){
-            attributes.put(attr.getKey(), attr.getValueAsString());
+            tagsStr = tagsStr + attr.getValueAsString() + ",";
+            //attributes.put(attr.getKey(), attr.getValueAsString());
         }
+        tagsStr = tagsStr.substring(0,tagsStr.length() - 1);
+        attributes.put("tags",tagsStr);
         ObjectMapper mapper = new ObjectMapper();
         String msgBody;
         try {

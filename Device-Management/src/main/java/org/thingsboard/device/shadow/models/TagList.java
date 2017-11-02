@@ -2,19 +2,16 @@ package org.thingsboard.device.shadow.models;
 
 import java.util.List;
 
-/**
- * Created by himanshu on 4/10/17.
- */
 public class TagList {
-    private String token;
+    private String deviceName;
     private List<String> tags;
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
     }
 
-    public String getToken() {
-        return token;
+    public String getDeviceName() {
+        return deviceName;
     }
 
     public void setTags(List<String> tags) {

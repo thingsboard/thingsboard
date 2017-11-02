@@ -1,42 +1,54 @@
 package org.thingsboard.device.shadow.models;
 
-import javax.persistence.*;
+import java.util.List;
 
 /**
- * Created by himanshu on 29/9/17.
+ * Created by himanshu on 30/10/17.
  */
-
 public class DeviceShadow {
+    private String deviceName;
+    private String availableTags;
+    private String desiredTags;
+    private String reportedTags;
 
-    /*@Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;*/
-    private String deviceToken;
-    private String tagName;
-    private Boolean desired;
-    private Boolean reported;
-
-    public DeviceShadow(String deviceToken, String tagName, Boolean desired, Boolean reported){
-        this.deviceToken = deviceToken;
-        this.tagName = tagName;
-        this.desired = desired;
-        this.reported = reported;
+    public DeviceShadow(String deviceName, String availableTags, String desiredTags,
+                        String reportedTags){
+        this.deviceName = deviceName;
+        this.availableTags = availableTags;
+        this.desiredTags = desiredTags;
+        this.reportedTags = reportedTags;
     }
 
-
-    public String getDeviceToken() {
-        return deviceToken;
+    public String getDeviceName() {
+        return deviceName;
     }
 
-    public String getTagName() {
-        return tagName;
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
     }
 
-    public Boolean getDesired() {
-        return desired;
+    public void setAvailableTags(String availableTags) {
+        this.availableTags = availableTags;
     }
 
-    public Boolean getReported() {
-        return reported;
+    public void setDesiredTags(String desiredTags) {
+        this.desiredTags = desiredTags;
     }
+
+    public void setReportedTags(String reportedTags) {
+        this.reportedTags = reportedTags;
+    }
+
+    public String getAvailableTags() {
+        return availableTags;
+    }
+
+    public String getDesiredTags() {
+        return desiredTags;
+    }
+
+    public String getReportedTags() {
+        return reportedTags;
+    }
+
 }

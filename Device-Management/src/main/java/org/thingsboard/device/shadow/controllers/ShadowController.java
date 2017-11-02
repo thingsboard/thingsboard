@@ -1,9 +1,5 @@
 package org.thingsboard.device.shadow.controllers;
 
-/**
- * Created by himanshu on 29/9/17.
- */
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
@@ -32,14 +28,16 @@ public class ShadowController {
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = null;
         JSONArray tagList = null;
+        String status = "";
         try {
             jsonObject = (JSONObject) parser.parse(availableTags);
-            dataService.updateAvailableTags(jsonObject);
+            logger.debug("UPDATE OBJ : \n" + jsonObject + "\n");
+            status =dataService.updateAvailableTags(jsonObject);
         }catch (Exception e){
             logger.error("Exception updating tags : " + e);
-            return "{\"error\":\""+e+"\"}";
+            status =  "{\"error\":\""+e+"\"}";
         }
-        return "{\"status\":\"updated\"}";
+        return status;
     }
 
     @RequestMapping(value = "/desired/tags", method = RequestMethod.POST)
@@ -73,8 +71,14 @@ public class ShadowController {
     }
 
     @RequestMapping(value = "/available/tags", produces = "application/json", method = RequestMethod.GET)
-    public String getAvailableTagsByToken(@RequestParam(value="token") String token) {
-        String jsonTagList = dataService.getAvailableTagsBytoken(token);
+    public String getAvailableTagsByDevice(@RequestParam(value="deviceName") String device) {
+        String jsonTagList = dataService.getAvailableTagsByDevice(device);
         return jsonTagList;
+    }
+
+    @RequestMapping(value = "/device/shadow", produces = "application/json", method = RequestMethod.GET)
+    public String getDeviceShadow(@RequestParam(value="deviceName") String device) {
+        String jsonShadow = dataService.getDeviceShadow(device);
+        return jsonShadow;
     }
 }

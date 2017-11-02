@@ -2,10 +2,6 @@ package org.thingsboard.device.shadow.services;
 
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -25,7 +21,7 @@ public class RestService {
 
         String tagsStr = createTagStr(tagList);
         Boolean status = true;
-        logger.error("opca msg" + tagsStr);
+        logger.debug("opca msg\n" + tagsStr);
         HttpPost postRequest = new HttpPost(getOpcDataUrl);
         StringEntity input = new StringEntity(tagsStr);
         input.setContentType("text/plain");
@@ -36,16 +32,14 @@ public class RestService {
 
         if (response.getStatusLine().getStatusCode() != 200) {
             status = false;
-            //throw new RuntimeException("Failed : HTTP error code : "
-                    //+ response.getStatusLine().getStatusCode());
         }
         return status;
     }
 
     public String createTagStr(TagList tagList){
-        String tagsStr = "";
+        String tagsStr = tagList.getDeviceName() + "\n";
         for (int i = 0; i < tagList.getTags().size(); i++){
-            tagsStr = tagsStr + tagList.getTags().get(i) + "\n";
+            tagsStr = tagsStr + tagList.getDeviceName() + "." + tagList.getTags().get(i) + "\n";
         }
         return tagsStr;
     }
