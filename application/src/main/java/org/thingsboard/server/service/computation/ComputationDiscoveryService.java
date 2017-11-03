@@ -15,8 +15,9 @@
  */
 package org.thingsboard.server.service.computation;
 
-import akka.stream.ActorMaterializer;
+import org.thingsboard.server.service.component.ComponentDiscoveryService;
 
 public interface ComputationDiscoveryService {
-    void init(ComputationDiscoveryListener listener, ActorMaterializer materializer);
+    void init(ComponentDiscoveryService service);
+    void discoverDynamicComponents();
 }

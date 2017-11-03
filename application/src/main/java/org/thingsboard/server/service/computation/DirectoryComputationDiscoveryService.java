@@ -15,30 +15,25 @@
  */
 package org.thingsboard.server.service.computation;
 
-import akka.NotUsed;
-import akka.japi.Pair;
-import akka.stream.ActorMaterializer;
-import akka.stream.alpakka.file.DirectoryChange;
-import akka.stream.alpakka.file.javadsl.Directory;
-import akka.stream.alpakka.file.javadsl.DirectoryChangesSource;
-import akka.stream.javadsl.Source;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.monitor.FileAlterationListener;
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
+import org.apache.commons.io.monitor.FileAlterationMonitor;
+import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import org.thingsboard.server.common.msg.computation.ComputationScanFinished;
-import org.thingsboard.server.common.msg.computation.SparkComputationAdded;
+import org.thingsboard.server.common.msg.computation.ComputationActionCompiled;
+import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.computation.annotation.AnnotationsProcessor;
+import org.thingsboard.server.service.computation.classloader.RuntimeJavaCompiler;
 import org.thingsboard.server.utils.MiscUtils;
-import scala.concurrent.duration.FiniteDuration;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,66 +46,83 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
     @Value("${spark.polling_interval}")
     private Long pollingInterval;
 
-    private ComputationDiscoveryListener listener;
-    private ActorMaterializer materializer;
+    private RuntimeJavaCompiler compiler;
+    private final String PLUGIN_CLAZZ = "org.thingsboard.server.extensions.livy.plugin.LivyPlugin";
+
+    private ComponentDiscoveryService componentDiscoveryService;
 
     @Override
-    public void init(ComputationDiscoveryListener listener, ActorMaterializer materializer) {
+    public void init(ComponentDiscoveryService service) {
         Assert.hasLength(libraryPath, MiscUtils.missingProperty("spark.jar_path"));
         Assert.notNull(pollingInterval, MiscUtils.missingProperty("spark.polling_interval"));
-        this.listener = listener;
-        this.materializer = materializer;
-        processExistingComputations();
+        this.compiler = new RuntimeJavaCompiler();
+        this.componentDiscoveryService = service;
     }
 
-    private void processExistingComputations(){
+    public void discoverDynamicComponents(){
         final FileSystem fs = FileSystems.getDefault();
-        //final Source<Path, NotUsed> source = Directory.walk(fs.getPath(libraryPath));
+        final List<ComputationActionCompiled> compiledActions = new ArrayList<>();
         try {
             List<Path> jars = Files.walk(fs.getPath(libraryPath)).collect(Collectors.toList());
             for(Path j: jars){
                 if(isJar(j)) {
-                    listener.onMsg(new SparkComputationAdded(j));
+                    AnnotationsProcessor processor = new AnnotationsProcessor(j, compiler);
+                    List<ComputationActionCompiled> c = processor.processAnnotations();
+                    if(c != null && !c.isEmpty()) {
+                        compiledActions.addAll(c);
+                    }
                 }
             }
-            listener.onMsg(new ComputationScanFinished());
+            componentDiscoveryService.updateActionsForPlugin(compiledActions, PLUGIN_CLAZZ);
             startPolling();
         } catch (IOException e) {
-            log.error("Error while reading jars", e);
+            log.error("Error while reading jars from directory.", e);
         }
-        /*source.runForeach((Path p) -> {
-            if(isJar(p)) {
-                listener.onMsg(new SparkComputationAdded(p));
-            }
-        }, materializer).whenComplete((d, e) -> {
-            if(d != null){
-                listener.onMsg(new ComputationScanFinished());
-                startPolling();
-            }else{
-                log.error("Error occurred while reading jars from directory", e);
-            }
-        });*/
     }
 
     private void startPolling(){
-        final FileSystem fs = FileSystems.getDefault();
-        final FiniteDuration interval = FiniteDuration.create(pollingInterval, TimeUnit.SECONDS);
-        final int maxBufferSize = 1000;
-        final Source<Pair<Path, DirectoryChange>, NotUsed> changes =
-                DirectoryChangesSource.create(fs.getPath(libraryPath), interval, maxBufferSize);
-
-
-        changes.runForeach((Pair<Path, DirectoryChange> pair) -> {
-            final Path changedPath = pair.first();
-            final DirectoryChange change = pair.second();
-            if(isJar(changedPath) && change == DirectoryChange.Creation){
-                listener.onMsg(new SparkComputationAdded(changedPath));
-            }
-        }, materializer);
+        try {
+            final FileSystem fs = FileSystems.getDefault();
+            FileAlterationObserver observer = new FileAlterationObserver(fs.getPath(libraryPath).toFile());
+            FileAlterationMonitor monitor = new FileAlterationMonitor(pollingInterval * 1000);
+            observer.addListener(newListener());
+            monitor.addObserver(observer);
+            monitor.start();
+        } catch (Exception e) {
+            log.error("Error while starting poller to scan dynamic components", e);
+        }
     }
 
     private boolean isJar(Path jarPath) throws IOException {
         File file = jarPath.toFile();
         return file.getCanonicalPath().endsWith(".jar") && file.canRead();
+    }
+
+    private FileAlterationListener newListener(){
+        return new FileAlterationListenerAdaptor(){
+            @Override
+            public void onFileCreate(File file) {
+                processComponent(file);
+            }
+
+            @Override
+            public void onFileChange(File file) {
+                processComponent(file);
+            }
+
+            private void processComponent(File file) {
+                log.debug("File {} is created", file.getAbsolutePath());
+                Path j = file.toPath();
+                try{
+                    if(isJar(j)){
+                        AnnotationsProcessor processor = new AnnotationsProcessor(j, compiler);
+                        List<ComputationActionCompiled> actions = processor.processAnnotations();
+                        componentDiscoveryService.updateActionsForPlugin(actions, PLUGIN_CLAZZ);
+                    }
+                } catch (IOException e) {
+                    log.error("Error while accessing jar to scan dynamic components", e);
+                }
+            }
+        };
     }
 }

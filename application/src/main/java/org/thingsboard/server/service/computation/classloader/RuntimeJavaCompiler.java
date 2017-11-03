@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.computation.classloader;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.thingsboard.server.service.computation.classloader.exception.CompilationException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -26,133 +28,113 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.jar.JarFile;
 import javax.tools.*;
 
 @Slf4j
-public class DynamicCompiler {
+public class RuntimeJavaCompiler {
+    private static final String BANG = "!";
+    private static final String JAR = ".jar";
     private StandardJavaFileManager fileManager;
     private JavaCompiler compiler;
-    private Path tempDir;
-    private String classPath;
+    private File tempDir;
     private final Object mutex = new Object();
+    private boolean classPathInitialized = false;
 
-    public DynamicCompiler(){
+    public RuntimeJavaCompiler(){
         compiler = ToolProvider.getSystemJavaCompiler();
         if (compiler == null) {
             throw new IllegalStateException("Cannot find the system Java compiler. "
                     + "Check that your class path includes tools.jar");
         }
         initTempDirectory();
-        fileManager = initFileManager();
-        //classPath = initClassPath();
     }
 
     private void initTempDirectory(){
-        Path dir = null;
         try {
-            dir = Files.createTempDirectory("spark");
+            Path dir = Files.createTempDirectory("spark");
             dir.toFile().deleteOnExit();
+            this.tempDir = dir.toFile();
         } catch (IOException e) {
             log.error("Error occurred while creating temp directory", e);
         }
-        this.tempDir = dir;
     }
 
-    private StandardJavaFileManager initFileManager(){
+    private void initFileManager(){
         if(fileManager == null) {
-            log.warn("Initializing file manager");
             StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
             try {
-                fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Arrays.asList(tempDir.toFile()));
+                fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Arrays.asList(tempDir));
                 this.fileManager = fileManager;
             } catch (Exception e) {
                 log.error("Error while setting class path", e);
             }
         }
-        return fileManager;
     }
 
     private void initClassPath() throws IOException, URISyntaxException {
-        if(classPath == null) {
+        if(!classPathInitialized) {
             Set<File> classPaths = new HashSet<>();
-            addExistingManagerClasspath(classPaths);
+            appendExistingClasspath(classPaths);
+            classPaths.add(tempDir);
             ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-            String cp = "";
             if (contextClassLoader instanceof URLClassLoader) {
                 URLClassLoader load = (URLClassLoader) contextClassLoader;
                 addClassDirectoryToClassPath(load);
-                StringBuilder builder = new StringBuilder();
-                for (URL s : load.getURLs()) {
-                    /*if ("file".equals(s.getProtocol())) {
-                        classPaths.add(new File(s.getFile()));
-                    }*/
-                    File f = new File(s.toURI());
-                    if(!f.exists()){
-                        log.warn("File doesn' exist {}", f);
-                    }
-                    classPaths.add(f);
-                    builder.append(File.pathSeparator);
-                    builder.append(f);
-                }
-                cp = builder.toString();
+                classPaths.addAll(parseUrlsAsClasspath(load.getURLs()));
             }
             fileManager.setLocation(StandardLocation.CLASS_PATH, classPaths);
-            classPath = System.getProperty("java.class.path") + cp;
+            classPathInitialized = true;
         }
     }
 
-    private void addExistingManagerClasspath(Set<File> classPaths) {
+    private void appendExistingClasspath(Set<File> classPaths) {
         for(File classPath : fileManager.getLocation((StandardLocation.CLASS_PATH)))
             classPaths.add(classPath);
-        classPaths.add(tempDir.toFile());
+        classPaths.add(tempDir);
     }
 
     private void addClassDirectoryToClassPath(URLClassLoader loader){
         try {
             Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[]{URL.class});
             method.setAccessible(true);
-            method.invoke(loader, new Object[]{tempDir.toUri().toURL()});
+            method.invoke(loader, new Object[]{tempDir.toURI().toURL()});
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void compile(String fullName, CharSequence sourceCode){
+    public void compile(String fullName, CharSequence sourceCode) throws CompilationException {
         try {
+            if(!tempDir.exists()){
+                throw new CompilationException("Source directory not created");
+            }
             synchronized(mutex){
                 initFileManager();
                 initClassPath();
             }
-            log.warn("Classpath entries are {}", this.classPath);
             DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
             File sourceFile = createSourceFile(fullName, sourceCode.toString());
-
-            List<String> options = new ArrayList<>();
-            //options.addAll(Arrays.asList("-classpath", classPath));
-            /*options.add(System.getProperty("java.class.path") + File.pathSeparator +
-                    getClass().getProtectionDomain()
-                            .getCodeSource().getLocation()
-                            .toURI().toString()
-                            .replace("file:/", ""));*/
-            log.warn("Starting to compile source code.");
+            log.debug("Starting to compile source code.");
 
             Iterable<? extends JavaFileObject> sourceObject = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFile));
-            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options,
+            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, null,
                     null, sourceObject);
             if (!task.call()) {
                 for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-                    log.warn("Error on line {} in {}", diagnostic.getLineNumber(), diagnostic.getMessage(Locale.ENGLISH));
+                    log.error("Error on line {} in {}", diagnostic.getLineNumber(), diagnostic.getMessage(Locale.ENGLISH));
                 }
+                throw new CompilationException("Error occurred while compiling source "+ diagnostics.getDiagnostics());
             }
-            log.warn("Compilation completed");
         } catch (Exception e) {
-            log.error("Error occured while compiling source {}", fullName, e);
+            log.error("Error occurred while compiling source {}", fullName, e);
+            throw new CompilationException("Error occurred while compiling source", e);
         }
     }
 
     public Class<?> load(String fullName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         Class<?> aClass = Class.forName(fullName);
-        log.warn("Loading class completed {}", aClass.getCanonicalName());
+        log.debug("Loading class completed {}", aClass.getCanonicalName());
         return aClass;
     }
 
@@ -160,17 +142,56 @@ public class DynamicCompiler {
         int dotPos = qualifiedClassName.lastIndexOf(".");
         String packageName = dotPos == -1 ? "" : qualifiedClassName.substring(0, dotPos);
         String className = dotPos == -1 ? qualifiedClassName : qualifiedClassName.substring(dotPos + 1);
-        File packageDir = new File(tempDir.toFile().getPath() + File.separator + packageName.replace(".", File.separator));
-        if(!packageDir.exists()){
-            packageDir.mkdirs();
+        File packageDir = new File(tempDir.getPath() + File.separator + packageName.replace(".", File.separator));
+        if(!packageDir.exists() && !packageDir.mkdirs()){
+            throw new IOException("Error while creating a package directory for Source.");
         }
         File source = new File(packageDir, className + JavaFileObject.Kind.SOURCE.extension);
-        if(!source.exists()){
-            source.createNewFile();
+        if(!source.exists() && !source.createNewFile()){
+            throw new IOException("Error while writing source file.");
         }
         FileWriter writer = new FileWriter(source);
         writer.write(sourceCode);
         writer.close();
         return source;
+    }
+
+    private List<File> parseUrlsAsClasspath(URL[] urls) throws IOException {
+        Map<String, File> jarsProcessed = new HashMap<>();
+        List<File> classPath = new ArrayList<>();
+        String protocol = "file:";
+        for(URL u: urls) {
+            String c = u.getFile();
+            if (c.startsWith(protocol)) {
+                String path = c.substring(protocol.length(), c.lastIndexOf(BANG));
+                if (path.contains(BANG)) {
+                    String[] nestedCp = path.split(BANG);
+                    String cpName = nestedCp[0];
+                    log.debug("Nested classpath entry is {}", Arrays.toString(nestedCp));
+                    if (isJar(cpName) && jarsProcessed.get(cpName) == null) {
+                        JarUnpacker unpacker = new JarUnpacker(new JarFile(new File(cpName)));
+                        File jarDir = unpacker.extractJar();
+                        log.debug("Jar {} extracted in directory {}", cpName, jarDir.getAbsolutePath());
+                        jarsProcessed.put(cpName, jarDir);
+                        classPath.add(new File(jarsProcessed.get(cpName), nestedCp[1]));
+                    }else if(isJar(cpName) && jarsProcessed.get(cpName) != null){
+                        log.debug("Jar {} already extracted, adding to {} classpath", cpName, nestedCp[1]);
+                        classPath.add(new File(jarsProcessed.get(cpName), nestedCp[1]));
+                    }
+                }else{
+                    log.debug("Classpath entry {} is not nested jar/dir", path);
+                    classPath.add(new File(path));
+                }
+            }else{
+                log.debug("Adding normal file path {} to classpath", c);
+                classPath.add(new File(c));
+            }
+        }
+        return classPath;
+    }
+
+    private boolean isJar(String jarName) {
+        return StringUtils.isNotEmpty(jarName) &&
+                jarName.endsWith(JAR);
     }
 }

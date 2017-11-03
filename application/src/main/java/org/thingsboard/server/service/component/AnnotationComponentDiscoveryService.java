@@ -39,7 +39,6 @@ import javax.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -71,6 +70,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     @PostConstruct
     public void init() {
+        computationDiscoveryService.init(this);
         if (!isInstall()) {
             discoverComponents();
         }
@@ -181,6 +181,8 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
         registerComponents(ComponentType.PLUGIN, Plugin.class);
 
+        computationDiscoveryService.discoverDynamicComponents();
+
         log.info("Found following definitions: {}", components.values());
     }
 
@@ -197,7 +199,6 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     @Override
     public List<ComponentDescriptor> getPluginActions(String pluginClazz) {
         Optional<ComponentDescriptor> pluginOpt = getComponent(pluginClazz);
-        log.warn("Components are {} and components map {}", new PrettyPrintingMap<>(components), new PrettyPrintingMap<>(componentsMap));
         if (pluginOpt.isPresent()) {
             ComponentDescriptor plugin = pluginOpt.get();
             if (ComponentType.PLUGIN != plugin.getType()) {
@@ -218,7 +219,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         List<ComponentDescriptor> actionDescriptors = new ArrayList<>();
         for(ComputationActionCompiled action: actions){
             if(!getComponent(action.getActionClazz()).isPresent()) {
-                log.warn("Component is not present {}", action.getActionClazz());
+                log.debug("Component is not present {}", action.getActionClazz());
                 ComponentDescriptor descriptor = new ComponentDescriptor();
                 descriptor.setType(ComponentType.ACTION);
                 descriptor.setClazz(action.getActionClazz());
@@ -227,13 +228,18 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                 descriptor.setConfigurationDescriptor(action.getConfigurationDescriptor());
                 ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(action.getActionClazz());
                 if (persistedComponent == null) {
-                    log.warn("Persisted component {}", action.getActionClazz());
+                    log.debug("Persisted component {}", action.getActionClazz());
                     descriptor = componentDescriptorService.saveComponent(descriptor);
-                } else {
-                    log.warn("Already persisted component found {}", persistedComponent);
+                } else if(descriptor.equals(persistedComponent)){
+                    log.debug("Already persisted component found {}", persistedComponent);
                     descriptor = persistedComponent;
+                }else {
+                    log.info("Component {} will be updated to {}", persistedComponent, descriptor);
+                    componentDescriptorService.deleteByClazz(persistedComponent.getClazz());
+                    descriptor.setId(persistedComponent.getId());
+                    descriptor = componentDescriptorService.saveComponent(descriptor);
                 }
-                components.putIfAbsent(action.getActionClazz(), descriptor);
+                components.put(action.getActionClazz(), descriptor);
                 actionDescriptors.add(descriptor);
             }
         }
@@ -259,6 +265,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                         descriptors.stream()
                         .filter(d -> !pluginActions.contains(d.getClazz()))
                         .map(ComponentDescriptor::getClazz).collect(Collectors.joining(","));
+                log.debug("New Actions {} will be added to Plugin", actionsToAdd);
                 if(!StringUtils.isEmpty(actionsToAdd)) {
                     pluginDescriptor.setActions(pluginDescriptor.getActions() + "," + actionsToAdd);
                     components.put(pluginClazz, pluginDescriptor);
@@ -269,36 +276,10 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                             return o;
                         }
                     }).collect(toList());
-
+                    log.debug("updating plugins with {}", plugins);
                     componentsMap.put(ComponentType.PLUGIN, plugins);
                 }
             }
         }
     }
-
-    private class PrettyPrintingMap<K, V> {
-        private Map<K, V> map;
-
-        public PrettyPrintingMap(Map<K, V> map) {
-            this.map = map;
-        }
-
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            Iterator<Map.Entry<K, V>> iter = map.entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry<K, V> entry = iter.next();
-                sb.append(entry.getKey());
-                sb.append('=').append('"');
-                sb.append(entry.getValue());
-                sb.append('"');
-                if (iter.hasNext()) {
-                    sb.append(',').append(' ');
-                }
-            }
-            return sb.toString();
-
-        }
-    }
-
 }

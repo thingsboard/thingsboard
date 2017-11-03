@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.computation.annotation;
 
-import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -34,7 +33,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.thingsboard.server.common.msg.computation.ComputationActionCompiled;
-import org.thingsboard.server.service.computation.classloader.DynamicCompiler;
+import org.thingsboard.server.service.computation.classloader.RuntimeJavaCompiler;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import java.io.IOException;
@@ -42,30 +41,33 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-import java.util.Scanner;
 
 @Slf4j
 public class AnnotationsProcessor {
-    private final URLClassLoader classLoader;
-    private final DynamicCompiler compiler;
-    private final ActorRef parent;
+    private final ClassLoader classLoader;
+    private final RuntimeJavaCompiler compiler;
+    private final Path jar;
     private ObjectMapper mapper = new ObjectMapper();
+    private final List<ComputationActionCompiled> actions = new ArrayList<>();
 
-    public AnnotationsProcessor(URLClassLoader classLoader,
-                                DynamicCompiler compiler,
-                                ActorRef parentActor){
-        this.classLoader = classLoader;
+    public AnnotationsProcessor(Path jar,
+                                RuntimeJavaCompiler compiler){
+        this.jar = jar;
+        this.classLoader = jarClassloader(jar);
         this.compiler = compiler;
-        this.parent = parentActor;
     }
 
-    public void processAnnotations(Path jar) throws IOException {
+    public List<ComputationActionCompiled> processAnnotations() throws IOException {
         AnnotationDetector detector = new AnnotationDetector(newReporter());
         detector.detect(jar.toFile());
+        return actions;
     }
 
     private AnnotationDetector.TypeReporter newReporter(){
@@ -78,10 +80,11 @@ public class AnnotationsProcessor {
                         SparkActionType model = action(clazz);
                         model.setConfiguration(configurations(clazz));
                         model.setRequest(request(clazz));
-                        log.warn("model created is {} generating Java Sources",model);
                         ComputationActionCompiled action = processModel(model);
-                        parent.tell(action, ActorRef.noSender());
-                        log.warn("Java Source creation and loading completed for {} ", clazz.getCanonicalName());
+                        if(action != null) {
+                            actions.add(action);
+                        }
+                        log.debug("Java Source creation and loading completed for {} ", clazz.getCanonicalName());
                     } catch (ClassNotFoundException e) {
                         log.error("Class not found", e);
                     }
@@ -148,11 +151,13 @@ public class AnnotationsProcessor {
             VelocityContext vc = new VelocityContext();
             vc.put("model", model);
             Template ct = ve.getTemplate("templates/config.vm");
-            generateSource(ct, vc, model.getPackageName() + "." + model.getConfiguration().getClassName());
-            Template at = ve.getTemplate("templates/action.vm");
-            generateSource(at, vc, model.getPackageName() + "." + model.getClassName());
-            JsonNode descriptor = descriptorNode(model.getDescriptor());
-            return new ComputationActionCompiled(model.getClassName(), model.getDescriptor(), model.getName(), descriptor);
+            Class<?> aClass = generateSource(ct, vc, model.getPackageName() + "." + model.getConfiguration().getClassName());
+            if(aClass != null) {
+                Template at = ve.getTemplate("templates/action.vm");
+                generateSource(at, vc, model.getPackageName() + "." + model.getClassName());
+                JsonNode descriptor = descriptorNode(model.getDescriptor());
+                return new ComputationActionCompiled(model.getPackageName() + "." + model.getClassName(), model.getDescriptor(), model.getName(), descriptor);
+            }
         } catch (IOException e) {
             log.error("Exception occurred while generating java source", e);
         } catch (ClassNotFoundException e) {
@@ -162,7 +167,7 @@ public class AnnotationsProcessor {
     }
 
     private Class<?> generateSource(Template vt, VelocityContext vc, String sourceName) throws IOException, ClassNotFoundException {
-        log.warn("Generating source for {}", sourceName);
+        log.debug("Generating source for {}", sourceName);
         StringWriter writer = new StringWriter();
 
         vt.merge(vc, writer);
@@ -172,7 +177,7 @@ public class AnnotationsProcessor {
             compiler.compile(sourceName, writer.toString());
             clazz = compiler.load(sourceName);
         }catch(Exception e){
-            log.warn("Error occurred {}", e);
+            log.error("Error occurred {}", e);
         }
         writer.close();
         return clazz;
@@ -185,6 +190,14 @@ public class AnnotationsProcessor {
                     Resources.toString(Resources.getResource(descriptor), Charsets.UTF_8));
         }else{
             return mapper.readTree(CharStreams.toString(new InputStreamReader(descriptorResource, "UTF-8")));
+        }
+    }
+
+    private ClassLoader jarClassloader(Path jarPath) {
+        try {
+            return new URLClassLoader(new URL[]{jarPath.toUri().toURL()}, this.getClass().getClassLoader());
+        } catch (MalformedURLException e) {
+            return Thread.currentThread().getContextClassLoader();
         }
     }
 }
