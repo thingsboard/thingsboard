@@ -218,30 +218,27 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     public void updateActionsForPlugin(List<ComputationActionCompiled> actions, String pluginClazz) {
         List<ComponentDescriptor> actionDescriptors = new ArrayList<>();
         for(ComputationActionCompiled action: actions){
-            if(!getComponent(action.getActionClazz()).isPresent()) {
-                log.debug("Component is not present {}", action.getActionClazz());
-                ComponentDescriptor descriptor = new ComponentDescriptor();
-                descriptor.setType(ComponentType.ACTION);
-                descriptor.setClazz(action.getActionClazz());
-                descriptor.setScope(ComponentScope.TENANT);
-                descriptor.setName(action.getName());
-                descriptor.setConfigurationDescriptor(action.getConfigurationDescriptor());
-                ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(action.getActionClazz());
-                if (persistedComponent == null) {
-                    log.debug("Persisted component {}", action.getActionClazz());
-                    descriptor = componentDescriptorService.saveComponent(descriptor);
-                } else if(descriptor.equals(persistedComponent)){
-                    log.debug("Already persisted component found {}", persistedComponent);
-                    descriptor = persistedComponent;
-                }else {
-                    log.info("Component {} will be updated to {}", persistedComponent, descriptor);
-                    componentDescriptorService.deleteByClazz(persistedComponent.getClazz());
-                    descriptor.setId(persistedComponent.getId());
-                    descriptor = componentDescriptorService.saveComponent(descriptor);
-                }
-                components.put(action.getActionClazz(), descriptor);
-                actionDescriptors.add(descriptor);
+            ComponentDescriptor descriptor = new ComponentDescriptor();
+            descriptor.setType(ComponentType.ACTION);
+            descriptor.setClazz(action.getActionClazz());
+            descriptor.setScope(ComponentScope.TENANT);
+            descriptor.setName(action.getName());
+            descriptor.setConfigurationDescriptor(action.getConfigurationDescriptor());
+            ComponentDescriptor persistedComponent = componentDescriptorService.findByClazz(action.getActionClazz());
+            if (persistedComponent == null) {
+                log.debug("Persisted component {}", action.getActionClazz());
+                descriptor = componentDescriptorService.saveComponent(descriptor);
+            } else if(descriptor.equals(persistedComponent)){
+                log.debug("Already persisted component found {}", persistedComponent);
+                descriptor = persistedComponent;
+            }else {
+                log.info("Component {} will be updated to {}", persistedComponent, descriptor);
+                componentDescriptorService.deleteByClazz(persistedComponent.getClazz());
+                descriptor.setId(persistedComponent.getId());
+                descriptor = componentDescriptorService.saveComponent(descriptor);
             }
+            components.put(action.getActionClazz(), descriptor);
+            actionDescriptors.add(descriptor);
         }
         updateCachedComponentsMap(actionDescriptors);
         associateDescriptorWithPlugin(actionDescriptors, pluginClazz);
@@ -268,10 +265,11 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                 log.debug("New Actions {} will be added to Plugin", actionsToAdd);
                 if(!StringUtils.isEmpty(actionsToAdd)) {
                     pluginDescriptor.setActions(pluginDescriptor.getActions() + "," + actionsToAdd);
+                    final ComponentDescriptor persisted = updatePlugin(pluginDescriptor);
                     components.put(pluginClazz, pluginDescriptor);
                     List<ComponentDescriptor> plugins = componentsMap.get(ComponentType.PLUGIN).stream().map(o -> {
-                        if (o.getClazz().equals(pluginDescriptor.getClazz())) {
-                            return pluginDescriptor;
+                        if (o.getClazz().equals(persisted.getClazz())) {
+                            return persisted;
                         } else {
                             return o;
                         }
@@ -281,5 +279,10 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                 }
             }
         }
+    }
+
+    private ComponentDescriptor updatePlugin(ComponentDescriptor pluginDescriptor){
+        componentDescriptorService.deleteByClazz(pluginDescriptor.getClazz());
+        return componentDescriptorService.saveComponent(pluginDescriptor);
     }
 }

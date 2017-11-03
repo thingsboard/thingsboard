@@ -62,8 +62,6 @@ public class ${model.getClassName()} extends org.thingsboard.server.extensions.l
 
     @Override
     protected String[] args() {
-        return new String[]{"--window", Long.toString(configuration.getWindow()),
-                "--mqttbroker", configuration.getEndpoint(), "--kafka", configuration.getKafkaBrokers(),
-                "--token", configuration.getGatewayApiToken()};
+        return new String[]{${model.getRequest().argsAsElements()}};
     }
 }
