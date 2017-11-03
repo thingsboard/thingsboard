@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -85,10 +86,14 @@ public class GatewaySessionCtx {
         ack(msg);
     }
 
-    private void onDeviceConnect(String deviceName, String deviceType) {
+    private void onDeviceConnect(String deviceName, String deviceType) throws AdaptorException {
         if (!devices.containsKey(deviceName)) {
             Optional<Device> deviceOpt = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
             Device device = deviceOpt.orElseGet(() -> {
+                JsonNode denyDeviceCreation = gateway.getAdditionalInfo().get("denyDeviceCreation");
+                if (denyDeviceCreation != null && denyDeviceCreation.asBoolean()) {
+                    return null;
+                }
                 Device newDevice = new Device();
                 newDevice.setTenantId(gateway.getTenantId());
                 newDevice.setName(deviceName);
@@ -97,6 +102,10 @@ public class GatewaySessionCtx {
                 relationService.saveRelationAsync(new EntityRelation(gateway.getId(), newDevice.getId(), "Created"));
                 return newDevice;
             });
+            if (null == device) {
+                log.debug("[{}] NOT allowed add to add device [{}] to the gateway session", gatewaySessionId, deviceName);
+                throw new AdaptorException(String.format("Device name[%s] not exists, automatic creation of devices are not allowed via this gateway", deviceName));
+            }
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
             devices.put(deviceName, ctx);
             log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);
@@ -209,7 +218,7 @@ public class GatewaySessionCtx {
         }
     }
 
-    private String checkDeviceConnected(String deviceName) {
+    private String checkDeviceConnected(String deviceName) throws AdaptorException {
         if (!devices.containsKey(deviceName)) {
             log.debug("[{}] Missing device [{}] for the gateway session", gatewaySessionId, deviceName);
             onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);

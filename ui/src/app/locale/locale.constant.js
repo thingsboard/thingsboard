@@ -615,6 +615,7 @@ export default angular.module('thingsboard.locale', [])
                     "unable-delete-device-alias-title": "Unable to delete device alias",
                     "unable-delete-device-alias-text": "Device alias '{{deviceAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
                     "is-gateway": "Is gateway",
+                    "deny-device-creation-via-gateway": "Deny device creation via gateway",
                     "public": "Public",
                     "device-public": "Device is public",
                     "select-device": "Select device"
