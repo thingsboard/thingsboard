@@ -63,6 +63,7 @@ public abstract class AbstractMqttTelemetryIntegrationTest extends AbstractContr
     }
 
     @Test
+    @Ignore
     public void testPushMqttRpcData() throws Exception {
         String clientId = MqttAsyncClient.generateClientId();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId);

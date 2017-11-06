@@ -76,6 +76,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
     }
 
     @Test
+    @Ignore
     public void testServerMqttOneWayRpc() throws Exception {
         Device device = new Device();
         device.setName("Test One-Way Server-Side RPC");
@@ -141,6 +142,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
     }
 
     @Test
+    @Ignore
     public void testServerMqttTwoWayRpc() throws Exception {
         Device device = new Device();
         device.setName("Test Two-Way Server-Side RPC");
