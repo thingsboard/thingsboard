@@ -39,7 +39,7 @@
         <module>extension-rest-api-call</module>
         <module>extension-kafka</module>
         <module>extension-mqtt</module>
-        <module>extension-livy</module>
+        <module>extension-spark-computation</module>
     </modules>
 
 </project>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.action;
+package org.thingsboard.server.extensions.spark.computation.action;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,23 +21,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.extensions.api.component.Action;
 
-@Action(name = "Sample Spark Livy Action",
+@Action(name = "Sample Spark Computation Action",
         descriptor = "SampleSparkApplicationDescriptor.json", configuration = SampleSparkAppConfiguration.class)
 @Slf4j
 public class SampleSparkAppAction extends AbstractSparkAppAction<SampleSparkAppConfiguration> {
 
     @Override
-    protected String buildLivyRequest() {
-        LivyRequest.LivyRequestBuilder builder = LivyRequest.builder();
+    protected String buildSparkComputationRequest() {
+        SparkComputationRequest.SparkComputationRequestBuilder builder = SparkComputationRequest.builder();
         builder.file("/usr/livy-server-0.3.0/upload/spark-kafka-streaming-integration-1.0.0.jar");
         builder.className("org.thingsboard.samples.spark.SparkKafkaStreamingDemoMain");
         builder.args(args());
-        LivyRequest livyRequest = builder.build();
+        SparkComputationRequest sparkComputationRequest = builder.build();
         ObjectMapper mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
         String msgBody;
         try {
-            msgBody = mapper.writeValueAsString(livyRequest);
+            msgBody = mapper.writeValueAsString(sparkComputationRequest);
         } catch (JsonProcessingException e) {
             return "{}";
         }

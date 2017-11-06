@@ -13,25 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.action;
+package org.thingsboard.server.extensions.spark.computation.model;
 
-import lombok.Builder;
 import lombok.Data;
-import lombok.ToString;
-
-import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 @Data
-@Builder
-@ToString
-public class LivyRequest implements Serializable{
-    private final String[] jars;
-    private final String file;
-    private final String className;
-    private final int executorCores;
-    private final String executorMemory;
-    private final int driverCores;
-    private final String driverMemory;
-    private final String queue;
-    private final String[] args;
+public class Batch {
+    private int id;
+    private String appId;
+    private Map<String, String> appInfo;
+    private List<String> log;
+    private String state;
 }

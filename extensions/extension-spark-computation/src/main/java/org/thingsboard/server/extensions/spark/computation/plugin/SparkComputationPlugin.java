@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.plugin;
+package org.thingsboard.server.extensions.spark.computation.plugin;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -21,21 +21,21 @@ import org.thingsboard.server.extensions.api.component.Plugin;
 import org.thingsboard.server.extensions.api.plugins.AbstractPlugin;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.RuleMsgHandler;
-import org.thingsboard.server.extensions.livy.action.SampleSparkAppAction;
+import org.thingsboard.server.extensions.spark.computation.action.SampleSparkAppAction;
 
-@Plugin(name = "Livy Plugin", actions = {SampleSparkAppAction.class},
-        descriptor = "LivyPluginDescriptor.json", configuration = LivyPluginConfiguration.class)
+@Plugin(name = "Spark Computation Plugin", actions = {SampleSparkAppAction.class},
+        descriptor = "SparkComputationPluginDescriptor.json", configuration = SparkComputationPluginConfiguration.class)
 @Slf4j
-public class LivyPlugin extends AbstractPlugin<LivyPluginConfiguration> {
+public class SparkComputationPlugin extends AbstractPlugin<SparkComputationPluginConfiguration> {
 
     private static final String BASE_URL_TEMPLATE = "http://%s:%d";
-    private LivyPluginConfiguration configuration;
-    private LivyMessageHandler handler;
+    private SparkComputationPluginConfiguration configuration;
+    private SparkComputationMessageHandler handler;
     private HttpHeaders headers = new HttpHeaders();
     private String baseUrl;
 
     @Override
-    public void init(LivyPluginConfiguration configuration) {
+    public void init(SparkComputationPluginConfiguration configuration) {
         this.configuration = configuration;
         this.baseUrl = String.format(
                 BASE_URL_TEMPLATE,
@@ -51,7 +51,7 @@ public class LivyPlugin extends AbstractPlugin<LivyPluginConfiguration> {
     }
 
     private void init() {
-        this.handler = new LivyMessageHandler(baseUrl, headers);
+        this.handler = new SparkComputationMessageHandler(baseUrl, headers);
     }
 
     @Override

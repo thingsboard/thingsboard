@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.action;
+package org.thingsboard.server.extensions.spark.computation.action;
 
-import org.thingsboard.server.common.data.SparkApplication;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginAction;
@@ -28,7 +27,7 @@ import org.thingsboard.server.extensions.api.rules.SimpleRuleLifecycleComponent;
 
 import java.util.Optional;
 
-public abstract class AbstractSparkAppAction<T extends LivyPluginActionConfiguration> extends SimpleRuleLifecycleComponent implements PluginAction<T>{
+public abstract class AbstractSparkAppAction<T extends SparkComputationPluginActionConfiguration> extends SimpleRuleLifecycleComponent implements PluginAction<T>{
 
     protected T configuration;
 
@@ -40,12 +39,12 @@ public abstract class AbstractSparkAppAction<T extends LivyPluginActionConfigura
     @Override
     public Optional<RuleToPluginMsg<?>> convert(RuleContext ctx, ToDeviceActorMsg msg, RuleProcessingMetaData deviceMsgMd) {
         String application = configuration.getApplication();
-        LivyActionPayload.LivyActionPayloadBuilder builder = LivyActionPayload.builder();
+        SparkComputationActionPayload.SparkComputationActionPayloadBuilder builder = SparkComputationActionPayload.builder();
         builder.sparkApplication(application);
         builder.actionPath(configuration.getActionPath());
-        String request = buildLivyRequest();
+        String request = buildSparkComputationRequest();
         builder.msgBody(request);
-        return Optional.of(new LivyActionMessage(msg.getTenantId(),
+        return Optional.of(new SparkComputationActionMessage(msg.getTenantId(),
                 msg.getCustomerId(), msg.getDeviceId(), builder.build()));
     }
 
@@ -62,7 +61,7 @@ public abstract class AbstractSparkAppAction<T extends LivyPluginActionConfigura
         return true;
     }
 
-    protected abstract String buildLivyRequest();
+    protected abstract String buildSparkComputationRequest();
 
     protected abstract String[] args();
 }

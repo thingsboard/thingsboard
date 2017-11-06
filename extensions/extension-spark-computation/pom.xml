@@ -27,7 +27,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.thingsboard.extensions</groupId>
-    <artifactId>extension-livy</artifactId>
+    <artifactId>extension-spark-computation</artifactId>
     <packaging>jar</packaging>
 
     <name>Thingsboard Server Livy Extension</name>

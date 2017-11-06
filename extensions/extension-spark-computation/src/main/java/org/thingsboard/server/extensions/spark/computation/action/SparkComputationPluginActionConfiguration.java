@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.model;
+package org.thingsboard.server.extensions.spark.computation.action;
 
-public enum LivyStatus {
-    NOT_FOUND, RUNNING, STARTING, UNKNOWN
+import lombok.Data;
+import org.thingsboard.server.common.data.SparkApplication;
+
+@Data
+public class SparkComputationPluginActionConfiguration {
+    private String application;
+    private String gatewayApiToken;
+    private String actionPath;
+    private String endpoint; //MQTT endpoint to send data back to Thingsboard
 }

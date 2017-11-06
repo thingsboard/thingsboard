@@ -59,7 +59,7 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard.extensions</groupId>
-            <artifactId>extension-livy</artifactId>
+            <artifactId>extension-spark-computation</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -519,7 +519,7 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>org.thingsboard.extensions</groupId>
-                                    <artifactId>extension-livy</artifactId>
+                                    <artifactId>extension-spark-computation</artifactId>
                                     <classifier>extension</classifier>
                                 </artifactItem>
                             </artifactItems>

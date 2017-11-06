@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.action;
+package org.thingsboard.server.extensions.spark.computation.model;
 
-import lombok.Builder;
-import lombok.Data;
-import org.thingsboard.server.common.data.SparkApplication;
-import java.io.Serializable;
-
-@Data
-@Builder
-public class LivyActionPayload implements Serializable{
-    private final String actionPath;
-    private final String sparkApplication;
-    //private final HttpMethod httpMethod;
-    private final String msgBody;
-    //private final Integer requestId;
+public enum SparkComputationStatus {
+    NOT_FOUND, RUNNING, STARTING, UNKNOWN
 }

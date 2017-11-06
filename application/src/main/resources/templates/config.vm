@@ -31,9 +31,10 @@
 package ${model.getPackageName()};
 
 import lombok.Data;
+import org.thingsboard.server.extensions.spark.computation.action.SparkComputationPluginActionConfiguration;
 
 @Data
-public class ${model.getConfiguration().getClassName()} extends org.thingsboard.server.extensions.livy.action.LivyPluginActionConfiguration{
+public class ${model.getConfiguration().getClassName()} extends SparkComputationPluginActionConfiguration{
     private String application = "SAMPLE";
     #foreach ($mapEntry in $model.getConfiguration().getFields().entrySet())
     private ${mapEntry.value} ${mapEntry.key};

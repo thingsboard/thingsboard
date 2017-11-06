@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.action;
+package org.thingsboard.server.extensions.spark.computation.action;
 
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.SparkApplication;
+import lombok.ToString;
+
+import java.io.Serializable;
 
 @Data
-public class LivyPluginActionConfiguration {
-    private String application;
-    private String gatewayApiToken;
-    private String actionPath;
-    private String endpoint; //MQTT endpoint to send data back to Thingsboard
+@Builder
+@ToString
+public class SparkComputationRequest implements Serializable{
+    private final String[] jars;
+    private final String file;
+    private final String className;
+    private final int executorCores;
+    private final String executorMemory;
+    private final int driverCores;
+    private final String driverMemory;
+    private final String queue;
+    private final String[] args;
 }

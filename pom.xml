@@ -351,7 +351,7 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-livy</artifactId>
+                <artifactId>extension-spark-computation</artifactId>
                 <classifier>extension</classifier>
                 <version>${project.version}</version>
             </dependency>

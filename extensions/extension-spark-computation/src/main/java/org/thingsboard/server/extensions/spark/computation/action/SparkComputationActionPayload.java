@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.action;
+package org.thingsboard.server.extensions.spark.computation.action;
 
+import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.SparkApplication;
+import java.io.Serializable;
 
 @Data
-public class SampleSparkAppConfiguration extends LivyPluginActionConfiguration{
-    private String application = "Sample";
-    private String zkUrl;
-    private String kafkaBrokers;
-    private String topic;
-    private long window;
+@Builder
+public class SparkComputationActionPayload implements Serializable{
+    private final String actionPath;
+    private final String sparkApplication;
+    private final String msgBody;
 }

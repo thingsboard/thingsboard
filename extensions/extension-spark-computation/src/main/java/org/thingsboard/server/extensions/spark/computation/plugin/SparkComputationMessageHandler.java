@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.plugin;
+package org.thingsboard.server.extensions.spark.computation.plugin;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +30,10 @@ import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.RuleMsgHandler;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
 import org.thingsboard.server.extensions.api.rules.RuleException;
-import org.thingsboard.server.extensions.livy.action.LivyActionMessage;
-import org.thingsboard.server.extensions.livy.action.LivyActionPayload;
-import org.thingsboard.server.extensions.livy.model.Batch;
-import org.thingsboard.server.extensions.livy.model.LivyStatus;
+import org.thingsboard.server.extensions.spark.computation.action.SparkComputationActionMessage;
+import org.thingsboard.server.extensions.spark.computation.action.SparkComputationActionPayload;
+import org.thingsboard.server.extensions.spark.computation.model.Batch;
+import org.thingsboard.server.extensions.spark.computation.model.SparkComputationStatus;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @RequiredArgsConstructor
-public class LivyMessageHandler implements RuleMsgHandler {
+public class SparkComputationMessageHandler implements RuleMsgHandler {
 
     private static final String SPARK_APP_KEY = "sparkApplication_";
     private static final String batchStateURI = "/batches/%d";
@@ -52,17 +52,17 @@ public class LivyMessageHandler implements RuleMsgHandler {
 
     @Override
     public void process(PluginContext ctx, TenantId tenantId, RuleId ruleId, RuleToPluginMsg<?> msg) throws RuleException {
-        if (!(msg instanceof LivyActionMessage)) {
+        if (!(msg instanceof SparkComputationActionMessage)) {
             throw new RuleException("Unsupported message type " + msg.getClass().getName() + "!");
         }
-        LivyActionPayload payload = ((LivyActionMessage)msg).getPayload();
+        SparkComputationActionPayload payload = ((SparkComputationActionMessage)msg).getPayload();
         PluginCallback<List<AttributeKvEntry>> callback = pluginCallback(tenantId, ruleId, payload);
         if(!isSparkAppRunning(sparkApplicationKey(payload))) {
             ctx.loadAttributes(ruleId, DataConstants.SERVER_SCOPE, Collections.singleton(sparkApplicationKey(payload)), callback);
         }
     }
 
-    private PluginCallback<List<AttributeKvEntry>> pluginCallback(TenantId tenantId, RuleId ruleId, LivyActionPayload payload) {
+    private PluginCallback<List<AttributeKvEntry>> pluginCallback(TenantId tenantId, RuleId ruleId, SparkComputationActionPayload payload) {
         return new PluginCallback<List<AttributeKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
@@ -79,7 +79,7 @@ public class LivyMessageHandler implements RuleMsgHandler {
         };
     }
 
-    private String sparkApplicationKey(LivyActionPayload payload) {
+    private String sparkApplicationKey(SparkComputationActionPayload payload) {
         return SPARK_APP_KEY + payload.getSparkApplication();
     }
 
@@ -87,7 +87,7 @@ public class LivyMessageHandler implements RuleMsgHandler {
         return !StringUtils.isEmpty(sparkAppsForTenant.get(sparkApplication));
     }
 
-    private void onPluginCallbackSuccess(PluginContext ctx, List<AttributeKvEntry> values, LivyActionPayload payload, TenantId tenantId, RuleId ruleId) {
+    private void onPluginCallbackSuccess(PluginContext ctx, List<AttributeKvEntry> values, SparkComputationActionPayload payload, TenantId tenantId, RuleId ruleId) {
         final String sparkApplication = sparkApplicationKey(payload);
         setSparkJobStatusFromAttributes(values, sparkApplication);
         Batch batch = postSparkApplication(payload, sparkApplication);
@@ -100,29 +100,29 @@ public class LivyMessageHandler implements RuleMsgHandler {
         for (AttributeKvEntry e : values) {
             if (e.getKey().equalsIgnoreCase(sparkApplication) &&
                     !StringUtils.isEmpty(e.getValueAsString())) {
-                LivyStatus status = fetchSparkJobStatus(Integer.parseInt(e.getValueAsString()));
-                if(status == LivyStatus.RUNNING || status == LivyStatus.STARTING) {
+                SparkComputationStatus status = fetchSparkJobStatus(Integer.parseInt(e.getValueAsString()));
+                if(status == SparkComputationStatus.RUNNING || status == SparkComputationStatus.STARTING) {
                     sparkAppsForTenant.putIfAbsent(sparkApplication, e.getValueAsString());
                 }
             }
         }
     }
 
-    private LivyStatus fetchSparkJobStatus(int batchId){
+    private SparkComputationStatus fetchSparkJobStatus(int batchId){
         String url = String.format(this.baseUrl + batchStateURI, batchId);
         try {
             ResponseEntity<Batch> response = new RestTemplate().exchange(
                     url, HttpMethod.GET, new HttpEntity<>(headers), Batch.class);
             if (response.getStatusCode() == HttpStatus.OK) {
-                return LivyStatus.RUNNING;
+                return SparkComputationStatus.RUNNING;
             }
         }catch (RestClientException e){
-            return LivyStatus.NOT_FOUND;
+            return SparkComputationStatus.NOT_FOUND;
         }
-        return LivyStatus.UNKNOWN; //TODO: Throw an exception in this case
+        return SparkComputationStatus.UNKNOWN; //TODO: Throw an exception in this case
     }
 
-    private synchronized Batch postSparkApplication(LivyActionPayload payload, String sparkApplication) {
+    private synchronized Batch postSparkApplication(SparkComputationActionPayload payload, String sparkApplication) {
         if (!isSparkAppRunning(sparkApplication)) {
             try {
                 ResponseEntity<Batch> response = new RestTemplate().exchange(

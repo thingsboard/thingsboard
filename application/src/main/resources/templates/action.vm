@@ -33,10 +33,10 @@ package ${model.getPackageName()};
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.thingsboard.server.extensions.livy.action.LivyRequest;
+import org.thingsboard.server.extensions.spark.computation.action.SparkComputationRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.extensions.api.component.Action;
-import org.thingsboard.server.extensions.livy.action.AbstractSparkAppAction;
+import org.thingsboard.server.extensions.spark.computation.action.AbstractSparkAppAction;
 
 @Action(name = "${model.getName()}",
         descriptor = "${model.getDescriptor()}", configuration = ${model.getConfiguration().getClassName()}.class)
@@ -44,17 +44,17 @@ import org.thingsboard.server.extensions.livy.action.AbstractSparkAppAction;
 public class ${model.getClassName()} extends AbstractSparkAppAction<${model.getConfiguration().getClassName()}> {
 
     @Override
-    protected String buildLivyRequest() {
-        LivyRequest.LivyRequestBuilder builder = LivyRequest.builder();
+    protected String buildSparkComputationRequest() {
+        SparkComputationRequest.SparkComputationRequestBuilder builder = SparkComputationRequest.builder();;
         builder.file("/usr/livy-server-0.3.0/upload/${model.getRequest().getJar()}");
         builder.className("${model.getRequest().getMainClass()}");
         builder.args(args());
-        LivyRequest livyRequest = builder.build();
+        SparkComputationRequest sparkComputationRequest = builder.build();
         ObjectMapper mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
         String msgBody;
         try {
-            msgBody = mapper.writeValueAsString(livyRequest);
+            msgBody = mapper.writeValueAsString(sparkComputationRequest);
         } catch (JsonProcessingException e) {
             return "{}";
         }

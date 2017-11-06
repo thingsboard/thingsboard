@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.plugin;
+package org.thingsboard.server.extensions.spark.computation.action;
 
 import lombok.Data;
-import org.thingsboard.server.extensions.core.plugin.KeyValuePluginProperties;
-
-import java.util.List;
 
 @Data
-public class LivyPluginConfiguration {
-    private String host;
-    private int port;
-    private List<KeyValuePluginProperties> headers;
+public class SampleSparkAppConfiguration extends SparkComputationPluginActionConfiguration {
+    private String application = "Sample";
+    private String zkUrl;
+    private String kafkaBrokers;
+    private String topic;
+    private long window;
 }

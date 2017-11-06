@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.action;
+package org.thingsboard.server.extensions.spark.computation.action;
 
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.extensions.api.plugins.msg.AbstractRuleToPluginMsg;
 
-public class LivyActionMessage extends AbstractRuleToPluginMsg<LivyActionPayload>{
-    public LivyActionMessage(TenantId tenantId, CustomerId customerId, DeviceId deviceId, LivyActionPayload payload) {
+public class SparkComputationActionMessage extends AbstractRuleToPluginMsg<SparkComputationActionPayload>{
+    public SparkComputationActionMessage(TenantId tenantId, CustomerId customerId, DeviceId deviceId, SparkComputationActionPayload payload) {
         super(tenantId, customerId, deviceId, payload);
     }
 }

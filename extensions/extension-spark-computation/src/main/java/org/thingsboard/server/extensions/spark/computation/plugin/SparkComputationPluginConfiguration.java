@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.livy.model;
+package org.thingsboard.server.extensions.spark.computation.plugin;
 
 import lombok.Data;
+import org.thingsboard.server.extensions.core.plugin.KeyValuePluginProperties;
+
 import java.util.List;
-import java.util.Map;
 
 @Data
-public class Batch {
-    private int id;
-    private String appId;
-    private Map<String, String> appInfo;
-    private List<String> log;
-    private String state;
+public class SparkComputationPluginConfiguration {
+    private String host;
+    private int port;
+    private List<KeyValuePluginProperties> headers;
 }
