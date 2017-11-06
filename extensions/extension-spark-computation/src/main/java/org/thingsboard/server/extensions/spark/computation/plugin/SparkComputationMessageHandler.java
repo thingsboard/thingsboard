@@ -38,13 +38,14 @@ import org.thingsboard.server.extensions.spark.computation.model.SparkComputatio
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @RequiredArgsConstructor
 public class SparkComputationMessageHandler implements RuleMsgHandler {
 
-    private static final String SPARK_APP_KEY = "sparkApplication_";
+    private static final String SPARK_COMPUTATION = "COMPUTATION_%s_%s";
     private static final String batchStateURI = "/batches/%d";
     private final String baseUrl;
     private final HttpHeaders headers;
@@ -57,8 +58,8 @@ public class SparkComputationMessageHandler implements RuleMsgHandler {
         }
         SparkComputationActionPayload payload = ((SparkComputationActionMessage)msg).getPayload();
         PluginCallback<List<AttributeKvEntry>> callback = pluginCallback(tenantId, ruleId, payload);
-        if(!isSparkAppRunning(sparkApplicationKey(payload))) {
-            ctx.loadAttributes(ruleId, DataConstants.SERVER_SCOPE, Collections.singleton(sparkApplicationKey(payload)), callback);
+        if(!isSparkAppRunning(sparkApplicationKey(payload, ruleId.getId()))) {
+            ctx.loadAttributes(ruleId, DataConstants.SERVER_SCOPE, Collections.singleton(sparkApplicationKey(payload, ruleId.getId())), callback);
         }
     }
 
@@ -66,7 +67,7 @@ public class SparkComputationMessageHandler implements RuleMsgHandler {
         return new PluginCallback<List<AttributeKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<AttributeKvEntry> values) {
-                final String sparkApplication = sparkApplicationKey(payload);
+                final String sparkApplication = sparkApplicationKey(payload, ruleId.getId());
                 if (!isSparkAppRunning(sparkApplication)) {
                     onPluginCallbackSuccess(ctx, values, payload, tenantId, ruleId);
                 }
@@ -79,8 +80,8 @@ public class SparkComputationMessageHandler implements RuleMsgHandler {
         };
     }
 
-    private String sparkApplicationKey(SparkComputationActionPayload payload) {
-        return SPARK_APP_KEY + payload.getSparkApplication();
+    private String sparkApplicationKey(SparkComputationActionPayload payload, UUID ruleId) {
+        return String.format(SPARK_COMPUTATION, payload.getSparkApplication(), ruleId.toString());
     }
 
     private boolean isSparkAppRunning(String sparkApplication){
@@ -88,7 +89,7 @@ public class SparkComputationMessageHandler implements RuleMsgHandler {
     }
 
     private void onPluginCallbackSuccess(PluginContext ctx, List<AttributeKvEntry> values, SparkComputationActionPayload payload, TenantId tenantId, RuleId ruleId) {
-        final String sparkApplication = sparkApplicationKey(payload);
+        final String sparkApplication = sparkApplicationKey(payload, ruleId.getId());
         setSparkJobStatusFromAttributes(values, sparkApplication);
         Batch batch = postSparkApplication(payload, sparkApplication);
         if (batch != null) {
@@ -132,7 +133,7 @@ public class SparkComputationMessageHandler implements RuleMsgHandler {
                         Batch.class);
                 if (response.getStatusCode() == HttpStatus.CREATED) {
                     Batch res =  response.getBody();
-                    sparkAppsForTenant.putIfAbsent(sparkApplication, String.valueOf(res.getId()));
+                    sparkAppsForTenant.put(sparkApplication, String.valueOf(res.getId()));
                     return res;
                 }
             } catch (RestClientException e) {
