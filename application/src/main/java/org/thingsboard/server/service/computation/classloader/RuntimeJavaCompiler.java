@@ -72,7 +72,7 @@ public class RuntimeJavaCompiler {
         }
     }
 
-    private void initClassPath() throws IOException, URISyntaxException {
+    private void initClassPath() throws IOException, URISyntaxException, CompilationException {
         if(!classPathInitialized) {
             Set<File> classPaths = new HashSet<>();
             appendExistingClasspath(classPaths);
@@ -94,13 +94,13 @@ public class RuntimeJavaCompiler {
         classPaths.add(tempDir);
     }
 
-    private void addClassDirectoryToClassPath(URLClassLoader loader){
+    private void addClassDirectoryToClassPath(URLClassLoader loader) throws CompilationException {
         try {
             Method method = URLClassLoader.class.getDeclaredMethod("addURL", new Class[]{URL.class});
             method.setAccessible(true);
             method.invoke(loader, new Object[]{tempDir.toURI().toURL()});
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new CompilationException("Error while adding temporary directory on classpath", e);
         }
     }
 
@@ -117,8 +117,11 @@ public class RuntimeJavaCompiler {
             File sourceFile = createSourceFile(fullName, sourceCode.toString());
             log.debug("Starting to compile source code.");
 
+            List<String> options = new ArrayList<>();
+            options.addAll(Arrays.asList("-source", "1.8"));
+
             Iterable<? extends JavaFileObject> sourceObject = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFile));
-            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, null,
+            JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options,
                     null, sourceObject);
             if (!task.call()) {
                 for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {

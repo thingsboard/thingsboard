@@ -36,11 +36,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.thingsboard.server.extensions.livy.action.LivyRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.extensions.api.component.Action;
+import org.thingsboard.server.extensions.livy.action.AbstractSparkAppAction;
 
 @Action(name = "${model.getName()}",
         descriptor = "${model.getDescriptor()}", configuration = ${model.getConfiguration().getClassName()}.class)
 @Slf4j
-public class ${model.getClassName()} extends org.thingsboard.server.extensions.livy.action.AbstractSparkAppAction<${model.getConfiguration().getClassName()}> {
+public class ${model.getClassName()} extends AbstractSparkAppAction<${model.getConfiguration().getClassName()}> {
 
     @Override
     protected String buildLivyRequest() {

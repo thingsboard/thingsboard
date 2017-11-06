@@ -51,7 +51,7 @@
         <jackson.version>2.8.8.1</jackson.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <scala.version>2.11</scala.version>
-        <akka.version>2.4.19</akka.version>
+        <akka.version>2.4.2</akka.version>
         <californium.version>1.0.2</californium.version>
         <gson.version>2.6.2</gson.version>
         <velocity.version>1.7</velocity.version>
@@ -602,11 +602,6 @@
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-slf4j_${scala.version}</artifactId>
                 <version>${akka.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.lightbend.akka</groupId>
-                <artifactId>akka-stream-alpakka-file_${scala.version}</artifactId>
-                <version>0.14</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.californium</groupId>

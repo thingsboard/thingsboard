@@ -91,8 +91,6 @@ public class DefaultActorService implements ActorService {
 
     private ActorRef rpcManagerActor;
 
-    private ActorRef sparkComputationActor;
-
     @PostConstruct
     public void initActorSystem() {
         log.info("Initializing Actor system. {}", actorContext.getRuleService());
