@@ -47,7 +47,7 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
     private Long pollingInterval;
 
     private RuntimeJavaCompiler compiler;
-    private final String PLUGIN_CLAZZ = "SparkComputationPlugin";
+    private final String PLUGIN_CLAZZ = "org.thingsboard.server.extensions.spark.computation.plugin.SparkComputationPlugin";
 
     private ComponentDiscoveryService componentDiscoveryService;
 

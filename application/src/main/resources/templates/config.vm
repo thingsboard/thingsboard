@@ -35,7 +35,7 @@ import org.thingsboard.server.extensions.spark.computation.action.SparkComputati
 
 @Data
 public class ${model.getConfiguration().getClassName()} extends SparkComputationPluginActionConfiguration{
-    private String application = "SAMPLE";
+    private String application = "${model.getApplicationKey()}";
     #foreach ($mapEntry in $model.getConfiguration().getFields().entrySet())
     private ${mapEntry.value} ${mapEntry.key};
 	#end

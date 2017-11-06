@@ -103,6 +103,7 @@ public class AnnotationsProcessor {
         SparkAction action = clazz.getAnnotation(SparkAction.class);
         SparkActionType model = new SparkActionType();
         model.setPackageName(clazz.getPackage().getName());
+        model.setApplicationKey(action.applicationKey());
         model.setClassName(action.actionClass());
         model.setName(action.name());
         model.setDescriptor(action.descriptor());
