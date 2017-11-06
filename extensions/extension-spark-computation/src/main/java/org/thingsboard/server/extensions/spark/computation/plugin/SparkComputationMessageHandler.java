@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SparkComputationMessageHandler implements RuleMsgHandler {
 
     private static final String SPARK_COMPUTATION = "COMPUTATION_%s_%s";
-    private static final String batchStateURI = "/batches/%d";
+    private static final String batchStateURI = "batches/%d";
     private final String baseUrl;
     private final HttpHeaders headers;
     private volatile Map<String, String> sparkAppsForTenant = new ConcurrentHashMap<>();

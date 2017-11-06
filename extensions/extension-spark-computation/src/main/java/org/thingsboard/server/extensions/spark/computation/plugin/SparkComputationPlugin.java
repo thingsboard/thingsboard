@@ -28,7 +28,7 @@ import org.thingsboard.server.extensions.spark.computation.action.SampleSparkApp
 @Slf4j
 public class SparkComputationPlugin extends AbstractPlugin<SparkComputationPluginConfiguration> {
 
-    private static final String BASE_URL_TEMPLATE = "http://%s:%d";
+    private static final String BASE_URL_TEMPLATE = "http://%s:%d/";
     private SparkComputationPluginConfiguration configuration;
     private SparkComputationMessageHandler handler;
     private HttpHeaders headers = new HttpHeaders();
