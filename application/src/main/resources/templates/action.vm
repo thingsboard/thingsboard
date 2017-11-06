@@ -45,7 +45,7 @@ public class ${model.getClassName()} extends AbstractSparkAppAction<${model.getC
 
     @Override
     protected String buildSparkComputationRequest() {
-        SparkComputationRequest.SparkComputationRequestBuilder builder = SparkComputationRequest.builder();;
+        SparkComputationRequest.SparkComputationRequestBuilder builder = SparkComputationRequest.builder();
         builder.file("/usr/livy-server-0.3.0/upload/${model.getRequest().getJar()}");
         builder.className("${model.getRequest().getMainClass()}");
         builder.args(args());
