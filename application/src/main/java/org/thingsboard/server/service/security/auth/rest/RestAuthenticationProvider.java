@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -37,32 +35,14 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
-import javax.naming.Context;
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.util.Hashtable;
 import java.util.UUID;
 
 @Component
-@Slf4j
 public class RestAuthenticationProvider implements AuthenticationProvider {
 
     private final BCryptPasswordEncoder encoder;
     private final UserService userService;
     private final CustomerService customerService;
-
-    @Value("${ldap.authentication-enabled}")
-    private boolean ldapEnabled;
-
-    @Value("${ldap.authentication-server}")
-    private String ldapURL;
-
-    @Value("${ldap.basedn}")
-    private String base;
-
-    @Value("${ldap.id-attribute}")
-    private String idAttribute;
 
     @Autowired
     public RestAuthenticationProvider(final UserService userService, final CustomerService customerService, final BCryptPasswordEncoder encoder) {
@@ -106,19 +86,10 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             throw new DisabledException("User is not active");
         }
 
-        if(ldapEnabled) {
-            try {
-                authenticateUsignLdap(username, password);
-            } catch (AuthenticationException e) {
-                throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");
-            } catch (NamingException e) {
-                throw new AuthenticationServiceException("LDAP service configuration error");
-            }
-        } else {
-            if (!encoder.matches(password, userCredentials.getPassword())) {
-                throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");
-            }
+        if (!encoder.matches(password, userCredentials.getPassword())) {
+            throw new BadCredentialsException("Authentication Failed. Username or Password not valid.");
         }
+
         if (user.getAuthority() == null) throw new InsufficientAuthenticationException("User has no authority assigned");
 
         SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
@@ -155,17 +126,6 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         SecurityUser securityUser = new SecurityUser(user, true, userPrincipal);
 
         return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
-    }
-
-    private void authenticateUsignLdap(String username, String password) throws AuthenticationException, NamingException {
-        String dn = idAttribute + "=" + username + "," + base;
-        Hashtable<String, String> environment = new Hashtable<String, String>();
-        environment.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        environment.put(Context.PROVIDER_URL, ldapURL);
-        environment.put(Context.SECURITY_AUTHENTICATION, "simple");
-        environment.put(Context.SECURITY_PRINCIPAL, dn);
-        environment.put(Context.SECURITY_CREDENTIALS, password);
-        DirContext authContext = new InitialDirContext(environment);
     }
 
     @Override

@@ -32,12 +32,6 @@ server:
     # Alias that identifies the key in the key store
     key-alias: "${SSL_KEY_ALIAS:tomcat}"
 
-ldap:
-  authentication-enabled: "${LDAP_AUTHENTICATION_ENABLED:false}"
-  authentication-server: "${LDAP_AUTH_SERVER:ldap://openldap:389}"
-  basedn: "${LDAP_BASE_DN:dc=example,dc=org}"
-  id-attribute: "${LDAP_ID_ATTRIBUTE:uid}"
-
 # Zookeeper connection parameters. Used for service discovery.
 zk:
   # Enable/disable zookeeper discovery service.
