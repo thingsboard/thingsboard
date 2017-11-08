@@ -69,6 +69,9 @@ public class BaseApplicationControllerTest extends AbstractControllerTest {
         tenantAdmin.setFirstName("Joe");
         tenantAdmin.setLastName("Downs");
 
+        if(ldapEnabled) {
+            createLDAPEntry(tenantAdmin.getEmail(), "testPassword1");
+        }
         tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
 
 
@@ -90,7 +93,9 @@ public class BaseApplicationControllerTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
-
+        if(ldapEnabled) {
+            deleteLDAPEntry(tenantAdmin.getEmail());
+        }
         doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }
@@ -194,11 +199,15 @@ public class BaseApplicationControllerTest extends AbstractControllerTest {
         User tenantAdmin2 = new User();
         tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin2.setTenantId(savedTenant2.getId());
-        tenantAdmin2.setEmail("tenant3@thingsboard.org");
+        tenantAdmin2.setEmail("sometenant@thingsboard.org");
         tenantAdmin2.setFirstName("Joe");
         tenantAdmin2.setLastName("Downs");
 
-        tenantAdmin2 = createUserAndLogin(tenantAdmin2, "testPassword1");
+        System.out.println("JetinderSinghRathore"+ldapEnabled);
+        if(ldapEnabled) {
+            createLDAPEntry(tenantAdmin2.getEmail(), "testPassword1");
+        }
+        createUserAndLogin(tenantAdmin2, "testPassword1");
 
         Customer customer = new Customer();
         customer.setTitle("Different customer");
@@ -217,6 +226,9 @@ public class BaseApplicationControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
+        if(ldapEnabled) {
+            deleteLDAPEntry(tenantAdmin2.getEmail());
+        }
         doDelete("/api/tenant/"+savedTenant2.getId().getId().toString())
                 .andExpect(status().isOk());
     }

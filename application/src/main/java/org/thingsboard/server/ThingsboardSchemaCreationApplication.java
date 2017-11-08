@@ -38,7 +38,6 @@ public class ThingsboardSchemaCreationApplication {
     private static final String DEFAULT_SPRING_CONFIG_PARAM = SPRING_CONFIG_NAME_KEY + "=" + "thingsboard";
 
     public static void main(String[] args) {
-        System.out.println("Jetinder starting schema creation");
         SpringApplication application = new SpringApplication(ThingsboardInstallApplication.class);
         application.setAdditionalProfiles("install");
         ConfigurableApplicationContext context = application.run(updateArguments(args));
