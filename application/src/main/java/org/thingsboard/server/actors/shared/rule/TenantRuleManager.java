@@ -16,7 +16,9 @@
 package org.thingsboard.server.actors.shared.rule;
 
 import akka.actor.ActorContext;
+import akka.actor.ActorRef;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.rule.RuleActorMetaData;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
@@ -45,4 +47,8 @@ public class TenantRuleManager extends RuleManager {
         return DefaultActorService.TENANT_RULE_DISPATCHER_NAME;
     }
 
+    @Override
+    RuleActorMetaData getRuleActorMetadata(RuleMetaData rule, ActorRef actorRef) {
+        return RuleActorMetaData.tenantRule(rule.getId(), rule.getWeight(), actorRef);
+    }
 }

@@ -255,6 +255,7 @@ public class ModelConstants {
 
     public static final String PLUGIN_BY_API_TOKEN_COLUMN_FAMILY_NAME = "plugin_by_api_token";
     public static final String PLUGIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "plugin_by_tenant_and_search_text";
+    public static final String PLUGIN_BY_CLASS_COLUMN_FAMILY_NAME = "plugin_by_clazz";
 
     /**
      * Cassandra plugin component metadata constants.

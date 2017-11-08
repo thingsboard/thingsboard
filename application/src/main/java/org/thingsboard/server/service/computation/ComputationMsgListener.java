@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.computation;
 
-public interface ComputationDiscoveryService {
-    void discoverDynamicComponents();
+import org.thingsboard.server.common.msg.computation.ComputationMsg;
+import scala.concurrent.Future;
+
+public interface ComputationMsgListener {
+    Future<Object> onMsg(ComputationMsg msg);
 }

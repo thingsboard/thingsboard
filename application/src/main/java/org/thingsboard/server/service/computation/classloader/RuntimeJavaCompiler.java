@@ -197,4 +197,12 @@ public class RuntimeJavaCompiler {
         return StringUtils.isNotEmpty(jarName) &&
                 jarName.endsWith(JAR);
     }
+
+    public void destroy(){
+        try {
+            fileManager.close();
+        } catch (IOException e) {
+            log.error("Error while closing file manager", e);
+        }
+    }
 }

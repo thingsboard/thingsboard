@@ -225,6 +225,12 @@ public class BasePluginService extends AbstractEntityService implements PluginSe
         tenantPluginRemover.removeEntities(tenantId);
     }
 
+    @Override
+    public PluginMetaData findPluginByClass(String pluginClazz) {
+        Validator.validateString(pluginClazz, "Incorrect plugin class for search request.");
+        return pluginDao.findByPluginClass(pluginClazz);
+    }
+
 
     private DataValidator<PluginMetaData> pluginValidator =
             new DataValidator<PluginMetaData>() {

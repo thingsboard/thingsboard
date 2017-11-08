@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.rule.RuleService;
-
 import java.util.*;
 
 @Slf4j
@@ -80,35 +79,42 @@ public abstract class RuleManager {
         RuleMetaData rule;
         if (event != ComponentLifecycleEvent.DELETED) {
             rule = systemContext.getRuleService().findRuleById(ruleId);
+            if(rule != null){
+                RuleActorMetaData actorMd = ruleMap.get(rule);
+                if (actorMd == null) {
+                    ActorRef ref = getOrCreateRuleActor(context, rule.getId());
+                    actorMd = getRuleActorMetadata(rule, ref);
+                    ruleMap.put(rule, actorMd);
+                }
+                refreshRuleChain();
+                return Optional.of(actorMd.getActorRef());
+            }
         } else {
             rule = ruleMap.keySet().stream()
                     .filter(r -> r.getId().equals(ruleId))
                     .peek(r -> r.setState(ComponentLifecycleState.SUSPENDED))
                     .findFirst()
                     .orElse(null);
+            log.debug("Suspended rule {}", rule);
             if (rule != null) {
-                ruleMap.remove(rule);
-                ruleActors.remove(ruleId);
+                RuleActorMetaData ruleActorMetaData = ruleMap.get(rule);
+                if(ruleActorMetaData != null){
+                    ruleMap.remove(rule);
+                    ruleActors.remove(ruleId);
+                    refreshRuleChain();
+                    return Optional.of(ruleActorMetaData.getActorRef());
+                }
             }
         }
-        if (rule != null) {
-            RuleActorMetaData actorMd = ruleMap.get(rule);
-            if (actorMd == null) {
-                ActorRef ref = getOrCreateRuleActor(context, rule.getId());
-                actorMd = RuleActorMetaData.systemRule(rule.getId(), rule.getWeight(), ref);
-                ruleMap.put(rule, actorMd);
-            }
-            refreshRuleChain();
-            return Optional.of(actorMd.getActorRef());
-        } else {
-            log.warn("[{}] Can't process unknown rule!", ruleId);
-            return Optional.empty();
-        }
+        log.warn("[{}] Can't process unknown rule!", ruleId);
+        return Optional.empty();
     }
 
     abstract FetchFunction<RuleMetaData> getFetchRulesFunction();
 
     abstract String getDispatcherName();
+
+    abstract RuleActorMetaData getRuleActorMetadata(RuleMetaData rule, ActorRef actorRef);
 
     public ActorRef getOrCreateRuleActor(ActorContext context, RuleId ruleId) {
         return ruleActors.computeIfAbsent(ruleId, rId ->

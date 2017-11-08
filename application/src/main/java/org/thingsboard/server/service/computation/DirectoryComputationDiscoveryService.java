@@ -15,30 +15,48 @@
  */
 package org.thingsboard.server.service.computation;
 
+import akka.dispatch.ExecutionContexts;
+import akka.dispatch.OnComplete;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
+import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.msg.computation.ComputationActionCompiled;
+import org.thingsboard.server.common.msg.computation.ComputationActionDeleted;
+import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.computation.annotation.AnnotationsProcessor;
 import org.thingsboard.server.service.computation.classloader.RuntimeJavaCompiler;
 import org.thingsboard.server.utils.MiscUtils;
+import scala.concurrent.Future;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-@Service
+@Service("computationDiscoveryService")
 @Slf4j
 public class DirectoryComputationDiscoveryService implements ComputationDiscoveryService{
+
+    private static final Executor executor = Executors.newSingleThreadExecutor();
+    private final String PLUGIN_CLAZZ = "org.thingsboard.server.extensions.spark.computation.plugin.SparkComputationPlugin";
 
     @Value("${spark.jar_path}")
     private String libraryPath;
@@ -46,17 +64,27 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
     @Value("${spark.polling_interval}")
     private Long pollingInterval;
 
-    private RuntimeJavaCompiler compiler;
-    private final String PLUGIN_CLAZZ = "org.thingsboard.server.extensions.spark.computation.plugin.SparkComputationPlugin";
-
+    @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
 
-    @Override
-    public void init(ComponentDiscoveryService service) {
+    @Autowired
+    private PluginService pluginService;
+
+    @Autowired
+    private ApplicationContext context;
+
+    private RuntimeJavaCompiler compiler;
+    private FileAlterationMonitor monitor;
+    private Map<String, Set<String>> processedJarsSources = new HashMap<>();
+
+    @PostConstruct
+    public void init() {
+        log.warn("Initializing bean Directory Computation discovery.");
         Assert.hasLength(libraryPath, MiscUtils.missingProperty("spark.jar_path"));
         Assert.notNull(pollingInterval, MiscUtils.missingProperty("spark.polling_interval"));
         this.compiler = new RuntimeJavaCompiler();
-        this.componentDiscoveryService = service;
+        discoverDynamicComponents();
+        startPolling();
     }
 
     public void discoverDynamicComponents(){
@@ -70,11 +98,12 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
                     List<ComputationActionCompiled> c = processor.processAnnotations();
                     if(c != null && !c.isEmpty()) {
                         compiledActions.addAll(c);
+                        processedJarsSources.put(j.toFile().getName(),
+                                c.stream().map(ComputationActionCompiled::getActionClazz).collect(Collectors.toSet()));
                     }
                 }
             }
             componentDiscoveryService.updateActionsForPlugin(compiledActions, PLUGIN_CLAZZ);
-            startPolling();
         } catch (IOException e) {
             log.error("Error while reading jars from directory.", e);
         }
@@ -84,7 +113,7 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
         try {
             final FileSystem fs = FileSystems.getDefault();
             FileAlterationObserver observer = new FileAlterationObserver(fs.getPath(libraryPath).toFile());
-            FileAlterationMonitor monitor = new FileAlterationMonitor(pollingInterval * 1000);
+            monitor = new FileAlterationMonitor(pollingInterval * 1000);
             observer.addListener(newListener());
             monitor.addObserver(observer);
             monitor.start();
@@ -102,16 +131,47 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
         return new FileAlterationListenerAdaptor(){
             @Override
             public void onFileCreate(File file) {
+                log.debug("File {} is created", file.getAbsolutePath());
                 processComponent(file);
             }
 
             @Override
             public void onFileChange(File file) {
+                log.debug("File {} is modified", file.getAbsolutePath());
                 processComponent(file);
             }
 
+            @Override
+            public void onFileDelete(File file){
+                log.debug("File {} is deleted", file.getAbsolutePath());
+                Set<String> actionsToRemove = processedJarsSources.get(file.getName());
+                if(actionsToRemove != null && !actionsToRemove.isEmpty()){
+                    log.debug("Actions to remove are {}", actionsToRemove);
+                    ComputationMsgListener listener = context.getBean(ComputationMsgListener.class);
+                    Optional<ComponentDescriptor> plugin = componentDiscoveryService.getComponent(PLUGIN_CLAZZ);
+                    if(plugin.isPresent() && listener != null) {
+                        PluginMetaData pluginMetadata = pluginService.findPluginByClass(PLUGIN_CLAZZ);
+                        if(pluginMetadata != null) {
+                            log.debug("Plugin Metadata found {}", pluginMetadata);
+                            final ComputationActionDeleted msg = new ComputationActionDeleted(actionsToRemove, pluginMetadata.getApiToken());
+                            Future<Object> fut = listener.onMsg(msg);
+
+                            fut.onComplete(new OnComplete<Object>(){
+                                public void onComplete(Throwable t, Object result){
+                                    if(t != null){
+                                        log.error("Error occurred while trying to delete rules", t);
+                                    }else {
+                                        log.info("Deleting action descriptors from plugin");
+                                        componentDiscoveryService.deleteActionsFromPlugin(msg, PLUGIN_CLAZZ);
+                                    }
+                                }
+                            }, ExecutionContexts.fromExecutor(executor));
+                        }
+                    }
+                }
+            }
+
             private void processComponent(File file) {
-                log.debug("File {} is created", file.getAbsolutePath());
                 Path j = file.toPath();
                 try{
                     if(isJar(j)){
@@ -124,5 +184,20 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
                 }
             }
         };
+    }
+
+    @PreDestroy
+    public void destroy(){
+        log.debug("Cleaning up resources from Computation discovery service");
+        try {
+            if (monitor != null) {
+                monitor.stop();
+            }
+            if(compiler != null){
+                compiler.destroy();
+            }
+        } catch (Exception e) {
+            log.error("Error while cleaning up resources for Directory Polling service");
+        }
     }
 }

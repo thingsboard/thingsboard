@@ -521,6 +521,12 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.plugin_by_tenant_and_search_t
     PRIMARY KEY ( tenant_id, search_text, id )
     WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );
 
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.plugin_by_clazz AS
+    SELECT *
+    FROM thingsboard.plugin
+    WHERE plugin_class IS NOT NULL AND id IS NOT NULL AND tenant_id IS NOT NULL
+    PRIMARY KEY (plugin_class, id, tenant_id) WITH CLUSTERING ORDER BY (id DESC);
+
 CREATE TABLE IF NOT EXISTS thingsboard.event (
 	tenant_id timeuuid, // tenant or system
 	id timeuuid,
