@@ -119,6 +119,7 @@ public class RuntimeJavaCompiler {
 
             List<String> options = new ArrayList<>();
             options.addAll(Arrays.asList("-source", "1.8"));
+            options.addAll(Arrays.asList("-XDuseUnsharedTable")); //To Avoid high memory usage due to unclaimed soft references by GC, resolved in < JDK 8u60
 
             Iterable<? extends JavaFileObject> sourceObject = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFile));
             JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options,

@@ -271,9 +271,8 @@
             <artifactId>annotation-detector</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.hashmap.tempus</groupId>
-            <artifactId>annotations</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>com.hashmapinc.tempus</groupId>
+            <artifactId>tempus-spark-annotations</artifactId>
         </dependency>
         <dependency>
             <groupId>com.sun</groupId>
@@ -650,10 +649,6 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-        </repository>
-        <repository>
-            <id>lib_id</id>
-            <url>file://${basedir}/src/main/lib</url>
         </repository>
     </repositories>
 </project>
