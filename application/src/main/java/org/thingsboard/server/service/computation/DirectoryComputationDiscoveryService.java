@@ -98,8 +98,7 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
                     List<ComputationActionCompiled> c = processor.processAnnotations();
                     if(c != null && !c.isEmpty()) {
                         compiledActions.addAll(c);
-                        processedJarsSources.put(j.toFile().getName(),
-                                c.stream().map(ComputationActionCompiled::getActionClazz).collect(Collectors.toSet()));
+                        putCompiledActions(j, c);
                     }
                 }
             }
@@ -107,6 +106,11 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
         } catch (IOException e) {
             log.error("Error while reading jars from directory.", e);
         }
+    }
+
+    private void putCompiledActions(Path j, List<ComputationActionCompiled> c) {
+        processedJarsSources.put(j.toFile().getName(),
+                c.stream().map(ComputationActionCompiled::getActionClazz).collect(Collectors.toSet()));
     }
 
     private void startPolling(){
@@ -156,16 +160,7 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
                             final ComputationActionDeleted msg = new ComputationActionDeleted(actionsToRemove, pluginMetadata.getApiToken());
                             Future<Object> fut = listener.onMsg(msg);
 
-                            fut.onComplete(new OnComplete<Object>(){
-                                public void onComplete(Throwable t, Object result){
-                                    if(t != null){
-                                        log.error("Error occurred while trying to delete rules", t);
-                                    }else {
-                                        log.info("Deleting action descriptors from plugin");
-                                        componentDiscoveryService.deleteActionsFromPlugin(msg, PLUGIN_CLAZZ);
-                                    }
-                                }
-                            }, ExecutionContexts.fromExecutor(executor));
+                            addDeleteCallback(msg, fut);
                         }
                     }
                 }
@@ -184,6 +179,19 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
                 }
             }
         };
+    }
+
+    private void addDeleteCallback(ComputationActionDeleted msg, Future<Object> fut) {
+        fut.onComplete(new OnComplete<Object>(){
+            public void onComplete(Throwable t, Object result){
+                if(t != null){
+                    log.error("Error occurred while trying to delete rules", t);
+                }else {
+                    log.info("Deleting action descriptors from plugin");
+                    componentDiscoveryService.deleteActionsFromPlugin(msg, PLUGIN_CLAZZ);
+                }
+            }
+        }, ExecutionContexts.fromExecutor(executor));
     }
 
     @PreDestroy

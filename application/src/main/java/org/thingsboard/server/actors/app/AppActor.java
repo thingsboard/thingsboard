@@ -33,6 +33,7 @@ import org.thingsboard.server.actors.shared.rule.SystemRuleManager;
 import org.thingsboard.server.actors.tenant.RuleChainDeviceMsg;
 import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -194,21 +195,26 @@ public class AppActor extends ContextAwareActor {
         if(msg instanceof ComputationActionDeleted){
             ComputationActionDeleted deleted = (ComputationActionDeleted)msg;
             List<RuleMetaData> pluginRules = systemContext.getRuleService().findPluginRules(deleted.getPluginApiToken());
-            logger.warning("Plugin Rules found for api token {} are {}", deleted.getPluginApiToken(), pluginRules);
-            logger.warning("Action to be deleted are {}", deleted.getActionClasses());
-            pluginRules.stream().
-                    filter(r -> deleted.getActionClasses().contains(r.getAction().get("clazz").asText())).
-                    forEach(r -> {
-                        systemContext.getRuleService().deleteRuleById(r.getId());
-                        ActorRef tenantActor = tenantActors.get(r.getTenantId());
-                        if(tenantActor != null) {
-                            logger.debug("Tenant Actor found.");
-                            tenantActor.tell(ComponentLifecycleMsg.forRule(r.getTenantId(), r.getId(), ComponentLifecycleEvent.DELETED),
-                                    ActorRef.noSender());
-                        }
-                    });
+            notifyTenantsFor(deleted, pluginRules);
             getContext().sender().tell(Done.getInstance(), getContext().self());
         }
+    }
+
+    private void notifyTenantsFor(ComputationActionDeleted deleted, List<RuleMetaData> pluginRules) {
+        pluginRules.stream().
+                filter(r -> deleted.getActionClasses().contains(r.getAction().get("clazz").asText())).
+                forEach(r -> {
+                    deleteRuleByRuleId(r.getId());
+                    ActorRef tenantActor = tenantActors.get(r.getTenantId());
+                    if(tenantActor != null) {
+                        tenantActor.tell(ComponentLifecycleMsg.forRule(r.getTenantId(), r.getId(), ComponentLifecycleEvent.DELETED),
+                                ActorRef.noSender());
+                    }
+                });
+    }
+
+    private void deleteRuleByRuleId(RuleId r) {
+        systemContext.getRuleService().deleteRuleById(r);
     }
 
     private ActorRef getOrCreateTenantActor(TenantId tenantId) {
