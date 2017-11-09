@@ -118,8 +118,9 @@ Spark application jar should contain a class with below annotations to be added 
 
 * *Suspend and Delete Rule actors* : As Spark computation plugin is a tenant plugin, all existing tenant rule actors associated with the actions needs to be suspended and then deleted. Once that's completed same Rules from DB are also deleted along with any attributes stored against them.
 
-After successful completion of that ComponentDescriptors associated with those actions are deleted. Remember generated action and configuration classes are not deleted, so that in case of error in any of the earlier stage that rule will still be available.
+* *Delete Component Descriptors* : ComponentDescriptors associated with those actions are deleted. Remember generated action and configuration classes are not deleted, so that in case of error in any of the earlier stage that rule will still be available.
 
+***In case jars are deleted when thingsbord server is stopped, nothing mentioned above will be triggered. You have to be careful while deleting existing spark computations***
 
 ## Support
 
