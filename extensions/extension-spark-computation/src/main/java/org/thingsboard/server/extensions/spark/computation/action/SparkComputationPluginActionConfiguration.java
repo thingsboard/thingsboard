@@ -16,7 +16,6 @@
 package org.thingsboard.server.extensions.spark.computation.action;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.SparkApplication;
 
 @Data
 public class SparkComputationPluginActionConfiguration {
