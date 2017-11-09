@@ -112,7 +112,7 @@ Spark application jar should contain a class with below annotations to be added 
 
 3. **Modify** : It goes through all the steps again as listed in Create section, so if there are any changes made to annotations those will be updated to DB and Plugins as well.
 
-***It's highly discouraged to change the class or package name of Action and Configuration. Because application will not delete old one and add new entries for newly generated classes*** 
+***It's highly discouraged to change the class or package name of Action and Configuration. Because application will not delete old one but add new entries for newly generated classes*** 
 
 4. **Delete**
 
