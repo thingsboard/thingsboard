@@ -91,6 +91,35 @@ Spark application jar should contain a class with below annotations to be added 
  ```
  
  ***These are all Type annotations, Processed by AnnotationsProcessor. Also package name for action and configuration is defaulted to package name of class having those annotations. e.g. Annotations are placed on class com.hashmap.tempus.app.TestSparkApp then classes generated will have the same package i.e. com.hashmap.tempus.app***
+ 
+### Computations Discovery
+
+#### Motivation
+
+*As a user if i want to add new Spark computation capability in thingsboard, i don't want to create a new Action for Spark computation plugin and i want a mechanism so that i should be able to register spark computation application without taking thingsboard down*
+
+#### Implementation
+
+1. **File system monitor** : It polls configured directory for given interval to identify changes like File create, modify or delete. This is started as soon as serve is started.
+
+2. **Create** : When new jar is added with annotations, it's classes are scanned for annotations explained above. Then it goes through series of steps as below
+
+* *Generate source* : Using velocity templates (action.vm and config.vm) and annotation values Java source is generated and written to temporary directory(Prefix spark, directory "java.io.tmpdir" system property) by AnnotationsProcessor, for debugging purposes. This directory is added to ClassPath of Application ClassLoader so that running application can access them runtime.
+
+* *Compile Generated Source* : Using javax.tools.JavaCompiler API from JDK tools.jar API generated sources are compiled at the same location as sources and added to application ClassLoader as directory is on Classpath already.
+
+* *Persist Components* : ComponentDiscoveryService needs to be notified about newly generated Actions to get persisted in DB and associated with Plugin, so that when request comes from UI for actions against Plugin it can return newly added actions as well.
+
+3. **Modify** : It goes through all the steps again as listed in Create section, so if there are any changes made to annotations those will be updated to DB and Plugins as well.
+
+***It's highly discouraged to change the class or package name of Action and Configuration. Because application will not delete old one and add new entries for newly generated classes*** 
+
+4. **Delete**
+
+* *Suspend and Delete Rule actors* : As Spark computation plugin is a tenant plugin, all existing tenant rule actors associated with the actions needs to be suspended and then deleted. Once that's completed same Rules from DB are also deleted along with any attributes stored against them.
+
+After successful completion of that ComponentDescriptors associated with those actions are deleted. Remember generated action and configuration classes are not deleted, so that in case of error in any of the earlier stage that rule will still be available.
+
 
 ## Support
 
