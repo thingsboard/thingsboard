@@ -20,13 +20,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
-import com.hashmap.annotations.ConfigurationMapping;
-import com.hashmap.annotations.Configurations;
-import com.hashmap.annotations.SparkAction;
-import com.hashmap.annotations.SparkRequest;
-import com.hashmap.models.SparkActionConfigurationType;
-import com.hashmap.models.SparkActionRequestType;
-import com.hashmap.models.SparkActionType;
+import com.hashmap.tempus.annotations.ConfigurationMapping;
+import com.hashmap.tempus.annotations.Configurations;
+import com.hashmap.tempus.annotations.SparkAction;
+import com.hashmap.tempus.annotations.SparkRequest;
+import com.hashmap.tempus.models.SparkActionConfigurationType;
+import com.hashmap.tempus.models.SparkActionRequestType;
+import com.hashmap.tempus.models.SparkActionType;
 import eu.infomas.annotation.AnnotationDetector;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.Template;
@@ -55,7 +55,6 @@ public class AnnotationsProcessor {
     private final RuntimeJavaCompiler compiler;
     private final Path jar;
     private ObjectMapper mapper = new ObjectMapper();
-    private final List<ComputationActionCompiled> actions = new ArrayList<>();
 
     public AnnotationsProcessor(Path jar,
                                 RuntimeJavaCompiler compiler){
@@ -65,26 +64,23 @@ public class AnnotationsProcessor {
     }
 
     public List<ComputationActionCompiled> processAnnotations() throws IOException {
-        AnnotationDetector detector = new AnnotationDetector(newReporter());
+        final List<ComputationActionCompiled> actions = new ArrayList<>();
+        AnnotationDetector detector = new AnnotationDetector(newReporter(actions));
         detector.detect(jar.toFile());
         return actions;
     }
 
-    private AnnotationDetector.TypeReporter newReporter(){
+    private AnnotationDetector.TypeReporter newReporter(List<ComputationActionCompiled> actions){
         return new AnnotationDetector.TypeReporter() {
             @Override
             public void reportTypeAnnotation(Class<? extends Annotation> aClass, String s) {
                 if(aClass.isAssignableFrom(SparkAction.class)){
                     try {
-                        Class<?> clazz = classLoader.loadClass(s);
-                        SparkActionType model = action(clazz);
-                        model.setConfiguration(configurations(clazz));
-                        model.setRequest(request(clazz));
-                        ComputationActionCompiled action = processModel(model);
+                        ComputationActionCompiled action = processModel(buildModelFromAnnotations(s));
                         if(action != null) {
                             actions.add(action);
                         }
-                        log.debug("Java Source creation and loading completed for {} ", clazz.getCanonicalName());
+                        log.debug("Java Source creation and loading completed for {} ", s);
                     } catch (ClassNotFoundException e) {
                         log.error("Class not found", e);
                     }
@@ -97,6 +93,14 @@ public class AnnotationsProcessor {
                 return new Class[]{SparkAction.class};
             }
         };
+    }
+
+    private SparkActionType buildModelFromAnnotations(String clazzString) throws ClassNotFoundException {
+        Class<?> clazz = classLoader.loadClass(clazzString);
+        SparkActionType model = action(clazz);
+        model.setConfiguration(configurations(clazz));
+        model.setRequest(request(clazz));
+        return model;
     }
 
     private SparkActionType action(Class<?> clazz){
@@ -121,7 +125,7 @@ public class AnnotationsProcessor {
                     actionConfiguration.addField(mapping.field(), mapping.type().getCanonicalName());
                 } catch (MirroredTypeException me) {
                     TypeMirror typeMirror = me.getTypeMirror();
-                    log.warn("found config {} for {}", mapping.field(), typeMirror.toString());
+                    log.debug("found config {} for {}", mapping.field(), typeMirror.toString());
                     actionConfiguration.addField(mapping.field(), typeMirror.toString());
                 }
             }
@@ -178,7 +182,7 @@ public class AnnotationsProcessor {
             compiler.compile(sourceName, writer.toString());
             clazz = compiler.load(sourceName);
         }catch(Exception e){
-            log.error("Error occurred {}", e);
+            log.error("Error occurred while processing dynamic actions", e);
         }
         writer.close();
         return clazz;

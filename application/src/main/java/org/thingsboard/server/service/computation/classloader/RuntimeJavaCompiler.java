@@ -119,6 +119,7 @@ public class RuntimeJavaCompiler {
 
             List<String> options = new ArrayList<>();
             options.addAll(Arrays.asList("-source", "1.8"));
+            options.addAll(Arrays.asList("-XDuseUnsharedTable")); //To Avoid high memory usage due to unclaimed soft references by GC, resolved in < JDK 8u60
 
             Iterable<? extends JavaFileObject> sourceObject = fileManager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFile));
             JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, options,
@@ -196,5 +197,13 @@ public class RuntimeJavaCompiler {
     private boolean isJar(String jarName) {
         return StringUtils.isNotEmpty(jarName) &&
                 jarName.endsWith(JAR);
+    }
+
+    public void destroy(){
+        try {
+            fileManager.close();
+        } catch (IOException e) {
+            log.error("Error while closing file manager", e);
+        }
     }
 }

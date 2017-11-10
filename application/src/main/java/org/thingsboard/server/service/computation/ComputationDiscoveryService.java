@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.service.computation;
 
-import org.thingsboard.server.service.component.ComponentDiscoveryService;
-
 public interface ComputationDiscoveryService {
-    void init(ComponentDiscoveryService service);
     void discoverDynamicComponents();
 }

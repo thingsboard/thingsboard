@@ -17,7 +17,6 @@ package org.thingsboard.server.extensions.spark.computation.action;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.SparkApplication;
 import java.io.Serializable;
 
 @Data

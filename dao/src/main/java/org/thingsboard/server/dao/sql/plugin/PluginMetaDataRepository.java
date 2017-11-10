@@ -48,4 +48,8 @@ public interface PluginMetaDataRepository extends CrudRepository<PluginMetaDataE
                                                               @Param("textSearch") String textSearch,
                                                               @Param("idOffset") String idOffset,
                                                               Pageable pageable);
+
+    @Query("SELECT pmd FROM PluginMetaDataEntity pmd WHERE pmd.clazz = :pluginClass " +
+            "ORDER BY pmd.id")
+    PluginMetaDataEntity findByPluginClass(@Param("pluginClass") String pluginClazz);
 }

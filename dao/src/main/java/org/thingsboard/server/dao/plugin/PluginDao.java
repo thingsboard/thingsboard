@@ -47,4 +47,6 @@ public interface PluginDao extends Dao<PluginMetaData> {
      */
     List<PluginMetaData> findAllTenantPluginsByTenantId(UUID tenantId, TextPageLink pageLink);
 
+    PluginMetaData findByPluginClass(String pluginClazz);
+
 }
