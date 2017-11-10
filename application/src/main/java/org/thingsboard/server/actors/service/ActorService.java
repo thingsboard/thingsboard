@@ -24,7 +24,7 @@ import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryServiceListener;
 import org.thingsboard.server.service.cluster.rpc.RpcMsgListener;
 
-public interface ActorService extends SessionMsgProcessor, WebSocketMsgProcessor, RestMsgProcessor, RpcMsgListener, DiscoveryServiceListener {
+public interface ActorService extends SessionMsgProcessor, WebSocketMsgProcessor, RestMsgProcessor, RpcMsgListener, DiscoveryServiceListener{
 
     void onPluginStateChange(TenantId tenantId, PluginId pluginId, ComponentLifecycleEvent state);
 

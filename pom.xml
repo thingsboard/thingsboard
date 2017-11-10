@@ -351,7 +351,7 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-livy</artifactId>
+                <artifactId>extension-spark-computation</artifactId>
                 <classifier>extension</classifier>
                 <version>${project.version}</version>
             </dependency>
@@ -783,6 +783,11 @@
                 <classifier>bin</classifier>
                 <type>exe</type>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>eu.infomas</groupId>
+                <artifactId>annotation-detector</artifactId>
+                <version>3.0.5</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
