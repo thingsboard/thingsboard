@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.extensions.core.action.telemetry;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.msg.core.GetAttributesRequest;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
+import org.thingsboard.server.common.msg.core.TelemetryUploadRequestForDepth;
 import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
@@ -32,7 +34,7 @@ import org.thingsboard.server.extensions.api.rules.SimpleRuleLifecycleComponent;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
+@Slf4j
 @Action(name = "Telemetry Plugin Action", descriptor = "TelemetryPluginActionDescriptor.json", configuration = TelemetryPluginActionConfiguration.class)
 public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implements PluginAction<TelemetryPluginActionConfiguration> {
 
@@ -52,11 +54,20 @@ public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implemen
     @Override
     public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd) {
         FromDeviceMsg msg = toDeviceActorMsg.getPayload();
+        log.debug("ToDeviceActorMsg : " + toDeviceActorMsg);
         if (msg.getMsgType() == MsgType.POST_TELEMETRY_REQUEST) {
+            log.debug("Post telemetry request : " + msg);
             TelemetryUploadRequest payload = (TelemetryUploadRequest) msg;
             return Optional.of(new TelemetryUploadRequestRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),
                     toDeviceActorMsg.getDeviceId(), payload, ttl));
-        } else if (msg.getMsgType() == MsgType.POST_ATTRIBUTES_REQUEST) {
+        }
+        else if (msg.getMsgType() == MsgType.POST_TELEMETRY_REQUEST_DEPTH) {
+            log.debug("Post telemetry requestDs : " + msg);
+            TelemetryUploadRequestForDepth payload = (TelemetryUploadRequestForDepth) msg;
+            return Optional.of(new TelemetryUploadRequestForDepthRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),
+                    toDeviceActorMsg.getDeviceId(), payload, ttl));
+        }
+        else if (msg.getMsgType() == MsgType.POST_ATTRIBUTES_REQUEST) {
             UpdateAttributesRequest payload = (UpdateAttributesRequest) msg;
             return Optional.of(new UpdateAttributesRequestRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),
                     toDeviceActorMsg.getDeviceId(), payload));

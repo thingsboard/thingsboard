@@ -21,11 +21,12 @@ import org.thingsboard.server.extensions.api.component.Plugin;
 import org.thingsboard.server.extensions.api.plugins.AbstractPlugin;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.RuleMsgHandler;
+import org.thingsboard.server.extensions.rest.action.DeviceAttributeRestAction;
 import org.thingsboard.server.extensions.rest.action.RestApiCallPluginAction;
 
 import java.util.Base64;
 
-@Plugin(name = "REST API Call Plugin", actions = {RestApiCallPluginAction.class},
+@Plugin(name = "REST API Call Plugin", actions = {RestApiCallPluginAction.class, DeviceAttributeRestAction.class},
         descriptor = "RestApiCallPluginDescriptor.json", configuration = RestApiCallPluginConfiguration.class)
 @Slf4j
 public class RestApiCallPlugin extends AbstractPlugin<RestApiCallPluginConfiguration> {

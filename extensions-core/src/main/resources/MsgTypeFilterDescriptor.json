@@ -21,6 +21,10 @@
             "label": "Post telemetry"
           },
           {
+            "value": "POST_TELEMETRY_DEPTH",
+            "label": "Post telemetry depth"
+          },
+          {
             "value": "RPC_REQUEST",
             "label": "RPC Request"
           }

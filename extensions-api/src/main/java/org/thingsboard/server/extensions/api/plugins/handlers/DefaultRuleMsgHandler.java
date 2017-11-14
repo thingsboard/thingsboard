@@ -20,10 +20,7 @@ import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.session.MsgType;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
-import org.thingsboard.server.extensions.api.plugins.msg.GetAttributesRequestRuleToPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.TelemetryUploadRequestRuleToPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.UpdateAttributesRequestRuleToPluginMsg;
+import org.thingsboard.server.extensions.api.plugins.msg.*;
 import org.thingsboard.server.extensions.api.rules.RuleException;
 
 /**
@@ -35,7 +32,11 @@ public class DefaultRuleMsgHandler implements RuleMsgHandler {
     @Override
     public void process(PluginContext ctx, TenantId tenantId, RuleId ruleId, RuleToPluginMsg<?> msg) throws RuleException {
         if (msg instanceof TelemetryUploadRequestRuleToPluginMsg) {
+            log.debug("\nmsg is TelemetryUploadRequestRuleToPluginMsg");
             handleTelemetryUploadRequest(ctx, tenantId, ruleId, (TelemetryUploadRequestRuleToPluginMsg) msg);
+        } else if (msg instanceof TelemetryUploadRequestForDepthRuleToPluginMsg) {
+            log.debug("\nmsg is TelemetryUploadRequestForDepthRuleToPluginMsg");
+            handleTelemetryUploadRequest(ctx, tenantId, ruleId, (TelemetryUploadRequestForDepthRuleToPluginMsg) msg);
         } else if (msg instanceof UpdateAttributesRequestRuleToPluginMsg) {
             handleUpdateAttributesRequest(ctx, tenantId, ruleId, (UpdateAttributesRequestRuleToPluginMsg) msg);
         } else if (msg instanceof GetAttributesRequestRuleToPluginMsg) {
@@ -53,6 +54,10 @@ public class DefaultRuleMsgHandler implements RuleMsgHandler {
     }
 
     protected void handleTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, TelemetryUploadRequestRuleToPluginMsg msg) {
+        msgTypeNotSupported(msg.getPayload().getMsgType());
+    }
+
+    protected void handleTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, TelemetryUploadRequestForDepthRuleToPluginMsg msg) {
         msgTypeNotSupported(msg.getPayload().getMsgType());
     }
 

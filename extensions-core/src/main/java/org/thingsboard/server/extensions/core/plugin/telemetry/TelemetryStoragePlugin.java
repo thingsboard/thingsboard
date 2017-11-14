@@ -16,6 +16,8 @@
 package org.thingsboard.server.extensions.core.plugin.telemetry;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.id.RuleId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.component.EmptyComponentConfiguration;
 import org.thingsboard.server.extensions.api.component.Plugin;
@@ -25,6 +27,8 @@ import org.thingsboard.server.extensions.api.plugins.handlers.RestMsgHandler;
 import org.thingsboard.server.extensions.api.plugins.handlers.RpcMsgHandler;
 import org.thingsboard.server.extensions.api.plugins.handlers.RuleMsgHandler;
 import org.thingsboard.server.extensions.api.plugins.handlers.WebsocketMsgHandler;
+import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
+import org.thingsboard.server.extensions.api.rules.RuleException;
 import org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryRestMsgHandler;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryRpcMsgHandler;

@@ -98,6 +98,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
 
     public void onRuleToPluginMsg(RuleToPluginMsgWrapper msg) throws RuleException {
         if (state == ComponentLifecycleState.ACTIVE) {
+            logger.debug("\n###### ComponentLifecycleState.ACTIVE ");
             pluginImpl.process(trustedCtx, msg.getRuleTenantId(), msg.getRuleId(), msg.getMsg());
         } else {
             //TODO: reply with plugin suspended message

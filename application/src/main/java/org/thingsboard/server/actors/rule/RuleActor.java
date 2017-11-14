@@ -37,6 +37,7 @@ public class RuleActor extends ComponentActor<RuleId, RuleActorMessageProcessor>
         logger.debug("[{}] Received message: {}", id, msg);
         if (msg instanceof RuleProcessingMsg) {
             try {
+                logger.debug("msg type RuleRrocessing -->");
                 processor.onRuleProcessingMsg(context(), (RuleProcessingMsg) msg);
                 increaseMessagesProcessedCount();
             } catch (Exception e) {
@@ -44,21 +45,26 @@ public class RuleActor extends ComponentActor<RuleId, RuleActorMessageProcessor>
             }
         } else if (msg instanceof PluginToRuleMsg<?>) {
             try {
+                logger.debug("msg type PluginToRuleMsg<?> -->");
                 processor.onPluginMsg(context(), (PluginToRuleMsg<?>) msg);
             } catch (Exception e) {
                 logAndPersist("onPluginMsg", e);
             }
         } else if (msg instanceof ComponentLifecycleMsg) {
+            logger.debug("msg type ComponentLifecycleMsg -->");
             onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
         } else if (msg instanceof ClusterEventMsg) {
+            logger.debug("msg type ClusterEventMsg -->");
             onClusterEventMsg((ClusterEventMsg) msg);
         } else if (msg instanceof RuleToPluginTimeoutMsg) {
             try {
+                logger.debug("msg type RuleToPluginTimeoutMsg -->");
                 processor.onTimeoutMsg(context(), (RuleToPluginTimeoutMsg) msg);
             } catch (Exception e) {
                 logAndPersist("onTimeoutMsg", e);
             }
         } else if (msg instanceof StatsPersistTick) {
+            logger.debug("msg type StatsPersistTick -->");
             onStatsPersistTick(id);
         } else {
             logger.debug("[{}][{}] Unknown msg type.", tenantId, id, msg.getClass().getName());
