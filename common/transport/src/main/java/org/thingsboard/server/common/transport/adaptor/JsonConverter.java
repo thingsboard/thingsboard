@@ -22,11 +22,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.gson.*;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.core.*;
 
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 
+@Slf4j
 public class JsonConverter {
 
     private static final Gson GSON = new Gson();
@@ -54,6 +56,29 @@ public class JsonConverter {
         return request;
     }
 
+    // HMDC test telemetry depth.
+    public static TelemetryUploadRequestForDepth convertToTelemetryDepth(JsonElement jsonObject, int requestId) throws JsonSyntaxException {
+        BasicTelemetryUploadRequestForDepth request = new BasicTelemetryUploadRequestForDepth(requestId);
+        log.error("\n\n HMDC request class: " + request.getClass() + "\n\n");
+        log.error("\n\n HMDC request val " + request + "\n\n");
+        //long systemTs = System.currentTimeMillis();
+        if (jsonObject.isJsonObject()) {
+            parseObjectDs(request, jsonObject);
+        }
+        else if (jsonObject.isJsonArray()) {
+            jsonObject.getAsJsonArray().forEach(je -> {
+                if (je.isJsonObject()) {
+                    parseObjectDs(request,je.getAsJsonObject());
+                } else {
+                    throw new JsonSyntaxException("Can't parse value: " + je);
+                }
+            });
+        } else {
+            throw new JsonSyntaxException("Can't parse value: " + jsonObject);
+        }
+        return request;
+    }
+
     public static ToServerRpcRequestMsg convertToServerRpcRequest(JsonElement json, int requestId) throws JsonSyntaxException {
         JsonObject object = json.getAsJsonObject();
         return new ToServerRpcRequestMsg(requestId, object.get("method").getAsString(), GSON.toJson(object.get("params")));
@@ -68,6 +93,16 @@ public class JsonConverter {
         }
     }
 
+    // HMDC telemetry ds
+    private static void parseObjectDs(BasicTelemetryUploadRequestForDepth request, JsonElement jsonObject) {
+        JsonObject jo = jsonObject.getAsJsonObject();
+        if (jo.has("ds") && jo.has("values")) {
+            parseWithDs(request, jo);
+        } else {
+
+        }
+    }
+
     private static void parseWithoutTs(BasicTelemetryUploadRequest request, long systemTs, JsonObject jo) {
         for (KvEntry entry : parseValues(jo)) {
             request.add(systemTs, entry);
@@ -79,6 +114,15 @@ public class JsonConverter {
         JsonObject valuesObject = jo.get("values").getAsJsonObject();
         for (KvEntry entry : parseValues(valuesObject)) {
             request.add(ts, entry);
+        }
+    }
+
+    // HMDC telemetry DS
+    public static void parseWithDs(BasicTelemetryUploadRequestForDepth request, JsonObject jo) {
+        Double ds = jo.get("ds").getAsDouble();
+        JsonObject valuesObject = jo.get("values").getAsJsonObject();
+        for (KvEntry entry : parseValues(valuesObject)) {
+            request.addDs(ds, entry);
         }
     }
 

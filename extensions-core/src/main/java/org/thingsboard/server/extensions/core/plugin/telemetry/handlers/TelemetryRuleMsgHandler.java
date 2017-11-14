@@ -20,19 +20,13 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.core.*;
 import org.thingsboard.server.common.msg.kv.BasicAttributeKVMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.handlers.DefaultRuleMsgHandler;
-import org.thingsboard.server.extensions.api.plugins.msg.GetAttributesRequestRuleToPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ResponsePluginToRuleMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.TelemetryUploadRequestRuleToPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.UpdateAttributesRequestRuleToPluginMsg;
+import org.thingsboard.server.extensions.api.plugins.msg.*;
 import org.thingsboard.server.extensions.core.plugin.telemetry.SubscriptionManager;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
 
@@ -86,6 +80,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
     @Override
     public void handleTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, TelemetryUploadRequestRuleToPluginMsg msg) {
         TelemetryUploadRequest request = msg.getPayload();
+        log.debug("\n\n request data post : " + request.getData().toString() + "\n\n");
         List<TsKvEntry> tsKvEntries = new ArrayList<>();
         for (Map.Entry<Long, List<KvEntry>> entry : request.getData().entrySet()) {
             for (KvEntry kv : entry.getValue()) {
@@ -115,6 +110,43 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
             }
         });
+    }
+
+    @Override
+    public void handleTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, TelemetryUploadRequestForDepthRuleToPluginMsg msg) {
+        TelemetryUploadRequestForDepth request = msg.getPayload();
+        log.debug("\n\n request data post : " + request.getData().toString() + "\n\n");
+        if(true)
+            return;
+        /*List<DsKvEntry> dsKvEntries = new ArrayList<>();
+        for (Map.Entry<Double, List<KvEntry>> entry : request.getData().entrySet()) {
+            for (KvEntry kv : entry.getValue()) {
+                dsKvEntries.add(new BasicDsKvEntry(entry.getKey(), kv));
+            }
+        }
+        ctx.saveDsData(msg.getDeviceId(), dsKvEntries, msg.getTtl(), new PluginCallback<Void>() {
+            @Override
+            public void onSuccess(PluginContext ctx, Void data) {
+                ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
+                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), SubscriptionType.TIMESERIES, s -> {
+                    List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
+                    for (Map.Entry<Double, List<KvEntry>> entry : request.getData().entrySet()) {
+                        for (KvEntry kv : entry.getValue()) {
+                            if (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey()))) {
+                                //subscriptionUpdate.add(new BasicTsKvEntry(entry.getKey(), kv));
+                            }
+                        }
+                    }
+                    return subscriptionUpdate;
+                });
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to process telemetry upload request", e);
+                ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
+            }
+        });*/
     }
 
     @Override

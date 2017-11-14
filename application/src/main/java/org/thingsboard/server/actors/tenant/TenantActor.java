@@ -78,20 +78,28 @@ public class TenantActor extends ContextAwareActor {
     public void onReceive(Object msg) throws Exception {
         logger.debug("[{}] Received message: {}", tenantId, msg);
         if (msg instanceof RuleChainDeviceMsg) {
+            logger.debug(" msg type RuleChainDeviceMsg -->");
             process((RuleChainDeviceMsg) msg);
         } else if (msg instanceof ToDeviceActorMsg) {
+            logger.debug(" msg type ToDeviceActorMsg -->");
             onToDeviceActorMsg((ToDeviceActorMsg) msg);
         } else if (msg instanceof ToPluginActorMsg) {
+            logger.debug(" msg type ToPluginActorMsg -->");
             onToPluginMsg((ToPluginActorMsg) msg);
         } else if (msg instanceof ToRuleActorMsg) {
+            logger.debug(" msg type ToRuleActorMsg -->");
             onToRuleMsg((ToRuleActorMsg) msg);
         } else if (msg instanceof ToDeviceActorNotificationMsg) {
+            logger.debug(" msg type ToDeviceActorNotificationMsg -->");
             onToDeviceActorMsg((ToDeviceActorNotificationMsg) msg);
         } else if (msg instanceof ClusterEventMsg) {
+            logger.debug(" msg type ClusterEventMsg -->");
             broadcast(msg);
         } else if (msg instanceof ComponentLifecycleMsg) {
+            logger.debug(" msg type ComponentLifecycleMsg -->");
             onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
         } else if (msg instanceof PluginTerminationMsg) {
+            logger.debug(" msg type PluginTerminationMsg -->");
             onPluginTerminated((PluginTerminationMsg) msg);
         } else {
             logger.warning("[{}] Unknown message: {}!", tenantId, msg);

@@ -49,6 +49,7 @@ public class PluginActor extends ComponentActor<PluginId, PluginActorMessageProc
         } else if (msg instanceof PluginCallbackMessage) {
             onPluginCallback((PluginCallbackMessage) msg);
         } else if (msg instanceof RuleToPluginMsgWrapper) {
+            logger.debug("\n msg type is RuleToPluginMsgWrapper" + msg);
             onRuleToPluginMsg((RuleToPluginMsgWrapper) msg);
         } else if (msg instanceof PluginRpcMsg) {
             onRpcMsg((PluginRpcMsg) msg);

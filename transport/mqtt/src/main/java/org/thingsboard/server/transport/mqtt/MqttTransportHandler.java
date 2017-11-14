@@ -109,6 +109,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     processConnect(ctx, (MqttConnectMessage) msg);
                     break;
                 case PUBLISH:
+                    log.debug("publish msg topic name" + ((MqttPublishMessage)msg).variableHeader().topicName());
                     processPublish(ctx, (MqttPublishMessage) msg);
                     break;
                 case SUBSCRIBE:
@@ -170,7 +171,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             if (topicName.equals(DEVICE_TELEMETRY_TOPIC)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_TELEMETRY_REQUEST, mqttMsg);
-            } else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
+            }else if(topicName.equals(WITSML_DEVICE_TELEMETRY_TOPIC)){
+                msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_TELEMETRY_REQUEST_DEPTH, mqttMsg);
+            }
+            else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_ATTRIBUTES_REQUEST, mqttMsg);
             } else if (topicName.startsWith(DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, GET_ATTRIBUTES_REQUEST, mqttMsg);
