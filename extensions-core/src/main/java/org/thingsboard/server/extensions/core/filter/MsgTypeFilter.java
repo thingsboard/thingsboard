@@ -60,8 +60,8 @@ public class MsgTypeFilter extends SimpleRuleLifecycleComponent implements RuleF
     @Override
     public boolean filter(RuleContext ctx, ToDeviceActorMsg msg) {
         for (MsgType msgType : msgTypes) {
-            log.error("\nHMDC msgtype : " + msgTypes);
-            log.error("\nHMDC payload msg type : " + msg.getPayload().getMsgType());
+            log.debug("\n msgtype : " + msgTypes);
+            log.debug("\n payload msg type : " + msg.getPayload().getMsgType());
             if (msgType == msg.getPayload().getMsgType()) {
                 return true;
             }

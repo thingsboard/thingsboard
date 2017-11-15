@@ -18,15 +18,14 @@ package org.thingsboard.server.extensions.api.plugins.msg;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequestForDepth;
+import org.thingsboard.server.common.msg.core.DepthTelemetryUploadRequest;
 
-public class TelemetryUploadRequestForDepthRuleToPluginMsg extends AbstractRuleToPluginMsg<TelemetryUploadRequestForDepth> {
+public class DepthTelemetryUploadRequestRuleToPluginMsg extends AbstractRuleToPluginMsg<DepthTelemetryUploadRequest> {
 
     private static final long serialVersionUID = 1L;
     private final long ttl;
 
-    public TelemetryUploadRequestForDepthRuleToPluginMsg(TenantId tenantId, CustomerId customerId, DeviceId deviceId, TelemetryUploadRequestForDepth payload, long ttl) {
+    public DepthTelemetryUploadRequestRuleToPluginMsg(TenantId tenantId, CustomerId customerId, DeviceId deviceId, DepthTelemetryUploadRequest payload, long ttl) {
         super(tenantId, customerId, deviceId, payload);
         this.ttl = ttl;
     }

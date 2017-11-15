@@ -34,9 +34,9 @@ public class DefaultRuleMsgHandler implements RuleMsgHandler {
         if (msg instanceof TelemetryUploadRequestRuleToPluginMsg) {
             log.debug("\nmsg is TelemetryUploadRequestRuleToPluginMsg");
             handleTelemetryUploadRequest(ctx, tenantId, ruleId, (TelemetryUploadRequestRuleToPluginMsg) msg);
-        } else if (msg instanceof TelemetryUploadRequestForDepthRuleToPluginMsg) {
-            log.debug("\nmsg is TelemetryUploadRequestForDepthRuleToPluginMsg");
-            handleTelemetryUploadRequest(ctx, tenantId, ruleId, (TelemetryUploadRequestForDepthRuleToPluginMsg) msg);
+        } else if (msg instanceof DepthTelemetryUploadRequestRuleToPluginMsg) {
+            log.debug("\nmsg is DepthTelemetryUploadRequestRuleToPluginMsg");
+            handleDepthTelemetryUploadRequest(ctx, tenantId, ruleId, (DepthTelemetryUploadRequestRuleToPluginMsg) msg);
         } else if (msg instanceof UpdateAttributesRequestRuleToPluginMsg) {
             handleUpdateAttributesRequest(ctx, tenantId, ruleId, (UpdateAttributesRequestRuleToPluginMsg) msg);
         } else if (msg instanceof GetAttributesRequestRuleToPluginMsg) {
@@ -57,7 +57,7 @@ public class DefaultRuleMsgHandler implements RuleMsgHandler {
         msgTypeNotSupported(msg.getPayload().getMsgType());
     }
 
-    protected void handleTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, TelemetryUploadRequestForDepthRuleToPluginMsg msg) {
+    protected void handleDepthTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, DepthTelemetryUploadRequestRuleToPluginMsg msg) {
         msgTypeNotSupported(msg.getPayload().getMsgType());
     }
 

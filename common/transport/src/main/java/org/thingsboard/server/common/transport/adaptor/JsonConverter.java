@@ -56,19 +56,19 @@ public class JsonConverter {
         return request;
     }
 
-    // HMDC test telemetry depth.
-    public static TelemetryUploadRequestForDepth convertToTelemetryDepth(JsonElement jsonObject, int requestId) throws JsonSyntaxException {
-        BasicTelemetryUploadRequestForDepth request = new BasicTelemetryUploadRequestForDepth(requestId);
-        log.error("\n\n HMDC request class: " + request.getClass() + "\n\n");
-        log.error("\n\n HMDC request val " + request + "\n\n");
+    //  test telemetry depth.
+    public static DepthTelemetryUploadRequest convertToTelemetryDepth(JsonElement jsonObject, int requestId) throws JsonSyntaxException {
+        BasicDepthTelemetryUploadRequest request = new BasicDepthTelemetryUploadRequest(requestId);
+        log.debug("\n\n  request class: " + request.getClass() + "\n\n");
+        log.debug("\n\n  request val " + request + "\n\n");
         //long systemTs = System.currentTimeMillis();
         if (jsonObject.isJsonObject()) {
-            parseObjectDs(request, jsonObject);
+            parseObject(request, jsonObject);
         }
         else if (jsonObject.isJsonArray()) {
             jsonObject.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
-                    parseObjectDs(request,je.getAsJsonObject());
+                    parseObject(request,je.getAsJsonObject());
                 } else {
                     throw new JsonSyntaxException("Can't parse value: " + je);
                 }
@@ -93,11 +93,11 @@ public class JsonConverter {
         }
     }
 
-    // HMDC telemetry ds
-    private static void parseObjectDs(BasicTelemetryUploadRequestForDepth request, JsonElement jsonObject) {
+    //  telemetry ds
+    private static void parseObject(BasicDepthTelemetryUploadRequest request, JsonElement jsonObject) {
         JsonObject jo = jsonObject.getAsJsonObject();
         if (jo.has("ds") && jo.has("values")) {
-            parseWithDs(request, jo);
+            parseWithDepth(request, jo);
         } else {
 
         }
@@ -117,8 +117,8 @@ public class JsonConverter {
         }
     }
 
-    // HMDC telemetry DS
-    public static void parseWithDs(BasicTelemetryUploadRequestForDepth request, JsonObject jo) {
+    //  telemetry DS
+    public static void parseWithDepth(BasicDepthTelemetryUploadRequest request, JsonObject jo) {
         Double ds = jo.get("ds").getAsDouble();
         JsonObject valuesObject = jo.get("values").getAsJsonObject();
         for (KvEntry entry : parseValues(valuesObject)) {

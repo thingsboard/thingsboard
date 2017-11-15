@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.msg.core.GetAttributesRequest;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequestForDepth;
+import org.thingsboard.server.common.msg.core.DepthTelemetryUploadRequest;
 import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
@@ -63,8 +63,8 @@ public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implemen
         }
         else if (msg.getMsgType() == MsgType.POST_TELEMETRY_REQUEST_DEPTH) {
             log.debug("Post telemetry requestDs : " + msg);
-            TelemetryUploadRequestForDepth payload = (TelemetryUploadRequestForDepth) msg;
-            return Optional.of(new TelemetryUploadRequestForDepthRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),
+            DepthTelemetryUploadRequest payload = (DepthTelemetryUploadRequest) msg;
+            return Optional.of(new DepthTelemetryUploadRequestRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),
                     toDeviceActorMsg.getDeviceId(), payload, ttl));
         }
         else if (msg.getMsgType() == MsgType.POST_ATTRIBUTES_REQUEST) {

@@ -229,7 +229,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     //  telemetry depth
-    private TelemetryUploadRequestForDepth convertToTelemetryUploadRequestDepth(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+    private DepthTelemetryUploadRequest convertToTelemetryUploadRequestDepth(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload());
         try {
             return JsonConverter.convertToTelemetryDepth(new JsonParser().parse(payload), inbound.variableHeader().messageId());

@@ -22,6 +22,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
 
-public interface TelemetryUploadRequestForDepth extends FromDeviceRequestMsg {
+public interface DepthTelemetryUploadRequest extends FromDeviceRequestMsg {
     Map<Double, List<KvEntry>> getData();
 }

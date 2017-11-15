@@ -25,17 +25,17 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.session.MsgType;
 
 @ToString
-public class BasicTelemetryUploadRequestForDepth extends BasicRequest implements TelemetryUploadRequestForDepth {
+public class BasicDepthTelemetryUploadRequest extends BasicRequest implements DepthTelemetryUploadRequest {
 
     private static final long serialVersionUID = 1L;
     //  telemetry DS
     private final Map<Double, List<KvEntry>> data;
 
-    public BasicTelemetryUploadRequestForDepth() {
+    public BasicDepthTelemetryUploadRequest() {
         this(DEFAULT_REQUEST_ID);
     }
 
-    public BasicTelemetryUploadRequestForDepth(Integer requestId) {
+    public BasicDepthTelemetryUploadRequest(Integer requestId) {
         super(requestId);
         this.data = new HashMap<>();
     }

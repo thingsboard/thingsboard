@@ -113,8 +113,8 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
     }
 
     @Override
-    public void handleTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, TelemetryUploadRequestForDepthRuleToPluginMsg msg) {
-        TelemetryUploadRequestForDepth request = msg.getPayload();
+    public void handleDepthTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, DepthTelemetryUploadRequestRuleToPluginMsg msg) {
+        DepthTelemetryUploadRequest request = msg.getPayload();
         log.debug("\n\n request data post : " + request.getData().toString() + "\n\n");
         if(true)
             return;
@@ -128,8 +128,8 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
             @Override
             public void onSuccess(PluginContext ctx, Void data) {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
-                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), SubscriptionType.TIMESERIES, s -> {
-                    List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
+                subscriptionManager.onLocalSubscriptionUpdateForDepth(ctx, msg.getDeviceId(), SubscriptionType.DEPTH_DATUM, s -> {
+                    List<DsKvEntry> subscriptionUpdate = new ArrayList<DsKvEntry>();
                     for (Map.Entry<Double, List<KvEntry>> entry : request.getData().entrySet()) {
                         for (KvEntry kv : entry.getValue()) {
                             if (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey()))) {
