@@ -317,6 +317,21 @@ export default angular.module('thingsboard.types', [])
                     name: "event.type-stats"
                 }
             },
+            extensionType: {
+                http: "HTTP",
+                mqtt: "MQTT",
+                opc: "OPC UA"
+            },
+            extensionValueType: {
+                string: 'value.string',
+                long: 'value.long',
+                double: 'value.double',
+                boolean: 'value.boolean'
+            },
+            extensionTransformerType: {
+                toDouble: 'extension.to-double',
+                custom: 'extension.custom'
+            },
             latestTelemetry: {
                 value: "LATEST_TELEMETRY",
                 name: "attribute.scope-latest-telemetry",
