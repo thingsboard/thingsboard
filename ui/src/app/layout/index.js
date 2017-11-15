@@ -47,6 +47,7 @@ import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardPlugin from '../plugin';
 import thingsboardRule from '../rule';
+import thingsboardComputation from '../computations';
 
 import thingsboardJsonForm from '../jsonform';
 
@@ -84,7 +85,8 @@ export default angular.module('thingsboard.home', [
     thingsboardNoAnimate,
     thingsboardOnFinishRender,
     thingsboardSideMenu,
-    thingsboardDashboardAutocomplete
+    thingsboardDashboardAutocomplete,
+    thingsboardComputation
 ])
     .config(HomeRoutes)
     .controller('HomeController', HomeController)

@@ -172,7 +172,10 @@ public class DirectoryComputationDiscoveryService implements ComputationDiscover
                     if(isJar(j)){
                         AnnotationsProcessor processor = new AnnotationsProcessor(j, compiler);
                         List<ComputationActionCompiled> actions = processor.processAnnotations();
-                        componentDiscoveryService.updateActionsForPlugin(actions, PLUGIN_CLAZZ);
+                        if(actions != null && !actions.isEmpty()) {
+                            putCompiledActions(j, actions);
+                            componentDiscoveryService.updateActionsForPlugin(actions, PLUGIN_CLAZZ);
+                        }
                     }
                 } catch (IOException e) {
                     log.error("Error while accessing jar to scan dynamic components", e);

@@ -264,3 +264,9 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+
+#max file and request size
+spring.http:
+  multipart:
+    max-file-size: 10MB
+    max-request-size: 11MB
