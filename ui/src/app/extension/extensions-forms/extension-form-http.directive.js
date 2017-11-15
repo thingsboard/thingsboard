@@ -87,6 +87,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             if (index > -1) {
                 scope.converterConfigs.splice(index, 1);
             }
+            scope.theForm.$setDirty();
         }
 
         scope.addConverter = function(converters) {
@@ -99,6 +100,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             if (index > -1) {
                 converters.splice(index, 1);
             }
+            scope.theForm.$setDirty();
         }
 
         scope.addAttribute = function(attributes) {
@@ -111,6 +113,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             if (index > -1) {
                 attributes.splice(index, 1);
             }
+            scope.theForm.$setDirty();
         }
 
         scope.transformerTypeChange = function(attribute) {
