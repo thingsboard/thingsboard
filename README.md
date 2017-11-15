@@ -28,6 +28,15 @@ ThingsBoard documentation is hosted on [thingsboard.io](https://thingsboard.io/d
 
 Collect and Visualize your IoT data in minutes by following this [guide](https://thingsboard.io/docs/getting-started-guides/helloworld/).
 
+
+## Enabling LDAP Security
+
+The default installation doesn't use LDAP security.  However, It can be changed to use LDAP server for authentication and thingsboard to authorize the user based on the authentication.
+
+To enable LDAP authentication change the value of flag 'authentication-enabled' under 'ldap' in thingsboard.yml to 'true'. Other settings under ldap also needs to be changed accordingly to point to the right ldap server, dn etc.
+
+The corresponding code can be found in class ThingsboardSecurityConfiguration.java and RestAuthenticationProvider.java. Please refer the official oracle documentation on how LDAP security has been implemented - [LDAP authentication in Java](https://docs.oracle.com/javase/jndi/tutorial/ldap/security/ldap.html)
+
 # Spark Annotations
 
 ## Introduction
