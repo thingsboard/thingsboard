@@ -70,6 +70,10 @@ plugins:
   # Comma seperated package list used during classpath scanning for plugins
   scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions}"
 
+spark:
+  jar_path: "${SPARK_COMPUTATIONS_PATH:/Users/jay/Poller}"
+  polling_interval: "${DIRECTORY_POLLING_INTERVAL:10}" # Number of Seconds
+
 # JWT Token parameters
 security.jwt:
   tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000000}" # Number of seconds (15 mins)
@@ -266,3 +270,9 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/thingsboard}"
     username: "${SPRING_DATASOURCE_USERNAME:postgres}"
     password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+
+#max file and request size
+spring.http:
+  multipart:
+    max-file-size: 10MB
+    max-request-size: 11MB

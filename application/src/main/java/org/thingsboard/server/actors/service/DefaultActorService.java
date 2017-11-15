@@ -19,8 +19,10 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.Terminated;
+import akka.pattern.Patterns;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.app.AppActor;
@@ -39,11 +41,12 @@ import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
+import org.thingsboard.server.common.msg.computation.ComputationMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
-import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
@@ -61,6 +64,7 @@ import java.util.Optional;
 
 @Service
 @Slf4j
+@DependsOn("computationDiscoveryService")
 public class DefaultActorService implements ActorService {
 
     private static final String ACTOR_SYSTEM_NAME = "Akka";
@@ -192,6 +196,12 @@ public class DefaultActorService implements ActorService {
     public void onMsg(RpcBroadcastMsg msg) {
         log.trace("Processing broadcast rpc msg: {}", msg);
         rpcManagerActor.tell(msg, ActorRef.noSender());
+    }
+
+    @Override
+    public Future<Object> onMsg(ComputationMsg msg) {
+        log.warn("Processing Computation message: {}", msg);
+        return Patterns.ask(appActor, msg, 10 * 1000);
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.app;
 
+import akka.Done;
 import akka.actor.*;
 import akka.actor.SupervisorStrategy.Directive;
 import akka.event.Logging;
@@ -32,9 +33,14 @@ import org.thingsboard.server.actors.shared.rule.SystemRuleManager;
 import org.thingsboard.server.actors.tenant.RuleChainDeviceMsg;
 import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.computation.ComputationActionDeleted;
+import org.thingsboard.server.common.msg.computation.ComputationMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -45,6 +51,7 @@ import org.thingsboard.server.extensions.api.rules.ToRuleActorMsg;
 import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -112,7 +119,9 @@ public class AppActor extends ContextAwareActor {
             onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
         } else if (msg instanceof PluginTerminationMsg) {
             onPluginTerminated((PluginTerminationMsg) msg);
-        } else {
+        } else if(msg instanceof ComputationMsg){
+            onComputationMsg((ComputationMsg)msg);
+        }else {
             logger.warning("Unknown message: {}!", msg);
         }
     }
@@ -180,6 +189,32 @@ public class AppActor extends ContextAwareActor {
         } else {
             tenantActor.tell(toDeviceActorMsg, context().self());
         }
+    }
+
+    private void onComputationMsg(ComputationMsg msg){
+        if(msg instanceof ComputationActionDeleted){
+            ComputationActionDeleted deleted = (ComputationActionDeleted)msg;
+            List<RuleMetaData> pluginRules = systemContext.getRuleService().findPluginRules(deleted.getPluginApiToken());
+            notifyTenantsFor(deleted, pluginRules);
+            getContext().sender().tell(Done.getInstance(), getContext().self());
+        }
+    }
+
+    private void notifyTenantsFor(ComputationActionDeleted deleted, List<RuleMetaData> pluginRules) {
+        pluginRules.stream().
+                filter(r -> deleted.getActionClasses().contains(r.getAction().get("clazz").asText())).
+                forEach(r -> {
+                    deleteRuleByRuleId(r.getId());
+                    ActorRef tenantActor = tenantActors.get(r.getTenantId());
+                    if(tenantActor != null) {
+                        tenantActor.tell(ComponentLifecycleMsg.forRule(r.getTenantId(), r.getId(), ComponentLifecycleEvent.DELETED),
+                                ActorRef.noSender());
+                    }
+                });
+    }
+
+    private void deleteRuleByRuleId(RuleId r) {
+        systemContext.getRuleService().deleteRuleById(r);
     }
 
     private ActorRef getOrCreateTenantActor(TenantId tenantId) {

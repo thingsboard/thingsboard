@@ -128,4 +128,17 @@ public class JpaBasePluginDao extends JpaAbstractSearchTextDao<PluginMetaDataEnt
         }
         return DaoUtil.convertDataList(entities);
     }
+
+    @Override
+    public PluginMetaData findByPluginClass(String pluginClazz) {
+        log.debug("Search plugin meta-data entity by class [{}]", pluginClazz);
+        PluginMetaDataEntity pluginEntity = pluginMetaDataRepository.findByPluginClass(pluginClazz);
+        PluginMetaData pluginMetaData = DaoUtil.getData(pluginEntity);
+        if (log.isTraceEnabled()) {
+            log.trace("Search result: [{}] for plugin entity [{}]", pluginMetaData != null, pluginMetaData);
+        } else {
+            log.debug("Search result: [{}]", pluginMetaData != null);
+        }
+        return pluginMetaData;
+    }
 }

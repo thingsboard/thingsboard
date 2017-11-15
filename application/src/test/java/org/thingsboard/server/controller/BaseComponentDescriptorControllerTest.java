@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public abstract class BaseComponentDescriptorControllerTest extends AbstractControllerTest {
 
-    private static final int AMOUNT_OF_DEFAULT_PLUGINS_DESCRIPTORS = 5;
+    private static final int AMOUNT_OF_DEFAULT_PLUGINS_DESCRIPTORS = 7;
     private Tenant savedTenant;
     private User tenantAdmin;
 

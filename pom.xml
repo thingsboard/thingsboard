@@ -77,6 +77,7 @@
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
         <postgresql.driver.version>9.4.1211</postgresql.driver.version>
+        <tempus.annotations.version>0.2</tempus.annotations.version>
     </properties>
 
     <modules>
@@ -351,7 +352,7 @@
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-livy</artifactId>
+                <artifactId>extension-spark-computation</artifactId>
                 <classifier>extension</classifier>
                 <version>${project.version}</version>
             </dependency>
@@ -783,6 +784,16 @@
                 <classifier>bin</classifier>
                 <type>exe</type>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>eu.infomas</groupId>
+                <artifactId>annotation-detector</artifactId>
+                <version>3.0.5</version>
+            </dependency>
+            <dependency>
+                <groupId>com.hashmapinc.tempus</groupId>
+                <artifactId>tempus-spark-annotations</artifactId>
+                <version>${tempus.annotations.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

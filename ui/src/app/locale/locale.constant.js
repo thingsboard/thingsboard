@@ -1239,6 +1239,9 @@ export default angular.module('thingsboard.locale', [])
                         "marker-click": "On marker click",
                         "tooltip-tag-action": "Tooltip tag action"
                     }
+                },
+                "computation": {
+                    "computations": "Upload Computations"
                 }
             }
         }

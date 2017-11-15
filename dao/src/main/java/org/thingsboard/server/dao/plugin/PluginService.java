@@ -52,4 +52,6 @@ public interface PluginService {
 
     void deletePluginsByTenantId(TenantId tenantId);
 
+    PluginMetaData findPluginByClass(String pluginClazz);
+
 }
