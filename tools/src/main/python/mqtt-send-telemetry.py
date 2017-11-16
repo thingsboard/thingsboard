@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 #
+# Copyright © 2016-2017 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,22 +25,12 @@ topic_pub='v1/devices/me/telemetry'
 
 client = mqtt.Client()
 
-client.username_pw_set("qyA3gP50SpGwfwyNGyi7")
+client.username_pw_set("TEST_TOKEN")
 client.connect('127.0.0.1', 1883, 1)
 
-for i in range(100):
+for i in range(5):
     x = random.randrange(20, 100)
     print x
     msg = '{"windSpeed":"'+ str(x) + '"}'
     client.publish(topic_pub, msg)
     sleep(0.1)
-#while True:
-#    val3 = random.uniform(0, 5)
-#    val4 = random.uniform(-3, 3)#
-#
-#    msg = '{"key3": '+ str(val3) +', "key4": ' + str(val4) + '}'
-#
-#    print('Message: ' + msg)
-#    client.publish(topic_pub, msg)
-#
-#    sleep(0.5)
