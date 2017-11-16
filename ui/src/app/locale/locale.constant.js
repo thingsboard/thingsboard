@@ -769,6 +769,8 @@ export default angular.module('thingsboard.locale', [])
                     "custom": "Custom",
                     "to-double": "To Double",
                     "transformer": "Transformer",
+                    "json-required": "Transformer json is required.",
+                    "json-parse": "Unable to parse transformer json.",
                     "attributes": "Attributes",
                     "add-attribute": "Add attribute",
                     "timeseries": "Timeseries",

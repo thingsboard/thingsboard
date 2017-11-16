@@ -152,11 +152,14 @@
                                                                                                                 <div flex class="tb-extension-custom-transformer"
                                                                                                                      ui-ace="extensionCustomTransformerOptions"
                                                                                                                      ng-model="attribute.transformer"
-                                                                                                                     name="test_{{$index}}">
+                                                                                                                     name="attributeCustomTransformer_{{configIndex}}{{converterIndex}}{{attributeIndex}}"
+                                                                                                                     ng-change='validateTransformer(attribute.transformer,"attributeCustomTransformer_" + configIndex + converterIndex + attributeIndex)'
+                                                                                                                     required>
                                                                                                                 </div>
                                                                                                             </div>
-                                                                                                            <div class="tb-error-messages" ng-messages="theForm['test_' + $index].$error" role="alert">
-                                                                                                                <div ng-message="transformerRequired" class="tb-error-message">Ну привет :)</div>
+                                                                                                            <div class="tb-error-messages" ng-messages="theForm['attributeCustomTransformer_' + configIndex + converterIndex + attributeIndex].$error" role="alert">
+                                                                                                                <div ng-message="required" class="tb-error-message" translate>extension.json-required</div>
+                                                                                                                <div ng-message="transformerJSON" class="tb-error-message" translate>extension.json-parse</div>
                                                                                                             </div>
                                                                                                         </div>
 
@@ -243,8 +246,15 @@
                                                                                                             <div flex class="tb-extension-custom-transformer-panel">
                                                                                                                 <div flex class="tb-extension-custom-transformer"
                                                                                                                      ui-ace="extensionCustomTransformerOptions"
-                                                                                                                     ng-model="timeseries.transformer">
+                                                                                                                     ng-model="timeseries.transformer"
+                                                                                                                     name="timeseriesCustomTransformer_{{configIndex}}{{converterIndex}}{{timeseriesIndex}}"
+                                                                                                                     ng-change='validateTransformer(timeseries.transformer,"timeseriesCustomTransformer_" + configIndex + converterIndex + timeseriesIndex)'
+                                                                                                                     required>
                                                                                                                 </div>
+                                                                                                            </div>
+                                                                                                            <div class="tb-error-messages" ng-messages="theForm['timeseriesCustomTransformer_' + configIndex + converterIndex + timeseriesIndex].$error" role="alert">
+                                                                                                                <div ng-message="required" class="tb-error-message" translate>extension.json-required</div>
+                                                                                                                <div ng-message="transformerJSON" class="tb-error-message" translate>extension.json-parse</div>
                                                                                                             </div>
                                                                                                         </div>
 

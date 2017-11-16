@@ -48,7 +48,9 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                 enableBasicAutocompletion: true,
                 enableLiveAutocompletion: true
             },
-            onLoad: aceOnLoad
+            onLoad: function(_ace) {
+                _ace.$blockScrolling = 1;
+            }
         };
 
         if(scope.isAdd) {
@@ -120,24 +122,17 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             attribute.transformer = "";
         }
 
-        function aceOnLoad(_ace) {
-            _ace.$blockScrolling = 1;
-            _ace.on("change", function(){
-                var aceValue = _ace.getSession().getDocument().getValue();
-                var valid = true;
-                if(!aceValue && !aceValue.length) {
-                    valid = false;
-                } else {
-                    try {
-                        angular.fromJson(aceValue);
-                    } catch(e) {
-                        valid = false;
-                    }
+        scope.validateTransformer = function (model, editorName) {
+            if(model && model.length) {
+                try {
+                    angular.fromJson(model);
+                    scope.theForm[editorName].$setValidity('transformerJSON', true);
+                } catch(e) {
+                    scope.theForm[editorName].$setValidity('transformerJSON', false);
                 }
-                scope.theForm.$setValidity('transformerRequired', valid);
-            });
+            }
         }
-
+        
         $compile(element.contents())(scope);
     }
 
