@@ -17,9 +17,7 @@ package org.thingsboard.server.extensions.api.plugins;
 
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.*;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.plugins.msg.PluginToRuleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
@@ -83,11 +81,17 @@ public interface PluginContext {
 
     void saveTsData(EntityId deviceId, List<TsKvEntry> entries, long ttl, PluginCallback<Void> pluginCallback);
 
+    void saveDsData(EntityId deviceId, List<DsKvEntry> entries, long ttl, PluginCallback<Void> pluginCallback);
+
     void loadTimeseries(EntityId entityId, List<TsKvQuery> queries, PluginCallback<List<TsKvEntry>> callback);
+
+    void loadDepthDatum(EntityId entityId, List<DsKvQuery> queries, PluginCallback<List<DsKvEntry>> callback);
 
     void loadLatestTimeseries(EntityId entityId, Collection<String> keys, PluginCallback<List<TsKvEntry>> callback);
 
     void loadLatestTimeseries(EntityId entityId, PluginCallback<List<TsKvEntry>> callback);
+
+    void loadLatestDepthDatum(EntityId entityId, PluginCallback<List<DsKvEntry>> callback);
 
     /*
         Attributes API

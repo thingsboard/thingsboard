@@ -319,6 +319,7 @@ public class ModelConstants {
     public static final String PARTITION_COLUMN = "partition";
     public static final String KEY_COLUMN = "key";
     public static final String TS_COLUMN = "ts";
+    public static final String DS_COLUMN = "ds";
 
     /**
      * Main names of cassandra key-value columns storage.
