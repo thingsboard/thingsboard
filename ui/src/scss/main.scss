@@ -494,11 +494,15 @@ md-tabs.tb-headless {
   height: 100%;
   max-width: 240px;
   span {
-    padding: 10px 10px 20px 10px;
+    padding: 0 0 20px 0;
     font-size: 18px;
     font-weight: 400;
     white-space: normal;
     line-height: 18px;
+    max-height: 18px;
+    min-height: 18px;
+    height: 18px;
+    margin: auto;
   }
 }
 

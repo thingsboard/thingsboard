@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-.tb-relation-additional-info-panel {
-  margin-left: 15px;
-  border: 1px solid #C0C0C0;
-  height: 100%;
-  #tb-relation-additional-info {
-    min-width: 200px;
-    min-height: 200px;
-    width: 100%;
-    height: 100%;
-  }
+@import "../../scss/constants";
+
+.tb-home-links {
+    .md-headline {
+      font-size: 20px;
+      @media (min-width: $layout-breakpoint-xmd) {
+        font-size: 24px;
+      }
+    }
 }
