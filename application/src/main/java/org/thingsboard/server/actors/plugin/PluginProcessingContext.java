@@ -182,7 +182,7 @@ public final class PluginProcessingContext implements PluginContext {
                 List<DsKvEntry> list = rsGetListFuture.get();
                 log.debug(" DsKvList " + list);
             }catch (Exception e){
-                log.debug(" exception " + e);
+                log.error(" exception " + e);
             }
             Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
         }));
