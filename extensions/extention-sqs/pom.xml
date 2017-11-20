@@ -45,13 +45,14 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>extensions-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sqs</artifactId>
             <version>${aws.sdk.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard</groupId>
-            <artifactId>extensions-core</artifactId>
         </dependency>
     </dependencies>
 
