@@ -15,36 +15,33 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 
-/**
- * @author Andrew Shvayka
- */
-@AllArgsConstructor
-public class SubscriptionState {
+public class DepthSubscriptionState extends SubscriptionState{
 
-    @Getter protected final String wsSessionId;
-    @Getter protected final int subscriptionId;
-    @Getter protected final EntityId entityId;
-    @Getter protected final SubscriptionType type;
-    @Getter protected final boolean allKeys;
-    @Getter private final Map<String, Long> keyStates;
+    @Getter
+    private final Map<String, Double> depthKeyStates;
+    public DepthSubscriptionState(String wsSessionId, int subscriptionId, EntityId entityId, SubscriptionType type,
+                                  boolean allKeys, Map<String, Long> keyStates, Map<String, Double> depthKeyStates) {
+        super(wsSessionId, subscriptionId, entityId, type, allKeys, keyStates);
+        this.depthKeyStates = depthKeyStates;
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SubscriptionState that = (SubscriptionState) o;
+        DepthSubscriptionState that = (DepthSubscriptionState) o;
 
         if (subscriptionId != that.subscriptionId) return false;
         if (wsSessionId != null ? !wsSessionId.equals(that.wsSessionId) : that.wsSessionId != null) return false;
         if (entityId != null ? !entityId.equals(that.entityId) : that.entityId != null) return false;
         return type == that.type;
+
     }
 
     @Override
@@ -58,7 +55,7 @@ public class SubscriptionState {
 
     @Override
     public String toString() {
-        return "SubscriptionState{" +
+        return "DepthSubscriptionState{" +
                 "type=" + type +
                 ", entityId=" + entityId +
                 ", subscriptionId=" + subscriptionId +

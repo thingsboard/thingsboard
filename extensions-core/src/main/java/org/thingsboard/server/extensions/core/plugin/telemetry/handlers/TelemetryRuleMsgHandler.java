@@ -128,7 +128,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
             @Override
             public void onSuccess(PluginContext ctx, Void data) {
                 log.debug(" ctx.saveDsData On success");
-                /*ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
+                ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
                 subscriptionManager.onLocalSubscriptionUpdateForDepth(ctx, msg.getDeviceId(), SubscriptionType.DEPTH_DATUM, s -> {
                     List<DsKvEntry> subscriptionUpdate = new ArrayList<DsKvEntry>();
                     for (Map.Entry<Double, List<KvEntry>> entry : request.getData().entrySet()) {
@@ -139,7 +139,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
                         }
                     }
                     return subscriptionUpdate;
-                });*/
+                });
             }
 
             @Override

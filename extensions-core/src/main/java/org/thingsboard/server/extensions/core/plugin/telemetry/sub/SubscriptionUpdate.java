@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 
+import org.thingsboard.server.common.data.kv.DsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.*;
@@ -27,18 +28,45 @@ public class SubscriptionUpdate {
     private String errorMsg;
     private Map<String, List<Object>> data;
 
-    public SubscriptionUpdate(int subscriptionId, List<TsKvEntry> data) {
+    public SubscriptionUpdate(int subscriptionId, List<?> data) {
         super();
         this.subscriptionId = subscriptionId;
         this.data = new TreeMap<>();
-        for (TsKvEntry tsEntry : data) {
-            List<Object> values = this.data.computeIfAbsent(tsEntry.getKey(), k -> new ArrayList<>());
+        if(data.get(0) instanceof TsKvEntry){
+            for (int i = 0; i < data.size(); i++) {
+                TsKvEntry tsEntry = (TsKvEntry)data.get(i);
+                List<Object> values = this.data.computeIfAbsent(tsEntry.getKey(), k -> new ArrayList<>());
+                Object[] value = new Object[2];
+                value[0] = tsEntry.getTs();
+                value[1] = tsEntry.getValueAsString();
+                values.add(value);
+            }
+        }
+        else if(data.get(0) instanceof DsKvEntry){
+            for (int i = 0; i < data.size(); i++) {
+                DsKvEntry dsEntry = (DsKvEntry) data.get(i);
+                List<Object> values = this.data.computeIfAbsent(dsEntry.getKey(), k -> new ArrayList<>());
+                Object[] value = new Object[2];
+                value[0] = dsEntry.getDs();
+                value[1] = dsEntry.getValueAsString();
+                values.add(value);
+            }
+        }
+
+    }
+
+    /*public SubscriptionUpdate(int subscriptionId, List<DsKvEntry> data) {
+        super();
+        this.subscriptionId = subscriptionId;
+        this.data = new TreeMap<>();
+        for (DsKvEntry dsEntry : data) {
+            List<Object> values = this.data.computeIfAbsent(dsEntry.getKey(), k -> new ArrayList<>());
             Object[] value = new Object[2];
-            value[0] = tsEntry.getTs();
-            value[1] = tsEntry.getValueAsString();
+            value[0] = dsEntry.getDs();
+            value[1] = dsEntry.getValueAsString();
             values.add(value);
         }
-    }
+    }*/
 
     public SubscriptionUpdate(int subscriptionId, Map<String, List<Object>> data) {
         super();

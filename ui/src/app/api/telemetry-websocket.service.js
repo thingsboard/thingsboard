@@ -24,7 +24,7 @@ const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
 
 /*@ngInject*/
-function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, types, userService) {
+function TelemetryWebsocketService($rootScope, $websocket,$log, $timeout, $window, types, userService) {
 
     var isOpening = false,
         isOpened = false,
@@ -75,6 +75,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     return service;
 
     function publishCommands () {
+        $log.log("HMDC cmdsWrapper tsSubCms length " + cmdsWrapper.tsSubCmds.length);
         if (isOpened && (cmdsWrapper.tsSubCmds.length > 0 ||
             cmdsWrapper.historyCmds.length > 0 ||
             cmdsWrapper.attrSubCmds.length > 0)) {
@@ -139,6 +140,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     function onMessage (message) {
         if (message.data) {
             var data = angular.fromJson(message.data);
+            $log.log("HMDC data " + data );
             if (data.subscriptionId) {
                 var subscriber = subscribers[data.subscriptionId];
                 if (subscriber && data) {

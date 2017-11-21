@@ -15,9 +15,26 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 
-/**
- * @author Andrew Shvayka
- */
-public enum SubscriptionType {
-    ATTRIBUTES, TIMESERIES, DEPTH_DATUM
+import lombok.Data;
+import lombok.ToString;
+
+import java.util.Map;
+
+@Data
+@ToString
+public class DepthSubscription extends Subscription{
+
+    private final DepthSubscriptionState sub;
+
+    public DepthSubscription(SubscriptionState sub, boolean local, DepthSubscriptionState depthSubscriptionState) {
+        super(sub, local);
+        this.sub = depthSubscriptionState;
+    }
+
+    public Map<String, Double> getDepthKeyStates() { return getSub().getDepthKeyStates(); }
+
+    public void setDepthKeyState(String key, Double ds) {
+        getSub().getDepthKeyStates().put(key, ds);
+    }
+
 }

@@ -13,11 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
+package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 
-/**
- * @author Andrew Shvayka
- */
-public enum SubscriptionType {
-    ATTRIBUTES, TIMESERIES, DEPTH_DATUM
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public class DepthDatumSubscriptionCmd extends SubscriptionCmd {
+
+    private Double startDs;
+    private Double depthWindow;
+    private Double interval;
+    private int limit;
+    private String agg;
+
+    @Override
+    public SubscriptionType getType() {
+        return SubscriptionType.DEPTH_DATUM;
+    }
 }

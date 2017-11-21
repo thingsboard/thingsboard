@@ -91,6 +91,8 @@ public interface PluginContext {
 
     void loadLatestTimeseries(EntityId entityId, PluginCallback<List<TsKvEntry>> callback);
 
+    void loadLatestDepthDatum(EntityId entityId, Collection<String> keys, PluginCallback<List<DsKvEntry>> callback);
+
     void loadLatestDepthDatum(EntityId entityId, PluginCallback<List<DsKvEntry>> callback);
 
     /*

@@ -28,8 +28,8 @@ import java.util.Map;
 public class Subscription {
 
     private final SubscriptionState sub;
-    private final boolean local;
-    private ServerAddress server;
+    protected final boolean local;
+    protected ServerAddress server;
 
     public Subscription(SubscriptionState sub, boolean local) {
         this(sub, local, null);

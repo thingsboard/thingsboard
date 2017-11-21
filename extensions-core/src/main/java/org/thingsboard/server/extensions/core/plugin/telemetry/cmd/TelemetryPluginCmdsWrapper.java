@@ -17,14 +17,13 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 
 import java.util.List;
 
-/**
- * @author Andrew Shvayka
- */
 public class TelemetryPluginCmdsWrapper {
 
     private List<AttributesSubscriptionCmd> attrSubCmds;
 
     private List<TimeseriesSubscriptionCmd> tsSubCmds;
+
+    private List<DepthDatumSubscriptionCmd> dsSubCmds;
 
     private List<GetHistoryCmd> historyCmds;
 
@@ -54,4 +53,8 @@ public class TelemetryPluginCmdsWrapper {
     public void setHistoryCmds(List<GetHistoryCmd> historyCmds) {
         this.historyCmds = historyCmds;
     }
+
+    public List<DepthDatumSubscriptionCmd> getDsSubCmds() { return dsSubCmds; }
+
+    public void setDsSubCmds(List<DepthDatumSubscriptionCmd> dsSubCmds) { this.dsSubCmds = dsSubCmds; }
 }

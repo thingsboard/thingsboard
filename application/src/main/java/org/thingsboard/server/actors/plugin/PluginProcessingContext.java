@@ -214,6 +214,14 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
+    public void loadLatestTimeseries(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<TsKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<TsKvEntry>> rsListFuture = pluginCtx.tsService.findLatest(entityId, keys);
+            Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);
+        }));
+    }
+
+    @Override
     public void loadLatestDepthDatum(final EntityId entityId, final PluginCallback<List<DsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
             ListenableFuture<List<DsKvEntry>> future = pluginCtx.dsService.findAllLatest(entityId);
@@ -222,12 +230,13 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
-    public void loadLatestTimeseries(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<TsKvEntry>> callback) {
+    public void loadLatestDepthDatum(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<DsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<TsKvEntry>> rsListFuture = pluginCtx.tsService.findLatest(entityId, keys);
+            ListenableFuture<List<DsKvEntry>> rsListFuture = pluginCtx.dsService.findLatest(entityId, keys);
             Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);
         }));
     }
+
 
     @Override
     public void reply(PluginToRuleMsg<?> msg) {
