@@ -107,6 +107,18 @@ coap:
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
   timeout: "${COAP_TIMEOUT:10000}"
 
+#Quota parameters
+quota:
+  host:
+    limit: "${QUOTA_HOST_LIMIT:10000}"
+    intervalMs: "${QUOTA_HOST_INTERVAL_MS:60000}"
+    ttlMs: "${QUOTA_HOST_TTL_MS:60000}"
+    cleanPeriodMs: "${QUOTA_HOST_CLEAN_PERIOD_MS:300000}"
+    enabled: "${QUOTA_HOST_ENABLED:false}"
+  log:
+    topSize: 10
+    intervalMin: 2
+
 database:
   type: "${DATABASE_TYPE:sql}" # cassandra OR sql
 
