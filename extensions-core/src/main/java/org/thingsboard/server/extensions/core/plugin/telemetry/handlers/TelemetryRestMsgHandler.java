@@ -128,8 +128,9 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
         Optional<Long> interval = request.getLongParamValue("interval");
         Optional<Integer> limit = request.getIntParamValue("limit");
 
+        // If some of these params are specified, they all must be
         if (startTs.isPresent() || endTs.isPresent() || interval.isPresent() || limit.isPresent()) {
-            if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent()) {
+            if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent() || interval.get() < 0) {
                 msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
                 return;
             }
