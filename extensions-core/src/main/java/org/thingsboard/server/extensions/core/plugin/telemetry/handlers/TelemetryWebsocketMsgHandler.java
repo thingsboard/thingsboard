@@ -257,13 +257,26 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         return new PluginCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
-                sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
+            	ctx.loadAttributes(entityId,DataConstants.SERVER_SCOPE,new PluginCallback<List<AttributeKvEntry>>() {
+            		@Override
+            		public void onSuccess(PluginContext ctx, List<AttributeKvEntry> dataAtt) {
+            			log.debug("Num Attributes Server ATT to be added [{}]",dataAtt.size());     
+		                sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data, dataAtt));
 
                 Map<String, Long> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startTs));
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
                 SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.TIMESERIES, false, subState);
                 subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
+            		}
+            		@Override
+                    public void onFailure(PluginContext ctx, Exception e) {
+                        log.error(FAILED_TO_FETCH_DATA, e);
+                        SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                                FAILED_TO_FETCH_DATA);
+                        sendWsMsg(ctx, sessionRef, update);
+                    }
+            	});
             }
 
             @Override

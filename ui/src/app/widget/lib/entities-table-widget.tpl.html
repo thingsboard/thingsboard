@@ -42,6 +42,7 @@
                 <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                 <tr md-row>
                     <th md-column ng-if="vm.displayEntityName" md-order-by="entityName"><span>{{vm.entityNameColumnTitle}}</span></th>
+                    <th md-column ng-if="vm.displayEntityDescription" md-order-by="entityDescription"><span>{{vm.entityDescriptionColumnTitle}}</span></th>
                     <th md-column ng-if="vm.displayEntityType" md-order-by="entityType"><span translate>entity.entity-type</span></th>
                     <th md-column md-order-by="{{ key.name }}" ng-repeat="key in vm.dataKeys"><span>{{ key.title }}</span></th>
                     <th md-column ng-if="vm.actionCellDescriptors.length"><span>&nbsp</span></th>
@@ -52,6 +53,7 @@
                     md-select-id="id.id" md-auto-select="false" ng-repeat="entity in vm.entities"
                     ng-click="vm.onRowClick($event, entity)" ng-class="{'tb-current': vm.isCurrent(entity)}">
                     <td md-cell flex ng-if="vm.displayEntityName">{{entity.entityName}}</td>
+                    <td md-cell flex ng-if="vm.displayEntityDescription">{{entity.entityDescription}}</td>
                     <td md-cell flex ng-if="vm.displayEntityType">{{entity.entityType}}</td>
                     <td md-cell flex ng-repeat="key in vm.dataKeys"
                         ng-style="vm.cellStyle(entity, key)"

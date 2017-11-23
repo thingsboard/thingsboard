@@ -16,6 +16,7 @@
 package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,17 +27,27 @@ public class SubscriptionUpdate {
     private int errorCode;
     private String errorMsg;
     private Map<String, List<Object>> data;
+    private Map<String, Object> attributes;
 
     public SubscriptionUpdate(int subscriptionId, List<TsKvEntry> data) {
         super();
         this.subscriptionId = subscriptionId;
         this.data = new TreeMap<>();
+        this.attributes = new TreeMap<>();
         for (TsKvEntry tsEntry : data) {
             List<Object> values = this.data.computeIfAbsent(tsEntry.getKey(), k -> new ArrayList<>());
             Object[] value = new Object[2];
             value[0] = tsEntry.getTs();
             value[1] = tsEntry.getValueAsString();
             values.add(value);
+        }
+    }
+    public SubscriptionUpdate(int subscriptionId, List<TsKvEntry> data, List<AttributeKvEntry> dataAtt) {
+        this(subscriptionId,data);
+        if (dataAtt!=null) {
+        	for (AttributeKvEntry tsEntry : dataAtt) {
+        		attributes.put(tsEntry.getKey(),tsEntry.getValue());
+        	}
         }
     }
 
@@ -47,7 +58,7 @@ public class SubscriptionUpdate {
     }
 
     public SubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode) {
-        this(subscriptionId, errorCode, null);
+        this(subscriptionId, errorCode, (String)null);
     }
 
     public SubscriptionUpdate(int subscriptionId, SubscriptionErrorCode errorCode, String errorMsg) {
@@ -63,6 +74,9 @@ public class SubscriptionUpdate {
 
     public Map<String, List<Object>> getData() {
         return data;
+    }
+    public Map<String, Object> getAttributes(){
+    	return attributes;
     }
 
     public Map<String, Long> getLatestValues() {
@@ -88,6 +102,6 @@ public class SubscriptionUpdate {
     @Override
     public String toString() {
         return "SubscriptionUpdate [subscriptionId=" + subscriptionId + ", errorCode=" + errorCode + ", errorMsg=" + errorMsg + ", data="
-                + data + "]";
+                + data + ", attributes="+ attributes +"]";
     }
 }
