@@ -16,7 +16,10 @@
 @import '../../scss/constants';
 
 .tb-details-title {
-  font-size: 1.600rem;
+  font-size: 1.000rem;
+  @media (min-width: $layout-breakpoint-gt-sm) {
+    font-size: 1.600rem;
+  }
   font-weight: 400;
   text-transform: uppercase;
   margin: 20px 8px 0 0;

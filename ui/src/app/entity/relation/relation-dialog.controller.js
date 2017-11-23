@@ -79,10 +79,8 @@ export default function RelationDialogController($scope, $mdDialog, types, entit
     });
 
     function updateEditorSize(element) {
-        var newWidth = 600;
         var newHeight = 200;
-        angular.element('#tb-relation-additional-info', element).height(newHeight.toString() + "px")
-            .width(newWidth.toString() + "px");
+        angular.element('#tb-relation-additional-info', element).height(newHeight.toString() + "px");
         vm.editor.resize();
     }
 
