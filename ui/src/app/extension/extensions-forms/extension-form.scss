@@ -38,3 +38,19 @@
     position:absolute!important
   }
 }
+
+.extensionDialog {
+  min-width: 1000px;
+}
+
+.tb-container-for-select {
+  height: 58px;
+}
+
+.tb-drop-file-input-hide {
+  height: 200%;
+  display: block;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-dialog aria-label="{{ (vm.isAdd ? 'extension.add' : 'extension.edit' ) | translate }}" style="min-width: 1000px;">
+<md-dialog class="extensionDialog" aria-label="{{ (vm.isAdd ? 'extension.add' : 'extension.edit' ) | translate }}">
     <form name="theForm" ng-submit="vm.save()">
         <md-toolbar>
             <div class="md-toolbar-tools">
@@ -26,8 +26,11 @@
                 </md-button>
             </div>
         </md-toolbar>
+
         <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
+
         <span style="min-height: 5px;" flex="" ng-show="!loading"></span>
+
         <md-dialog-content>
             <div class="md-dialog-content">
                 <md-content class="md-padding" layout="column">
@@ -35,41 +38,48 @@
                         <section flex layout="row">
                             <md-input-container flex="60" class="md-block">
                                 <label translate>extension.extension-id</label>
-                                <input required name="extensionId" ng-model="vm.newExtension.id" ng-change="vm.validateId()">
+                                <input required name="extensionId" ng-model="vm.extension.id" ng-change="vm.validateId()">
                                 <div ng-messages="theForm.extensionId.$error">
                                     <div translate ng-message="required">extension.id-required</div>
                                     <div translate ng-message="uniqueIdValidation">extension.unique-id-required</div>
                                 </div>
                             </md-input-container>
+
                             <md-input-container flex="40" class="md-block">
                                 <label translate>extension.extension-type</label>
-                                <md-select ng-disabled="!vm.isAdd" required name="extensionType" ng-model="vm.newExtension.type">
+
+                                <md-select ng-disabled="!vm.isAdd" required name="extensionType" ng-change="vm.extensionTypeChange()" ng-model="vm.extension.type">
                                     <md-option ng-repeat="(key,value) in vm.types.extensionType" ng-value="value">
                                         {{value}}
                                     </md-option>
                                 </md-select>
+
                                 <div ng-messages="theForm.extensionType.$error">
                                     <div translate ng-message="required">extension.type-required</div>
                                 </div>
                             </md-input-container>
                         </section>
 
-                        <div tb-extension-form-http config="vm.configuration" is-add="vm.isAdd" ng-if="vm.newExtension.type && vm.newExtension.type == vm.types.extensionType.http"></div>
+                        <div tb-extension-form-http        config="vm.extension.configuration" is-add="vm.isAdd" ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.http"></div>
 
+                        <div tb-extension-form-opc  configuration="vm.extension.configuration"                   ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.opc"></div>
                     </fieldset>
-
-                    <!--<div>{{vm.newExtension}}</div>-->
+                    <!--<div>{{vm.extension}}</div>-->
                 </md-content>
             </div>
         </md-dialog-content>
+
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-disabled="loading || theForm.$invalid || !theForm.$dirty" type="submit"
+            <md-button type="submit"
+                       ng-disabled="loading || theForm.$invalid || !theForm.$dirty"
                        class="md-raised md-primary">
                 {{ (vm.isAdd  ? 'action.add' : 'action.save') | translate }}
             </md-button>
+
             <md-button ng-disabled="loading" ng-click="vm.cancel()" style="margin-right:20px;">{{ 'action.cancel' | translate }}
             </md-button>
         </md-dialog-actions>
     </form>
 </md-dialog>
+

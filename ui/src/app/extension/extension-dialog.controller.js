@@ -29,45 +29,72 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     vm.entityId = entityId;
     vm.allExtensions = allExtensions;
 
-    vm.configuration = {};
-    vm.newExtension = {id:"",type:"",configuration:vm.configuration};
 
-    if(!vm.isAdd) {
-        vm.newExtension = angular.copy(extension);
-        vm.configuration = vm.newExtension.configuration;
-        editTransformers(vm.newExtension);
+    if (extension) { // Editing
+        //vm.configuration = vm.extension.configuration;
+        vm.extension = angular.copy(extension);
+        editTransformers(vm.extension);
+    } else { // Add new
+        vm.extension = {};
     }
 
-    vm.cancel = cancel;
-    vm.save = save;
 
+    vm.extensionTypeChange = function () {
+        // $scope.theForm.$setPristine();
+        // $scope.theForm.$setUntouched();
+
+        if (vm.extension.type === "HTTP") {
+            vm.extension.configuration = {
+                "converterConfigurations": []
+            };
+        }
+        if (vm.extension.type === "MQTT") {
+            vm.extension.configuration = {
+                "brokers": []
+            };
+        }
+        if (vm.extension.type === "OPC UA") {
+            vm.extension.configuration = {
+                "servers": []
+            };
+        }
+    };
+
+    vm.cancel = cancel;
     function cancel() {
         $mdDialog.cancel();
     }
+
+    vm.save = save;
     function save() {
         saveTransformers();
         if(vm.isAdd) {
-            vm.allExtensions.push(vm.newExtension);
+            vm.allExtensions.push(vm.extension);
         } else {
             var index = vm.allExtensions.indexOf(extension);
             if(index > -1) {
-                vm.allExtensions[index] = vm.newExtension;
+                vm.allExtensions[index] = vm.extension;
             }
         }
 
         var editedValue = angular.toJson(vm.allExtensions);
 
-        attributeService.saveEntityAttributes(vm.entityType, vm.entityId, types.attributesScope.shared.value, [{key:"configuration", value:editedValue}]).then(
-            function success() {
-                $scope.theForm.$setPristine();
-                $mdDialog.hide();
-            }
-        );
+        attributeService
+            .saveEntityAttributes(
+                vm.entityType,
+                vm.entityId,
+                types.attributesScope.shared.value,
+                [{key:"configuration", value:editedValue}]
+            )
+            .then(function success() {
+                    $scope.theForm.$setPristine();
+                    $mdDialog.hide();
+            });
     }
     
     vm.validateId = function() {
         var coincidenceArray = vm.allExtensions.filter(function(ext) {
-            return ext.id == vm.newExtension.id;
+            return ext.id == vm.extension.id;
         });
         if(coincidenceArray.length) {
             if(!vm.isAdd) {
@@ -82,11 +109,11 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
         } else {
             $scope.theForm.extensionId.$setValidity('uniqueIdValidation', true);
         }
-    }
+    };
 
     function saveTransformers() {
-        var config = vm.newExtension.configuration.converterConfigurations;
-        if(vm.newExtension.type == types.extensionType.http) {
+        var config = vm.extension.configuration.converterConfigurations;
+        if(vm.extension.type == types.extensionType.http) {
             for(let i=0;i<config.length;i++) {
                 for(let j=0;j<config[i].converters.length;j++){
                     for(let k=0;k<config[i].converters[j].attributes.length;k++){
