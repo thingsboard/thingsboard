@@ -33,8 +33,12 @@
                     </div>
                     <div ng-if="converterConfigs.length > 0">
                         <ol class="list-group">
-                            <li class="list-group-item" ng-repeat="(configIndex,config) in converterConfigs">
-                                <md-button aria-label="{{ 'action.remove' | translate }}" class="md-icon-button" ng-click="removeConverterConfig(config)">
+                            <li class="list-group-item" ng-repeat="(configIndex, config) in converterConfigs">
+                                <md-button aria-label="{{ 'action.remove' | translate }}"
+                                           class="md-icon-button"
+                                           ng-click="removeConverterConfig(config)"
+                                           ng-hide="converterConfigs.length < 2"
+                                >
                                     <ng-md-icon icon="close" aria-label="{{ 'action.remove' | translate }}"></ng-md-icon>
                                     <md-tooltip md-direction="top">
                                         {{ 'action.remove' | translate }}
@@ -65,8 +69,14 @@
                                                     </div>
                                                     <div ng-if="config.converters.length > 0">
                                                         <ol class="list-group">
-                                                            <li class="list-group-item" ng-repeat="(converterIndex,converter) in config.converters">
-                                                                <md-button aria-label="{{ 'action.remove' | translate }}" class="md-icon-button" ng-click="removeConverter(converter, config.converters)">
+                                                            <li class="list-group-item"
+                                                                ng-repeat="(converterIndex,converter) in config.converters"
+                                                            >
+                                                                <md-button aria-label="{{ 'action.remove' | translate }}"
+                                                                           class="md-icon-button"
+                                                                           ng-click="removeConverter(converter, config.converters)"
+                                                                           ng-hide="config.converters.length < 2"
+                                                                >
                                                                     <ng-md-icon icon="close" aria-label="{{ 'action.remove' | translate }}"></ng-md-icon>
                                                                     <md-tooltip md-direction="top">
                                                                         {{ 'action.remove' | translate }}

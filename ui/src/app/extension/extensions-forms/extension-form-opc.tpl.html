@@ -216,7 +216,7 @@
                                                         </div>
                                                     </md-input-container>
 
-                                                    <div class="tb-container">
+                                                    <div class="tb-container" ng-class="{'ng-invalid':!server.keystore.file}">
                                                         <span ng-init='fieldsToFill = {"fileName":"fileName", "file":"file"}'></span>
                                                         <label class="tb-label" translate>extension.opc-keystore-location</label>
                                                         <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, server.keystore, fieldsToFill)' class="tb-file-select-container">

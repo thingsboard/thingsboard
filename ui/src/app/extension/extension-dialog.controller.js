@@ -40,8 +40,6 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
 
 
     vm.extensionTypeChange = function () {
-        // $scope.theForm.$setPristine();
-        // $scope.theForm.$setUntouched();
 
         if (vm.extension.type === "HTTP") {
             vm.extension.configuration = {
@@ -68,28 +66,49 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     vm.save = save;
     function save() {
         saveTransformers();
-        if(vm.isAdd) {
-            vm.allExtensions.push(vm.extension);
-        } else {
-            var index = vm.allExtensions.indexOf(extension);
-            if(index > -1) {
-                vm.allExtensions[index] = vm.extension;
+
+        let $errorElement = angular.element('[name=theForm]').find('.ng-invalid');
+
+        if ($errorElement.length) {
+
+            let $mdDialogScroll = angular.element('md-dialog-content').scrollTop();
+            let $mdDialogTop = angular.element('md-dialog-content').offset().top;
+            let $errorElementTop = angular.element('[name=theForm]').find('.ng-invalid').eq(0).offset().top;
+
+
+            if ($errorElementTop !== $mdDialogTop) {
+                angular.element('md-dialog-content').animate({
+                    scrollTop: $mdDialogScroll + ($errorElementTop - $mdDialogTop) - 20
+                }, 500);
+                $errorElement.eq(0).focus();
             }
-        }
 
-        var editedValue = angular.toJson(vm.allExtensions);
+        } else {
 
-        attributeService
-            .saveEntityAttributes(
-                vm.entityType,
-                vm.entityId,
-                types.attributesScope.shared.value,
-                [{key:"configuration", value:editedValue}]
-            )
-            .then(function success() {
+            if(vm.isAdd) {
+                vm.allExtensions.push(vm.extension);
+            } else {
+                var index = vm.allExtensions.indexOf(extension);
+                if(index > -1) {
+                    vm.allExtensions[index] = vm.extension;
+                }
+            }
+
+            var editedValue = angular.toJson(vm.allExtensions);
+
+            attributeService
+                .saveEntityAttributes(
+                    vm.entityType,
+                    vm.entityId,
+                    types.attributesScope.shared.value,
+                    [{key:"configuration", value:editedValue}]
+                )
+                .then(function success() {
                     $scope.theForm.$setPristine();
                     $mdDialog.hide();
-            });
+                });
+
+        }
     }
     
     vm.validateId = function() {

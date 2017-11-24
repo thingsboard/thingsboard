@@ -16,7 +16,7 @@
 
 -->
 <md-dialog class="extensionDialog" aria-label="{{ (vm.isAdd ? 'extension.add' : 'extension.edit' ) | translate }}">
-    <form name="theForm" ng-submit="vm.save()">
+    <form name="theForm" ng-submit="vm.save()" novalidate>
         <md-toolbar>
             <div class="md-toolbar-tools">
                 <h2 translate>{{ vm.isAdd ? 'extension.add' : 'extension.edit'}}</h2>
@@ -70,10 +70,9 @@
         </md-dialog-content>
 
         <md-dialog-actions layout="row">
-            <span flex></span>
             <md-button type="submit"
-                       ng-disabled="loading || theForm.$invalid || !theForm.$dirty"
-                       class="md-raised md-primary">
+                       class="md-raised md-primary"
+            >
                 {{ (vm.isAdd  ? 'action.add' : 'action.save') | translate }}
             </md-button>
 
