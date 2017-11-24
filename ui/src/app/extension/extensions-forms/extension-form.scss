@@ -22,9 +22,6 @@
     margin-top: 0;
     padding-left: 3px;
   }
-  .t-right {
-    text-align: right;
-  }
   .tb-container {
     width:100%;
   }
@@ -32,6 +29,15 @@
     .tb-error-message {
       padding: 5px 0 0 0;
     }
+  }
+  .dropdown-section {
+    margin-bottom: 30px;
+  }
+}
+
+.extension-form.extension-mqtt {
+  md-checkbox{
+    margin-left: 10px;
   }
 }
 
@@ -48,4 +54,20 @@
   .ace_text-input {
     position:absolute!important
   }
+}
+
+.extensionDialog {
+  min-width: 1000px;
+}
+
+.tb-container-for-select {
+  height: 58px;
+}
+
+.tb-drop-file-input-hide {
+  height: 200%;
+  display: block;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }

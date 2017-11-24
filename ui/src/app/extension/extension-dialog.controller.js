@@ -29,45 +29,88 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     vm.entityId = entityId;
     vm.allExtensions = allExtensions;
 
-    vm.configuration = {};
-    vm.newExtension = {id:"",type:"",configuration:vm.configuration};
 
-    if(!vm.isAdd) {
-        vm.newExtension = angular.copy(extension);
-        vm.configuration = vm.newExtension.configuration;
-        editTransformers(vm.newExtension);
+    if (extension) {
+        vm.extension = angular.copy(extension);
+        editTransformers(vm.extension);
+    } else {
+        vm.extension = {};
     }
 
-    vm.cancel = cancel;
-    vm.save = save;
 
+    vm.extensionTypeChange = function () {
+
+        if (vm.extension.type === "HTTP") {
+            vm.extension.configuration = {
+                "converterConfigurations": []
+            };
+        }
+        if (vm.extension.type === "MQTT") {
+            vm.extension.configuration = {
+                "brokers": []
+            };
+        }
+        if (vm.extension.type === "OPC UA") {
+            vm.extension.configuration = {
+                "servers": []
+            };
+        }
+    };
+
+    vm.cancel = cancel;
     function cancel() {
         $mdDialog.cancel();
     }
+
+    vm.save = save;
     function save() {
-        $mdDialog.hide();
-        saveTransformers();
-        if(vm.isAdd) {
-            vm.allExtensions.push(vm.newExtension);
+        let $errorElement = angular.element('[name=theForm]').find('.ng-invalid');
+
+        if ($errorElement.length) {
+
+            let $mdDialogScroll = angular.element('md-dialog-content').scrollTop();
+            let $mdDialogTop = angular.element('md-dialog-content').offset().top;
+            let $errorElementTop = angular.element('[name=theForm]').find('.ng-invalid').eq(0).offset().top;
+
+
+            if ($errorElementTop !== $mdDialogTop) {
+                angular.element('md-dialog-content').animate({
+                    scrollTop: $mdDialogScroll + ($errorElementTop - $mdDialogTop) - 50
+                }, 500);
+                $errorElement.eq(0).focus();
+            }
         } else {
-            var index = vm.allExtensions.indexOf(extension);
-            if(index > -1) {
-                vm.allExtensions[index] = vm.newExtension;
+
+            if(vm.isAdd) {
+                vm.allExtensions.push(vm.extension);
+            } else {
+                var index = vm.allExtensions.indexOf(extension);
+                if(index > -1) {
+                    vm.allExtensions[index] = vm.extension;
+                }
             }
+
+            $mdDialog.hide();
+            saveTransformers();
+
+            var editedValue = angular.toJson(vm.allExtensions);
+
+            attributeService
+                .saveEntityAttributes(
+                    vm.entityType,
+                    vm.entityId,
+                    types.attributesScope.shared.value,
+                    [{key:"configuration", value:editedValue}]
+                )
+                .then(function success() {
+                });
+
         }
-
-        var editedValue = angular.toJson(vm.allExtensions);
-
-        attributeService.saveEntityAttributes(vm.entityType, vm.entityId, types.attributesScope.shared.value, [{key:"configuration", value:editedValue}]).then(
-            function success() {
-                $scope.theForm.$setPristine();
-            }
-        );
     }
     
     vm.validateId = function() {
         var coincidenceArray = vm.allExtensions.filter(function(ext) {
-            return ext.id == vm.newExtension.id;
+            return ext.id == vm.extension.id;
         });
         if(coincidenceArray.length) {
             if(!vm.isAdd) {
@@ -82,11 +125,11 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
         } else {
             $scope.theForm.extensionId.$setValidity('uniqueIdValidation', true);
         }
-    }
+    };
 
     function saveTransformers() {
-        if(vm.newExtension.type == types.extensionType.http) {
-            var config = vm.newExtension.configuration.converterConfigurations;
+        if(vm.extension.type == types.extensionType.http) {
+            var config = vm.extension.configuration.converterConfigurations;
             if(config && config.length > 0) {
                 for(let i=0;i<config.length;i++) {
                     for(let j=0;j<config[i].converters.length;j++){
@@ -106,8 +149,8 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                 }
             }
         }
-        if(vm.newExtension.type == types.extensionType.mqtt) {
-            var brokers = vm.newExtension.configuration.brokers;
+        if(vm.extension.type == types.extensionType.mqtt) {
+            var brokers = vm.extension.configuration.brokers;
             if(brokers && brokers.length > 0) {
                 for(let i=0;i<brokers.length;i++) {
                     if(brokers[i].mapping && brokers[i].mapping.length > 0) {
@@ -117,6 +160,27 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                                 delete brokers[i].mapping[j].converter.typeExp;
                             }
                             delete brokers[i].mapping[j].converterType;
+                        }
+                    }
+                    if(brokers[i].connectRequests && brokers[i].connectRequests.length > 0) {
+                        for(let j=0;j<brokers[i].connectRequests.length;j++) {
+                            delete brokers[i].connectRequests[j].nameExp;
+                        }
+                    }
+                    if(brokers[i].disconnectRequests && brokers[i].disconnectRequests.length > 0) {
+                        for(let j=0;j<brokers[i].disconnectRequests.length;j++) {
+                            delete brokers[i].disconnectRequests[j].nameExp;
+                        }
+                    }
+                    if(brokers[i].attributeRequests && brokers[i].attributeRequests.length > 0) {
+                        for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                            delete brokers[i].attributeRequests[j].nameExp;
+                        }
+                        for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                            delete brokers[i].attributeRequests[j].attrKey;
+                        }
+                        for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                            delete brokers[i].attributeRequests[j].requestId;
                         }
                     }
                 }
@@ -171,6 +235,43 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                             brokers[i].mapping[j].converterType = "json";
                         } else {
                             brokers[i].mapping[j].converterType = "custom";
+                        }
+                    }
+                }
+                if(brokers[i].connectRequests && brokers[i].connectRequests.length > 0) {
+                    for(let j=0;j<brokers[i].connectRequests.length;j++) {
+                        if(brokers[i].connectRequests[j].deviceNameTopicExpression) {
+                            brokers[i].connectRequests[j].nameExp = "deviceNameTopicExpression";
+                        } else {
+                            brokers[i].connectRequests[j].nameExp = "deviceNameJsonExpression";
+                        }
+                    }
+                }
+                if(brokers[i].disconnectRequests && brokers[i].disconnectRequests.length > 0) {
+                    for(let j=0;j<brokers[i].disconnectRequests.length;j++) {
+                        if(brokers[i].disconnectRequests[j].deviceNameTopicExpression) {
+                            brokers[i].disconnectRequests[j].nameExp = "deviceNameTopicExpression";
+                        } else {
+                            brokers[i].disconnectRequests[j].nameExp = "deviceNameJsonExpression";
+                        }
+                    }
+                }
+                if(brokers[i].attributeRequests && brokers[i].attributeRequests.length > 0) {
+                    for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                        if(brokers[i].attributeRequests[j].deviceNameTopicExpression) {
+                            brokers[i].attributeRequests[j].nameExp = "deviceNameTopicExpression";
+                        } else {
+                            brokers[i].attributeRequests[j].nameExp = "deviceNameJsonExpression";
+                        }
+                        if(brokers[i].attributeRequests[j].attributeKeyTopicExpression) {
+                            brokers[i].attributeRequests[j].attrKey = "attributeKeyTopicExpression";
+                        } else {
+                            brokers[i].attributeRequests[j].attrKey = "attributeKeyJsonExpression";
+                        }
+                        if(brokers[i].attributeRequests[j].requestIdTopicExpression) {
+                            brokers[i].attributeRequests[j].requestId = "requestIdTopicExpression";
+                        } else {
+                            brokers[i].attributeRequests[j].requestId = "requestIdJsonExpression";
                         }
                     }
                 }

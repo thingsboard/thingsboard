@@ -30,6 +30,7 @@
     "angular-material": "1.1.1",
     "angular-material-data-table": "^0.10.9",
     "angular-material-icons": "^0.7.1",
+    "angular-material-expansion-panel": "^0.7.2",
     "angular-messages": "1.5.8",
     "angular-route": "1.5.8",
     "angular-sanitize": "1.5.8",

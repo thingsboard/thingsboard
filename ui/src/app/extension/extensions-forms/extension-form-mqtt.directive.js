@@ -33,14 +33,22 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
         scope.types = types;
         scope.theForm = scope.$parent.theForm;
 
-        scope.nameExpressions = {
+        scope.deviceNameExpressions = {
             deviceNameJsonExpression: "extension.converter-json",
             deviceNameTopicExpression: "extension.topic"
         };
-        scope.typeExpressions = {
+        scope.deviceTypeExpressions = {
             deviceTypeJsonExpression: "extension.converter-json",
             deviceTypeTopicExpression: "extension.topic"
         };
+        scope.attributeKeyExpressions = {
+            attributeKeyJsonExpression: "extension.converter-json",
+            attributeKeyTopicExpression: "extension.topic"
+        };
+        scope.requestIdExpressions = {
+            requestIdJsonExpression: "extension.converter-json",
+            requestIdTopicExpression: "extension.topic"
+        }
 
         scope.extensionCustomConverterOptions = {
             useWrapMode: false,
@@ -58,17 +66,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             }
         };
 
-
-        if(scope.isAdd) {
-            scope.brokers = [];
-            scope.config.brokers = scope.brokers;
-        } else {
-            scope.brokers = scope.config.brokers;
-        }
-
         scope.updateValidity = function () {
-            var valid = scope.brokers && scope.brokers.length > 0;
-            scope.theForm.$setValidity('brokers', valid);
             if(scope.brokers.length) {
                 for(let i=0;i<scope.brokers.length;i++) {
                     if(scope.brokers[i].credentials.type == scope.types.mqttCredentialTypes.pem.value) {
@@ -81,57 +79,116 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                     }
                 }
             }
-        }
+        };
 
         scope.$watch('brokers', function() {
             scope.updateValidity();
         }, true);
 
         scope.addBroker = function() {
-            var newBroker = {host:"localhost", port:1882, ssl:false, retryInterval:3000, credentials:{type:"anonymous"}, mapping:[]};
+            var newBroker = {
+                host: "localhost",
+                port: 1882,
+                ssl: false,
+                retryInterval: 3000,
+                credentials: {type:"anonymous"},
+                mapping: [],
+                connectRequests: [],
+                disconnectRequests: [],
+                attributeRequests: [],
+                attributeUpdates: [],
+                serverSideRpc: []
+            };
             scope.brokers.push(newBroker);
-        }
+        };
 
         scope.removeBroker = function(broker) {
             var index = scope.brokers.indexOf(broker);
             if (index > -1) {
                 scope.brokers.splice(index, 1);
             }
-            scope.theForm.$setDirty();
+        };
+
+        if(scope.isAdd) {
+            scope.brokers = [];
+            scope.config.brokers = scope.brokers;
+            scope.addBroker();
+        } else {
+            scope.brokers = scope.config.brokers;
         }
 
         scope.addMap = function(mapping) {
             var newMap = {topicFilter:"sensors", converter:{attributes:[],timeseries:[]}};
 
             mapping.push(newMap);
-        }
+        };
 
         scope.removeMap = function(map, mapping) {
             var index = mapping.indexOf(map);
             if (index > -1) {
                 mapping.splice(index, 1);
             }
-            scope.theForm.$setDirty();
-        }
+        };
 
         scope.addAttribute = function(attributes) {
             var newAttribute = {type:"", key:"", value:""};
             attributes.push(newAttribute);
-        }
+        };
 
         scope.removeAttribute = function(attribute, attributes) {
             var index = attributes.indexOf(attribute);
             if (index > -1) {
                 attributes.splice(index, 1);
             }
-            scope.theForm.$setDirty();
-        }
+        };
+
+        scope.addConnectRequest = function(requests, type) {
+            var newRequest = {};
+            if(type == "connect") {
+                newRequest.topicFilter = "sensors/connect";
+            } else {
+                newRequest.topicFilter = "sensors/disconnect";
+            }
+            requests.push(newRequest);
+        };
+
+        scope.addAttributeRequest = function(requests) {
+            var newRequest = {
+                topicFilter: "sensors/attributes",
+                clientScope: false,
+                responseTopicExpression: "sensors/${deviceName}/attributes/${responseId}",
+                valueExpression: "${attributeValue}"
+            };
+            requests.push(newRequest);
+        };
+
+        scope.addAttributeUpdate = function(updates) {
+            var newUpdate = {
+                deviceNameFilter: ".*",
+                attributeFilter: ".*",
+                topicExpression: "sensor/${deviceName}/${attributeKey}",
+                valueExpression: "{\"${attributeKey}\":\"${attributeValue}\"}"
+            }
+            updates.push(newUpdate);
+        };
+
+        scope.addServerSideRpc = function(rpcRequests) {
+            var newRpc = {
+                deviceNameFilter: ".*",
+                methodFilter: "echo",
+                requestTopicExpression: "sensor/${deviceName}/request/${methodName}/${requestId}",
+                responseTopicExpression: "sensor/${deviceName}/response/${methodName}/${requestId}",
+                responseTimeout: 10000,
+                valueExpression: "${params}"
+            };
+            rpcRequests.push(newRpc);
+        };
 
         scope.changeCredentials = function(broker) {
             var type = broker.credentials.type;
             broker.credentials = {};
             broker.credentials.type = type;
-        }
+        };
 
         scope.changeConverterType = function(map) {
             if(map.converterType == "custom"){
@@ -140,20 +197,32 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             if(map.converterType == "json") {
                 map.converter = {attributes:[],timeseries:[]};
             }
-        }
+        };
 
-        scope.changeNameExpression = function(converter) {
-            if(converter.nameExp == "deviceNameJsonExpression") {
-                if(converter.deviceNameTopicExpression) {
-                    delete converter.deviceNameTopicExpression;
+        scope.changeNameExpression = function(element, type) {
+            if(element.nameExp == "deviceNameJsonExpression") {
+                if(element.deviceNameTopicExpression) {
+                    delete element.deviceNameTopicExpression;
+                }
+                if(type) {
+                    element.deviceNameJsonExpression = "${$.serialNumber}";
                 }
             }
-            if(converter.nameExp == "deviceNameTopicExpression") {
-                if(converter.deviceNameJsonExpression) {
-                    delete converter.deviceNameJsonExpression;
+            if(element.nameExp == "deviceNameTopicExpression") {
+                if(element.deviceNameJsonExpression) {
+                    delete element.deviceNameJsonExpression;
+                }
+                if(type && type == "connect") {
+                    element.deviceNameTopicExpression = "(?<=sensor\\/)(.*?)(?=\\/connect)";
+                }
+                if(type && type == "disconnect") {
+                    element.deviceNameTopicExpression = "(?<=sensor\\/)(.*?)(?=\\/disconnect)";
+                }
+                if(type && type == "attribute") {
+                    element.deviceNameTopicExpression = "(?<=sensors\\/)(.*?)(?=\\/attributes)";
                 }
             }
-        }
+        };
 
         scope.changeTypeExpression = function(converter) {
             if(converter.typeExp == "deviceTypeJsonExpression") {
@@ -166,7 +235,37 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                     delete converter.deviceTypeJsonExpression;
                 }
             }
-        }
+        };
+
+        scope.changeAttrKeyExpression = function(request) {
+            if(request.attrKey == "attributeKeyJsonExpression") {
+                if(request.attributeKeyTopicExpression) {
+                    delete request.attributeKeyTopicExpression;
+                }
+                request.attributeKeyJsonExpression = "${$.key}";
+            }
+            if(request.attrKey == "attributeKeyTopicExpression") {
+                if(request.attributeKeyJsonExpression) {
+                    delete request.attributeKeyJsonExpression;
+                }
+                request.attributeKeyTopicExpression = "(?<=attributes\\/)(.*?)(?=\\/request)";
+            }
+        };
+
+        scope.changeRequestIdExpression = function(request) {
+            if(request.requestId == "requestIdJsonExpression") {
+                if(request.requestIdTopicExpression) {
+                    delete request.requestIdTopicExpression;
+                }
+                request.requestIdJsonExpression = "${$.requestId}";
+            }
+            if(request.requestId == "requestIdTopicExpression") {
+                if(request.requestIdJsonExpression) {
+                    delete request.requestIdJsonExpression;
+                }
+                request.requestIdTopicExpression = "(?<=request\\/)(.*?)($)";
+            }
+        };
 
         scope.validateCustomConverter = function(model, editorName) {
             if(model && model.length) {
@@ -177,7 +276,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                     scope.theForm[editorName].$setValidity('converterJSON', false);
                 }
             }
-        }
+        };
 
         scope.fileAdded = function($file, broker, fileType) {
             var reader = new FileReader();
@@ -204,7 +303,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                 });
             };
             reader.readAsDataURL($file.file);
-        }
+        };
 
         scope.clearFile = function(broker, fileType) {
             scope.theForm.$setDirty();
@@ -220,10 +319,10 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                 broker.credentials.certFileName = null;
                 broker.credentials.cert = null;
             }
-        }
+        };
 
         $compile(element.contents())(scope);
-    }
+    };
 
     return {
         restrict: "A",
