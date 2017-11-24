@@ -45,6 +45,7 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
         $mdDialog.cancel();
     }
     function save() {
+        $mdDialog.hide();
         saveTransformers();
         if(vm.isAdd) {
             vm.allExtensions.push(vm.newExtension);
@@ -60,7 +61,6 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
         attributeService.saveEntityAttributes(vm.entityType, vm.entityId, types.attributesScope.shared.value, [{key:"configuration", value:editedValue}]).then(
             function success() {
                 $scope.theForm.$setPristine();
-                $mdDialog.hide();
             }
         );
     }
@@ -85,21 +85,39 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     }
 
     function saveTransformers() {
-        var config = vm.newExtension.configuration.converterConfigurations;
         if(vm.newExtension.type == types.extensionType.http) {
-            for(let i=0;i<config.length;i++) {
-                for(let j=0;j<config[i].converters.length;j++){
-                    for(let k=0;k<config[i].converters[j].attributes.length;k++){
-                        if(config[i].converters[j].attributes[k].transformerType == "toDouble"){
-                            config[i].converters[j].attributes[k].transformer = {type: "intToDouble"};
+            var config = vm.newExtension.configuration.converterConfigurations;
+            if(config && config.length > 0) {
+                for(let i=0;i<config.length;i++) {
+                    for(let j=0;j<config[i].converters.length;j++){
+                        for(let k=0;k<config[i].converters[j].attributes.length;k++){
+                            if(config[i].converters[j].attributes[k].transformerType == "toDouble"){
+                                config[i].converters[j].attributes[k].transformer = {type: "intToDouble"};
+                            }
+                            delete config[i].converters[j].attributes[k].transformerType;
                         }
-                        delete config[i].converters[j].attributes[k].transformerType;
+                        for(let l=0;l<config[i].converters[j].timeseries.length;l++) {
+                            if(config[i].converters[j].timeseries[l].transformerType == "toDouble"){
+                                config[i].converters[j].timeseries[l].transformer = {type: "intToDouble"};
+                            }
+                            delete config[i].converters[j].timeseries[l].transformerType;
+                        }
                     }
-                    for(let l=0;l<config[i].converters[j].timeseries.length;l++) {
-                        if(config[i].converters[j].timeseries[l].transformerType == "toDouble"){
-                            config[i].converters[j].timeseries[l].transformer = {type: "intToDouble"};
+                }
+            }
+        }
+        if(vm.newExtension.type == types.extensionType.mqtt) {
+            var brokers = vm.newExtension.configuration.brokers;
+            if(brokers && brokers.length > 0) {
+                for(let i=0;i<brokers.length;i++) {
+                    if(brokers[i].mapping && brokers[i].mapping.length > 0) {
+                        for(let j=0;j<brokers[i].mapping.length;j++) {
+                            if(brokers[i].mapping[j].converterType == "json") {
+                                delete brokers[i].mapping[j].converter.nameExp;
+                                delete brokers[i].mapping[j].converter.typeExp;
+                            }
+                            delete brokers[i].mapping[j].converterType;
                         }
-                        delete config[i].converters[j].timeseries[l].transformerType;
                     }
                 }
             }
@@ -107,8 +125,8 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     }
 
     function editTransformers(extension) {
-        var config = extension.configuration.converterConfigurations;
         if(extension.type == types.extensionType.http) {
+            var config = extension.configuration.converterConfigurations;
             for(let i=0;i<config.length;i++) {
                 for(let j=0;j<config[i].converters.length;j++){
                     for(let k=0;k<config[i].converters[j].attributes.length;k++){
@@ -129,6 +147,30 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                                 config[i].converters[j].timeseries[l].transformerType = "custom";
                                 config[i].converters[j].timeseries[l].transformer = js_beautify(config[i].converters[j].timeseries[l].transformer, {indent_size: 4});
                             }
+                        }
+                    }
+                }
+            }
+        }
+        if(extension.type == types.extensionType.mqtt) {
+            var brokers = extension.configuration.brokers;
+            for(let i=0;i<brokers.length;i++) {
+                if(brokers[i].mapping && brokers[i].mapping.length > 0) {
+                    for(let j=0;j<brokers[i].mapping.length;j++) {
+                        if(brokers[i].mapping[j].converter.type == "json") {
+                            if(brokers[i].mapping[j].converter.deviceNameTopicExpression) {
+                                brokers[i].mapping[j].converter.nameExp = "deviceNameTopicExpression";
+                            } else {
+                                brokers[i].mapping[j].converter.nameExp = "deviceNameJsonExpression";
+                            }
+                            if(brokers[i].mapping[j].converter.deviceTypeTopicExpression) {
+                                brokers[i].mapping[j].converter.typeExp = "deviceTypeTopicExpression";
+                            } else {
+                                brokers[i].mapping[j].converter.typeExp = "deviceTypeJsonExpression";
+                            }
+                            brokers[i].mapping[j].converterType = "json";
+                        } else {
+                            brokers[i].mapping[j].converterType = "custom";
                         }
                     }
                 }

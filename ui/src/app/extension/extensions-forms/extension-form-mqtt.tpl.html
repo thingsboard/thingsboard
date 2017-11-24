@@ -15,4 +15,439 @@
     limitations under the License.
 
 -->
-<div>MQTT</div>
+<md-card class="extension-form extension-mqtt">
+    <md-card-title name="testValid">
+        <md-card-title-text>
+            <span translate class="md-headline">extension.configuration</span>
+        </md-card-title-text>
+    </md-card-title>
+    <md-card-content>
+        <v-accordion id="mqtt-brokers-accordion" class="vAccordion--default">
+            <v-pane id="mqtt-brokers-pane" expanded="isAdd">
+                <v-pane-header>
+                    {{ 'extension.brokers' | translate }}
+                </v-pane-header>
+                <v-pane-content>
+                    <div ng-if="brokers.length === 0">
+                        <span translate layout-align="center center" class="tb-prompt">extension.add-broker-prompt</span>
+                    </div>
+                    <div ng-if="brokers.length > 0">
+                        <ol class="list-group">
+                            <li class="list-group-item" ng-repeat="(brokerIndex,broker) in brokers">
+                                <md-button aria-label="{{ 'action.remove' | translate }}" class="md-icon-button" ng-click="removeBroker(broker)">
+                                    <ng-md-icon icon="close" aria-label="{{ 'action.remove' | translate }}"></ng-md-icon>
+                                    <md-tooltip md-direction="top">
+                                        {{ 'action.remove' | translate }}
+                                    </md-tooltip>
+                                </md-button>
+                                <md-card>
+                                    <md-card-content>
+                                        <section flex layout="row">
+                                            <md-input-container flex="40" class="md-block">
+                                                <label translate>extension.port</label>
+                                                <input required type="number" min="1" max="65535" name="mqttPort_{{brokerIndex}}" ng-model="broker.port">
+                                                <div ng-messages="theForm['mqttPort_' + brokerIndex].$error">
+                                                    <div translate ng-message="required">extension.port-required</div>
+                                                    <div translate ng-message="min">extension.port-range</div>
+                                                    <div translate ng-message="max">extension.port-range</div>
+                                                </div>
+                                            </md-input-container>
+                                            <md-input-container flex="60" class="md-block">
+                                                <label translate>extension.host</label>
+                                                <input required name="mqttHost_{{brokerIndex}}" ng-model="broker.host">
+                                                <div ng-messages="theForm['mqttHost_' + brokerIndex].$error">
+                                                    <div translate ng-message="required">extension.host-required</div>
+                                                </div>
+                                            </md-input-container>
+                                        </section>
+                                        <section flex layout="row">
+                                            <md-input-container flex="40" class="md-block">
+                                                <label translate>extension.retry-interval</label>
+                                                <input required type="number" name="mqttRetryInterval_{{brokerIndex}}" ng-model="broker.retryInterval">
+                                                <div ng-messages="theForm['mqttRetryInterval_' + brokerIndex].$error">
+                                                    <div translate ng-message="required">extension.retry-interval-required</div>
+                                                </div>
+                                            </md-input-container>
+                                            <md-input-container flex="50" class="md-block">
+                                                <label translate>extension.credentials</label>
+                                                <md-select required name="mqttCredentials_{{brokerIndex}}" ng-model="broker.credentials.type" ng-change="changeCredentials(broker)">
+                                                    <md-option ng-repeat="(credentialsType, credentialsValue) in types.mqttCredentialTypes" ng-value="credentialsValue.value">
+                                                        {{credentialsValue.name | translate}}
+                                                    </md-option>
+                                                </md-select>
+                                            </md-input-container>
+                                            <md-input-container flex="10" class="md-block t-right">
+                                                <md-checkbox flex aria-label="{{ 'extension.ssl' | translate }}"
+                                                             ng-model="broker.ssl">{{ 'extension.ssl' | translate }}
+                                                </md-checkbox>
+                                            </md-input-container>
+                                        </section>
+                                        <section flex layout="row" ng-if='broker.credentials.type == "basic"'>
+                                            <md-input-container flex="40" class="md-block">
+                                                <label translate>extension.username</label>
+                                                <input required name="mqttUsername_{{brokerIndex}}" ng-model="broker.credentials.username">
+                                                <div ng-messages="theForm['mqttUsername_' + brokerIndex].$error">
+                                                    <div translate ng-message="required">extension.username-required</div>
+                                                </div>
+                                            </md-input-container>
+                                            <md-input-container flex="60" class="md-block">
+                                                <label translate>extension.password</label>
+                                                <input required name="mqttPassword_{{brokerIndex}}" ng-model="broker.credentials.password">
+                                                <div ng-messages="theForm['mqttPassword_' + brokerIndex].$error">
+                                                    <div translate ng-message="required">extension.password-required</div>
+                                                </div>
+                                            </md-input-container>
+                                        </section>
+                                        <section flex layout="column" ng-if='broker.credentials.type == "cert.PEM"'>
+                                            <div class="tb-container">
+                                                <label class="tb-label" translate>extension.ca-cert</label>
+                                                <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, broker, "caCert")' class="tb-file-select-container">
+                                                    <div class="tb-file-clear-container">
+                                                        <md-button ng-click='clearFile(broker, "caCert")' class="tb-file-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
+                                                            <md-tooltip md-direction="top">
+                                                                {{ 'action.remove' | translate }}
+                                                            </md-tooltip>
+                                                            <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">close</md-icon>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="alert tb-flow-drop" flow-drop>
+                                                        <label for="caCertSelect_{{brokerIndex}}" translate>extension.drop-file</label>
+                                                        <input class="file-input" flow-btn flow-attrs="{accept:'.pem'}" id="caCertSelect_{{brokerIndex}}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown-messages">
+                                                <div ng-if="!broker.credentials.caCertFileName" class="tb-error-message" translate>extension.no-file</div>
+                                                <div ng-if="broker.credentials.caCertFileName">{{broker.credentials.caCertFileName}}</div>
+                                            </div>
+                                            <div class="tb-container">
+                                                <label class="tb-label" translate>extension.private-key</label>
+                                                <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, broker, "privateKey")' class="tb-file-select-container">
+                                                    <div class="tb-file-clear-container">
+                                                        <md-button ng-click='clearFile(broker, "privateKey")' class="tb-file-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
+                                                            <md-tooltip md-direction="top">
+                                                                {{ 'action.remove' | translate }}
+                                                            </md-tooltip>
+                                                            <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">close</md-icon>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="alert tb-flow-drop" flow-drop>
+                                                        <label for="privateKeySelect_{{brokerIndex}}" translate>extension.drop-file</label>
+                                                        <input class="file-input" flow-btn flow-attrs="{accept:'.pem'}" id="privateKeySelect_{{brokerIndex}}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown-messages">
+                                                <div ng-if="!broker.credentials.privateKeyFileName" class="tb-error-message" translate>extension.no-file</div>
+                                                <div ng-if="broker.credentials.privateKeyFileName">{{broker.credentials.privateKeyFileName}}</div>
+                                            </div>
+                                            <div class="tb-container" ng-class="broker.credentials.certFileName ? 'ng-valid' : 'ng-invalid'">
+                                                <label class="tb-label" translate>extension.cert</label>
+                                                <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, broker, "Cert")' class="tb-file-select-container">
+                                                    <div class="tb-file-clear-container">
+                                                        <md-button ng-click='clearFile(broker, "Cert")' class="tb-file-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
+                                                            <md-tooltip md-direction="top">
+                                                                {{ 'action.remove' | translate }}
+                                                            </md-tooltip>
+                                                            <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">close</md-icon>
+                                                        </md-button>
+                                                    </div>
+                                                    <div class="alert tb-flow-drop" flow-drop>
+                                                        <label for="CertSelect_{{brokerIndex}}" translate>extension.drop-file</label>
+                                                        <input class="file-input" flow-btn flow-attrs="{accept:'.pem'}" id="CertSelect_{{brokerIndex}}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown-messages">
+                                                <div ng-if="!broker.credentials.certFileName" class="tb-error-message" translate>extension.no-file</div>
+                                                <div ng-if="broker.credentials.certFileName">{{broker.credentials.certFileName}}</div>
+                                            </div>
+                                        </section>
+
+                                        <v-accordion id="mqtt-mapping-accordion" class="vAccordion--default">
+                                            <v-pane id="mqtt-mapping-pane">
+                                                <v-pane-header>
+                                                    {{ 'extension.mapping' | translate }}
+                                                </v-pane-header>
+                                                <v-pane-content>
+                                                    <div ng-if="broker.mapping.length > 0">
+                                                        <ol class="list-group">
+                                                            <li class="list-group-item" ng-repeat="(mapIndex,map) in broker.mapping">
+                                                                <md-button aria-label="{{ 'action.remove' | translate }}" class="md-icon-button" ng-click="removeMap(map, broker.mapping)">
+                                                                    <ng-md-icon icon="close" aria-label="{{ 'action.remove' | translate }}"></ng-md-icon>
+                                                                    <md-tooltip md-direction="top">
+                                                                        {{ 'action.remove' | translate }}
+                                                                    </md-tooltip>
+                                                                </md-button>
+                                                                <md-card>
+                                                                    <md-card-content>
+                                                                        <section flex layout="row">
+                                                                            <md-input-container flex="40" class="md-block">
+                                                                                <label translate>extension.converter-type</label>
+                                                                                <md-select required name="mqttConverterType_{{brokerIndex}}{{mapIndex}}" ng-model="map.converterType" ng-change="changeConverterType(map)">
+                                                                                    <md-option ng-repeat="(converterType, value) in types.mqttConverterTypes" ng-value="converterType">
+                                                                                        {{value | translate}}
+                                                                                    </md-option>
+                                                                                </md-select>
+                                                                                <div ng-messages="theForm['mqttConverterType_' + brokerIndex + mapIndex].$error">
+                                                                                    <div translate ng-message="required">extension.converter-type-required</div>
+                                                                                </div>
+                                                                            </md-input-container>
+                                                                            <md-input-container flex="60" class="md-block">
+                                                                                <label translate>extension.topic-filter</label>
+                                                                                <input required name="mqttTopicFilter_{{brokerIndex}}{{mapIndex}}" ng-model="map.topicFilter">
+                                                                                <div ng-messages="theForm['mqttTopicFilter_' + brokerIndex + mapIndex].$error">
+                                                                                    <div translate ng-message="required">extension.topic-filter-required</div>
+                                                                                </div>
+                                                                            </md-input-container>
+                                                                        </section>
+
+                                                                        <div ng-if='map.converterType =="json"' ng-init="map.converter.type = 'json'">
+                                                                            <section flex layout="row">
+                                                                                <md-input-container flex="40" class="md-block">
+                                                                                    <label translate>extension.name-expression</label>
+                                                                                    <md-select required name="mqttDeviceNameExpression_{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.nameExp" ng-change="changeNameExpression(map.converter)">
+                                                                                        <md-option ng-repeat="(key, value) in nameExpressions" ng-value='key'>
+                                                                                            {{value | translate}}
+                                                                                        </md-option>
+                                                                                    </md-select>
+                                                                                </md-input-container>
+                                                                                <md-input-container ng-if="map.converter.nameExp == 'deviceNameJsonExpression'" flex="60" class="md-block">
+                                                                                    <label translate>extension.json-name-expression</label>
+                                                                                    <input required name="mqttJsonNameExp_{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.deviceNameJsonExpression">
+                                                                                    <div ng-messages="theForm['mqttJsonNameExp_' + brokerIndex + mapIndex].$error">
+                                                                                        <div translate ng-message="required">extension.json-name-expression-required</div>
+                                                                                    </div>
+                                                                                </md-input-container>
+                                                                                <md-input-container ng-if="map.converter.nameExp == 'deviceNameTopicExpression'" flex="60" class="md-block">
+                                                                                    <label translate>extension.topic-name-expression</label>
+                                                                                    <input required name="mqttTopicNameExp_{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.deviceNameTopicExpression">
+                                                                                    <div ng-messages="theForm['mqttTopicNameExp_' + brokerIndex + mapIndex].$error">
+                                                                                        <div translate ng-message="required">extension.topic-name-expression-required</div>
+                                                                                    </div>
+                                                                                </md-input-container>
+                                                                            </section>
+                                                                            <section flex layout="row">
+                                                                                <md-input-container flex="40" class="md-block">
+                                                                                    <label translate>extension.type-expression</label>
+                                                                                    <md-select required name="mqttDeviceTypeExpression_{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.typeExp" ng-change="changeTypeExpression(map.converter)">
+                                                                                        <md-option ng-repeat="(key, value) in typeExpressions" ng-value='key'>
+                                                                                            {{value | translate}}
+                                                                                        </md-option>
+                                                                                    </md-select>
+                                                                                </md-input-container>
+                                                                                <md-input-container ng-if="map.converter.typeExp == 'deviceTypeJsonExpression'" flex="60" class="md-block">
+                                                                                    <label translate>extension.json-type-expression</label>
+                                                                                    <input required name="mqttJsonTypeExp_{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.deviceTypeJsonExpression">
+                                                                                    <div ng-messages="theForm['mqttJsonTypeExp_' + brokerIndex + mapIndex].$error">
+                                                                                        <div translate ng-message="required">extension.json-type-expression-required</div>
+                                                                                    </div>
+                                                                                </md-input-container>
+                                                                                <md-input-container ng-if="map.converter.typeExp == 'deviceTypeTopicExpression'" flex="60" class="md-block">
+                                                                                    <label translate>extension.topic-type-expression</label>
+                                                                                    <input required name="mqttTopicTypeExp_{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.deviceTypeTopicExpression">
+                                                                                    <div ng-messages="theForm['mqttTopicTypeExp_' + brokerIndex + mapIndex].$error">
+                                                                                        <div translate ng-message="required">extension.topic-type-expression-required</div>
+                                                                                    </div>
+                                                                                </md-input-container>
+                                                                            </section>
+                                                                            <section flex layout="row">
+                                                                                <md-input-container flex="40" class="md-block">
+                                                                                    <label translate>extension.timeout</label>
+                                                                                    <input type="number" name="mqttTimeout_{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.timeout" parse-to-null>
+                                                                                </md-input-container>
+                                                                                <md-input-container flex="60" class="md-block">
+                                                                                    <label translate>extension.filter-expression</label>
+                                                                                    <input required name="mqttFilterExpression{{brokerIndex}}{{mapIndex}}" ng-model="map.converter.filterExpression">
+                                                                                    <div ng-messages="theForm['mqttFilterExpression' + brokerIndex + mapIndex].$error">
+                                                                                        <div translate ng-message="required">extension.filter-expression-required</div>
+                                                                                    </div>
+                                                                                </md-input-container>
+                                                                            </section>
+                                                                        </div>
+
+                                                                        <div ng-if='map.converterType == "custom"'>
+                                                                            <div class="md-caption" style="padding-left: 3px; padding-bottom: 10px; color: rgba(0,0,0,0.57);" translate>extension.transformer-json</div>
+                                                                            <div flex class="tb-extension-custom-transformer-panel">
+                                                                                <div flex class="tb-extension-custom-transformer"
+                                                                                     ui-ace="extensionCustomConverterOptions"
+                                                                                     ng-model="map.converter"
+                                                                                     name="mqttCustomConverter_{{brokerIndex}}{{mapIndex}}"
+                                                                                     ng-change='validateCustomConverter(map.converter, "mqttCustomConverter_" + brokerIndex + mapIndex)'
+                                                                                     required>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="tb-error-messages" ng-messages="theForm['mqttCustomConverter_' + brokerIndex + mapIndex].$error" role="alert">
+                                                                                <div ng-message="required" class="tb-error-message" translate>extension.converter-json-required</div>
+                                                                                <div ng-message="converterJSON" class="tb-error-message" translate>extension.converter-json-parse</div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <v-accordion ng-if='map.converterType =="json"' id="mqtt-attributes-accordion" class="vAccordion--default">
+                                                                            <v-pane id="mqtt-attributes-pane">
+                                                                                <v-pane-header>
+                                                                                    {{ 'extension.attributes' | translate }}
+                                                                                </v-pane-header>
+                                                                                <v-pane-content>
+                                                                                    <div ng-if="map.converter.attributes.length > 0">
+                                                                                        <ol class="list-group">
+                                                                                            <li class="list-group-item" ng-repeat="(attributeIndex, attribute) in map.converter.attributes">
+                                                                                                <md-button aria-label="{{ 'action.remove' | translate }}" class="md-icon-button" ng-click="removeAttribute(attribute, map.converter.attributes)">
+                                                                                                    <ng-md-icon icon="close" aria-label="{{ 'action.remove' | translate }}"></ng-md-icon>
+                                                                                                    <md-tooltip md-direction="top">
+                                                                                                        {{ 'action.remove' | translate }}
+                                                                                                    </md-tooltip>
+                                                                                                </md-button>
+                                                                                                <md-card>
+                                                                                                    <md-card-content>
+                                                                                                        <section flex layout="row">
+                                                                                                            <md-input-container flex="60" class="md-block">
+                                                                                                                <label translate>extension.key</label>
+                                                                                                                <input required name="mqttAttributeKey_{{brokerIndex}}{{mapIndex}}{{attributeIndex}}" ng-model="attribute.key">
+                                                                                                                <div ng-messages="theForm['mqttAttributeKey_' + brokerIndex + mapIndex + attributeIndex].$error">
+                                                                                                                    <div translate ng-message="required">extension.required-key</div>
+                                                                                                                </div>
+                                                                                                            </md-input-container>
+                                                                                                            <md-input-container flex="40" class="md-block">
+                                                                                                                <label translate>extension.type</label>
+                                                                                                                <md-select required name="mqttAttributeType_{{brokerIndex}}{{mapIndex}}{{attributeIndex}}" ng-model="attribute.type">
+                                                                                                                    <md-option ng-repeat="(attrType, attrTypeValue) in types.extensionValueType" ng-value="attrType">
+                                                                                                                        {{attrTypeValue | translate}}
+                                                                                                                    </md-option>
+                                                                                                                </md-select>
+                                                                                                                <div ng-messages="theForm['mqttAttributeType_' + brokerIndex + mapIndex + attributeIndex].$error">
+                                                                                                                    <div translate ng-message="required">extension.required-type</div>
+                                                                                                                </div>
+                                                                                                            </md-input-container>
+                                                                                                        </section>
+                                                                                                        <md-input-container class="md-block">
+                                                                                                            <label translate>extension.value</label>
+                                                                                                            <input required name="mqttAttributeValue_{{brokerIndex}}{{mapIndex}}{{attributeIndex}}" ng-model="attribute.value">
+                                                                                                            <div ng-messages="theForm['mqttAttributeValue_' + brokerIndex + mapIndex + attributeIndex].$error">
+                                                                                                                <div translate ng-message="required">extension.required-value</div>
+                                                                                                            </div>
+                                                                                                        </md-input-container>
+                                                                                                    </md-card-content>
+                                                                                                </md-card>
+                                                                                            </li>
+                                                                                        </ol>
+                                                                                    </div>
+                                                                                    <div flex layout="row" layout-align="start center">
+                                                                                        <md-button class="md-primary md-raised"
+                                                                                                   ng-click="addAttribute(map.converter.attributes)" aria-label="{{ 'action.add' | translate }}">
+                                                                                            <md-tooltip md-direction="top">
+                                                                                                {{ 'extension.add-attribute' | translate }}
+                                                                                            </md-tooltip>
+                                                                                            <md-icon class="material-icons">add</md-icon>
+                                                                                            <span translate>action.add</span>
+                                                                                        </md-button>
+                                                                                    </div>
+                                                                                </v-pane-content>
+                                                                            </v-pane>
+                                                                        </v-accordion>
+
+                                                                        <v-accordion ng-if='map.converterType =="json"' id="mqtt-timeseries-accordion" class="vAccordion--default">
+                                                                            <v-pane id="mqtt-timeseries-pane">
+                                                                                <v-pane-header>
+                                                                                    {{ 'extension.timeseries' | translate }}
+                                                                                </v-pane-header>
+                                                                                <v-pane-content>
+                                                                                    <div ng-if="map.converter.timeseries.length > 0">
+                                                                                        <ol class="list-group">
+                                                                                            <li class="list-group-item" ng-repeat="(timeseriesIndex, timeseries) in map.converter.timeseries">
+                                                                                                <md-button aria-label="{{ 'action.remove' | translate }}" class="md-icon-button" ng-click="removeAttribute(timeseries, map.converter.timeseries)">
+                                                                                                    <ng-md-icon icon="close" aria-label="{{ 'action.remove' | translate }}"></ng-md-icon>
+                                                                                                    <md-tooltip md-direction="top">
+                                                                                                        {{ 'action.remove' | translate }}
+                                                                                                    </md-tooltip>
+                                                                                                </md-button>
+                                                                                                <md-card>
+                                                                                                    <md-card-content>
+                                                                                                        <section flex layout="row">
+                                                                                                            <md-input-container flex="60" class="md-block">
+                                                                                                                <label translate>extension.key</label>
+                                                                                                                <input required name="mqttTimeseriesKey_{{brokerIndex}}{{mapIndex}}{{timeseriesIndex}}" ng-model="timeseries.key">
+                                                                                                                <div ng-messages="theForm['mqtTtimeseriesKey_' + brokerIndex + mapIndex + timeseriesIndex].$error">
+                                                                                                                    <div translate ng-message="required">extension.required-key</div>
+                                                                                                                </div>
+                                                                                                            </md-input-container>
+                                                                                                            <md-input-container flex="40" class="md-block">
+                                                                                                                <label translate>extension.type</label>
+                                                                                                                <md-select required name="mqttTimeseriesType_{{brokerIndex}}{{mapIndex}}{{timeseriesIndex}}" ng-model="timeseries.type">
+                                                                                                                    <md-option ng-repeat="(attrType, attrTypeValue) in types.extensionValueType" ng-value="attrType">
+                                                                                                                        {{attrTypeValue | translate}}
+                                                                                                                    </md-option>
+                                                                                                                </md-select>
+                                                                                                                <div ng-messages="theForm['mqttTimeseriesType_' + brokerIndex + mapIndex + timeseriesIndex].$error">
+                                                                                                                    <div translate ng-message="required">extension.required-type</div>
+                                                                                                                </div>
+                                                                                                            </md-input-container>
+                                                                                                        </section>
+                                                                                                        <md-input-container class="md-block">
+                                                                                                            <label translate>extension.value</label>
+                                                                                                            <input required name="mqttTimeseriesValue_{{brokerIndex}}{{mapIndex}}{{timeseriesIndex}}" ng-model="timeseries.value">
+                                                                                                            <div ng-messages="theForm['mqttTimeseriesValue_' + brokerIndex + mapIndex + timeseriesIndex].$error">
+                                                                                                                <div translate ng-message="required">extension.required-value</div>
+                                                                                                            </div>
+                                                                                                        </md-input-container>
+                                                                                                    </md-card-content>
+                                                                                                </md-card>
+                                                                                            </li>
+                                                                                        </ol>
+                                                                                    </div>
+                                                                                    <div flex layout="row" layout-align="start center">
+                                                                                        <md-button class="md-primary md-raised"
+                                                                                                   ng-click="addAttribute(map.converter.timeseries)" aria-label="{{ 'action.add' | translate }}">
+                                                                                            <md-tooltip md-direction="top">
+                                                                                                {{ 'extension.add-timeseries' | translate }}
+                                                                                            </md-tooltip>
+                                                                                            <md-icon class="material-icons">add</md-icon>
+                                                                                            <span translate>action.add</span>
+                                                                                        </md-button>
+                                                                                    </div>
+                                                                                </v-pane-content>
+                                                                            </v-pane>
+                                                                        </v-accordion>
+
+                                                                    </md-card-content>
+                                                                </md-card>
+                                                            </li>
+                                                        </ol>
+                                                    </div>
+                                                    <div flex layout="row" layout-align="start center">
+                                                        <md-button class="md-primary md-raised"
+                                                                   ng-click="addMap(broker.mapping)" aria-label="{{ 'action.add' | translate }}">
+                                                            <md-tooltip md-direction="top">
+                                                                {{ 'extension.add-map' | translate }}
+                                                            </md-tooltip>
+                                                            <md-icon class="material-icons">add</md-icon>
+                                                            <span translate>action.add</span>
+                                                        </md-button>
+                                                    </div>
+                                                </v-pane-content>
+                                            </v-pane>
+                                        </v-accordion>
+                                    </md-card-content>
+                                </md-card>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div flex layout="row" layout-align="start center">
+                        <md-button class="md-primary md-raised"
+                                   ng-click="addBroker()" aria-label="{{ 'action.add' | translate }}">
+                            <md-tooltip md-direction="top">
+                                {{ 'extension.add-broker' | translate }}
+                            </md-tooltip>
+                            <md-icon class="material-icons">add</md-icon>
+                            <span translate>action.add</span>
+                        </md-button>
+                    </div>
+                </v-pane-content>
+            </v-pane>
+        </v-accordion>
+<pre>
+{{config | json}}
+</pre>
+    </md-card-content>
+</md-card>

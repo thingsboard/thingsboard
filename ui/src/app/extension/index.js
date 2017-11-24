@@ -16,10 +16,12 @@
 
 import ExtensionTableDirective from './extension-table.directive';
 import ExtensionFormHttpDirective from './extensions-forms/extension-form-http.directive';
+import ExtensionFormMqttDirective from './extensions-forms/extension-form-mqtt.directive'
 import {ParseToNull} from './extension-dialog.controller';
 
 export default angular.module('thingsboard.extension', [])
     .directive('tbExtensionTable', ExtensionTableDirective)
     .directive('tbExtensionFormHttp', ExtensionFormHttpDirective)
+    .directive('tbExtensionFormMqtt', ExtensionFormMqttDirective)
     .directive('parseToNull', ParseToNull)
     .name;

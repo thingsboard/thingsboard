@@ -132,7 +132,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                 }
             }
         }
-        
+
         $compile(element.contents())(scope);
     }
 
