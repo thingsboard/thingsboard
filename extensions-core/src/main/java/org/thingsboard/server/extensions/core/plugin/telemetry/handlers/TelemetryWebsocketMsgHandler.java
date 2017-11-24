@@ -48,6 +48,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
     public static final int DEFAULT_LIMIT = 100;
     public static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
+    public static final DepthAggregation DEFAULT_DEPTH_AGGREGATION = DepthAggregation.NONE;
 
     private final SubscriptionManager subscriptionManager;
 
@@ -249,7 +250,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                         log.debug("[{}] fetching depth datum data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
                         startDs = cmd.getStartDs();
                         Double endDs = cmd.getStartDs() + cmd.getDepthWindow();
-                        List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, startDs, endDs, cmd.getInterval(), getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
+                        List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, startDs, endDs, cmd.getInterval(), getLimit(cmd.getLimit()), getDepthAggregation(cmd.getAgg()))).collect(Collectors.toList());
                         ctx.loadDepthDatum(entityId, queries, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startDs, keys));
                     } else {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
@@ -382,6 +383,10 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
 
     private static Aggregation getAggregation(String agg) {
         return StringUtils.isEmpty(agg) ? DEFAULT_AGGREGATION : Aggregation.valueOf(agg);
+    }
+
+    private static DepthAggregation getDepthAggregation(String agg) {
+        return StringUtils.isEmpty(agg) ? DEFAULT_DEPTH_AGGREGATION : DepthAggregation.valueOf(agg);
     }
 
     private int getLimit(int limit) {

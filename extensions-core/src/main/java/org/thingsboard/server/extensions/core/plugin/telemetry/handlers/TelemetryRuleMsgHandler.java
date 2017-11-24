@@ -115,7 +115,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
     @Override
     public void handleDepthTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, DepthTelemetryUploadRequestRuleToPluginMsg msg) {
         DepthTelemetryUploadRequest request = msg.getPayload();
-        log.error("\n\n request data post : " + request.getData().toString() + "\n\n");
+        log.debug("\n\n request data post : " + request.getData().toString() + "\n\n");
         /*if(true)
             return;*/
         List<DsKvEntry> dsKvEntries = new ArrayList<>();

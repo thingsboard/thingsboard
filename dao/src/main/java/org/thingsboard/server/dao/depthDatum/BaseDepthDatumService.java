@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.timeseries;
+package org.thingsboard.server.dao.depthDatum;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -24,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.DsKvEntry;
 import org.thingsboard.server.common.data.kv.DsKvQuery;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -106,7 +104,7 @@ public class BaseDepthDatumService implements DepthDatumService {
             throw new IncorrectParameterException("TsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Key can't be empty");
-        } else if (query.getAggregation() == null) {
+        } else if (query.getDepthAggregation() == null) {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Aggregation can't be empty");
         }
     }

@@ -25,19 +25,19 @@ public class BaseDsKvQuery implements DsKvQuery {
     private final Double endDs;
     private final Double interval;
     private final int limit;
-    private final Aggregation aggregation;
+    private final DepthAggregation depthAggregation;
 
-    public BaseDsKvQuery(String key, Double startDs, Double endDs, Double interval, int limit, Aggregation aggregation) {
+    public BaseDsKvQuery(String key, Double startDs, Double endDs, Double interval, int limit, DepthAggregation depthAggregation) {
         this.key = key;
         this.startDs = startDs;
         this.endDs = endDs;
         this.interval = interval;
         this.limit = limit;
-        this.aggregation = aggregation;
+        this.depthAggregation = depthAggregation;
     }
 
     public BaseDsKvQuery(String key, Double startDs, Double endDs) {
-        this(key, startDs, endDs, endDs-startDs, 1, Aggregation.AVG);
+        this(key, startDs, endDs, endDs-startDs, 1, DepthAggregation.AVG);
     }
 
 }

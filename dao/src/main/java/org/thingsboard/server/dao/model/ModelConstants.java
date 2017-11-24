@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.DepthAggregation;
 
 import java.util.UUID;
 
@@ -308,6 +309,9 @@ public class ModelConstants {
     public static final String TS_KV_CF = "ts_kv_cf";
     public static final String TS_KV_PARTITIONS_CF = "ts_kv_partitions_cf";
     public static final String TS_KV_LATEST_CF = "ts_kv_latest_cf";
+    public static final String DS_KV_CF = "ds_kv_cf";
+    public static final String DS_KV_PARTITIONS_CF = "ds_kv_partitions_cf";
+    public static final String DS_KV_LATEST_CF = "ds_kv_latest_cf";
 
 
     public static final String ENTITY_TYPE_COLUMN = "entity_type";
@@ -330,6 +334,7 @@ public class ModelConstants {
     public static final String DOUBLE_VALUE_COLUMN = "dbl_v";
 
     public static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
+    public static final String[] NONE_DS_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, KEY_COLUMN, DS_COLUMN};
 
     public static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN)};
 
@@ -361,6 +366,25 @@ public class ModelConstants {
         switch (aggregation) {
             case NONE:
                 return NONE_AGGREGATION_COLUMNS;
+            case MIN:
+                return MIN_AGGREGATION_COLUMNS;
+            case MAX:
+                return MAX_AGGREGATION_COLUMNS;
+            case SUM:
+                return SUM_AGGREGATION_COLUMNS;
+            case COUNT:
+                return COUNT_AGGREGATION_COLUMNS;
+            case AVG:
+                return AVG_AGGREGATION_COLUMNS;
+            default:
+                throw new RuntimeException("Aggregation type: " + aggregation + " is not supported!");
+        }
+    }
+
+    public static String[] getFetchColumnNames(DepthAggregation aggregation) {
+        switch (aggregation) {
+            case NONE:
+                return NONE_DS_AGGREGATION_COLUMNS;
             case MIN:
                 return MIN_AGGREGATION_COLUMNS;
             case MAX:

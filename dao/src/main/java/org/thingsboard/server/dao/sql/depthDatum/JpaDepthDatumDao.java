@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.*;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.timeseries.DepthDatumDao;
+import org.thingsboard.server.dao.depthDatum.DepthDatumDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.Nullable;
@@ -75,7 +75,7 @@ public class JpaDepthDatumDao extends JpaAbstractDaoListeningExecutorService imp
     }
 
     private ListenableFuture<List<DsKvEntry>> findAllAsync(EntityId entityId, DsKvQuery query) {
-        if (query.getAggregation() == Aggregation.NONE) {
+        if (query.getDepthAggregation() == DepthAggregation.NONE) {
             return findAllAsyncWithLimit(entityId, query);
         } else {
             Double stepDs = query.getStartDs();
@@ -84,7 +84,7 @@ public class JpaDepthDatumDao extends JpaAbstractDaoListeningExecutorService imp
                 Double startDs = stepDs;
                 Double endDs = stepDs + query.getInterval();
                 Double ds = startDs + (endDs - startDs) / 2;
-                futures.add(findAndAggregateAsync(entityId, query.getKey(), startDs, endDs, ds, query.getAggregation()));
+                futures.add(findAndAggregateAsync(entityId, query.getKey(), startDs, endDs, ds, query.getDepthAggregation()));
                 stepDs = endDs;
             }
             ListenableFuture<List<Optional<DsKvEntry>>> future = Futures.allAsList(futures);
@@ -104,10 +104,10 @@ public class JpaDepthDatumDao extends JpaAbstractDaoListeningExecutorService imp
         }
     }
 
-    private ListenableFuture<Optional<DsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, Double startDs, Double endDs, Double ds, Aggregation aggregation) {
+    private ListenableFuture<Optional<DsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, Double startDs, Double endDs, Double ds, DepthAggregation depthAggregation) {
         CompletableFuture<DsKvEntity> entity;
         String entityIdStr = fromTimeUUID(entityId.getId());
-        switch (aggregation) {
+        switch (depthAggregation) {
             case AVG:
                 entity = dsKvRepository.findAvg(
                         entityIdStr,
@@ -154,7 +154,7 @@ public class JpaDepthDatumDao extends JpaAbstractDaoListeningExecutorService imp
 
                 break;
             default:
-                throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
+                throw new IllegalArgumentException("Not supported depthAggregation type: " + depthAggregation);
         }
 
         SettableFuture<DsKvEntity> listenableFuture = SettableFuture.create();

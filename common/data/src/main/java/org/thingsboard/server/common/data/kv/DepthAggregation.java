@@ -15,18 +15,11 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-public interface DsKvQuery {
+/**
+ * Created by ashvayka on 20.02.17.
+ */
+public enum DepthAggregation {
 
-    String getKey();
-
-    Double getStartDs();
-
-    Double getEndDs();
-
-    Double getInterval();
-
-    int getLimit();
-
-    DepthAggregation getDepthAggregation();
+    MIN, MAX, AVG, SUM, COUNT, NONE;
 
 }
