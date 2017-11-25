@@ -17,9 +17,7 @@ package org.thingsboard.server.dao.sql.timeseries;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
@@ -49,6 +48,8 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @Slf4j
 @SqlDao
 public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService implements TimeseriesDao {
+
+    private ListeningExecutorService insertService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
 
     @Autowired
     private TsKvRepository tsKvRepository;
@@ -232,7 +233,8 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
-        return service.submit(() -> {
+        log.trace("Saving entity: " + entity);
+        return insertService.submit(() -> {
             tsKvRepository.save(entity);
             return null;
         });
@@ -240,7 +242,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
 
     @Override
     public ListenableFuture<Void> savePartition(EntityId entityId, long tsKvEntryTs, String key, long ttl) {
-        return service.submit(() -> null);
+        return insertService.submit(() -> null);
     }
 
     @Override
@@ -254,7 +256,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         latestEntity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         latestEntity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         latestEntity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
-        return service.submit(() -> {
+        return insertService.submit(() -> {
             tsKvLatestRepository.save(latestEntity);
             return null;
         });
