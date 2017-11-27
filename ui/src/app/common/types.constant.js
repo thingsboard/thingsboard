@@ -317,6 +317,35 @@ export default angular.module('thingsboard.types', [])
                     name: "event.type-stats"
                 }
             },
+            extensionType: {
+                http: "HTTP",
+                mqtt: "MQTT",
+                opc: "OPC UA"
+            },
+            extensionValueType: {
+                string: 'value.string',
+                long: 'value.long',
+                double: 'value.double',
+                boolean: 'value.boolean'
+            },
+            extensionTransformerType: {
+                toDouble: 'extension.to-double',
+                custom: 'extension.custom'
+            },
+            extensionOpcSecurityTypes: {
+                Basic128Rsa15: "Basic128Rsa15",
+                Basic256: "Basic256",
+                Basic256Sha256: "Basic256Sha256",
+                None: "None"
+            },
+            extensionIdentityType: {
+                anonymous: "anonymous",
+                username: "username"
+            },
+            extensionKeystoreType: {
+                PKCS12: "PKCS12",
+                JKS: "JKS"
+            },
             latestTelemetry: {
                 value: "LATEST_TELEMETRY",
                 name: "attribute.scope-latest-telemetry",
