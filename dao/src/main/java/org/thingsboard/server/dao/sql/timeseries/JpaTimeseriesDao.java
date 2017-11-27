@@ -34,6 +34,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.Nullable;
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -260,6 +261,11 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
             tsKvLatestRepository.save(latestEntity);
             return null;
         });
+    }
+
+    @PreDestroy
+    void onDestroy() {
+        insertService.shutdown();
     }
 
 }
