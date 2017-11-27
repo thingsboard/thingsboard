@@ -18,7 +18,7 @@ export default angular.module('thingsboard.api.attribute', [])
     .name;
 
 /*@ngInject*/
-function AttributeService($http, $q, $filter, types, telemetryWebsocketService) {
+function AttributeService($http, $q, $filter, types, telemetryWebsocketService, $log) {
 
     var entityAttributesSubscriptionMap = {};
 
@@ -42,6 +42,8 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
             url += 'timeseries';
         } else if (type === types.dataKeyType.attribute) {
             url += 'attributes';
+        } else if (type === types.dataKeyType.depthDatum) {
+            url += 'depth_datum';
         }
         $http.get(url, null).then(function success(response) {
             var result = [];
@@ -173,6 +175,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
     }
 
     function subscribeForEntityAttributes(entityType, entityId, attributeScope) {
+        $log.log('AttributeService : subscribeForEntityAttributes : EntityType : {} :: EntityId : {} :: AttributeScope : {}', entityType, entityId, attributeScope);
         var subscriptionId = entityType + entityId + attributeScope;
         var entityAttributesSubscription = entityAttributesSubscriptionMap[subscriptionId];
         if (!entityAttributesSubscription) {
@@ -182,6 +185,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
                 scope: attributeScope
             };
 
+            ///############## HANDLE DEPTH
             var type = attributeScope === types.latestTelemetry.value ?
                 types.dataKeyType.timeseries : types.dataKeyType.attribute;
 

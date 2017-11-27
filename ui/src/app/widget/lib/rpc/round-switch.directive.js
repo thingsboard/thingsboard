@@ -143,7 +143,7 @@ function RoundSwitchController($element, $scope, utils, types) {
             if (!vm.isSimulated) {
                 if (vm.retrieveValueMethod == 'rpc') {
                     rpcRequestValue();
-                } else if (vm.retrieveValueMethod == 'attribute' || vm.retrieveValueMethod == 'timeseries') {
+                } else if (vm.retrieveValueMethod == 'attribute' || vm.retrieveValueMethod == 'timeseries' || vm.retrieveValueMethod == 'depthdatum') {
                     subscribeForValue();
                 }
             }
@@ -178,8 +178,12 @@ function RoundSwitchController($element, $scope, utils, types) {
             valueSubscriptionInfo[0].attributes = [
                 {name: vm.valueKey}
             ];
-        } else {
+        } else if (vm.retrieveValueMethod == 'timeseries') {
             valueSubscriptionInfo[0].timeseries = [
+                {name: vm.valueKey}
+            ];
+        } else if (vm.retrieveValueMethod == 'depthdatum') {
+            valueSubscriptionInfo[0].depthdatum = [
                 {name: vm.valueKey}
             ];
         }

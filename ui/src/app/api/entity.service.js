@@ -769,6 +769,8 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
             url += 'timeseries';
         } else if (type === types.dataKeyType.attribute) {
             url += 'attributes';
+        } else if (type === types.dataKeyType.depthDatum) {
+            url += 'depth_datum';
         }
         $http.get(url, null).then(function success(response) {
             var result = [];
@@ -916,6 +918,10 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
         }
         if (subscriptionInfo.attributes) {
             createDatasourceKeys(subscriptionInfo.attributes, types.dataKeyType.attribute, datasource, datasources);
+        }
+        //########## ADDING DEPTH HANDLING
+        if (subscriptionInfo.depthDatum) {
+            createDatasourceKeys(subscriptionInfo.depthDatum, types.dataKeyType.depthDatum, datasource, datasources);
         }
         if (subscriptionInfo.functions) {
             createDatasourceKeys(subscriptionInfo.functions, types.dataKeyType.function, datasource, datasources);

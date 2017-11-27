@@ -128,6 +128,58 @@
 						  </div>
 					  </md-chip-template>
 			   </md-chips>
+			   <md-chips flex ng-if="widgetType === types.widgetType.latest.value"
+                         id="depth_datakey_chips"
+                         ng-required="true"
+                         ng-model="depthDataKeys" md-autocomplete-snap
+                         md-transform-chip="transformDepthDataKeyChip($chip)"
+                         md-require-match="false">
+					  <md-autocomplete
+							md-no-cache="true"
+							id="depth_datakey"
+							md-selected-item="selectedDepthDataKey"
+							md-search-text="depthDataKeySearchText"
+							md-items="item in dataKeysSearch(depthDataKeySearchText, types.dataKeyType.depthDatum)"
+							md-item-text="item.name"
+							md-min-length="0"
+							placeholder="{{'datakey.depthDatum' | translate }}"
+							md-menu-class="tb-depth-datakey-autocomplete">
+							<span md-highlight-text="depthDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+						    <md-not-found>
+							  <div class="tb-not-found">
+								  <div class="tb-no-entries" ng-if="!textIsNotEmpty(depthDataKeySearchText)">
+									  <span translate>entity.no-keys-found</span>
+								  </div>
+								  <div ng-if="textIsNotEmpty(attributeDataKeySearchText)">
+									  <span translate translate-values='{ key: "{{depthDataKeySearchText | truncate:true:6:&apos;...&apos;}}" }'>entity.no-key-matching</span>
+									  <span>
+											<a translate ng-click="createKey($event, '#depth_datakey_chips')">entity.create-new-key</a>
+									  </span>
+								  </div>
+							  </div>
+						    </md-not-found>
+					  </md-autocomplete>
+					  <md-chip-template>
+						  <div layout="row" layout-align="start center" class="tb-attribute-chip">
+							  <div class="tb-color-preview" ng-click="showColorPicker($event, $chip, $index)" style="margin-right: 5px;">
+								  <div class="tb-color-result" ng-style="{background: $chip.color}"></div>
+							  </div>
+							  <div layout="row" flex>
+								  <div class="tb-chip-label">
+									  {{$chip.label}}
+								  </div>
+								  <div class="tb-chip-separator">: </div>
+								  <div class="tb-chip-label">
+									  <strong ng-if="!$chip.postFuncBody">{{$chip.name}}</strong>
+									  <strong ng-if="$chip.postFuncBody">f({{$chip.name}})</strong>
+								  </div>
+							  </div>
+							  <md-button ng-click="editDataKey($event, $chip, $index)" class="md-icon-button tb-md-32">
+								  <md-icon aria-label="edit" class="material-icons tb-md-20">edit</md-icon>
+							  </md-button>
+						  </div>
+					  </md-chip-template>
+			   </md-chips>
 			   <md-chips flex ng-if="widgetType == types.widgetType.alarm.value"
 						 id="alarm_datakey_chips"
 						 ng-required="true"

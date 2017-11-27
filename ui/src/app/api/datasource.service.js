@@ -220,6 +220,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         }
         var subsTw = datasourceSubscription.subscriptionTimewindow;
         var tsKeyNames = [];
+        //##### ADDING DEPTH KEY NAMES
+        var dsKeyNames = [];
         var dataKey;
 
         if (datasourceType === types.datasourceType.entity) {
@@ -228,6 +230,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
             var tsKeys = '';
             var attrKeys = '';
+            //##### ADDING DEPTH KEYS
+            var dsKeys = '';
 
             for (var key in dataKeys) {
                 var dataKeysList = dataKeys[key];
@@ -238,6 +242,13 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     }
                     tsKeys += dataKey.name;
                     tsKeyNames.push(dataKey.name);
+                } else if (dataKey.type === types.dataKeyType.depthDatum) {
+                    //##### ADDING DEPTH HANDLING
+                    if (dsKeys.length > 0) {
+                        dsKeys += ',';
+                    }
+                    dsKeys += dsKeys.name;
+                    dsKeyNames.push(dataKey.name);
                 } else if (dataKey.type === types.dataKeyType.attribute) {
                     if (attrKeys.length > 0) {
                         attrKeys += ',';
@@ -387,6 +398,155 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         subscriber.onData = function(data) {
                             if (data.data) {
                                 onData(data.data, types.dataKeyType.timeseries, true);
+                            }
+                        }
+                    }
+
+                    telemetryWebsocketService.subscribe(subscriber);
+                    subscribers.push(subscriber);
+
+                }
+            }
+
+            if (dsKeys.length > 0) {
+
+                if (history) {
+
+                    historyCommand = {
+                        entityType: datasourceSubscription.entityType,
+                        entityId: datasourceSubscription.entityId,
+                        keys: dsKeys,
+                        startTs: subsTw.fixedWindow.startTimeMs,
+                        endTs: subsTw.fixedWindow.endTimeMs,
+                        interval: subsTw.aggregation.interval,
+                        limit: subsTw.aggregation.limit,
+                        agg: subsTw.aggregation.type
+                    };
+
+                    subscriber = {
+                        historyCommands: [ historyCommand ],
+                        type: types.dataKeyType.depthDatum,
+                        subsTw: subsTw
+                    };
+
+                    if (subsTw.aggregation.stateData) {
+                        subscriber.firstStateHistoryCommand = createFirstStateHistoryCommand(subsTw.fixedWindow.startTimeMs, dsKeys);
+                        subscriber.historyCommands.push(subscriber.firstStateHistoryCommand);
+                    }
+
+                    subscriber.onData = function (data, subscriptionId) {
+                        if (this.subsTw.aggregation.stateData &&
+                            this.firstStateHistoryCommand && this.firstStateHistoryCommand.cmdId == subscriptionId) {
+                            if (this.data) {
+                                onStateHistoryData(data, this.data, this.subsTw.aggregation.limit,
+                                    subsTw.fixedWindow.startTimeMs, this.subsTw.fixedWindow.endTimeMs,
+                                    (data) => {
+                                        onData(data.data, types.dataKeyType.depthDatum, true);
+                                    });
+                            } else {
+                                this.firstStateData = data;
+                            }
+                        } else {
+                            if (this.subsTw.aggregation.stateData) {
+                                if (this.firstStateData) {
+                                    onStateHistoryData(this.firstStateData, data, this.subsTw.aggregation.limit,
+                                        this.subsTw.fixedWindow.startTimeMs, this.subsTw.fixedWindow.endTimeMs,
+                                        (data) => {
+                                            onData(data.data, types.dataKeyType.depthDatum, true);
+                                        });
+                                } else {
+                                    this.data = data;
+                                }
+                            } else {
+                                for (key in data.data) {
+                                    var keyData = data.data[key];
+                                    data.data[key] = $filter('orderBy')(keyData, '+this[0]');
+                                }
+                                onData(data.data, types.dataKeyType.depthDatum, true);
+                            }
+                        }
+                    };
+                    subscriber.onReconnected = function() {};
+                    telemetryWebsocketService.subscribe(subscriber);
+                    subscribers.push(subscriber);
+
+                } else {
+
+                    subscriptionCommand = {
+                        entityType: datasourceSubscription.entityType,
+                        entityId: datasourceSubscription.entityId,
+                        keys: tsKeys
+                    };
+
+                    subscriber = {
+                        subscriptionCommands: [subscriptionCommand],
+                        type: types.dataKeyType.depthDatum
+                    };
+
+                    if (datasourceSubscription.type === types.widgetType.timeseries.value) {
+                        subscriber.subsTw = subsTw;
+                        updateRealtimeSubscriptionCommand(subscriptionCommand, subsTw);
+
+                        if (subsTw.aggregation.stateData) {
+                            subscriber.firstStateSubscriptionCommand = createFirstStateHistoryCommand(subsTw.startTs, dsKeys);
+                            subscriber.historyCommands = [subscriber.firstStateSubscriptionCommand];
+                        }
+                        dataAggregator = createRealtimeDataAggregator(subsTw, dsKeyNames, types.dataKeyType.depthDatum);
+                        subscriber.onData = function(data, subscriptionId) {
+                            if (this.subsTw.aggregation.stateData &&
+                                this.firstStateSubscriptionCommand && this.firstStateSubscriptionCommand.cmdId == subscriptionId) {
+                                if (this.data) {
+                                    onStateHistoryData(data, this.data, this.subsTw.aggregation.limit,
+                                        this.subsTw.startTs, this.subsTw.startTs + this.subsTw.aggregation.timeWindow,
+                                        (data) => {
+                                            dataAggregator.onData(data, false, false, true);
+                                        });
+                                    this.stateDataReceived = true;
+                                } else {
+                                    this.firstStateData = data;
+                                }
+                            } else {
+                                if (this.subsTw.aggregation.stateData && !this.stateDataReceived) {
+                                    if (this.firstStateData) {
+                                        onStateHistoryData(this.firstStateData, data, this.subsTw.aggregation.limit,
+                                            this.subsTw.startTs, this.subsTw.startTs + this.subsTw.aggregation.timeWindow,
+                                            (data) => {
+                                                dataAggregator.onData(data, false, false, true);
+                                            });
+                                        this.stateDataReceived = true;
+                                    } else {
+                                        this.data = data;
+                                    }
+                                } else {
+                                    dataAggregator.onData(data, false, false, true);
+                                }
+                            }
+                        }
+                        subscriber.onReconnected = function() {
+                            var newSubsTw = null;
+                            for (var i2 = 0; i2 < listeners.length; i2++) {
+                                var listener = listeners[i2];
+                                if (!newSubsTw) {
+                                    newSubsTw = listener.updateRealtimeSubscription();
+                                } else {
+                                    listener.setRealtimeSubscription(newSubsTw);
+                                }
+                            }
+                            this.subsTw = newSubsTw;
+                            this.firstStateData = null;
+                            this.data = null;
+                            this.stateDataReceived = false;
+                            updateRealtimeSubscriptionCommand(this.subscriptionCommands[0], this.subsTw);
+                            if (this.subsTw.aggregation.stateData) {
+                                updateFirstStateHistoryCommand(this.firstStateSubscriptionCommand, this.subsTw.startTs);
+                            }
+                            dataAggregator.reset(newSubsTw.startTs,  newSubsTw.aggregation.timeWindow, newSubsTw.aggregation.interval);
+                        }
+                    } else {
+                        subscriber.onReconnected = function() {}
+                        subscriber.onData = function(data) {
+                            if (data.data) {
+                                onData(data.data, types.dataKeyType.depthDatum, true);
                             }
                         }
                     }
