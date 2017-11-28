@@ -186,8 +186,17 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService, 
             };
 
             ///############## HANDLE DEPTH
-            var type = attributeScope === types.latestTelemetry.value ?
-                types.dataKeyType.timeseries : types.dataKeyType.attribute;
+            // var type = attributeScope === types.latestTelemetry.value ?
+            //     types.dataKeyType.timeseries : types.dataKeyType.attribute;
+
+            // ADDING DEPTH-DATUM Handling
+            if (attributeScope === types.latestTelemetry.value) {
+                var type = types.dataKeyType.timeseries;
+            } else if (attributeScope === types.latestDepthDatum.value) {
+                type = types.dataKeyType.depthDatum;
+            } else {
+                type = types.dataKeyType.attribute;
+            }
 
             var subscriber = {
                 subscriptionCommands: [subscriptionCommand],

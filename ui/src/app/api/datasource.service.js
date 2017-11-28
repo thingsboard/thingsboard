@@ -247,7 +247,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     if (dsKeys.length > 0) {
                         dsKeys += ',';
                     }
-                    dsKeys += dsKeys.name;
+                    dsKeys += dataKey.name;
                     dsKeyNames.push(dataKey.name);
                 } else if (dataKey.type === types.dataKeyType.attribute) {
                     if (attrKeys.length > 0) {
