@@ -35,6 +35,7 @@ import org.thingsboard.server.extensions.api.plugins.handlers.DefaultRestMsgHand
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.RestRequest;
 import org.thingsboard.server.extensions.core.plugin.telemetry.AttributeData;
+import org.thingsboard.server.extensions.core.plugin.telemetry.DsData;
 import org.thingsboard.server.extensions.core.plugin.telemetry.SubscriptionManager;
 import org.thingsboard.server.extensions.core.plugin.telemetry.TsData;
 
@@ -75,6 +76,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
 
         if (method.equals("keys")) {
             if (feature == TelemetryFeature.TIMESERIES) {
+                log.error("HMDC inside telemetry keys ");
                 ctx.loadLatestTimeseries(entityId, new PluginCallback<List<TsKvEntry>>() {
                     @Override
                     public void onSuccess(PluginContext ctx, List<TsKvEntry> value) {
@@ -87,7 +89,22 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                         msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                     }
                 });
-            } else if (feature == TelemetryFeature.ATTRIBUTES) {
+            } else if(feature == TelemetryFeature.DEPTH_DATUM){
+                ctx.loadLatestDepthDatum(entityId, new PluginCallback<List<DsKvEntry>>() {
+                    @Override
+                    public void onSuccess(PluginContext ctx, List<DsKvEntry> value) {
+                        List<String> keys = value.stream().map(dsKv -> dsKv.getKey()).collect(Collectors.toList());
+                        msg.getResponseHolder().setResult(new ResponseEntity<>(keys, HttpStatus.OK));
+                    }
+
+                    @Override
+                    public void onFailure(PluginContext ctx, Exception e) {
+                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                    }
+                });
+            }
+            else if (feature == TelemetryFeature.ATTRIBUTES) {
+                log.error("HMDC inside Attributes keys ");
                 PluginCallback<List<AttributeKvEntry>> callback = getAttributeKeysPluginCallback(msg);
                 if (!StringUtils.isEmpty(scope)) {
                     ctx.loadAttributes(entityId, scope, callback);
@@ -97,6 +114,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
             }
         } else if (method.equals("values")) {
             if (feature == TelemetryFeature.TIMESERIES) {
+                log.error("HMDC inside telemetry values ");
                 String keysStr = request.getParameter("keys");
                 List<String> keys = Arrays.asList(keysStr.split(","));
 
@@ -116,10 +134,36 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                             .collect(Collectors.toList());
                     ctx.loadTimeseries(entityId, queries, getTsKvListCallback(msg));
                 } else {
+                    log.error("HMDC inside telemetry values ");
                     ctx.loadLatestTimeseries(entityId, keys, getTsKvListCallback(msg));
                 }
-            } else if (feature == TelemetryFeature.ATTRIBUTES) {
+            } else if(feature == TelemetryFeature.DEPTH_DATUM){
+                String keysStr = request.getParameter("keys");
+                List<String> keys = Arrays.asList(keysStr.split(","));
+
+                Optional<Double> startDs = request.getDoubleParamValue("startDs");
+                Optional<Double> endDs = request.getDoubleParamValue("endDs");
+                Optional<Double> interval = request.getDoubleParamValue("interval");
+                Optional<Integer> limit = request.getIntParamValue("limit");
+
+                if (startDs.isPresent() || endDs.isPresent() || interval.isPresent() || limit.isPresent()) {
+                    if (!startDs.isPresent() || !endDs.isPresent() || !interval.isPresent()) {
+                        msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+                        return;
+                    }
+                    DepthAggregation agg = DepthAggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
+
+                    List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, startDs.get(), endDs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
+                            .collect(Collectors.toList());
+                    ctx.loadDepthDatum(entityId, queries, getDsKvListCallback(msg));
+                } else {
+
+                    ctx.loadLatestDepthDatum(entityId, keys, getDsKvListCallback(msg));
+                }
+            }
+            else if (feature == TelemetryFeature.ATTRIBUTES) {
                 String keys = request.getParameter("keys", "");
+                log.error("HMDC inside attriibute values ");
 
                 PluginCallback<List<AttributeKvEntry>> callback = getAttributeValuesPluginCallback(msg);
                 if (!StringUtils.isEmpty(scope)) {
@@ -330,6 +374,30 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                         result.put(entry.getKey(), vList);
                     }
                     vList.add(new TsData(entry.getTs(), entry.getValueAsString()));
+                }
+                msg.getResponseHolder().setResult(new ResponseEntity<>(result, HttpStatus.OK));
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                log.error("Failed to fetch historical data", e);
+                msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            }
+        };
+    }
+
+    private PluginCallback<List<DsKvEntry>> getDsKvListCallback(final PluginRestMsg msg) {
+        return new PluginCallback<List<DsKvEntry>>() {
+            @Override
+            public void onSuccess(PluginContext ctx, List<DsKvEntry> data) {
+                Map<String, List<DsData>> result = new LinkedHashMap<>();
+                for (DsKvEntry entry : data) {
+                    List<DsData> vList = result.get(entry.getKey());
+                    if (vList == null) {
+                        vList = new ArrayList<>();
+                        result.put(entry.getKey(), vList);
+                    }
+                    vList.add(new DsData(entry.getDs(), entry.getValueAsString()));
                 }
                 msg.getResponseHolder().setResult(new ResponseEntity<>(result, HttpStatus.OK));
             }

@@ -77,6 +77,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 }
                 if (cmdsWrapper.getDsSubCmds() != null) {
                     cmdsWrapper.getDsSubCmds().forEach(cmd -> handleWsDepthDatumSubscriptionCmd(ctx, sessionRef, cmd));
+                    log.error("HMDC DsSubCmds " + cmdsWrapper.getAttrSubCmds());
                 }
                 if (cmdsWrapper.getHistoryCmds() != null) {
                     cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(ctx, sessionRef, cmd));
@@ -248,6 +249,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     if (cmd.getDepthWindow() > 0) {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
                         log.debug("[{}] fetching depth datum data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
+                        log.error("[{}] fetching depth datum data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
                         startDs = cmd.getStartDs();
                         Double endDs = cmd.getStartDs() + cmd.getDepthWindow();
                         List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, startDs, endDs, cmd.getInterval(), getLimit(cmd.getLimit()), getDepthAggregation(cmd.getAgg()))).collect(Collectors.toList());
@@ -256,13 +258,16 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
                         startDs = 0.0;
                         log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
+                        log.error("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
                         ctx.loadLatestDepthDatum(entityId, keys, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startDs, keys));
                     }
                 } else {
+                    log.error("HMDC inside load latest Depth Datum ");
                     ctx.loadLatestDepthDatum(entityId, new PluginCallback<List<DsKvEntry>>() {
                         @Override
                         public void onSuccess(PluginContext ctx, List<DsKvEntry> data) {
-                            sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
+                            log.error("HMDC load latest sucess  ");
+                            sendWsMsg(ctx, sessionRef, new DepthSubscriptionUpdate(cmd.getCmdId(), data));
                             Map<String, Double> subState = new HashMap<>(data.size());
                             data.forEach(v -> subState.put(v.getKey(), v.getDs()));
                             SubscriptionState sub = new DepthSubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTH_DATUM
@@ -273,6 +278,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                         @Override
                         public void onFailure(PluginContext ctx, Exception e) {
                             SubscriptionUpdate update;
+                            log.error("HMDC load latest failure ");
                             if (UnauthorizedException.class.isInstance(e)) {
                                 update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
                                         SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
@@ -425,6 +431,18 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
     }
 
     private void sendWsMsg(PluginContext ctx, PluginWebsocketSessionRef sessionRef, SubscriptionUpdate update) {
+        TextPluginWebSocketMsg reply;
+        try {
+            reply = new TextPluginWebSocketMsg(sessionRef, jsonMapper.writeValueAsString(update));
+            ctx.send(reply);
+        } catch (JsonProcessingException e) {
+            log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
+        } catch (IOException e) {
+            log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
+        }
+    }
+
+    private void sendWsMsg(PluginContext ctx, PluginWebsocketSessionRef sessionRef, DepthSubscriptionUpdate update) {
         TextPluginWebSocketMsg reply;
         try {
             reply = new TextPluginWebSocketMsg(sessionRef, jsonMapper.writeValueAsString(update));

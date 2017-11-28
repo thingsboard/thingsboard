@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.core.plugin.telemetry.handlers;
+package org.thingsboard.server.extensions.core.plugin.telemetry;
 
-/**
- * Created by ashvayka on 08.05.17.
- */
-public enum TelemetryFeature {
+public class DsData implements Comparable<DsData>{
 
-    ATTRIBUTES, TIMESERIES, DEPTH_DATUM;
+    private final Double ds;
+    private final String value;
 
-    public static TelemetryFeature forName(String name) {
-        return TelemetryFeature.valueOf(name.toUpperCase());
+    public DsData(Double ds, String value) {
+        super();
+        this.ds = ds;
+        this.value = value;
     }
 
+    public Double getDs() {
+        return ds;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    @Override
+    public int compareTo(DsData o) {
+        return Double.compare(ds, o.ds);
+    }
 }
