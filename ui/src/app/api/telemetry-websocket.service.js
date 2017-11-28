@@ -24,7 +24,7 @@ const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
 
 /*@ngInject*/
-function TelemetryWebsocketService($rootScope, $websocket,$log, $timeout, $window, types, userService) {
+function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, types, userService, $log) {
 
     var isOpening = false,
         isOpened = false,
@@ -38,7 +38,9 @@ function TelemetryWebsocketService($rootScope, $websocket,$log, $timeout, $windo
         cmdsWrapper = {
             tsSubCmds: [],
             historyCmds: [],
-            attrSubCmds: []
+            attrSubCmds: [],
+          //##### ADDING DEPTH DATUM
+            dsSubCmds: []
         },
         telemetryUri,
         dataStream,
@@ -78,13 +80,17 @@ function TelemetryWebsocketService($rootScope, $websocket,$log, $timeout, $windo
         $log.log("HMDC cmdsWrapper tsSubCms length " + cmdsWrapper.tsSubCmds.length);
         if (isOpened && (cmdsWrapper.tsSubCmds.length > 0 ||
             cmdsWrapper.historyCmds.length > 0 ||
-            cmdsWrapper.attrSubCmds.length > 0)) {
-            dataStream.send(angular.copy(cmdsWrapper)).then(function () {
+            cmdsWrapper.attrSubCmds.length > 0 ||
+            //##### ADDED dsSubCmd.length
+            cmdsWrapper.dsSubCmds.length > 0)) {
+          dataStream.send(angular.copy(cmdsWrapper)).then(function () {
                 checkToClose();
             });
             cmdsWrapper.tsSubCmds = [];
             cmdsWrapper.historyCmds = [];
             cmdsWrapper.attrSubCmds = [];
+            //##### Resetting dsSubCmds
+            cmdsWrapper.dsSubCmds = [];
         }
         tryOpenSocket();
     }
@@ -187,6 +193,9 @@ function TelemetryWebsocketService($rootScope, $websocket,$log, $timeout, $windo
                 commands[cmdId] = subscriptionCommand;
                 if (subscriber.type === types.dataKeyType.timeseries) {
                     cmdsWrapper.tsSubCmds.push(subscriptionCommand);
+                } else if (subscriber.type === types.dataKeyType.depthDatum) {
+                    //##### DEPTH DATUM
+                    cmdsWrapper.dsSubCmds.push(subscriptionCommand);
                 } else if (subscriber.type === types.dataKeyType.attribute) {
                     cmdsWrapper.attrSubCmds.push(subscriptionCommand);
                 }
@@ -215,6 +224,9 @@ function TelemetryWebsocketService($rootScope, $websocket,$log, $timeout, $windo
                     subscriptionCommand.unsubscribe = true;
                     if (subscriber.type === types.dataKeyType.timeseries) {
                         cmdsWrapper.tsSubCmds.push(subscriptionCommand);
+                    } else if (subscriber.type === types.dataKeyType.depthDatum) {
+                        //##### DEPTH DATUM
+                        cmdsWrapper.dsSubCmds.push(subscriptionCommand);
                     } else if (subscriber.type === types.dataKeyType.attribute) {
                         cmdsWrapper.attrSubCmds.push(subscriptionCommand);
                     }
@@ -305,6 +317,8 @@ function TelemetryWebsocketService($rootScope, $websocket,$log, $timeout, $windo
         cmdsWrapper.tsSubCmds = [];
         cmdsWrapper.historyCmds = [];
         cmdsWrapper.attrSubCmds = [];
+        //##### DEPTH DATUM
+        cmdsWrapper.dsSubCmds = [];
         if (close) {
             closeSocket();
         }
