@@ -216,12 +216,12 @@ public class SubscriptionManager {
                 String sessionId = s.getWsSessionId();
                 List<DsKvEntry> subscriptionUpdate = f.apply(s);
                 if (!subscriptionUpdate.isEmpty()) {
-                    SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
+                    DepthSubscriptionUpdate update = new DepthSubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
                     if (s.isLocal()) {
-                        updateSubscriptionState(sessionId, s, update);
+                        updateDepthSubscriptionState(sessionId, s, update);
                         websocketHandler.sendWsMsg(ctx, sessionId, update);
                     } else {
-                        rpcHandler.onSubscriptionUpdate(ctx, s.getServer(), sessionId, update);
+                        //rpcHandler.onSubscriptionUpdate(ctx, s.getServer(), sessionId, update);
                     }
                 }
             });
@@ -276,6 +276,12 @@ public class SubscriptionManager {
     private void updateSubscriptionState(String sessionId, Subscription subState, SubscriptionUpdate update) {
         log.trace("[{}] updating subscription state {} using onUpdate {}", sessionId, subState, update);
         update.getLatestValues().entrySet().forEach(e -> subState.setKeyState(e.getKey(), e.getValue()));
+    }
+
+    private void updateDepthSubscriptionState(String sessionId, Subscription subState, DepthSubscriptionUpdate update) {
+        log.trace("[{}] updating subscription state {} using onUpdate {}", sessionId, subState, update);
+        DepthSubscription depthSubState = (DepthSubscription) subState;
+        update.getLatestValues().entrySet().forEach(e -> depthSubState.setDepthKeyState(e.getKey(), e.getValue()));
     }
 
     private Optional<Subscription> getSubscription(String sessionId, int subscriptionId) {

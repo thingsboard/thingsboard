@@ -472,4 +472,11 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             sendWsMsg(ctx, md.getSessionRef(), update);
         }
     }
+
+    public void sendWsMsg(PluginContext ctx, String sessionId, DepthSubscriptionUpdate update) {
+        WsSessionMetaData md = wsSessionsMap.get(sessionId);
+        if (md != null) {
+            sendWsMsg(ctx, md.getSessionRef(), update);
+        }
+    }
 }
