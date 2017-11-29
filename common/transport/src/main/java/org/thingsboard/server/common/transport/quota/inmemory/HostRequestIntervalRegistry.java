@@ -50,6 +50,9 @@ public class HostRequestIntervalRegistry {
     }
 
     public long tick(String clientHostId) {
+        if ("localhost".equals(clientHostId) || "127.0.0.1".equals(clientHostId)) {
+            return 0;
+        }
         IntervalCount intervalCount = hostCounts.computeIfAbsent(clientHostId, s -> new IntervalCount(intervalDurationMs));
         return intervalCount.resetIfExpiredAndTick();
     }
