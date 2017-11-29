@@ -69,7 +69,7 @@ public class HostRequestsQuotaService implements QuotaService {
     public boolean isQuotaExceeded(String key) {
         if (enabled) {
             long count = requestRegistry.tick(key);
-            return requestsPolicy.isValid(count);
+            return !requestsPolicy.isValid(count);
         }
         return false;
     }
