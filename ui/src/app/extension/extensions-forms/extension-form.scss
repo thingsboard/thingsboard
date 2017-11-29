@@ -22,6 +22,23 @@
     margin-top: 0;
     padding-left: 3px;
   }
+  .tb-container {
+    width:100%;
+  }
+  .dropdown-messages {
+    .tb-error-message {
+      padding: 5px 0 0 0;
+    }
+  }
+  .dropdown-section {
+    margin-bottom: 30px;
+  }
+}
+
+.extension-form.extension-mqtt {
+  md-checkbox{
+    margin-left: 10px;
+  }
 }
 
 .tb-extension-custom-transformer-panel {

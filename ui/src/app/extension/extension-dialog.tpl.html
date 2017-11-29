@@ -36,16 +36,16 @@
                 <md-content class="md-padding" layout="column">
                     <fieldset ng-disabled="loading">
                         <section flex layout="row">
-                            <md-input-container flex="60" class="md-block">
+                            <md-input-container flex="60" class="md-block" md-is-error="theForm.extensionId.$touched && theForm.extensionId.$invalid">
                                 <label translate>extension.extension-id</label>
                                 <input required name="extensionId" ng-model="vm.extension.id" ng-change="vm.validateId()">
                                 <div ng-messages="theForm.extensionId.$error">
-                                    <div translate ng-message="required">extension.id-required</div>
+                                    <div translate ng-message="required">extension.field-required</div>
                                     <div translate ng-message="uniqueIdValidation">extension.unique-id-required</div>
                                 </div>
                             </md-input-container>
 
-                            <md-input-container flex="40" class="md-block">
+                            <md-input-container flex="40" class="md-block" md-is-error="theForm.extensionType.$touched && theForm.extensionType.$invalid">
                                 <label translate>extension.extension-type</label>
 
                                 <md-select ng-disabled="!vm.isAdd" required name="extensionType" ng-change="vm.extensionTypeChange()" ng-model="vm.extension.type">
@@ -55,16 +55,14 @@
                                 </md-select>
 
                                 <div ng-messages="theForm.extensionType.$error">
-                                    <div translate ng-message="required">extension.type-required</div>
+                                    <div translate ng-message="required">extension.field-required</div>
                                 </div>
                             </md-input-container>
                         </section>
-
-                        <div tb-extension-form-http        config="vm.extension.configuration" is-add="vm.isAdd" ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.http"></div>
-
-                        <div tb-extension-form-opc  configuration="vm.extension.configuration"                   ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.opc"></div>
+                        <div tb-extension-form-http config="vm.extension.configuration" is-add="vm.isAdd" ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.http"></div>
+                        <div tb-extension-form-mqtt config="vm.extension.configuration" is-add="vm.isAdd" ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.mqtt"></div>
+                        <div tb-extension-form-opc  configuration="vm.extension.configuration"  ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.opc"></div>
                     </fieldset>
-                    <!--<div>{{vm.extension}}</div>-->
                 </md-content>
             </div>
         </md-dialog-content>
@@ -81,4 +79,3 @@
         </md-dialog-actions>
     </form>
 </md-dialog>
-

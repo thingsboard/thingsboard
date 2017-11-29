@@ -67,7 +67,6 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             if (index > -1) {
                 scope.converterConfigs.splice(index, 1);
             }
-            scope.theForm.$setDirty();
         };
 
         scope.addConverter = function(converters) {
@@ -85,7 +84,6 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             if (index > -1) {
                 converters.splice(index, 1);
             }
-            scope.theForm.$setDirty();
         };
 
         scope.addAttribute = function(attributes) {
@@ -98,11 +96,7 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
             if (index > -1) {
                 attributes.splice(index, 1);
             }
-            scope.theForm.$setDirty();
         };
-
-
-
 
 
         if(scope.isAdd) {
@@ -111,28 +105,6 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
         } else {
             scope.converterConfigs = scope.config.converterConfigurations;
         }
-
-
-
-        scope.updateValidity = function() {
-            let valid = scope.converterConfigs && scope.converterConfigs.length > 0;
-            scope.theForm.$setValidity('converterConfigs', valid);
-            if(scope.converterConfigs.length) {
-                for(let i=0; i<scope.converterConfigs.length; i++) {
-                    if(!scope.converterConfigs[i].converters.length) {
-                        scope.theForm.$setValidity('converters', false);
-                        break;
-                    } else {
-                        scope.theForm.$setValidity('converters', true);
-                    }
-                }
-            }
-        };
-
-        scope.$watch('converterConfigs', function() {
-            scope.updateValidity();
-        }, true);
-
 
         scope.transformerTypeChange = function(attribute) {
             attribute.transformer = "";

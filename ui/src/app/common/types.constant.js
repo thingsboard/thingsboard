@@ -332,6 +332,24 @@ export default angular.module('thingsboard.types', [])
                 toDouble: 'extension.to-double',
                 custom: 'extension.custom'
             },
+            mqttConverterTypes: {
+                json: 'extension.converter-json',
+                custom: 'extension.custom'
+            },
+            mqttCredentialTypes: {
+                anonymous:  {
+                    value: "anonymous",
+                    name: "extension.anonymous"
+                },
+                basic: {
+                    value: "basic",
+                    name: "extension.basic"
+                },
+                pem: {
+                    value: "cert.PEM",
+                    name: "extension.pem"
+                }
+            },
             extensionOpcSecurityTypes: {
                 Basic128Rsa15: "Basic128Rsa15",
                 Basic256: "Basic256",
@@ -339,8 +357,8 @@ export default angular.module('thingsboard.types', [])
                 None: "None"
             },
             extensionIdentityType: {
-                anonymous: "anonymous",
-                username: "username"
+                anonymous: "extension.anonymous",
+                username: "extension.username"
             },
             extensionKeystoreType: {
                 PKCS12: "PKCS12",

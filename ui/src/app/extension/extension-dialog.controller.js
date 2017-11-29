@@ -30,11 +30,10 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     vm.allExtensions = allExtensions;
 
 
-    if (extension) { // Editing
-        //vm.configuration = vm.extension.configuration;
+    if (extension) {
         vm.extension = angular.copy(extension);
         editTransformers(vm.extension);
-    } else { // Add new
+    } else {
         vm.extension = {};
     }
 
@@ -65,8 +64,6 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
 
     vm.save = save;
     function save() {
-        saveTransformers();
-
         let $errorElement = angular.element('[name=theForm]').find('.ng-invalid');
 
         if ($errorElement.length) {
@@ -78,11 +75,10 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
 
             if ($errorElementTop !== $mdDialogTop) {
                 angular.element('md-dialog-content').animate({
-                    scrollTop: $mdDialogScroll + ($errorElementTop - $mdDialogTop) - 20
+                    scrollTop: $mdDialogScroll + ($errorElementTop - $mdDialogTop) - 50
                 }, 500);
                 $errorElement.eq(0).focus();
             }
-
         } else {
 
             if(vm.isAdd) {
@@ -94,6 +90,9 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                 }
             }
 
+            $mdDialog.hide();
+            saveTransformers();
+
             var editedValue = angular.toJson(vm.allExtensions);
 
             attributeService
@@ -104,8 +103,6 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                     [{key:"configuration", value:editedValue}]
                 )
                 .then(function success() {
-                    $scope.theForm.$setPristine();
-                    $mdDialog.hide();
                 });
 
         }
@@ -131,21 +128,60 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     };
 
     function saveTransformers() {
-        var config = vm.extension.configuration.converterConfigurations;
         if(vm.extension.type == types.extensionType.http) {
-            for(let i=0;i<config.length;i++) {
-                for(let j=0;j<config[i].converters.length;j++){
-                    for(let k=0;k<config[i].converters[j].attributes.length;k++){
-                        if(config[i].converters[j].attributes[k].transformerType == "toDouble"){
-                            config[i].converters[j].attributes[k].transformer = {type: "intToDouble"};
+            var config = vm.extension.configuration.converterConfigurations;
+            if(config && config.length > 0) {
+                for(let i=0;i<config.length;i++) {
+                    for(let j=0;j<config[i].converters.length;j++){
+                        for(let k=0;k<config[i].converters[j].attributes.length;k++){
+                            if(config[i].converters[j].attributes[k].transformerType == "toDouble"){
+                                config[i].converters[j].attributes[k].transformer = {type: "intToDouble"};
+                            }
+                            delete config[i].converters[j].attributes[k].transformerType;
                         }
-                        delete config[i].converters[j].attributes[k].transformerType;
+                        for(let l=0;l<config[i].converters[j].timeseries.length;l++) {
+                            if(config[i].converters[j].timeseries[l].transformerType == "toDouble"){
+                                config[i].converters[j].timeseries[l].transformer = {type: "intToDouble"};
+                            }
+                            delete config[i].converters[j].timeseries[l].transformerType;
+                        }
                     }
-                    for(let l=0;l<config[i].converters[j].timeseries.length;l++) {
-                        if(config[i].converters[j].timeseries[l].transformerType == "toDouble"){
-                            config[i].converters[j].timeseries[l].transformer = {type: "intToDouble"};
+                }
+            }
+        }
+        if(vm.extension.type == types.extensionType.mqtt) {
+            var brokers = vm.extension.configuration.brokers;
+            if(brokers && brokers.length > 0) {
+                for(let i=0;i<brokers.length;i++) {
+                    if(brokers[i].mapping && brokers[i].mapping.length > 0) {
+                        for(let j=0;j<brokers[i].mapping.length;j++) {
+                            if(brokers[i].mapping[j].converterType == "json") {
+                                delete brokers[i].mapping[j].converter.nameExp;
+                                delete brokers[i].mapping[j].converter.typeExp;
+                            }
+                            delete brokers[i].mapping[j].converterType;
                         }
-                        delete config[i].converters[j].timeseries[l].transformerType;
+                    }
+                    if(brokers[i].connectRequests && brokers[i].connectRequests.length > 0) {
+                        for(let j=0;j<brokers[i].connectRequests.length;j++) {
+                            delete brokers[i].connectRequests[j].nameExp;
+                        }
+                    }
+                    if(brokers[i].disconnectRequests && brokers[i].disconnectRequests.length > 0) {
+                        for(let j=0;j<brokers[i].disconnectRequests.length;j++) {
+                            delete brokers[i].disconnectRequests[j].nameExp;
+                        }
+                    }
+                    if(brokers[i].attributeRequests && brokers[i].attributeRequests.length > 0) {
+                        for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                            delete brokers[i].attributeRequests[j].nameExp;
+                        }
+                        for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                            delete brokers[i].attributeRequests[j].attrKey;
+                        }
+                        for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                            delete brokers[i].attributeRequests[j].requestId;
+                        }
                     }
                 }
             }
@@ -153,8 +189,8 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
     }
 
     function editTransformers(extension) {
-        var config = extension.configuration.converterConfigurations;
         if(extension.type == types.extensionType.http) {
+            var config = extension.configuration.converterConfigurations;
             for(let i=0;i<config.length;i++) {
                 for(let j=0;j<config[i].converters.length;j++){
                     for(let k=0;k<config[i].converters[j].attributes.length;k++){
@@ -175,6 +211,67 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                                 config[i].converters[j].timeseries[l].transformerType = "custom";
                                 config[i].converters[j].timeseries[l].transformer = js_beautify(config[i].converters[j].timeseries[l].transformer, {indent_size: 4});
                             }
+                        }
+                    }
+                }
+            }
+        }
+        if(extension.type == types.extensionType.mqtt) {
+            var brokers = extension.configuration.brokers;
+            for(let i=0;i<brokers.length;i++) {
+                if(brokers[i].mapping && brokers[i].mapping.length > 0) {
+                    for(let j=0;j<brokers[i].mapping.length;j++) {
+                        if(brokers[i].mapping[j].converter.type == "json") {
+                            if(brokers[i].mapping[j].converter.deviceNameTopicExpression) {
+                                brokers[i].mapping[j].converter.nameExp = "deviceNameTopicExpression";
+                            } else {
+                                brokers[i].mapping[j].converter.nameExp = "deviceNameJsonExpression";
+                            }
+                            if(brokers[i].mapping[j].converter.deviceTypeTopicExpression) {
+                                brokers[i].mapping[j].converter.typeExp = "deviceTypeTopicExpression";
+                            } else {
+                                brokers[i].mapping[j].converter.typeExp = "deviceTypeJsonExpression";
+                            }
+                            brokers[i].mapping[j].converterType = "json";
+                        } else {
+                            brokers[i].mapping[j].converterType = "custom";
+                        }
+                    }
+                }
+                if(brokers[i].connectRequests && brokers[i].connectRequests.length > 0) {
+                    for(let j=0;j<brokers[i].connectRequests.length;j++) {
+                        if(brokers[i].connectRequests[j].deviceNameTopicExpression) {
+                            brokers[i].connectRequests[j].nameExp = "deviceNameTopicExpression";
+                        } else {
+                            brokers[i].connectRequests[j].nameExp = "deviceNameJsonExpression";
+                        }
+                    }
+                }
+                if(brokers[i].disconnectRequests && brokers[i].disconnectRequests.length > 0) {
+                    for(let j=0;j<brokers[i].disconnectRequests.length;j++) {
+                        if(brokers[i].disconnectRequests[j].deviceNameTopicExpression) {
+                            brokers[i].disconnectRequests[j].nameExp = "deviceNameTopicExpression";
+                        } else {
+                            brokers[i].disconnectRequests[j].nameExp = "deviceNameJsonExpression";
+                        }
+                    }
+                }
+                if(brokers[i].attributeRequests && brokers[i].attributeRequests.length > 0) {
+                    for(let j=0;j<brokers[i].attributeRequests.length;j++) {
+                        if(brokers[i].attributeRequests[j].deviceNameTopicExpression) {
+                            brokers[i].attributeRequests[j].nameExp = "deviceNameTopicExpression";
+                        } else {
+                            brokers[i].attributeRequests[j].nameExp = "deviceNameJsonExpression";
+                        }
+                        if(brokers[i].attributeRequests[j].attributeKeyTopicExpression) {
+                            brokers[i].attributeRequests[j].attrKey = "attributeKeyTopicExpression";
+                        } else {
+                            brokers[i].attributeRequests[j].attrKey = "attributeKeyJsonExpression";
+                        }
+                        if(brokers[i].attributeRequests[j].requestIdTopicExpression) {
+                            brokers[i].attributeRequests[j].requestId = "requestIdTopicExpression";
+                        } else {
+                            brokers[i].attributeRequests[j].requestId = "requestIdJsonExpression";
                         }
                     }
                 }

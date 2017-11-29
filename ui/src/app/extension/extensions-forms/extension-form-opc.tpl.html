@@ -56,16 +56,16 @@
                                                 <label translate>extension.opc-application-name</label>
                                                 <input required name="applicationName_{{serverIndex}}" ng-model="server.applicationName">
                                                 <div ng-messages="theForm['applicationName_' + serverIndex].$error">
-                                                    <div translate ng-message="required">extension.opc-field-required</div>
+                                                    <div translate ng-message="required">extension.field-required</div>
                                                 </div>
                                             </md-input-container>
 
 
-                                            <md-input-container flex="50" class="md-block">
+                                            <md-input-container flex="50" class="md-block" md-is-error="theForm['applicationUri_' + serverIndex].$touched && theForm['applicationUri_' + serverIndex].$invalid">
                                                 <label translate>extension.opc-application-uri</label>
                                                 <input required name="applicationUri_{{serverIndex}}" ng-model="server.applicationUri">
                                                 <div ng-messages="theForm['applicationUri_' + serverIndex].$error">
-                                                    <div translate ng-message="required">extension.opc-field-required</div>
+                                                    <div translate ng-message="required">extension.field-required</div>
                                                 </div>
                                             </md-input-container>
                                         </div>
@@ -73,15 +73,15 @@
 
                                         <div layout="row">
                                             <md-input-container flex="50" class="md-block">
-                                                <label translate>extension.opc-host</label>
+                                                <label translate>extension.host</label>
                                                 <input required name="host_{{serverIndex}}" ng-model="server.host">
                                                 <div ng-messages="theForm['host_' + serverIndex].$error">
-                                                    <div translate ng-message="required">extension.opc-field-required</div>
+                                                    <div translate ng-message="required">extension.field-required</div>
                                                 </div>
                                             </md-input-container>
 
                                             <md-input-container flex="50" class="md-block">
-                                                <label translate>extension.opc-port</label>
+                                                <label translate>extension.port</label>
                                                 <input type="number"
                                                        required
                                                        name="port_{{serverIndex}}"
@@ -92,7 +92,7 @@
                                                 <div ng-messages="theForm['port_' + serverIndex].$error">
                                                     <div translate
                                                          ng-message="required"
-                                                    >extension.opc-field-required</div>
+                                                    >extension.field-required</div>
                                                     <div translate
                                                          ng-message="min"
                                                     >Port should be in a range from 1 to 65535</div>
@@ -113,12 +113,12 @@
                                                 <div ng-messages="theForm['scanPeriodInSeconds_' + serverIndex].$error">
                                                     <div translate
                                                          ng-message="required"
-                                                    >extension.opc-field-required</div>
+                                                    >extension.field-required</div>
                                                 </div>
                                             </md-input-container>
 
                                             <md-input-container flex="50" class="md-block">
-                                                <label translate>extension.opc-timeout-in-millis</label>
+                                                <label translate>extension.timeout</label>
                                                 <input type="number"
                                                        required name="timeoutInMillis_{{serverIndex}}"
                                                        ng-model="server.timeoutInMillis"
@@ -126,7 +126,7 @@
                                                 <div ng-messages="theForm['timeoutInMillis_' + serverIndex].$error">
                                                     <div translate
                                                          ng-message="required"
-                                                    >extension.opc-field-required</div>
+                                                    >extension.field-required</div>
                                                 </div>
                                             </md-input-container>
                                         </div>
@@ -145,7 +145,7 @@
                                                 <div ng-messages="theForm['securityType_' + serverIndex].$error">
                                                     <div translate
                                                          ng-message="required"
-                                                    >extension.opc-field-required</div>
+                                                    >extension.field-required</div>
                                                 </div>
                                             </md-input-container>
 
@@ -157,24 +157,23 @@
                                                 >
                                                     <md-option ng-value="identityType"
                                                                ng-repeat="(identityType, identityValue) in types.extensionIdentityType"
-                                                    ><span ng-bind="::identityValue"></span></md-option>
+                                                    ><span ng-bind="identityValue | translate"></span></md-option>
                                                 </md-select>
                                                 <div ng-messages="theForm['identityType_' + serverIndex].$error">
                                                     <div translate
                                                          ng-message="required"
-                                                    >extension.opc-field-required</div>
+                                                    >extension.field-required</div>
                                                 </div>
                                             </md-input-container>
                                         </div>
-
 
                                         <div ng-if="server.identity.type != 'username'">
                                             <span class=""
                                                   ng-init="server.identity = {'type':'anonymous'}"></span>
                                         </div>
                                         <div layout="row" ng-if="server.identity.type == 'username'">
-                                            <md-input-container flex="50" class="md-block">
-                                                <label translate>extension.opc-username</label>
+                                            <md-input-container flex="50" class="md-block" md-is-error="theForm['identityUsername_' + serverIndex].$touched && theForm['identityUsername_' + serverIndex].$invalid">
+                                                <label translate>extension.username</label>
                                                 <input required
                                                        name="identityUsername_{{serverIndex}}"
                                                        ng-model="server.identity.username"
@@ -182,25 +181,24 @@
                                                 <div ng-messages="theForm['identityUsername_' + serverIndex].$error">
                                                     <div translate
                                                          ng-message="required"
-                                                    >extension.opc-field-required</div>
+                                                    >extension.field-required</div>
                                                 </div>
                                             </md-input-container>
 
-                                            <md-input-container flex="50" class="md-block">
-                                                <label translate>extension.opc-password</label>
+                                            <md-input-container flex="50" class="md-block" md-is-error="theForm['identityPassword_' + serverIndex].$touched && theForm['identityPassword_' + serverIndex].$invalid">
+                                                <label translate>extension.password</label>
                                                 <input required
                                                        name="identityPassword_{{serverIndex}}" ng-model="server.identity.password">
                                                 <div ng-messages="theForm['identityPassword_' + serverIndex].$error">
                                                     <div translate
                                                          ng-message="required"
-                                                    >extension.opc-field-required</div>
+                                                    >extension.field-required</div>
                                                 </div>
                                             </md-input-container>
                                         </div>
 
-
                                         <v-accordion id="opc-attributes-accordion" class="vAccordion--default">
-                                            <v-pane id="opc-attributes-pane">
+                                            <v-pane id="opc-attributes-pane" expanded="true">
                                                 <v-pane-header>
                                                     {{ 'extension.opc-keystore' | translate }}
                                                 </v-pane-header>
@@ -212,38 +210,40 @@
                                                             <md-option ng-value="keystoreType" ng-repeat="(keystoreType, keystoreValue) in types.extensionKeystoreType"><span ng-bind="::keystoreValue"></span></md-option>
                                                         </md-select>
                                                         <div ng-messages="theForm['keystoreType_'+serverIndex].$error">
-                                                            <div translate ng-message="required">extension.opc-field-required</div>
+                                                            <div translate ng-message="required">extension.field-required</div>
                                                         </div>
                                                     </md-input-container>
 
-                                                    <div class="tb-container" ng-class="{'ng-invalid':!server.keystore.file}">
-                                                        <span ng-init='fieldsToFill = {"fileName":"fileName", "file":"file"}'></span>
-                                                        <label class="tb-label" translate>extension.opc-keystore-location</label>
-                                                        <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, server.keystore, fieldsToFill)' class="tb-file-select-container">
-                                                            <div class="tb-file-clear-container">
-                                                                <md-button ng-click='clearFile(server.keystore, fieldsToFill)' class="tb-file-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
-                                                                    <md-tooltip md-direction="top">
-                                                                        {{ 'action.remove' | translate }}
-                                                                    </md-tooltip>
-                                                                    <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">close</md-icon>
-                                                                </md-button>
-                                                            </div>
-                                                            <div class="alert tb-flow-drop" flow-drop>
-                                                                <label for="dropFileKeystore_{{serverIndex}}" translate>extension.drop-file</label>
-                                                                <input flow-attrs="{accept:'.pfx,.p12'}"
-                                                                       type="file"
-                                                                       class="file-input"
-                                                                       flow-btn id="dropFileKeystore_{{serverIndex}}"
-                                                                       name="keystoreFile"
-                                                                       ng-model="server.keystore.file"
-                                                                >
+                                                    <section class="dropdown-section">
+                                                        <div class="tb-container" ng-class="{'ng-invalid':!server.keystore.file}">
+                                                            <span ng-init='fieldsToFill = {"fileName":"fileName", "file":"file"}'></span>
+                                                            <label class="tb-label" translate>extension.opc-keystore-location</label>
+                                                            <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, server.keystore, fieldsToFill)' class="tb-file-select-container">
+                                                                <div class="tb-file-clear-container">
+                                                                    <md-button ng-click='clearFile(server.keystore, fieldsToFill)' class="tb-file-clear-btn md-icon-button md-primary" aria-label="{{ 'action.remove' | translate }}">
+                                                                        <md-tooltip md-direction="top">
+                                                                            {{ 'action.remove' | translate }}
+                                                                        </md-tooltip>
+                                                                        <md-icon aria-label="{{ 'action.remove' | translate }}" class="material-icons">close</md-icon>
+                                                                    </md-button>
+                                                                </div>
+                                                                <div class="alert tb-flow-drop" flow-drop>
+                                                                    <label for="dropFileKeystore_{{serverIndex}}" translate>extension.drop-file</label>
+                                                                    <input flow-attrs="{accept:'.pfx,.p12'}"
+                                                                           type="file"
+                                                                           class="file-input"
+                                                                           flow-btn id="dropFileKeystore_{{serverIndex}}"
+                                                                           name="keystoreFile"
+                                                                           ng-model="server.keystore.file"
+                                                                    >
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div>
-                                                        <div ng-if="!server.keystore[fieldsToFill.fileName]" class="tb-error-message" translate>extension.no-file</div>
-                                                        <div ng-if="server.keystore[fieldsToFill.fileName]">{{server.keystore[fieldsToFill.fileName]}}</div>
-                                                    </div>
+                                                        <div class="dropdown-messages">
+                                                            <div ng-if="!server.keystore[fieldsToFill.fileName]" class="tb-error-message" translate>extension.no-file</div>
+                                                            <div ng-if="server.keystore[fieldsToFill.fileName]">{{server.keystore[fieldsToFill.fileName]}}</div>
+                                                        </div>
+                                                    </section>
 
 
                                                     <div flex layout="row">
@@ -251,7 +251,7 @@
                                                             <label translate>extension.opc-keystore-password</label>
                                                             <input required name="keystorePassword_{{serverIndex}}" ng-model="server.keystore.password">
                                                             <div ng-messages="theForm['keystorePassword_' + serverIndex].$error">
-                                                                <div translate ng-message="required">extension.opc-field-required</div>
+                                                                <div translate ng-message="required">extension.field-required</div>
                                                             </div>
                                                         </md-input-container>
 
@@ -259,7 +259,7 @@
                                                             <label translate>extension.opc-keystore-alias</label>
                                                             <input required name="keystoreAlias_{{serverIndex}}" ng-model="server.keystore.alias">
                                                             <div ng-messages="theForm['keystoreAlias_' + serverIndex].$error">
-                                                                <div translate ng-message="required">extension.opc-field-required</div>
+                                                                <div translate ng-message="required">extension.field-required</div>
                                                             </div>
                                                         </md-input-container>
                                                     </div>
@@ -268,7 +268,7 @@
                                                         <label translate>extension.opc-keystore-key-password</label>
                                                         <input required name="keystoreKeyPassword_{{serverIndex}}" ng-model="server.keystore.keyPassword">
                                                         <div ng-messages="theForm['keystoreKeyPassword_' + serverIndex].$error">
-                                                            <div translate ng-message="required">extension.opc-field-required</div>
+                                                            <div translate ng-message="required">extension.field-required</div>
                                                         </div>
                                                     </md-input-container>
 
@@ -282,7 +282,7 @@
                                         >
                                             <v-pane id="opc-attributes-pane">
                                                 <v-pane-header>
-                                                    {{ 'extension.opc-mapping' | translate }}
+                                                    {{ 'extension.mapping' | translate }}
                                                 </v-pane-header>
                                                 <v-pane-content>
                                                     <div ng-if="server.mapping.length > 0">
@@ -312,7 +312,7 @@
                                                                                 <div ng-messages="theForm['deviceNodePattern_' + serverIndex + mapIndex].$error">
                                                                                     <div translate
                                                                                          ng-message="required"
-                                                                                    >extension.opc-field-required</div>
+                                                                                    >extension.field-required</div>
                                                                                 </div>
                                                                             </md-input-container>
 
@@ -325,7 +325,7 @@
                                                                                 <div ng-messages="theForm['deviceNamePattern_' + serverIndex + mapIndex].$error">
                                                                                     <div translate
                                                                                          ng-message="required"
-                                                                                    >extension.opc-field-required</div>
+                                                                                    >extension.field-required</div>
                                                                                 </div>
                                                                             </md-input-container>
                                                                         </div>
@@ -336,7 +336,7 @@
                                                                         >
                                                                             <v-pane id="opc-attributes-pane">
                                                                                 <v-pane-header>
-                                                                                    {{ 'extension.opc-mapping-attributes' | translate }}
+                                                                                    {{ 'extension.attributes' | translate }}
                                                                                 </v-pane-header>
                                                                                 <v-pane-content>
                                                                                     <div ng-show="map.attributes.length > 0">
@@ -369,7 +369,7 @@
                                                                                                                 <div ng-messages="theForm['opcAttributeKey_' + serverIndex + mapIndex + attributeIndex].$error">
                                                                                                                     <div translate
                                                                                                                          ng-message="required"
-                                                                                                                    >extension.opc-field-required</div>
+                                                                                                                    >extension.field-required</div>
                                                                                                                 </div>
                                                                                                             </md-input-container>
                                                                                                             <md-input-container flex="40" class="md-block tb-container-for-select">
@@ -400,7 +400,7 @@
                                                                                                                 <div ng-messages="theForm['opcAttributeValue_' + serverIndex + mapIndex + attributeIndex].$error">
                                                                                                                     <div translate
                                                                                                                          ng-message="required"
-                                                                                                                    >extension.opc-field-required</div>
+                                                                                                                    >extension.field-required</div>
                                                                                                                 </div>
                                                                                                             </md-input-container>
 
@@ -417,11 +417,8 @@
                                                                                                    ng-click="addNewAttribute(map.attributes)"
                                                                                                    aria-label="{{ 'action.add' | translate }}"
                                                                                         >
-                                                                                            <md-tooltip md-direction="top">
-                                                                                                {{ 'extension.add-map' | translate }}
-                                                                                            </md-tooltip>
                                                                                             <md-icon class="material-icons">add</md-icon>
-                                                                                            <span translate>action.add</span>
+                                                                                            <span translate>add-attribute</span>
                                                                                         </md-button>
                                                                                     </div>
                                                                                 </v-pane-content>
@@ -431,7 +428,7 @@
                                                                         <v-accordion id="opc-timeseries-accordion" class="vAccordion--default">
                                                                             <v-pane id="opc-timeseries-pane">
                                                                                 <v-pane-header>
-                                                                                    {{ 'extension.opc-timeseries' | translate }}
+                                                                                    {{ 'extension.timeseries' | translate }}
                                                                                 </v-pane-header>
                                                                                 <v-pane-content>
                                                                                     <div ng-show="map.timeseries.length > 0">
@@ -460,7 +457,7 @@
                                                                                                                 <div ng-messages="theForm['opcTimeseriesKey_' + serverIndex + mapIndex + timeseriesIndex].$error">
                                                                                                                     <div translate
                                                                                                                          ng-message="required"
-                                                                                                                    >extension.opc-field-required</div>
+                                                                                                                    >extension.field-required</div>
                                                                                                                 </div>
                                                                                                             </md-input-container>
                                                                                                             <md-input-container flex="40"
@@ -480,7 +477,7 @@
                                                                                                                 <div ng-messages="theForm['opcTimeseriesType_' + serverIndex + mapIndex + timeseriesIndex].$error">
                                                                                                                     <div translate
                                                                                                                          ng-message="required"
-                                                                                                                    >extension.opc-field-required</div>
+                                                                                                                    >extension.field-required</div>
                                                                                                                 </div>
                                                                                                             </md-input-container>
                                                                                                         </section>
@@ -503,11 +500,8 @@
                                                                                                    ng-click="addNewAttribute(map.timeseries)"
                                                                                                    aria-label="{{ 'action.add' | translate }}"
                                                                                         >
-                                                                                            <md-tooltip md-direction="top">
-                                                                                                {{ 'extension.add-timeseries' | translate }}
-                                                                                            </md-tooltip>
                                                                                             <md-icon class="material-icons">add</md-icon>
-                                                                                            <span translate>action.add</span>
+                                                                                            <span translate>extension.add-timeseries</span>
                                                                                         </md-button>
                                                                                     </div>
                                                                                 </v-pane-content>
@@ -528,11 +522,8 @@
                                                                    ng-click="addMap(server.mapping)"
                                                                    aria-label="{{ 'action.add' | translate }}"
                                                         >
-                                                            <md-tooltip md-direction="top">
-                                                                {{ 'extension.add-map' | translate }}
-                                                            </md-tooltip>
                                                             <md-icon class="material-icons">add</md-icon>
-                                                            <span translate>action.add</span>
+                                                            <span translate>extension.add-map</span>
                                                         </md-button>
                                                     </div>
                                                 </v-pane-content>
@@ -553,7 +544,7 @@
                                        aria-label="{{ 'action.add' | translate }}"
                             >
                                 <md-icon class="material-icons">add</md-icon>
-                                <span translate>extension.opc-add-another-server</span>
+                                <span translate>extension.opc-add-server</span>
                             </md-button>
                         </div>
 
