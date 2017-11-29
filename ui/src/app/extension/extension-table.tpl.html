@@ -16,7 +16,7 @@
 
 -->
 
-<md-content flex class="md-padding tb-absolute-fill tb-data-table" layout="column">
+<md-content flex class="md-padding tb-absolute-fill tb-data-table extension-table" layout="column">
     <div layout="column" class="md-whiteframe-z1">
         <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedExtensions.length
                                                                  && vm.query.search === null">
@@ -78,6 +78,25 @@
                 </md-button>
             </div>
         </md-toolbar>
+
+        <div class="md-padding" flex layout="row">
+            <md-input-container flex="50" class="md-block">
+                <label translate>extension.sync.status</label>
+                <input ng-model="vm.syncStatus"
+                       ng-class="{'extension__syncStatus--green':vm.appliedConfiguration === vm.extensionsJSON, 'extension__syncStatus--red':vm.appliedConfiguration !== vm.extensionsJSON}"
+                       disabled
+                >
+            </md-input-container>
+
+            <md-input-container flex="50" class="md-block">
+                <label translate>extension.sync.last-sync-time</label>
+                <input ng-model="vm.syncLastTime"
+                       class="extension__syncStatus--black"
+                       disabled
+                >
+            </md-input-container>
+        </div>
+
         <md-table-container>
             <table md-table md-row-select multiple="" ng-model="vm.selectedExtensions" md-progress="vm.extensionsDeferred.promise">
                 <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">

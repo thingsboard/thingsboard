@@ -777,6 +777,14 @@ export default angular.module('thingsboard.locale', [])
                     "timeseries": "Timeseries",
                     "add-timeseries": "Add timeseries",
 
+
+                    "sync": {
+                        "status": "Status",
+                        "sync": "Sync",
+                        "not-sync": "Not sync",
+                        "last-sync-time": "Last sync time",
+                    },
+
                     "opc-field-required": "Field is required",
                     "opc-server": "Servers",
                     "opc-add-server-hint": "Add server",

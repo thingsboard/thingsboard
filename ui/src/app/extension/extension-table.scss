@@ -14,3 +14,18 @@
  * limitations under the License.
  */
 @import '../../scss/constants';
+
+
+.extension-table md-input-container .md-errors-spacer {
+  min-height: 0;
+}
+
+.extension__syncStatus--black {
+  color: #000000!important;
+}
+.extension__syncStatus--green {
+  color: #228634!important;
+}
+.extension__syncStatus--red {
+  color: #862222!important;
+}

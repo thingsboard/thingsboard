@@ -33,7 +33,8 @@ export default function ExtensionTableDirective() {
         scope: true,
         bindToController: {
             entityId: '=',
-            entityType: '@'
+            entityType: '@',
+            transferredAttributes: '<'
         },
         controller: ExtensionTableController,
         controllerAs: 'vm',
@@ -81,6 +82,51 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
             updateExtensions();
         }
     });
+
+    $scope.$watch('vm.transferredAttributes', function () {
+        if (vm.transferredAttributes && vm.transferredAttributes.data && vm.transferredAttributes.data.length) {
+            vm.transferredAttributes.data
+                .some(attribute=>{
+                    if (attribute.key === "appliedConfiguration") {
+                        vm.appliedConfiguration = attribute.value;
+                    }
+                });
+
+            checkForSync();
+        }
+    });
+
+
+    checkForSync();
+    function checkForSync() {
+        if (vm.appliedConfiguration === vm.extensionsJSON) {
+            vm.syncStatus = $translate.instant('extension.sync.sync');
+            vm.syncLastTime = formatDate();
+        } else {
+            vm.syncStatus = $translate.instant('extension.sync.not-sync');
+        }
+    }
+
+
+    function formatDate(date) {
+        let d;
+        if (date) {
+            d = date;
+        } else {
+            d = new Date();
+        }
+
+        d = d.getFullYear() +'/'+ addZero(d.getMonth()+1) +'/'+ addZero(d.getDate()) + ' ' + addZero(d.getHours()) + ':' + addZero(d.getMinutes()) +':'+ addZero(d.getSeconds());
+        return d;
+
+
+        function addZero(num) {
+            if ((angular.isNumber(num) && num < 10) || (angular.isString(num) && num.length === 1)) {
+                num = '0' + num;
+            }
+            return num;
+        }
+    }
 
     function enterFilterMode() {
         vm.query.search = '';
@@ -238,5 +284,61 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
         vm.extensionsCount = result.length;
         var startIndex = vm.query.limit * (vm.query.page - 1);
         vm.extensions = result.slice(startIndex, startIndex + vm.query.limit);
+        vm.extensionsJSON = angular.toJson(vm.extensions);
     }
+
+
+    // vm.subscriptionId = null;
+    // $scope.checkSubscription = function() {
+    //     var newSubscriptionId = null;
+    //     if (vm.entityId && vm.entityType) {
+    //         newSubscriptionId = attributeService.subscribeForEntityAttributes(vm.entityType, vm.entityId, 'extension/SHARED_SCOPE');
+    //     }
+    //     if (vm.subscriptionId && vm.subscriptionId != newSubscriptionId) {
+    //         attributeService.unsubscribeForEntityAttributes(vm.subscriptionId);
+    //     }
+    //     vm.subscriptionId = newSubscriptionId;
+    // }
+    //
+    //
+    // // $scope.attributesData = {};
+    // // var entityAttributesSubscriptionMap = [];
+    // //
+    // $scope.subscribeForEntityAttributes = function (entityType=vm.entityType, entityId=vm.entityId, attributeScope="SHARED_SCOPE") {
+    //     var subscriptionId = entityType + entityId + attributeScope;
+    //     var entityAttributesSubscription = entityAttributesSubscriptionMap[subscriptionId];
+    //     if (!entityAttributesSubscription) {
+    //         var subscriptionCommand = {
+    //             entityType: entityType,
+    //             entityId: entityId,
+    //             scope: attributeScope
+    //         };
+    //
+    //         var type = attributeScope === types.latestTelemetry.value ?
+    //             types.dataKeyType.timeseries : types.dataKeyType.attribute;
+    //
+    //         var subscriber = {
+    //             subscriptionCommands: [subscriptionCommand],
+    //             type: type,
+    //             onData: function (data) {
+    //                 if (data.data) {
+    //                     onSubscriptionData(data.data, subscriptionId);
+    //                 }
+    //             }
+    //         };
+    //         entityAttributesSubscription = {
+    //             subscriber: subscriber,
+    //             attributes: null
+    //         };
+    //         entityAttributesSubscriptionMap[subscriptionId] = entityAttributesSubscription;
+    //         telemetryWebsocketService.subscribe(subscriber);
+    //     }
+    //     return subscriptionId;
+    // };
+    //
+    // function onSubscriptionData(data/*, subscriptionId*/) {
+    //     $scope.attributesData = data;
+    // }
+
+    // telemetryWebsocketService.subscribe(subscriber);
 }
