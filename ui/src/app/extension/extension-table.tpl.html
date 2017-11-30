@@ -83,7 +83,7 @@
             <md-input-container flex="50" class="md-block">
                 <label translate>extension.sync.status</label>
                 <input ng-model="vm.syncStatus"
-                       ng-class="{'extension__syncStatus--green':vm.appliedConfiguration === vm.extensionsJSON, 'extension__syncStatus--red':vm.appliedConfiguration !== vm.extensionsJSON}"
+                       ng-class="{'extension__syncStatus--green':isSync, 'extension__syncStatus--red':!isSync}"
                        disabled
                 >
             </md-input-container>

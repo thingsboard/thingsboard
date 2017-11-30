@@ -766,14 +766,6 @@ export default angular.module('thingsboard.locale', [])
                     "add-map": "Add mapping element",
                     "timeseries": "Timeseries",
                     "add-timeseries": "Add timeseries",
-
-                    "sync": {
-                        "status": "Status",
-                        "sync": "Sync",
-                        "not-sync": "Not sync",
-                        "last-sync-time": "Last sync time",
-                    },
-
                     "field-required": "Field is required",
                     "brokers": "Brokers",
                     "add-broker": "Add broker",
@@ -847,6 +839,14 @@ export default angular.module('thingsboard.locale', [])
                     "opc-keystore-key-password":"Key password",
                     "opc-device-node-pattern":"Device node pattern",
                     "opc-device-name-pattern":"Device name pattern",
+
+                    "sync": {
+                        "status": "Status",
+                        "sync": "Sync",
+                        "not-sync": "Not sync",
+                        "last-sync-time": "Last sync time",
+                        "not-available": "Not available"
+                    },
                 },
                 "fullscreen": {
                     "expand": "Expand to fullscreen",

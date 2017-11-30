@@ -25,6 +25,7 @@ import extensionDialogTemplate from './extension-dialog.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 import ExtensionDialogController from './extension-dialog.controller'
+import $ from 'jquery';
 
 /*@ngInject*/
 export default function ExtensionTableDirective() {
@@ -72,6 +73,15 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
 
     $scope.$watch("vm.entityId", function(newVal) {
         if (newVal) {
+            if ($scope.subscriber) {
+                telemetryWebsocketService.unsubscribe($scope.subscriber);
+            }
+
+            vm.subscribed = false;
+            vm.syncLastTime = $translate.instant('extension.sync.not-available');
+
+            subscribeForClientAttributes();
+
             reloadExtensions();
         }
     });
@@ -205,12 +215,18 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
     }
 
     function reloadExtensions() {
+        vm.subscribed = false;
         vm.allExtensions.length = 0;
         vm.extensions.length = 0;
         vm.extensionsPromise = attributeService.getEntityAttributesValues(vm.entityType, vm.entityId, types.attributesScope.shared.value, ["configuration"]);
         vm.extensionsPromise.then(
             function success(data) {
-                vm.allExtensions = angular.fromJson(data[0].value);
+                if (data.length) {
+                    vm.allExtensions = angular.fromJson(data[0].value);
+                } else {
+                    vm.allExtensions = [];
+                }
+
                 vm.selectedExtensions = [];
                 updateExtensions();
                 vm.extensionsPromise = null;
@@ -238,52 +254,58 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
         vm.extensionsCount = result.length;
         var startIndex = vm.query.limit * (vm.query.page - 1);
         vm.extensions = result.slice(startIndex, startIndex + vm.query.limit);
+
         vm.extensionsJSON = angular.toJson(vm.extensions);
+        checkForSync()
+
     }
 
-
-
-    if (vm.entityId && vm.entityType) {
-        $scope.subscriber = {
-            subscriptionCommands: [{
-                entityType: vm.entityType,
-                entityId: vm.entityId,
-                scope: 'CLIENT_SCOPE'
-            }],
-            type: 'attribute',
-            onData: function (data) {
-                if (data.data) {
-                    onSubscriptionData(data.data);
-                }
+    function subscribeForClientAttributes() {
+        if (!vm.subscribed) {
+            if (vm.entityId && vm.entityType) {
+                $scope.subscriber = {
+                    subscriptionCommands: [{
+                        entityType: vm.entityType,
+                        entityId: vm.entityId,
+                        scope: 'CLIENT_SCOPE'
+                    }],
+                    type: 'attribute',
+                    onData: function (data) {
+                        if (data.data) {
+                            onSubscriptionData(data.data);
+                        }
+                        vm.subscribed = true;
+                    }
+                };
             }
-        };
-    }
-    telemetryWebsocketService.subscribe($scope.subscriber);
+            telemetryWebsocketService.subscribe($scope.subscriber);
 
-
-    $scope.$on('$destroy', function() {
-        telemetryWebsocketService.unsubscribe($scope.subscriber);
-    });
-
-
-
-
-    function onSubscriptionData(data) {
-        if (data.appliedConfiguration && data.appliedConfiguration[0] && data.appliedConfiguration[0][1]) {
-            vm.appliedConfiguration = data.appliedConfiguration[0][1];
-            checkForSync();
-            $scope.$digest();
         }
     }
+    function onSubscriptionData(data) {
+
+        if ($.isEmptyObject(data)) {
+            vm.appliedConfiguration = undefined;
+        } else {
+            if (data.appliedConfiguration && data.appliedConfiguration[0] && data.appliedConfiguration[0][1]) {
+                vm.appliedConfiguration = data.appliedConfiguration[0][1];
+            }
+        }
+
+        updateExtensions();
+        $scope.$digest();
+    }
 
 
-    checkForSync();
     function checkForSync() {
-        if (vm.appliedConfiguration === vm.extensionsJSON) {
+        if (vm.appliedConfiguration && vm.extensionsJSON && vm.appliedConfiguration === vm.extensionsJSON) {
             vm.syncStatus = $translate.instant('extension.sync.sync');
             vm.syncLastTime = formatDate();
+            $scope.isSync = true;
         } else {
             vm.syncStatus = $translate.instant('extension.sync.not-sync');
+
+            $scope.isSync = false;
         }
     }
 
@@ -306,7 +328,4 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
             return num;
         }
     }
-
-
-    //telemetryWebsocketService.subscribe(subscriber);
 }
