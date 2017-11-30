@@ -774,7 +774,6 @@ export default angular.module('thingsboard.locale', [])
                         "last-sync-time": "Last sync time",
                     },
 
-
                     "field-required": "Field is required",
                     "brokers": "Brokers",
                     "add-broker": "Add broker",

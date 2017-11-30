@@ -33,8 +33,7 @@ export default function ExtensionTableDirective() {
         scope: true,
         bindToController: {
             entityId: '=',
-            entityType: '@',
-            transferredAttributes: '<'
+            entityType: '@'
         },
         controller: ExtensionTableController,
         controllerAs: 'vm',
@@ -254,7 +253,7 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
             type: 'attribute',
             onData: function (data) {
                 if (data.data) {
-                    onSubscriptionData(data.data/*, subscriptionId*/);
+                    onSubscriptionData(data.data);
                 }
             }
         };
@@ -269,9 +268,7 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
 
 
 
-    function onSubscriptionData(data/*, subscriptionId*/) {
-        //$scope.attributesData = data.;
-
+    function onSubscriptionData(data) {
         if (data.appliedConfiguration && data.appliedConfiguration[0] && data.appliedConfiguration[0][1]) {
             vm.appliedConfiguration = data.appliedConfiguration[0][1];
             checkForSync();
