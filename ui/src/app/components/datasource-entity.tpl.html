@@ -128,7 +128,7 @@
 						  </div>
 					  </md-chip-template>
 			   </md-chips>
-			   <md-chips flex ng-if="widgetType === types.widgetType.latest.value"
+			   <md-chips flex ng-if="widgetType === types.widgetType.latest.value && types.uiConf.isDepthSeriesEnabled()"
                          id="depth_datakey_chips"
                          ng-required="true"
                          ng-model="depthDataKeys" md-autocomplete-snap
