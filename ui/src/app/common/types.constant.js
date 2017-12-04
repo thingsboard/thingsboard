@@ -220,7 +220,7 @@ export default angular.module('thingsboard.types', [])
                 timeseries: "timeseries",
                 attribute: "attribute",
               //##### ADDING DEPTH DATA KEY TYPE
-                depthDatum: "depth_datum",
+                depthSeries: "depthSeries",
                 function: "function",
                 alarm: "alarm"
             },
@@ -324,9 +324,9 @@ export default angular.module('thingsboard.types', [])
                 name: "attribute.scope-latest-telemetry",
                 clientSide: true
             },
-            latestDepthDatum: {
-                value: "LATEST_DEPTH_DATUM",
-                name: "attribute.scope-latest-depth-datum",
+            latestDepthSeries: {
+                value: "LATEST_DEPTH_SERIES",
+                name: "attribute.scope-latest-depth-series",
                 clientSide: true
             },
             attributesScope: {

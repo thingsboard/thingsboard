@@ -39,7 +39,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
             tsSubCmds: [],
             historyCmds: [],
             attrSubCmds: [],
-          //##### ADDING DEPTH DATUM
+          //##### ADDING DEPTH Series
             dsSubCmds: []
         },
         telemetryUri,
@@ -193,8 +193,8 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
                 commands[cmdId] = subscriptionCommand;
                 if (subscriber.type === types.dataKeyType.timeseries) {
                     cmdsWrapper.tsSubCmds.push(subscriptionCommand);
-                } else if (subscriber.type === types.dataKeyType.depthDatum) {
-                    //##### DEPTH DATUM
+                } else if (subscriber.type === types.dataKeyType.depthSeries) {
+                    //##### DEPTH SERIES
                     cmdsWrapper.dsSubCmds.push(subscriptionCommand);
                 } else if (subscriber.type === types.dataKeyType.attribute) {
                     cmdsWrapper.attrSubCmds.push(subscriptionCommand);
@@ -224,8 +224,8 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
                     subscriptionCommand.unsubscribe = true;
                     if (subscriber.type === types.dataKeyType.timeseries) {
                         cmdsWrapper.tsSubCmds.push(subscriptionCommand);
-                    } else if (subscriber.type === types.dataKeyType.depthDatum) {
-                        //##### DEPTH DATUM
+                    } else if (subscriber.type === types.dataKeyType.depthSeries) {
+                        //##### DEPTH SERIES
                         cmdsWrapper.dsSubCmds.push(subscriptionCommand);
                     } else if (subscriber.type === types.dataKeyType.attribute) {
                         cmdsWrapper.attrSubCmds.push(subscriptionCommand);
@@ -317,7 +317,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         cmdsWrapper.tsSubCmds = [];
         cmdsWrapper.historyCmds = [];
         cmdsWrapper.attrSubCmds = [];
-        //##### DEPTH DATUM
+        //##### DEPTH SERIES
         cmdsWrapper.dsSubCmds = [];
         if (close) {
             closeSocket();

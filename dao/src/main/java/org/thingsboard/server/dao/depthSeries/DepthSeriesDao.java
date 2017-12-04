@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.depthDatum;
+package org.thingsboard.server.dao.depthSeries;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -22,21 +22,22 @@ import org.thingsboard.server.common.data.kv.DsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Himanshu Mishra
  */
-public interface DepthDatumService {
+public interface DepthSeriesDao {
 
-    ListenableFuture<List<DsKvEntry>> findAll(EntityId entityId, List<DsKvQuery> queries);
+    ListenableFuture<List<DsKvEntry>> findAllAsync(EntityId entityId, List<DsKvQuery> queries);
 
-    ListenableFuture<List<DsKvEntry>> findLatest(EntityId entityId, Collection<String> keys);
+    ListenableFuture<DsKvEntry> findLatest(EntityId entityId, String key);
 
     ListenableFuture<List<DsKvEntry>> findAllLatest(EntityId entityId);
 
-    ListenableFuture<List<Void>> save(EntityId entityId, DsKvEntry tsKvEntry);
+    ListenableFuture<Void> save(EntityId entityId, DsKvEntry dsKvEntry, long ttl);
 
-    ListenableFuture<List<Void>> save(EntityId entityId, List<DsKvEntry> dsKvEntry, long ttl);
+    ListenableFuture<Void> savePartition(EntityId entityId, Double dsKvEntryDs, String key, long ttl);
+
+    ListenableFuture<Void> saveLatest(EntityId entityId, DsKvEntry DsKvEntry);
 }

@@ -43,8 +43,8 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             if (scope.types.latestTelemetry.value === attributeScopeValue) {
                 return scope.types.latestTelemetry;
             }
-            if (scope.types.latestDepthDatum.value === attributeScopeValue) {
-                return scope.types.latestDepthDatum;
+            if (scope.types.latestDepthSeries.value === attributeScopeValue) {
+                return scope.types.latestDepthSeries;
             }
             for (var attrScope in scope.attributeScopes) {
                 if (scope.attributeScopes[attrScope].value === attributeScopeValue) {
@@ -69,7 +69,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
         scope.attributeScope = getAttributeScopeByValue(attrs.defaultAttributeScope);
 
         if (scope.entityType != types.entityType.device) {
-            if (scope.attributeScope != types.latestTelemetry && scope.attributeScope != types.latestDepthDatum) {
+            if (scope.attributeScope != types.latestTelemetry && scope.attributeScope != types.latestDepthSeries) {
                 scope.attributeScope = scope.attributeScopes.server;
             }
         }
@@ -306,14 +306,14 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
             scope.aliasController = new AliasController(scope, $q, $filter, utils,
                 types, entityService, stateController, entitiAliases);
 
-            ///########## NEED TO ADD DEPTH DATUM
+            ///########## NEED TO ADD DEPTH SERIES
             // var dataKeyType = scope.attributeScope === types.latestTelemetry ?
             //     types.dataKeyType.timeseries : types.dataKeyType.attribute;
 
             if (scope.attributeScope === types.latestTelemetry) {
                 var dataKeyType = types.dataKeyType.timeseries;
-            } else if (scope.attributeScope === types.latestDepthDatum) {
-                dataKeyType = types.dataKeyType.depthDatum;
+            } else if (scope.attributeScope === types.latestDepthSeries) {
+                dataKeyType = types.dataKeyType.depthSeries;
             } else {
                 dataKeyType = types.dataKeyType.attribute;
             }
@@ -388,7 +388,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
                                         widget.config.title = widgetInfo.widgetName;
                                         widget.config.datasources = [datasource];
                                         var length;
-                                        if ((scope.attributeScope === types.latestTelemetry || scope.attributeScope === types.latestDepthDatum) && widgetInfo.type !== types.widgetType.rpc.value) {
+                                        if ((scope.attributeScope === types.latestTelemetry || scope.attributeScope === types.latestDepthSeries) && widgetInfo.type !== types.widgetType.rpc.value) {
                                             length = scope.widgetsListCache.push([widget]);
                                             scope.widgetsList.push(length === 1 ? [widget] : []);
                                         } else if (widgetInfo.type === types.widgetType.latest.value) {

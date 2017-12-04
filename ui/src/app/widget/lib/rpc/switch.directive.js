@@ -141,7 +141,7 @@ function SwitchController($element, $scope, types, utils) {
             if (!vm.isSimulated) {
                 if (vm.retrieveValueMethod == 'rpc') {
                     rpcRequestValue();
-                } else if (vm.retrieveValueMethod == 'attribute' || vm.retrieveValueMethod == 'timeseries' || vm.retrieveValueMethod == 'depthdatum') {  //############ ADDing DEPTH
+                } else if (vm.retrieveValueMethod == 'attribute' || vm.retrieveValueMethod == 'timeseries' || vm.retrieveValueMethod == 'depthseries') {  //############ ADDing DEPTH
                     subscribeForValue();
                 }
             }
@@ -199,8 +199,8 @@ function SwitchController($element, $scope, types, utils) {
             valueSubscriptionInfo[0].timeseries = [
                 {name: vm.valueKey}
             ];
-        } else if (vm.retrieveValueMethod == 'depthdataum') {
-            valueSubscriptionInfo[0].depthDatum = [
+        } else if (vm.retrieveValueMethod == 'depthseries') {
+            valueSubscriptionInfo[0].depthSeries = [
                 {name: vm.valueKey}
             ];
         }

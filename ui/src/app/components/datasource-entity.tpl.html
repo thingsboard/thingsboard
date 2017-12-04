@@ -139,10 +139,10 @@
 							id="depth_datakey"
 							md-selected-item="selectedDepthDataKey"
 							md-search-text="depthDataKeySearchText"
-							md-items="item in dataKeysSearch(depthDataKeySearchText, types.dataKeyType.depthDatum)"
+							md-items="item in dataKeysSearch(depthDataKeySearchText, types.dataKeyType.depthSeries)"
 							md-item-text="item.name"
 							md-min-length="0"
-							placeholder="{{'datakey.depthDatum' | translate }}"
+							placeholder="{{'datakey.depthSeries' | translate }}"
 							md-menu-class="tb-depth-datakey-autocomplete">
 							<span md-highlight-text="depthDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
 						    <md-not-found>

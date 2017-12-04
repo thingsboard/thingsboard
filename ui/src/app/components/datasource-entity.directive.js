@@ -142,7 +142,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                         timeseriesDataKeys.push(dataKey);
                     } else if (dataKey.type === types.dataKeyType.attribute) {
                         attributeDataKeys.push(dataKey);
-                    } else if (dataKey.type === types.dataKeyType.depthDatum) {
+                    } else if (dataKey.type === types.dataKeyType.depthSeries) {
                         depthDataKeys.push(dataKey);
                     } else if (dataKey.type === types.dataKeyType.alarm) {
                         alarmDataKeys.push(dataKey);
@@ -194,7 +194,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
                 return null;
             } else {
-                return scope.generateDataKey({chip: chip, type: types.dataKeyType.depthDatum});
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.depthSeries});
             }
         };
 
@@ -253,7 +253,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     scope.timeseriesDataKeys[index] = dataKey;
                 } else if (dataKey.type === types.dataKeyType.attribute) {
                     scope.attributeDataKeys[index] = dataKey;
-                } else if (dataKey.type === types.dataKeyType.depthDatum) {
+                } else if (dataKey.type === types.dataKeyType.depthSeries) {
                     scope.depthDataKeys[index] = dataKey;
                 } else if (dataKey.type === types.dataKeyType.alarm) {
                     scope.alarmDataKeys[index] = dataKey;

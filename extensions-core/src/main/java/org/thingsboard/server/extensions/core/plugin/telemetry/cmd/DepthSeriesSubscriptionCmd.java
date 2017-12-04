@@ -23,7 +23,7 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionT
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class DepthDatumSubscriptionCmd extends SubscriptionCmd {
+public class DepthSeriesSubscriptionCmd extends SubscriptionCmd {
 
     private Double startDs;
     private Double depthWindow;
@@ -33,6 +33,6 @@ public class DepthDatumSubscriptionCmd extends SubscriptionCmd {
 
     @Override
     public SubscriptionType getType() {
-        return SubscriptionType.DEPTH_DATUM;
+        return SubscriptionType.DEPTHSERIES;
     }
 }

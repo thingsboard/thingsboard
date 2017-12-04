@@ -23,7 +23,7 @@ public class TelemetryPluginCmdsWrapper {
 
     private List<TimeseriesSubscriptionCmd> tsSubCmds;
 
-    private List<DepthDatumSubscriptionCmd> dsSubCmds;
+    private List<DepthSeriesSubscriptionCmd> dsSubCmds;
 
     private List<GetHistoryCmd> historyCmds;
 
@@ -54,7 +54,7 @@ public class TelemetryPluginCmdsWrapper {
         this.historyCmds = historyCmds;
     }
 
-    public List<DepthDatumSubscriptionCmd> getDsSubCmds() { return dsSubCmds; }
+    public List<DepthSeriesSubscriptionCmd> getDsSubCmds() { return dsSubCmds; }
 
-    public void setDsSubCmds(List<DepthDatumSubscriptionCmd> dsSubCmds) { this.dsSubCmds = dsSubCmds; }
+    public void setDsSubCmds(List<DepthSeriesSubscriptionCmd> dsSubCmds) { this.dsSubCmds = dsSubCmds; }
 }

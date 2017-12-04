@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.depthDatum;
+package org.thingsboard.server.dao.depthSeries;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -37,18 +37,18 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  */
 @Service
 @Slf4j
-public class BaseDepthDatumService implements DepthDatumService {
+public class BaseDepthSeriesService implements DepthSeriesService {
 
     public static final int INSERTS_PER_ENTRY = 3;
 
     @Autowired
-    private DepthDatumDao depthDatumDao;
+    private DepthSeriesDao depthSeriesDao;
 
     @Override
     public ListenableFuture<List<DsKvEntry>> findAll(EntityId entityId, List<DsKvQuery> queries) {
         validate(entityId);
         queries.forEach(query -> validate(query));
-        return depthDatumDao.findAllAsync(entityId, queries);
+        return depthSeriesDao.findAllAsync(entityId, queries);
     }
 
     @Override
@@ -56,14 +56,14 @@ public class BaseDepthDatumService implements DepthDatumService {
         validate(entityId);
         List<ListenableFuture<DsKvEntry>> futures = Lists.newArrayListWithExpectedSize(keys.size());
         keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
-        keys.forEach(key -> futures.add(depthDatumDao.findLatest(entityId, key)));
+        keys.forEach(key -> futures.add(depthSeriesDao.findLatest(entityId, key)));
         return Futures.allAsList(futures);
     }
 
     @Override
     public ListenableFuture<List<DsKvEntry>> findAllLatest(EntityId entityId) {
         validate(entityId);
-        return depthDatumDao.findAllLatest(entityId);
+        return depthSeriesDao.findAllLatest(entityId);
     }
 
     @Override
@@ -90,9 +90,9 @@ public class BaseDepthDatumService implements DepthDatumService {
     }
 
     private void saveAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, DsKvEntry dsKvEntry, long ttl) {
-        futures.add(depthDatumDao.savePartition(entityId, dsKvEntry.getDs(), dsKvEntry.getKey(), ttl));
-        futures.add(depthDatumDao.saveLatest(entityId, dsKvEntry));
-        futures.add(depthDatumDao.save(entityId, dsKvEntry, ttl));
+        futures.add(depthSeriesDao.savePartition(entityId, dsKvEntry.getDs(), dsKvEntry.getKey(), ttl));
+        futures.add(depthSeriesDao.saveLatest(entityId, dsKvEntry));
+        futures.add(depthSeriesDao.save(entityId, dsKvEntry, ttl));
     }
 
     private static void validate(EntityId entityId) {

@@ -198,7 +198,7 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
-    public void loadDepthDatum(final EntityId entityId, final List<DsKvQuery> queries, final PluginCallback<List<DsKvEntry>> callback) {
+    public void loadDepthSeries(final EntityId entityId, final List<DsKvQuery> queries, final PluginCallback<List<DsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
             ListenableFuture<List<DsKvEntry>> future = pluginCtx.dsService.findAll(entityId, queries);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
@@ -222,7 +222,7 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
-    public void loadLatestDepthDatum(final EntityId entityId, final PluginCallback<List<DsKvEntry>> callback) {
+    public void loadLatestDepthSeries(final EntityId entityId, final PluginCallback<List<DsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
             ListenableFuture<List<DsKvEntry>> future = pluginCtx.dsService.findAllLatest(entityId);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
@@ -230,7 +230,7 @@ public final class PluginProcessingContext implements PluginContext {
     }
 
     @Override
-    public void loadLatestDepthDatum(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<DsKvEntry>> callback) {
+    public void loadLatestDepthSeries(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<DsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
             ListenableFuture<List<DsKvEntry>> rsListFuture = pluginCtx.dsService.findLatest(entityId, keys);
             Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);

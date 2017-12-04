@@ -89,8 +89,8 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                         msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                     }
                 });
-            } else if(feature == TelemetryFeature.DEPTH_DATUM){
-                ctx.loadLatestDepthDatum(entityId, new PluginCallback<List<DsKvEntry>>() {
+            } else if(feature == TelemetryFeature.DEPTHSERIES){
+                ctx.loadLatestDepthSeries(entityId, new PluginCallback<List<DsKvEntry>>() {
                     @Override
                     public void onSuccess(PluginContext ctx, List<DsKvEntry> value) {
                         List<String> keys = value.stream().map(dsKv -> dsKv.getKey()).collect(Collectors.toList());
@@ -137,7 +137,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     log.error("HMDC inside telemetry values ");
                     ctx.loadLatestTimeseries(entityId, keys, getTsKvListCallback(msg));
                 }
-            } else if(feature == TelemetryFeature.DEPTH_DATUM){
+            } else if(feature == TelemetryFeature.DEPTHSERIES){
                 String keysStr = request.getParameter("keys");
                 List<String> keys = Arrays.asList(keysStr.split(","));
 
@@ -155,10 +155,10 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
 
                     List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, startDs.get(), endDs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
                             .collect(Collectors.toList());
-                    ctx.loadDepthDatum(entityId, queries, getDsKvListCallback(msg));
+                    ctx.loadDepthSeries(entityId, queries, getDsKvListCallback(msg));
                 } else {
 
-                    ctx.loadLatestDepthDatum(entityId, keys, getDsKvListCallback(msg));
+                    ctx.loadLatestDepthSeries(entityId, keys, getDsKvListCallback(msg));
                 }
             }
             else if (feature == TelemetryFeature.ATTRIBUTES) {

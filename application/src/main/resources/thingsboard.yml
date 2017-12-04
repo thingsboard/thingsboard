@@ -232,7 +232,6 @@ spring.mvc.cors:
 configurations:
   ui:
     depthSeries: "false"
-    test: "test"
 
 # HSQLDB DAO Configuration
 spring:

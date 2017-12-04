@@ -46,7 +46,7 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.depthDatum.DepthDatumService;
+import org.thingsboard.server.dao.depthSeries.DepthSeriesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
@@ -102,7 +102,7 @@ public class ActorSystemContext {
     @Getter private TimeseriesService tsService;
 
     @Autowired
-    @Getter private DepthDatumService dsService;
+    @Getter private DepthSeriesService dsService;
 
     @Autowired
     @Getter private AttributesService attributesService;

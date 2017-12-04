@@ -58,7 +58,7 @@ public class SubscriptionManager {
         } else {
             log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), entityId);
             subscription = new Subscription(sub, true);
-            /*if(sub.getType() == SubscriptionType.DEPTH_DATUM) {
+            /*if(sub.getType() == SubscriptionType.DEPTHSERIES) {
                 depthSubscriptionState = (DepthSubscriptionState) sub;
                 subscription = new DepthSubscription(sub,true,depthSubscriptionState);
             }

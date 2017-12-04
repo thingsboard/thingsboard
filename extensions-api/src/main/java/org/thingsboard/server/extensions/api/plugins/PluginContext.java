@@ -85,15 +85,15 @@ public interface PluginContext {
 
     void loadTimeseries(EntityId entityId, List<TsKvQuery> queries, PluginCallback<List<TsKvEntry>> callback);
 
-    void loadDepthDatum(EntityId entityId, List<DsKvQuery> queries, PluginCallback<List<DsKvEntry>> callback);
+    void loadDepthSeries(EntityId entityId, List<DsKvQuery> queries, PluginCallback<List<DsKvEntry>> callback);
 
     void loadLatestTimeseries(EntityId entityId, Collection<String> keys, PluginCallback<List<TsKvEntry>> callback);
 
     void loadLatestTimeseries(EntityId entityId, PluginCallback<List<TsKvEntry>> callback);
 
-    void loadLatestDepthDatum(EntityId entityId, Collection<String> keys, PluginCallback<List<DsKvEntry>> callback);
+    void loadLatestDepthSeries(EntityId entityId, Collection<String> keys, PluginCallback<List<DsKvEntry>> callback);
 
-    void loadLatestDepthDatum(EntityId entityId, PluginCallback<List<DsKvEntry>> callback);
+    void loadLatestDepthSeries(EntityId entityId, PluginCallback<List<DsKvEntry>> callback);
 
     /*
         Attributes API

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.depthDatum;
+package org.thingsboard.server.dao.depthSeries;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
@@ -52,7 +52,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 @Component
 @Slf4j
 @NoSqlDao
-public class CassandraBaseDepthDatumDao extends CassandraAbstractAsyncDao implements DepthDatumDao {
+public class CassandraBaseDepthSeriesDao extends CassandraAbstractAsyncDao implements DepthSeriesDao {
 
     private static final Double MIN_AGGREGATION_STEP_MS = 0.1;
 

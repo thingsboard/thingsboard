@@ -242,7 +242,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     }
                     tsKeys += dataKey.name;
                     tsKeyNames.push(dataKey.name);
-                } else if (dataKey.type === types.dataKeyType.depthDatum) {
+                } else if (dataKey.type === types.dataKeyType.depthSeries) {
                     //##### ADDING DEPTH HANDLING
                     if (dsKeys.length > 0) {
                         dsKeys += ',';
@@ -425,7 +425,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
                     subscriber = {
                         historyCommands: [ historyCommand ],
-                        type: types.dataKeyType.depthDatum,
+                        type: types.dataKeyType.depthSeries,
                         subsTw: subsTw
                     };
 
@@ -441,7 +441,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                                 onStateHistoryData(data, this.data, this.subsTw.aggregation.limit,
                                     subsTw.fixedWindow.startTimeMs, this.subsTw.fixedWindow.endTimeMs,
                                     (data) => {
-                                        onData(data.data, types.dataKeyType.depthDatum, true);
+                                        onData(data.data, types.dataKeyType.depthSeries, true);
                                     });
                             } else {
                                 this.firstStateData = data;
@@ -452,7 +452,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                                     onStateHistoryData(this.firstStateData, data, this.subsTw.aggregation.limit,
                                         this.subsTw.fixedWindow.startTimeMs, this.subsTw.fixedWindow.endTimeMs,
                                         (data) => {
-                                            onData(data.data, types.dataKeyType.depthDatum, true);
+                                            onData(data.data, types.dataKeyType.depthSeries, true);
                                         });
                                 } else {
                                     this.data = data;
@@ -462,7 +462,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                                     var keyData = data.data[key];
                                     data.data[key] = $filter('orderBy')(keyData, '+this[0]');
                                 }
-                                onData(data.data, types.dataKeyType.depthDatum, true);
+                                onData(data.data, types.dataKeyType.depthSeries, true);
                             }
                         }
                     };
@@ -480,7 +480,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
                     subscriber = {
                         subscriptionCommands: [subscriptionCommand],
-                        type: types.dataKeyType.depthDatum
+                        type: types.dataKeyType.depthSeries
                     };
 
                     if (datasourceSubscription.type === types.widgetType.timeseries.value) {
@@ -491,7 +491,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                             subscriber.firstStateSubscriptionCommand = createFirstStateHistoryCommand(subsTw.startTs, dsKeys);
                             subscriber.historyCommands = [subscriber.firstStateSubscriptionCommand];
                         }
-                        dataAggregator = createRealtimeDataAggregator(subsTw, dsKeyNames, types.dataKeyType.depthDatum);
+                        dataAggregator = createRealtimeDataAggregator(subsTw, dsKeyNames, types.dataKeyType.depthSeries);
                         subscriber.onData = function(data, subscriptionId) {
                             if (this.subsTw.aggregation.stateData &&
                                 this.firstStateSubscriptionCommand && this.firstStateSubscriptionCommand.cmdId == subscriptionId) {
@@ -546,7 +546,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         subscriber.onReconnected = function() {}
                         subscriber.onData = function(data) {
                             if (data.data) {
-                                onData(data.data, types.dataKeyType.depthDatum, true);
+                                onData(data.data, types.dataKeyType.depthSeries, true);
                             }
                         }
                     }

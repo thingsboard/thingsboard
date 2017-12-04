@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.depthDatum;
+package org.thingsboard.server.dao.sql.depthSeries;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.*;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
-import org.thingsboard.server.dao.depthDatum.DepthDatumDao;
+import org.thingsboard.server.dao.depthSeries.DepthSeriesDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.Nullable;
@@ -46,7 +46,7 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @Component
 @Slf4j
 @SqlDao
-public class JpaDepthDatumDao extends JpaAbstractDaoListeningExecutorService implements DepthDatumDao {
+public class JpaDepthSeriesDao extends JpaAbstractDaoListeningExecutorService implements DepthSeriesDao {
 
     @Autowired
     private DsKvRepository dsKvRepository;

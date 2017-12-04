@@ -20,7 +20,7 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.handlers;
  */
 public enum TelemetryFeature {
 
-    ATTRIBUTES, TIMESERIES, DEPTH_DATUM;
+    ATTRIBUTES, TIMESERIES, DEPTHSERIES;
 
     public static TelemetryFeature forName(String name) {
         return TelemetryFeature.valueOf(name.toUpperCase());

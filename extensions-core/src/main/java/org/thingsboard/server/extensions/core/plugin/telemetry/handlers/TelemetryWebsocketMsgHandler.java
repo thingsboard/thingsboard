@@ -76,7 +76,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     cmdsWrapper.getTsSubCmds().forEach(cmd -> handleWsTimeseriesSubscriptionCmd(ctx, sessionRef, cmd));
                 }
                 if (cmdsWrapper.getDsSubCmds() != null) {
-                    cmdsWrapper.getDsSubCmds().forEach(cmd -> handleWsDepthDatumSubscriptionCmd(ctx, sessionRef, cmd));
+                    cmdsWrapper.getDsSubCmds().forEach(cmd -> handleWsDepthSeriesSubscriptionCmd(ctx, sessionRef, cmd));
                     log.error("HMDC DsSubCmds " + cmdsWrapper.getAttrSubCmds());
                 }
                 if (cmdsWrapper.getHistoryCmds() != null) {
@@ -233,7 +233,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         }
     }
 
-    private void handleWsDepthDatumSubscriptionCmd(PluginContext ctx, PluginWebsocketSessionRef sessionRef, DepthDatumSubscriptionCmd cmd) {
+    private void handleWsDepthSeriesSubscriptionCmd(PluginContext ctx, PluginWebsocketSessionRef sessionRef, DepthSeriesSubscriptionCmd cmd) {
         String sessionId = sessionRef.getSessionId();
         log.debug("[{}] Processing: {}", sessionId, cmd);
 
@@ -248,29 +248,29 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     Double startDs;
                     if (cmd.getDepthWindow() > 0) {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
-                        log.debug("[{}] fetching depth datum data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
-                        log.error("[{}] fetching depth datum data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
+                        log.debug("[{}] fetching depth series data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
+                        log.error("[{}] fetching depth series data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
                         startDs = cmd.getStartDs();
                         Double endDs = cmd.getStartDs() + cmd.getDepthWindow();
                         List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, startDs, endDs, cmd.getInterval(), getLimit(cmd.getLimit()), getDepthAggregation(cmd.getAgg()))).collect(Collectors.toList());
-                        ctx.loadDepthDatum(entityId, queries, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startDs, keys));
+                        ctx.loadDepthSeries(entityId, queries, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startDs, keys));
                     } else {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
                         startDs = 0.0;
                         log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
                         log.error("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
-                        ctx.loadLatestDepthDatum(entityId, keys, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startDs, keys));
+                        ctx.loadLatestDepthSeries(entityId, keys, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startDs, keys));
                     }
                 } else {
-                    log.error("HMDC inside load latest Depth Datum ");
-                    ctx.loadLatestDepthDatum(entityId, new PluginCallback<List<DsKvEntry>>() {
+                    log.error("HMDC inside load latest Depth Series ");
+                    ctx.loadLatestDepthSeries(entityId, new PluginCallback<List<DsKvEntry>>() {
                         @Override
                         public void onSuccess(PluginContext ctx, List<DsKvEntry> data) {
                             log.error("HMDC load latest sucess  ");
                             sendWsMsg(ctx, sessionRef, new DepthSubscriptionUpdate(cmd.getCmdId(), data));
                             Map<String, Double> subState = new HashMap<>(data.size());
                             data.forEach(v -> subState.put(v.getKey(), v.getDs()));
-                            SubscriptionState sub = new DepthSubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTH_DATUM
+                            SubscriptionState sub = new DepthSubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTHSERIES
                                     , true, null, subState);
                             subscriptionManager.addLocalWsDepthSubscription(ctx, sessionId, entityId, sub);
                         }
@@ -317,7 +317,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         };
     }
 
-    private PluginCallback<List<DsKvEntry>> getSubscriptionCallback(final PluginWebsocketSessionRef sessionRef, final DepthDatumSubscriptionCmd cmd, final String sessionId, final EntityId entityId, final Double startDs, final List<String> keys) {
+    private PluginCallback<List<DsKvEntry>> getSubscriptionCallback(final PluginWebsocketSessionRef sessionRef, final DepthSeriesSubscriptionCmd cmd, final String sessionId, final EntityId entityId, final Double startDs, final List<String> keys) {
         return new PluginCallback<List<DsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<DsKvEntry> data) {
@@ -326,7 +326,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 Map<String, Double> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startDs));
                 data.forEach(v -> subState.put(v.getKey(), v.getDs()));
-                SubscriptionState sub = new DepthSubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTH_DATUM, false, null, subState);
+                SubscriptionState sub = new DepthSubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTHSERIES, false, null, subState);
                 subscriptionManager.addLocalWsDepthSubscription(ctx, sessionId, entityId, sub);
             }
 

@@ -30,7 +30,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.depthDatum.DepthDatumService;
+import org.thingsboard.server.dao.depthSeries.DepthSeriesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
@@ -57,7 +57,7 @@ public final class SharedPluginProcessingContext {
     final CustomerService customerService;
     final TenantService tenantService;
     final TimeseriesService tsService;
-    final DepthDatumService dsService;
+    final DepthSeriesService dsService;
     final AttributesService attributesService;
     final ClusterRpcService rpcService;
     final ClusterRoutingService routingService;
