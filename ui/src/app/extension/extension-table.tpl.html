@@ -23,6 +23,19 @@
             <div class="md-toolbar-tools">
                 <span translate>{{ 'extension.extensions' }}</span>
                 <span flex></span>
+
+                <md-button class="md-icon-button" ng-click="vm.importExtensions($event)">
+                    <md-icon>file_upload</md-icon>
+                    <md-tooltip md-direction="top">
+                        {{ 'extension.sync.import-extensions-configuration' | translate }}
+                    </md-tooltip>
+                </md-button>
+                <md-button class="md-icon-button" ng-click="vm.exportExtensions()">
+                    <md-icon>file_download</md-icon>
+                    <md-tooltip md-direction="top">
+                        {{ 'extension.sync.export-extensions-configuration' | translate }}
+                    </md-tooltip>
+                </md-button>
                 <md-button class="md-icon-button" ng-click="vm.addExtension($event)">
                     <md-icon>add</md-icon>
                     <md-tooltip md-direction="top">
@@ -44,7 +57,7 @@
             </div>
         </md-toolbar>
         <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedExtensions.length
-                                                                 && vm.query.search != null"">
+                                                                 && vm.query.search != null">
             <div class="md-toolbar-tools">
                 <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}">
                     <md-icon aria-label="{{ 'action.search' | translate }}" class="material-icons">search</md-icon>
@@ -111,6 +124,12 @@
                     <td md-cell>{{ extension.id }}</td>
                     <td md-cell>{{ extension.type }}</td>
                     <td md-cell class="tb-action-cell">
+                        <md-button class="md-icon-button" aria-label="{{ 'action.edit' | translate }}" ng-click="vm.exportExtension($event, extension)">
+                            <md-icon aria-label="{{ 'action.edit' | translate }}" class="material-icons">file_download</md-icon>
+                            <md-tooltip md-direction="top">
+                                {{ 'extension.export-extension' | translate }}
+                            </md-tooltip>
+                        </md-button>
                         <md-button class="md-icon-button" aria-label="{{ 'action.edit' | translate }}" ng-click="vm.editExtension($event, extension)">
                             <md-icon aria-label="{{ 'action.edit' | translate }}" class="material-icons">edit</md-icon>
                             <md-tooltip md-direction="top">

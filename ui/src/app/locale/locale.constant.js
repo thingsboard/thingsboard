@@ -845,8 +845,16 @@ export default angular.module('thingsboard.locale', [])
                         "sync": "Sync",
                         "not-sync": "Not sync",
                         "last-sync-time": "Last sync time",
-                        "not-available": "Not available"
+                        "not-available": "Not available",
+                        "export-extensions-configuration":"Export extensions configuration",
+                        "import-extensions-configuration":"Import extensions configuration"
                     },
+
+                    "import-extensions": "Import extensions",
+                    "import-extension": "Import extension",
+                    "export-extension": "Export extension",
+                    "file": "Extensions file",
+                    "invalid-file-error": "Invalid extension file"
                 },
                 "fullscreen": {
                     "expand": "Expand to fullscreen",

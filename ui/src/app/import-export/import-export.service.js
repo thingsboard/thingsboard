@@ -24,8 +24,9 @@ import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 /* eslint-disable no-undef, angular/window-service, angular/document-service */
 
 /*@ngInject*/
-export default function ImportExport($log, $translate, $q, $mdDialog, $document, itembuffer, utils, types, dashboardUtils,
-                                     entityService, dashboardService, pluginService, ruleService, widgetService, toast) {
+export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types,
+                                     dashboardUtils, entityService, dashboardService, pluginService, ruleService,
+                                     widgetService, toast, attributeService) {
 
 
     var service = {
@@ -40,8 +41,11 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         exportWidgetType: exportWidgetType,
         importWidgetType: importWidgetType,
         exportWidgetsBundle: exportWidgetsBundle,
-        importWidgetsBundle: importWidgetsBundle
-    }
+        importWidgetsBundle: importWidgetsBundle,
+        exportExtension: exportExtension,
+        importExtension: importExtension,
+        exportToPc: exportToPc
+    };
 
     return service;
 
@@ -613,6 +617,89 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         }
         return true;
     }
+
+
+
+    function exportExtension(extensionId) {
+
+        getExtension(extensionId)
+            .then(
+                function success(extension) {
+                    var name = extension.title;
+                    name = name.toLowerCase().replace(/\W/g,"_");
+                    exportToPc(prepareExport(extension), name + '.json');
+                },
+                function fail(rejection) {
+                    var message = rejection;
+                    if (!message) {
+                        message = $translate.instant('error.unknown-error');
+                    }
+                    toast.showError($translate.instant('extension.export-failed-error', {error: message}));
+                }
+            );
+
+
+        function getExtension(extensionId) {
+            var deferred = $q.defer();
+            var url = '/api/plugins/telemetry/DEVICE/' + extensionId;
+            $http.get(url, null)
+                .then(function success(response) {
+                    deferred.resolve(response.data);
+                }, function fail() {
+                    deferred.reject();
+                });
+            return deferred.promise;
+        }
+
+    }
+
+    function importExtension(options) {
+        var deferred = $q.defer();
+        openImportDialog(options, 'extension.import-extensions', 'extension.file')
+            .then(
+                function success(extension) {
+                    if (!validateImportedExtension(extension)) {
+                        toast.showError($translate.instant('extension.invalid-file-error'));
+                        deferred.reject();
+                    } else {
+                        attributeService
+                            .saveEntityAttributes(
+                                options.entityType,
+                                options.entityId,
+                                types.attributesScope.shared.value,
+                                [{
+                                    key: "configuration",
+                                    value: angular.toJson(extension)
+                                }]
+                            )
+                            .then(function success() {
+                                options.successFunc();
+                            });
+
+                    }
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        return deferred.promise;
+    }
+
+
+    function validateImportedExtension(configuration) {
+        if (configuration.length) {
+            for (let i = 0; i < configuration.length; i++) {
+                if (angular.isUndefined(configuration[i].configuration) || angular.isUndefined(configuration[i].id )|| angular.isUndefined(configuration[i].type)) {
+                    return false;
+                }
+            }
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+
 
     function processEntityAliases(entityAliases, aliasIds) {
         var deferred = $q.defer();

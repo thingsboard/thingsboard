@@ -34,7 +34,8 @@ export default function ExtensionTableDirective() {
         scope: true,
         bindToController: {
             entityId: '=',
-            entityType: '@'
+            entityType: '@',
+            entityName: '='
         },
         controller: ExtensionTableController,
         controllerAs: 'vm',
@@ -43,7 +44,7 @@ export default function ExtensionTableDirective() {
 }
 
 /*@ngInject*/
-function ExtensionTableController($scope, $filter, $document, $translate, types, $mdDialog, attributeService, telemetryWebsocketService) {
+function ExtensionTableController($scope, $filter, $document, $translate, types, $mdDialog, attributeService, telemetryWebsocketService, importExport) {
 
     let vm = this;
 
@@ -328,4 +329,21 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
             return num;
         }
     }
+
+    vm.importExtensions = function () {
+        importExport.importExtension({"entityType":vm.entityType, "entityId":vm.entityId, "successFunc":reloadExtensions});
+    };
+    vm.exportExtensions = function () {
+        importExport.exportToPc(vm.extensionsJSON,  vm.entityName + '_configuration.json');
+    };
+
+    vm.exportExtension = function ($event, extension) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        importExport.exportToPc(extension,  vm.entityName +'_'+ extension.id +'_configuration.json');
+    };
+
+
+
 }

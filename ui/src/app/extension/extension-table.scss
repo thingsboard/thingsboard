@@ -16,9 +16,18 @@
 @import '../../scss/constants';
 
 
-.extension-table md-input-container .md-errors-spacer {
-  min-height: 0;
+.extension-table {
+
+  md-input-container .md-errors-spacer {
+    min-height: 0;
+  }
+
+  &.tb-data-table table.md-table tbody tr td.tb-action-cell,
+  &.tb-data-table table.md-table.md-row-select tbody tr td.tb-action-cell {
+    width: 114px;
+  }
 }
+
 
 .extension__syncStatus--black {
   color: #000000!important;
