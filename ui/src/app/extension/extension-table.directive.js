@@ -36,7 +36,8 @@ export default function ExtensionTableDirective() {
             entityId: '=',
             entityType: '@',
             inWidget: '@?',
-            ctx: '=?'
+            ctx: '=?',
+            entityName: '='
         },
         controller: ExtensionTableController,
         controllerAs: 'vm',
@@ -45,7 +46,7 @@ export default function ExtensionTableDirective() {
 }
 
 /*@ngInject*/
-function ExtensionTableController($scope, $filter, $document, $translate, types, $mdDialog, attributeService, telemetryWebsocketService) {
+function ExtensionTableController($scope, $filter, $document, $translate, types, $mdDialog, attributeService, telemetryWebsocketService, importExport) {
 
     let vm = this;
 
@@ -120,6 +121,16 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
     $scope.$on("addExtension", function($event, source) {
         if(source.entityId == vm.entityId) {
             addExtension();
+        }
+    });
+    $scope.$on("exportExtensions", function($event, source) {
+        if(source.entityId == vm.entityId) {
+            vm.exportExtensions(source.entityName);
+        }
+    });
+    $scope.$on("importExtensions", function($event, source) {
+        if(source.entityId == vm.entityId) {
+            vm.importExtensions();
         }
     });
 
@@ -364,4 +375,23 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
             return num;
         }
     }
+
+    vm.importExtensions = function($event) {
+        importExport.importExtension($event, {"entityType":vm.entityType, "entityId":vm.entityId, "successFunc":reloadExtensions});
+    };
+    vm.exportExtensions = function(widgetSourceEntityName) {
+        if(vm.inWidget) {
+            importExport.exportToPc(vm.extensionsJSON,  widgetSourceEntityName + '_configuration.json');
+        } else {
+            importExport.exportToPc(vm.extensionsJSON,  vm.entityName + '_configuration.json');
+        }
+    };
+
+    /*change function for widget implementing, like vm.exportExtensions*/
+    vm.exportExtension = function($event, extension) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        importExport.exportToPc(extension,  vm.entityName +'_'+ extension.id +'_configuration.json');
+    };
 }

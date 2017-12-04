@@ -66,7 +66,7 @@ function ExtensionsTableWidgetController($scope, $translate, utils) {
         }
         vm.ctx.widgetTitle = vm.extensionsTitle;
 
-        vm.ctx.widgetActions = [vm.addAction, vm.searchAction, vm.refreshAction];
+        vm.ctx.widgetActions = [vm.importExtensionsAction, vm.exportExtensionsAction, vm.addAction, vm.searchAction, vm.refreshAction];
     }
 
     function updateDatasources() {
@@ -78,7 +78,7 @@ function ExtensionsTableWidgetController($scope, $translate, utils) {
 
     vm.changeSelectedSource = function(source) {
         vm.selectedSource = source;
-    }
+    };
 
     vm.searchAction = {
         name: "action.search",
@@ -96,7 +96,7 @@ function ExtensionsTableWidgetController($scope, $translate, utils) {
             $scope.$broadcast("refreshExtensions", vm.selectedSource);
         },
         icon: "refresh"
-    }
+    };
 
     vm.addAction = {
         name: "action.add",
@@ -105,7 +105,25 @@ function ExtensionsTableWidgetController($scope, $translate, utils) {
             $scope.$broadcast("addExtension", vm.selectedSource);
         },
         icon: "add"
-    }
+    };
+
+    vm.exportExtensionsAction = {
+        name: "extension.export-extensions-configuration",
+        show: true,
+        onAction: function() {
+            $scope.$broadcast("exportExtensions", vm.selectedSource);
+        },
+        icon: "file_download"
+    };
+
+    vm.importExtensionsAction = {
+        name: "extension.import-extensions-configuration",
+        show: true,
+        onAction: function() {
+            $scope.$broadcast("importExtensions", vm.selectedSource);
+        },
+        icon: "file_upload"
+    };
 
     $scope.$on("filterMode", function($event, mode) {
         vm.tabsHidden = mode;

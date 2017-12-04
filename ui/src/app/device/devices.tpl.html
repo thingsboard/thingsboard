@@ -70,6 +70,7 @@
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.grid.operatingItem().additionalInfo.gateway" md-on-select="vm.grid.triggerResize()" label="{{ 'extension.extensions' | translate }}">
             <tb-extension-table flex
                                 entity-id="vm.grid.operatingItem().id.id"
+                                entity-name="vm.grid.operatingItem().name"
                                 entity-type="{{vm.types.entityType.device}}">
             </tb-extension-table>
         </md-tab>
