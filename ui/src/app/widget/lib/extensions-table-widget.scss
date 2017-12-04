@@ -13,31 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../scss/constants';
 
-
-.extension-table md-input-container .md-errors-spacer {
-  min-height: 0;
-}
-
-.extension-table {
-  .sync-widget {
-    max-height: 90px;
-    overflow: hidden;
-  }
-  .toolbar-widget {
-    min-height: 39px;
-    max-height: 39px;
+tb-extension-table {
+  md-content {
+    background-color: #fff;
   }
 }
-
-
-.extension__syncStatus--black {
-  color: #000000!important;
-}
-.extension__syncStatus--green {
-  color: #228634!important;
-}
-.extension__syncStatus--red {
-  color: #862222!important;
+md-tabs.hide-tabs-menu {
+  md-tabs-wrapper {
+    display: none;
+  }
+  md-tabs-content-wrapper {
+    top: 0 !important;
+  }
 }

@@ -17,9 +17,9 @@
 -->
 
 <md-content flex class="md-padding tb-absolute-fill tb-data-table extension-table" layout="column">
-    <div layout="column" class="md-whiteframe-z1">
-        <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedExtensions.length
-                                                                 && vm.query.search === null">
+    <div layout="column" class="md-whiteframe-z1" ng-class="{'tb-absolute-fill' : vm.inWidget}">
+        <md-toolbar ng-if="!vm.inWidget" class="md-table-toolbar md-default" ng-show="!vm.selectedExtensions.length
+                                                                                      && vm.query.search === null">
             <div class="md-toolbar-tools">
                 <span translate>{{ 'extension.extensions' }}</span>
                 <span flex></span>
@@ -44,7 +44,7 @@
             </div>
         </md-toolbar>
         <md-toolbar class="md-table-toolbar md-default" ng-show="!vm.selectedExtensions.length
-                                                                 && vm.query.search != null"">
+                                                                 && vm.query.search != null" ng-class="{'toolbar-widget' : vm.inWidget}">
             <div class="md-toolbar-tools">
                 <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}">
                     <md-icon aria-label="{{ 'action.search' | translate }}" class="material-icons">search</md-icon>
@@ -58,13 +58,13 @@
                 </md-input-container>
                 <md-button class="md-icon-button" aria-label="{{ 'action.back' | translate }}" ng-click="vm.exitFilterMode()">
                     <md-icon aria-label="{{ 'action.close' | translate }}" class="material-icons">close</md-icon>
-                    <md-tooltip md-direction="top">
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
                         {{ 'action.close' | translate }}
                     </md-tooltip>
                 </md-button>
             </div>
         </md-toolbar>
-        <md-toolbar class="md-table-toolbar alternate" ng-show="vm.selectedExtensions.length">
+        <md-toolbar class="md-table-toolbar alternate" ng-show="vm.selectedExtensions.length" ng-class="{'toolbar-widget' : vm.inWidget}">
             <div class="md-toolbar-tools">
                 <span translate
                       translate-values="{count: vm.selectedExtensions.length}"
@@ -72,14 +72,14 @@
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="vm.deleteExtensions($event)">
                     <md-icon>delete</md-icon>
-                    <md-tooltip md-direction="top">
+                    <md-tooltip md-direction="{{vm.ctx.dashboard.isWidgetExpanded ? 'bottom' : 'top'}}">
                         {{ 'action.delete' | translate }}
                     </md-tooltip>
                 </md-button>
             </div>
         </md-toolbar>
 
-        <div class="md-padding" flex layout="row">
+        <div class="md-padding" flex layout="row" ng-class="{'sync-widget' : vm.inWidget}">
             <md-input-container flex="50" class="md-block">
                 <label translate>extension.sync.status</label>
                 <input ng-model="vm.syncStatus"
@@ -97,7 +97,7 @@
             </md-input-container>
         </div>
 
-        <md-table-container>
+        <md-table-container flex>
             <table md-table md-row-select multiple="" ng-model="vm.selectedExtensions" md-progress="vm.extensionsDeferred.promise">
                 <thead md-head md-order="vm.query.order" md-on-reorder="vm.onReorder">
                     <tr md-row>
@@ -117,7 +117,7 @@
                                 {{ 'extension.edit' | translate }}
                             </md-tooltip>
                         </md-button>
-                        <md-button class="md-icon-button" aria-label="{{ 'action.delete' | translate }}" ng-click="vm.deleteExtension($event, extension)"> <!-- add click-function -->
+                        <md-button class="md-icon-button" aria-label="{{ 'action.delete' | translate }}" ng-click="vm.deleteExtension($event, extension)">
                             <md-icon aria-label="{{ 'action.delete' | translate }}" class="material-icons">delete</md-icon>
                             <md-tooltip md-direction="top">
                                 {{ 'extension.delete' | translate }}
@@ -127,11 +127,12 @@
                 </tr>
                 </tbody>
             </table>
+            <md-divider ng-if="vm.inWidget"></md-divider>
         </md-table-container>
         <md-table-pagination md-limit="vm.query.limit" md-limit-options="[5, 10, 15]"
                              md-page="vm.query.page" md-total="{{vm.extensionsCount}}"
                              md-on-paginate="vm.onPaginate" md-page-select>
         </md-table-pagination>
     </div>
-    <div></div> <!-- div for testing values -->
+
 </md-content>

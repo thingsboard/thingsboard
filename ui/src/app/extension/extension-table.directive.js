@@ -34,7 +34,9 @@ export default function ExtensionTableDirective() {
         scope: true,
         bindToController: {
             entityId: '=',
-            entityType: '@'
+            entityType: '@',
+            inWidget: '@?',
+            ctx: '=?'
         },
         controller: ExtensionTableController,
         controllerAs: 'vm',
@@ -70,7 +72,6 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
     vm.reloadExtensions = reloadExtensions;
     vm.updateExtensions = updateExtensions;
 
-
     $scope.$watch("vm.entityId", function(newVal) {
         if (newVal) {
             if ($scope.subscriber) {
@@ -92,13 +93,50 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
         }
     });
 
+    $scope.$watch('vm.selectedExtensions.length', function (newLength) {
+        var selectionMode = newLength ? true : false;
+        if (vm.ctx) {
+            if (selectionMode) {
+                vm.ctx.hideTitlePanel = true;
+                $scope.$emit("selectedExtensions", true);
+            } else if (vm.query.search == null) {
+                vm.ctx.hideTitlePanel = false;
+                $scope.$emit("selectedExtensions", false);
+            }
+        }
+    });
+
+    $scope.$on("showSearch", function($event, source) {
+        if(source.entityId == vm.entityId) {
+            enterFilterMode();
+            $scope.$emit("filterMode", true);
+        }
+    });
+    $scope.$on("refreshExtensions", function($event, source) {
+        if(source.entityId == vm.entityId) {
+            reloadExtensions();
+        }
+    });
+    $scope.$on("addExtension", function($event, source) {
+        if(source.entityId == vm.entityId) {
+            addExtension();
+        }
+    });
+
     function enterFilterMode() {
         vm.query.search = '';
+        if(vm.inWidget) {
+            vm.ctx.hideTitlePanel = true;
+        }
     }
 
     function exitFilterMode() {
         vm.query.search = null;
         updateExtensions();
+        if(vm.inWidget) {
+            vm.ctx.hideTitlePanel = false;
+            $scope.$emit("filterMode", false);
+        }
     }
 
     function onReorder() {
@@ -256,8 +294,7 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
         vm.extensions = result.slice(startIndex, startIndex + vm.query.limit);
 
         vm.extensionsJSON = angular.toJson(vm.extensions);
-        checkForSync()
-
+        checkForSync();
     }
 
     function subscribeForClientAttributes() {
@@ -319,7 +356,6 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
 
         d = d.getFullYear() +'/'+ addZero(d.getMonth()+1) +'/'+ addZero(d.getDate()) + ' ' + addZero(d.getHours()) + ':' + addZero(d.getMinutes()) +':'+ addZero(d.getSeconds());
         return d;
-
 
         function addZero(num) {
             if ((angular.isNumber(num) && num < 10) || (angular.isString(num) && num.length === 1)) {
