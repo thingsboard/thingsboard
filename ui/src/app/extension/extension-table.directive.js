@@ -77,6 +77,7 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
         if (newVal) {
             if ($scope.subscriber) {
                 telemetryWebsocketService.unsubscribe($scope.subscriber);
+                $scope.subscriber = null;
             }
 
             vm.subscribed = false;
@@ -85,6 +86,13 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
             subscribeForClientAttributes();
 
             reloadExtensions();
+        }
+    });
+
+    $scope.$on('$destroy', function() {
+        if ($scope.subscriber) {
+            telemetryWebsocketService.unsubscribe($scope.subscriber);
+            $scope.subscriber = null;
         }
     });
 
@@ -325,9 +333,8 @@ function ExtensionTableController($scope, $filter, $document, $translate, types,
                         vm.subscribed = true;
                     }
                 };
+                telemetryWebsocketService.subscribe($scope.subscriber);
             }
-            telemetryWebsocketService.subscribe($scope.subscriber);
-
         }
     }
     function onSubscriptionData(data) {
