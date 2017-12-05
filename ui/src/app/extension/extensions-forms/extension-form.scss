@@ -33,6 +33,9 @@
   .dropdown-section {
     margin-bottom: 30px;
   }
+  v-pane.inner-invalid > v-pane-header {
+    border-bottom: 2px solid rgb(221,44,0);
+  }
 }
 
 .extension-form.extension-mqtt {

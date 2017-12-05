@@ -148,6 +148,18 @@ export default function ExtensionFormOpcDirective($compile, $templateCache, $tra
 
         };
 
+        scope.collapseValidation = function(index, id) {
+            var invalidState = angular.element('#'+id+':has(.ng-invalid)');
+            if(invalidState.length) {
+                invalidState.addClass('inner-invalid');
+            }
+        };
+
+        scope.expandValidation = function (index, id) {
+            var invalidState = angular.element('#'+id);
+            invalidState.removeClass('inner-invalid');
+        };
+
     };
 
     return {

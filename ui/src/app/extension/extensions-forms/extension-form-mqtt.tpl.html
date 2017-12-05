@@ -22,7 +22,7 @@
         </md-card-title-text>
     </md-card-title>
     <md-card-content>
-        <v-accordion id="mqtt-brokers-accordion" class="vAccordion--default">
+        <v-accordion id="mqtt-brokers-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
             <v-pane id="mqtt-brokers-pane" expanded="true">
                 <v-pane-header>
                     {{ 'extension.brokers' | translate }}
@@ -161,8 +161,8 @@
                                             </div>
                                         </section>
 
-                                        <v-accordion id="mqtt-mapping-accordion" class="vAccordion--default">
-                                            <v-pane id="mqtt-mapping-pane">
+                                        <v-accordion id="mqtt-mapping-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                            <v-pane id="mqtt-mapping-pane_{{brokerIndex}}">
                                                 <v-pane-header>
                                                     {{ 'extension.mapping' | translate }}
                                                 </v-pane-header>
@@ -286,8 +286,8 @@
                                                                             </div>
                                                                         </div>
 
-                                                                        <v-accordion ng-if='map.converterType =="json"' id="mqtt-attributes-accordion" class="vAccordion--default">
-                                                                            <v-pane id="mqtt-attributes-pane">
+                                                                        <v-accordion ng-if='map.converterType =="json"' id="mqtt-attributes-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                                                            <v-pane id="mqtt-attributes-pane_{{brokerIndex}}{{mapIndex}}">
                                                                                 <v-pane-header>
                                                                                     {{ 'extension.attributes' | translate }}
                                                                                 </v-pane-header>
@@ -346,8 +346,8 @@
                                                                             </v-pane>
                                                                         </v-accordion>
 
-                                                                        <v-accordion ng-if='map.converterType =="json"' id="mqtt-timeseries-accordion" class="vAccordion--default">
-                                                                            <v-pane id="mqtt-timeseries-pane">
+                                                                        <v-accordion ng-if='map.converterType =="json"' id="mqtt-timeseries-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                                                            <v-pane id="mqtt-timeseries-pane_{{brokerIndex}}{{mapIndex}}">
                                                                                 <v-pane-header>
                                                                                     {{ 'extension.timeseries' | translate }}
                                                                                 </v-pane-header>
@@ -422,8 +422,8 @@
                                             </v-pane>
                                         </v-accordion>
 
-                                        <v-accordion id="mqtt-connect-requests-accordion" class="vAccordion--default">
-                                            <v-pane id="mqtt-connect-requests-pane">
+                                        <v-accordion id="mqtt-connect-requests-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                            <v-pane id="mqtt-connect-requests-pane_{{brokerIndex}}">
                                                 <v-pane-header>
                                                     {{ 'extension.connect-requests' | translate }}
                                                 </v-pane-header>
@@ -489,8 +489,8 @@
                                             </v-pane>
                                         </v-accordion>
 
-                                        <v-accordion id="mqtt-disconnect-requests-accordion" class="vAccordion--default">
-                                            <v-pane id="mqtt-disconnect-requests-pane">
+                                        <v-accordion id="mqtt-disconnect-requests-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                            <v-pane id="mqtt-disconnect-requests-pane_{{brokerIndex}}">
                                                 <v-pane-header>
                                                     {{ 'extension.disconnect-requests' | translate }}
                                                 </v-pane-header>
@@ -556,8 +556,8 @@
                                             </v-pane>
                                         </v-accordion>
 
-                                        <v-accordion id="mqtt-attribute-requests-accordion" class="vAccordion--default">
-                                            <v-pane id="mqtt-attribute-requests-pane">
+                                        <v-accordion id="mqtt-attribute-requests-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                            <v-pane id="mqtt-attribute-requests-pane_{{brokerIndex}}">
                                                 <v-pane-header>
                                                     {{ 'extension.attribute-requests' | translate }}
                                                 </v-pane-header>
@@ -701,8 +701,8 @@
                                             </v-pane>
                                         </v-accordion>
 
-                                        <v-accordion id="mqtt-attribute-updates-accordion" class="vAccordion--default">
-                                            <v-pane id="mqtt-attribute-updates-pane">
+                                        <v-accordion id="mqtt-attribute-updates-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                            <v-pane id="mqtt-attribute-updates-pane_{{brokerIndex}}">
                                                 <v-pane-header>
                                                     {{ 'extension.attribute-updates' | translate }}
                                                 </v-pane-header>
@@ -764,8 +764,8 @@
                                             </v-pane>
                                         </v-accordion>
 
-                                        <v-accordion id="mqtt-server-side-rpc-accordion" class="vAccordion--default">
-                                            <v-pane id="mqtt-server-side-rpc-pane">
+                                        <v-accordion id="mqtt-server-side-rpc-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                            <v-pane id="mqtt-server-side-rpc-pane_{{brokerIndex}}">
                                                 <v-pane-header>
                                                     {{ 'extension.server-side-rpc' | translate }}
                                                 </v-pane-header>

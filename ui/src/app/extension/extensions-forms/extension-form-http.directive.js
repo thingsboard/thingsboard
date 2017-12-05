@@ -120,6 +120,18 @@ export default function ExtensionFormHttpDirective($compile, $templateCache, $tr
                 }
             }
         };
+
+        scope.collapseValidation = function(index, id) {
+            var invalidState = angular.element('#'+id+':has(.ng-invalid)');
+            if(invalidState.length) {
+                invalidState.addClass('inner-invalid');
+            }
+        };
+
+        scope.expandValidation = function (index, id) {
+            var invalidState = angular.element('#'+id);
+            invalidState.removeClass('inner-invalid');
+        };
         
         $compile(element.contents())(scope);
     };

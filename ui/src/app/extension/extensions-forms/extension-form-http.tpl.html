@@ -22,7 +22,7 @@
         </md-card-title-text>
     </md-card-title>
     <md-card-content>
-        <v-accordion id="http-converter-configs-accordion" class="vAccordion--default">
+        <v-accordion id="http-converter-configs-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
             <v-pane id="http-converters-pane" expanded="true">
                 <v-pane-header>
                     {{ 'extension.converter-configurations' | translate }}
@@ -55,8 +55,8 @@
                                             <label translate>extension.token</label>
                                             <input name="httpToken" ng-model="config.token" parse-to-null>
                                         </md-input-container>
-                                        <v-accordion id="http-converters-accordion" class="vAccordion--default">
-                                            <v-pane id="http-converters-pane" expanded="true">
+                                        <v-accordion id="http-converters-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                            <v-pane id="http-converters-pane_{{configIndex}}" expanded="true">
                                                 <v-pane-header>
                                                     {{ 'extension.converters' | translate }}
                                                 </v-pane-header>
@@ -93,8 +93,8 @@
                                                                             </div>
                                                                         </md-input-container>
 
-                                                                        <v-accordion id="http-attributes-accordion" class="vAccordion--default">
-                                                                            <v-pane id="http-attributes-pane">
+                                                                        <v-accordion id="http-attributes-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                                                            <v-pane id="http-attributes-pane_{{configIndex}}{{converterIndex}}">
                                                                                 <v-pane-header>
                                                                                     {{ 'extension.attributes' | translate }}
                                                                                 </v-pane-header>
@@ -185,8 +185,8 @@
                                                                         </v-accordion>
 
 
-                                                                        <v-accordion id="http-timeseries-accordion" class="vAccordion--default">
-                                                                            <v-pane id="http-timeseries-pane">
+                                                                        <v-accordion id="http-timeseries-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                                                            <v-pane id="http-timeseries-pane_{{configIndex}}{{converterIndex}}">
                                                                                 <v-pane-header>
                                                                                     {{ 'extension.timeseries' | translate }}
                                                                                 </v-pane-header>
