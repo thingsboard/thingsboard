@@ -386,7 +386,7 @@
                                                                                                                 <div ng-messages="theForm['opcAttributeType_' + serverIndex + mapIndex + attributeIndex].$error">
                                                                                                                     <div translate
                                                                                                                          ng-message="required"
-                                                                                                                    >extension.required-type</div>
+                                                                                                                    >extension.field-required</div>
                                                                                                                 </div>
                                                                                                             </md-input-container>
                                                                                                         </section>
@@ -418,7 +418,7 @@
                                                                                                    aria-label="{{ 'action.add' | translate }}"
                                                                                         >
                                                                                             <md-icon class="material-icons">add</md-icon>
-                                                                                            <span translate>add-attribute</span>
+                                                                                            <span translate>extension.add-attribute</span>
                                                                                         </md-button>
                                                                                     </div>
                                                                                 </v-pane-content>
@@ -486,7 +486,7 @@
                                                                                                                 <label translate>extension.value</label>
                                                                                                                 <input required name="opcTimeseriesValue_{{serverIndex}}{{mapIndex}}{{timeseriesIndex}}" ng-model="timeseries.value">
                                                                                                                 <div ng-messages="theForm['opcTimeseriesValue_' + serverIndex + mapIndex + timeseriesIndex].$error">
-                                                                                                                    <div translate ng-message="required">extension.required-value</div>
+                                                                                                                    <div translate ng-message="required">extension.field-required</div>
                                                                                                                 </div>
                                                                                                             </md-input-container>
                                                                                                         </section>
