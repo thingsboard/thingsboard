@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.contains;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 import static org.thingsboard.server.dao.model.ModelConstants.*;
@@ -44,6 +45,16 @@ public class CassandraApplicationDao extends CassandraAbstractSearchTextDao<Appl
     public Application save(Application application){
         Application savedApplication = super.save(application);
         return savedApplication;
+    }
+
+    @Override
+    public List<Application> findApplicationByDeviceType(UUID tenantId, String deviceType){
+        log.debug("Trying to find applications by device type for tenantId [{}] and device type [{}]", tenantId, deviceType);
+        Select select = select().from(APPLICATION_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME).allowFiltering();
+        Select.Where query = select.where();
+        query.and(eq(APPLICATION_TENANT_ID_PROPERTY, tenantId));
+        query.and(contains(APPLICATION_DEVICE_TYPES_COLUMN, deviceType));
+        return DaoUtil.convertDataList(findListByStatement(query));
     }
 
 

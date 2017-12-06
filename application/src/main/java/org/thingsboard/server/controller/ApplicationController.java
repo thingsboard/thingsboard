@@ -95,6 +95,19 @@ public class ApplicationController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/applications/{deviceType}", method = RequestMethod.GET)
+    @ResponseBody
+    public List<Application> getDeviceTypeApplications(@PathVariable("deviceType") String deviceType)  throws ThingsboardException {
+        checkParameter("deviceType", deviceType);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(applicationService.findApplicationsByDeviceType(tenantId, deviceType));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/application/{applicationId}", method = RequestMethod.POST)

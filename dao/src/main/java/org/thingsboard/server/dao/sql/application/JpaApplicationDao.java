@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.application;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
@@ -37,6 +38,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 @Component
 @SqlDao
+@Slf4j
 public class JpaApplicationDao extends JpaAbstractSearchTextDao<ApplicationEntity, Application> implements ApplicationDao {
 
     @Autowired
@@ -68,5 +70,10 @@ public class JpaApplicationDao extends JpaAbstractSearchTextDao<ApplicationEntit
     public Optional<Application> findApplicationByTenantIdAndName(UUID tenantId, String name) {
         Application application = DaoUtil.getData(applicationRepository.findByTenantIdAndName(fromTimeUUID(tenantId), name));
         return Optional.ofNullable(application);
+    }
+
+    @Override
+    public List<Application> findApplicationByDeviceType(UUID tenantId, String deviceType) {
+        return DaoUtil.convertDataList(applicationRepository.findByDeviceType(fromTimeUUID(tenantId), deviceType));
     }
 }

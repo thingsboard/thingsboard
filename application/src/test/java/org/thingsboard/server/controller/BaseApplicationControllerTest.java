@@ -261,6 +261,31 @@ public class BaseApplicationControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetDeviceTypeApplications() throws Exception {
+        Application application1 = new Application();
+        application1.setName("application1");
+        application1.setDeviceTypes(Arrays.asList("DT1", "DT2"));
+        doPost("/api/application", application1, Application.class);
+
+        Application application2 = new Application();
+        application2.setName("application2");
+        application2.setDeviceTypes(Arrays.asList("DT2", "DT3"));
+        doPost("/api/application", application2, Application.class);
+
+        Application application3 = new Application();
+        application3.setName("application3");
+        application3.setDeviceTypes(Arrays.asList("DT3", "DT4"));
+        doPost("/api/application", application3, Application.class);
+
+        List<Application> foundApplications = doGetTyped("/api/applications/DT2" , new TypeReference<List<Application>>(){});
+
+        Assert.assertEquals(2, foundApplications.size());
+        Assert.assertTrue(foundApplications.get(0).getDeviceTypes().contains("DT2"));
+        Assert.assertTrue(foundApplications.get(1).getDeviceTypes().contains("DT2"));
+
+    }
+
+    @Test
     public void testFindTenantApplicationsByName() throws Exception {
         String title1 = "Application title 1";
         List<Application> applicationsTitle1 = new ArrayList<>();
