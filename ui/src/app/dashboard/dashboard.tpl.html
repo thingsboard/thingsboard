@@ -221,6 +221,17 @@
                                 on-widget-clicked="vm.addWidgetFromType(event, widget)">
                         </tb-dashboard>
                     </md-tab>
+                    <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.depthseries' | translate }}">
+                        <tb-dashboard
+                                alias-controller="vm.dashboardCtx.aliasController"
+                                widgets="vm.timeseriesWidgetTypes"
+                                is-edit="false"
+                                is-mobile="true"
+                                is-edit-action-enabled="false"
+                                is-remove-action-enabled="false"
+                                on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                        </tb-dashboard>
+                    </md-tab>
                     <md-tab ng-if="vm.latestWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.latest-values' | translate }}">
                         <tb-dashboard
                                 alias-controller="vm.dashboardCtx.aliasController"

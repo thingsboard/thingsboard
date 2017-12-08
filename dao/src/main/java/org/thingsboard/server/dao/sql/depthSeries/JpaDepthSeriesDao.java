@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -196,15 +197,12 @@ public class JpaDepthSeriesDao extends JpaAbstractDaoListeningExecutorService im
 
     @Override
     public ListenableFuture<DsKvEntry> findLatest(EntityId entityId, String key) {
-        DsKvLatestCompositeKey compositeKey =
-                new DsKvLatestCompositeKey(
-                        entityId.getEntityType(),
-                        fromTimeUUID(entityId.getId()),
-                        key);
-        DsKvLatestEntity entry = dsKvLatestRepository.findOne(compositeKey);
+        List<DsKvLatestEntity> entries = dsKvLatestRepository.findAllByEntityTypeAndEntityIdAndKey(
+                entityId.getEntityType(),
+                UUIDConverter.fromTimeUUID(entityId.getId()),key);
         DsKvEntry result;
-        if (entry != null) {
-            result = DaoUtil.getData(entry);
+        if (entries.get(0) != null) {
+            result = DaoUtil.getData(entries.get(0));
         } else {
             result = new BasicDsKvEntry(0.0, new StringDataEntry(key, null));
         }

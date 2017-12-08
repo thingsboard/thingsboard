@@ -62,6 +62,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             TelemetryPluginCmdsWrapper cmdsWrapper = null;
             if (wsMsg instanceof TextPluginWebSocketMsg) {
                 TextPluginWebSocketMsg textMsg = (TextPluginWebSocketMsg) wsMsg;
+                log.debug("TextPluginWebSocketMsg txtMsg.payload " + textMsg.getPayload() + " and msg " + textMsg);
                 cmdsWrapper = jsonMapper.readValue(textMsg.getPayload(), TelemetryPluginCmdsWrapper.class);
             } else if (wsMsg instanceof BinaryPluginWebSocketMsg) {
                 throw new IllegalStateException("Not Implemented!");
@@ -73,14 +74,19 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     cmdsWrapper.getAttrSubCmds().forEach(cmd -> handleWsAttributesSubscriptionCmd(ctx, sessionRef, cmd));
                 }
                 if (cmdsWrapper.getTsSubCmds() != null) {
+                    log.debug("TsSubCmds " + cmdsWrapper.getTsSubCmds());
                     cmdsWrapper.getTsSubCmds().forEach(cmd -> handleWsTimeseriesSubscriptionCmd(ctx, sessionRef, cmd));
                 }
                 if (cmdsWrapper.getDsSubCmds() != null) {
                     cmdsWrapper.getDsSubCmds().forEach(cmd -> handleWsDepthSeriesSubscriptionCmd(ctx, sessionRef, cmd));
-                    log.error("HMDC DsSubCmds " + cmdsWrapper.getAttrSubCmds());
+                    log.debug("DsSubCmds " + cmdsWrapper.getDsSubCmds());
                 }
                 if (cmdsWrapper.getHistoryCmds() != null) {
                     cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(ctx, sessionRef, cmd));
+                }
+                if (cmdsWrapper.getDepthHistoryCmds() != null) {
+                    cmdsWrapper.getDepthHistoryCmds().forEach(cmd -> handleWsDepthHistoryCmd(ctx, sessionRef, cmd));
+                    log.debug("DepthHistorySubCmds " + cmdsWrapper.getDepthHistoryCmds());
                 }
             }
         } catch (IOException e) {
@@ -245,11 +251,11 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 Optional<Set<String>> keysOptional = getKeys(cmd);
 
                 if (keysOptional.isPresent()) {
+                    log.debug(" optional present");
                     Double startDs;
                     if (cmd.getDepthWindow() > 0) {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
-                        log.debug("[{}] fetching depth series data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
-                        log.error("[{}] fetching depth series data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
+                        log.debug("[{}] fetching depthseries data for last {}  for keys: ({}) for device : {}", sessionId, cmd.getDepthWindow(), cmd.getKeys(), entityId);
                         startDs = cmd.getStartDs();
                         Double endDs = cmd.getStartDs() + cmd.getDepthWindow();
                         List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, startDs, endDs, cmd.getInterval(), getLimit(cmd.getLimit()), getDepthAggregation(cmd.getAgg()))).collect(Collectors.toList());
@@ -257,16 +263,15 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     } else {
                         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
                         startDs = 0.0;
-                        log.debug("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
-                        log.error("[{}] fetching latest timeseries data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
+                        log.debug("[{}] fetching latest depth series data for keys: ({}) for device : {}", sessionId, cmd.getKeys(), entityId);
                         ctx.loadLatestDepthSeries(entityId, keys, getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startDs, keys));
                     }
                 } else {
-                    log.error("HMDC inside load latest Depth Series ");
+                    log.debug("inside load latest Depth Series ");
                     ctx.loadLatestDepthSeries(entityId, new PluginCallback<List<DsKvEntry>>() {
                         @Override
                         public void onSuccess(PluginContext ctx, List<DsKvEntry> data) {
-                            log.error("HMDC load latest sucess  ");
+                            log.debug("load latest success  " + data);
                             sendWsMsg(ctx, sessionRef, new DepthSubscriptionUpdate(cmd.getCmdId(), data));
                             Map<String, Double> subState = new HashMap<>(data.size());
                             data.forEach(v -> subState.put(v.getKey(), v.getDs()));
@@ -277,13 +282,13 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
 
                         @Override
                         public void onFailure(PluginContext ctx, Exception e) {
-                            SubscriptionUpdate update;
-                            log.error("HMDC load latest failure ");
+                            DepthSubscriptionUpdate update;
+                            log.debug("HMDC load latest failure ");
                             if (UnauthorizedException.class.isInstance(e)) {
-                                update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                                update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
                                         SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
                             } else {
-                                update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                                update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
                                         "Failed to fetch data!");
                             }
                             sendWsMsg(ctx, sessionRef, update);
@@ -298,6 +303,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         return new PluginCallback<List<TsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<TsKvEntry> data) {
+                log.debug("on ts subscription success : data " + data);
                 sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
 
                 Map<String, Long> subState = new HashMap<>(keys.size());
@@ -321,7 +327,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         return new PluginCallback<List<DsKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<DsKvEntry> data) {
-                sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
+                log.debug("on success getSubscriptionCallback " + data );
+                sendWsMsg(ctx, sessionRef, new DepthSubscriptionUpdate(cmd.getCmdId(), data));
 
                 Map<String, Double> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startDs));
@@ -333,7 +340,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             @Override
             public void onFailure(PluginContext ctx, Exception e) {
                 log.error("Failed to fetch data!", e);
-                SubscriptionUpdate update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                DepthSubscriptionUpdate update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
                         "Failed to fetch data!");
                 sendWsMsg(ctx, sessionRef, update);
             }
@@ -380,6 +387,54 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                             SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
                 } else {
                     update = new SubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                            "Failed to fetch data!");
+                }
+                sendWsMsg(ctx, sessionRef, update);
+            }
+        });
+    }
+
+    private void handleWsDepthHistoryCmd(PluginContext ctx, PluginWebsocketSessionRef sessionRef, GetDepthHistoryCmd cmd) {
+        String sessionId = sessionRef.getSessionId();
+        WsSessionMetaData sessionMD = wsSessionsMap.get(sessionId);
+        if (sessionMD == null) {
+            log.warn("[{}] Session meta data not found. ", sessionId);
+            DepthSubscriptionUpdate update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
+                    "Session meta-data not found!");
+            sendWsMsg(ctx, sessionRef, update);
+            return;
+        }
+        if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty() || cmd.getEntityType() == null || cmd.getEntityType().isEmpty()) {
+            DepthSubscriptionUpdate update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Device id is empty!");
+            sendWsMsg(ctx, sessionRef, update);
+            return;
+        }
+        if (cmd.getKeys() == null || cmd.getKeys().isEmpty()) {
+            DepthSubscriptionUpdate update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.BAD_REQUEST,
+                    "Keys are empty!");
+            sendWsMsg(ctx, sessionRef, update);
+            return;
+        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
+        List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
+        List<DsKvQuery> queries = keys.stream().map(key -> new BaseDsKvQuery(key, cmd.getStartDs(), cmd.getEndDs(), cmd.getInterval(), getLimit(cmd.getLimit()), getDepthAggregation(cmd.getAgg())))
+                .collect(Collectors.toList());
+        ctx.loadDepthSeries(entityId, queries, new PluginCallback<List<DsKvEntry>>() {
+            @Override
+            public void onSuccess(PluginContext ctx, List<DsKvEntry> data) {
+                log.debug("HMDC depthHistory success." + data);
+                sendWsMsg(ctx, sessionRef, new DepthSubscriptionUpdate(cmd.getCmdId(), data));
+            }
+
+            @Override
+            public void onFailure(PluginContext ctx, Exception e) {
+                DepthSubscriptionUpdate update;
+                if (UnauthorizedException.class.isInstance(e)) {
+                    update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.UNAUTHORIZED,
+                            SubscriptionErrorCode.UNAUTHORIZED.getDefaultMsg());
+                } else {
+                    update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
                             "Failed to fetch data!");
                 }
                 sendWsMsg(ctx, sessionRef, update);
@@ -446,6 +501,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         TextPluginWebSocketMsg reply;
         try {
             reply = new TextPluginWebSocketMsg(sessionRef, jsonMapper.writeValueAsString(update));
+            log.debug("reply " + reply);
             ctx.send(reply);
         } catch (JsonProcessingException e) {
             log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);

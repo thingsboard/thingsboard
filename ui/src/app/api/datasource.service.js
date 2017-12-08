@@ -416,8 +416,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                         entityType: datasourceSubscription.entityType,
                         entityId: datasourceSubscription.entityId,
                         keys: dsKeys,
-                        startTs: subsTw.fixedWindow.startTimeMs,
-                        endTs: subsTw.fixedWindow.endTimeMs,
+                        startDs: subsTw.fixedWindow.startTimeMs,
+                        endDs: subsTw.fixedWindow.endTimeMs,
                         interval: subsTw.aggregation.interval,
                         limit: subsTw.aggregation.limit,
                         agg: subsTw.aggregation.type
@@ -430,11 +430,13 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     };
 
                     if (subsTw.aggregation.stateData) {
+                        $log.log(" aggregation stateData is true");
                         subscriber.firstStateHistoryCommand = createFirstStateHistoryCommand(subsTw.fixedWindow.startTimeMs, dsKeys);
                         subscriber.historyCommands.push(subscriber.firstStateHistoryCommand);
                     }
 
                     subscriber.onData = function (data, subscriptionId) {
+                        $log.log(" dskey subscriber.on data");
                         if (this.subsTw.aggregation.stateData &&
                             this.firstStateHistoryCommand && this.firstStateHistoryCommand.cmdId == subscriptionId) {
                             if (this.data) {
@@ -475,7 +477,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     subscriptionCommand = {
                         entityType: datasourceSubscription.entityType,
                         entityId: datasourceSubscription.entityId,
-                        keys: tsKeys
+                        keys: dsKeys
                     };
 
                     subscriber = {
@@ -669,8 +671,10 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
     }
 
     function updateRealtimeSubscriptionCommand(subscriptionCommand, subsTw) {
-        subscriptionCommand.startTs = subsTw.startTs;
-        subscriptionCommand.timeWindow = subsTw.aggregation.timeWindow;
+        //subscriptionCommand.startTs = subsTw.startTs;
+        subscriptionCommand.startDs = subsTw.startTs;
+        //subscriptionCommand.timeWindow = subsTw.aggregation.timeWindow;
+        subscriptionCommand.depthWindow = subsTw.aggregation.timeWindow;
         subscriptionCommand.interval = subsTw.aggregation.interval;
         subscriptionCommand.limit = subsTw.aggregation.limit;
         subscriptionCommand.agg = subsTw.aggregation.type;

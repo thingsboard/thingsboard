@@ -19,15 +19,13 @@ import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.DsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sql.DsKvLatestEntity;
-import org.thingsboard.server.dao.model.sql.TsKvLatestCompositeKey;
-import org.thingsboard.server.dao.model.sql.TsKvLatestEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.UUID;
 
 @SqlDao
 public interface DsKvLatestRepository extends CrudRepository<DsKvLatestEntity, DsKvLatestCompositeKey> {
 
     List<DsKvLatestEntity> findAllByEntityTypeAndEntityId(EntityType entityType, String entityId);
+    List<DsKvLatestEntity> findAllByEntityTypeAndEntityIdAndKey(EntityType entityType, String entityId, String key);
 }

@@ -30,8 +30,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @IdClass(TsKvLatestCompositeKey.class)
 public final class DsKvLatestEntity implements ToData<DsKvEntry> {
 
-
-    //TODO: reafctor this and TsKvEntity to avoid code duplicates
     @Id
     @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_COLUMN)

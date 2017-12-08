@@ -24,7 +24,7 @@ const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
 
 /*@ngInject*/
-function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, types, userService, $log) {
+function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, types, userService) {
 
     var isOpening = false,
         isOpened = false,
@@ -39,8 +39,9 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
             tsSubCmds: [],
             historyCmds: [],
             attrSubCmds: [],
-          //##### ADDING DEPTH Series
-            dsSubCmds: []
+          //##### ADDING DEPTH SERIES
+            dsSubCmds: [],
+            depthHistoryCmds: []
         },
         telemetryUri,
         dataStream,
@@ -77,12 +78,12 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     return service;
 
     function publishCommands () {
-        $log.log("HMDC cmdsWrapper tsSubCms length " + cmdsWrapper.tsSubCmds.length);
         if (isOpened && (cmdsWrapper.tsSubCmds.length > 0 ||
             cmdsWrapper.historyCmds.length > 0 ||
             cmdsWrapper.attrSubCmds.length > 0 ||
             //##### ADDED dsSubCmd.length
-            cmdsWrapper.dsSubCmds.length > 0)) {
+            cmdsWrapper.dsSubCmds.length > 0||
+            cmdsWrapper.depthHistoryCmds.length > 0)) {
           dataStream.send(angular.copy(cmdsWrapper)).then(function () {
                 checkToClose();
             });
@@ -91,6 +92,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
             cmdsWrapper.attrSubCmds = [];
             //##### Resetting dsSubCmds
             cmdsWrapper.dsSubCmds = [];
+            cmdsWrapper.depthHistoryCmds = [];
         }
         tryOpenSocket();
     }
@@ -146,7 +148,6 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     function onMessage (message) {
         if (message.data) {
             var data = angular.fromJson(message.data);
-            $log.log("HMDC data " + data );
             if (data.subscriptionId) {
                 var subscriber = subscribers[data.subscriptionId];
                 if (subscriber && data) {
@@ -202,13 +203,25 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
             }
         }
         if (angular.isDefined(subscriber.historyCommands)) {
-            for (i=0;i<subscriber.historyCommands.length;i++) {
-                var historyCommand = subscriber.historyCommands[i];
-                cmdId = nextCmdId();
-                subscribers[cmdId] = subscriber;
-                historyCommand.cmdId = cmdId;
-                commands[cmdId] = historyCommand;
-                cmdsWrapper.historyCmds.push(historyCommand);
+            if(subscriber.type === types.dataKeyType.timeseries) {
+                for (i = 0; i < subscriber.historyCommands.length; i++) {
+                    var historyCommand = subscriber.historyCommands[i];
+                    cmdId = nextCmdId();
+                    subscribers[cmdId] = subscriber;
+                    historyCommand.cmdId = cmdId;
+                    commands[cmdId] = historyCommand;
+                    cmdsWrapper.historyCmds.push(historyCommand);
+                }
+            }
+            else if(subscriber.type === types.dataKeyType.depthSeries){
+                for (i = 0; i < subscriber.historyCommands.length; i++) {
+                    historyCommand = subscriber.historyCommands[i];
+                    cmdId = nextCmdId();
+                    subscribers[cmdId] = subscriber;
+                    historyCommand.cmdId = cmdId;
+                    commands[cmdId] = historyCommand;
+                    cmdsWrapper.depthHistoryCmds.push(historyCommand);
+                }
             }
         }
         subscribersCount++;
@@ -319,6 +332,7 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         cmdsWrapper.attrSubCmds = [];
         //##### DEPTH SERIES
         cmdsWrapper.dsSubCmds = [];
+        cmdsWrapper.depthHistoryCmds = [];
         if (close) {
             closeSocket();
         }

@@ -27,7 +27,17 @@ public class TelemetryPluginCmdsWrapper {
 
     private List<GetHistoryCmd> historyCmds;
 
+    private List <GetDepthHistoryCmd> depthHistoryCmds;
+
     public TelemetryPluginCmdsWrapper() {
+    }
+
+    public List<GetDepthHistoryCmd> getDepthHistoryCmds() {
+        return depthHistoryCmds;
+    }
+
+    public void setDepthHistoryCmds(List<GetDepthHistoryCmd> depthHistoryCmds) {
+        this.depthHistoryCmds = depthHistoryCmds;
     }
 
     public List<AttributesSubscriptionCmd> getAttrSubCmds() {

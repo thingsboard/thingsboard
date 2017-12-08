@@ -193,8 +193,10 @@ function Timewindow($compile, $templateCache, $filter, $mdPanel, $document, $mdM
                         scope.model.displayValue += $translate.instant('timewindow.last-prefix') + ' ' +
                             $filter('milliSecondsToTimeString')(scope.model.history.timewindowMs);
                     } else {
-                        var startString = $filter('date')(scope.model.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
-                        var endString = $filter('date')(scope.model.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
+                        /*var startString = $filter('date')(scope.model.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
+                        var endString = $filter('date')(scope.model.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');*/
+                        var startString = scope.model.history.fixedTimewindow.startTimeMs;
+                        var endString = scope.model.history.fixedTimewindow.endTimeMs;
                         scope.model.displayValue += $translate.instant('timewindow.period', {startTime: startString, endTime: endString});
                     }
                 }

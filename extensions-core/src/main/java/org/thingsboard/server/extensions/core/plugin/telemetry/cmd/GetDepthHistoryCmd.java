@@ -18,21 +18,20 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class DepthSeriesSubscriptionCmd extends SubscriptionCmd {
+public class GetDepthHistoryCmd implements TelemetryPluginCmd {
 
-    private double startDs;
-    private double depthWindow;
-    private double interval;
+    private int cmdId;
+    private String entityType;
+    private String entityId;
+    private String keys;
+    private Double startDs;
+    private Double endDs;
+    private Double interval;
     private int limit;
     private String agg;
 
-    @Override
-    public SubscriptionType getType() {
-        return SubscriptionType.DEPTHSERIES;
-    }
 }

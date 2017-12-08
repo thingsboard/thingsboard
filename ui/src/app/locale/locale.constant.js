@@ -262,8 +262,10 @@ export default angular.module('thingsboard.locale', [])
                 "attribute": {
                     "attributes": "Attributes",
                     "latest-telemetry": "Latest telemetry",
+                    "latest-depth": "Latest depth",
                     "attributes-scope": "Entity attributes scope",
                     "scope-latest-telemetry": "Latest telemetry",
+                    "scope-latest-depth-series": "Latest depth",
                     "scope-client": "Client attributes",
                     "scope-server": "Server attributes",
                     "scope-shared": "Shared attributes",
@@ -358,6 +360,10 @@ export default angular.module('thingsboard.locale', [])
                     "time-from": "Time from",
                     "date-to": "Date to",
                     "time-to": "Time to"
+                },
+                "depthValue": {
+                    "start-depth": "Start Depth",
+                    "end-depth": "End Depth"
                 },
                 "dashboard": {
                     "dashboard": "Dashboard",
@@ -1087,6 +1093,7 @@ export default angular.module('thingsboard.locale', [])
                     "remove-widget-title": "Are you sure you want to remove the widget '{{widgetTitle}}'?",
                     "remove-widget-text": "After the confirmation the widget and all related data will become unrecoverable.",
                     "timeseries": "Time series",
+                    "depthseries": "Depth series",
                     "latest-values": "Latest values",
                     "rpc": "Control widget",
                     "alarm": "Alarm widget",
