@@ -197,8 +197,9 @@ export default class TbCanvasDigitalGauge {
             if (cellData.data.length > 0) {
                 var tvPair = cellData.data[cellData.data.length -
                 1];
+                var timestamp;
                 if (this.localSettings.showTimestamp) {
-                    var timestamp = tvPair[0];
+                    timestamp = tvPair[0];
                     var filter= this.ctx.$scope.$injector.get('$filter');
                     var timestampDisplayValue = filter('date')(timestamp, this.localSettings.timestampFormat);
                     this.gauge.options.label = timestampDisplayValue;
@@ -206,6 +207,8 @@ export default class TbCanvasDigitalGauge {
                 var value = tvPair[1];
                 if(value !== this.gauge.value) {
                     this.gauge.value = value;
+                } else if (this.localSettings.showTimestamp && this.gauge.timestamp != timestamp) {
+                    this.gauge.timestamp = timestamp;
                 }
             }
         }
