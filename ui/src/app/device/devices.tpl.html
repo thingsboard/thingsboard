@@ -49,7 +49,9 @@
                                 disable-attribute-scope-selection="true">
             </tb-attribute-table>
         </md-tab>
-        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.latest-depth' | translate }}">
+        <md-tab ng-if="vm.types.uiConf.isDepthSeriesEnabled() && !vm.grid.detailsConfig.isDetailsEditMode"
+                md-on-select="vm.grid.triggerResize()"
+                label="{{ 'attribute.latest-depth' | translate }}">
             <tb-attribute-table flex
                                 entity-id="vm.grid.operatingItem().id.id"
                                 entity-type="{{vm.types.entityType.device}}"

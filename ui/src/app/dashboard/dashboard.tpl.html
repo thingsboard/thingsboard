@@ -207,7 +207,7 @@
             <div ng-if="vm.isAddingWidget">
                 <md-tabs ng-if="vm.timeseriesWidgetTypes.length > 0 || vm.latestWidgetTypes.length > 0 ||
                                 vm.rpcWidgetTypes.length > 0 || vm.alarmWidgetTypes.length > 0 ||
-                                vm.staticWidgetTypes.length > 0"
+                                vm.staticWidgetTypes.length > 0 || vm.depthseriesWidgetTypes.length > 0"
                          flex
                          class="tb-absolute-fill" md-border-bottom>
                     <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.timeseries' | translate }}">
@@ -221,10 +221,12 @@
                                 on-widget-clicked="vm.addWidgetFromType(event, widget)">
                         </tb-dashboard>
                     </md-tab>
-                    <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.depthseries' | translate }}">
+                    <md-tab ng-if="vm.types.uiConf.isDepthSeriesEnabled() && vm.depthseriesWidgetTypes.length > 0"
+                            style="height: 100%;"
+                            label="{{ 'widget.depthseries' | translate }}">
                         <tb-dashboard
                                 alias-controller="vm.dashboardCtx.aliasController"
-                                widgets="vm.timeseriesWidgetTypes"
+                                widgets="vm.depthseriesWidgetTypes"
                                 is-edit="false"
                                 is-mobile="true"
                                 is-edit-action-enabled="false"

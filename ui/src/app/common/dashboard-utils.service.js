@@ -159,6 +159,9 @@ function DashboardUtils(types, utils, timeService) {
         if (widget.isSystemType  && widget.bundleAlias == 'charts' && widget.typeAlias == 'timeseries') {
             widget.typeAlias = 'basic_timeseries';
         }
+        if (widget.isSystemType  && widget.bundleAlias == 'charts' && widget.typeAlias == 'depthseries') {
+            widget.typeAlias = 'basic_depthseries';
+        }
         return widget;
     }
 

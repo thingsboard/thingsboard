@@ -35,4 +35,9 @@ public class DepthSeriesSubscriptionCmd extends SubscriptionCmd {
     public SubscriptionType getType() {
         return SubscriptionType.DEPTHSERIES;
     }
+
+    @Override
+    public String toString() {
+        return "DepthSeriesSubscriptionCmd : [startDs : " + startDs + " ,depthWindow : " + depthWindow + " ,interval : " + interval + " ,limit : " + limit + ",agg : " + agg +"]";
+    }
 }

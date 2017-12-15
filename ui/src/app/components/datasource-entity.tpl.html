@@ -24,7 +24,7 @@
 	   </tb-entity-alias-select>
 	   <section flex layout='column'>
 		   <section flex layout='column' layout-align="center" style="padding-left: 4px;">
-			   <md-chips flex ng-if="widgetType != types.widgetType.alarm.value"
+			   <md-chips flex ng-if="widgetType != types.widgetType.depthseries.value && widgetType != types.widgetType.alarm.value"
 						 id="timeseries_datakey_chips"
 						 ng-required="true"
 						 ng-model="timeseriesDataKeys" md-autocomplete-snap
@@ -128,7 +128,7 @@
 						  </div>
 					  </md-chip-template>
 			   </md-chips>
-			   <md-chips flex ng-if="widgetType != types.widgetType.alarm.value && types.uiConf.isDepthSeriesEnabled()"
+			   <md-chips flex ng-if="types.uiConf.isDepthSeriesEnabled() && (widgetType != types.widgetType.timeseries.value && widgetType != types.widgetType.alarm.value)"
                          id="depth_datakey_chips"
                          ng-required="true"
                          ng-model="depthDataKeys" md-autocomplete-snap
@@ -235,10 +235,19 @@
 		   </section>
 		   <div class="tb-error-messages" ng-messages="ngModelCtrl.$error" role="alert">
 			    <div translate ng-message="entityKeys" ng-if="widgetType === types.widgetType.timeseries.value" class="tb-error-message">datakey.timeseries-required</div>
-				<div translate ng-message="entityKeys" ng-if="widgetType === types.widgetType.latest.value" class="tb-error-message">datakey.timeseries-or-attributes-required</div>
+			    <div translate ng-message="entityKeys" ng-if="widgetType === types.widgetType.depthseries.value" class="tb-error-message">datakey.depthseries-required</div>
+			   	<div translate ng-message="entityKeys" ng-if="types.uiConf.isDepthSeriesEnabled() && widgetType === types.widgetType.latest.value" class="tb-error-message">datakey.timeseries-or-attributes-or-depthseries-required</div>
+			   	<div translate ng-message="entityKeys" ng-if="widgetType === types.widgetType.latest.value" class="tb-error-message">datakey.timeseries-or-attributes-required</div>
 			    <div translate ng-message="entityKeys" ng-if="widgetType === types.widgetType.alarm.value" class="tb-error-message">datakey.alarm-fields-required</div>
-			</div>
-		   <div class="md-caption" style="color: rgba(0,0,0,0.57);" ng-if="maxDataKeys != -1"
+		   </div>
+		   <div class="md-caption" style="color: rgba(0,0,0,0.57);"
+				ng-if="types.uiConf.isDepthSeriesEnabled() && maxDataKeys != -1"
+				translate="datakey.maximum-timeseries-or-attributes-or-depthseries"
+				translate-values="{count: maxDataKeys}"
+				translate-interpolation="messageformat"
+		   ></div>
+		   <div class="md-caption" style="color: rgba(0,0,0,0.57);"
+				ng-if="!types.uiConf.isDepthSeriesEnabled() && maxDataKeys != -1"
 				translate="datakey.maximum-timeseries-or-attributes"
 				translate-values="{count: maxDataKeys}"
 				translate-interpolation="messageformat"
