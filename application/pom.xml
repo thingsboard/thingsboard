@@ -496,6 +496,16 @@
                                     <artifactId>extension-mqtt</artifactId>
                                     <classifier>extension</classifier>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.thingsboard.extensions</groupId>
+                                    <artifactId>extension-sqs</artifactId>
+                                    <classifier>extension</classifier>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.thingsboard.extensions</groupId>
+                                    <artifactId>extension-sns</artifactId>
+                                    <classifier>extension</classifier>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>

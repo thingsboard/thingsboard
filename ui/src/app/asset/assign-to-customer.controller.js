@@ -77,8 +77,8 @@ export default function AssignAssetToCustomerController(customerService, assetSe
 
     function assign() {
         var tasks = [];
-        for (var assetId in assetIds) {
-            tasks.push(assetService.assignAssetToCustomer(vm.customers.selection.id.id, assetIds[assetId]));
+        for (var i=0;i<assetIds.length;i++) {
+            tasks.push(assetService.assignAssetToCustomer(vm.customers.selection.id.id, assetIds[i]));
         }
         $q.all(tasks).then(function () {
             $mdDialog.hide();

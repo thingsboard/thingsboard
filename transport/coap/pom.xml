@@ -28,7 +28,7 @@
     <packaging>jar</packaging>
 
     <name>Thingsboard COAP Transport</name>
-    <url>http://thingsboard.org</url>
+    <url>https://thingsboard.io</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
