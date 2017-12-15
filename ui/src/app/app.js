@@ -39,6 +39,7 @@ import uiRouter from 'angular-ui-router';
 import angularJwt from 'angular-jwt';
 import 'angular-drag-and-drop-lists';
 import mdDataTable from 'angular-material-data-table';
+import 'angular-material-expansion-panel';
 import ngTouch from 'angular-touch';
 import 'angular-carousel';
 import 'clipboard';
@@ -82,6 +83,7 @@ import 'md-color-picker/dist/mdColorPicker.min.css';
 import 'mdPickers/dist/mdPickers.min.css';
 import 'angular-hotkeys/build/hotkeys.min.css';
 import 'angular-carousel/dist/angular-carousel.min.css';
+import 'angular-material-expansion-panel/dist/md-expansion-panel.min.css';
 import '../scss/main.scss';
 
 import AppConfig from './app.config';
@@ -103,6 +105,7 @@ angular.module('thingsboard', [
     angularJwt,
     'dndLists',
     mdDataTable,
+    'material.components.expansionPanels',
     ngTouch,
     'angular-carousel',
     'ngclipboard',

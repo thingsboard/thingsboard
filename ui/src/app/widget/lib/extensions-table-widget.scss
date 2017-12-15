@@ -13,32 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "~compass-sass-mixins/lib/animate";
 
-@include keyframes(tbMoveFromTopFade) {
-  from {
-    opacity: 0;
-    @include transform(translate(0, -100%));
+tb-extension-table {
+  md-content {
+    background-color: #fff;
   }
 }
-
-@include keyframes(tbMoveToTopFade) {
-  to {
-    opacity: 0;
-    @include transform(translate(0, -100%));
+md-tabs.hide-tabs-menu {
+  md-tabs-wrapper {
+    display: none;
   }
-}
-
-@include keyframes(tbMoveFromBottomFade) {
-  from {
-    opacity: 0;
-    @include transform(translate(0, 100%));
-  }
-}
-
-@include keyframes(tbMoveToBottomFade) {
-  to {
-    opacity: 0;
-    @include transform(translate(0, 150%));
+  md-tabs-content-wrapper {
+    top: 0 !important;
   }
 }

@@ -13,32 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "~compass-sass-mixins/lib/animate";
+@import '../../scss/constants';
 
-@include keyframes(tbMoveFromTopFade) {
-  from {
-    opacity: 0;
-    @include transform(translate(0, -100%));
+
+.extension-table {
+
+  md-input-container .md-errors-spacer {
+    min-height: 0;
+  }
+
+  /*&.tb-data-table table.md-table tbody tr td.tb-action-cell,
+  &.tb-data-table table.md-table.md-row-select tbody tr td.tb-action-cell {
+    width: 114px;
+  }*/
+  .sync-widget {
+    max-height: 90px;
+    overflow: hidden;
+  }
+  .toolbar-widget {
+    min-height: 39px;
+    max-height: 39px;
   }
 }
 
-@include keyframes(tbMoveToTopFade) {
-  to {
-    opacity: 0;
-    @include transform(translate(0, -100%));
-  }
+.extension__syncStatus--black {
+  color: #000000!important;
 }
-
-@include keyframes(tbMoveFromBottomFade) {
-  from {
-    opacity: 0;
-    @include transform(translate(0, 100%));
-  }
+.extension__syncStatus--green {
+  color: #228634!important;
 }
-
-@include keyframes(tbMoveToBottomFade) {
-  to {
-    opacity: 0;
-    @include transform(translate(0, 150%));
-  }
+.extension__syncStatus--red {
+  color: #862222!important;
 }

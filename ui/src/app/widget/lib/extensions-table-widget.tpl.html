@@ -15,21 +15,13 @@
     limitations under the License.
 
 -->
-<!DOCTYPE html>
-<html ng-app="thingsboard" ng-strict-di style="width: 100%;">
-  <head>
-    <title ng-bind="pageTitle"></title>
-    <base href="/" />
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="description" content="" />
-    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <link rel="icon"
-          type="image/x-icon"
-          href="static/thingsboard.ico" />
-  </head>
-  <body>
-    <ui-view layout="row" layout-fill>
-    </ui-view>
-  </body>
-</html>
+<md-tabs id="tabs" md-border-bottom flex class="tb-absolute-fill" ng-class="{'hide-tabs-menu': vm.datasources.length == 1 || vm.tabsHidden}">
+    <md-tab ng-repeat="source in vm.datasources" label="{{ source.name }}" md-on-select="vm.changeSelectedSource(source)">
+        <tb-extension-table flex
+                            entity-id="source.entityId"
+                            entity-type="{{source.entityType}}"
+                            in-widget="true"
+                            ctx="vm.ctx">
+        </tb-extension-table>
+    </md-tab>
+</md-tabs>
