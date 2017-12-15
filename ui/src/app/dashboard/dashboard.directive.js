@@ -29,6 +29,7 @@ export default function DashboardDirective($compile, $templateCache, $translate,
         scope.isPublic = false;
         scope.assignedCustomer = null;
         scope.publicLink = null;
+        scope.types = types;
 
         scope.$watch('dashboard', function(newVal) {
             if (newVal) {

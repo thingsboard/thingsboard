@@ -46,11 +46,13 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.isEditingWidget = false;
     vm.latestWidgetTypes = [];
     vm.timeseriesWidgetTypes = [];
+    vm.depthseriesWidgetTypes = [];
     vm.rpcWidgetTypes = [];
     vm.alarmWidgetTypes = [];
     vm.staticWidgetTypes = [];
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
     vm.iframeMode = $rootScope.iframeMode;
+    vm.types = types;
 
     vm.isToolbarOpened = false;
 
@@ -273,6 +275,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     function loadWidgetLibrary() {
         vm.latestWidgetTypes = [];
         vm.timeseriesWidgetTypes = [];
+        vm.depthseriesWidgetTypes = [];
         vm.rpcWidgetTypes = [];
         vm.alarmWidgetTypes = [];
         vm.staticWidgetTypes = [];
@@ -316,6 +319,8 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                         widget.config.title = widgetTypeInfo.widgetName;
                         if (widgetTypeInfo.type === types.widgetType.timeseries.value) {
                             vm.timeseriesWidgetTypes.push(widget);
+                        } else if (widgetTypeInfo.type === types.widgetType.depthseries.value) {
+                            vm.depthseriesWidgetTypes.push(widget);
                         } else if (widgetTypeInfo.type === types.widgetType.latest.value) {
                             vm.latestWidgetTypes.push(widget);
                         } else if (widgetTypeInfo.type === types.widgetType.rpc.value) {
@@ -852,6 +857,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
 
     function onAddWidgetClosed() {
         vm.timeseriesWidgetTypes = [];
+        vm.depthseriesWidgetTypes = [];
         vm.latestWidgetTypes = [];
         vm.rpcWidgetTypes = [];
         vm.alarmWidgetTypes = [];

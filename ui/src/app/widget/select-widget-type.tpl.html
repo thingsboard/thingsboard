@@ -40,6 +40,13 @@
                             <span translate>{{vm.types.widgetType.timeseries.name}}</span>
                         </md-button>
                         <md-button class="tb-card-button md-raised md-primary" layout="column"
+                                   ng-click="vm.typeSelected(vm.types.widgetType.depthseries.value)">
+                            <md-icon class="material-icons tb-md-96" aria-label="{{ vm.types.widgetType.depthseries.name | translate }}">
+                                timeline
+                            </md-icon>
+                            <span translate>{{vm.types.widgetType.depthseries.name}}</span>
+                        </md-button>
+                        <md-button class="tb-card-button md-raised md-primary" layout="column"
                                    ng-click="vm.typeSelected(vm.types.widgetType.latest.value)">
                             <md-icon class="material-icons tb-md-96"
                                      aria-label="{{ vm.types.widgetType.latest.name | translate }}">track_changes

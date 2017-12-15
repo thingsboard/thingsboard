@@ -377,6 +377,14 @@ export default angular.module('thingsboard.types', [])
                         alias: "basic_timeseries"
                     }
                 },
+                depthseries: {
+                    value: "depthseries",
+                    name: "widget.depthseries",
+                    template: {
+                        bundleAlias: "charts",
+                        alias: "basic_depthseries"
+                    }
+                },
                 latest: {
                     value: "latest",
                     name: "widget.latest-values",
