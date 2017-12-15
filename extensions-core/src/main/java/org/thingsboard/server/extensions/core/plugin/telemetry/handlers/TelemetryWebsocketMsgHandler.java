@@ -74,19 +74,16 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                     cmdsWrapper.getAttrSubCmds().forEach(cmd -> handleWsAttributesSubscriptionCmd(ctx, sessionRef, cmd));
                 }
                 if (cmdsWrapper.getTsSubCmds() != null) {
-                    log.debug("TsSubCmds " + cmdsWrapper.getTsSubCmds());
                     cmdsWrapper.getTsSubCmds().forEach(cmd -> handleWsTimeseriesSubscriptionCmd(ctx, sessionRef, cmd));
                 }
                 if (cmdsWrapper.getDsSubCmds() != null) {
                     cmdsWrapper.getDsSubCmds().forEach(cmd -> handleWsDepthSeriesSubscriptionCmd(ctx, sessionRef, cmd));
-                    log.debug("DsSubCmds " + cmdsWrapper.getDsSubCmds());
                 }
                 if (cmdsWrapper.getHistoryCmds() != null) {
                     cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(ctx, sessionRef, cmd));
                 }
                 if (cmdsWrapper.getDepthHistoryCmds() != null) {
                     cmdsWrapper.getDepthHistoryCmds().forEach(cmd -> handleWsDepthHistoryCmd(ctx, sessionRef, cmd));
-                    log.debug("DepthHistorySubCmds " + cmdsWrapper.getDepthHistoryCmds());
                 }
             }
         } catch (IOException e) {
@@ -127,7 +124,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                             keys.forEach(key -> subState.put(key, 0L));
                             attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
-                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.ATTRIBUTES, false, subState);
+                            SubscriptionState<Long> sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.ATTRIBUTES, false, subState);
                             subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
                         }
 
@@ -161,7 +158,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                             Map<String, Long> subState = new HashMap<>(attributesData.size());
                             attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
 
-                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.ATTRIBUTES, true, subState);
+                            SubscriptionState<Long> sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.ATTRIBUTES, true, subState);
                             subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
                         }
 
@@ -194,7 +191,6 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             } else if (validateSubscriptionCmd(ctx, sessionRef, cmd)) {
                 EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
                 Optional<Set<String>> keysOptional = getKeys(cmd);
-
                 if (keysOptional.isPresent()) {
                     long startTs;
                     if (cmd.getTimeWindow() > 0) {
@@ -217,7 +213,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                             sendWsMsg(ctx, sessionRef, new SubscriptionUpdate(cmd.getCmdId(), data));
                             Map<String, Long> subState = new HashMap<>(data.size());
                             data.forEach(v -> subState.put(v.getKey(), v.getTs()));
-                            SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.TIMESERIES, true, subState);
+                            SubscriptionState<Long> sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.TIMESERIES, true, subState);
                             subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
                         }
 
@@ -249,7 +245,6 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
             } else if (validateSubscriptionCmd(ctx, sessionRef, cmd)) {
                 EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
                 Optional<Set<String>> keysOptional = getKeys(cmd);
-
                 if (keysOptional.isPresent()) {
                     log.debug(" optional present");
                     Double startDs;
@@ -275,8 +270,8 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                             sendWsMsg(ctx, sessionRef, new DepthSubscriptionUpdate(cmd.getCmdId(), data));
                             Map<String, Double> subState = new HashMap<>(data.size());
                             data.forEach(v -> subState.put(v.getKey(), v.getDs()));
-                            SubscriptionState sub = new DepthSubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTHSERIES
-                                    , true, null, subState);
+                            SubscriptionState<Double> sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTHSERIES
+                                    , true, subState);
                             subscriptionManager.addLocalWsDepthSubscription(ctx, sessionId, entityId, sub);
                         }
 
@@ -309,7 +304,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 Map<String, Long> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startTs));
                 data.forEach(v -> subState.put(v.getKey(), v.getTs()));
-                SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.TIMESERIES, false, subState);
+                SubscriptionState<Long> sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.TIMESERIES, false, subState);
                 subscriptionManager.addLocalWsSubscription(ctx, sessionId, entityId, sub);
             }
 
@@ -333,13 +328,13 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
                 Map<String, Double> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, startDs));
                 data.forEach(v -> subState.put(v.getKey(), v.getDs()));
-                SubscriptionState sub = new DepthSubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTHSERIES, false, null, subState);
+                SubscriptionState<Double> sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, SubscriptionType.DEPTHSERIES, false, subState);
                 subscriptionManager.addLocalWsDepthSubscription(ctx, sessionId, entityId, sub);
             }
 
             @Override
             public void onFailure(PluginContext ctx, Exception e) {
-                log.error("Failed to fetch data!", e);
+                log.debug("Failed to fetch data!", e);
                 DepthSubscriptionUpdate update = new DepthSubscriptionUpdate(cmd.getCmdId(), SubscriptionErrorCode.INTERNAL_ERROR,
                         "Failed to fetch data!");
                 sendWsMsg(ctx, sessionRef, update);
@@ -489,6 +484,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         TextPluginWebSocketMsg reply;
         try {
             reply = new TextPluginWebSocketMsg(sessionRef, jsonMapper.writeValueAsString(update));
+            log.debug("reply TS " + reply);
             ctx.send(reply);
         } catch (JsonProcessingException e) {
             log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
@@ -501,7 +497,7 @@ public class TelemetryWebsocketMsgHandler extends DefaultWebsocketMsgHandler {
         TextPluginWebSocketMsg reply;
         try {
             reply = new TextPluginWebSocketMsg(sessionRef, jsonMapper.writeValueAsString(update));
-            log.debug("reply " + reply);
+            log.debug("reply DS " + reply);
             ctx.send(reply);
         } catch (JsonProcessingException e) {
             log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
