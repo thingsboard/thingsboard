@@ -98,12 +98,7 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
     }
 
-    public Alarm createAlarm(String type, AlarmSeverity severity, AlarmStatus status, EntityId originator) {
-        Alarm alarm = new Alarm();
-        alarm.setOriginator(originator);
-        alarm.setStatus(status);
-        alarm.setSeverity(severity);
-        alarm.setType(type);
+    public Alarm createAlarm(Alarm alarm) {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
     }
 
