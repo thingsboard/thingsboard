@@ -42,4 +42,16 @@ public interface ApplicationDao extends Dao<Application>{
      * @return the optional application object
      */
     Optional<Application> findApplicationByTenantIdAndName(UUID tenantId, String name);
+
+
+    /**
+     * Find application by tenantId and device id.
+     *
+     * @param tenantId the tenantId
+     * @param deviceType the device type
+     * @return the list of application objects
+     */
+    List<Application> findApplicationByDeviceType(UUID tenantId, String deviceType);
+
+
 }

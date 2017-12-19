@@ -90,6 +90,13 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
     }
 
     @Override
+    public List<Application> findApplicationsByDeviceType(TenantId tenantId, String deviceType){
+        log.trace("Executing findApplicationsByDeviceType,  tenantId [{}], device Type [{}]", tenantId, deviceType);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        return applicationDao.findApplicationByDeviceType( tenantId.getId(), deviceType);
+    }
+
+    @Override
     public Application assignApplicationToCustomer(ApplicationId applicationId, CustomerId customerId) {
         Application application = findApplicationById(applicationId);
         application.setCustomerId(customerId);

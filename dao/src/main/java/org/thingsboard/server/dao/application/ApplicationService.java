@@ -32,6 +32,8 @@ public interface ApplicationService {
 
     TextPageData<Application> findApplicationsByTenantId(TenantId tenantId, TextPageLink pageLink);
 
+    List<Application> findApplicationsByDeviceType(TenantId tenantId, String deviceType);
+
     Application assignApplicationToCustomer(ApplicationId applicationId, CustomerId customerId);
 
     Application unassignApplicationFromCustomer(ApplicationId applicationId);

@@ -33,6 +33,9 @@ public interface ApplicationRepository extends CrudRepository<ApplicationEntity,
                                            @Param("idOffset") String idOffset,
                                            Pageable pageable);
 
+    @Query("SELECT a FROM ApplicationEntity a WHERE :deviceType member a.deviceTypes AND a.tenantId = :tenantId ORDER BY a.id")
+    List<ApplicationEntity> findByDeviceType(@Param("tenantId") String tenantId, @Param("deviceType") String deviceType);
+
 
     ApplicationEntity findByTenantIdAndName(String tenantId, String name);
 }
