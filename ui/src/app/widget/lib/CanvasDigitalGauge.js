@@ -155,6 +155,15 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
         return result;
     }
 
+    set timestamp(timestamp) {
+        this.options.timestamp = timestamp;
+        this.draw();
+    }
+
+    get timestamp() {
+        return this.options.timestamp;
+    }
+
     draw() {
         try {
 
@@ -195,7 +204,9 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
                 canvas.elementClone.initialized = true;
             }
 
-            if (!this.elementValueClone.initialized || this.elementValueClone.renderedValue !== this.value) {
+            var valueChanged = false;
+
+            if (!this.elementValueClone.initialized || this.elementValueClone.renderedValue !== this.value || (options.showTimestamp && this.elementValueClone.renderedTimestamp !== this.timestamp)) {
                 let context = this.contextValueClone;
                 // clear the cache
                 context.clearRect(x, y, w, h);
@@ -208,10 +219,13 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
 
                 if (options.showTimestamp) {
                     drawDigitalLabel(context, options);
+                    this.elementValueClone.renderedTimestamp = this.timestamp;
                 }
 
                 this.elementValueClone.initialized = true;
                 this.elementValueClone.renderedValue = this.value;
+
+                valueChanged = true;
             }
 
             var progress = (canvasGauges.drawings.normalizedValue(options).normal - options.minValue) /
@@ -219,7 +233,7 @@ export default class CanvasDigitalGauge extends canvasGauges.BaseGauge {
 
             var fixedProgress = progress.toFixed(3);
 
-            if (!this.elementProgressClone.initialized || this.elementProgressClone.renderedProgress !== fixedProgress) {
+            if (!this.elementProgressClone.initialized || this.elementProgressClone.renderedProgress !== fixedProgress || valueChanged) {
                 let context = this.contextProgressClone;
                 // clear the cache
                 context.clearRect(x, y, w, h);

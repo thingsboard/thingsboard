@@ -128,12 +128,16 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
         Optional<Long> interval = request.getLongParamValue("interval");
         Optional<Integer> limit = request.getIntParamValue("limit");
 
+        // If some of these params are specified, they all must be
         if (startTs.isPresent() || endTs.isPresent() || interval.isPresent() || limit.isPresent()) {
-            if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent()) {
+            if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent() || interval.get() < 0) {
                 msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
                 return;
             }
-            Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
+
+            // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
+            Aggregation agg = (interval.isPresent() && interval.get() == 0) ? Aggregation.valueOf(Aggregation.NONE.name()) :
+                                                                              Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
 
             List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
                     .collect(Collectors.toList());

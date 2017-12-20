@@ -425,12 +425,26 @@ function DashboardUtils(types, utils, timeService) {
         var prevColumns = prevGridSettings ? prevGridSettings.columns : 24;
         var ratio = gridSettings.columns / prevColumns;
         layout.gridSettings = gridSettings;
+        var maxRow = 0;
         for (var w in layout.widgets) {
             var widget = layout.widgets[w];
+            maxRow = Math.max(maxRow, widget.row + widget.sizeY);
+        }
+        var newMaxRow = Math.round(maxRow * ratio);
+        for (w in layout.widgets) {
+            widget = layout.widgets[w];
+            if (widget.row + widget.sizeY == maxRow) {
+                widget.row = Math.round(widget.row * ratio);
+                widget.sizeY = newMaxRow - widget.row;
+            } else {
+                widget.row = Math.round(widget.row * ratio);
+                widget.sizeY = Math.round(widget.sizeY * ratio);
+            }
             widget.sizeX = Math.round(widget.sizeX * ratio);
-            widget.sizeY = Math.round(widget.sizeY * ratio);
             widget.col = Math.round(widget.col * ratio);
-            widget.row = Math.round(widget.row * ratio);
+            if (widget.col + widget.sizeX > gridSettings.columns) {
+                widget.sizeX = gridSettings.columns - widget.col;
+            }
         }
     }
 

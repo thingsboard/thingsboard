@@ -229,6 +229,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 } else if (topicName.equals(DEVICE_ATTRIBUTES_RESPONSES_TOPIC)) {
                     deviceSessionCtx.setAllowAttributeResponses();
                     grantedQoSList.add(getMinSupportedQos(reqQoS));
+                } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
+                    grantedQoSList.add(getMinSupportedQos(reqQoS));
                 } else {
                     log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topicName, reqQoS);
                     grantedQoSList.add(FAILURE.value());

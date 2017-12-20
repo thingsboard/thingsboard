@@ -384,7 +384,7 @@ public class BaseRelationService implements RelationService {
         Set<EntityRelation> children = new HashSet<>(findRelations(rootId, direction).get());
         Set<EntityId> childrenIds = new HashSet<>();
         for (EntityRelation childRelation : children) {
-            log.info("Found Relation: {}", childRelation);
+            log.trace("Found Relation: {}", childRelation);
             EntityId childId;
             if (direction == EntitySearchDirection.FROM) {
                 childId = childRelation.getTo();
@@ -392,9 +392,9 @@ public class BaseRelationService implements RelationService {
                 childId = childRelation.getFrom();
             }
             if (uniqueMap.putIfAbsent(childId, Boolean.TRUE) == null) {
-                log.info("Adding Relation: {}", childId);
+                log.trace("Adding Relation: {}", childId);
                 if (childrenIds.add(childId)) {
-                    log.info("Added Relation: {}", childId);
+                    log.trace("Added Relation: {}", childId);
                 }
             }
         }

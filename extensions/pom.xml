@@ -28,7 +28,7 @@
     <packaging>pom</packaging>
 
     <name>Thingsboard Extensions</name>
-    <url>http://thingsboard.org</url>
+    <url>https://thingsboard.io</url>
 
     <properties>
         <main.dir>${basedir}/..</main.dir>
@@ -39,6 +39,8 @@
         <module>extension-rest-api-call</module>
         <module>extension-kafka</module>
         <module>extension-mqtt</module>
+        <module>extension-sqs</module>
+        <module>extension-sns</module>
     </modules>
 
 </project>

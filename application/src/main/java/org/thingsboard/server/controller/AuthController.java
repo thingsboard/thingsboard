@@ -19,8 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,7 +28,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.mail.MailService;
@@ -78,9 +75,10 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/auth/changePassword", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public void changePassword (
-            @RequestParam(value = "currentPassword") String currentPassword,
-            @RequestParam(value = "newPassword") String newPassword) throws ThingsboardException {
+            @RequestBody JsonNode changePasswordRequest) throws ThingsboardException {
         try {
+            String currentPassword = changePasswordRequest.get("currentPassword").asText();
+            String newPassword = changePasswordRequest.get("newPassword").asText();
             SecurityUser securityUser = getCurrentUser();
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(securityUser.getId());
             if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
@@ -118,9 +116,10 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/noauth/resetPasswordByEmail", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public void requestResetPasswordByEmail (
-            @RequestParam(value = "email") String email,
+            @RequestBody JsonNode resetPasswordByEmailRequest,
             HttpServletRequest request) throws ThingsboardException {
         try {
+            String email = resetPasswordByEmailRequest.get("email").asText();
             UserCredentials userCredentials = userService.requestPasswordReset(email);
             String baseUrl = constructBaseUrl(request);
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
@@ -158,10 +157,11 @@ public class AuthController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
     public JsonNode activateUser(
-            @RequestParam(value = "activateToken") String activateToken,
-            @RequestParam(value = "password") String password,
+            @RequestBody JsonNode activateRequest,
             HttpServletRequest request) throws ThingsboardException {
         try {
+            String activateToken = activateRequest.get("activateToken").asText();
+            String password = activateRequest.get("password").asText();
             String encodedPassword = passwordEncoder.encode(password);
             UserCredentials credentials = userService.activateUserCredentials(activateToken, encodedPassword);
             User user = userService.findUserById(credentials.getUserId());
@@ -194,10 +194,11 @@ public class AuthController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
     public JsonNode resetPassword(
-            @RequestParam(value = "resetToken") String resetToken,
-            @RequestParam(value = "password") String password,
+            @RequestBody JsonNode resetPasswordRequest,
             HttpServletRequest request) throws ThingsboardException {
         try {
+            String resetToken = resetPasswordRequest.get("resetToken").asText();
+            String password = resetPasswordRequest.get("password").asText();
             UserCredentials userCredentials = userService.findUserCredentialsByResetToken(resetToken);
             if (userCredentials != null) {
                 String encodedPassword = passwordEncoder.encode(password);
