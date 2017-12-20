@@ -235,6 +235,108 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         removeResizeListener(gridsterParent[0], onGridsterParentResize); // eslint-disable-line no-undef
     });
 
+    function onGridsterParentResize() {
+        if (gridsterParent.height() && autofillHeight()) {
+            updateMobileOpts();
+        }
+    }
+
+    //TODO: widgets visibility
+    /*gridsterParent.scroll(function () {
+        updateVisibleRect();
+    });
+
+    gridsterParent.resize(function () {
+        updateVisibleRect();
+    });*/
+
+    function updateMobileOpts() {
+        var isMobileDisabled = vm.isMobileDisabled === true;
+        var isMobile = vm.isMobile === true && !isMobileDisabled;
+        var mobileBreakPoint = isMobileDisabled ? 0 : (isMobile ? 20000 : 960);
+
+        if (!isMobile && !isMobileDisabled) {
+            isMobile = !$mdMedia('gt-sm');
+        }
+
+        if (vm.gridsterOpts.isMobile != isMobile) {
+            vm.gridsterOpts.isMobile = isMobile;
+            vm.gridsterOpts.mobileModeEnabled = isMobile;
+        }
+        if (vm.gridsterOpts.mobileBreakPoint != mobileBreakPoint) {
+            vm.gridsterOpts.mobileBreakPoint = mobileBreakPoint;
+        }
+        detectRowSize(isMobile).then(
+            function(rowHeight) {
+                if (vm.gridsterOpts.rowHeight != rowHeight) {
+                    vm.gridsterOpts.rowHeight = rowHeight;
+                }
+            }
+        );
+        vm.isMobileSize = checkIsMobileSize();
+    }
+
+    function checkIsMobileSize() {
+        var isMobileDisabled = vm.isMobileDisabled === true;
+        var isMobileSize = vm.isMobile === true && !isMobileDisabled;
+        if (!isMobileSize && !isMobileDisabled) {
+            isMobileSize = !$mdMedia('gt-sm');
+        }
+        return isMobileSize;
+    }
+
+    $scope.$watch('vm.columns', function () {
+        var columns = vm.columns ? vm.columns : 24;
+        if (vm.gridsterOpts.columns != columns) {
+            vm.gridsterOpts.columns = columns;
+            if (vm.gridster) {
+                vm.gridster.columns = vm.columns;
+                updateGridsterParams();
+            }
+            //TODO: widgets visibility
+            //updateVisibleRect();
+        }
+    });
+
+    $scope.$watch(function() {
+        return $mdMedia('gt-sm') + ',' + vm.isMobile + ',' + vm.isMobileDisabled;
+    }, function() {
+        updateMobileOpts();
+        sortWidgets();
+    });
+
+    $scope.$watch(function() {
+        return vm.autofillHeight + ',' + vm.mobileAutofillHeight + ',' + vm.mobileRowHeight;
+    }, function () {
+        updateMobileOpts();
+    });
+
+    $scope.$watch('vm.margins', function () {
+        var margins = vm.margins ? vm.margins : [10, 10];
+        if (!angular.equals(vm.gridsterOpts.margins, margins)) {
+            vm.gridsterOpts.margins = margins;
+            updateMobileOpts();
+            if (vm.gridster) {
+                vm.gridster.margins = vm.margins;
+                updateGridsterParams();
+            }
+            //TODO: widgets visibility
+            //updateVisibleRect();
+        }
+    });
+
+    $scope.$watch('vm.isEdit', function () {
+        vm.gridsterOpts.resizable.enabled = vm.isEdit;
+        vm.gridsterOpts.draggable.enabled = vm.isEdit;
+        $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
+    });
+
+    $scope.$watch('vm.isMobileSize', function (newVal, prevVal) {
+        if (!angular.equals(newVal, prevVal)) {
+            $scope.$broadcast('mobileModeChanged', vm.isMobileSize);
+        }
+    });
+
     $scope.$watchCollection('vm.widgets', function () {
         var ids = [];
         for (var i=0;i<vm.widgets.length;i++) {
@@ -290,125 +392,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         });
     });
 
-    function onGridsterParentResize() {
-        if (gridsterParent.height() && autofillHeight()) {
-            updateMobileOpts();
-        }
-    }
-
-    //TODO: widgets visibility
-    /*gridsterParent.scroll(function () {
-        updateVisibleRect();
-    });
-
-    gridsterParent.resize(function () {
-        updateVisibleRect();
-    });*/
-
-    function updateMobileOpts() {
-        var isMobileDisabled = vm.isMobileDisabled === true;
-        var isMobile = vm.isMobile === true && !isMobileDisabled;
-        var mobileBreakPoint = isMobileDisabled ? 0 : (isMobile ? 20000 : 960);
-
-        if (!isMobile && !isMobileDisabled) {
-            isMobile = !$mdMedia('gt-sm');
-        }
-
-        if (vm.gridsterOpts.isMobile != isMobile) {
-            vm.gridsterOpts.isMobile = isMobile;
-            vm.gridsterOpts.mobileModeEnabled = isMobile;
-        }
-        if (vm.gridsterOpts.mobileBreakPoint != mobileBreakPoint) {
-            vm.gridsterOpts.mobileBreakPoint = mobileBreakPoint;
-        }
-        detectRowSize(isMobile).then(
-            function(rowHeight) {
-                if (vm.gridsterOpts.rowHeight != rowHeight) {
-                    vm.gridsterOpts.rowHeight = rowHeight;
-                }
-            }
-        );
-        vm.isMobileSize = checkIsMobileSize();
-    }
-
-    function checkIsMobileSize() {
-        var isMobileDisabled = vm.isMobileDisabled === true;
-        var isMobileSize = vm.isMobile === true && !isMobileDisabled;
-        if (!isMobileSize && !isMobileDisabled) {
-            isMobileSize = !$mdMedia('gt-sm');
-        }
-        return isMobileSize;
-    }
-
-    $scope.$watch(function() { return $mdMedia('gt-sm'); }, function() {
-        updateMobileOpts();
-        sortWidgets();
-    });
-
-    $scope.$watch('vm.isMobile', function () {
-        updateMobileOpts();
-        sortWidgets();
-    });
-
-    $scope.$watch('vm.autofillHeight', function () {
-        updateMobileOpts();
-    });
-
-    $scope.$watch('vm.mobileAutofillHeight', function () {
-        updateMobileOpts();
-    });
-
-    $scope.$watch('vm.mobileRowHeight', function () {
-        updateMobileOpts();
-    });
-
-    $scope.$watch('vm.isMobileDisabled', function () {
-        updateMobileOpts();
-        sortWidgets();
-    });
-
     $scope.$watch('vm.widgetLayouts', function () {
         updateMobileOpts();
         sortWidgets();
-    });
-
-    $scope.$watch('vm.columns', function () {
-        var columns = vm.columns ? vm.columns : 24;
-        if (vm.gridsterOpts.columns != columns) {
-            vm.gridsterOpts.columns = columns;
-            if (vm.gridster) {
-                vm.gridster.columns = vm.columns;
-                updateGridsterParams();
-            }
-            //TODO: widgets visibility
-            //updateVisibleRect();
-        }
-    });
-
-    $scope.$watch('vm.margins', function () {
-        var margins = vm.margins ? vm.margins : [10, 10];
-        if (!angular.equals(vm.gridsterOpts.margins, margins)) {
-            vm.gridsterOpts.margins = margins;
-            updateMobileOpts();
-            if (vm.gridster) {
-                vm.gridster.margins = vm.margins;
-                updateGridsterParams();
-            }
-            //TODO: widgets visibility
-            //updateVisibleRect();
-        }
-    });
-
-    $scope.$watch('vm.isEdit', function () {
-        vm.gridsterOpts.resizable.enabled = vm.isEdit;
-        vm.gridsterOpts.draggable.enabled = vm.isEdit;
-        $scope.$broadcast('toggleDashboardEditMode', vm.isEdit);
-    });
-
-    $scope.$watch('vm.isMobileSize', function (newVal, prevVal) {
-        if (!angular.equals(newVal, prevVal)) {
-            $scope.$broadcast('mobileModeChanged', vm.isMobileSize);
-        }
     });
 
     $scope.$on('gridster-resized', function (event, sizes, theGridster) {
