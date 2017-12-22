@@ -44,4 +44,6 @@ public interface ApplicationService {
 
     Application assignRulesToApplication(ApplicationId applicationId, List<RuleId> ruleIdList);
 
+    Application assignDeviceTypesToApplication(ApplicationId applicationId, List<String> deviceTypes);
+
 }

@@ -215,4 +215,19 @@ public class ApplicationController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/app/{applicationId}/deviceTypes", method = RequestMethod.POST,consumes = "application/json")
+    public Application assignDeviceTypesToApplication(@PathVariable("applicationId") String strApplicationId,
+                                                      @RequestBody List<String> deviceTypes) throws ThingsboardException {
+        checkParameter("applicationId", strApplicationId);
+        try {
+            log.error("Got application [{}] with deviceTypes [{}]", strApplicationId, deviceTypes);
+            ApplicationId applicationId = new ApplicationId(toUUID(strApplicationId));
+            checkApplicationId(applicationId);
+            return checkNotNull(applicationService.assignDeviceTypesToApplication(applicationId, deviceTypes));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
 }

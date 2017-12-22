@@ -462,5 +462,17 @@ public class BaseApplicationControllerTest extends AbstractControllerTest {
         Assert.assertEquals(Arrays.asList(savedRule2.getId()), unAssignedOneRuleApplication.getRules());
     }
 
+    @Test
+    public void testAssignDeviceTypesToApplication() throws Exception{
+        Application application = new Application();
+        application.setName("My application");
+        Application savedApplication = doPost("/api/application", application, Application.class);
+
+        List<String> deviceTypes = new ArrayList<String>(Arrays.asList("WeatherStation", "Pump"));
+        Application assignedApplication = doPostWithDifferentResponse("/api/app/" + savedApplication.getId().getId().toString() + "/deviceTypes",
+                deviceTypes, Application.class);
+        Assert.assertEquals(deviceTypes, assignedApplication.getDeviceTypes());
+    }
+
 
 }

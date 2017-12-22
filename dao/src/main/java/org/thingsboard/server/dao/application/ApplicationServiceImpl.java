@@ -145,6 +145,16 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
         return saveApplication(application);
     }
 
+    @Override
+    public Application assignDeviceTypesToApplication(ApplicationId applicationId, List<String> deviceTypes) {
+        Application application = findApplicationById(applicationId);
+        if(deviceTypes != null && !deviceTypes.isEmpty()){
+            application.setDeviceTypes(deviceTypes);
+            return saveApplication(application);
+        }
+        return application;
+    }
+
 
     private DataValidator<Application> applicationValidator =
             new DataValidator<Application>() {
