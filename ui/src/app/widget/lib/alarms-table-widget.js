@@ -298,7 +298,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
                 entityId = vm.currentAlarm.originator;
                 entityName = vm.currentAlarm.originatorName;
             }
-            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName);
+            vm.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, { alarm: vm.currentAlarm });
         }
     }
 
@@ -312,7 +312,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
             entityId = alarm.originator;
             entityName = alarm.originatorName;
         }
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName);
+        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, { alarm: vm.currentAlarm });
     }
 
     function isCurrent(alarm) {

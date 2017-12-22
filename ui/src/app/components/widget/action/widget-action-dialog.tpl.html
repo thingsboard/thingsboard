@@ -120,7 +120,7 @@
                         </div>
                         <tb-js-func ng-if="vm.action.type == vm.types.widgetActionTypes.custom.value"
                                     ng-model="vm.action.customFunction"
-                                    function-args="{{ ['$event', 'widgetContext', 'entityId'] }}"
+                                    function-args="{{ ['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams'] }}"
                                     validation-args="{{ [] }}">
                         </tb-js-func>
                     </fieldset>
