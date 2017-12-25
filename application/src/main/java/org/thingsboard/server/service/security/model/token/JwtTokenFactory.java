@@ -20,7 +20,6 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -31,7 +30,9 @@ import org.thingsboard.server.config.JwtSettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
-import java.util.Arrays;
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -81,13 +82,13 @@ public class JwtTokenFactory {
             claims.put(CUSTOMER_ID, securityUser.getCustomerId().getId().toString());
         }
 
-        DateTime currentTime = new DateTime();
+        ZonedDateTime currentTime = ZonedDateTime.now();
 
         String token = Jwts.builder()
                 .setClaims(claims)
                 .setIssuer(settings.getTokenIssuer())
-                .setIssuedAt(currentTime.toDate())
-                .setExpiration(currentTime.plusSeconds(settings.getTokenExpirationTime()).toDate())
+                .setIssuedAt(Date.from(currentTime.toInstant()))
+                .setExpiration(Date.from(currentTime.plusSeconds(settings.getTokenExpirationTime()).toInstant()))
                 .signWith(SignatureAlgorithm.HS512, settings.getTokenSigningKey())
                 .compact();
 
@@ -129,11 +130,11 @@ public class JwtTokenFactory {
             throw new IllegalArgumentException("Cannot create JWT Token without username/email");
         }
 
-        DateTime currentTime = new DateTime();
+        ZonedDateTime currentTime = ZonedDateTime.now();
 
         UserPrincipal principal = securityUser.getUserPrincipal();
         Claims claims = Jwts.claims().setSubject(principal.getValue());
-        claims.put(SCOPES, Arrays.asList(Authority.REFRESH_TOKEN.name()));
+        claims.put(SCOPES, Collections.singletonList(Authority.REFRESH_TOKEN.name()));
         claims.put(USER_ID, securityUser.getId().getId().toString());
         claims.put(IS_PUBLIC, principal.getType() == UserPrincipal.Type.PUBLIC_ID);
 
@@ -141,8 +142,8 @@ public class JwtTokenFactory {
                 .setClaims(claims)
                 .setIssuer(settings.getTokenIssuer())
                 .setId(UUID.randomUUID().toString())
-                .setIssuedAt(currentTime.toDate())
-                .setExpiration(currentTime.plusSeconds(settings.getRefreshTokenExpTime()).toDate())
+                .setIssuedAt(Date.from(currentTime.toInstant()))
+                .setExpiration(Date.from(currentTime.plusSeconds(settings.getRefreshTokenExpTime()).toInstant()))
                 .signWith(SignatureAlgorithm.HS512, settings.getTokenSigningKey())
                 .compact();
 
