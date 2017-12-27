@@ -29,13 +29,12 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
 import java.io.IOException;
@@ -110,6 +109,14 @@ public class RestClient implements ClientHttpRequestInterceptor {
     public Asset assignAsset(CustomerId customerId, AssetId assetId) {
         return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", null, Asset.class,
                 customerId.toString(), assetId.toString()).getBody();
+    }
+
+    public EntityRelation makeRelation(String relationType, EntityId idFrom, EntityId idTo) {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(idFrom);
+        relation.setTo(idTo);
+        relation.setType(relationType);
+        return restTemplate.postForEntity(baseURL + "/api/relation", relation, EntityRelation.class).getBody();
     }
 
     public DeviceCredentials getCredentials(DeviceId id) {
