@@ -33,8 +33,7 @@
         <spring.version>4.3.4.RELEASE</spring.version>
         <spring-security.version>4.2.0.RELEASE</spring-security.version>
         <jjwt.version>0.7.0</jjwt.version>
-        <joda-time.version>2.4</joda-time.version>
-        <json-path.version>2.2.0</json-path.version>
+         <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
@@ -482,11 +481,6 @@
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt</artifactId>
                 <version>${jjwt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>joda-time</groupId>
-                <artifactId>joda-time</artifactId>
-                <version>${joda-time.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.velocity</groupId>
