@@ -50,6 +50,8 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
 
     vm.sources = [];
     vm.sourceIndex = 0;
+    vm.defaultPageSize = 10;
+    vm.defaultSortOrder = '-0';
 
     $scope.$watch('vm.ctx', function() {
        if (vm.ctx) {
@@ -107,6 +109,8 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
         cssParser.cssPreviewNamespace = namespace;
         cssParser.createStyleElement(namespace, cssString);
         $element.addClass(namespace);
+
+        vm.displayPagination = angular.isDefined(vm.settings.displayPagination) ? vm.settings.displayPagination : true;
 
         function hashCode(str) {
             var hash = 0;
@@ -211,7 +215,7 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
                 source.data = [];
                 source.rawData = [];
                 source.query = {
-                    limit: 5,
+                    limit: vm.settings.defaultPageSize || 10,
                     page: 1,
                     order: '-0'
                 }
