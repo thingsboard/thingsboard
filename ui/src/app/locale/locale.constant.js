@@ -1029,6 +1029,16 @@ export default angular.module('thingsboard.locale', [])
                     "last": "Last",
                     "time-period": "Time period"
                 },
+                "depthwindow": {
+                    "realtime": "Realtime",
+                    "history": "History",
+                    "last-prefix": "last",
+                    "period": "from {{ startDepth }} to {{ endDepth }}",
+                    "edit": "Edit depthwindow",
+                    "last": "Last",
+                    "depth-range": "Depth range",
+                    "depth-period": "Depth period"
+                },
                 "user": {
                     "user": "User",
                     "users": "Users",
@@ -1194,7 +1204,9 @@ export default angular.module('thingsboard.locale', [])
                     "units": "Special symbol to show next to value",
                     "decimals": "Number of digits after floating point",
                     "timewindow": "Timewindow",
+                    "depthwindow": "Depthwindow",
                     "use-dashboard-timewindow": "Use dashboard timewindow",
+                    "use-dashboard-depthwindow": "Use dashboard depthwindow",
                     "display-legend": "Display legend",
                     "datasources": "Datasources",
                     "maximum-datasources": "Maximum { count, select, 1 {1 datasource is allowed.} other {# datasources are allowed} }",

@@ -33,7 +33,7 @@ function DatetimePeriod($compile, $templateCache) {
         var template = $templateCache.get(datetimePeriodTemplate);
         element.html(template);
 
-       /* ngModelCtrl.$render = function () {
+        ngModelCtrl.$render = function () {
             var date = new Date();
             scope.startDate = new Date(
                 date.getFullYear(),
@@ -44,17 +44,6 @@ function DatetimePeriod($compile, $templateCache) {
                 var value = ngModelCtrl.$viewValue;
                 scope.startDate = new Date(value.startTimeMs);
                 scope.endDate = new Date(value.endTimeMs);
-            }
-        }*/
-
-        ngModelCtrl.$render = function () {
-            var depth = 0.0;
-            scope.startDate = depth
-            scope.endDate = depth + 200.0;
-            if (ngModelCtrl.$viewValue) {
-                var value = ngModelCtrl.$viewValue;
-                scope.startDate = value.startTimeMs;
-                scope.endDate = value.endTimeMs;
             }
         }
 
@@ -68,10 +57,8 @@ function DatetimePeriod($compile, $templateCache) {
             var value = null;
             if (scope.startDate && scope.endDate) {
                 value = {
-                    /*startTimeMs: scope.startDate.getTime(),
-                    endTimeMs: scope.endDate.getTime()*/
-                    startTimeMs: scope.startDate,
-                    endTimeMs: scope.endDate
+                    startTimeMs: scope.startDate.getTime(),
+                    endTimeMs: scope.endDate.getTime()
                 };
                 ngModelCtrl.$setValidity('datetimePeriod', true);
             } else {
@@ -86,22 +73,22 @@ function DatetimePeriod($compile, $templateCache) {
 
         scope.$watch('startDate', function (newDate) {
             if (newDate) {
-                /*if (newDate.getTime() > scope.maxStartDate) {
+                if (newDate.getTime() > scope.maxStartDate) {
                     scope.startDate = angular.copy(scope.maxStartDate);
                 }
-                scope.updateMinMaxDates();*/
+                scope.updateMinMaxDates();
             }
             scope.updateView();
         });
 
         scope.$watch('endDate', function (newDate) {
             if (newDate) {
-                /*if (newDate.getTime() < scope.minEndDate) {
+                if (newDate.getTime() < scope.minEndDate) {
                     scope.endDate = angular.copy(scope.minEndDate);
                 } else if (newDate.getTime() > scope.maxEndDate) {
                     scope.endDate = angular.copy(scope.maxEndDate);
                 }
-                scope.updateMinMaxDates();*/
+                scope.updateMinMaxDates();
             }
             scope.updateView();
         });

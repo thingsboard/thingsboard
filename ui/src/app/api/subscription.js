@@ -38,6 +38,7 @@ export default class Subscription {
         this.id = this.ctx.utils.guid();
         this.cafs = {};
         this.registrations = [];
+        this.startDpt = 3000;
 
         var subscription = this;
         var deferred = this.ctx.$q.defer();
@@ -103,7 +104,71 @@ export default class Subscription {
                     deferred.reject();
                 }
             );
-        } else {
+        }else if(this.type === this.ctx.types.widgetType.depthseries.value){
+            this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || function(){};
+            this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || function(){};
+            this.callbacks.dataLoading = this.callbacks.dataLoading || function(){};
+            this.callbacks.legendDataUpdated = this.callbacks.legendDataUpdated || function(){};
+            this.callbacks.depthWindowUpdated = this.callbacks.depthWindowUpdated || function(){};
+
+            this.datasources = this.ctx.utils.validateDatasources(options.datasources);
+            this.datasourceListeners = [];
+
+            /*
+             *   data = array of datasourceData
+             *   datasourceData = {
+             *   			tbDatasource,
+             *   			dataKey,     { name, config }
+             *   			data = array of [time, value]
+             *   }
+             */
+            this.data = [];
+            this.hiddenData = [];
+            this.originalDepthwindow = null;
+            this.depthWindow = {
+                stDiff: this.ctx.stDiff
+            }
+            this.useDashboardDepthwindow = options.useDashboardDepthwindow;
+            this.stateData = options.stateData;
+            if (this.useDashboardDepthwindow) {
+                this.depthWindowConfig = angular.copy(options.dashboardDepthwindow);
+            } else {
+                this.depthWindowConfig = angular.copy(options.depthWindowConfig);
+            }
+
+            this.subscriptionDepthwindow = null;
+
+            this.units = options.units || '';
+            this.decimals = angular.isDefined(options.decimals) ? options.decimals : 2;
+
+            this.loadingData = false;
+
+            if (options.legendConfig) {
+                this.legendConfig = options.legendConfig;
+                this.legendData = {
+                    keys: [],
+                    data: []
+                };
+                this.displayLegend = true;
+            } else {
+                this.displayLegend = false;
+            }
+            this.caulculateLegendData = this.displayLegend &&
+                this.type === this.ctx.types.widgetType.depthseries.value &&
+                (this.legendConfig.showMin === true ||
+                    this.legendConfig.showMax === true ||
+                    this.legendConfig.showAvg === true ||
+                    this.legendConfig.showTotal === true);
+            this.initDataSubscription().then(
+                function success() {
+                    deferred.resolve(subscription);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        }
+        else {
             this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || function(){};
             this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || function(){};
             this.callbacks.dataLoading = this.callbacks.dataLoading || function(){};
@@ -336,6 +401,20 @@ export default class Subscription {
                 this.startWatchingTimewindow();
             }
         }
+
+        if (this.type === this.ctx.types.widgetType.depthseries.value) {
+            if (this.useDashboardDepthwindow) {
+                registration = this.ctx.$scope.$on('dashboardDepthwindowChanged', function (event, newDashboardDepthwindow) {
+                    if (!angular.equals(subscription.depthWindowConfig, newDashboardDepthwindow) && newDashboardDepthwindow) {
+                        subscription.depthWindowConfig = angular.copy(newDashboardDepthwindow);
+                        subscription.update();
+                    }
+                });
+                this.registrations.push(registration);
+            } else {
+                this.startWatchingDepthwindow();
+            }
+        }
     }
 
     resetData() {
@@ -365,6 +444,18 @@ export default class Subscription {
         this.registrations.push(this.timeWindowWatchRegistration);
     }
 
+    startWatchingDepthwindow() {
+        var subscription = this;
+        this.depthWindowWatchRegistration = this.ctx.$scope.$watch(function () {
+            return subscription.depthWindowConfig;
+        }, function (newDepthwindow, prevDepthwindow) {
+            if (!angular.equals(newDepthwindow, prevDepthwindow)) {
+                subscription.update();
+            }
+        }, true);
+        this.registrations.push(this.depthWindowWatchRegistration);
+    }
+
     stopWatchingTimewindow() {
         if (this.timeWindowWatchRegistration) {
             this.timeWindowWatchRegistration();
@@ -374,6 +465,17 @@ export default class Subscription {
             }
         }
     }
+
+    stopWatchingDepthwindow() {
+        if (this.depthWindowWatchRegistration) {
+            this.depthWindowWatchRegistration();
+            var index = this.registrations.indexOf(this.depthWindowWatchRegistration);
+            if (index > -1) {
+                this.registrations.splice(index, 1);
+            }
+        }
+    }
+
 
     initRpc() {
         var deferred = this.ctx.$q.defer();
@@ -554,6 +656,10 @@ export default class Subscription {
         this.timeWindowConfig = newTimewindow;
     }
 
+    updateDepthwindowConfig(newDepthwindow) {
+        this.depthWindowConfig = newDepthwindow;
+    }
+
     onResetTimewindow() {
         if (this.useDashboardTimewindow) {
             this.ctx.dashboardTimewindowApi.onResetTimewindow();
@@ -565,6 +671,21 @@ export default class Subscription {
                 this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
                 this.update();
                 this.startWatchingTimewindow();
+            }
+        }
+    }
+
+    onResetDepthwindow() {
+        if (this.useDashboardDepthwindow) {
+            this.ctx.dashboardDepthwindowApi.onResetDepthwindow();
+        } else {
+            if (this.originalDepthwindow) {
+                this.stopWatchingDepthwindow();
+                this.depthWindowConfig = angular.copy(this.originalDepthwindow);
+                this.originalDepthwindow = null;
+                this.callbacks.depthWindowUpdated(this, this.depthWindowConfig);
+                this.update();
+                this.startWatchingDepthwindow();
             }
         }
     }
@@ -581,6 +702,21 @@ export default class Subscription {
             this.callbacks.timeWindowUpdated(this, this.timeWindowConfig);
             this.update();
             this.startWatchingTimewindow();
+        }
+    }
+
+    onUpdateDepthwindow(startDepthFt, endDepthFt) {
+        if (this.useDashboardDepthwindow) {
+            this.ctx.dashboardDepthwindowApi.onUpdateDepthwindow(startDepthFt, endDepthFt);
+        } else {
+            this.stopWatchingDepthwindow();
+            if (!this.originalDepthwindow) {
+                this.originalDepthwindow = angular.copy(this.depthWindowConfig);
+            }
+            this.depthWindowConfig = this.ctx.depthService.toHistoryDepthwindow(this.depthWindowConfig, startDepthFt, endDepthFt);
+            this.callbacks.depthWindowUpdated(this, this.depthWindowConfig);
+            this.update();
+            this.startWatchingDepthwindow();
         }
     }
 
@@ -605,6 +741,20 @@ export default class Subscription {
         }
     }
 
+    updateDepthwindow(minDepth, maxDepth) {
+        this.depthWindow.interval = this.subscriptionDepthwindow.aggregation.interval || 1000;
+        if (this.subscriptionDepthwindow.realtimeWindowFt) {
+            //var temp = 300;
+            this.depthWindow.maxDepth = maxDepth + 3;///*(new Date).getTime()*/ this.startDpt + this.depthWindow.stDiff;
+            //change new date getTime().
+            this.depthWindow.minDepth = maxDepth - this.subscriptionDepthwindow.realtimeWindowFt;//this.depthWindow.maxDepth - this.subscriptionDepthwindow.realtimeWindowFt;
+            this.startDpt = this.startDpt + this.subscriptionDepthwindow.realtimeWindowFt;
+        } else if (this.subscriptionDepthwindow.fixedWindow) {
+            this.depthWindow.maxDepth = this.subscriptionDepthwindow.fixedWindow.endDepthFt;
+            this.depthWindow.minDepth = this.subscriptionDepthwindow.fixedWindow.startDepthFt;
+        }
+    }
+
     updateRealtimeSubscription(subscriptionTimewindow) {
         if (subscriptionTimewindow) {
             this.subscriptionTimewindow = subscriptionTimewindow;
@@ -616,6 +766,19 @@ export default class Subscription {
         }
         this.updateTimewindow();
         return this.subscriptionTimewindow;
+    }
+
+    updateRealtimeDepthSubscription(subscriptionDepthwindow) {
+        if (subscriptionDepthwindow) {
+            this.subscriptionDepthwindow = subscriptionDepthwindow;
+        } else {
+            this.subscriptionDepthwindow =
+                this.ctx.depthService.createSubscriptionDepthwindow(
+                    this.depthWindowConfig,
+                    this.depthWindow.stDiff, this.stateData);
+        }
+        this.updateDepthwindow();
+        return this.subscriptionDepthwindow;
     }
 
     dataUpdated(sourceData, datasourceIndex, dataKeyIndex, apply) {
@@ -641,6 +804,11 @@ export default class Subscription {
         if (update) {
             if (this.subscriptionTimewindow && this.subscriptionTimewindow.realtimeWindowMs) {
                 this.updateTimewindow();
+            }
+
+            if (this.subscriptionDepthwindow && this.subscriptionDepthwindow.realtimeWindowFt) {
+                if(currentData.data.length > 1)
+                    this.updateDepthwindow(currentData.data[0][0],currentData.data[currentData.data.length - 1][0]);
             }
             currentData.data = sourceData.data;
             if (this.caulculateLegendData) {
@@ -698,6 +866,14 @@ export default class Subscription {
                     this.onDataUpdated();
                 }
             }
+
+            if (this.type === this.ctx.types.widgetType.depthseries.value && this.depthWindowConfig){
+                this.updateRealtimeDepthSubscription();
+                if (this.subscriptionDepthwindow.fixedWindow) {
+                    this.onDataUpdated();
+                }
+            }
+
             var index = 0;
             for (var i = 0; i < this.datasources.length; i++) {
                 var datasource = this.datasources[i];
@@ -709,6 +885,7 @@ export default class Subscription {
                 var listener = {
                     subscriptionType: this.type,
                     subscriptionTimewindow: this.subscriptionTimewindow,
+                    subscriptionDepthwindow: this.subscriptionDepthwindow,
                     datasource: datasource,
                     entityType: datasource.entityType,
                     entityId: datasource.entityId,
@@ -719,8 +896,15 @@ export default class Subscription {
                         this.subscriptionTimewindow = subscription.updateRealtimeSubscription();
                         return this.subscriptionTimewindow;
                     },
+                    updateRealtimeDepthSubscription: function () {
+                        this.subscriptionDepthwindow = subscription.updateRealtimeDepthSubscription();
+                        return this.subscriptionDepthwindow;
+                    },
                     setRealtimeSubscription: function (subscriptionTimewindow) {
                         subscription.updateRealtimeSubscription(angular.copy(subscriptionTimewindow));
+                    },
+                    setRealtimeDepthSubscription: function (subscriptionDepthwindow) {
+                        subscription.updateRealtimeDepthSubscription(angular.copy(subscriptionDepthwindow));
                     },
                     datasourceIndex: index
                 };

@@ -28,7 +28,7 @@ import AliasController from '../api/alias-controller';
 
 /*@ngInject*/
 export default function DashboardController(types, utils, dashboardUtils, widgetService, userService,
-                                            dashboardService, timeService, entityService, itembuffer, importExport, hotkeys, $window, $rootScope,
+                                            dashboardService, timeService, depthService, entityService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $element, $state, $stateParams, $mdDialog, $mdMedia, $timeout, $document, $q, $translate, $filter) {
 
     var vm = this;
@@ -197,6 +197,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.displayTitle = displayTitle;
     vm.displayExport = displayExport;
     vm.displayDashboardTimewindow = displayDashboardTimewindow;
+    vm.displayDashboardDepthwindow = displayDashboardDepthwindow;
     vm.displayDashboardsSelect = displayDashboardsSelect;
     vm.displayEntitiesSelect = displayEntitiesSelect;
 
@@ -363,6 +364,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             vm.dashboardConfiguration = vm.dashboard.configuration;
             vm.dashboardCtx.dashboard = vm.dashboard;
             vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+            vm.dashboardCtx.dashboardDepthwindow = vm.dashboardConfiguration.depthwindow;
             vm.dashboardCtx.aliasController = new AliasController($scope, $q, $filter, utils,
                 types, entityService, vm.dashboardCtx.stateController, vm.dashboardConfiguration.entityAliases);
             var parentScope = $window.parent.angular.element($window.frameElement).scope();
@@ -375,6 +377,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     vm.dashboardConfiguration = vm.dashboard.configuration;
                     vm.dashboardCtx.dashboard = vm.dashboard;
                     vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+                    vm.dashboardCtx.dashboardDepthwindow = vm.dashboardConfiguration.depthwindow;
                     vm.dashboardCtx.aliasController = new AliasController($scope, $q, $filter, utils,
                         types, entityService, vm.dashboardCtx.stateController, vm.dashboardConfiguration.entityAliases);
                 }, function fail() {
@@ -791,7 +794,18 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     function displayDashboardTimewindow() {
         if (vm.dashboard && vm.dashboard.configuration.settings &&
             angular.isDefined(vm.dashboard.configuration.settings.showDashboardTimewindow)) {
+            //$log.log("showDashboardTimewindow : " + vm.dashboard.configuration.settings.showDashboardTimewindow);
             return vm.dashboard.configuration.settings.showDashboardTimewindow;
+        } else {
+            return true;
+        }
+    }
+
+    function displayDashboardDepthwindow() {
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.showDashboardDepthwindow)) {
+            //$log.log("showDashboardTimewindow : " + vm.dashboard.configuration.settings.showDashboardTimewindow);
+            return vm.dashboard.configuration.settings.showDashboardDepthwindow;
         } else {
             return true;
         }
@@ -1016,9 +1030,11 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     vm.dashboard = vm.prevDashboard;
                     vm.dashboardConfiguration = vm.dashboard.configuration;
                     vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+                    vm.dashboardCtx.dashboardDepthwindow = vm.dashboardConfiguration.depthwindow;
                     entityAliasesUpdated();
                 } else {
                     vm.dashboard.configuration.timewindow = vm.dashboardCtx.dashboardTimewindow;
+                    vm.dashboard.configuration.depthwindow = vm.dashboardCtx.dashboardDepthwindow;
                 }
             }
         }

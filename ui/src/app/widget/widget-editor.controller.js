@@ -347,6 +347,13 @@ export default function WidgetEditorController(widgetService, userService, types
                             }
                         };
                     }
+                    if (!config.depthwindow) {
+                        config.depthwindow = {
+                            realtime: {
+                                depthwindowFt: 300
+                            }
+                        };
+                    }
                     for (var i = 0; i < config.datasources.length; i++) {
                         var datasource = config.datasources[i];
                         datasource.type = vm.widget.type;
