@@ -43,7 +43,7 @@ function DatakeyConfigDialogController($scope, $mdDialog, $q, entityService, dat
             function success(aliasInfo) {
                 var entity = aliasInfo.currentEntity;
                 if (entity) {
-                    entityService.getEntityKeys(entity.entityType, entity.id, query, type).then(
+                    entityService.getEntityKeys(entity.entityType, entity.id, query, type, {ignoreLoading: true}).then(
                         function success(keys) {
                             deferred.resolve(keys);
                         },

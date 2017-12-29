@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section ng-show="!loading && vm.noData()" layout-align="center center"
+<section ng-show="!$root.loading && vm.noData()" layout-align="center center"
 		 style="text-transform: uppercase; display: flex; z-index: 1;"
 		 class="md-headline tb-absolute-fill">
 	 <md-button ng-if="!vm.isReadOnly()" class="tb-add-new-widget" ng-click="vm.addWidgetType($event)">
@@ -42,10 +42,10 @@
 	on-init-failed="vm.dashboardInitFailed(e)">
 </tb-dashboard>
 <section layout="row" layout-wrap class="tb-footer-buttons md-fab ">
-	<md-fab-speed-dial ng-disabled="loading" ng-show="!vm.isReadOnly()"
+	<md-fab-speed-dial ng-disabled="$root.loading" ng-show="!vm.isReadOnly()"
 					   md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up">
 		<md-fab-trigger>
-			<md-button ng-disabled="loading"
+			<md-button ng-disabled="$root.loading"
 					   class="tb-btn-footer md-accent md-hue-2 md-fab"
 					   aria-label="{{ 'widget.add-widget-type' | translate }}">
 				<md-tooltip md-direction="top">
@@ -55,7 +55,7 @@
 			</md-button>
 		</md-fab-trigger>
 		<md-fab-actions>
-			<md-button ng-disabled="loading"
+			<md-button ng-disabled="$root.loading"
 					   class="tmd-accent md-hue-2 md-fab" ng-click="vm.addWidgetType($event)"
 					   aria-label="{{ 'action.create' | translate }}">
 				<md-tooltip md-direction="top">
@@ -63,7 +63,7 @@
 				</md-tooltip>
 				<ng-md-icon icon="insert_drive_file"></ng-md-icon>
 			</md-button>
-			<md-button ng-disabled="loading"
+			<md-button ng-disabled="$root.loading"
 					   class="tmd-accent md-hue-2 md-fab" ng-click="vm.importWidgetType($event)"
 					   aria-label="{{ 'action.import' | translate }}">
 				<md-tooltip md-direction="top">

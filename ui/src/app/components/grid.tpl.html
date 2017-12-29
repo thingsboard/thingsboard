@@ -45,7 +45,7 @@
                                 <tb-grid-card-content flex grid-ctl="vm" parent-ctl="vm.parentCtl" item-controller="vm.itemCardController" item-template="vm.itemCardTemplate" item="rowItem[n]"></tb-grid-card-content>
                             </md-card-content>
                             <md-card-actions layout="row" layout-align="end end">
-                                <md-button ng-if="action.isEnabled(rowItem[n])" ng-disabled="loading" class="md-icon-button md-primary" ng-repeat="action in vm.actionsList"
+                                <md-button ng-if="action.isEnabled(rowItem[n])" ng-disabled="$root.loading" class="md-icon-button md-primary" ng-repeat="action in vm.actionsList"
                                            ng-click="action.onAction($event, rowItem[n])" aria-label="{{ action.name() }}">
                                     <md-tooltip md-direction="top">
                                         {{ action.details( rowItem[n] ) }}
@@ -81,28 +81,28 @@
 </section>
 
 <section layout="row" layout-wrap class="tb-footer-buttons md-fab " layout-align="start end">
-    <md-button ng-disabled="loading" ng-show="vm.items.selectedCount > 0" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-repeat="groupAction in vm.groupActionsList"
+    <md-button ng-disabled="$root.loading" ng-show="vm.items.selectedCount > 0" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-repeat="groupAction in vm.groupActionsList"
                ng-click="groupAction.onAction($event, vm.items)" aria-label="{{ groupAction.name() }}">
         <md-tooltip md-direction="top">
             {{ groupAction.details(vm.items.selectedCount) }}
         </md-tooltip>
         <ng-md-icon icon="{{groupAction.icon}}"></ng-md-icon>
     </md-button>
-    <md-button ng-disabled="loading" ng-show="vm.topIndex > 0" class="tb-btn-footer md-primary md-hue-1 md-fab" ng-click="vm.moveToTop()" aria-label="{{'grid.scroll-to-top' | translate}}" >
+    <md-button ng-disabled="$root.loading" ng-show="vm.topIndex > 0" class="tb-btn-footer md-primary md-hue-1 md-fab" ng-click="vm.moveToTop()" aria-label="{{'grid.scroll-to-top' | translate}}" >
         <md-tooltip md-direction="top">
             {{'grid.scroll-to-top' | translate}}
         </md-tooltip>
         <ng-md-icon icon="arrow_drop_up"></ng-md-icon>
     </md-button>
-    <md-button ng-disabled="loading" ng-if="vm.addItemAction.name() && vm.addItemActions.length == 0" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-click="vm.addItemAction.onAction($event)" aria-label="{{ vm.addItemAction.name() }}" >
+    <md-button ng-disabled="$root.loading" ng-if="vm.addItemAction.name() && vm.addItemActions.length == 0" class="tb-btn-footer md-accent md-hue-2 md-fab" ng-click="vm.addItemAction.onAction($event)" aria-label="{{ vm.addItemAction.name() }}" >
         <md-tooltip md-direction="top">
             {{ vm.addItemAction.details() }}
         </md-tooltip>
         <ng-md-icon icon="{{ vm.addItemAction.icon }}"></ng-md-icon>
     </md-button>
-    <md-fab-speed-dial ng-disabled="loading" ng-if="vm.addItemAction.name() && vm.addItemActions.length > 0" md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up" ng-if="vm.addItemAction.name()">
+    <md-fab-speed-dial ng-disabled="$root.loading" ng-if="vm.addItemAction.name() && vm.addItemActions.length > 0" md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up" ng-if="vm.addItemAction.name()">
         <md-fab-trigger>
-            <md-button ng-disabled="loading" class="tb-btn-footer md-accent md-hue-2 md-fab" aria-label="{{ vm.addItemAction.name() }}" >
+            <md-button ng-disabled="$root.loading" class="tb-btn-footer md-accent md-hue-2 md-fab" aria-label="{{ vm.addItemAction.name() }}" >
                 <md-tooltip md-direction="top">
                     {{ vm.addItemAction.details() }}
                 </md-tooltip>
@@ -110,7 +110,7 @@
             </md-button>
         </md-fab-trigger>
         <md-fab-actions>
-            <md-button ng-disabled="loading" class="md-accent md-hue-2 md-fab" ng-repeat="addItemAction in vm.addItemActions"
+            <md-button ng-disabled="$root.loading" class="md-accent md-hue-2 md-fab" ng-repeat="addItemAction in vm.addItemActions"
                        ng-click="addItemAction.onAction($event)" aria-label="{{ addItemAction.name() }}" >
                 <md-tooltip md-direction="top">
                     {{ addItemAction.details() }}

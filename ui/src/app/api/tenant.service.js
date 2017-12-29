@@ -29,7 +29,7 @@ function TenantService($http, $q) {
 
     return service;
 
-    function getTenants (pageLink) {
+    function getTenants (pageLink, config) {
         var deferred = $q.defer();
         var url = '/api/tenants?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -41,7 +41,7 @@ function TenantService($http, $q) {
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
         }
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
@@ -49,10 +49,10 @@ function TenantService($http, $q) {
         return deferred.promise;
     }
 
-    function getTenant (tenantId) {
+    function getTenant (tenantId, config) {
         var deferred = $q.defer();
         var url = '/api/tenant/' + tenantId;
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);

@@ -32,7 +32,7 @@
 </div>
 
 <md-content class="md-padding" layout="column">
-	<fieldset ng-show="!isPublic" ng-disabled="loading || !isEdit">
+	<fieldset ng-show="!isPublic" ng-disabled="$root.loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>customer.title</label>
 			<input required name="title" ng-model="customer.title">	

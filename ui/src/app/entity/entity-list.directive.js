@@ -38,7 +38,7 @@ export default function EntityListDirective($compile, $templateCache, $q, $mdUti
 
         scope.fetchEntities = function(searchText, limit) {
              var deferred = $q.defer();
-             entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit).then(
+             entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit, {ignoreLoading: true}).then(
                  function success(result) {
                     if (result) {
                         deferred.resolve(result);

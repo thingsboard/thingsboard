@@ -129,7 +129,7 @@
                                                 <input placeholder="{{ 'widget.resource-url' | translate }}"
                                                        ng-required="true" name="resource" ng-model="resource.url">
                                             </md-input-container>
-                                            <md-button ng-disabled="loading" class="md-icon-button md-primary"
+                                            <md-button ng-disabled="$root.loading" class="md-icon-button md-primary"
                                                        ng-click="vm.removeResource($index)"
                                                        aria-label="{{ 'action.remove' | translate }}">
                                                 <md-tooltip md-direction="top">
@@ -142,7 +142,7 @@
                                             </md-button>
                                         </div>
                                         <div>
-                                            <md-button ng-disabled="loading" class="md-primary md-raised"
+                                            <md-button ng-disabled="$root.loading" class="md-primary md-raised"
                                                        ng-click="vm.addResource()"
                                                        aria-label="{{ 'action.add' | translate }}">
                                                 <md-tooltip md-direction="top">

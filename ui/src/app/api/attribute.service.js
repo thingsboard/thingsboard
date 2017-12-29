@@ -35,7 +35,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
 
     return service;
 
-    function getEntityKeys(entityType, entityId, query, type) {
+    function getEntityKeys(entityType, entityId, query, type, config) {
         var deferred = $q.defer();
         var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/keys/';
         if (type === types.dataKeyType.timeseries) {
@@ -43,7 +43,7 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         } else if (type === types.dataKeyType.attribute) {
             url += 'attributes';
         }
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             var result = [];
             if (response.data) {
                 if (query) {
