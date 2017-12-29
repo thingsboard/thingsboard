@@ -238,19 +238,30 @@ export default class TbFlot {
                 if (this.ticksFormatterFunction) {
                     return this.ticksFormatterFunction(value);
                 }
-                var factor = this.tickDecimals ? Math.pow(10, this.tickDecimals) : 1,
-                    formatted = "" + Math.round(value * factor) / factor;
-                if (this.tickDecimals != null) {
-                    var decimal = formatted.indexOf("."),
-                        precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
-
-                    if (precision < this.tickDecimals) {
-                        formatted = (precision ? formatted : formatted + ".") + ("" + factor).substr(1, this.tickDecimals - precision);
-                    }
+                if (this.tickDecimals) {
+                    value = value.toFixed(this.tickDecimals);
                 }
-                formatted += ' ' + this.tickUnits;
-                return formatted;
-            }
+                if (this.tickUnits) {
+                    value = value + ' ' + this.tickUnits;
+                }
+                if (this.tickSize) {
+                    return value;
+                }
+
+                // var factor = this.tickDecimals ? Math.pow(10, this.tickDecimals) : 1,
+                //     formatted = "" + Math.round(value * factor) / factor;
+                // if (this.tickDecimals != null) {
+                //     var decimal = formatted.indexOf("."),
+                //         precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
+                //
+                //     if (precision < this.tickDecimals) {
+                //         formatted = (precision ? formatted : formatted + ".") + ("" + factor).substr(1, this.tickDecimals - precision);
+                //     }
+                // }
+                // formatted += ' ' + this.tickUnits;
+                return value;
+
+            };
 
             this.yaxis.tickFormatter = ctx.yAxisTickFormatter;
 
@@ -262,6 +273,8 @@ export default class TbFlot {
                 this.yaxis.labelFont.color = this.yaxis.font.color;
                 this.yaxis.labelFont.size = this.yaxis.font.size+2;
                 this.yaxis.labelFont.weight = "bold";
+                this.yaxis.tickSize = settings.yaxis.tickSize || null;
+                this.yaxis.tickDecimals = settings.yaxis.tickDecimals || null;
                 if (settings.yaxis.ticksFormatter && settings.yaxis.ticksFormatter.length) {
                     try {
                         this.yaxis.ticksFormatterFunction = new Function('value', settings.yaxis.ticksFormatter);
@@ -489,7 +502,7 @@ export default class TbFlot {
         var yaxis = angular.copy(this.yaxis);
 
         var label = keySettings.axisTitle && keySettings.axisTitle.length ? keySettings.axisTitle : yaxis.label;
-        var tickDecimals = angular.isDefined(keySettings.axisTickDecimals) ? keySettings.axisTickDecimals : 0;
+        //var tickDecimals = angular.isDefined(keySettings.axisTickDecimals) ? keySettings.axisTickDecimals : 0;
         var position = keySettings.axisPosition && keySettings.axisPosition.length ? keySettings.axisPosition : "left";
 
         var min = angular.isDefined(keySettings.axisMin) ? keySettings.axisMin : yaxis.min;
@@ -499,7 +512,6 @@ export default class TbFlot {
         yaxis.min = min;
         yaxis.max = max;
         yaxis.tickUnits = units;
-        yaxis.tickDecimals = tickDecimals;
         yaxis.alignTicksWithAxis = position == "right" ? 1 : null;
         yaxis.position = position;
 
@@ -904,6 +916,11 @@ export default class TbFlot {
                                 "type": "number",
                                 "default": null
                             },
+                            "tickSize": {
+                                "title": "Step size between ticks",
+                                "type": "number",
+                                "default": null
+                            },
                             "showLabels": {
                                 "title": "Show labels",
                                 "type": "boolean",
@@ -928,7 +945,13 @@ export default class TbFlot {
                                 "title": "Ticks formatter function, f(value)",
                                 "type": "string",
                                 "default": ""
+                            },
+                            "tickDecimals": {
+                                "title": "The number of decimals to display",
+                                "type": "number",
+                                "default": 0
                             }
+
                         }
                     }
                 },
@@ -986,6 +1009,8 @@ export default class TbFlot {
                     "items": [
                         "yaxis.min",
                         "yaxis.max",
+                        "yaxis.tickSize",
+                        "yaxis.tickDecimals",
                         "yaxis.showLabels",
                         "yaxis.title",
                         "yaxis.titleAngle",
@@ -1010,24 +1035,24 @@ export default class TbFlot {
 
     static datakeySettingsSchema(defaultShowLines) {
         return {
-                "schema": {
+            "schema": {
                 "type": "object",
-                    "title": "DataKeySettings",
-                    "properties": {
+                "title": "DataKeySettings",
+                "properties": {
                     "showLines": {
                         "title": "Show lines",
-                            "type": "boolean",
-                            "default": defaultShowLines
+                        "type": "boolean",
+                        "default": defaultShowLines
                     },
                     "fillLines": {
                         "title": "Fill lines",
-                            "type": "boolean",
-                            "default": false
+                        "type": "boolean",
+                        "default": false
                     },
                     "showPoints": {
                         "title": "Show points",
-                            "type": "boolean",
-                            "default": false
+                        "type": "boolean",
+                        "default": false
                     },
                     "tooltipValueFormatter": {
                         "title": "Tooltip value format function, f(value)",
@@ -1054,11 +1079,6 @@ export default class TbFlot {
                         "type": "string",
                         "default": ""
                     },
-                    "axisTickDecimals": {
-                        "title": "Axis tick number of digits after floating point",
-                        "type": "number",
-                        "default": 0
-                    },
                     "axisPosition": {
                         "title": "Axis position",
                         "type": "string",
@@ -1072,7 +1092,7 @@ export default class TbFlot {
                 },
                 "required": ["showLines", "fillLines", "showPoints"]
             },
-                "form": [
+            "form": [
                 "showLines",
                 "fillLines",
                 "showPoints",
@@ -1084,7 +1104,6 @@ export default class TbFlot {
                 "axisMin",
                 "axisMax",
                 "axisTitle",
-                "axisTickDecimals",
                 {
                     "key": "axisPosition",
                     "type": "rc-select",
