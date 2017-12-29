@@ -77,6 +77,21 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
+    public Optional<Customer> findCustomer(String title) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("customerTitle", title);
+        try {
+            ResponseEntity<Customer> customerEntity = restTemplate.getForEntity(baseURL + "/api/tenant/customers?customerTitle={customerTitle}", Customer.class, params);
+            return Optional.of(customerEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
     public Optional<Asset> findAsset(String name) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("assetName", name);
@@ -136,10 +151,6 @@ public class RestClient implements ClientHttpRequestInterceptor {
 
     public DeviceCredentials getCredentials(DeviceId id) {
         return restTemplate.getForEntity(baseURL + "/api/device/" + id.getId().toString() + "/credentials", DeviceCredentials.class).getBody();
-    }
-
-    public Customer getCustomerByTitle(String title) {
-        return restTemplate.getForEntity(baseURL + "/api/tenant/customers?customerTitle=" + title, Customer.class).getBody();
     }
 
     public RestTemplate getRestTemplate() {
