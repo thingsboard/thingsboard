@@ -1213,6 +1213,7 @@ export default angular.module('thingsboard.locale', [])
                     "remove-widget-title": "Are you sure you want to remove the widget '{{widgetTitle}}'?",
                     "remove-widget-text": "After the confirmation the widget and all related data will become unrecoverable.",
                     "timeseries": "Time series",
+                    "search-data": "Search data",
                     "latest-values": "Latest values",
                     "rpc": "Control widget",
                     "alarm": "Alarm widget",

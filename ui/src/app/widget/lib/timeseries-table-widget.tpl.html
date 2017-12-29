@@ -28,16 +28,20 @@
                 </tr>
                 </thead>
                 <tbody md-body>
-                <tr md-row ng-repeat="row in source.ts.data">
+                <tr md-row ng-repeat="row in source.ts.data track by $index">
                     <td ng-show="$index > 0 || ($index === 0 && vm.showTimestamp)" md-cell ng-repeat="d in row track by $index" ng-style="vm.cellStyle(source, $index, d)" ng-bind-html="vm.cellContent(source, $index, row, d)">
                     </td>
                 </tr>
                 </tbody>
             </table>
         </md-table-container>
-        <md-table-pagination md-limit="source.query.limit" md-limit-options="[5, 10, 15]"
-                             md-page="source.query.page" md-total="{{source.ts.count}}"
-                             md-on-paginate="vm.onPaginate(source)" md-page-select>
+        <md-table-pagination ng-if="vm.displayPagination"
+                             md-limit="source.query.limit"
+                             md-limit-options="vm.limitOptions"
+                             md-page="source.query.page"
+                             md-total="{{source.ts.count}}"
+                             md-on-paginate="vm.onPaginate(source)"
+                             md-page-select>
         </md-table-pagination>
     </md-tab>
 </md-tabs>
