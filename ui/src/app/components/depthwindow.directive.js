@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './timewindow.scss';
+//import './timewindow.scss';
+import './depthwindow.scss';
 
 import $ from 'jquery';
 import thingsboardDepthinterval from './depthinterval.directive';
@@ -21,9 +22,8 @@ import thingsboardDepthPeriod from './depth-period.directive';
 
 /* eslint-disable import/no-unresolved, import/default */
 
-//import timewindowButtonTemplate from './timewindow-button.tpl.html';
 import depthwindowTemplate from './depthwindow.tpl.html';
-import timewindowButtonTemplate from './timewindow-button.tpl.html';
+import depthwindowButtonTemplate from './depthwindow-button.tpl.html';
 import depthwindowPanelTemplate from './depthwindow-panel.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
@@ -83,10 +83,8 @@ function Depthwindow($compile, $templateCache, $filter, $mdPanel, $document, $md
 
         var template;
         if (scope.asButton) {
-            template = $templateCache.get(timewindowButtonTemplate);
-            $log.log("Inside button tpl");
+            template = $templateCache.get(depthwindowButtonTemplate);
         } else {
-            $log.log("Inside normal");
             scope.direction = angular.isDefined(attrs.direction) ? attrs.direction : 'left';
             scope.tooltipDirection = angular.isDefined(attrs.tooltipDirection) ? attrs.tooltipDirection : 'top';
             template = $templateCache.get(depthwindowTemplate);
@@ -189,16 +187,14 @@ function Depthwindow($compile, $templateCache, $filter, $mdPanel, $document, $md
             if ($translate.isReady()) {
                 if (scope.model.selectedTab === 0 && !scope.historyOnly) {
                     scope.model.displayValue = $translate.instant('depthwindow.realtime') + ' - ' +
-                        $translate.instant('depthwindow.last-prefix');
+                        $translate.instant('depthwindow.last-prefix') + ' ' + scope.model.realtime.depthwindowFt + "Ft";
                 } else {
                     scope.model.displayValue = !scope.historyOnly ? ($translate.instant('depthwindow.history') + ' - ') : '';
                     if (scope.model.history.historyType === 0) {
                         scope.model.displayValue += $translate.instant('depthwindow.last-prefix');
                     } else {
-                        /*var startString = $filter('date')(scope.model.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
-                        var endString = $filter('date')(scope.model.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');*/
-                        var startString = scope.model.history.fixedDepthwindow.startDepthFt;
-                        var endString = scope.model.history.fixedDepthwindow.endDepthFt;
+                        var startString = scope.model.history.fixedDepthwindow.startDepthFt + "Ft";
+                        var endString = scope.model.history.fixedDepthwindow.endDepthFt + "Ft";
                         scope.model.displayValue += $translate.instant('depthwindow.period', {startDepth: startString, endDepth: endString});
                     }
                 }

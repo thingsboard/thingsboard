@@ -15,15 +15,7 @@
     limitations under the License.
 
 -->
-<section layout="row">
-    <section layout="row" flex ng-show="!advanced">
-        <md-input-container flex>
-            <label translate>{{ predefinedName }}</label>
-            <md-select ng-model="intervalFt" style="min-width: 150px;" aria-label="predefined-interval">
-                <md-option ng-repeat="interval in intervals" ng-value="interval.value">
-                    {{interval.name}}
-                </md-option>
-            </md-select>
-        </md-input-container>
-    </section>
-</section>
+<md-button ng-disabled="disabled" class="md-raised md-primary" ng-click="openEditMode($event)">
+    <ng-md-icon icon="query_builder"></ng-md-icon>
+    <span>{{model.displayValue}}</span>
+</md-button>

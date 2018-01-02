@@ -38,7 +38,6 @@ export default class Subscription {
         this.id = this.ctx.utils.guid();
         this.cafs = {};
         this.registrations = [];
-        this.startDpt = 3000;
 
         var subscription = this;
         var deferred = this.ctx.$q.defer();
@@ -741,14 +740,12 @@ export default class Subscription {
         }
     }
 
-    updateDepthwindow(minDepth, maxDepth) {
-        this.depthWindow.interval = this.subscriptionDepthwindow.aggregation.interval || 1000;
+    updateDepthwindow(maxDepth) {
+        this.depthWindow.interval = this.subscriptionDepthwindow.aggregation.interval || 10;
         if (this.subscriptionDepthwindow.realtimeWindowFt) {
-            //var temp = 300;
-            this.depthWindow.maxDepth = maxDepth + 3;///*(new Date).getTime()*/ this.startDpt + this.depthWindow.stDiff;
-            //change new date getTime().
-            this.depthWindow.minDepth = maxDepth - this.subscriptionDepthwindow.realtimeWindowFt;//this.depthWindow.maxDepth - this.subscriptionDepthwindow.realtimeWindowFt;
-            this.startDpt = this.startDpt + this.subscriptionDepthwindow.realtimeWindowFt;
+            var windowProportion = 0.8;
+            this.depthWindow.maxDepth = maxDepth + this.subscriptionDepthwindow.realtimeWindowFt * (1 - windowProportion);
+            this.depthWindow.minDepth = maxDepth - this.subscriptionDepthwindow.realtimeWindowFt * windowProportion;
         } else if (this.subscriptionDepthwindow.fixedWindow) {
             this.depthWindow.maxDepth = this.subscriptionDepthwindow.fixedWindow.endDepthFt;
             this.depthWindow.minDepth = this.subscriptionDepthwindow.fixedWindow.startDepthFt;
@@ -808,7 +805,7 @@ export default class Subscription {
 
             if (this.subscriptionDepthwindow && this.subscriptionDepthwindow.realtimeWindowFt) {
                 if(currentData.data.length > 1)
-                    this.updateDepthwindow(currentData.data[0][0],currentData.data[currentData.data.length - 1][0]);
+                    this.updateDepthwindow(currentData.data[currentData.data.length - 1][0]);
             }
             currentData.data = sourceData.data;
             if (this.caulculateLegendData) {

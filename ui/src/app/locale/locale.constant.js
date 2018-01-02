@@ -1015,6 +1015,9 @@ export default angular.module('thingsboard.locale', [])
                     "seconds": "Seconds",
                     "advanced": "Advanced"
                 },
+                "depthinterval": {
+                    "feet-interval": "{ feet, select, 1 {1 feet} other {# feet} }",
+                },
                 "timewindow": {
                     "days": "{ days, select, 1 { day } other {# days } }",
                     "hours": "{ hours, select, 0 { hour } 1 {1 hour } other {# hours } }",
@@ -1030,6 +1033,7 @@ export default angular.module('thingsboard.locale', [])
                     "time-period": "Time period"
                 },
                 "depthwindow": {
+                    "feet": "{ feet, select, 0 { feet } 1 {1 feet } other {# feet } }",
                     "realtime": "Realtime",
                     "history": "History",
                     "last-prefix": "last",

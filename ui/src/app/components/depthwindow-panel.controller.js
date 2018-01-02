@@ -25,12 +25,12 @@ export default function DepthwindowPanelController(mdPanelRef, $scope, depthServ
     vm.onDepthwindowUpdate = onDepthwindowUpdate;
     vm.aggregationTypes = types.aggregation;
     vm.showLimit = showLimit;
-    vm.showRealtimeAggInterval = showRealtimeAggInterval;
-    vm.showHistoryAggInterval = showHistoryAggInterval;
-    vm.minRealtimeAggInterval = minRealtimeAggInterval;
-    vm.maxRealtimeAggInterval = maxRealtimeAggInterval;
-    vm.minHistoryAggInterval = minHistoryAggInterval;
-    vm.maxHistoryAggInterval = maxHistoryAggInterval;
+    vm.showRealtimeDepthAggInterval = showRealtimeAggInterval;
+    vm.showHistoryDepthAggInterval = showHistoryAggInterval;
+    vm.minRealtimeDepthAggInterval = minRealtimeAggInterval;
+    vm.maxRealtimeDepthAggInterval = maxRealtimeAggInterval;
+    vm.minHistoryDepthAggInterval = minHistoryAggInterval;
+    vm.maxHistoryDepthAggInterval = maxHistoryAggInterval;
 
     if (vm.historyOnly) {
         vm.depthwindow.selectedTab = 1;
@@ -79,14 +79,14 @@ export default function DepthwindowPanelController(mdPanelRef, $scope, depthServ
     }
 
     function minHistoryAggInterval () {
-        return depthService.minIntervalLimit(currentHistoryTimewindow());
+        return depthService.minIntervalLimit(currentHistoryDepthwindow());
     }
 
     function maxHistoryAggInterval () {
-        return depthService.maxIntervalLimit(currentHistoryTimewindow());
+        return depthService.maxIntervalLimit(currentHistoryDepthwindow());
     }
 
-    function currentHistoryTimewindow() {
+    function currentHistoryDepthwindow() {
         if (vm.depthwindow.history.historyType === 0) {
             return vm.depthwindow.history.depthwindowFt;
         } else {

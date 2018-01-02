@@ -18,7 +18,7 @@ export default angular.module('thingsboard.api.attribute', [])
     .name;
 
 /*@ngInject*/
-function AttributeService($http, $q, $filter, types, telemetryWebsocketService, $log) {
+function AttributeService($http, $q, $filter, types, telemetryWebsocketService) {
 
     var entityAttributesSubscriptionMap = {};
 
@@ -175,7 +175,6 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService, 
     }
 
     function subscribeForEntityAttributes(entityType, entityId, attributeScope) {
-        $log.log('AttributeService : subscribeForEntityAttributes : EntityType : {} :: EntityId : {} :: AttributeScope : {}', entityType, entityId, attributeScope);
         var subscriptionId = entityType + entityId + attributeScope;
         var entityAttributesSubscription = entityAttributesSubscriptionMap[subscriptionId];
         if (!entityAttributesSubscription) {

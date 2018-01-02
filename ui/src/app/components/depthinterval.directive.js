@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './timeinterval.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -26,7 +25,7 @@ export default angular.module('thingsboard.directives.depthinterval', [])
     .name;
 
 /*@ngInject*/
-function Depthinterval($compile, $templateCache, $log) {
+function Depthinterval($compile, $templateCache, depthService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -35,22 +34,10 @@ function Depthinterval($compile, $templateCache, $log) {
 
         scope.rendered = false;
 
-        //scope.advanced = false;
-
         scope.boundInterval = function() {
-            //var min = timeService.boundMinInterval(scope.min);
-            //var max = timeService.boundMaxInterval(scope.max);
-            scope.intervals = [1, 2, 3];//timeService.getIntervals(scope.min, scope.max);
+            scope.intervals = depthService.getIntervals();
             if (scope.rendered) {
                 var newIntervalFt = ngModelCtrl.$viewValue;
-                /*if (newIntervalFt < min) {
-                    newIntervalFt = min;
-                } else if (newIntervalFt > max) {
-                    newIntervalFt = max;
-                }
-                if (!scope.advanced) {
-                    newIntervalFt = timeService.boundToPredefinedInterval(min, max, newIntervalFt);
-                }*/
                 if (newIntervalFt !== ngModelCtrl.$viewValue) {
                     scope.setIntervalFt(newIntervalFt);
                     scope.updateView();
@@ -59,18 +46,12 @@ function Depthinterval($compile, $templateCache, $log) {
         };
 
         scope.setIntervalFt = function (intervalFt) {
-            //if (!scope.advanced) {
-                $log.log("Setting IntervalFt");
                 scope.intervalFt = intervalFt;
-            //}
         };
 
         ngModelCtrl.$render = function () {
             if (ngModelCtrl.$viewValue) {
                 var intervalFt = ngModelCtrl.$viewValue;
-                if (!scope.rendered) {
-                    //scope.advanced = !timeService.matchesExistingInterval(scope.min, scope.max, intervalFt);
-                }
                 scope.setIntervalFt(intervalFt);
             }
             scope.rendered = true;
@@ -99,7 +80,6 @@ function Depthinterval($compile, $templateCache, $log) {
         });
 
         scope.$watch('intervalFt', function (newIntervalFt, prevIntervalFt) {
-            $log.log("Changing intervalFt ");
             if (angular.isDefined(newIntervalFt) && newIntervalFt !== prevIntervalFt) {
                 scope.updateView();
             }

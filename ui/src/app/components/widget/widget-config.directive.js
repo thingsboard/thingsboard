@@ -47,7 +47,7 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     .name;
 
 /*@ngInject*/
-function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout, types, utils, $log) {
+function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout, types, utils) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
 
@@ -124,7 +124,6 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                         config.useDashboardDepthwindow : true;
                     scope.timewindow = config.timewindow;
                     scope.depthwindow = config.depthwindow;
-                    $log.log("timewindow " + Object.values(scope.timewindow));
                     scope.showLegend = angular.isDefined(config.showLegend) ?
                         config.showLegend : scope.widgetType === types.widgetType.timeseries.value;
                     scope.legendConfig = config.legendConfig;

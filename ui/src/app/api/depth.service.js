@@ -18,28 +18,31 @@ export default angular.module('thingsboard.api.depth', [])
     .name;
 
 const DECI_FT = 10;
-/*const SECOND = 1000;
-const MINUTE = 60 * SECOND;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;*/
 const AVG_LIMIT = 200;
 const MAX_LIMIT = 500;
 const MIN_LIMIT = 10;
 const MIN_INTEVAL = 10;
 const MAX_INTEVAL = 30;
-var startDpt = 3010;
+var startDpt = DECI_FT;
 
 /*@ngInject*/
-function DepthService($translate, types, $log) {
+function DepthService($translate, types) {
+
+    var predefIntervals = [
+        {
+            name: $translate.instant('depthinterval.feet-interval', {feet: 10}, 'messageformat'),
+            value: 10
+        },
+        {
+            name: $translate.instant('depthinterval.feet-interval', {feet: 20}, 'messageformat'),
+            value: 20
+        }]
+    predefIntervals;
 
     var service = {
         minIntervalLimit: minIntervalLimit,
         maxIntervalLimit: maxIntervalLimit,
-        /*boundMinInterval: boundMinInterval,
-        boundMaxInterval: boundMaxInterval,
         getIntervals: getIntervals,
-        matchesExistingInterval: matchesExistingInterval,
-        boundToPredefinedInterval: boundToPredefinedInterval,*/
         defaultDepthwindow: defaultDepthwindow,
         toHistoryDepthwindow: toHistoryDepthwindow,
         createSubscriptionDepthwindow: createSubscriptionDepthwindow,
@@ -50,88 +53,13 @@ function DepthService($translate, types, $log) {
 
     return service;
 
-    /*function minIntervalLimit(depthwindow) {
-        var min = depthwindow / MAX_LIMIT;
-        return boundMinInterval(min);
-    }
-
-    function avgInterval(depthwindow) {
-        var avg = depthwindow / AVG_LIMIT;
-        return boundMinInterval(avg);
-    }
-
-    function maxIntervalLimit(depthwindow) {
-        var max = depthwindow / MIN_LIMIT;
-        return boundMaxInterval(max);
-    }
-
-    function boundMinInterval(min) {
-        return toBound(min, MIN_INTERVAL, MAX_INTERVAL, MIN_INTERVAL);
-    }
-
-    function boundMaxInterval(max) {
-        return toBound(max, MIN_INTERVAL, MAX_INTERVAL, MAX_INTERVAL);
-    }
-
-    function toBound(value, min, max, defValue) {
-        if (angular.isDefined(value)) {
-            value = Math.max(value, min);
-            value = Math.min(value, max);
-            return value;
-        } else {
-            return defValue;
-        }
-    }
-
-    function getIntervals(min, max) {
-        min = boundMinInterval(min);
-        max = boundMaxInterval(max);
-        var intervals = [];
-        for (var i in predefIntervals) {
-            var interval = predefIntervals[i];
-            if (interval.value >= min && interval.value <= max) {
-                intervals.push(interval);
-            }
-        }
-        return intervals;
-    }
-
-    function matchesExistingInterval(min, max, intervalMs) {
-        var intervals = getIntervals(min, max);
-        for (var i in intervals) {
-            var interval = intervals[i];
-            if (intervalMs === interval.value) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function boundToPredefinedInterval(min, max, intervalMs) {
-        var intervals = getIntervals(min, max);
-        var minDelta = MAX_INTERVAL;
-        var boundedInterval = intervalMs || min;
-        var matchedInterval;
-        for (var i in intervals) {
-            var interval = intervals[i];
-            var delta = Math.abs(interval.value - boundedInterval);
-            if (delta < minDelta) {
-                matchedInterval = interval;
-                minDelta = delta;
-            }
-        }
-        boundedInterval = matchedInterval.value;
-        return boundedInterval;
-    }*/
-
     function defaultDepthwindow() {
-        //var currentTime = (new Date).getTime();
         var depthwindow = {
             displayValue: "",
             selectedTab: 0,
             realtime: {
                 interval: DECI_FT,
-                depthwindowFt: 100 // 1 min by default
+                depthwindowFt: DECI_FT // 10 Feet by default by default
             },
             history: {
                 historyType: 0,
@@ -220,13 +148,10 @@ function DepthService($translate, types, $log) {
             subscriptionDepthwindow.aggregation.interval =
                 boundIntervalToDepthwindow(subscriptionDepthwindow.realtimeWindowFt, depthwindow.realtime.interval,
                     subscriptionDepthwindow.aggregation.type);
-            subscriptionDepthwindow.startDs = /*(new Date).getTime()*/ startDpt + stDiff - subscriptionDepthwindow.realtimeWindowFt;
-            $log.log("realtime window ft " + subscriptionDepthwindow.realtimeWindowFt);
+            subscriptionDepthwindow.startDs = startDpt + stDiff - subscriptionDepthwindow.realtimeWindowFt;
             startDpt = startDpt + subscriptionDepthwindow.realtimeWindowFt;
-            $log.log("StartDpt " + startDpt);
-            // We need to have a different value at new Date
+
             var startDiff = subscriptionDepthwindow.startDs % subscriptionDepthwindow.aggregation.interval;
-            $log.log("StartDiff " + startDiff);
             aggDepthwindow = subscriptionDepthwindow.realtimeWindowFt;
             if (startDiff) {
                 subscriptionDepthwindow.startDs -= startDiff;
@@ -236,8 +161,8 @@ function DepthService($translate, types, $log) {
             if (angular.isDefined(depthwindow.history.depthwindowFt)) {
                 //var currentTime = (new Date).getTime();
                 subscriptionDepthwindow.fixedWindow = {
-                    startDepthFt: /*currentTime*/ startDpt - depthwindow.history.depthwindowFt,
-                    endDepthFt: startDpt //currentTime
+                    startDepthFt: startDpt - depthwindow.history.depthwindowFt,
+                    endDepthFt: startDpt
                 }
                 startDpt = startDpt + depthwindow.history.depthwindowFt;
                 aggDepthwindow = depthwindow.history.depthwindowFt;
@@ -259,6 +184,15 @@ function DepthService($translate, types, $log) {
             aggregation.limit = Math.ceil(aggDepthwindow / subscriptionDepthwindow.aggregation.interval);
         }
         return subscriptionDepthwindow;
+    }
+
+    function getIntervals() {
+        var intervals = [];
+        for (var i in predefIntervals) {
+            var interval = predefIntervals[i];
+                intervals.push(interval);
+        }
+        return intervals;
     }
 
     function minIntervalLimit(depthwindow) {

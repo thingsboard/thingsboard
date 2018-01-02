@@ -68,11 +68,11 @@
                             <input flex type="number" ng-model="vm.depthwindow.aggregation.limit" aria-label="limit" aria-controls="limit-slider">
                         </md-input-container>
                     </md-slider-container>
-                    <tb-depthinterval ng-show="vm.showRealtimeAggInterval()" min="vm.minRealtimeAggInterval()" max="vm.maxRealtimeAggInterval()"
+                    <tb-depthinterval ng-show="vm.showRealtimeDepthAggInterval()" min="vm.minRealtimeDepthAggInterval()" max="vm.maxRealtimeDepthAggInterval()"
                                      predefined-name="'aggregation.group-interval'"
                                      ng-model="vm.depthwindow.realtime.interval">
                     </tb-depthinterval>
-                    <tb-depthinterval ng-show="vm.showHistoryAggInterval()" min="vm.minHistoryAggInterval()" max="vm.maxHistoryAggInterval()"
+                    <tb-depthinterval ng-show="vm.showHistoryDepthAggInterval()" min="vm.minHistoryDepthAggInterval()" max="vm.maxHistoryDepthAggInterval()"
                                      predefined-name="'aggregation.group-interval'"
                                      ng-model="vm.depthwindow.history.interval">
                     </tb-depthinterval>

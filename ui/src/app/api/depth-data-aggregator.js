@@ -125,18 +125,9 @@ export default class DepthDataAggregator {
             this.intervalTimeoutHandle = null;
         }
         if (!history) {
-            /*var delta = Math.floor(this.elapsed / this.interval);
-            if (delta || !this.data) {
-                this.startDs += delta * this.interval;
-                this.endDs += delta * this.interval;
-                this.data = this.updateData();
-                this.elapsed = this.elapsed - delta * this.interval;
-            }*/
             var delta = Math.floor(this.elapsed / this.interval);
             delta;
             if(delta || !this.data){
-                this.startDs = 5000;//+= this.interval
-                this.endDs = 6000;//this.startDs + this.interval;
                 this.data = this.updateData();
             }
         } else {
@@ -162,25 +153,14 @@ export default class DepthDataAggregator {
             var aggKeyData = this.aggregationMap[key];
             var keyData = this.dataBuffer[key];
             for (var aggDepthdatum in aggKeyData) {
-                if (aggDepthdatum <= this.startDs) {
-                    if (this.stateData &&
-                        (!this.lastPrevKvPairData[key] || this.lastPrevKvPairData[key][0] < aggDepthdatum)) {
-                        this.lastPrevKvPairData[key] = [Number(aggDepthdatum), aggKeyData[aggDepthdatum].aggValue];
-                    }
-                    delete aggKeyData[aggDepthdatum];
-                } else if (aggDepthdatum <= this.endDs) {
-                    var aggData = aggKeyData[aggDepthdatum];
-                    var kvPair = [Number(aggDepthdatum), aggData.aggValue];
-                    keyData.push(kvPair);
-                }
-                /*var aggData = aggKeyData[aggDepthdatum];
+                var aggData = aggKeyData[aggDepthdatum];
                 var kvPair = [Number(aggDepthdatum), aggData.aggValue];
-                keyData.push(kvPair);*/
+                keyData.push(kvPair);
             }
             keyData = this.$filter('orderBy')(keyData, '+this[0]');
-            if (this.stateData) {
-                //this.updateStateBounds(keyData, angular.copy(this.lastPrevKvPairData[key]));
-            }
+            /*if (this.stateData) {
+                this.updateStateBounds(keyData, angular.copy(this.lastPrevKvPairData[key]));
+            }*/
             if (keyData.length > this.limit) {
                 keyData = keyData.slice(keyData.length - this.limit);
             }

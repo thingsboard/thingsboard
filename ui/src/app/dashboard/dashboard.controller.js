@@ -794,7 +794,6 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     function displayDashboardTimewindow() {
         if (vm.dashboard && vm.dashboard.configuration.settings &&
             angular.isDefined(vm.dashboard.configuration.settings.showDashboardTimewindow)) {
-            //$log.log("showDashboardTimewindow : " + vm.dashboard.configuration.settings.showDashboardTimewindow);
             return vm.dashboard.configuration.settings.showDashboardTimewindow;
         } else {
             return true;
@@ -804,7 +803,6 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     function displayDashboardDepthwindow() {
         if (vm.dashboard && vm.dashboard.configuration.settings &&
             angular.isDefined(vm.dashboard.configuration.settings.showDashboardDepthwindow)) {
-            //$log.log("showDashboardTimewindow : " + vm.dashboard.configuration.settings.showDashboardTimewindow);
             return vm.dashboard.configuration.settings.showDashboardDepthwindow;
         } else {
             return true;
