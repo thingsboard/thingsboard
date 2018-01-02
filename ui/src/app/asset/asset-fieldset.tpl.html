@@ -48,7 +48,7 @@
          ng-show="!isEdit && isPublic && (assetScope === 'customer' || assetScope === 'tenant')">
         {{ 'asset.asset-public' | translate }}
     </div>
-    <fieldset ng-disabled="loading || !isEdit">
+    <fieldset ng-disabled="$root.loading || !isEdit">
         <md-input-container class="md-block">
             <label translate>asset.name</label>
             <input required name="name" ng-model="asset.name">
@@ -57,7 +57,7 @@
             </div>
         </md-input-container>
         <tb-entity-subtype-autocomplete
-                ng-disabled="loading || !isEdit"
+                ng-disabled="$root.loading || !isEdit"
                 tb-required="true"
                 the-form="theForm"
                 ng-model="asset.type"

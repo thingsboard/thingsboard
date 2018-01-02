@@ -77,7 +77,6 @@ public class PluginWebSocketHandler extends TextWebSocketHandler implements Plug
                 log.warn("[{}] Failed to find session", session.getId());
                 session.close(CloseStatus.SERVER_ERROR.withReason("Session not found!"));
             }
-            session.sendMessage(message);
         } catch (IOException e) {
             log.warn("IO error", e);
         }

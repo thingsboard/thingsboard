@@ -48,19 +48,19 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
             var promise;
             if (scope.dashboardsScope === 'customer' || userService.getAuthority() === 'CUSTOMER_USER') {
                 if (scope.customerId) {
-                    promise = dashboardService.getCustomerDashboards(scope.customerId, pageLink, false);
+                    promise = dashboardService.getCustomerDashboards(scope.customerId, pageLink, false, {ignoreLoading: true});
                 } else {
                     promise = $q.when({data: []});
                 }
             } else {
                 if (userService.getAuthority() === 'SYS_ADMIN') {
                     if (scope.tenantId) {
-                        promise = dashboardService.getTenantDashboardsByTenantId(scope.tenantId, pageLink);
+                        promise = dashboardService.getTenantDashboardsByTenantId(scope.tenantId, pageLink, {ignoreLoading: true});
                     } else {
                         promise = $q.when({data: []});
                     }
                 } else {
-                    promise = dashboardService.getTenantDashboards(pageLink, false);
+                    promise = dashboardService.getTenantDashboards(pageLink, false, {ignoreLoading: true});
                 }
             }
 

@@ -421,10 +421,14 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         return deferred.promise;
     }
 
-    function getUser(userId, ignoreErrors) {
+    function getUser(userId, ignoreErrors, config) {
         var deferred = $q.defer();
         var url = '/api/user/' + userId;
-        $http.get(url, { ignoreErrors: ignoreErrors }).then(function success(response) {
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

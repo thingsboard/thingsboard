@@ -87,7 +87,7 @@
         <md-button ng-if="vm.allowAcknowledgment && (vm.alarm.status==vm.types.alarmStatus.activeUnack ||
                           vm.alarm.status==vm.types.alarmStatus.clearedUnack)"
                    class="md-raised md-primary"
-                   ng-disabled="loading"
+                   ng-disabled="$root.loading"
                    ng-click="vm.acknowledge()"
                    style="margin-right:20px;">{{ 'alarm.acknowledge' |
             translate }}
@@ -95,12 +95,12 @@
         <md-button ng-if="vm.allowClear && (vm.alarm.status==vm.types.alarmStatus.activeAck ||
                           vm.alarm.status==vm.types.alarmStatus.activeUnack)"
                    class="md-raised md-primary"
-                   ng-disabled="loading"
+                   ng-disabled="$root.loading"
                    ng-click="vm.clear()">{{ 'alarm.clear' |
             translate }}
         </md-button>
         <span flex></span>
-        <md-button ng-disabled="loading" ng-click="vm.close()" style="margin-right:20px;">{{ 'action.close' |
+        <md-button ng-disabled="$root.loading" ng-click="vm.close()" style="margin-right:20px;">{{ 'action.close' |
             translate }}
         </md-button>
     </md-dialog-actions>

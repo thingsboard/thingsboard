@@ -35,7 +35,7 @@
 	        </div>
 		    <section ng-if="!isReadOnly" layout="row" layout-wrap
 				   class="tb-header-buttons md-fab">
-				<md-button ng-show="isEdit" ng-disabled="loading || theForm.$invalid || !theForm.$dirty"
+				<md-button ng-show="isEdit" ng-disabled="$root.loading || theForm.$invalid || !theForm.$dirty"
 							 class="tb-btn-header md-accent md-hue-2 md-fab md-fab-bottom-right"
 							 aria-label="{{ 'action.apply' | translate }}"
 							 ng-click="detailsApply()">
@@ -44,7 +44,7 @@
 					  </md-tooltip>
 					  <ng-md-icon icon="done"></ng-md-icon>
 				</md-button>
-				<md-button ng-disabled="loading || (isAlwaysEdit && !theForm.$dirty)" class="tb-btn-header md-accent md-hue-2 md-fab md-fab-bottom-right"
+				<md-button ng-disabled="$root.loading || (isAlwaysEdit && !theForm.$dirty)" class="tb-btn-header md-accent md-hue-2 md-fab md-fab-bottom-right"
 					 aria-label="{{ 'details.edit-mode' | translate }}"
 					 ng-click="toggleDetailsEditMode()">
 					<md-tooltip md-direction="top">

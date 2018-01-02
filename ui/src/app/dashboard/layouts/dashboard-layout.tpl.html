@@ -22,7 +22,7 @@
                     'background-attachment': 'scroll',
                     'background-size': vm.layoutCtx.gridSettings.backgroundSizeMode || '100%',
                     'background-position': '0% 0%'}">
-    <section ng-show="!loading && vm.noData()" layout-align="center center"
+    <section ng-show="!$root.loading && vm.noData()" layout-align="center center"
              ng-style="{'color': vm.layoutCtx.gridSettings.color}"
              style="text-transform: uppercase; display: flex; z-index: 1; pointer-events: none;"
              class="md-headline tb-absolute-fill">

@@ -58,7 +58,7 @@
          ng-show="!isEdit && isPublic && (deviceScope === 'customer' || deviceScope === 'tenant')">
         {{ 'device.device-public' | translate }}
     </div>
-	<fieldset ng-disabled="loading || !isEdit">
+	<fieldset ng-disabled="$root.loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>device.name</label>
 			<input required name="name" ng-model="device.name">	
@@ -67,14 +67,14 @@
 	    	</div>				
 		</md-input-container>
         <tb-entity-subtype-autocomplete
-                ng-disabled="loading || !isEdit"
+                ng-disabled="$root.loading || !isEdit"
                 tb-required="true"
                 the-form="theForm"
                 ng-model="device.type"
                 entity-type="types.entityType.device">
         </tb-entity-subtype-autocomplete>
         <md-input-container class="md-block">
-            <md-checkbox ng-disabled="loading || !isEdit" flex aria-label="{{ 'device.is-gateway' | translate }}"
+            <md-checkbox ng-disabled="$root.loading || !isEdit" flex aria-label="{{ 'device.is-gateway' | translate }}"
                          ng-model="device.additionalInfo.gateway">{{ 'device.is-gateway' | translate }}
             </md-checkbox>
         </md-input-container>
