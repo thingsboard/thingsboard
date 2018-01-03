@@ -134,6 +134,8 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         defaultAlarmDataKeys.push(dataKey);
     }
 
+    var imageAspectMap = {};
+
     var service = {
         getDefaultDatasource: getDefaultDatasource,
         generateObjectFromJsonSchema: generateObjectFromJsonSchema,
@@ -159,7 +161,8 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         insertVariable: insertVariable,
         customTranslation: customTranslation,
         objToBase64: objToBase64,
-        base64toObj: base64toObj
+        base64toObj: base64toObj,
+        loadImageAspect: loadImageAspect
     }
 
     return service;
@@ -541,6 +544,36 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
         var json = utf8Decode(encoded);
         var obj = angular.fromJson(json);
         return obj;
+    }
+
+    function loadImageAspect(imageUrl) {
+        var deferred = $q.defer();
+        if (imageUrl && imageUrl.length) {
+            var urlHashCode = hashCode(imageUrl);
+            var aspect = imageAspectMap[urlHashCode];
+            if (angular.isUndefined(aspect)) {
+                var testImage = document.createElement('img'); // eslint-disable-line
+                testImage.style.visibility = 'hidden';
+                testImage.onload = function() {
+                    aspect = testImage.width / testImage.height;
+                    document.body.removeChild(testImage); //eslint-disable-line
+                    imageAspectMap[urlHashCode] = aspect;
+                    deferred.resolve(aspect);
+                };
+                testImage.onerror = function() {
+                    aspect = 0;
+                    imageAspectMap[urlHashCode] = aspect;
+                    deferred.resolve(aspect);
+                };
+                document.body.appendChild(testImage); //eslint-disable-line
+                testImage.src = imageUrl;
+            } else {
+                deferred.resolve(aspect);
+            }
+        } else {
+            deferred.resolve(0);
+        }
+        return deferred.promise;
     }
 
 }

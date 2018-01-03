@@ -74,11 +74,11 @@ export default class TbMapWidgetV2 {
         });
 
         if (mapProvider === 'google-map') {
-            this.map = new TbGoogleMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
+            this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
         } else if (mapProvider === 'openstreet-map') {
-            this.map = new TbOpenStreetMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
+            this.map = new TbOpenStreetMap($element, this.utils,  initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.mapProvider);
         } else if (mapProvider === 'image-map') {
-            this.map = new TbImageMap(this.ctx, $element, initCallback,
+            this.map = new TbImageMap(this.ctx, $element, this.utils, initCallback,
                 settings.mapImageUrl,
                 settings.posFunction,
                 settings.imageEntityAlias,

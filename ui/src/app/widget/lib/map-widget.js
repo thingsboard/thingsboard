@@ -74,7 +74,7 @@ export default class TbMapWidget {
         if (!$element) {
             $element = ctx.$container;
         }
-
+        this.utils = ctx.$scope.$injector.get('utils');
         this.drawRoutes = drawRoutes;
         this.markers = [];
         if (this.drawRoutes) {
@@ -109,9 +109,9 @@ export default class TbMapWidget {
         };
 
         if (mapProvider === 'google-map') {
-            this.map = new TbGoogleMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
+            this.map = new TbGoogleMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.gmApiKey, settings.gmDefaultMapType);
         } else if (mapProvider === 'openstreet-map') {
-            this.map = new TbOpenStreetMap($element, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
+            this.map = new TbOpenStreetMap($element, this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel);
         }
 
     }

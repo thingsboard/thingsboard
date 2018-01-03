@@ -20,9 +20,10 @@ const maxZoom = 4;
 
 export default class TbImageMap {
 
-    constructor(ctx, $containerElement, initCallback, imageUrl, posFunction, imageEntityAlias, imageUrlAttribute) {
+    constructor(ctx, $containerElement, utils, initCallback, imageUrl, posFunction, imageEntityAlias, imageUrlAttribute) {
 
         this.ctx = ctx;
+        this.utils = utils;
         this.tooltips = [];
 
         this.$containerElement = $containerElement;
@@ -116,18 +117,15 @@ export default class TbImageMap {
         }
         this.imageUrl = imageUrl;
         var imageMap = this;
-        var testImage = document.createElement('img'); // eslint-disable-line
-        testImage.style.visibility = 'hidden';
-        testImage.onload = function() {
-            imageMap.aspect = testImage.width / testImage.height;
-            document.body.removeChild(testImage); //eslint-disable-line
-            imageMap.onresize(updateImage);
-            if (initCallback) {
-                setTimeout(initCallback, 0); //eslint-disable-line
+        this.utils.loadImageAspect(imageUrl).then(
+            (aspect) => {
+                imageMap.aspect = aspect;
+                imageMap.onresize(updateImage);
+                if (initCallback) {
+                    setTimeout(initCallback, 0); //eslint-disable-line
+                }
             }
-        }
-        document.body.appendChild(testImage); //eslint-disable-line
-        testImage.src = imageUrl;
+        );
     }
 
     onresize(updateImage) {
@@ -249,37 +247,34 @@ export default class TbImageMap {
         var currentImage = settings.currentImage;
         var opMap = this;
         if (currentImage && currentImage.url) {
-            var testImage = document.createElement('img'); // eslint-disable-line
-            testImage.style.visibility = 'hidden';
-            testImage.onload = function() {
-                var width;
-                var height;
-                var aspect = testImage.width / testImage.height;
-                document.body.removeChild(testImage); //eslint-disable-line
-                if (aspect > 1) {
-                    width = currentImage.size;
-                    height = currentImage.size / aspect;
-                } else {
-                    width = currentImage.size * aspect;
-                    height = currentImage.size;
+            this.utils.loadImageAspect(currentImage.url).then(
+                (aspect) => {
+                    if (aspect) {
+                        var width;
+                        var height;
+                        if (aspect > 1) {
+                            width = currentImage.size;
+                            height = currentImage.size / aspect;
+                        } else {
+                            width = currentImage.size * aspect;
+                            height = currentImage.size;
+                        }
+                        var icon = L.icon({
+                            iconUrl: currentImage.url,
+                            iconSize: [width, height],
+                            iconAnchor: [marker.offsetX * width, marker.offsetY * height],
+                            popupAnchor: [0, -height]
+                        });
+                        var iconInfo = {
+                            size: [width, height],
+                            icon: icon
+                        };
+                        onMarkerIconReady(iconInfo);
+                    } else {
+                        opMap.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
+                    }
                 }
-                var icon = L.icon({
-                    iconUrl: currentImage.url,
-                    iconSize: [width, height],
-                    iconAnchor: [marker.offsetX * width, marker.offsetY * height],
-                    popupAnchor: [0, -height]
-                });
-                var iconInfo = {
-                    size: [width, height],
-                    icon: icon
-                };
-                onMarkerIconReady(iconInfo);
-            };
-            testImage.onerror = function() {
-                opMap.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
-            };
-            document.body.appendChild(testImage); //eslint-disable-line
-            testImage.src = currentImage.url;
+            );
         } else {
             this.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
         }
