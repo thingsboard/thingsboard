@@ -47,7 +47,7 @@ md-toolbar.md-table-toolbar.alternate {
 .widgets-carousel {
   position: relative;
   margin: 0px;
-
+  height: calc(100% - 100px);
   min-height: 150px !important;
 
   tb-dashboard {
