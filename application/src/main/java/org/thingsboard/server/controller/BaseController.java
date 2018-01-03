@@ -57,6 +57,9 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.dao.settings.AdminSettingsService;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
@@ -116,6 +119,9 @@ public abstract class BaseController {
 
     @Autowired
     protected RelationService relationService;
+
+    @Autowired
+    private AdminSettingsService adminSettingsService;
 
 
     @ExceptionHandler(ThingsboardException.class)
@@ -523,6 +529,12 @@ public abstract class BaseController {
     }
 
     protected String constructBaseUrl(HttpServletRequest request) {
+        AdminSettings settings = adminSettingsService.findAdminSettingsByKey("general");
+        if (settings != null) {
+            JsonNode jsonConfig = settings.getJsonValue();
+            return jsonConfig.get("baseUrl").asText();
+        }
+
         String scheme = request.getScheme();
         if (request.getHeader("x-forwarded-proto") != null) {
             scheme = request.getHeader("x-forwarded-proto");
