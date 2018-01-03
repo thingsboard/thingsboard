@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import tinycolor from 'tinycolor2';
 
 import TbGoogleMap from './google-map';
@@ -159,9 +158,13 @@ export default class TbMapWidgetV2 {
         if (!this.locationSettings.useMarkerImageFunction &&
             angular.isDefined(this.ctx.settings.markerImage) &&
             this.ctx.settings.markerImage.length > 0) {
-            this.locationSettings.markerImage = this.ctx.settings.markerImage;
             this.locationSettings.useMarkerImage = true;
-            this.locationSettings.markerImageSize = this.ctx.settings.markerImageSize || 34;
+            var url = this.ctx.settings.markerImage;
+            var size = this.ctx.settings.markerImageSize || 34;
+            this.locationSettings.currentImage = {
+                url: url,
+                size: size
+            };
         }
 
         if (this.drawRoutes) {
@@ -235,10 +238,10 @@ export default class TbMapWidgetV2 {
             }
         }
 
-        function updateLocationMarkerImage(location, image) {
-            if (image && (!location.settings.calculatedImage || !angular.equals(location.settings.calculatedImage, image))) {
-                tbMap.map.updateMarkerImage(location.marker, location.settings, image.url, image.size);
-                location.settings.calculatedImage = image;
+        function updateLocationMarkerIcon(location, image) {
+            if (image && (!location.settings.currentImage || !angular.equals(location.settings.currentImage, image))) {
+                location.settings.currentImage = image;
+                tbMap.map.updateMarkerIcon(location.marker, location.settings);
             }
         }
 
@@ -247,7 +250,31 @@ export default class TbMapWidgetV2 {
             var color = calculateLocationColor(location, dataMap);
             var image = calculateLocationMarkerImage(location, dataMap);
             updateLocationColor(location, color, image);
-            updateLocationMarkerImage(location, image);
+            updateLocationMarkerIcon(location, image);
+        }
+
+        function createOrUpdateLocationMarker(location, markerLocation, dataMap) {
+            var changed = false;
+            if (!location.marker) {
+                var image = calculateLocationMarkerImage(location, dataMap);
+                if (image && (!location.settings.currentImage || !angular.equals(location.settings.currentImage, image))) {
+                    location.settings.currentImage = image;
+                }
+                location.marker = tbMap.map.createMarker(markerLocation, location.settings,
+                    function (event) {
+                        tbMap.callbacks.onLocationClick(location);
+                        locationRowClick(event, location);
+                    }, [location.dsIndex]);
+                tbMap.markers.push(location.marker);
+                changed = true;
+            } else {
+                var prevPosition = tbMap.map.getMarkerPosition(location.marker);
+                if (!prevPosition.equals(markerLocation)) {
+                    tbMap.map.setMarkerPosition(location.marker, markerLocation);
+                    changed = true;
+                }
+            }
+            return changed;
         }
 
         function locationRowClick($event, location) {
@@ -284,16 +311,7 @@ export default class TbMapWidgetV2 {
                         }
                         if (latLngs.length > 0) {
                             var markerLocation = latLngs[latLngs.length - 1];
-                            if (!location.marker) {
-                                location.marker = tbMap.map.createMarker(markerLocation, location.settings,
-                                    function (event) {
-                                        tbMap.callbacks.onLocationClick(location);
-                                        locationRowClick(event, location);
-                                    }, [location.dsIndex]
-                                );
-                            } else {
-                                tbMap.map.setMarkerPosition(location.marker, markerLocation);
-                            }
+                            createOrUpdateLocationMarker(location, markerLocation, dataMap);
                         }
                         if (!location.polyline) {
                             location.polyline = tbMap.map.createPolyline(latLngs, location.settings);
@@ -312,20 +330,8 @@ export default class TbMapWidgetV2 {
                         lng = lngData[lngData.length - 1][1];
                         if (angular.isDefined(lat) && lat != null && angular.isDefined(lng) && lng != null) {
                             latLng = tbMap.map.createLatLng(lat, lng);
-                            if (!location.marker) {
-                                location.marker = tbMap.map.createMarker(latLng, location.settings,
-                                    function (event) {
-                                        tbMap.callbacks.onLocationClick(location);
-                                        locationRowClick(event, location);
-                                    }, [location.dsIndex]);
-                                tbMap.markers.push(location.marker);
+                            if (createOrUpdateLocationMarker(location, latLng, dataMap)) {
                                 locationChanged = true;
-                            } else {
-                                var prevPosition = tbMap.map.getMarkerPosition(location.marker);
-                                if (!prevPosition.equals(latLng)) {
-                                    tbMap.map.setMarkerPosition(location.marker, latLng);
-                                    locationChanged = true;
-                                }
                             }
                         }
                     }

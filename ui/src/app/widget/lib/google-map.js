@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 var gmGlobals = {
     loadingGmId: null,
     gmApiKeys: {}
@@ -151,80 +150,100 @@ export default class TbGoogleMap {
 
     /* eslint-disable no-undef */
     updateMarkerColor(marker, color) {
-        var pinColor = color.substr(1);
-        var pinImage = new google.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
-            new google.maps.Size(21, 34),
-            new google.maps.Point(0,0),
-            new google.maps.Point(10, 34));
-        marker.setIcon(pinImage);
+        this.createDefaultMarkerIcon(marker, color, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
+        });
     }
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
-    updateMarkerImage(marker, settings, image, maxSize) {
-        var testImage = document.createElement('img'); // eslint-disable-line
-        testImage.style.visibility = 'hidden';
-        testImage.onload = function() {
-            var width;
-            var height;
-            var aspect = testImage.width / testImage.height;
-            document.body.removeChild(testImage); //eslint-disable-line
-            if (aspect > 1) {
-                width = maxSize;
-                height = maxSize / aspect;
-            } else {
-                width = maxSize * aspect;
-                height = maxSize;
-            }
-            var pinImage = {
-                url: image,
-                scaledSize : new google.maps.Size(width, height)
-            }
-            marker.setIcon(pinImage);
+    updateMarkerIcon(marker, settings) {
+        this.createMarkerIcon(marker, settings, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
             if (settings.showLabel) {
-                marker.set('labelAnchor', new google.maps.Point(100, height + 20));
+                marker.set('labelAnchor', new google.maps.Point(100, iconInfo.size[1] + 20));
             }
+        });
+    }
+    /* eslint-disable no-undef */
+
+    /* eslint-disable no-undef */
+    createMarkerIcon(marker, settings, onMarkerIconReady) {
+        var currentImage = settings.currentImage;
+        var gMap = this;
+        if (currentImage && currentImage.url) {
+            var testImage = document.createElement('img'); // eslint-disable-line
+            testImage.style.visibility = 'hidden';
+            testImage.onload = function() {
+                var width;
+                var height;
+                var aspect = testImage.width / testImage.height;
+                document.body.removeChild(testImage); //eslint-disable-line
+                if (aspect > 1) {
+                    width = currentImage.size;
+                    height = currentImage.size / aspect;
+                } else {
+                    width = currentImage.size * aspect;
+                    height = currentImage.size;
+                }
+                var icon = {
+                    url: currentImage.url,
+                    scaledSize : new google.maps.Size(width, height)
+                };
+                var iconInfo = {
+                    size: [width, height],
+                    icon: icon
+                };
+                onMarkerIconReady(iconInfo);
+            };
+            testImage.onerror = function() {
+                gMap.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
+            };
+            document.body.appendChild(testImage); //eslint-disable-line
+            testImage.src = currentImage.url;
+        } else {
+            this.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
         }
-        document.body.appendChild(testImage); //eslint-disable-line
-        testImage.src = image;
+    }
+    /* eslint-enable no-undef */
+
+    /* eslint-disable no-undef */
+    createDefaultMarkerIcon(marker, color, onMarkerIconReady) {
+        var pinColor = color.substr(1);
+        var icon = new google.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_letter_withshadow&chld=%E2%80%A2|" + pinColor,
+            new google.maps.Size(40, 37),
+            new google.maps.Point(0,0),
+            new google.maps.Point(10, 37));
+        var iconInfo = {
+            size: [40, 37],
+            icon: icon
+        };
+        onMarkerIconReady(iconInfo);
     }
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
     createMarker(location, settings, onClickListener, markerArgs) {
-        var height = 34;
-        var pinColor = settings.color.substr(1);
-        var pinImage = new google.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
-            new google.maps.Size(21, 34),
-            new google.maps.Point(0,0),
-            new google.maps.Point(10, 34));
-        var pinShadow = new google.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_shadow",
-            new google.maps.Size(40, 37),
-            new google.maps.Point(0, 0),
-            new google.maps.Point(12, 35));
         var marker;
         if (settings.showLabel) {
             marker = new MarkerWithLabel({
                 position: location,
-                map: this.map,
-                icon: pinImage,
-                shadow: pinShadow,
                 labelContent: '<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
-                labelClass: "tb-labels",
-                labelAnchor: new google.maps.Point(100, height + 20)
+                labelClass: "tb-labels"
             });
         } else {
             marker = new google.maps.Marker({
                 position: location,
-                map: this.map,
-                icon: pinImage,
-                shadow: pinShadow
             });
         }
-
-        if (settings.useMarkerImage) {
-            this.updateMarkerImage(marker, settings, settings.markerImage, settings.markerImageSize || 34);
-        }
+        var gMap = this;
+        this.createMarkerIcon(marker, settings, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
+            if (settings.showLabel) {
+                marker.set('labelAnchor', new google.maps.Point(100, iconInfo.size[1] + 20));
+            }
+            marker.setMap(gMap.map);
+        });
 
         if (settings.displayTooltip) {
             this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, settings.autocloseTooltip, markerArgs);

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
 
@@ -229,20 +228,12 @@ export default class TbImageMap {
     }
 
     updateMarkerColor(marker, color) {
-        var pinColor = color.substr(1);
-        var icon = L.icon({
-            iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
-            iconSize: [21, 34],
-            iconAnchor: [10, 34],
-            popupAnchor: [0, -34],
-            shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
-            shadowSize: [40, 37],
-            shadowAnchor: [12, 35]
+        this.createDefaultMarkerIcon(marker, color, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
         });
-        marker.setIcon(icon);
     }
 
-    updateMarkerImage(marker, settings, image, maxSize) {
+    /*updateMarkerImage(marker, settings, image, maxSize) {
         var testImage = document.createElement('img'); // eslint-disable-line
         testImage.style.visibility = 'hidden';
         testImage.onload = function() {
@@ -273,39 +264,97 @@ export default class TbImageMap {
         }
         document.body.appendChild(testImage); //eslint-disable-line
         testImage.src = image;
+    }*/
+
+    updateMarkerIcon(marker, settings) {
+        this.createMarkerIcon(marker, settings, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
+            if (settings.showLabel) {
+                marker.unbindTooltip();
+                marker.tooltipOffset = [0, -iconInfo.size[1] * marker.offsetY + 10];
+                marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
+                    { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
+            }
+        });
     }
 
-    createMarker(position, settings, onClickListener, markerArgs) {
-        var height = 34;
-        var pinColor = settings.color.substr(1);
+    createMarkerIcon(marker, settings, onMarkerIconReady) {
+        var currentImage = settings.currentImage;
+        var opMap = this;
+        if (currentImage && currentImage.url) {
+            var testImage = document.createElement('img'); // eslint-disable-line
+            testImage.style.visibility = 'hidden';
+            testImage.onload = function() {
+                var width;
+                var height;
+                var aspect = testImage.width / testImage.height;
+                document.body.removeChild(testImage); //eslint-disable-line
+                if (aspect > 1) {
+                    width = currentImage.size;
+                    height = currentImage.size / aspect;
+                } else {
+                    width = currentImage.size * aspect;
+                    height = currentImage.size;
+                }
+                var icon = L.icon({
+                    iconUrl: currentImage.url,
+                    iconSize: [width, height],
+                    iconAnchor: [marker.offsetX * width, marker.offsetY * height],
+                    popupAnchor: [0, -height]
+                });
+                var iconInfo = {
+                    size: [width, height],
+                    icon: icon
+                };
+                onMarkerIconReady(iconInfo);
+            };
+            testImage.onerror = function() {
+                opMap.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
+            };
+            document.body.appendChild(testImage); //eslint-disable-line
+            testImage.src = currentImage.url;
+        } else {
+            this.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
+        }
+    }
+
+    createDefaultMarkerIcon(marker, color, onMarkerIconReady) {
+        var pinColor = color.substr(1);
         var icon = L.icon({
             iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + pinColor,
             iconSize: [21, 34],
-            iconAnchor: [21 * settings.markerOffsetX, 34 * settings.markerOffsetY],
+            iconAnchor: [21 * marker.offsetX, 34 * marker.offsetY],
             popupAnchor: [0, -34],
             shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
             shadowSize: [40, 37],
             shadowAnchor: [12, 35]
         });
+        var iconInfo = {
+            size: [21, 34],
+            icon: icon
+        };
+        onMarkerIconReady(iconInfo);
+    }
 
+    createMarker(position, settings, onClickListener, markerArgs) {
         var pos = this.posFunction(position.x, position.y);
         var x = pos.x * this.width;
         var y = pos.y * this.height;
         var location = this.pointToLatLng(x, y);
-        var marker = L.marker(location, {icon: icon}).addTo(this.map);
+        var marker = L.marker(location, {});//.addTo(this.map);
         marker.position = position;
         marker.offsetX = settings.markerOffsetX;
         marker.offsetY = settings.markerOffsetY;
-
-        if (settings.showLabel) {
-            marker.tooltipOffset = [0, -height * marker.offsetY + 10];
-            marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
-                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
-        }
-
-        if (settings.useMarkerImage) {
-            this.updateMarkerImage(marker, settings, settings.markerImage, settings.markerImageSize || 34);
-        }
+        var opMap = this;
+        this.createMarkerIcon(marker, settings, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
+            if (settings.showLabel) {
+                marker.tooltipOffset = [0, -iconInfo.size[1] * marker.offsetY + 10];
+                marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
+                    { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
+            }
+            marker.addTo(opMap.map);
+        });
 
         if (settings.displayTooltip) {
             this.createTooltip(marker, settings.tooltipPattern, settings.tooltipReplaceInfo, settings.autocloseTooltip, markerArgs);
