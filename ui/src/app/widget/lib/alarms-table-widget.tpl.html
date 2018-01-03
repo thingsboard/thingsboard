@@ -77,7 +77,7 @@
                     </td>
                     <td md-cell ng-if="vm.displayDetails" class="tb-action-cell">
                         <md-button class="md-icon-button" aria-label="{{ 'alarm.details' | translate }}"
-                                   ng-click="vm.openAlarmDetails($event, alarm)">
+                                   ng-click="vm.openAlarmDetails($event, alarm)" ng-disabled="$root.loading">
                             <md-icon aria-label="{{ 'alarm.details' | translate }}" class="material-icons">more_horiz</md-icon>
                             <md-tooltip md-direction="top">
                                 {{ 'alarm.details' | translate }}
@@ -90,7 +90,7 @@
                                    width: vm.actionCellDescriptors.length*36+'px'}">
                         <md-button class="md-icon-button" ng-repeat="actionDescriptor in vm.actionCellDescriptors"
                                    aria-label="{{ actionDescriptor.displayName }}"
-                                   ng-click="vm.onActionButtonClick($event, alarm, actionDescriptor)">
+                                   ng-click="vm.onActionButtonClick($event, alarm, actionDescriptor)" ng-disabled="$root.loading">
                             <md-icon aria-label="{{ actionDescriptor.displayName }}" class="material-icons">{{actionDescriptor.icon}}</md-icon>
                             <md-tooltip md-direction="top">
                                 {{ actionDescriptor.displayName }}

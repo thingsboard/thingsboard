@@ -455,7 +455,7 @@ function barDimensions(context, options, x, y, w, h) {
         if (options.hideMinMax && options.label === '') {
             bd.labelY = bd.barBottom;
             bd.barLeft = bd.origBaseX + options.fontMinMaxSize/3 * bd.fontSizeFactor;
-            bd.barRight = bd.bd.origBaseX + w + /*bd.width*/ - options.fontMinMaxSize/3 * bd.fontSizeFactor;
+            bd.barRight = bd.origBaseX + w + /*bd.width*/ - options.fontMinMaxSize/3 * bd.fontSizeFactor;
         } else {
             context.font = canvasGauges.drawings.font(options, 'MinMax', bd.fontSizeFactor);
             var minTextWidth  = context.measureText(options.minValue+'').width;
