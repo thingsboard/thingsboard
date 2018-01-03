@@ -233,39 +233,6 @@ export default class TbImageMap {
         });
     }
 
-    /*updateMarkerImage(marker, settings, image, maxSize) {
-        var testImage = document.createElement('img'); // eslint-disable-line
-        testImage.style.visibility = 'hidden';
-        testImage.onload = function() {
-            var width;
-            var height;
-            var aspect = testImage.width / testImage.height;
-            document.body.removeChild(testImage);  //eslint-disable-line
-            if (aspect > 1) {
-                width = maxSize;
-                height = maxSize / aspect;
-            } else {
-                width = maxSize * aspect;
-                height = maxSize;
-            }
-            var icon = L.icon({
-                iconUrl: image,
-                iconSize: [width, height],
-                iconAnchor: [marker.offsetX * width, marker.offsetY * height],
-                popupAnchor: [0, -height]
-            });
-            marker.setIcon(icon);
-            if (settings.showLabel) {
-                marker.unbindTooltip();
-                marker.tooltipOffset = [0, -height * marker.offsetY + 10];
-                marker.bindTooltip('<div style="color: '+ settings.labelColor +';"><b>'+settings.labelText+'</b></div>',
-                    { className: 'tb-marker-label', permanent: true, direction: 'top', offset: marker.tooltipOffset });
-            }
-        }
-        document.body.appendChild(testImage); //eslint-disable-line
-        testImage.src = image;
-    }*/
-
     updateMarkerIcon(marker, settings) {
         this.createMarkerIcon(marker, settings, (iconInfo) => {
             marker.setIcon(iconInfo.icon);
