@@ -26,4 +26,8 @@ tb-timeseries-table-widget {
     .md-table-pagination>* {
         height: 46px;
     }
+
+    .tb-data-table md-toolbar {
+        z-index: 10;
+    }
 }
