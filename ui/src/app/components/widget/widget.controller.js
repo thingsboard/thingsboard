@@ -548,7 +548,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     function configureWidgetElement() {
 
         $scope.displayLegend = angular.isDefined(widget.config.showLegend) ?
-            widget.config.showLegend : widget.type === types.widgetType.timeseries.value;
+            widget.config.showLegend : ( widget.type === types.widgetType.timeseries.value ||
+                widget.type === types.widgetType.depthseries.value);
 
         if ($scope.displayLegend) {
             $scope.legendConfig = widget.config.legendConfig ||

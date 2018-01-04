@@ -37,7 +37,6 @@ function DepthService($translate, types) {
             name: $translate.instant('depthinterval.feet-interval', {feet: 20}, 'messageformat'),
             value: 20
         }]
-    predefIntervals;
 
     var service = {
         minIntervalLimit: minIntervalLimit,
@@ -64,15 +63,15 @@ function DepthService($translate, types) {
             history: {
                 historyType: 0,
                 interval: DECI_FT,
-                depthwindowFt: 100, // 1 min by default
+                depthwindowFt: 100,
                 fixedDepthwindow: {
-                    startDepthFt: 0, //currentTime - DAY, // 1 day by default
-                    endDepthFt: 100 //currentTime
+                    startDepthFt: 0,
+                    endDepthFt: 100
                 }
             },
             aggregation: {
-                type: types.aggregation.avg.value,
-                limit: AVG_LIMIT
+                type: types.aggregation.none.value,
+                limit: 200
             }
         }
         return depthwindow;

@@ -350,7 +350,7 @@ export default function WidgetEditorController(widgetService, userService, types
                     if (!config.depthwindow) {
                         config.depthwindow = {
                             realtime: {
-                                depthwindowFt: 300
+                                depthwindowFt: 10
                             }
                         };
                     }

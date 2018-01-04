@@ -125,7 +125,8 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     scope.timewindow = config.timewindow;
                     scope.depthwindow = config.depthwindow;
                     scope.showLegend = angular.isDefined(config.showLegend) ?
-                        config.showLegend : scope.widgetType === types.widgetType.timeseries.value;
+                        config.showLegend : (scope.widgetType === types.widgetType.timeseries.value ||
+                            scope.widgetType === types.widgetType.depthseries.value) ;
                     scope.legendConfig = config.legendConfig;
                     scope.actions = config.actions;
                     if (!scope.actions) {
@@ -230,7 +231,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
 
         scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
             'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
-            'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
+            ' useDashboardDepthwindow + alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 if (value.config) {

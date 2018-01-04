@@ -260,7 +260,8 @@
                     </md-input-container>
                 </div>
                 <div ng-show="widgetType === types.widgetType.timeseries.value ||
-                              widgetType === types.widgetType.latest.value" layout='column' layout-align="center"
+                              widgetType === types.widgetType.latest.value ||
+                              widgetType === types.widgetType.depthseries.value" layout='column' layout-align="center"
                      layout-gt-sm='row' layout-align-gt-sm="start center">
                     <md-checkbox flex aria-label="{{ 'widget-config.display-legend' | translate }}"
                                  ng-model="showLegend">{{ 'widget-config.display-legend' | translate }}

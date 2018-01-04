@@ -204,7 +204,7 @@ function TimeService($translate, types) {
     }
 
     function defaultTimewindow() {
-        //var currentTime = (new Date).getTime();
+        var currentTime = (new Date).getTime();
         var timewindow = {
             displayValue: "",
             selectedTab: 0,
@@ -217,8 +217,8 @@ function TimeService($translate, types) {
                     interval: SECOND,
                     timewindowMs: MINUTE, // 1 min by default
                     fixedTimewindow: {
-                        startTimeMs: 0, //currentTime - DAY, // 1 day by default
-                        endTimeMs: 10 //currentTime
+                        startTimeMs: currentTime - DAY, // 1 day by default
+                        endTimeMs: currentTime
                     }
             },
             aggregation: {
