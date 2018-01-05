@@ -35,10 +35,12 @@ Thingsboard can now support depthseries data also. Earlier thingsboard supported
 ## Configurations
 
 1. There is only one configuration to be made, it is in thingsboard.yml. Under the heading UI Related configuration set depthSeries to true like:
-   # UI Related Configuration
-   configurations:
-     ui:
-     	depthSeries: "true"
+```
+#UI Related Configuration
+  configurations:
+    ui:
+      depthSeries: "true"
+```
 
 ## Build
 
