@@ -182,7 +182,7 @@ spec:
   - metadata:
       name: zkdatadir
       annotations:
-        volume.beta.kubernetes.io/storage-class: slow
+        volume.beta.kubernetes.io/storage-class: standard
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:

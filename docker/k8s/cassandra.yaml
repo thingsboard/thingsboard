@@ -115,7 +115,7 @@ spec:
   - metadata:
       name: cassandra-data
       annotations:
-        volume.beta.kubernetes.io/storage-class: fast
+        volume.beta.kubernetes.io/storage-class: ebs-gp2
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
@@ -124,7 +124,7 @@ spec:
   - metadata:
       name: cassandra-commitlog
       annotations:
-        volume.beta.kubernetes.io/storage-class: fast
+        volume.beta.kubernetes.io/storage-class: ebs-gp2
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
