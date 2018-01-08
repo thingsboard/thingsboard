@@ -298,11 +298,11 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
         tenantWidgetsBundles = undefined;
     }
 
-    function loadWidgetsBundleCache() {
+    function loadWidgetsBundleCache(config) {
         var deferred = $q.defer();
         if (!allWidgetsBundles) {
             var url = '/api/widgetsBundles';
-            $http.get(url, null).then(function success(response) {
+            $http.get(url, config).then(function success(response) {
                 allWidgetsBundles = response.data;
                 systemWidgetsBundles = [];
                 tenantWidgetsBundles = [];
@@ -326,9 +326,9 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
     }
 
 
-    function getSystemWidgetsBundles() {
+    function getSystemWidgetsBundles(config) {
         var deferred = $q.defer();
-        loadWidgetsBundleCache().then(
+        loadWidgetsBundleCache(config).then(
             function success() {
                 deferred.resolve(systemWidgetsBundles);
             },
@@ -339,9 +339,9 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
         return deferred.promise;
     }
 
-    function getTenantWidgetsBundles() {
+    function getTenantWidgetsBundles(config) {
         var deferred = $q.defer();
-        loadWidgetsBundleCache().then(
+        loadWidgetsBundleCache(config).then(
             function success() {
                 deferred.resolve(tenantWidgetsBundles);
             },
@@ -352,9 +352,9 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
         return deferred.promise;
     }
 
-    function getAllWidgetsBundles() {
+    function getAllWidgetsBundles(config) {
         var deferred = $q.defer();
-        loadWidgetsBundleCache().then(
+        loadWidgetsBundleCache(config).then(
             function success() {
                 deferred.resolve(allWidgetsBundles);
             },

@@ -43,7 +43,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
 
     return service;
 
-    function getTenantDashboardsByTenantId(tenantId, pageLink) {
+    function getTenantDashboardsByTenantId(tenantId, pageLink, config) {
         var deferred = $q.defer();
         var url = '/api/tenant/' + tenantId + '/dashboards?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -55,7 +55,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
         }
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
@@ -63,7 +63,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         return deferred.promise;
     }
 
-    function getTenantDashboards(pageLink, applyCustomersInfo) {
+    function getTenantDashboards(pageLink, applyCustomersInfo, config) {
         var deferred = $q.defer();
         var url = '/api/tenant/dashboards?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -75,7 +75,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
         }
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             if (applyCustomersInfo) {
                 customerService.applyAssignedCustomersInfo(response.data.data).then(
                     function success(data) {
@@ -95,7 +95,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         return deferred.promise;
     }
 
-    function getCustomerDashboards(customerId, pageLink, applyCustomersInfo) {
+    function getCustomerDashboards(customerId, pageLink, applyCustomersInfo, config) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/dashboards?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -107,7 +107,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         if (angular.isDefined(pageLink.textOffset)) {
             url += '&textOffset=' + pageLink.textOffset;
         }
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             if (applyCustomersInfo) {
                 customerService.applyAssignedCustomerInfo(response.data.data, customerId).then(
                     function success(data) {
@@ -158,10 +158,10 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         return deferred.promise;
     }
 
-    function getDashboardInfo(dashboardId) {
+    function getDashboardInfo(dashboardId, config) {
         var deferred = $q.defer();
         var url = '/api/dashboard/info/' + dashboardId;
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

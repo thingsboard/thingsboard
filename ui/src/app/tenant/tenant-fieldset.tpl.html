@@ -29,7 +29,7 @@
 </div>
 
 <md-content class="md-padding" layout="column">
-	<fieldset ng-disabled="loading || !isEdit">
+	<fieldset ng-disabled="$root.loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>tenant.title</label>
 			<input required name="title" ng-model="tenant.title">	

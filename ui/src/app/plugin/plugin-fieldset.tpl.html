@@ -39,7 +39,7 @@
 </div>
 
 <md-content class="md-padding" layout="column" style="overflow-x: hidden">
-    <fieldset ng-disabled="loading || !isEdit || isReadOnly">
+    <fieldset ng-disabled="$root.loading || !isEdit || isReadOnly">
         <md-input-container class="md-block">
             <label translate>plugin.name</label>
             <input required name="name" ng-model="plugin.name">
@@ -61,7 +61,7 @@
             </md-input-container>
             <md-input-container flex class="md-block">
                 <label translate>plugin.type</label>
-                <md-select required name="pluginType" ng-model="plugin.clazz" ng-disabled="loading || !isEdit">
+                <md-select required name="pluginType" ng-model="plugin.clazz" ng-disabled="$root.loading || !isEdit">
                     <md-option ng-repeat="component in pluginComponents" ng-value="component.clazz">
                         {{component.name}}
                     </md-option>
@@ -74,14 +74,14 @@
         <md-card flex class="plugin-config" ng-if="showPluginConfig">
             <md-card-title>
                 <md-card-title-text>
-                    <span translate class="md-headline" ng-class="{'tb-readonly-label' : (loading || !isEdit || isReadOnly)}">plugin.configuration</span>
+                    <span translate class="md-headline" ng-class="{'tb-readonly-label' : ($root.loading || !isEdit || isReadOnly)}">plugin.configuration</span>
                 </md-card-title-text>
             </md-card-title>
             <md-card-content>
                 <tb-json-form schema="pluginComponent.configurationDescriptor.schema"
                               form="pluginComponent.configurationDescriptor.form"
                               model="pluginConfiguration.data"
-                              readonly="loading || !isEdit || isReadOnly"
+                              readonly="$root.loading || !isEdit || isReadOnly"
                               form-control="theForm">
                 </tb-json-form>
             </md-card-content>

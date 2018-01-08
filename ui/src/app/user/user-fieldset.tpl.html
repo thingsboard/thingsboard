@@ -26,7 +26,7 @@
 </md-button>
 
 <md-content class="md-padding" layout="column">
-    <fieldset ng-disabled="loading || !isEdit">
+    <fieldset ng-disabled="$root.loading || !isEdit">
         <md-input-container class="md-block">
             <label translate>user.email</label>
             <input required name="email"
@@ -50,11 +50,11 @@
             <textarea ng-model="user.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
         <section class="tb-default-dashboard" flex layout="column" ng-if="user.id">
-            <span class="tb-default-dashboard-label" ng-class="{'tb-disabled-label': loading || !isEdit}" translate>user.default-dashboard</span>
+            <span class="tb-default-dashboard-label" ng-class="{'tb-disabled-label': $root.loading || !isEdit}" translate>user.default-dashboard</span>
             <section flex layout="column" layout-gt-sm="row">
                 <tb-dashboard-autocomplete ng-if="isTenantAdmin()"
                                            flex
-                                           ng-disabled="loading || !isEdit"
+                                           ng-disabled="$root.loading || !isEdit"
                                            the-form="theForm"
                                            ng-model="user.additionalInfo.defaultDashboardId"
                                            tenant-id="user.tenantId.id"
@@ -62,14 +62,14 @@
                 </tb-dashboard-autocomplete>
                 <tb-dashboard-autocomplete ng-if="isCustomerUser()"
                                      flex
-                                     ng-disabled="loading || !isEdit"
+                                     ng-disabled="$root.loading || !isEdit"
                                      the-form="theForm"
                                      ng-model="user.additionalInfo.defaultDashboardId"
                                      dashboards-scope="customer"
                                      customer-id="user.customerId.id"
                                      select-first-dashboard="false">
                 </tb-dashboard-autocomplete>
-                <md-checkbox ng-disabled="loading || !isEdit" flex aria-label="{{ 'user.always-fullscreen' | translate }}"
+                <md-checkbox ng-disabled="$root.loading || !isEdit" flex aria-label="{{ 'user.always-fullscreen' | translate }}"
                              ng-model="user.additionalInfo.defaultDashboardFullscreen">{{ 'user.always-fullscreen' | translate }}
                 </md-checkbox>
             </section>

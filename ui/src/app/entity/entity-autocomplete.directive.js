@@ -38,7 +38,7 @@ export default function EntityAutocomplete($compile, $templateCache, $q, $filter
             if (scope.excludeEntityIds && scope.excludeEntityIds.length) {
                 limit += scope.excludeEntityIds.length;
             }
-            entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit, null, scope.entitySubtype).then(function success(result) {
+            entityService.getEntitiesByNameFilter(scope.entityType, searchText, limit, {ignoreLoading: true}, scope.entitySubtype).then(function success(result) {
                 if (result) {
                     if (scope.excludeEntityIds && scope.excludeEntityIds.length) {
                         var entities = [];

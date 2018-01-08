@@ -23,6 +23,8 @@ export default angular.module('thingsboard.api.telemetryWebsocket', [thingsboard
 const RECONNECT_INTERVAL = 2000;
 const WS_IDLE_TIMEOUT = 90000;
 
+const MAX_PUBLISH_COMMANDS = 10;
+
 /*@ngInject*/
 function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, types, userService) {
 
@@ -75,17 +77,38 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
     return service;
 
     function publishCommands () {
-        if (isOpened && (cmdsWrapper.tsSubCmds.length > 0 ||
-            cmdsWrapper.historyCmds.length > 0 ||
-            cmdsWrapper.attrSubCmds.length > 0)) {
-            dataStream.send(angular.copy(cmdsWrapper)).then(function () {
+        while(isOpened && hasCommands()) {
+            dataStream.send(preparePublishCommands()).then(function () {
                 checkToClose();
             });
-            cmdsWrapper.tsSubCmds = [];
-            cmdsWrapper.historyCmds = [];
-            cmdsWrapper.attrSubCmds = [];
         }
         tryOpenSocket();
+    }
+
+    function hasCommands() {
+        return cmdsWrapper.tsSubCmds.length > 0 ||
+            cmdsWrapper.historyCmds.length > 0 ||
+            cmdsWrapper.attrSubCmds.length > 0;
+    }
+
+    function preparePublishCommands() {
+        var preparedWrapper = {};
+        var leftCount = MAX_PUBLISH_COMMANDS;
+        preparedWrapper.tsSubCmds = popCmds(cmdsWrapper.tsSubCmds, leftCount);
+        leftCount -= preparedWrapper.tsSubCmds.length;
+        preparedWrapper.historyCmds = popCmds(cmdsWrapper.historyCmds, leftCount);
+        leftCount -= preparedWrapper.historyCmds.length;
+        preparedWrapper.attrSubCmds = popCmds(cmdsWrapper.attrSubCmds, leftCount);
+        return preparedWrapper;
+    }
+
+    function popCmds(cmds, leftCount) {
+        var toPublish = Math.min(cmds.length, leftCount);
+        if (toPublish > 0) {
+            return cmds.splice(0, toPublish);
+        } else {
+            return [];
+        }
     }
 
     function onError (/*message*/) {

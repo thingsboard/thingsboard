@@ -82,7 +82,7 @@ public class CustomerController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
-    @ResponseBody 
+    @ResponseBody
     public Customer saveCustomer(@RequestBody Customer customer) throws ThingsboardException {
         try {
             customer.setTenantId(getCurrentUser().getTenantId());
@@ -107,7 +107,7 @@ public class CustomerController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customers", params = { "limit" }, method = RequestMethod.GET)
+    @RequestMapping(value = "/customers", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<Customer> getCustomers(@RequestParam int limit,
                                                @RequestParam(required = false) String textSearch,
@@ -122,4 +122,16 @@ public class CustomerController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/customers", params = {"customerTitle"}, method = RequestMethod.GET)
+    @ResponseBody
+    public Customer getTenantCustomer(
+            @RequestParam String customerTitle) throws ThingsboardException {
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
 }

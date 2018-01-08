@@ -59,7 +59,7 @@
 			</md-button>
 		</div>
 	</div>
-	<fieldset ng-disabled="loading || !isEdit">
+	<fieldset ng-disabled="$root.loading || !isEdit">
 		<md-input-container class="md-block">
 			<label translate>dashboard.title</label>
 			<input required name="title" ng-model="dashboard.title">	

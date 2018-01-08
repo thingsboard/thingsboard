@@ -23,7 +23,7 @@
            class="md-raised md-primary">{{ 'widgets-bundle.delete' | translate }}</md-button>
 
 <md-content class="md-padding" layout="column">
-    <fieldset ng-disabled="loading || !isEdit">
+    <fieldset ng-disabled="$root.loading || !isEdit">
         <md-input-container class="md-block">
             <label translate>widgets-bundle.title</label>
             <input required name="title" ng-model="widgetsBundle.title">

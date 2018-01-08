@@ -16,7 +16,7 @@
 
 -->
 <form name="theForm" ng-submit="vm.update()">
-	<fieldset ng-disabled="loading">
+	<fieldset ng-disabled="$root.loading">
 		<md-content style="height: 100%" flex layout="column">
 			<section layout="column">
 				<md-tabs ng-class="{'tb-headless': vm.historyOnly}" md-dynamic-height md-selected="vm.timewindow.selectedTab" md-border-bottom>
@@ -81,10 +81,10 @@
 			<span flex></span>
 			<section layout="row" layout-alignment="start center">
 				  <span flex></span>
-				  <md-button ng-disabled="loading || theForm.$invalid || !theForm.$dirty" type="submit" class="md-raised md-primary">
+				  <md-button ng-disabled="$root.loading || theForm.$invalid || !theForm.$dirty" type="submit" class="md-raised md-primary">
 				  		{{ 'action.update' | translate }}
 				  </md-button>
-			      <md-button ng-disabled="loading" ng-click="vm.cancel()" style="margin-right:20px;">
+			      <md-button ng-disabled="$root.loading" ng-click="vm.cancel()" style="margin-right:20px;">
 					  {{ 'action.cancel' | translate }}
 			      </md-button>
 			</section> 

@@ -293,10 +293,10 @@ function DeviceService($http, $q, attributeService, customerService, types) {
         return deferred.promise;
     }
 
-    function getDeviceTypes() {
+    function getDeviceTypes(config) {
         var deferred = $q.defer();
         var url = '/api/device/types';
-        $http.get(url).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

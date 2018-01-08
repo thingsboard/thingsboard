@@ -52,6 +52,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     private static final String PUBLIC_CUSTOMER_TITLE = "Public";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
     private CustomerDao customerDao;
@@ -76,6 +77,13 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         log.trace("Executing findCustomerById [{}]", customerId);
         Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         return customerDao.findById(customerId.getId());
+    }
+
+    @Override
+    public Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title) {
+        log.trace("Executing findCustomerByTenantIdAndTitle [{}] [{}]", tenantId, title);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title);
     }
 
     @Override
