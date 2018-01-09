@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
@@ -31,14 +32,17 @@ import org.thingsboard.server.dao.model.sql.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sql.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
+import org.thingsboard.server.dao.timeseries.TsInsertExecutorType;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -50,13 +54,45 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 @SqlDao
 public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService implements TimeseriesDao {
 
-    private ListeningExecutorService insertService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+    @Value("${sql.ts_inserts_executor_type}")
+    private String insertExecutorType;
+
+    @Value("${sql.ts_inserts_fixed_thread_pool_size}")
+    private int insertFixedThreadPoolSize;
+
+    private ListeningExecutorService insertService;
 
     @Autowired
     private TsKvRepository tsKvRepository;
 
     @Autowired
     private TsKvLatestRepository tsKvLatestRepository;
+
+    @PostConstruct
+    public void init() {
+        Optional<TsInsertExecutorType> executorTypeOptional = TsInsertExecutorType.parse(insertExecutorType);
+        TsInsertExecutorType executorType;
+        if (executorTypeOptional.isPresent()) {
+            executorType = executorTypeOptional.get();
+        } else {
+            executorType = TsInsertExecutorType.FIXED;
+        }
+        switch (executorType) {
+            case SINGLE:
+                insertService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+                break;
+            case FIXED:
+                int poolSize = insertFixedThreadPoolSize;
+                if (poolSize <= 0) {
+                    poolSize = 10;
+                }
+                insertService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(poolSize));
+                break;
+            case CACHED:
+                insertService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+                break;
+        }
+    }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllAsync(EntityId entityId, List<TsKvQuery> queries) {
@@ -265,7 +301,9 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
 
     @PreDestroy
     void onDestroy() {
-        insertService.shutdown();
+        if (insertService != null) {
+            insertService.shutdown();
+        }
     }
 
 }
