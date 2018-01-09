@@ -340,7 +340,9 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
         }
         if (!style.width) {
             var columnWidth = vm.columnWidth[key.label];
-            style.width = columnWidth;
+            if(columnWidth && columnWidth !== "0px") {
+                style.width = columnWidth;
+            }
         }
         return style;
     }
