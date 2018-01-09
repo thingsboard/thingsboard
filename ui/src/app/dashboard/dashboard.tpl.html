@@ -49,17 +49,19 @@
                         </md-tooltip>
                         <md-icon aria-label="{{ 'action.export' | translate }}" class="material-icons">file_download</md-icon>
                     </md-button>
-                    <!--tb-timewindow ng-show="vm.isEdit || vm.displayDashboardTimewindow()"
+                    <tb-timewindow ng-if="!vm.types.uiConf.isDepthSeriesEnabled()"
+                                   ng-show="vm.isEdit || vm.displayDashboardTimewindow()"
                                    is-toolbar
                                    direction="left"
                                    tooltip-direction="bottom" aggregation="true"
                                    ng-model="vm.dashboardCtx.dashboardTimewindow">
-                    </tb-timewindow>-->
-                    <tb-depthwindow ng-show="vm.isEdit || vm.displayDashboardDepthwindow()"
-                                   is-toolbar
-                                   direction="left"
-                                   tooltip-direction="bottom" aggregation="true"
-                                   ng-model="vm.dashboardCtx.dashboardDepthwindow">
+                    </tb-timewindow>
+                    <tb-depthwindow ng-if="vm.types.uiConf.isDepthSeriesEnabled()"
+                                    ng-show="vm.isEdit || vm.displayDashboardDepthwindow()"
+                                    is-toolbar
+                                    direction="left"
+                                    tooltip-direction="bottom" aggregation="true"
+                                    ng-model="vm.dashboardCtx.dashboardDepthwindow">
                     </tb-depthwindow>
                     <tb-aliases-entity-select ng-show="!vm.isEdit && vm.displayEntitiesSelect()"
                                               tooltip-direction="bottom"
