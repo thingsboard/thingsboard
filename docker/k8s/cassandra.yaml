@@ -28,7 +28,7 @@ spec:
   selector:
     app: cassandra
 ---
-apiVersion: "apps/v1beta1"
+apiVersion: "apps/v1"
 kind: StatefulSet
 metadata:
   name: cassandra
@@ -54,7 +54,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
       - name: cassandra
-        image: thingsboard/cassandra:1.3.0
+        image: thingsboard/cassandra:1.3.1
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
@@ -115,7 +115,7 @@ spec:
   - metadata:
       name: cassandra-data
       annotations:
-        volume.beta.kubernetes.io/storage-class: fast
+        volume.beta.kubernetes.io/storage-class: ebs-gp2
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
@@ -124,7 +124,7 @@ spec:
   - metadata:
       name: cassandra-commitlog
       annotations:
-        volume.beta.kubernetes.io/storage-class: fast
+        volume.beta.kubernetes.io/storage-class: ebs-gp2
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:

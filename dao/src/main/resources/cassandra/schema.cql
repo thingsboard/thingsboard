@@ -197,6 +197,34 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.device_by_customer_by_type_an
     PRIMARY KEY ( customer_id, tenant_id, type, search_text, id )
     WITH CLUSTERING ORDER BY ( tenant_id DESC, type ASC, search_text ASC, id DESC );
 
+CREATE TABLE IF NOT EXISTS thingsboard.application (
+    id timeuuid,
+    tenant_id timeuuid,
+    customer_id timeuuid,
+    mini_dashboard_id timeuuid,
+    dashboard_id timeuuid,
+    search_text text,
+    name text,
+    description text,
+    application_rules list<timeuuid>,
+    application_device_types list<text>,
+    PRIMARY KEY (id, tenant_id, customer_id)
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.application_by_tenant_and_search_text AS
+    SELECT *
+    from thingsboard.application
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, search_text, id, customer_id )
+    WITH CLUSTERING ORDER BY ( search_text ASC, id DESC, customer_id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.application_by_tenant_and_name AS
+    SELECT *
+    from thingsboard.application
+    WHERE tenant_id IS NOT NULL AND customer_id IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY ( tenant_id, name, id, customer_id)
+    WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
+
 CREATE TABLE IF NOT EXISTS thingsboard.device_credentials (
 	id timeuuid PRIMARY KEY,
 	device_id timeuuid,
@@ -552,6 +580,12 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.plugin_by_tenant_and_search_t
     WHERE tenant_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
     PRIMARY KEY ( tenant_id, search_text, id )
     WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.plugin_by_clazz AS
+    SELECT *
+    FROM thingsboard.plugin
+    WHERE plugin_class IS NOT NULL AND id IS NOT NULL AND tenant_id IS NOT NULL
+    PRIMARY KEY (plugin_class, id, tenant_id) WITH CLUSTERING ORDER BY (id DESC);
 
 CREATE TABLE IF NOT EXISTS thingsboard.event (
 	tenant_id timeuuid, // tenant or system

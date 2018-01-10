@@ -33,9 +33,9 @@ function ComponentDescriptorService($http, $q) {
 
     function getComponentDescriptorsByType(componentType) {
         var deferred = $q.defer();
-        if (componentsByType[componentType]) {
+        /*if (componentsByType[componentType]) {
             deferred.resolve(componentsByType[componentType]);
-        } else {
+        } else {*/
             var url = '/api/components/' + componentType;
             $http.get(url, null).then(function success(response) {
                 componentsByType[componentType] = response.data;
@@ -48,15 +48,15 @@ function ComponentDescriptorService($http, $q) {
                 deferred.reject();
             });
 
-        }
+        //}
         return deferred.promise;
     }
 
     function getComponentDescriptorByClazz(componentDescriptorClazz) {
         var deferred = $q.defer();
-        if (componentsByClazz[componentDescriptorClazz]) {
+        /*if (componentsByClazz[componentDescriptorClazz]) {
             deferred.resolve(componentsByClazz[componentDescriptorClazz]);
-        } else {
+        } else {*/
             var url = '/api/component/' + componentDescriptorClazz;
             $http.get(url, null).then(function success(response) {
                 componentsByClazz[componentDescriptorClazz] = response.data;
@@ -64,15 +64,15 @@ function ComponentDescriptorService($http, $q) {
             }, function fail() {
                 deferred.reject();
             });
-        }
+        //}
         return deferred.promise;
     }
 
     function getPluginActionsByPluginClazz(pluginClazz) {
         var deferred = $q.defer();
-        if (actionsByPlugin[pluginClazz]) {
+        /*if (actionsByPlugin[pluginClazz]) {
             deferred.resolve(actionsByPlugin[pluginClazz]);
-        } else {
+        } else {*/
             var url = '/api/components/actions/' + pluginClazz;
             $http.get(url, null).then(function success(response) {
                 actionsByPlugin[pluginClazz] = response.data;
@@ -80,7 +80,7 @@ function ComponentDescriptorService($http, $q) {
             }, function fail() {
                 deferred.reject();
             });
-        }
+        //}
         return deferred.promise;
     }
 

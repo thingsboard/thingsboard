@@ -46,6 +46,23 @@ source "${CONF_FOLDER}/${configfile}"
 
 run_user=${pkg.name}
 
+#for cassandra schema setup
+su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardSchemaCreationApplication \
+                    -Dinstall.data_dir=${installDir} \
+                    -Dinstall.load_demo=${loadDemo} \
+                    -Dspring.jpa.hibernate.ddl-auto=none \
+                    -Dinstall.upgrade=false \
+                    -Dlogging.config=${pkg.installFolder}/bin/install/logback.xml \
+                    org.springframework.boot.loader.PropertiesLauncher" "$run_user"
+
+if [ $? -ne 0 ]; then
+    echo "ThingsBoard schema setup failed!"
+else
+    echo "ThingsBoard schema setup successfully!"
+fi
+
+
+
 su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardInstallApplication \
                     -Dinstall.data_dir=${installDir} \
                     -Dinstall.load_demo=${loadDemo} \

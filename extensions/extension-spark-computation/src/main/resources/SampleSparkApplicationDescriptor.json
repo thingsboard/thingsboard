@@ -1,0 +1,54 @@
+{
+  "schema": {
+    "title": "Sample Spark Job Configuration",
+    "type": "object",
+    "properties": {
+      "gatewayApiToken": {
+        "title": "Gateway Device API Token",
+        "type": "string"
+      },
+      "window": {
+        "title": "Sliding Window(in Seconds)",
+        "type": "integer"
+      },
+      "zkUrl": {
+        "title": "Zookeeper URL(s)",
+        "type": "string"
+      },
+      "kafkaBrokers": {
+        "title": "Kafka Broker(s)",
+        "type": "string"
+      },
+      "topic": {
+        "title": "Topic Name",
+        "type": "string"
+      },
+      "actionPath": {
+        "title": "Livy Action",
+        "type": "string"
+      },
+      "endpoint": {
+        "title": "MQTT Endpoint",
+        "type": "string"
+      }
+    },
+    "required": [
+      "gatewayApiToken",
+      "window",
+      "zkUrl",
+      "kafkaBrokers",
+      "topic",
+      "actionPath",
+      "endpoint"
+    ]
+  },
+  "form": [
+    "gatewayApiToken",
+    "window",
+    "zkUrl",
+    "kafkaBrokers",
+    "topic",
+    "actionPath",
+    "endpoint"
+  ]
+}

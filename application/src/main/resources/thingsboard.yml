@@ -32,6 +32,12 @@ server:
     # Alias that identifies the key in the key store
     key-alias: "${SSL_KEY_ALIAS:tomcat}"
 
+ldap:
+  authentication-enabled: "${LDAP_AUTHENTICATION_ENABLED:false}"
+  authentication-server: "${LDAP_AUTH_SERVER:ldap://openldap:389}"
+  basedn: "${LDAP_BASE_DN:dc=example,dc=org}"
+  id-attribute: "${LDAP_ID_ATTRIBUTE:uid}"
+
 # Zookeeper connection parameters. Used for service discovery.
 zk:
   # Enable/disable zookeeper discovery service.
@@ -63,6 +69,10 @@ cluster:
 plugins:
   # Comma seperated package list used during classpath scanning for plugins
   scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions}"
+
+spark:
+  jar_path: "${SPARK_COMPUTATIONS_PATH:/Users/jay/Poller}"
+  polling_interval: "${DIRECTORY_POLLING_INTERVAL:10}" # Number of Seconds
 
 # JWT Token parameters
 security.jwt:
@@ -234,23 +244,6 @@ configurations:
     depthSeries: "false"
 
 # HSQLDB DAO Configuration
-spring:
-  data:
-    jpa:
-      repositories:
-        enabled: "true"
-  jpa:
-    hibernate:
-      ddl-auto: "validate"
-    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
-  datasource:
-    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false}"
-    username: "${SPRING_DATASOURCE_USERNAME:sa}"
-    password: "${SPRING_DATASOURCE_PASSWORD:}"
-
-
-# PostgreSQL DAO Configuration
 #spring:
 #  data:
 #    jpa:
@@ -259,9 +252,32 @@ spring:
 #  jpa:
 #    hibernate:
 #      ddl-auto: "validate"
-#    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
+#    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
 #  datasource:
-#    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-#    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
-#    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-#    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+#    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
+#    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false}"
+#    username: "${SPRING_DATASOURCE_USERNAME:sa}"
+#    password: "${SPRING_DATASOURCE_PASSWORD:}"
+
+
+# PostgreSQL DAO Configuration
+spring:
+  data:
+    jpa:
+      repositories:
+        enabled: "true"
+  jpa:
+    hibernate:
+      ddl-auto: "validate"
+    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
+  datasource:
+    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/thingsboard}"
+    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+
+#max file and request size
+spring.http:
+  multipart:
+    max-file-size: 10MB
+    max-request-size: 11MB

@@ -58,6 +58,11 @@
             <artifactId>extensions-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.extensions</groupId>
+            <artifactId>extension-spark-computation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>transport</artifactId>
         </dependency>
@@ -264,6 +269,21 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>eu.infomas</groupId>
+            <artifactId>annotation-detector</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.hashmapinc.tempus</groupId>
+            <artifactId>tempus-spark-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>tools</artifactId>
+            <version>1.8</version>
+            <scope>system</scope>
+            <systemPath>${java.home}/../lib/tools.jar</systemPath>
         </dependency>
     </dependencies>
 
@@ -500,6 +520,11 @@
                                     <artifactId>extension-mqtt</artifactId>
                                     <classifier>extension</classifier>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.thingsboard.extensions</groupId>
+                                    <artifactId>extension-spark-computation</artifactId>
+                                    <classifier>extension</classifier>
+                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
@@ -548,6 +573,7 @@
                     <layout>ZIP</layout>
                     <executable>true</executable>
                     <excludeDevtools>true</excludeDevtools>
+                    <!--<includeSystemScope>true</includeSystemScope>-->
                     <embeddedLaunchScriptProperties>
                         <confFolder>${pkg.installFolder}/conf</confFolder>
                         <logFolder>${pkg.unixLogFolder}</logFolder>

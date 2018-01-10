@@ -34,6 +34,7 @@ import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.dao.model.ModelConstants.PLUGIN_BY_CLASS_COLUMN_FAMILY_NAME;
 
 @Component
 @Slf4j
@@ -113,6 +114,21 @@ public class CassandraBasePluginDao extends CassandraAbstractSearchTextDao<Plugi
             log.debug("Search result: [{}]", pluginEntities.size());
         }
         return DaoUtil.convertDataList(pluginEntities);
+    }
+
+    @Override
+    public PluginMetaData findByPluginClass(String pluginClazz) {
+        log.debug("Search plugin meta-data entity by class [{}]", pluginClazz);
+        Select.Where query = select().from(PLUGIN_BY_CLASS_COLUMN_FAMILY_NAME).
+                where(eq(ModelConstants.PLUGIN_CLASS_PROPERTY, pluginClazz));
+        PluginMetaDataEntity entity = findOneByStatement(query);
+        PluginMetaData pluginMetaData = DaoUtil.getData(entity);
+        if (log.isTraceEnabled()) {
+            log.trace("Search result: [{}] for plugin entity [{}]", pluginMetaData != null, pluginMetaData);
+        } else {
+            log.debug("Search result: [{}]", pluginMetaData != null);
+        }
+        return pluginMetaData;
     }
 
 }

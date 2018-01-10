@@ -211,6 +211,12 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.dashboards',
                             icon: 'dashboards'
+                        },
+                        {
+                            name: 'computation.computations',
+                            type: 'link',
+                            state: 'home.computations',
+                            icon: 'dashboards'
                         }];
 
                     homeSections =

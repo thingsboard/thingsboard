@@ -34,6 +34,7 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
@@ -72,12 +73,11 @@ import org.thingsboard.server.service.mail.TestMailService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
+import javax.naming.Context;
+import javax.naming.directory.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -94,6 +94,13 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest
 @Slf4j
 public abstract class AbstractControllerTest {
+
+    @Value("${ldap.authentication-enabled}")
+    protected boolean ldapEnabled;
+
+    @Value("${ldap.authentication-server}")
+    protected String ldapURL;
+
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
 
@@ -162,6 +169,11 @@ public abstract class AbstractControllerTest {
             this.mockMvc = webAppContextSetup(webApplicationContext)
                     .apply(springSecurity()).build();
         }
+        if(ldapEnabled) {
+            createLDAPEntry(SYS_ADMIN_EMAIL, SYS_ADMIN_PASSWORD);
+            createLDAPEntry(TENANT_ADMIN_EMAIL, TENANT_ADMIN_PASSWORD);
+            createLDAPEntry(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
+        }
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -200,6 +212,11 @@ public abstract class AbstractControllerTest {
         loginSysAdmin();
         doDelete("/api/tenant/" + tenantId.getId().toString())
                 .andExpect(status().isOk());
+        if(ldapEnabled) {
+            deleteLDAPEntry(SYS_ADMIN_EMAIL);
+            deleteLDAPEntry(TENANT_ADMIN_EMAIL);
+            deleteLDAPEntry(CUSTOMER_USER_EMAIL);
+        }
         log.info("Executed teardown");
     }
 
@@ -224,6 +241,43 @@ public abstract class AbstractControllerTest {
         JsonNode tokenInfo = readResponse(doPost("/api/noauth/activate", "activateToken", TestMailService.currentActivateToken, "password", password).andExpect(status().isOk()), JsonNode.class);
         validateAndSetJwtToken(tokenInfo, user.getEmail());
         return savedUser;
+    }
+
+    protected void deleteLDAPEntry(String email) throws Exception{
+        DirContext ldapContext = getAdminLDAPContext();
+        ldapContext.destroySubcontext("uid="+email+",dc=example,dc=org");
+    }
+
+    private DirContext getAdminLDAPContext() throws Exception{
+        String adminPwd = "admin";
+        String conntype = "simple";
+        String AdminDn  = "cn=admin,dc=example,dc=org";
+
+        Hashtable<String, String> environment = new Hashtable<String, String>();
+        environment.put(Context.INITIAL_CONTEXT_FACTORY,"com.sun.jndi.ldap.LdapCtxFactory");
+        environment.put(Context.PROVIDER_URL,ldapURL);
+        environment.put(Context.SECURITY_AUTHENTICATION,conntype);
+        environment.put(Context.SECURITY_PRINCIPAL,AdminDn);
+        environment.put(Context.SECURITY_CREDENTIALS, adminPwd);
+        return new InitialDirContext(environment);
+    }
+
+    protected void createLDAPEntry(String email, String password) throws Exception{
+        DirContext ldapContext = getAdminLDAPContext();
+
+        String entryDN = "uid="+email+",dc=example,dc=org";
+
+        Attribute userPassword = new BasicAttribute("userpassword",password);
+        Attribute uid = new BasicAttribute("uid",email);
+        Attribute oc = new BasicAttribute("objectClass");
+        oc.add("account");
+        oc.add("simpleSecurityObject");
+        oc.add("top");
+        BasicAttributes entry = new BasicAttributes();
+        entry.put(uid);
+        entry.put(userPassword);
+        entry.put(oc);
+        ldapContext.createSubcontext(entryDN, entry);
     }
 
     protected void login(String username, String password) throws Exception {
@@ -337,6 +391,10 @@ public abstract class AbstractControllerTest {
     }
 
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) throws Exception {
+        return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+    }
+
+    protected <T, R> R doPostWithDifferentResponse(String urlTemplate, T content, Class<R> responseClass, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
 

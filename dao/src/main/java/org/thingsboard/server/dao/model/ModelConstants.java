@@ -135,6 +135,26 @@ public class ModelConstants {
     public static final String DEVICE_TYPES_BY_TENANT_VIEW_NAME = "device_types_by_tenant";
 
     /**
+     * Application constants
+     */
+    public static final String APPLICATION_TABLE_NAME = "application";
+    public static final String APPLICATION_DASHBOARD_ID_PROPERTY = "dashboard_id";
+    public static final String APPLICATION_MINI_DASHBOARD_ID_PROPERTY = "mini_dashboard_id";
+    public static final String APPLICATION_NAME = "name";
+    public static final String APPLICATION_DESCRIPTION = "description";
+    public static final String APPLICATION_DEVICE_TYPES_TABLE = "application_device_types";
+    public static final String APPLICATION_RULES_ASSOCIATION_TABLE = "application_associated_rules";
+    public static final String APPLICATION_RULE_ID_COLUMN= "application_rule_id";
+    public static final String APPLICATION_ID_COLUMN = "application_id";
+    public static final String APPLICATION_DEVICE_TYPES = "device_type";
+    public static final String APPLICATION_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String APPLICATION_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String APPLICATION_RULES_COLUMN = "application_rules";
+    public static final String APPLICATION_DEVICE_TYPES_COLUMN = "application_device_types";
+    public static final String APPLICATION_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "application_by_tenant_and_search_text";
+    public static final String APPLICATION_BY_TENANT_AND_NAME_VIEW_NAME = "application_by_tenant_and_name";
+
+    /**
      * Cassandra asset constants.
      */
     public static final String ASSET_COLUMN_FAMILY_NAME = "asset";
@@ -256,6 +276,7 @@ public class ModelConstants {
 
     public static final String PLUGIN_BY_API_TOKEN_COLUMN_FAMILY_NAME = "plugin_by_api_token";
     public static final String PLUGIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "plugin_by_tenant_and_search_text";
+    public static final String PLUGIN_BY_CLASS_COLUMN_FAMILY_NAME = "plugin_by_clazz";
 
     /**
      * Cassandra plugin component metadata constants.
