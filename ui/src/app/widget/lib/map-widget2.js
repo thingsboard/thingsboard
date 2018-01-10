@@ -18,6 +18,7 @@ import tinycolor from 'tinycolor2';
 import TbGoogleMap from './google-map';
 import TbOpenStreetMap from './openstreet-map';
 import TbImageMap from './image-map';
+import TbTencentMap from './tencent-map';
 
 import {processPattern, arraysEqual, toLabelValueMap, fillPattern, fillPatternWithActions} from './widget-utils';
 
@@ -83,6 +84,8 @@ export default class TbMapWidgetV2 {
                 settings.posFunction,
                 settings.imageEntityAlias,
                 settings.imageUrlAttribute);
+        } else if (mapProvider === 'tencent-map') {
+            this.map = new TbTencentMap($element,this.utils, initCallback, this.defaultZoomLevel, this.dontFitMapBounds, minZoomLevel, settings.tmApiKey, settings.tmDefaultMapType);
         }
     }
 
@@ -466,6 +469,8 @@ export default class TbMapWidgetV2 {
             schema = angular.copy(openstreetMapSettingsSchema);
         } else if (mapProvider === 'image-map') {
             return imageMapSettingsSchema;
+        } else if (mapProvider === 'tencent-map') {
+            schema = angular.copy(tencentMapSettingsSchema);
         }
         angular.merge(schema.schema.properties, commonMapSettingsSchema.schema.properties);
         schema.schema.required = schema.schema.required.concat(commonMapSettingsSchema.schema.required);
@@ -544,7 +549,51 @@ const googleMapSettingsSchema =
             }
         ]
     };
-
+    
+const tencentMapSettingsSchema =
+    {
+        "schema":{
+            "title":"Tencent Map Configuration",
+            "type":"object",
+            "properties":{
+                "tmApiKey":{
+                    "title":"Tencent Maps API Key",
+                    "type":"string"
+                },
+                "tmDefaultMapType":{
+                    "title":"Default map type",
+                    "type":"string",
+                    "default":"roadmap"
+                }
+            },
+            "required":[
+                "tmApiKey"
+            ]
+        },
+        "form":[
+            "tmApiKey",
+            {
+                "key":"tmDefaultMapType",
+                "type":"rc-select",
+                "multiple":false,
+                "items":[
+                    {
+                        "value":"roadmap",
+                        "label":"Roadmap"
+                    },
+                    {
+                        "value":"satellite",
+                        "label":"Satellite"
+                    },
+                    {
+                        "value":"hybrid",
+                        "label":"Hybrid"
+                    },
+                ]
+            }
+        ]
+    };
+    
 const openstreetMapSettingsSchema =
     {
         "schema":{
