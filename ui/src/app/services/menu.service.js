@@ -169,6 +169,18 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.links',
                             icon: 'home'
+                        },  
+                        {
+                            name: 'Applications',
+                            type: 'link',
+                            state: 'home.applications',
+                            icon: 'dashboards'
+                        }, 
+                        {
+                            name: 'Tempusboard',
+                            type: 'link',
+                            state: 'home.tempusboard',
+                            icon: 'dashboards'
                         },
                         {
                             name: 'plugin.plugins',
@@ -256,6 +268,16 @@ function Menu(userService, $state, $rootScope) {
                                 ]
                             },
                             {
+                                name: 'Tempusboard',
+                                places: [
+                                    {
+                                        name: 'Tempusboard',
+                                        icon: 'dashboard',
+                                        state: 'home.tempusboard'
+                                    }
+                                ]
+                            },
+                            {
                                 name: 'device.management',
                                 places: [
                                     {
@@ -288,6 +310,12 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.links',
                             icon: 'home'
+                        },
+                        {
+                            name: 'alert.alert',
+                            type: 'link',
+                            state: 'alert.links',
+                            icon: 'dashboards'
                         },
                         {
                             name: 'asset.assets',

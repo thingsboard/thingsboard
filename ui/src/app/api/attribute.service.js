@@ -98,13 +98,15 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         return deferred.promise;
     }
 
-    function processAttributes(attributes, query, deferred, successCallback, update, apply) {
+    function processAttributes(attributes, query, deferred, successCallback, update, apply, subscriptionId) {
         attributes = $filter('orderBy')(attributes, query.order);
         if (query.search != null) {
             attributes = $filter('filter')(attributes, {key: query.search});
         }
         var responseData = {
-            count: attributes.length
+            count: attributes.length,
+            query: query.search,
+            subscriptionId: subscriptionId
         }
         var startIndex = query.limit * (query.page - 1);
         responseData.data = attributes.slice(startIndex, startIndex + query.limit);
@@ -120,22 +122,22 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
         var eas = entityAttributesSubscriptionMap[subscriptionId];
         if (eas) {
             if (eas.attributes) {
-                processAttributes(eas.attributes, query, deferred, successCallback);
+                processAttributes(eas.attributes, query, deferred, successCallback, null, null, subscriptionId);
                 eas.subscriptionCallback = function(attributes) {
-                    processAttributes(attributes, query, null, successCallback, true, true);
+                    processAttributes(attributes, query, null, successCallback, true, true, subscriptionId);
                 }
             } else {
                 eas.subscriptionCallback = function(attributes) {
-                    processAttributes(attributes, query, deferred, successCallback, false, true);
+                    processAttributes(attributes, query, deferred, successCallback, false, true, subscriptionId);
                     eas.subscriptionCallback = function(attributes) {
-                        processAttributes(attributes, query, null, successCallback, true, true);
+                        processAttributes(attributes, query, null, successCallback, true, true, subscriptionId);
                     }
                 }
             }
         } else {
             var url = '/api/plugins/telemetry/' + entityType + '/' + entityId + '/values/attributes/' + attributeScope;
             $http.get(url, config).then(function success(response) {
-                processAttributes(response.data, query, deferred, successCallback);
+                processAttributes(response.data, query, deferred, successCallback, null, null, subscriptionId);
             }, function fail() {
                 deferred.reject();
             });

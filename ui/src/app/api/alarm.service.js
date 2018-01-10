@@ -136,13 +136,13 @@ function AlarmService($http, $q, $interval, $filter, $timeout, utils, types) {
         var deferred = $q.defer();
         var url = '/api/alarm/' + entityType + '/' + entityId + '?limit=' + pageLink.limit;
 
-        if (angular.isDefined(pageLink.startTime)) {
+        if (angular.isDefined(pageLink.startTime) && pageLink.startTime != null) {
             url += '&startTime=' + pageLink.startTime;
         }
-        if (angular.isDefined(pageLink.endTime)) {
+        if (angular.isDefined(pageLink.endTime) && pageLink.endTime != null) {
             url += '&endTime=' + pageLink.endTime;
         }
-        if (angular.isDefined(pageLink.idOffset)) {
+        if (angular.isDefined(pageLink.idOffset) && pageLink.idOffset != null) {
             url += '&offset=' + pageLink.idOffset;
         }
         if (alarmSearchStatus) {

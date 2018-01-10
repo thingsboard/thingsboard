@@ -113,7 +113,6 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
 
     if (!('dashboardTimewindow' in vm)) {
         vm.dashboardTimewindow = timeService.defaultTimewindow();
-        //vm.dashboardDepthwindow = depthService.defaultDepthwindow()
     }
 
     if (!('dashboardDepthwindow' in vm)) {
@@ -136,8 +135,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         margins: vm.margins ? vm.margins : [10, 10],
         minSizeX: 1,
         minSizeY: 1,
-        defaultSizeX: 8,
-        defaultSizeY: 6,
+        defaultSizeX: 24,
+        defaultSizeY: 18,
         resizable: {
             enabled: vm.isEdit
         },

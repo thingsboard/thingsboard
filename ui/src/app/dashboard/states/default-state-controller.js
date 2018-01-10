@@ -154,8 +154,18 @@ export default function DefaultStateController($scope, $timeout, $location, $sta
             result = newResult;
         }
 
+        var rootStateId = dashboardUtils.getRootStateId(vm.states);
         if (!result[0].id) {
-            result[0].id = dashboardUtils.getRootStateId(vm.states);
+            result[0].id = rootStateId;
+        }
+        if (!vm.states[result[0].id]) {
+            result[0].id = rootStateId;
+        }
+        var i = result.length;
+        while (i--) {
+            if (!result[i].id || !vm.states[result[i].id]) {
+                result.splice(i, 1);
+            }
         }
         return result;
     }

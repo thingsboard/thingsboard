@@ -217,9 +217,43 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
                                 vm.items.pending = false;
                                 reload();
                             } else {
-                                vm.items.data = vm.items.data.concat(items.data);
-                                var startIndex = vm.items.data.length - items.data.length;
-                                var endIndex = vm.items.data.length;
+                                if(items.data[0].id.entityType == 'DASHBOARD' && angular.isDefined(vm.config.parentCtl.currentApplication) && (angular.isDefined(vm.config.parentCtl.currentApplication.miniDashboardId) || angular.isDefined(vm.config.parentCtl.currentApplication.dashboardId))){
+                                    if(vm.config.parentCtl.showAppMini){
+                                        items.data.forEach(function(miniDashboard){
+                                            if(miniDashboard.id.id === vm.config.parentCtl.currentApplication.miniDashboardId.id){
+                                                vm.items.data.push(miniDashboard);
+                                            }
+                                        });
+                                    }
+                                    else if(vm.config.parentCtl.showAppMain){
+                                        items.data.forEach(function(mainDashboard){
+                                            if(mainDashboard.id.id === vm.config.parentCtl.currentApplication.dashboardId.id){
+                                                vm.items.data.push(mainDashboard);
+                                            }
+                                        });
+                                    }
+                                     startIndex = 0;
+                                     endIndex = 1;
+                                }
+                                else if(items.data[0].id.entityType == 'RULE' && angular.isDefined(vm.config.parentCtl.currentApplication) && angular.isDefined(vm.config.parentCtl.currentApplication.rules)){
+                                    var indexCounter = 0;
+                                    items.data.forEach(function(rule){
+                                        vm.config.parentCtl.currentApplication.rules.forEach(function(currentRule){
+                                            if(rule.id.id === currentRule.id){
+                                            vm.items.data.push(rule);
+                                            indexCounter +=1;
+                                        }
+                                        })
+                                    });
+                                    startIndex = vm.items.data.length - indexCounter;
+                                    endIndex = vm.items.data.length;
+                                }
+                                else {
+                                     vm.items.data = vm.items.data.concat(items.data);
+                                     var startIndex = vm.items.data.length - items.data.length;
+                                     var endIndex = vm.items.data.length;
+                                }
+
                                 for (var i = startIndex; i < endIndex; i++) {
                                     var item = vm.items.data[i];
                                     item.index = i;
@@ -496,6 +530,14 @@ function GridController($scope, $state, $mdDialog, $document, $q, $timeout, $tra
             }
         }
         vm.loadItemDetailsFunc(item).then(function success(detailsItem) {
+            if((angular.isFunction(vm.config.parentCtl.currentApp) || angular.isObject(vm.config.parentCtl.currentApp)) && detailsItem.id.entityType == 'APPLICATION')
+            {
+                vm.config.parentCtl.currentApp(detailsItem);  
+                vm.config.parentCtl.appClicked = false;
+                $timeout( function(){
+                    vm.config.parentCtl.appClicked = true;
+                }, 100 );   
+            }
             detailsItem.index = item.index;
             vm.detailsConfig.currentItem = detailsItem;
             vm.detailsConfig.isDetailsEditMode = false;

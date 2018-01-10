@@ -239,7 +239,8 @@ export default angular.module('thingsboard.types', [])
                 customer: "CUSTOMER",
                 user: "USER",
                 dashboard: "DASHBOARD",
-                alarm: "ALARM"
+                alarm: "ALARM",
+                application:"APPLICATION"
             },
             entityTypeTranslations: {
                 "DEVICE": {
@@ -295,6 +296,12 @@ export default angular.module('thingsboard.types', [])
                     typePlural: 'entity.type-alarms',
                     list: 'entity.list-of-alarms',
                     nameStartsWith: 'entity.alarm-name-starts-with'
+                },
+                "APPLICATION": {
+                    type: 'entity.type-application',
+                    typePlural: 'entity.type-applications',
+                    list: 'entity.list-of-applications',
+                    nameStartsWith: 'entity.application-name-starts-with'
                 }
             },
             entitySearchDirection: {
