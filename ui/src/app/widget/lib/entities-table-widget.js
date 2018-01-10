@@ -342,6 +342,8 @@ function EntitiesTableWidgetController($element, $scope, $filter, $mdMedia, $tra
             var columnWidth = vm.columnWidth[key.label];
             if(columnWidth !== "0px") {
                 style.width = columnWidth;
+            } else {
+                style.width = "auto";
             }
         }
         return style;
