@@ -62,6 +62,7 @@ public final class PluginProcessingContext implements PluginContext {
     private static final Executor executor = Executors.newSingleThreadExecutor();
     public static final String CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "Customer user is not allowed to perform this operation!";
     public static final String SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION = "System administrator is not allowed to perform this operation!";
+    public static final String DEVICE_WITH_REQUESTED_ID_NOT_FOUND = "Device with requested id wasn't found!";
 
     private final SharedPluginProcessingContext pluginCtx;
     private final Optional<PluginApiCallSecurityContext> securityCtx;
@@ -309,7 +310,7 @@ public final class PluginProcessingContext implements PluginContext {
             ListenableFuture<Device> deviceFuture = pluginCtx.deviceService.findDeviceByIdAsync(new DeviceId(entityId.getId()));
             Futures.addCallback(deviceFuture, getCallback(callback, device -> {
                 if (device == null) {
-                    return ValidationResult.entityNotFound("Device with requested id wasn't found!");
+                    return ValidationResult.entityNotFound(DEVICE_WITH_REQUESTED_ID_NOT_FOUND);
                 } else {
                     if (!device.getTenantId().equals(ctx.getTenantId())) {
                         return ValidationResult.accessDenied("Device doesn't belong to the current Tenant!");
