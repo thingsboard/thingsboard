@@ -1214,6 +1214,7 @@ export default angular.module('thingsboard.locale', [])
                     "remove-widget-text": "After the confirmation the widget and all related data will become unrecoverable.",
                     "timeseries": "Time series",
                     "search-data": "Search data",
+                    "no-data-found": "No data found",
                     "latest-values": "Latest values",
                     "rpc": "Control widget",
                     "alarm": "Alarm widget",
