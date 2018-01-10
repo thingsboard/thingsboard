@@ -58,7 +58,7 @@ import EditWidgetDirective from '../dashboard/edit-widget.directive';
 
 //import RuleRoutes from '../rule/rule.routes';
 //import RuleController from '../rule/rule.controller';
-import RuleDirective from '../rule/rule.directive';
+//import RuleDirective from '../rule/rule.directive';
 
 export default angular.module('thingsboard.application', [
     uiRouter,
@@ -94,7 +94,7 @@ export default angular.module('thingsboard.application', [
     .controller('DashboardSettingsController', DashboardSettingsController)
     .controller('AddWidgetController', AddWidgetController)
     .directive('tbApplication', ApplicationDirective)
-    .directive('tbRule', RuleDirective)
+  //  .directive('tbRule', RuleDirective)
   //  .directive('tbDashboardDetails', DashboardDirective)
     .directive('tbEditWidget', EditWidgetDirective)
    // .directive('tbDashboardToolbar', DashboardToolbar)
