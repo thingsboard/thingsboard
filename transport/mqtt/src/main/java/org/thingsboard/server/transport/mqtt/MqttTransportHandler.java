@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.*;
@@ -47,7 +46,6 @@ import org.thingsboard.server.transport.mqtt.util.SslUtil;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.security.cert.X509Certificate;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -109,6 +107,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     processConnect(ctx, (MqttConnectMessage) msg);
                     break;
                 case PUBLISH:
+                    log.debug("publish msg topic name" + ((MqttPublishMessage)msg).variableHeader().topicName());
                     processPublish(ctx, (MqttPublishMessage) msg);
                     break;
                 case SUBSCRIBE:
@@ -170,7 +169,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             if (topicName.equals(DEVICE_TELEMETRY_TOPIC)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_TELEMETRY_REQUEST, mqttMsg);
-            } else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
+            }else if(topicName.equals(DEVICE_DEPTH_TELEMETRY_TOPIC)){
+                msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_TELEMETRY_REQUEST_DEPTH, mqttMsg);
+            }
+            else if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_ATTRIBUTES_REQUEST, mqttMsg);
             } else if (topicName.startsWith(DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, GET_ATTRIBUTES_REQUEST, mqttMsg);

@@ -47,6 +47,8 @@ public class MsgTypeFilter extends SimpleRuleLifecycleComponent implements RuleF
                     return MsgType.POST_ATTRIBUTES_REQUEST;
                 case "POST_TELEMETRY":
                     return MsgType.POST_TELEMETRY_REQUEST;
+                case "POST_TELEMETRY_DEPTH":
+                    return MsgType.POST_TELEMETRY_REQUEST_DEPTH;
                 case "RPC_REQUEST":
                     return MsgType.TO_SERVER_RPC_REQUEST;
                 default:
@@ -58,6 +60,8 @@ public class MsgTypeFilter extends SimpleRuleLifecycleComponent implements RuleF
     @Override
     public boolean filter(RuleContext ctx, ToDeviceActorMsg msg) {
         for (MsgType msgType : msgTypes) {
+            log.debug("\n msgtype : " + msgTypes);
+            log.debug("\n payload msg type : " + msg.getPayload().getMsgType());
             if (msgType == msg.getPayload().getMsgType()) {
                 return true;
             }
