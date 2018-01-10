@@ -74,7 +74,7 @@ export default class TbTencentMap {
         this.mapId = '' + Math.random().toString(36).substr(2, 9);
         this.apiKey = tmApiKey || '84d6d83e0e51e481e50454ccbe8986b';
 
-        window.gm_authFailure = function() { // eslint-disable-line no-undef, angular/window-service
+        window.tm_authFailure = function() { // eslint-disable-line no-undef, angular/window-service
             if (tmGlobals.loadingTmId && tmGlobals.loadingTmId === tbMap.mapId) {
                 tmGlobals.loadingTmId = null;
                 tmGlobals.tmApiKeys[tbMap.apiKey].error = 'Unable to authentificate for tencent Map API.</br>Please check your API key.';
@@ -85,7 +85,13 @@ export default class TbTencentMap {
         this.initMapFunctionName = 'initTencentMap_' + this.mapId;
 
         window[this.initMapFunctionName] = function() { // eslint-disable-line no-undef, angular/window-service
-           initTencentMap();
+            tmGlobals.tmApiKeys[tbMap.apiKey].loaded = true;
+            initTencentMap();
+            for (var p = 0; p < tmGlobals.tmApiKeys[tbMap.apiKey].pendingInits.length; p++) {
+                var pendingInit = tmGlobals.tmApiKeys[tbMap.apiKey].pendingInits[p];
+                pendingInit();
+            }
+            tmGlobals.tmApiKeys[tbMap.apiKey].pendingInits = [];
         };
         if (this.apiKey && this.apiKey.length > 0) {
             if (tmGlobals.tmApiKeys[this.apiKey]) {
@@ -124,24 +130,43 @@ export default class TbTencentMap {
         return angular.isDefined(this.map);
     }
 
+    createMarkerLabelStyle(settings) {
+        return {
+            width: "200px",
+            textAlign: "center",
+            color: settings.labelColor,
+            background: "none",
+            border: "none",
+            fontSize: "12px",
+            fontFamily: "\"Helvetica Neue\", Arial, Helvetica, sans-serif",
+            fontWeight: "bold"
+        };
+    }
+
     /* eslint-disable no-undef,no-unused-vars*/
     updateMarkerLabel(marker, settings) {
-
+        if (marker.label) {
+            marker.label.setContent(settings.labelText);
+            marker.label.setStyle(this.createMarkerLabelStyle(settings));
+        }
     }
     /* eslint-enable no-undef,no-unused-vars */
 
     /* eslint-disable no-undef,no-unused-vars */
     updateMarkerColor(marker, color) {
-        this.createDefaultMarkerIcon(marker, color, (icon) => {
-            marker.setIcon(icon);
+        this.createDefaultMarkerIcon(marker, color, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
         });
     }
     /* eslint-enable no-undef,,no-unused-vars */
 
     /* eslint-disable no-undef */
     updateMarkerIcon(marker, settings) {
-        this.createMarkerIcon(marker, settings, (icon) => {
-            marker.setIcon(icon);
+        this.createMarkerIcon(marker, settings, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
+            if (marker.label) {
+                marker.label.setOffset(new qq.maps.Size(-100, -iconInfo.size[1]-20));
+            }
         });
     }
     /* eslint-disable no-undef */
@@ -149,7 +174,7 @@ export default class TbTencentMap {
     /* eslint-disable no-undef */
     createMarkerIcon(marker, settings, onMarkerIconReady) {
         var currentImage = settings.currentImage;
-        var gMap = this;
+        var tMap = this;
         if (currentImage && currentImage.url) {
             this.utils.loadImageAspect(currentImage.url).then(
                 (aspect) => {
@@ -163,15 +188,18 @@ export default class TbTencentMap {
                             width = currentImage.size * aspect;
                             height = currentImage.size;
                         }
-
                         var icon = new qq.maps.MarkerImage(currentImage.url,
-                            qq.maps.Size(width, height),
+                            new qq.maps.Size(width, height),
                             new qq.maps.Point(0,0),
-                            new qq.maps.Point(10, 37));
-
-                        onMarkerIconReady(icon);
+                            new qq.maps.Point(width/2, height),
+                            new qq.maps.Size(width, height));
+                        var iconInfo = {
+                            size: [width, height],
+                            icon: icon
+                        };
+                        onMarkerIconReady(iconInfo);
                     } else {
-                        gMap.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
+                        tMap.createDefaultMarkerIcon(marker, settings.color, onMarkerIconReady);
                     }
                 }
             );
@@ -183,27 +211,40 @@ export default class TbTencentMap {
 
     /* eslint-disable no-undef */
     createDefaultMarkerIcon(marker, color, onMarkerIconReady) {
-       /* var pinColor = color.substr(1);*/
-        var icon = new qq.maps.MarkerImage("http://api.map.qq.com/doc/img/nilt.png",
+        var pinColor = color.substr(1);
+        var icon = new qq.maps.MarkerImage("https://chart.apis.google.com/chart?chst=d_map_pin_letter_withshadow&chld=%E2%80%A2|" + pinColor,
             new qq.maps.Size(40, 37),
             new qq.maps.Point(0,0),
             new qq.maps.Point(10, 37));
-
-        onMarkerIconReady(icon);
+        var iconInfo = {
+            size: [40, 37],
+            icon: icon
+        };
+        onMarkerIconReady(iconInfo);
     }
     /* eslint-enable no-undef */
 
     /* eslint-disable no-undef */
     createMarker(location, settings, onClickListener, markerArgs) {
-         var marker = new qq.maps.Marker({
-           map: this.map,
-           position:location
-         });
-
-        var gMap = this;
-        this.createMarkerIcon(marker, settings, (icon) => {
-            marker.setIcon(icon);
-            marker.setMap(gMap.map)
+        var marker = new qq.maps.Marker({
+            position: location
+        });
+        var tMap = this;
+        this.createMarkerIcon(marker, settings, (iconInfo) => {
+            marker.setIcon(iconInfo.icon);
+            marker.setMap(tMap.map);
+            if (settings.showLabel) {
+                marker.label = new qq.maps.Label({
+                    clickable: false,
+                    content: settings.labelText,
+                    offset: new qq.maps.Size(-100, -iconInfo.size[1]-20),
+                    style: tMap.createMarkerLabelStyle(settings),
+                    visible: true,
+                    position: location,
+                    map: tMap.map,
+                    zIndex: 1000
+                });
+            }
         });
 
         if (settings.displayTooltip) {
@@ -220,6 +261,9 @@ export default class TbTencentMap {
     /* eslint-disable no-undef */
     removeMarker(marker) {
         marker.setMap(null);
+        if (marker.label) {
+            marker.label.setMap(null);
+        }
     }
 
     /* eslint-enable no-undef */
@@ -310,6 +354,9 @@ export default class TbTencentMap {
 
     setMarkerPosition(marker, latLng) {
         marker.setPosition(latLng);
+        if (marker.label) {
+            marker.label.setPosition(latLng);
+        }
     }
 
     getPolylineLatLngs(polyline) {
