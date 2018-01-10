@@ -238,29 +238,23 @@ export default class TbFlot {
                 if (this.ticksFormatterFunction) {
                     return this.ticksFormatterFunction(value);
                 }
-                if (this.tickDecimals) {
-                    value = value.toFixed(this.tickDecimals);
+                if (angular.isNumber(this.tickDecimals)) {
+                    var factor = this.tickDecimals ? Math.pow(10, this.tickDecimals) : 1,
+                        formatted = "" + Math.round(value * factor) / factor;
+                    if (this.tickDecimals != null) {
+                        var decimal = formatted.indexOf("."),
+                            precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
+
+                        if (precision < this.tickDecimals) {
+                            value = (precision ? formatted : formatted + ".") + ("" + factor).substr(1, this.tickDecimals - precision);
+                        }
+                    }
                 }
                 if (this.tickUnits) {
                     value = value + ' ' + this.tickUnits;
                 }
-                if (this.tickSize) {
-                    return value;
-                }
 
-                // var factor = this.tickDecimals ? Math.pow(10, this.tickDecimals) : 1,
-                //     formatted = "" + Math.round(value * factor) / factor;
-                // if (this.tickDecimals != null) {
-                //     var decimal = formatted.indexOf("."),
-                //         precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
-                //
-                //     if (precision < this.tickDecimals) {
-                //         formatted = (precision ? formatted : formatted + ".") + ("" + factor).substr(1, this.tickDecimals - precision);
-                //     }
-                // }
-                // formatted += ' ' + this.tickUnits;
                 return value;
-
             };
 
             this.yaxis.tickFormatter = ctx.yAxisTickFormatter;
@@ -273,8 +267,16 @@ export default class TbFlot {
                 this.yaxis.labelFont.color = this.yaxis.font.color;
                 this.yaxis.labelFont.size = this.yaxis.font.size+2;
                 this.yaxis.labelFont.weight = "bold";
-                this.yaxis.tickSize = settings.yaxis.tickSize || null;
-                this.yaxis.tickDecimals = settings.yaxis.tickDecimals || null;
+                if (angular.isNumber(settings.yaxis.tickSize)) {
+                    this.yaxis.tickSize = settings.yaxis.tickSize;
+                } else {
+                    this.yaxis.tickSize = null;
+                }
+                if (angular.isNumber(settings.yaxis.tickDecimals)) {
+                    this.yaxis.tickDecimals = settings.yaxis.tickDecimals
+                } else {
+                    this.yaxis.tickDecimals = null;
+                }
                 if (settings.yaxis.ticksFormatter && settings.yaxis.ticksFormatter.length) {
                     try {
                         this.yaxis.ticksFormatterFunction = new Function('value', settings.yaxis.ticksFormatter);
@@ -500,9 +502,19 @@ export default class TbFlot {
 
     createYAxis(keySettings, units) {
         var yaxis = angular.copy(this.yaxis);
+        var tickDecimals, tickSize;
 
         var label = keySettings.axisTitle && keySettings.axisTitle.length ? keySettings.axisTitle : yaxis.label;
-        //var tickDecimals = angular.isDefined(keySettings.axisTickDecimals) ? keySettings.axisTickDecimals : 0;
+        if (angular.isNumber(keySettings.axisTickDecimals)) {
+            tickDecimals = keySettings.axisTickDecimals;
+        } else {
+            tickDecimals = yaxis.tickDecimals;
+        }
+        if (angular.isNumber(keySettings.axisTickSize)) {
+            tickSize = keySettings.axisTickSize;
+        } else {
+            tickSize = yaxis.tickSize;
+        }
         var position = keySettings.axisPosition && keySettings.axisPosition.length ? keySettings.axisPosition : "left";
 
         var min = angular.isDefined(keySettings.axisMin) ? keySettings.axisMin : yaxis.min;
@@ -512,6 +524,8 @@ export default class TbFlot {
         yaxis.min = min;
         yaxis.max = max;
         yaxis.tickUnits = units;
+        yaxis.tickDecimals = tickDecimals;
+        yaxis.tickSize = tickSize;
         yaxis.alignTicksWithAxis = position == "right" ? 1 : null;
         yaxis.position = position;
 
@@ -557,7 +571,7 @@ export default class TbFlot {
                                     }
                                 }
                                 yaxis.hidden = hidden;
-                                var newIndex = -1;
+                                var newIndex = 1;
                                 if (!yaxis.hidden) {
                                     this.options.yaxes.push(yaxis);
                                     newIndex = this.options.yaxes.length;
@@ -916,11 +930,6 @@ export default class TbFlot {
                                 "type": "number",
                                 "default": null
                             },
-                            "tickSize": {
-                                "title": "Step size between ticks",
-                                "type": "number",
-                                "default": null
-                            },
                             "showLabels": {
                                 "title": "Show labels",
                                 "type": "boolean",
@@ -950,8 +959,12 @@ export default class TbFlot {
                                 "title": "The number of decimals to display",
                                 "type": "number",
                                 "default": 0
+                            },
+                            "tickSize": {
+                                "title": "Step size between ticks",
+                                "type": "number",
+                                "default": null
                             }
-
                         }
                     }
                 },
@@ -1009,8 +1022,8 @@ export default class TbFlot {
                     "items": [
                         "yaxis.min",
                         "yaxis.max",
-                        "yaxis.tickSize",
                         "yaxis.tickDecimals",
+                        "yaxis.tickSize",
                         "yaxis.showLabels",
                         "yaxis.title",
                         "yaxis.titleAngle",
@@ -1079,6 +1092,16 @@ export default class TbFlot {
                         "type": "string",
                         "default": ""
                     },
+                    "axisTickDecimals": {
+                        "title": "Axis tick number of digits after floating point",
+                        "type": "number",
+                        "default": 0
+                    },
+                    "axisTickSize": {
+                        "title": "Axis step size between ticks",
+                        "type": "number",
+                        "default": null
+                    },
                     "axisPosition": {
                         "title": "Axis position",
                         "type": "string",
@@ -1104,6 +1127,8 @@ export default class TbFlot {
                 "axisMin",
                 "axisMax",
                 "axisTitle",
+                "axisTickDecimals",
+                "axisTickSize",
                 {
                     "key": "axisPosition",
                     "type": "rc-select",
