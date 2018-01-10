@@ -21,6 +21,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
     var userService;
     var types;
     var http;
+    var conf;
 
     var internalUrlPrefixes = [
         '/api/auth/token',
@@ -43,6 +44,21 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
         return toast;
     }
 
+    function getConf() {
+        if (!conf) {
+            conf = $injector.get("uiConfigurationService");
+        }
+        return conf;
+    }
+
+    function getTypes() {
+        if (!types) {
+            types = $injector.get("types");
+            types.uiConf = getConf();
+        }
+        return types;
+    }
+
     function getTranslate() {
         if (!translate) {
             translate = $injector.get("$translate");
@@ -55,13 +71,6 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             userService = $injector.get("userService");
         }
         return userService;
-    }
-
-    function getTypes() {
-        if (!types) {
-            types = $injector.get("types");
-        }
-        return types;
     }
 
     function getHttp() {

@@ -56,6 +56,9 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
         scope.selectedAttributeDataKey = null;
         scope.attributeDataKeySearchText = null;
 
+        scope.selectedDepthDataKey = null;
+        scope.depthDataKeySearchText = null;
+
         scope.selectedAlarmDataKey = null;
         scope.alarmDataKeySearchText = null;
 
@@ -100,6 +103,10 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             updateDataKeys();
         }, true);
 
+        scope.$watch('depthDataKeys', function () {
+            updateDataKeys();
+        }, true);
+
         scope.$watch('alarmDataKeys', function () {
             updateDataKeys();
         }, true);
@@ -109,6 +116,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 var dataKeys = [];
                 dataKeys = dataKeys.concat(scope.timeseriesDataKeys);
                 dataKeys = dataKeys.concat(scope.attributeDataKeys);
+                dataKeys = dataKeys.concat(scope.depthDataKeys);
                 dataKeys = dataKeys.concat(scope.alarmDataKeys);
                 ngModelCtrl.$viewValue.dataKeys = dataKeys;
                 scope.updateValidity();
@@ -126,6 +134,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 }
                 var timeseriesDataKeys = [];
                 var attributeDataKeys = [];
+                var depthDataKeys = [];
                 var alarmDataKeys = [];
                 for (var d in ngModelCtrl.$viewValue.dataKeys) {
                     var dataKey = ngModelCtrl.$viewValue.dataKeys[d];
@@ -133,12 +142,15 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                         timeseriesDataKeys.push(dataKey);
                     } else if (dataKey.type === types.dataKeyType.attribute) {
                         attributeDataKeys.push(dataKey);
+                    } else if (dataKey.type === types.dataKeyType.depthSeries) {
+                        depthDataKeys.push(dataKey);
                     } else if (dataKey.type === types.dataKeyType.alarm) {
                         alarmDataKeys.push(dataKey);
                     }
                 }
                 scope.timeseriesDataKeys = timeseriesDataKeys;
                 scope.attributeDataKeys = attributeDataKeys;
+                scope.depthDataKeys = depthDataKeys;
                 scope.alarmDataKeys = alarmDataKeys;
             }
         };
@@ -153,6 +165,9 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             }
             if (!scope.attributeDataKeySearchText || scope.attributeDataKeySearchText === '') {
                 scope.attributeDataKeySearchText = scope.attributeDataKeySearchText === '' ? null : '';
+            }
+            if (!scope.depthDataKeySearchText || scope.depthDataKeySearchText === '') {
+                scope.depthDataKeySearchText = scope.depthDataKeySearchText === '' ? null : '';
             }
             if (!scope.alarmDataKeySearchText || scope.alarmDataKeySearchText === '') {
                 scope.alarmDataKeySearchText = scope.alarmDataKeySearchText === '' ? null : '';
@@ -172,6 +187,14 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                 return null;
             } else {
                 return scope.generateDataKey({chip: chip, type: types.dataKeyType.attribute});
+            }
+        };
+
+        scope.transformDepthDataKeyChip = function (chip) {
+            if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
+                return null;
+            } else {
+                return scope.generateDataKey({chip: chip, type: types.dataKeyType.depthSeries});
             }
         };
 
@@ -230,6 +253,8 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
                     scope.timeseriesDataKeys[index] = dataKey;
                 } else if (dataKey.type === types.dataKeyType.attribute) {
                     scope.attributeDataKeys[index] = dataKey;
+                } else if (dataKey.type === types.dataKeyType.depthSeries) {
+                    scope.depthDataKeys[index] = dataKey;
                 } else if (dataKey.type === types.dataKeyType.alarm) {
                     scope.alarmDataKeys[index] = dataKey;
                 }

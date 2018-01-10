@@ -42,6 +42,8 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
             url += 'timeseries';
         } else if (type === types.dataKeyType.attribute) {
             url += 'attributes';
+        } else if (type === types.dataKeyType.depthSeries) {
+            url += 'depthseries';
         }
         $http.get(url, null).then(function success(response) {
             var result = [];
@@ -182,8 +184,18 @@ function AttributeService($http, $q, $filter, types, telemetryWebsocketService) 
                 scope: attributeScope
             };
 
-            var type = attributeScope === types.latestTelemetry.value ?
-                types.dataKeyType.timeseries : types.dataKeyType.attribute;
+            ///############## HANDLE DEPTH
+            // var type = attributeScope === types.latestTelemetry.value ?
+            //     types.dataKeyType.timeseries : types.dataKeyType.attribute;
+
+            // ADDING DEPTH-SERIES Handling
+            if (attributeScope === types.latestTelemetry.value) {
+                var type = types.dataKeyType.timeseries;
+            } else if (attributeScope === types.latestDepthSeries.value) {
+                type = types.dataKeyType.depthSeries;
+            } else {
+                type = types.dataKeyType.attribute;
+            }
 
             var subscriber = {
                 subscriptionCommands: [subscriptionCommand],

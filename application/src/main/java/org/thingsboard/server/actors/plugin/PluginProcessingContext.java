@@ -27,10 +27,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.*;
-import org.thingsboard.server.common.data.kv.AttributeKey;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
@@ -174,11 +171,36 @@ public final class PluginProcessingContext implements PluginContext {
         }));
     }
 
+    @Override
+    public void saveDsData(final EntityId entityId, final List<DsKvEntry> entries, long ttl, final PluginCallback<Void> callback) {
+        log.debug(" here in saveDsData");
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            log.debug(" inside validate");
+            ListenableFuture<List<Void>> rsListFuture = pluginCtx.dsService.save(entityId, entries, ttl);
+            ListenableFuture<List<DsKvEntry>> rsGetListFuture = pluginCtx.dsService.findAllLatest(entityId);
+            try {
+                List<DsKvEntry> list = rsGetListFuture.get();
+                log.debug(" DsKvList " + list);
+            }catch (Exception e){
+                log.error(" exception " + e);
+            }
+            Futures.addCallback(rsListFuture, getListCallback(callback, v -> null), executor);
+        }));
+    }
+
 
     @Override
     public void loadTimeseries(final EntityId entityId, final List<TsKvQuery> queries, final PluginCallback<List<TsKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
             ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAll(entityId, queries);
+            Futures.addCallback(future, getCallback(callback, v -> v), executor);
+        }));
+    }
+
+    @Override
+    public void loadDepthSeries(final EntityId entityId, final List<DsKvQuery> queries, final PluginCallback<List<DsKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<DsKvEntry>> future = pluginCtx.dsService.findAll(entityId, queries);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
@@ -198,6 +220,23 @@ public final class PluginProcessingContext implements PluginContext {
             Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);
         }));
     }
+
+    @Override
+    public void loadLatestDepthSeries(final EntityId entityId, final PluginCallback<List<DsKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<DsKvEntry>> future = pluginCtx.dsService.findAllLatest(entityId);
+            Futures.addCallback(future, getCallback(callback, v -> v), executor);
+        }));
+    }
+
+    @Override
+    public void loadLatestDepthSeries(final EntityId entityId, final Collection<String> keys, final PluginCallback<List<DsKvEntry>> callback) {
+        validate(entityId, new ValidationCallback(callback, ctx -> {
+            ListenableFuture<List<DsKvEntry>> rsListFuture = pluginCtx.dsService.findLatest(entityId, keys);
+            Futures.addCallback(rsListFuture, getCallback(callback, v -> v), executor);
+        }));
+    }
+
 
     @Override
     public void reply(PluginToRuleMsg<?> msg) {

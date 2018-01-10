@@ -116,9 +116,9 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
     public void handleDepthTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, DepthTelemetryUploadRequestRuleToPluginMsg msg) {
         DepthTelemetryUploadRequest request = msg.getPayload();
         log.debug("\n\n request data post : " + request.getData().toString() + "\n\n");
-        if(true)
-            return;
-        /*List<DsKvEntry> dsKvEntries = new ArrayList<>();
+        /*if(true)
+            return;*/
+        List<DsKvEntry> dsKvEntries = new ArrayList<>();
         for (Map.Entry<Double, List<KvEntry>> entry : request.getData().entrySet()) {
             for (KvEntry kv : entry.getValue()) {
                 dsKvEntries.add(new BasicDsKvEntry(entry.getKey(), kv));
@@ -127,13 +127,16 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
         ctx.saveDsData(msg.getDeviceId(), dsKvEntries, msg.getTtl(), new PluginCallback<Void>() {
             @Override
             public void onSuccess(PluginContext ctx, Void data) {
+                log.debug(" ctx.saveDsData On success");
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
-                subscriptionManager.onLocalSubscriptionUpdateForDepth(ctx, msg.getDeviceId(), SubscriptionType.DEPTH_DATUM, s -> {
+                subscriptionManager.onLocalSubscriptionUpdateForDepth(ctx, msg.getDeviceId(), SubscriptionType.DEPTHSERIES, s -> {
                     List<DsKvEntry> subscriptionUpdate = new ArrayList<DsKvEntry>();
                     for (Map.Entry<Double, List<KvEntry>> entry : request.getData().entrySet()) {
                         for (KvEntry kv : entry.getValue()) {
+                            log.debug("Subscription key states: "+s.getKeyStates());
                             if (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey()))) {
-                                //subscriptionUpdate.add(new BasicTsKvEntry(entry.getKey(), kv));
+                                log.debug("Adding to subscription update "+entry.getKey());
+                                subscriptionUpdate.add(new BasicDsKvEntry(entry.getKey(), kv));
                             }
                         }
                     }
@@ -146,7 +149,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
                 log.error("Failed to process telemetry upload request", e);
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
             }
-        });*/
+        });
     }
 
     @Override

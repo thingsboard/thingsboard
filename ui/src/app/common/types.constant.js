@@ -219,6 +219,8 @@ export default angular.module('thingsboard.types', [])
             dataKeyType: {
                 timeseries: "timeseries",
                 attribute: "attribute",
+              //##### ADDING DEPTH DATA KEY TYPE
+                depthSeries: "depthSeries",
                 function: "function",
                 alarm: "alarm"
             },
@@ -322,6 +324,11 @@ export default angular.module('thingsboard.types', [])
                 name: "attribute.scope-latest-telemetry",
                 clientSide: true
             },
+            latestDepthSeries: {
+                value: "LATEST_DEPTH_SERIES",
+                name: "attribute.scope-latest-depth-series",
+                clientSide: true
+            },
             attributesScope: {
                 client: {
                     value: "CLIENT_SCOPE",
@@ -368,6 +375,14 @@ export default angular.module('thingsboard.types', [])
                     template: {
                         bundleAlias: "charts",
                         alias: "basic_timeseries"
+                    }
+                },
+                depthseries: {
+                    value: "depthseries",
+                    name: "widget.depthseries",
+                    template: {
+                        bundleAlias: "charts",
+                        alias: "basic_depthseries"
                     }
                 },
                 latest: {

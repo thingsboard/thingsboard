@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 
+import org.thingsboard.server.common.data.kv.DsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.*;

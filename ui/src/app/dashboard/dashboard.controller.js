@@ -28,7 +28,7 @@ import AliasController from '../api/alias-controller';
 
 /*@ngInject*/
 export default function DashboardController(types, utils, dashboardUtils, widgetService, userService,
-                                            dashboardService, timeService, entityService, itembuffer, importExport, hotkeys, $window, $rootScope,
+                                            dashboardService, timeService, depthService, entityService, itembuffer, importExport, hotkeys, $window, $rootScope,
                                             $scope, $element, $state, $stateParams, $mdDialog, $mdMedia, $timeout, $document, $q, $translate, $filter) {
 
     var vm = this;
@@ -46,11 +46,13 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.isEditingWidget = false;
     vm.latestWidgetTypes = [];
     vm.timeseriesWidgetTypes = [];
+    vm.depthseriesWidgetTypes = [];
     vm.rpcWidgetTypes = [];
     vm.alarmWidgetTypes = [];
     vm.staticWidgetTypes = [];
     vm.widgetEditMode = $state.$current.data.widgetEditMode;
     vm.iframeMode = $rootScope.iframeMode;
+    vm.types = types;
 
     vm.isToolbarOpened = false;
 
@@ -195,6 +197,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     vm.displayTitle = displayTitle;
     vm.displayExport = displayExport;
     vm.displayDashboardTimewindow = displayDashboardTimewindow;
+    vm.displayDashboardDepthwindow = displayDashboardDepthwindow;
     vm.displayDashboardsSelect = displayDashboardsSelect;
     vm.displayEntitiesSelect = displayEntitiesSelect;
 
@@ -273,6 +276,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
     function loadWidgetLibrary() {
         vm.latestWidgetTypes = [];
         vm.timeseriesWidgetTypes = [];
+        vm.depthseriesWidgetTypes = [];
         vm.rpcWidgetTypes = [];
         vm.alarmWidgetTypes = [];
         vm.staticWidgetTypes = [];
@@ -316,6 +320,8 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                         widget.config.title = widgetTypeInfo.widgetName;
                         if (widgetTypeInfo.type === types.widgetType.timeseries.value) {
                             vm.timeseriesWidgetTypes.push(widget);
+                        } else if (widgetTypeInfo.type === types.widgetType.depthseries.value) {
+                            vm.depthseriesWidgetTypes.push(widget);
                         } else if (widgetTypeInfo.type === types.widgetType.latest.value) {
                             vm.latestWidgetTypes.push(widget);
                         } else if (widgetTypeInfo.type === types.widgetType.rpc.value) {
@@ -358,6 +364,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
             vm.dashboardConfiguration = vm.dashboard.configuration;
             vm.dashboardCtx.dashboard = vm.dashboard;
             vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+            vm.dashboardCtx.dashboardDepthwindow = vm.dashboardConfiguration.depthwindow;
             vm.dashboardCtx.aliasController = new AliasController($scope, $q, $filter, utils,
                 types, entityService, vm.dashboardCtx.stateController, vm.dashboardConfiguration.entityAliases);
             var parentScope = $window.parent.angular.element($window.frameElement).scope();
@@ -370,6 +377,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     vm.dashboardConfiguration = vm.dashboard.configuration;
                     vm.dashboardCtx.dashboard = vm.dashboard;
                     vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+                    vm.dashboardCtx.dashboardDepthwindow = vm.dashboardConfiguration.depthwindow;
                     vm.dashboardCtx.aliasController = new AliasController($scope, $q, $filter, utils,
                         types, entityService, vm.dashboardCtx.stateController, vm.dashboardConfiguration.entityAliases);
                 }, function fail() {
@@ -792,6 +800,15 @@ export default function DashboardController(types, utils, dashboardUtils, widget
         }
     }
 
+    function displayDashboardDepthwindow() {
+        if (vm.dashboard && vm.dashboard.configuration.settings &&
+            angular.isDefined(vm.dashboard.configuration.settings.showDashboardDepthwindow)) {
+            return vm.dashboard.configuration.settings.showDashboardDepthwindow;
+        } else {
+            return true;
+        }
+    }
+
     function displayDashboardsSelect() {
         if (vm.dashboard && vm.dashboard.configuration.settings &&
             angular.isDefined(vm.dashboard.configuration.settings.showDashboardsSelect)) {
@@ -852,6 +869,7 @@ export default function DashboardController(types, utils, dashboardUtils, widget
 
     function onAddWidgetClosed() {
         vm.timeseriesWidgetTypes = [];
+        vm.depthseriesWidgetTypes = [];
         vm.latestWidgetTypes = [];
         vm.rpcWidgetTypes = [];
         vm.alarmWidgetTypes = [];
@@ -1010,9 +1028,11 @@ export default function DashboardController(types, utils, dashboardUtils, widget
                     vm.dashboard = vm.prevDashboard;
                     vm.dashboardConfiguration = vm.dashboard.configuration;
                     vm.dashboardCtx.dashboardTimewindow = vm.dashboardConfiguration.timewindow;
+                    vm.dashboardCtx.dashboardDepthwindow = vm.dashboardConfiguration.depthwindow;
                     entityAliasesUpdated();
                 } else {
                     vm.dashboard.configuration.timewindow = vm.dashboardCtx.dashboardTimewindow;
+                    vm.dashboard.configuration.depthwindow = vm.dashboardCtx.dashboardDepthwindow;
                 }
             }
         }

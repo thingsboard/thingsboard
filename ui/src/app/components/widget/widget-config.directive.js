@@ -19,6 +19,7 @@ import thingsboardUtils from '../../common/utils.service';
 import thingsboardEntityAliasSelect from '../entity-alias-select.directive';
 import thingsboardDatasource from '../datasource.directive';
 import thingsboardTimewindow from '../timewindow.directive';
+import thingsboardDepthwindow from '../depthwindow.directive';
 import thingsboardLegendConfig from '../legend-config.directive';
 import thingsboardJsonForm from '../json-form.directive';
 import thingsboardManageWidgetActions from './action/manage-widget-actions.directive';
@@ -38,6 +39,7 @@ export default angular.module('thingsboard.directives.widgetConfig', [thingsboar
     thingsboardEntityAliasSelect,
     thingsboardDatasource,
     thingsboardTimewindow,
+    thingsboardDepthwindow,
     thingsboardLegendConfig,
     thingsboardManageWidgetActions,
     'ui.ace'])
@@ -118,9 +120,13 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     scope.decimals = config.decimals;
                     scope.useDashboardTimewindow = angular.isDefined(config.useDashboardTimewindow) ?
                         config.useDashboardTimewindow : true;
+                    scope.useDashboardDepthwindow = angular.isDefined(config.useDashboardDepthwindow) ?
+                        config.useDashboardDepthwindow : true;
                     scope.timewindow = config.timewindow;
+                    scope.depthwindow = config.depthwindow;
                     scope.showLegend = angular.isDefined(config.showLegend) ?
-                        config.showLegend : scope.widgetType === types.widgetType.timeseries.value;
+                        config.showLegend : (scope.widgetType === types.widgetType.timeseries.value ||
+                            scope.widgetType === types.widgetType.depthseries.value) ;
                     scope.legendConfig = config.legendConfig;
                     scope.actions = config.actions;
                     if (!scope.actions) {
@@ -225,7 +231,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
 
         scope.$watch('title + showTitle + dropShadow + enableFullscreen + backgroundColor + color + ' +
             'padding + margin + widgetStyle + titleStyle + mobileOrder + mobileHeight + units + decimals + useDashboardTimewindow + ' +
-            'alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
+            ' useDashboardDepthwindow + alarmSearchStatus + alarmsPollingInterval + showLegend', function () {
             if (ngModelCtrl.$viewValue) {
                 var value = ngModelCtrl.$viewValue;
                 if (value.config) {
@@ -251,6 +257,7 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                     config.units = scope.units;
                     config.decimals = scope.decimals;
                     config.useDashboardTimewindow = scope.useDashboardTimewindow;
+                    config.useDashboardDepthwindow = scope.useDashboardDepthwindow;
                     config.alarmSearchStatus = scope.alarmSearchStatus;
                     config.alarmsPollingInterval = scope.alarmsPollingInterval;
                     config.showLegend = scope.showLegend;
@@ -280,6 +287,16 @@ function WidgetConfig($compile, $templateCache, $rootScope, $translate, $timeout
                 var value = ngModelCtrl.$viewValue;
                 if (value.config) {
                     value.config.timewindow = scope.timewindow;
+                    ngModelCtrl.$setViewValue(value);
+                }
+            }
+        }, true);
+
+        scope.$watch('depthwindow', function () {
+            if (ngModelCtrl.$viewValue) {
+                var value = ngModelCtrl.$viewValue;
+                if (value.config) {
+                    value.config.depthwindow = scope.depthwindow;
                     ngModelCtrl.$setViewValue(value);
                 }
             }

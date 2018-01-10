@@ -447,6 +447,39 @@ CREATE TABLE IF NOT EXISTS thingsboard.ts_kv_latest_cf (
     PRIMARY KEY (( entity_type, entity_id ), key)
 ) WITH compaction = { 'class' :  'LeveledCompactionStrategy'  };
 
+CREATE TABLE IF NOT EXISTS thingsboard.ds_kv_cf (
+    entity_type text, // (DEVICE, CUSTOMER, TENANT)
+    entity_id timeuuid,
+    key text,
+    partition double,
+    ds double,
+    bool_v boolean,
+    str_v text,
+    long_v bigint,
+    dbl_v double,
+    PRIMARY KEY (( entity_type, entity_id, key, partition ), ds)
+);
+
+CREATE TABLE IF NOT EXISTS thingsboard.ds_kv_partitions_cf (
+    entity_type text, // (DEVICE, CUSTOMER, TENANT)
+    entity_id timeuuid,
+    key text,
+    partition double,
+    PRIMARY KEY (( entity_type, entity_id, key ), partition)
+) WITH CLUSTERING ORDER BY ( partition ASC )
+  AND compaction = { 'class' :  'LeveledCompactionStrategy'  };
+
+CREATE TABLE IF NOT EXISTS thingsboard.ds_kv_latest_cf (
+    entity_type text, // (DEVICE, CUSTOMER, TENANT)
+    entity_id timeuuid,
+    key text,
+    ds double,
+    bool_v boolean,
+    str_v text,
+    long_v bigint,
+    dbl_v double,
+    PRIMARY KEY (( entity_type, entity_id ), key)
+) WITH compaction = { 'class' :  'LeveledCompactionStrategy'  };
 
 CREATE TABLE IF NOT EXISTS thingsboard.attributes_kv_cf (
     entity_type text, // (DEVICE, CUSTOMER, TENANT)
@@ -511,7 +544,6 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule (
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.rule_by_plugin_token AS
     SELECT *
-
     FROM thingsboard.rule
     WHERE tenant_id IS NOT NULL AND id IS NOT NULL AND plugin_token IS NOT NULL
     PRIMARY KEY (plugin_token, tenant_id, id) WITH CLUSTERING ORDER BY (tenant_id DESC, id DESC);

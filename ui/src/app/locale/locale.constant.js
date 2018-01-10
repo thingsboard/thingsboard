@@ -262,8 +262,10 @@ export default angular.module('thingsboard.locale', [])
                 "attribute": {
                     "attributes": "Attributes",
                     "latest-telemetry": "Latest telemetry",
+                    "latest-depth": "Latest depth",
                     "attributes-scope": "Entity attributes scope",
                     "scope-latest-telemetry": "Latest telemetry",
+                    "scope-latest-depth-series": "Latest depth",
                     "scope-client": "Client attributes",
                     "scope-server": "Server attributes",
                     "scope-shared": "Shared attributes",
@@ -358,6 +360,10 @@ export default angular.module('thingsboard.locale', [])
                     "time-from": "Time from",
                     "date-to": "Date to",
                     "time-to": "Time to"
+                },
+                "depthValue": {
+                    "start-depth": "Start Depth",
+                    "end-depth": "End Depth"
                 },
                 "dashboard": {
                     "dashboard": "Dashboard",
@@ -505,10 +511,14 @@ export default angular.module('thingsboard.locale', [])
                     "configuration": "Data key configuration",
                     "timeseries": "Timeseries",
                     "attributes": "Attributes",
+                    "depthSeries": "DepthSeries",
                     "alarm": "Alarm fields",
                     "timeseries-required": "Entity timeseries are required.",
+                    "depthseries-required": "Entity depthseries are required.",
                     "timeseries-or-attributes-required": "Entity timeseries/attributes are required.",
+                    "timeseries-or-attributes-or-depthseries-required": "Entity timeseries/attributes/depthseries are required.",
                     "maximum-timeseries-or-attributes": "Maximum { count, select, 1 {1 timeseries/attribute is allowed.} other {# timeseries/attributes are allowed} }",
+                    "maximum-timeseries-or-attributes-or-depthseries": "Maximum { count, select, 1 {1 timeseries/attribute/depthseries is allowed.} other {# timeseries/attributes/depthseries are allowed} }",
                     "alarm-fields-required": "Alarm fields are required.",
                     "function-types": "Function types",
                     "function-types-required": "Function types are required.",
@@ -1005,6 +1015,9 @@ export default angular.module('thingsboard.locale', [])
                     "seconds": "Seconds",
                     "advanced": "Advanced"
                 },
+                "depthinterval": {
+                    "feet-interval": "{ feet, select, 1 {1 feet} other {# feet} }",
+                },
                 "timewindow": {
                     "days": "{ days, select, 1 { day } other {# days } }",
                     "hours": "{ hours, select, 0 { hour } 1 {1 hour } other {# hours } }",
@@ -1018,6 +1031,17 @@ export default angular.module('thingsboard.locale', [])
                     "date-range": "Date range",
                     "last": "Last",
                     "time-period": "Time period"
+                },
+                "depthwindow": {
+                    "feet": "{ feet, select, 0 { feet } 1 {1 feet } other {# feet } }",
+                    "realtime": "Realtime",
+                    "history": "History",
+                    "last-prefix": "last",
+                    "period": "from {{ startDepth }} to {{ endDepth }}",
+                    "edit": "Edit depthwindow",
+                    "last": "Last",
+                    "depth-range": "Depth range",
+                    "depth-period": "Depth period"
                 },
                 "user": {
                     "user": "User",
@@ -1086,6 +1110,7 @@ export default angular.module('thingsboard.locale', [])
                     "remove-widget-title": "Are you sure you want to remove the widget '{{widgetTitle}}'?",
                     "remove-widget-text": "After the confirmation the widget and all related data will become unrecoverable.",
                     "timeseries": "Time series",
+                    "depthseries": "Depth Series",
                     "latest-values": "Latest values",
                     "rpc": "Control widget",
                     "alarm": "Alarm widget",
@@ -1183,7 +1208,9 @@ export default angular.module('thingsboard.locale', [])
                     "units": "Special symbol to show next to value",
                     "decimals": "Number of digits after floating point",
                     "timewindow": "Timewindow",
+                    "depthwindow": "Depthwindow",
                     "use-dashboard-timewindow": "Use dashboard timewindow",
+                    "use-dashboard-depthwindow": "Use dashboard depthwindow",
                     "display-legend": "Display legend",
                     "datasources": "Datasources",
                     "maximum-datasources": "Maximum { count, select, 1 {1 datasource is allowed.} other {# datasources are allowed} }",

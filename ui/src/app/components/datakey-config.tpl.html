@@ -18,6 +18,7 @@
 <md-content class="md-padding" layout="column">
     <md-autocomplete ng-if="model.type === types.dataKeyType.timeseries ||
     						model.type === types.dataKeyType.attribute ||
+    						model.type === types.dataKeyType.depthSeries ||
     						model.type === types.dataKeyType.alarm"
     	   style="padding-bottom: 8px;"
            ng-required="true"
@@ -69,7 +70,7 @@
 				 result-type="any">
 		</tb-js-func>
 	</section>	
-	<section layout="column" ng-if="model.type === types.dataKeyType.timeseries || model.type === types.dataKeyType.attribute">
+	<section layout="column" ng-if="model.type === types.dataKeyType.timeseries || model.type === types.dataKeyType.attribute || model.type === types.dataKeyType.depthSeries">
         <md-checkbox ng-model="model.usePostProcessing" aria-label="{{ 'datakey.use-data-post-processing-func' | translate }}">
 			{{ 'datakey.use-data-post-processing-func' | translate }}
         </md-checkbox>		

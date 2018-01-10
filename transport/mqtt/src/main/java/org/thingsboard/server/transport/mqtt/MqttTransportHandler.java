@@ -144,6 +144,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 try {
                     if (topicName.equals(GATEWAY_TELEMETRY_TOPIC)) {
                         gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
+                    }else if (topicName.equals(GATEWAY_DEPTH_TELEMETRY_TOPIC)) {
+                        gatewaySessionCtx.onDeviceDepthTelemetry(mqttMsg);
                     } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
                         gatewaySessionCtx.onDeviceAttributes(mqttMsg);
                     } else if (topicName.equals(GATEWAY_ATTRIBUTES_REQUEST_TOPIC)) {

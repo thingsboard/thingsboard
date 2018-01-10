@@ -25,11 +25,11 @@ import java.util.Map;
 
 @Data
 @AllArgsConstructor
-public class Subscription {
+public class Subscription<T>{
 
     private final SubscriptionState sub;
-    private final boolean local;
-    private ServerAddress server;
+    protected final boolean local;
+    protected ServerAddress server;
 
     public Subscription(SubscriptionState sub, boolean local) {
         this(sub, local, null);
@@ -55,12 +55,12 @@ public class Subscription {
         return getSub().isAllKeys();
     }
 
-    public Map<String, Long> getKeyStates() {
+    public Map<String, T> getKeyStates() {
         return getSub().getKeyStates();
     }
 
-    public void setKeyState(String key, long ts) {
-        getSub().getKeyStates().put(key, ts);
+    public void setKeyState(String key, T stamp) {
+        getSub().getKeyStates().put(key, stamp);
     }
 
     @Override

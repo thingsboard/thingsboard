@@ -238,6 +238,11 @@ spring.mvc.cors:
          max-age: "1800"
          allow-credentials: "true"
 
+# UI Related Configuration
+configurations:
+  ui:
+    depthSeries: "false"
+
 # HSQLDB DAO Configuration
 #spring:
 #  data:

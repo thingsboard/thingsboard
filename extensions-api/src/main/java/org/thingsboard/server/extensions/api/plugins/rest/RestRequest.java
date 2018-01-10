@@ -72,6 +72,10 @@ public class RestRequest {
         return getParamValue(paramName, s -> Long.valueOf(s));
     }
 
+    public Optional<Double> getDoubleParamValue(String paramName) {
+        return getParamValue(paramName, s -> Double.valueOf(s));
+    }
+
     public Optional<Integer> getIntParamValue(String paramName) {
         return getParamValue(paramName, s -> Integer.valueOf(s));
     }
