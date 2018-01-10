@@ -270,7 +270,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
         entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
-        log.trace("Saving entity: " + entity);
+        log.trace("Saving entity: {}", entity);
         return insertService.submit(() -> {
             tsKvRepository.save(entity);
             return null;
