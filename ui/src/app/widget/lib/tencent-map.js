@@ -107,7 +107,7 @@ export default class TbTencentMap {
                     loaded: false,
                     pendingInits: []
                 };
-                var tencentMapScriptRes = 'http://map.qq.com/api/js?v=2.exp&key='+this.apiKey+'&callback='+this.initMapFunctionName;
+                var tencentMapScriptRes = 'https://map.qq.com/api/js?v=2.exp&key='+this.apiKey+'&callback='+this.initMapFunctionName;
 
                 tmGlobals.loadingTmId = this.mapId;
                 lazyLoad.load({ type: 'js', path: tencentMapScriptRes }).then( // eslint-disable-line no-undef
