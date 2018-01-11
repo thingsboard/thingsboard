@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 import $ from 'jquery';
 import tinycolor from 'tinycolor2';
-import moment from 'moment';
+
 import 'flot/lib/jquery.colorhelpers';
 import 'flot/src/jquery.flot';
 import 'flot/src/plugins/jquery.flot.time';
@@ -27,7 +27,7 @@ import 'flot/src/plugins/jquery.flot.stack';
 import 'flot.curvedlines/curvedLines';
 
 /* eslint-disable angular/angularelement */
-export default class TbFlot {
+export default class TbDsFlot {
     constructor(ctx, chartType) {
 
         this.ctx = ctx;
@@ -53,7 +53,7 @@ export default class TbFlot {
             }).appendTo("body");
         }
 
-        var tbFlot = this;
+        var tbDsFlot = this;
 
         function seriesInfoDiv(label, color, value, units, trackDecimals, active, percent, valueFormatFunction) {
             var divElement = $('<div></div>');
@@ -87,7 +87,7 @@ export default class TbFlot {
             if (valueFormatFunction) {
                 valueContent = valueFormatFunction(value);
             } else {
-                valueContent = tbFlot.ctx.utils.formatValue(value, trackDecimals, units);
+                valueContent = tbDsFlot.ctx.utils.formatValue(value, trackDecimals, units);
             }
             if (angular.isNumber(percent)) {
                 valueContent += ' (' + Math.round(percent) + ' %)';
@@ -107,20 +107,11 @@ export default class TbFlot {
             return divElement;
         }
 
-        if (this.chartType === 'pie') {
-            ctx.tooltipFormatter = function(item) {
-                var units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : tbFlot.ctx.trackUnits;
-                var decimals = angular.isDefined(item.series.dataKey.decimals) ? item.series.dataKey.decimals : tbFlot.ctx.trackDecimals;
-                var divElement = seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
-                    item.datapoint[1][0][1], units, decimals, true, item.series.percent, item.series.dataKey.tooltipValueFormatFunction);
-                return divElement.prop('outerHTML');
-            };
-        } else {
-            ctx.tooltipFormatter = function(hoverInfo, seriesIndex) {
+
+        ctx.tooltipFormatter = function(hoverInfo, seriesIndex) {
                 var content = '';
                 var timestamp = parseInt(hoverInfo.time);
-                var date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
-                var dateDiv = $('<div>' + date + '</div>');
+                var dateDiv = $('<div>' + timestamp + '</div>');
                 dateDiv.css({
                     display: "flex",
                     alignItems: "center",
@@ -131,24 +122,23 @@ export default class TbFlot {
                 content += dateDiv.prop('outerHTML');
                 for (var i = 0; i < hoverInfo.seriesHover.length; i++) {
                     var seriesHoverInfo = hoverInfo.seriesHover[i];
-                    if (tbFlot.ctx.tooltipIndividual && seriesHoverInfo.index !== seriesIndex) {
+                    if (tbDsFlot.ctx.tooltipIndividual && seriesHoverInfo.index !== seriesIndex) {
                         continue;
                     }
-                    var units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : tbFlot.ctx.trackUnits;
-                    var decimals = angular.isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : tbFlot.ctx.trackDecimals;
+                    var units = seriesHoverInfo.units && seriesHoverInfo.units.length ? seriesHoverInfo.units : tbDsFlot.ctx.trackUnits;
+                    var decimals = angular.isDefined(seriesHoverInfo.decimals) ? seriesHoverInfo.decimals : tbDsFlot.ctx.trackDecimals;
                     var divElement = seriesInfoDiv(seriesHoverInfo.label, seriesHoverInfo.color,
                         seriesHoverInfo.value, units, decimals, seriesHoverInfo.index === seriesIndex, null, seriesHoverInfo.tooltipValueFormatFunction);
                     content += divElement.prop('outerHTML');
                 }
                 return content;
-            };
-        }
+        };
 
         ctx.trackDecimals = ctx.decimals;
 
         ctx.trackUnits = ctx.units;
 
-        ctx.tooltipIndividual = this.chartType === 'pie' || (angular.isDefined(settings.tooltipIndividual) ? settings.tooltipIndividual : false);
+        ctx.tooltipIndividual = (angular.isDefined(settings.tooltipIndividual) ? settings.tooltipIndividual : false);
         ctx.tooltipCumulative = angular.isDefined(settings.tooltipCumulative) ? settings.tooltipCumulative : false;
 
         var font = {
@@ -173,10 +163,8 @@ export default class TbFlot {
             }
         };
 
-        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+        if (this.chartType === 'line') {
             options.xaxis = {
-                mode: 'time',
-                timezone: 'browser',
                 font: angular.copy(font),
                 labelFont: angular.copy(font)
             };
@@ -273,65 +261,9 @@ export default class TbFlot {
                 }
             }
 
-            if (this.chartType === 'bar') {
-                options.series.lines = {
-                        show: false,
-                        fill: false,
-                        steps: false
-                }
-                options.series.bars ={
-                        show: true,
-                        lineWidth: 0,
-                        fill: 0.9
-                }
-            }
-
-            if (this.chartType === 'state') {
-                options.series.lines = {
-                    steps: true,
-                    show: true
-                }
-            }
-
-        } else if (this.chartType === 'pie') {
-            options.series = {
-                pie: {
-                    show: true,
-                    label: {
-                        show: settings.showLabels === true
-                    },
-                    radius: settings.radius || 1,
-                    innerRadius: settings.innerRadius || 0,
-                    stroke: {
-                        color: '#fff',
-                        width: 0
-                    },
-                    tilt: settings.tilt || 1,
-                    shadow: {
-                        left: 5,
-                        top: 15,
-                        alpha: 0.02
-                    }
-                }
-            }
-            if (settings.stroke) {
-                options.series.pie.stroke.color = settings.stroke.color || '#fff';
-                options.series.pie.stroke.width = settings.stroke.width || 0;
-            }
-
-            if (options.series.pie.label.show) {
-                options.series.pie.label.formatter = function (label, series) {
-                    return "<div class='pie-label'>" + series.dataKey.label + "<br/>" + Math.round(series.percent) + "%</div>";
-                }
-                options.series.pie.label.radius = 3/4;
-                options.series.pie.label.background = {
-                     opacity: 0.8
-                };
-            }
         }
-
         //Experimental
-        this.ctx.animatedPie = settings.animatedPie === true;
+        //this.ctx.animatedPie = settings.animatedPie === true;
 
         this.options = options;
 
@@ -421,12 +353,9 @@ export default class TbFlot {
 
         this.options.colors = colors;
         this.options.yaxes = angular.copy(this.yaxes);
-        if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
-            if (this.chartType === 'bar') {
-                this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
-            }
-            this.options.xaxis.min = this.subscription.timeWindow.minTime;
-            this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+        if (this.chartType === 'line') {
+                this.options.xaxis.min = this.subscription.depthWindow.minDepth;
+                this.options.xaxis.max = this.subscription.depthWindow.maxDepth;
         }
 
         this.checkMouseEvents();
@@ -434,20 +363,7 @@ export default class TbFlot {
         if (this.ctx.plot) {
             this.ctx.plot.destroy();
         }
-        if (this.chartType === 'pie' && this.ctx.animatedPie) {
-            this.ctx.pieDataAnimationDuration = 250;
-            this.pieData = angular.copy(this.subscription.data);
-            this.ctx.pieRenderedData = [];
-            this.ctx.pieTargetData = [];
-            for (i = 0; i < this.subscription.data.length; i++) {
-                this.ctx.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
-                    ? this.subscription.data[i].data[0][1] : 0;
-            }
-            this.pieDataRendered();
-            this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
-        } else {
-            this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
-        }
+        this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
     }
 
     createYAxis(keySettings, units) {
@@ -482,7 +398,7 @@ export default class TbFlot {
         }
         if (this.subscription) {
             if (!this.isMouseInteraction && this.ctx.plot) {
-                if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
+                if (this.chartType === 'line') {
 
                     var axisVisibilityChanged = false;
                     if (this.yaxis) {
@@ -522,39 +438,24 @@ export default class TbFlot {
                             };
                         }
                     }
-
-                    this.options.xaxis.min = this.subscription.timeWindow.minTime;
-                    this.options.xaxis.max = this.subscription.timeWindow.maxTime;
-
-                    if (this.chartType === 'bar') {
-                        this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
-                    }
-
+                    
+                    this.options.xaxis.min = this.subscription.depthWindow.minDepth;
+                    this.options.xaxis.max = this.subscription.depthWindow.maxDepth;
+                    
                     if (axisVisibilityChanged) {
                         this.redrawPlot();
                     } else {
-                        this.ctx.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
-                        this.ctx.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
-
-                        if (this.chartType === 'bar') {
-                            this.ctx.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
-                        }
+                        this.ctx.plot.getOptions().xaxes[0].min = this.subscription.depthWindow.minDepth;
+                        this.ctx.plot.getOptions().xaxes[0].max = this.subscription.depthWindow.maxDepth;
                         this.ctx.plot.setData(this.subscription.data);
                         this.ctx.plot.setupGrid();
                         this.ctx.plot.draw();
                     }
-                } else if (this.chartType === 'pie') {
-                    if (this.ctx.animatedPie) {
-                        this.nextPieDataAnimation(true);
-                    } else {
-                        this.ctx.plot.setData(this.subscription.data);
-                        this.ctx.plot.draw();
-                    }
-                }
+                } 
             } else if (this.isMouseInteraction && this.ctx.plot){
-                var tbFlot = this;
+                var tbDsFlot = this;
                 this.updateTimeoutHandle = this.ctx.$scope.$timeout(function() {
-                    tbFlot.update();
+                    tbDsFlot.update();
                 }, 30, false);
             }
         }
@@ -563,95 +464,8 @@ export default class TbFlot {
     resize() {
         if (this.ctx.plot) {
             this.ctx.plot.resize();
-            if (this.chartType !== 'pie') {
                 this.ctx.plot.setupGrid();
-            }
             this.ctx.plot.draw();
-        }
-    }
-
-    static get pieSettingsSchema() {
-        return {
-            "schema": {
-                "type": "object",
-                "title": "Settings",
-                "properties": {
-                    "radius": {
-                        "title": "Radius",
-                        "type": "number",
-                        "default": 1
-                    },
-                    "innerRadius": {
-                        "title": "Inner radius",
-                        "type": "number",
-                        "default": 0
-                    },
-                    "tilt": {
-                        "title": "Tilt",
-                        "type": "number",
-                        "default": 1
-                    },
-                    "animatedPie": {
-                        "title": "Enable pie animation (experimental)",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "stroke": {
-                        "title": "Stroke",
-                        "type": "object",
-                        "properties": {
-                            "color": {
-                                "title": "Color",
-                                "type": "string",
-                                "default": ""
-                            },
-                            "width": {
-                                "title": "Width (pixels)",
-                                "type": "number",
-                                "default": 0
-                            }
-                        }
-                    },
-                    "showLabels": {
-                        "title": "Show labels",
-                        "type": "boolean",
-                        "default": false
-                    },
-                    "fontColor": {
-                        "title": "Font color",
-                        "type": "string",
-                        "default": "#545454"
-                    },
-                    "fontSize": {
-                        "title": "Font size",
-                        "type": "number",
-                        "default": 10
-                    }
-                },
-                "required": []
-            },
-            "form": [
-                "radius",
-                "innerRadius",
-                "animatedPie",
-                "tilt",
-                {
-                    "key": "stroke",
-                    "items": [
-                        {
-                            "key": "stroke.color",
-                            "type": "color"
-                        },
-                        "stroke.width"
-                    ]
-                },
-                "showLabels",
-                {
-                    "key": "fontColor",
-                    "type": "color"
-                },
-                "fontSize"
-            ]
         }
     }
 
@@ -865,10 +679,6 @@ export default class TbFlot {
         }
     }
 
-    static get pieDatakeySettingsSchema() {
-        return {}
-    }
-
     static datakeySettingsSchema(defaultShowLines) {
         return {
                 "schema": {
@@ -969,11 +779,7 @@ export default class TbFlot {
                 }
                 if (this.ctx.plot) {
                     this.ctx.plot.destroy();
-                    if (this.chartType === 'pie' && this.ctx.animatedPie) {
-                        this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
-                    } else {
-                        this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
-                    }
+                    this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
                 }
             }
         }
@@ -982,11 +788,8 @@ export default class TbFlot {
     redrawPlot() {
         if (this.ctx.plot) {
             this.ctx.plot.destroy();
-            if (this.chartType === 'pie' && this.ctx.animatedPie) {
-                this.ctx.plot = $.plot(this.$element, this.pieData, this.options);
-            } else {
-                this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
-            }
+            this.ctx.plot = $.plot(this.$element, this.subscription.data, this.options);
+            
         }
     }
 
@@ -1002,62 +805,58 @@ export default class TbFlot {
         this.$element.addClass('mouse-events');
         this.options.selection = { mode : 'x' };
 
-        var tbFlot = this;
+        var tbDsFlot = this;
 
         if (!this.flotHoverHandler) {
             this.flotHoverHandler =  function (event, pos, item) {
-                if (!tbFlot.ctx.tooltipIndividual || item) {
+                if (!tbDsFlot.ctx.tooltipIndividual || item) {
 
-                    var multipleModeTooltip = !tbFlot.ctx.tooltipIndividual;
+                    var multipleModeTooltip = !tbDsFlot.ctx.tooltipIndividual;
 
                     if (multipleModeTooltip) {
-                        tbFlot.ctx.plot.unhighlight();
+                        tbDsFlot.ctx.plot.unhighlight();
                     }
 
                     var pageX = pos.pageX;
                     var pageY = pos.pageY;
 
                     var tooltipHtml;
-
-                    if (tbFlot.chartType === 'pie') {
-                        tooltipHtml = tbFlot.ctx.tooltipFormatter(item);
-                    } else {
-                        var hoverInfo = tbFlot.getHoverInfo(tbFlot.ctx.plot.getData(), pos);
-                        if (angular.isNumber(hoverInfo.time)) {
+                    
+                    var hoverInfo = tbDsFlot.getHoverInfo(tbDsFlot.ctx.plot.getData(), pos);
+                    if (angular.isNumber(hoverInfo.time)) {
                             hoverInfo.seriesHover.sort(function (a, b) {
                                 return b.value - a.value;
                             });
-                            tooltipHtml = tbFlot.ctx.tooltipFormatter(hoverInfo, item ? item.seriesIndex : -1);
-                        }
+                            tooltipHtml = tbDsFlot.ctx.tooltipFormatter(hoverInfo, item ? item.seriesIndex : -1);
                     }
 
                     if (tooltipHtml) {
-                        tbFlot.ctx.tooltip.html(tooltipHtml)
+                        tbDsFlot.ctx.tooltip.html(tooltipHtml)
                             .css({top: pageY+5, left: 0})
                             .fadeIn(200);
 
                         var windowWidth = $( window ).width();  //eslint-disable-line
-                        var tooltipWidth = tbFlot.ctx.tooltip.width();
+                        var tooltipWidth = tbDsFlot.ctx.tooltip.width();
                         var left = pageX+5;
                         if (windowWidth - pageX < tooltipWidth + 50) {
                             left = pageX - tooltipWidth - 10;
                         }
-                        tbFlot.ctx.tooltip.css({
+                        tbDsFlot.ctx.tooltip.css({
                             left: left
                         });
 
                         if (multipleModeTooltip) {
                             for (var i = 0; i < hoverInfo.seriesHover.length; i++) {
                                 var seriesHoverInfo = hoverInfo.seriesHover[i];
-                                tbFlot.ctx.plot.highlight(seriesHoverInfo.index, seriesHoverInfo.hoverIndex);
+                                tbDsFlot.ctx.plot.highlight(seriesHoverInfo.index, seriesHoverInfo.hoverIndex);
                             }
                         }
                     }
 
                 } else {
-                    tbFlot.ctx.tooltip.stop(true);
-                    tbFlot.ctx.tooltip.hide();
-                    tbFlot.ctx.plot.unhighlight();
+                    tbDsFlot.ctx.tooltip.stop(true);
+                    tbDsFlot.ctx.tooltip.hide();
+                    tbDsFlot.ctx.plot.unhighlight();
                 }
             };
             this.$element.bind('plothover', this.flotHoverHandler);
@@ -1065,35 +864,35 @@ export default class TbFlot {
 
         if (!this.flotSelectHandler) {
             this.flotSelectHandler =  function (event, ranges) {
-                tbFlot.ctx.plot.clearSelection();
-                tbFlot.subscription.onUpdateTimewindow(ranges.xaxis.from, ranges.xaxis.to);
+                tbDsFlot.ctx.plot.clearSelection();
+                tbDsFlot.subscription.onUpdateTimewindow(ranges.xaxis.from, ranges.xaxis.to);
             };
             this.$element.bind('plotselected', this.flotSelectHandler);
         }
         if (!this.dblclickHandler) {
             this.dblclickHandler =  function () {
-                tbFlot.subscription.onResetTimewindow();
+                tbDsFlot.subscription.onResetTimewindow();
             };
             this.$element.bind('dblclick', this.dblclickHandler);
         }
         if (!this.mousedownHandler) {
             this.mousedownHandler =  function () {
-                tbFlot.isMouseInteraction = true;
+                tbDsFlot.isMouseInteraction = true;
             };
             this.$element.bind('mousedown', this.mousedownHandler);
         }
         if (!this.mouseupHandler) {
             this.mouseupHandler =  function () {
-                tbFlot.isMouseInteraction = false;
+                tbDsFlot.isMouseInteraction = false;
             };
             this.$element.bind('mouseup', this.mouseupHandler);
         }
         if (!this.mouseleaveHandler) {
             this.mouseleaveHandler =  function () {
-                tbFlot.ctx.tooltip.stop(true);
-                tbFlot.ctx.tooltip.hide();
-                tbFlot.ctx.plot.unhighlight();
-                tbFlot.isMouseInteraction = false;
+                tbDsFlot.ctx.tooltip.stop(true);
+                tbDsFlot.ctx.tooltip.hide();
+                tbDsFlot.ctx.plot.unhighlight();
+                tbDsFlot.isMouseInteraction = false;
             };
             this.$element.bind('mouseleave', this.mouseleaveHandler);
         }
@@ -1215,69 +1014,6 @@ export default class TbFlot {
         }
         results.time = minTime;
         return results;
-    }
-
-    pieDataRendered() {
-        for (var i = 0; i < this.ctx.pieTargetData.length; i++) {
-            var value = this.ctx.pieTargetData[i] ? this.ctx.pieTargetData[i] : 0;
-            this.ctx.pieRenderedData[i] = value;
-            if (!this.pieData[i].data[0]) {
-                this.pieData[i].data[0] = [0,0];
-            }
-            this.pieData[i].data[0][1] = value;
-        }
-    }
-
-    nextPieDataAnimation(start) {
-        if (start) {
-            this.finishPieDataAnimation();
-            this.ctx.pieAnimationStartTime = this.ctx.pieAnimationLastTime = Date.now();
-            for (var i = 0;  i < this.subscription.data.length; i++) {
-                this.ctx.pieTargetData[i] = (this.subscription.data[i].data && this.subscription.data[i].data[0])
-                    ? this.subscription.data[i].data[0][1] : 0;
-            }
-        }
-        if (this.ctx.pieAnimationCaf) {
-            this.ctx.pieAnimationCaf();
-            this.ctx.pieAnimationCaf = null;
-        }
-        var self = this;
-        this.ctx.pieAnimationCaf = this.ctx.$scope.tbRaf(
-            function () {
-                self.onPieDataAnimation();
-            }
-        );
-    }
-
-    onPieDataAnimation() {
-        var time = Date.now();
-        var elapsed = time - this.ctx.pieAnimationLastTime;//this.ctx.pieAnimationStartTime;
-        var progress = (time - this.ctx.pieAnimationStartTime) / this.ctx.pieDataAnimationDuration;
-        if (progress >= 1) {
-            this.finishPieDataAnimation();
-        } else {
-            if (elapsed >= 40) {
-                for (var i = 0; i < this.ctx.pieTargetData.length; i++) {
-                    var prevValue = this.ctx.pieRenderedData[i];
-                    var targetValue = this.ctx.pieTargetData[i];
-                    var value = prevValue + (targetValue - prevValue) * progress;
-                    if (!this.pieData[i].data[0]) {
-                        this.pieData[i].data[0] = [0,0];
-                    }
-                    this.pieData[i].data[0][1] = value;
-                }
-                this.ctx.plot.setData(this.pieData);
-                this.ctx.plot.draw();
-                this.ctx.pieAnimationLastTime = time;
-            }
-            this.nextPieDataAnimation(false);
-        }
-    }
-
-    finishPieDataAnimation() {
-        this.pieDataRendered();
-        this.ctx.plot.setData(this.pieData);
-        this.ctx.plot.draw();
     }
 }
 
