@@ -19,7 +19,7 @@ export default angular.module('thingsboard.dashboardUtils', [])
     .name;
 
 /*@ngInject*/
-function DashboardUtils(types, utils, timeService) {
+function DashboardUtils(types, utils, timeService, depthService) {
 
     var service = {
         validateAndUpdateDashboard: validateAndUpdateDashboard,
@@ -159,6 +159,9 @@ function DashboardUtils(types, utils, timeService) {
         if (widget.isSystemType  && widget.bundleAlias == 'charts' && widget.typeAlias == 'timeseries') {
             widget.typeAlias = 'basic_timeseries';
         }
+        if (widget.isSystemType  && widget.bundleAlias == 'charts' && widget.typeAlias == 'depthseries') {
+            widget.typeAlias = 'basic_depthseries';
+        }
         return widget;
     }
 
@@ -278,6 +281,11 @@ function DashboardUtils(types, utils, timeService) {
         if (angular.isUndefined(dashboard.configuration.timewindow)) {
             dashboard.configuration.timewindow = timeService.defaultTimewindow();
         }
+
+        if (angular.isUndefined(dashboard.configuration.depthwindow)) {
+            dashboard.configuration.depthwindow = depthService.defaultDepthwindow();
+        }
+
         if (angular.isUndefined(dashboard.configuration.settings)) {
             dashboard.configuration.settings = {};
             dashboard.configuration.settings.stateControllerId = 'entity';
@@ -285,6 +293,7 @@ function DashboardUtils(types, utils, timeService) {
             dashboard.configuration.settings.showDashboardsSelect = true;
             dashboard.configuration.settings.showEntitiesSelect = true;
             dashboard.configuration.settings.showDashboardTimewindow = true;
+            dashboard.configuration.settings.showDashboardDepthwindow = true;
             dashboard.configuration.settings.showDashboardExport = true;
             dashboard.configuration.settings.toolbarAlwaysOpen = true;
         } else {
@@ -313,6 +322,10 @@ function DashboardUtils(types, utils, timeService) {
             if (angular.isDefined(gridSettings.showDashboardTimewindow)) {
                 dashboard.configuration.settings.showDashboardTimewindow = gridSettings.showDashboardTimewindow;
                 delete gridSettings.showDashboardTimewindow;
+            }
+            if (angular.isDefined(gridSettings.showDashboardDepthwindow)) {
+                dashboard.configuration.settings.showDashboardDepthwindow = gridSettings.showDashboardDepthwindow;
+                delete gridSettings.showDashboardDepthwindow;
             }
             if (angular.isDefined(gridSettings.showDashboardExport)) {
                 dashboard.configuration.settings.showDashboardExport = gridSettings.showDashboardExport;

@@ -1,0 +1,46 @@
+<section layout="row" class="ng-scope layout-row" layout-wrap>
+	<div layout="row" class="row" style="width:100%; clear:both;">
+		<md-card  md-colspan="2" md-colspan-gt-sm="2" class="tb-card-item _md" style="width: calc(((25% - 0.75px) * 2) + 1px); top: calc(0px); height: calc(620px); margin-left: 0px; overflow: scroll;">
+			
+	        <div ng-if="vm.deviceSelected" ng-repeat="widgets in vm.widgetsSet">
+	        	<md-card-title>
+				    <md-card-title-text>
+				     {{widgets.name}} 
+				    </md-card-title-text>
+				    <a ng-href={{widgets.dashboard}} target="_blank"> <i class="material-icons">open_in_new</i></a>
+				</md-card-title>
+ 	           <tb-dashboard
+                    widgets="widgets.widget"
+                    is-remove-action-enabled="false" >
+               </tb-dashboard>
+             </div>
+
+		</md-card>
+		<md-card md-colspan="2" md-colspan-gt-sm="2" class="tb-card-item _md" style="width: calc(((25% - 0.75px) * 2) + 1px); top: calc(0px); height: calc(620px); margin-left: 0px">
+			<md-tabs layout-fill  style="height: calc(380px);">
+			  <md-tab label="All" style="margin-bottom: 3px;">
+			  	 <md-content ng-repeat="device in vm.devices">
+			  	 	<md-card style="height: calc(120px); margin-bottom: 3px; margin-top: 3px; cursor: pointer;" ng-click="vm.assetSelected(device);">
+			  	 		<md-card-header>
+			  	 			<md-card-header-text>
+			  	 				{{device.name}}
+			  	 			</md-card-header-text>
+			  	 		</md-card-header>
+			  	 		<md-card-content>
+			  	 			 <div layout="row">
+							    <div flex><strong>{{device.data[0].key}}:</strong>{{device.data[0].value | number : 2}}</div>
+							    <div flex><strong>{{device.data[1].key}}:</strong>{{device.data[1].value | number : 2}}</div>
+							    <div flex><strong>{{device.data[2].key}}:</strong>{{device.data[2].value | number : 2}}</div>
+							    <div flex><strong>{{device.data[3].key}}:</strong>{{device.data[3].value | number : 2}}</div>
+							  </div>
+			  	 		</md-card-content>
+			  	 		
+			  	 	</md-card>
+	
+			  	 </md-content>
+			  </md-tab>
+			  <md-tab label="Alerts"></md-tab>
+		    </md-tabs>
+		</md-card>
+	</div>
+</section>

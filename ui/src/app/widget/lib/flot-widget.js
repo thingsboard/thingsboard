@@ -16,7 +16,7 @@
  
 import $ from 'jquery';
 import tinycolor from 'tinycolor2';
-import moment from 'moment';
+//import moment from 'moment';
 import 'flot/lib/jquery.colorhelpers';
 import 'flot/src/jquery.flot';
 import 'flot/src/plugins/jquery.flot.time';
@@ -119,8 +119,9 @@ export default class TbFlot {
             ctx.tooltipFormatter = function(hoverInfo, seriesIndex) {
                 var content = '';
                 var timestamp = parseInt(hoverInfo.time);
-                var date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
-                var dateDiv = $('<div>' + date + '</div>');
+                //var date = moment(timestamp).format('YYYY-MM-DD HH:mm:ss');
+                //var dateDiv = $('<div>' + date + '</div>');
+                var dateDiv = $('<div>' + timestamp + '</div>');
                 dateDiv.css({
                     display: "flex",
                     alignItems: "center",
@@ -175,8 +176,8 @@ export default class TbFlot {
 
         if (this.chartType === 'line' || this.chartType === 'bar' || this.chartType === 'state') {
             options.xaxis = {
-                mode: 'time',
-                timezone: 'browser',
+                //mode: 'time',
+                //timezone: 'browser',
                 font: angular.copy(font),
                 labelFont: angular.copy(font)
             };
@@ -425,8 +426,14 @@ export default class TbFlot {
             if (this.chartType === 'bar') {
                 this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
             }
-            this.options.xaxis.min = this.subscription.timeWindow.minTime;
-            this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+            if(subscription.type === 'timeseries') {
+                this.options.xaxis.min = this.subscription.timeWindow.minTime;
+                this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+            }
+            if(subscription.type === 'depthseries') {
+                this.options.xaxis.min = this.subscription.depthWindow.minDepth;
+                this.options.xaxis.max = this.subscription.depthWindow.maxDepth;
+            }
         }
 
         this.checkMouseEvents();
@@ -523,8 +530,16 @@ export default class TbFlot {
                         }
                     }
 
-                    this.options.xaxis.min = this.subscription.timeWindow.minTime;
-                    this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+                    if(this.subscription.type === 'timeseries') {
+                        this.options.xaxis.min = this.subscription.timeWindow.minTime;
+                        this.options.xaxis.max = this.subscription.timeWindow.maxTime;
+                    }
+
+                    if(this.subscription.type === 'depthseries') {
+                        this.options.xaxis.min = this.subscription.depthWindow.minDepth;
+                        this.options.xaxis.max = this.subscription.depthWindow.maxDepth;
+                    }
+
                     if (this.chartType === 'bar') {
                         this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
                     }
@@ -532,8 +547,17 @@ export default class TbFlot {
                     if (axisVisibilityChanged) {
                         this.redrawPlot();
                     } else {
-                        this.ctx.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
-                        this.ctx.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
+
+                        if(this.subscription.type === 'timeseries') {
+                            this.ctx.plot.getOptions().xaxes[0].min = this.subscription.timeWindow.minTime;
+                            this.ctx.plot.getOptions().xaxes[0].max = this.subscription.timeWindow.maxTime;
+                        }
+
+                        if(this.subscription.type === 'depthseries') {
+                            this.ctx.plot.getOptions().xaxes[0].min = this.subscription.depthWindow.minDepth;
+                            this.ctx.plot.getOptions().xaxes[0].max = this.subscription.depthWindow.maxDepth;
+                        }
+
                         if (this.chartType === 'bar') {
                             this.ctx.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
                         }

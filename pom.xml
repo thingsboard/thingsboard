@@ -256,7 +256,7 @@
                     <artifactId>license-maven-plugin</artifactId>
                     <version>3.0</version>
                     <configuration>
-                        <header>${main.dir}/license-header-template.txt</header>
+                        <!--<header>${main.dir}/license-header-template.txt</header>-->
                         <properties>
                             <owner>The Thingsboard Authors</owner>
                         </properties>

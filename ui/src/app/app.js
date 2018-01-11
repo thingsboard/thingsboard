@@ -59,6 +59,7 @@ import thingsboardUtils from './common/utils.service';
 import thingsboardDashboardUtils from './common/dashboard-utils.service';
 import thingsboardTypes from './common/types.constant';
 import thingsboardApiTime from './api/time.service';
+import thingsboardApiDepth from './api/depth.service';
 import thingsboardKeyboardShortcut from './components/keyboard-shortcut.filter';
 import thingsboardHelp from './help/help.directive';
 import thingsboardToast from './services/toast';
@@ -71,7 +72,10 @@ import thingsboardApiAsset from './api/asset.service';
 import thingsboardApiAttribute from './api/attribute.service';
 import thingsboardApiEntity from './api/entity.service';
 import thingsboardApiAlarm from './api/alarm.service';
+import thingsboardApiUiConfiguration from './api/ui-configuration.service'
 import thingsboardApiComputation from './api/computation.service';
+import thingsboardTempusboard from './tempusboard';
+import thingsboardApplications from './applications';
 
 import 'typeface-roboto';
 import 'font-awesome/css/font-awesome.min.css';
@@ -118,6 +122,7 @@ angular.module('thingsboard', [
     thingsboardDashboardUtils,
     thingsboardTypes,
     thingsboardApiTime,
+    thingsboardApiDepth,
     thingsboardKeyboardShortcut,
     thingsboardHelp,
     thingsboardToast,
@@ -130,7 +135,10 @@ angular.module('thingsboard', [
     thingsboardApiAttribute,
     thingsboardApiEntity,
     thingsboardApiAlarm,
+    thingsboardApiUiConfiguration,
     thingsboardApiComputation,
+    thingsboardTempusboard,
+    thingsboardApplications,
     uiRouter])
     .config(AppConfig)
     .factory('globalInterceptor', GlobalInterceptor)

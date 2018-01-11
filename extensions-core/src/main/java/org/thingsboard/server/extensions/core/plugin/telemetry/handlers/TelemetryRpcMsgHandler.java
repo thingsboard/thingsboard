@@ -116,13 +116,13 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
             throw new RuntimeException(e);
         }
         Map<String, Long> statesMap = proto.getKeyStatesList().stream().collect(Collectors.toMap(SubscriptionKetStateProto::getKey, SubscriptionKetStateProto::getTs));
-        Subscription subscription = new Subscription(
+        Subscription<Long> subscription = new Subscription(
                 new SubscriptionState(proto.getSessionId(), proto.getSubscriptionId(), EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()), SubscriptionType.valueOf(proto.getType()), proto.getAllKeys(), statesMap),
                 false, msg.getServerAddress());
         subscriptionManager.addRemoteWsSubscription(ctx, msg.getServerAddress(), proto.getSessionId(), subscription);
     }
 
-    public void onNewSubscription(PluginContext ctx, ServerAddress address, String sessionId, Subscription cmd) {
+    public void onNewSubscription(PluginContext ctx, ServerAddress address, String sessionId, Subscription<Long> cmd) {
         SubscriptionProto.Builder builder = SubscriptionProto.newBuilder();
         builder.setSessionId(sessionId);
         builder.setSubscriptionId(cmd.getSubscriptionId());

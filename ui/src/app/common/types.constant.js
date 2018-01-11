@@ -219,6 +219,8 @@ export default angular.module('thingsboard.types', [])
             dataKeyType: {
                 timeseries: "timeseries",
                 attribute: "attribute",
+              //##### ADDING DEPTH DATA KEY TYPE
+                depthSeries: "depthSeries",
                 function: "function",
                 alarm: "alarm"
             },
@@ -237,7 +239,8 @@ export default angular.module('thingsboard.types', [])
                 customer: "CUSTOMER",
                 user: "USER",
                 dashboard: "DASHBOARD",
-                alarm: "ALARM"
+                alarm: "ALARM",
+                application:"APPLICATION"
             },
             entityTypeTranslations: {
                 "DEVICE": {
@@ -293,6 +296,12 @@ export default angular.module('thingsboard.types', [])
                     typePlural: 'entity.type-alarms',
                     list: 'entity.list-of-alarms',
                     nameStartsWith: 'entity.alarm-name-starts-with'
+                },
+                "APPLICATION": {
+                    type: 'entity.type-application',
+                    typePlural: 'entity.type-applications',
+                    list: 'entity.list-of-applications',
+                    nameStartsWith: 'entity.application-name-starts-with'
                 }
             },
             entitySearchDirection: {
@@ -320,6 +329,11 @@ export default angular.module('thingsboard.types', [])
             latestTelemetry: {
                 value: "LATEST_TELEMETRY",
                 name: "attribute.scope-latest-telemetry",
+                clientSide: true
+            },
+            latestDepthSeries: {
+                value: "LATEST_DEPTH_SERIES",
+                name: "attribute.scope-latest-depth-series",
                 clientSide: true
             },
             attributesScope: {
@@ -368,6 +382,14 @@ export default angular.module('thingsboard.types', [])
                     template: {
                         bundleAlias: "charts",
                         alias: "basic_timeseries"
+                    }
+                },
+                depthseries: {
+                    value: "depthseries",
+                    name: "widget.depthseries",
+                    template: {
+                        bundleAlias: "charts",
+                        alias: "basic_depthseries"
                     }
                 },
                 latest: {

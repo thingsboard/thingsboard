@@ -250,8 +250,12 @@ function LedIndicatorController($element, $scope, $timeout, utils, types) {
             subscriptionsInfo[0].attributes = [
                 {name: vm.valueAttribute}
             ];
-        } else {
+        } else if (vm.retrieveValueMethod == 'timeseries') {
             subscriptionsInfo[0].timeseries = [
+                {name: vm.valueAttribute}
+            ];
+        } else if (vm.retrieveValueMethod == 'depthSeries') {
+            subscriptionsInfo[0].depthSeries = [
                 {name: vm.valueAttribute}
             ];
         }

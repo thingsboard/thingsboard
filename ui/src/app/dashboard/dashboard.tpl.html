@@ -49,12 +49,20 @@
                         </md-tooltip>
                         <md-icon aria-label="{{ 'action.export' | translate }}" class="material-icons">file_download</md-icon>
                     </md-button>
-                    <tb-timewindow ng-show="vm.isEdit || vm.displayDashboardTimewindow()"
+                    <tb-timewindow ng-if="!vm.types.uiConf.isDepthSeriesEnabled()"
+                                   ng-show="vm.isEdit || vm.displayDashboardTimewindow()"
                                    is-toolbar
                                    direction="left"
                                    tooltip-direction="bottom" aggregation="true"
                                    ng-model="vm.dashboardCtx.dashboardTimewindow">
                     </tb-timewindow>
+                    <tb-depthwindow ng-if="vm.types.uiConf.isDepthSeriesEnabled()"
+                                    ng-show="vm.isEdit || vm.displayDashboardDepthwindow()"
+                                    is-toolbar
+                                    direction="left"
+                                    tooltip-direction="bottom" aggregation="true"
+                                    ng-model="vm.dashboardCtx.dashboardDepthwindow">
+                    </tb-depthwindow>
                     <tb-aliases-entity-select ng-show="!vm.isEdit && vm.displayEntitiesSelect()"
                                               tooltip-direction="bottom"
                                               alias-controller="vm.dashboardCtx.aliasController">
@@ -207,13 +215,26 @@
             <div ng-if="vm.isAddingWidget">
                 <md-tabs ng-if="vm.timeseriesWidgetTypes.length > 0 || vm.latestWidgetTypes.length > 0 ||
                                 vm.rpcWidgetTypes.length > 0 || vm.alarmWidgetTypes.length > 0 ||
-                                vm.staticWidgetTypes.length > 0"
+                                vm.staticWidgetTypes.length > 0 || vm.depthseriesWidgetTypes.length > 0"
                          flex
                          class="tb-absolute-fill" md-border-bottom>
                     <md-tab ng-if="vm.timeseriesWidgetTypes.length > 0" style="height: 100%;" label="{{ 'widget.timeseries' | translate }}">
                         <tb-dashboard
                                 alias-controller="vm.dashboardCtx.aliasController"
                                 widgets="vm.timeseriesWidgetTypes"
+                                is-edit="false"
+                                is-mobile="true"
+                                is-edit-action-enabled="false"
+                                is-remove-action-enabled="false"
+                                on-widget-clicked="vm.addWidgetFromType(event, widget)">
+                        </tb-dashboard>
+                    </md-tab>
+                    <md-tab ng-if="vm.types.uiConf.isDepthSeriesEnabled() && vm.depthseriesWidgetTypes.length > 0"
+                            style="height: 100%;"
+                            label="{{ 'widget.depthseries' | translate }}">
+                        <tb-dashboard
+                                alias-controller="vm.dashboardCtx.aliasController"
+                                widgets="vm.depthseriesWidgetTypes"
                                 is-edit="false"
                                 is-mobile="true"
                                 is-edit-action-enabled="false"

@@ -20,9 +20,9 @@ import Subscription from '../../api/subscription';
 /* eslint-disable angular/angularelement */
 
 /*@ngInject*/
-export default function WidgetController($scope, $state, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService,
-                                         datasourceService, alarmService, entityService, deviceService, visibleRect, isEdit, isMobile, stDiff, dashboardTimewindow,
-                                         dashboardTimewindowApi, widget, aliasController, stateController, widgetInfo, widgetType) {
+export default function WidgetController($scope, $state, $timeout, $window, $element, $q, $log, $injector, $filter, $compile, tbRaf, types, utils, timeService, depthService,
+                                         datasourceService, alarmService, entityService, deviceService, visibleRect, isEdit, isMobile, stDiff, dashboardTimewindow, dashboardDepthwindow,
+                                         dashboardTimewindowApi, dashboardDepthwindowApi, widget, aliasController, stateController, widgetInfo, widgetType) {
 
     var vm = this;
 
@@ -37,6 +37,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     $scope.executingRpcRequest = false;
 
     vm.dashboardTimewindow = dashboardTimewindow;
+    vm.dashboardDepthwindow = dashboardDepthwindow;
 
     var gridsterItemInited = false;
     var subscriptionInited = false;
@@ -74,6 +75,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         subscriptions: {},
         defaultSubscription: null,
         dashboardTimewindow: dashboardTimewindow,
+        dashboardDepthwindow: dashboardDepthwindow,
         timewindowFunctions: {
             onUpdateTimewindow: function(startTimeMs, endTimeMs) {
                 if (widgetContext.defaultSubscription) {
@@ -83,6 +85,18 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             onResetTimewindow: function() {
                 if (widgetContext.defaultSubscription) {
                     widgetContext.defaultSubscription.onResetTimewindow();
+                }
+            }
+        },
+        depthwindowFunctions: {
+            onUpdateDepthwindow: function(startDepthFt, endDepthFt) {
+                if (widgetContext.defaultSubscription) {
+                    widgetContext.defaultSubscription.onUpdateDepthwindow(startDepthFt, endDepthFt);
+                }
+            },
+            onResetDepthwindow: function() {
+                if (widgetContext.defaultSubscription) {
+                    widgetContext.defaultSubscription.onResetDepthwindow();
                 }
             }
         },
@@ -152,12 +166,14 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         $timeout: $timeout,
         tbRaf: tbRaf,
         timeService: timeService,
+        depthService: depthService,
         deviceService: deviceService,
         datasourceService: datasourceService,
         alarmService: alarmService,
         utils: utils,
         widgetUtils: widgetContext.utils,
         dashboardTimewindowApi: dashboardTimewindowApi,
+        dashboardDepthwindowApi: dashboardDepthwindowApi,
         types: types,
         stDiff: stDiff,
         aliasController: aliasController
@@ -231,6 +247,9 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             if (!options.timeWindowConfig) {
                 options.useDashboardTimewindow = true;
             }
+            if(!options.depthWindowConfig){
+                options.useDashboardDepthwindow = true;
+            }
         }
 
         var createDatasourcesPromise;
@@ -266,6 +285,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     function createSubscription(options, subscribe) {
         var deferred = $q.defer();
         options.dashboardTimewindow = vm.dashboardTimewindow;
+        options.dashboardDepthwindow = vm.dashboardDepthwindow;
         new Subscription(subscriptionContext, options).then(
             function success(subscription) {
                 widgetContext.subscriptions[subscription.id] = subscription;
@@ -285,8 +305,11 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     function defaultComponentsOptions(options) {
         options.useDashboardTimewindow = angular.isDefined(widget.config.useDashboardTimewindow)
             ? widget.config.useDashboardTimewindow : true;
+        options.useDashboardDepthwindow = angular.isDefined(widget.config.useDashboardDepthwindow)
+            ? widget.config.useDashboardDepthwindow : true;
 
         options.timeWindowConfig = options.useDashboardTimewindow ? vm.dashboardTimewindow : widget.config.timewindow;
+        options.depthWindowConfig = options.useDashboardDepthwindow ? vm.dashboardDepthwindow : widget.config.depthwindow;
         options.legendConfig = null;
 
         if ($scope.displayLegend) {
@@ -315,6 +338,10 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
             timeWindowUpdated: function(subscription, timeWindowConfig) {
                 widget.config.timewindow = timeWindowConfig;
                 $scope.$apply();
+            },
+            depthWindowUpdated: function(subscription, depthWindowConfig) {
+                widget.config.depthwindow = depthWindowConfig;
+                $scope.$apply();
             }
         }
     }
@@ -329,6 +356,17 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 }
             });
         }
+
+        if (!options.useDashboardDepthwindow) {
+            $scope.$watch(function () {
+                return widget.config.depthwindow;
+            }, function (newDepthwindow, prevDepthwindow) {
+                if (!angular.equals(newDepthwindow, prevDepthwindow)) {
+                    subscription.updateDepthwindowConfig(widget.config.depthwindow);
+                }
+            });
+        }
+
         if ($scope.displayLegend) {
             $scope.legendData = subscription.legendData;
         }
@@ -364,6 +402,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                     widgetContext.data = subscription.data;
                     widgetContext.hiddenData = subscription.hiddenData;
                     widgetContext.timeWindow = subscription.timeWindow;
+                    widgetContext.depthWindow = subscription.depthWindow;
                     widgetContext.defaultSubscription = subscription;
                     deferred.resolve();
                 },
@@ -509,7 +548,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
     function configureWidgetElement() {
 
         $scope.displayLegend = angular.isDefined(widget.config.showLegend) ?
-            widget.config.showLegend : widget.type === types.widgetType.timeseries.value;
+            widget.config.showLegend : ( widget.type === types.widgetType.timeseries.value ||
+                widget.type === types.widgetType.depthseries.value);
 
         if ($scope.displayLegend) {
             $scope.legendConfig = widget.config.legendConfig ||
@@ -517,7 +557,8 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                     position: types.position.bottom.value,
                     showMin: false,
                     showMax: false,
-                    showAvg: widget.type === types.widgetType.timeseries.value,
+                    showAvg: (widget.type === types.widgetType.timeseries.value ||
+                        widget.type === types.widgetType.depthseries.value),
                     showTotal: false
                 };
             $scope.legendData = {
@@ -650,6 +691,11 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         $scope.$on('dashboardTimewindowChanged', function (event, newDashboardTimewindow) {
             vm.dashboardTimewindow = newDashboardTimewindow;
             widgetContext.dashboardTimewindow = newDashboardTimewindow;
+        });
+
+        $scope.$on('dashboardDepthwindowChanged', function (event, newDashboardDepthwindow) {
+            vm.dashboardDepthwindow = newDashboardDepthwindow;
+            widgetContext.dashboardDepthwindow = newDashboardDepthwindow;
         });
 
         $scope.$on("$destroy", function () {

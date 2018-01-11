@@ -18,6 +18,7 @@ import thingsboardApiTelemetryWebsocket from './telemetry-websocket.service';
 import thingsboardTypes from '../common/types.constant';
 import thingsboardUtils from '../common/utils.service';
 import DataAggregator from './data-aggregator';
+import DepthDataAggregator from './depth-data-aggregator';
 
 export default angular.module('thingsboard.api.datasource', [thingsboardApiDevice, thingsboardApiTelemetryWebsocket, thingsboardTypes, thingsboardUtils])
     .factory('datasourceService', DatasourceService)
@@ -26,7 +27,7 @@ export default angular.module('thingsboard.api.datasource', [thingsboardApiDevic
 const YEAR = 1000 * 60 * 60 * 24 * 365;
 
 /*@ngInject*/
-function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, types, utils) {
+function DatasourceService($timeout, $filter, telemetryWebsocketService, types, utils) {
 
     var subscriptions = {};
 
@@ -65,6 +66,11 @@ function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, t
         if (listener.subscriptionType === types.widgetType.timeseries.value) {
             datasourceSubscription.subscriptionTimewindow = angular.copy(listener.subscriptionTimewindow);
         }
+
+        if (listener.subscriptionType === types.widgetType.depthseries.value) {
+            datasourceSubscription.subscriptionDepthwindow = angular.copy(listener.subscriptionDepthwindow);
+        }
+
         if (datasourceSubscription.datasourceType === types.datasourceType.entity) {
             datasourceSubscription.entityType = listener.entityType;
             datasourceSubscription.entityId = listener.entityId;
@@ -76,7 +82,7 @@ function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, t
             subscription = subscriptions[listener.datasourceSubscriptionKey];
             subscription.syncListener(listener);
         } else {
-            subscription = new DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $filter, $log, types, utils);
+            subscription = new DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $filter, types, utils);
             subscriptions[listener.datasourceSubscriptionKey] = subscription;
             subscription.start();
         }
@@ -99,7 +105,7 @@ function DatasourceService($timeout, $filter, $log, telemetryWebsocketService, t
 
 }
 
-function DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $filter, $log, types, utils) {
+function DatasourceSubscription(datasourceSubscription, telemetryWebsocketService, $timeout, $filter, types, utils) {
 
     var listeners = [];
     var datasourceType = datasourceSubscription.datasourceType;
@@ -110,6 +116,10 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         datasourceSubscription.subscriptionTimewindow.fixedWindow;
     var realtime = datasourceSubscription.subscriptionTimewindow &&
         datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
+    var historyDepth = datasourceSubscription.subscriptionDepthwindow &&
+        datasourceSubscription.subscriptionDepthwindow.fixedWindow;
+    //var realtimeDepth = datasourceSubscription.subscriptionDepthwindow &&
+    //    datasourceSubscription.subscriptionTimewindow.realtimeWindowMs;
     var timer;
     var frequency;
     var tickElapsed = 0;
@@ -143,7 +153,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     dataKey.postFunc = new Function("time", "value", "prevValue", dataKey.postFuncBody);
                 }
             }
-            if (datasourceType === types.datasourceType.entity || datasourceSubscription.type === types.widgetType.timeseries.value) {
+            if (datasourceType === types.datasourceType.entity || datasourceSubscription.type === types.widgetType.timeseries.value
+                || datasourceSubscription.type === types.widgetType.depthseries.value ) {
                 if (datasourceType === types.datasourceType.function) {
                     key = dataKey.name + '_' + dataKey.index + '_' + dataKey.type;
                 } else {
@@ -165,6 +176,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                 };
                 dataKeys[key] = dataKey;
             }
+
             dataKey.key = key;
         }
         if (datasourceType === types.datasourceType.function) {
@@ -172,12 +184,15 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
             if (datasourceSubscription.type === types.widgetType.timeseries.value) {
                 frequency = Math.min(datasourceSubscription.subscriptionTimewindow.aggregation.interval, 5000);
             }
+            if (datasourceSubscription.type === types.widgetType.depthseries.value) {
+                frequency = Math.min(datasourceSubscription.subscriptionDepthwindow.aggregation.interval, 5000);
+            }
         }
     }
 
     function addListener(listener) {
         listeners.push(listener);
-        if (history) {
+        if (history || historyDepth) {
             start();
         }
     }
@@ -193,7 +208,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
     function syncListener(listener) {
         var key;
         var dataKey;
-        if (datasourceType === types.datasourceType.entity || datasourceSubscription.type === types.widgetType.timeseries.value) {
+        if (datasourceType === types.datasourceType.entity || datasourceSubscription.type === types.widgetType.timeseries.value ||
+            datasourceSubscription.type === types.widgetType.depthseries.value ) {
             for (key in dataKeys) {
                 var dataKeysList = dataKeys[key];
                 for (var i = 0; i < dataKeysList.length; i++) {
@@ -215,11 +231,14 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
     }
 
     function start() {
-        if (history && !hasListeners()) {
+        if (history && historyDepth && !hasListeners()) {
             return;
         }
         var subsTw = datasourceSubscription.subscriptionTimewindow;
+        var subsDw = datasourceSubscription.subscriptionDepthwindow;
         var tsKeyNames = [];
+        //##### ADDING DEPTH KEY NAMES
+        var dsKeyNames = [];
         var dataKey;
 
         if (datasourceType === types.datasourceType.entity) {
@@ -228,6 +247,8 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
 
             var tsKeys = '';
             var attrKeys = '';
+            //##### ADDING DEPTH KEYS
+            var dsKeys = '';
 
             for (var key in dataKeys) {
                 var dataKeysList = dataKeys[key];
@@ -238,6 +259,13 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     }
                     tsKeys += dataKey.name;
                     tsKeyNames.push(dataKey.name);
+                } else if (dataKey.type === types.dataKeyType.depthSeries) {
+                    //##### ADDING DEPTH HANDLING
+                    if (dsKeys.length > 0) {
+                        dsKeys += ',';
+                    }
+                    dsKeys += dataKey.name;
+                    dsKeyNames.push(dataKey.name);
                 } else if (dataKey.type === types.dataKeyType.attribute) {
                     if (attrKeys.length > 0) {
                         attrKeys += ',';
@@ -397,6 +425,157 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                 }
             }
 
+            if (dsKeys.length > 0) {
+
+                if (historyDepth) {
+
+                    historyCommand = {
+                        entityType: datasourceSubscription.entityType,
+                        entityId: datasourceSubscription.entityId,
+                        keys: dsKeys,
+                        startDs: subsDw.fixedWindow.startDepthFt,
+                        endDs: subsDw.fixedWindow.endDepthFt,
+                        interval: subsDw.aggregation.interval,
+                        limit: subsDw.aggregation.limit,
+                        agg: subsDw.aggregation.type
+                    };
+
+                    subscriber = {
+                        historyCommands: [ historyCommand ],
+                        type: types.dataKeyType.depthSeries,
+                        subsDw: subsDw
+                    };
+
+                    if (subsDw.aggregation.stateData) {
+                        subscriber.firstStateHistoryCommand = createFirstStateDepthHistoryCommand(subsDw.fixedWindow.startDepthFt, dsKeys);
+                        subscriber.historyCommands.push(subscriber.firstStateHistoryCommand);
+                    }
+
+                    subscriber.onData = function (data, subscriptionId) {
+                        if (this.subsDw.aggregation.stateData &&
+                            this.firstStateHistoryCommand && this.firstStateHistoryCommand.cmdId == subscriptionId) {
+                            if (this.data) {
+                                onStateDepthHistoryData(data, this.data, this.subsDw.aggregation.limit,
+                                    subsDw.fixedWindow.startDepthFt, this.subsDw.fixedWindow.endDepthFt,
+                                    (data) => {
+                                        onData(data.data, types.dataKeyType.depthSeries, true);
+                                    });
+                            } else {
+                                this.firstStateData = data;
+                            }
+                        } else {
+                            if (this.subsDw.aggregation.stateData) {
+                                if (this.firstStateData) {
+                                    onStateDepthHistoryData(this.firstStateData, data, this.subsDw.aggregation.limit,
+                                        this.subsDw.fixedWindow.startDepthFt, this.subsDw.fixedWindow.endDepthFt,
+                                        (data) => {
+                                            onData(data.data, types.dataKeyType.depthSeries, true);
+                                        });
+                                } else {
+                                    this.data = data;
+                                }
+                            } else {
+                                for (key in data.data) {
+                                    var keyData = data.data[key];
+                                    data.data[key] = $filter('orderBy')(keyData, '+this[0]');
+                                }
+                                onData(data.data, types.dataKeyType.depthSeries, true);
+                            }
+                        }
+                    };
+                    subscriber.onReconnected = function() {};
+                    telemetryWebsocketService.subscribe(subscriber);
+                    subscribers.push(subscriber);
+
+                }
+                else {
+
+                    subscriptionCommand = {
+                        entityType: datasourceSubscription.entityType,
+                        entityId: datasourceSubscription.entityId,
+                        keys: dsKeys
+                    };
+
+                    subscriber = {
+                        subscriptionCommands: [subscriptionCommand],
+                        type: types.dataKeyType.depthSeries
+                    };
+
+                    if (datasourceSubscription.type === types.widgetType.depthseries.value) {
+                        subscriber.subsDw = subsDw;
+                        updateRealtimeDepthSubscriptionCommand(subscriptionCommand, subsDw);
+
+                        if (subsDw.aggregation.stateData) {
+                            subscriber.firstStateSubscriptionCommand = createFirstStateDepthHistoryCommand(subsDw.startDs, dsKeys);
+                            subscriber.historyCommands = [subscriber.firstStateSubscriptionCommand];
+                        }
+                        dataAggregator = createRealtimeDepthDataAggregator(subsDw, dsKeyNames, types.dataKeyType.depthSeries);
+                        subscriber.onData = function(data, subscriptionId) {
+                            if (this.subsDw.aggregation.stateData &&
+                                this.firstStateSubscriptionCommand && this.firstStateSubscriptionCommand.cmdId == subscriptionId) {
+                                if (this.data) {
+                                    onStateDepthHistoryData(data, this.data, this.subsDw.aggregation.limit,
+                                        this.subsDw.startDs, this.subsDw.startDs + this.subsDw.aggregation.depthWindow,
+                                        (data) => {
+                                            dataAggregator.onData(data, false, false, true);
+                                        });
+                                    this.stateDataReceived = true;
+                                } else {
+                                    this.firstStateData = data;
+                                }
+                            } else {
+                                if (this.subsDw.aggregation.stateData && !this.stateDataReceived) {
+                                    if (this.firstStateData) {
+                                        onStateDepthHistoryData(this.firstStateData, data, this.subsDw.aggregation.limit,
+                                            this.subsDw.startDs, this.subsDw.startDs + this.subsTw.aggregation.depthWindow,
+                                            (data) => {
+                                                dataAggregator.onData(data, false, false, true);
+                                            });
+                                        this.stateDataReceived = true;
+                                    } else {
+                                        this.data = data;
+                                    }
+                                } else {
+                                    dataAggregator.onData(data, false, false, true);
+                                }
+                            }
+                        }
+                        subscriber.onReconnected = function() {
+                            var newSubsDw = null;
+                            for (var i2 = 0; i2 < listeners.length; i2++) {
+                                var listener = listeners[i2];
+                                if (!newSubsDw) {
+                                    newSubsDw = listener.updateRealtimeDepthSubscription();
+                                } else {
+                                    listener.setRealtimeDepthSubscription(newSubsDw);
+                                }
+                            }
+                            this.subsDw = newSubsDw;
+                            this.firstStateData = null;
+                            this.data = null;
+                            this.stateDataReceived = false;
+                            updateRealtimeDepthSubscriptionCommand(this.subscriptionCommands[0], this.subsDw);
+                            if (this.subsDw.aggregation.stateData) {
+                                updateFirstStateDepthHistoryCommand(this.firstStateSubscriptionCommand, this.subsDw.startDs);
+                            }
+                            dataAggregator.reset(newSubsDw.startDs,  newSubsDw.aggregation.depthWindow, newSubsDw.aggregation.interval);
+                        }
+                    }
+                    else {
+                        subscriber.onReconnected = function() {}
+                        subscriber.onData = function(data) {
+                            if (data.data) {
+                                onData(data.data, types.dataKeyType.depthSeries, true);
+                            }
+                        }
+                    }
+
+                    telemetryWebsocketService.subscribe(subscriber);
+                    subscribers.push(subscriber);
+
+                }
+            }
+
             if (attrKeys.length > 0) {
 
                 var attrsSubscriptionCommand = {
@@ -460,9 +639,27 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         };
     }
 
+    function createFirstStateDepthHistoryCommand(startDs, dsKeys) {
+        return {
+            entityType: datasourceSubscription.entityType,
+            entityId: datasourceSubscription.entityId,
+            keys: dsKeys,
+            startDs: startDs - 10,
+            endDs: startDs,
+            interval: 1000,
+            limit: 1,
+            agg: types.aggregation.none.value
+        };
+    }
+
     function updateFirstStateHistoryCommand(stateHistoryCommand, startTs) {
         stateHistoryCommand.startTs = startTs - YEAR;
         stateHistoryCommand.endTs = startTs;
+    }
+
+    function updateFirstStateDepthHistoryCommand(stateHistoryCommand, startDs) {
+        stateHistoryCommand.startDs = startDs - 10;
+        stateHistoryCommand.endDs = startDs;
     }
 
     function onStateHistoryData(firstStateData, data, limit, startTs, endTs, onData) {
@@ -490,6 +687,31 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         onData(data);
     }
 
+    function onStateDepthHistoryData(firstStateData, data, limit, startDs, endDs, onData) {
+        for (var key in data.data) {
+            var keyData = data.data[key];
+            data.data[key] = $filter('orderBy')(keyData, '+this[0]');
+            keyData = data.data[key];
+            if (keyData.length < limit) {
+                var firstStateKeyData = firstStateData.data[key];
+                if (firstStateKeyData.length) {
+                    var firstStateDataDsKv = firstStateKeyData[0];
+                    firstStateDataDsKv[0] = startDs;
+                    firstStateKeyData = [
+                        [ startDs, firstStateKeyData[0][1] ]
+                    ];
+                    keyData.unshift(firstStateDataDsKv);
+                }
+            }
+            if (keyData.length) {
+                var lastDsKv = angular.copy(keyData[keyData.length-1]);
+                lastDsKv[0] = endDs;
+                keyData.push(lastDsKv);
+            }
+        }
+        onData(data);
+    }
+
     function createRealtimeDataAggregator(subsTw, tsKeyNames, dataKeyType) {
         return new DataAggregator(
             function(data, apply) {
@@ -508,12 +730,40 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
         );
     }
 
+    function createRealtimeDepthDataAggregator(subsDw, dsKeyNames, dataKeyType) {
+        return new DepthDataAggregator(
+            function(data, apply) {
+                onData(data, dataKeyType, apply);
+            },
+            dsKeyNames,
+            subsDw.startDs,
+            subsDw.aggregation.limit,
+            subsDw.aggregation.type,
+            subsDw.aggregation.depthWindow,
+            subsDw.aggregation.interval,
+            subsDw.aggregation.stateData,
+            types,
+            $timeout,
+            $filter
+        );
+    }
+
     function updateRealtimeSubscriptionCommand(subscriptionCommand, subsTw) {
         subscriptionCommand.startTs = subsTw.startTs;
+        //subscriptionCommand.startDs = subsTw.startTs;
         subscriptionCommand.timeWindow = subsTw.aggregation.timeWindow;
+        //subscriptionCommand.depthWindow = subsTw.aggregation.timeWindow;
         subscriptionCommand.interval = subsTw.aggregation.interval;
         subscriptionCommand.limit = subsTw.aggregation.limit;
         subscriptionCommand.agg = subsTw.aggregation.type;
+    }
+
+    function updateRealtimeDepthSubscriptionCommand(subscriptionCommand, subsDw) {
+        subscriptionCommand.startDs = subsDw.startDs;
+        subscriptionCommand.depthWindow = subsDw.aggregation.depthWindow;
+        subscriptionCommand.interval = subsDw.aggregation.interval;
+        subscriptionCommand.limit = subsDw.aggregation.limit;
+        subscriptionCommand.agg = subsDw.aggregation.type;
     }
 
     function unsubscribe() {
@@ -690,7 +940,7 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                     } else {
                         prevSeries = [0, 0];
                     }
-                    if (datasourceSubscription.type === types.widgetType.timeseries.value) {
+                    if (datasourceSubscription.type === types.widgetType.timeseries.value) { // || condition here for depthseries.
                         var series, time, value;
                         for (var i = 0; i < keyData.length; i++) {
                             series = keyData[i];
@@ -700,6 +950,20 @@ function DatasourceSubscription(datasourceSubscription, telemetryWebsocketServic
                                 value = dataKey.postFunc(time, value, prevSeries[1]);
                             }
                             series = [time, value];
+                            data.push(series);
+                            prevSeries = series;
+                        }
+                        update = true;
+                    }else if(datasourceSubscription.type === types.widgetType.depthseries.value) {
+                        var depth;
+                        for (i = 0; i < keyData.length; i++) {
+                            series = keyData[i];
+                            depth = series[0];
+                            value = convertValue(series[1]);
+                            if (dataKey.postFunc) {
+                                value = dataKey.postFunc(depth, value, prevSeries[1]);
+                            }
+                            series = [depth, value];
                             data.push(series);
                             prevSeries = series;
                         }

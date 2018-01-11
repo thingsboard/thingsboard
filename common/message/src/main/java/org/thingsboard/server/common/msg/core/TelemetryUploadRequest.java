@@ -25,5 +25,4 @@ import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
 public interface TelemetryUploadRequest extends FromDeviceRequestMsg {
 
     Map<Long, List<KvEntry>> getData();
-
 }

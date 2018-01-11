@@ -25,14 +25,14 @@ import java.util.Map;
  * @author Andrew Shvayka
  */
 @AllArgsConstructor
-public class SubscriptionState {
+public class SubscriptionState<T> {
 
-    @Getter private final String wsSessionId;
-    @Getter private final int subscriptionId;
-    @Getter private final EntityId entityId;
-    @Getter private final SubscriptionType type;
-    @Getter private final boolean allKeys;
-    @Getter private final Map<String, Long> keyStates;
+    @Getter protected final String wsSessionId;
+    @Getter protected final int subscriptionId;
+    @Getter protected final EntityId entityId;
+    @Getter protected final SubscriptionType type;
+    @Getter protected final boolean allKeys;
+    @Getter private final Map<String, T> keyStates;
 
     @Override
     public boolean equals(Object o) {

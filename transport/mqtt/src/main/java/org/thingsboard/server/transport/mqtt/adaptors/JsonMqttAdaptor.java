@@ -59,6 +59,10 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             case POST_TELEMETRY_REQUEST:
                 msg = convertToTelemetryUploadRequest(ctx, (MqttPublishMessage) inbound);
                 break;
+            case POST_TELEMETRY_REQUEST_DEPTH:
+                msg = convertToTelemetryUploadRequestDepth(ctx, (MqttPublishMessage) inbound);
+                log.debug("\n\n########### msg " + msg + "\n\n");
+                break;
             case POST_ATTRIBUTES_REQUEST:
                 msg = convertToUpdateAttributesRequest(ctx, (MqttPublishMessage) inbound);
                 break;
@@ -219,6 +223,16 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload());
         try {
             return JsonConverter.convertToTelemetry(new JsonParser().parse(payload), inbound.variableHeader().messageId());
+        } catch (IllegalStateException | JsonSyntaxException ex) {
+            throw new AdaptorException(ex);
+        }
+    }
+
+    //  telemetry depth
+    private DepthTelemetryUploadRequest convertToTelemetryUploadRequestDepth(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        String payload = validatePayload(ctx.getSessionId(), inbound.payload());
+        try {
+            return JsonConverter.convertToTelemetryDepth(new JsonParser().parse(payload), inbound.variableHeader().messageId());
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }

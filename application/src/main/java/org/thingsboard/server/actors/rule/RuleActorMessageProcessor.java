@@ -152,6 +152,7 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
 
         logger.debug("[{}] Going to filter in msg: {}", entityId, inMsg);
         for (RuleFilter filter : filters) {
+            logger.debug("\n Filter is " + filter);
             if (!filter.filter(ruleCtx, inMsg)) {
                 logger.debug("[{}] In msg is NOT valid for processing by current rule: {}", entityId, inMsg);
                 pushToNextRule(context, msg.getCtx(), RuleEngineError.NO_FILTERS_MATCHED);
@@ -167,6 +168,7 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
         }
         logger.debug("[{}] Going to convert in msg: {}", entityId, inMsg);
         if (action != null) {
+            logger.debug("\nInside action \n" + inMsg + "\n");
             Optional<RuleToPluginMsg<?>> ruleToPluginMsgOptional = action.convert(ruleCtx, inMsg, inMsgMd);
             if (ruleToPluginMsgOptional.isPresent()) {
                 RuleToPluginMsg<?> ruleToPluginMsg = ruleToPluginMsgOptional.get();

@@ -23,6 +23,7 @@ import thingsboardApiWidget from '../api/widget.service';
 import thingsboardWidget from './widget/widget.directive';
 import thingsboardToast from '../services/toast';
 import thingsboardTimewindow from './timewindow.directive';
+import thingsboardDepthwindow from './depthwindow.directive';
 import thingsboardEvents from './tb-event-directives';
 import thingsboardMousepointMenu from './mousepoint-menu.directive';
 
@@ -39,6 +40,7 @@ export default angular.module('thingsboard.directives.dashboard', [thingsboardTy
     thingsboardApiWidget,
     thingsboardWidget,
     thingsboardTimewindow,
+    thingsboardDepthwindow,
     thingsboardEvents,
     thingsboardMousepointMenu,
     angularGridster.name])
@@ -56,6 +58,7 @@ function Dashboard() {
             aliasController: '=',
             stateController: '=',
             dashboardTimewindow: '=?',
+            dashboardDepthwindow: '=?',
             columns: '=',
             margins: '=',
             isEdit: '=',
@@ -89,7 +92,7 @@ function Dashboard() {
 }
 
 /*@ngInject*/
-function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $mdUtil, $q, timeService, types, utils) {
+function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $mdUtil, $q, timeService, depthService, types, utils) {
 
     var highlightedMode = false;
     var highlightedWidget = null;
@@ -112,6 +115,10 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         vm.dashboardTimewindow = timeService.defaultTimewindow();
     }
 
+    if (!('dashboardDepthwindow' in vm)) {
+        vm.dashboardDepthwindow = depthService.defaultDepthwindow()
+    }
+
     vm.dashboardLoading = true;
     vm.visibleRect = {
         top: 0,
@@ -128,8 +135,8 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         margins: vm.margins ? vm.margins : [10, 10],
         minSizeX: 1,
         minSizeY: 1,
-        defaultSizeX: 8,
-        defaultSizeY: 6,
+        defaultSizeX: 24,
+        defaultSizeY: 18,
         resizable: {
             enabled: vm.isEdit
         },
@@ -194,7 +201,9 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
     vm.dropWidgetShadow = dropWidgetShadow;
     vm.enableWidgetFullscreen = enableWidgetFullscreen;
     vm.hasTimewindow = hasTimewindow;
+    vm.hasDepthwindow = hasDepthwindow;
     vm.hasAggregation = hasAggregation;
+    vm.hasDepthAggregation = hasDepthAggregation;
     vm.editWidget = editWidget;
     vm.exportWidget = exportWidget;
     vm.removeWidget = removeWidget;
@@ -227,6 +236,25 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             }
             $timeout(function() {
                 vm.dashboardTimewindow = timeService.toHistoryTimewindow(vm.dashboardTimewindow, startTimeMs, endTimeMs);
+            }, 0);
+        }
+    };
+
+    vm.dashboardDepthwindowApi = {
+        onResetDepthwindow: function() {
+            $timeout(function() {
+                if (vm.originalDashboardDepthwindow) {
+                    vm.dashboardDepthwindow = angular.copy(vm.originalDashboardDepthwindow);
+                    vm.originalDashboardDepthwindow = null;
+                }
+            }, 0);
+        },
+        onUpdateDepthwindow: function(startDepthFt, endDepthFt) {
+            if (!vm.originalDashboardDepthwindow) {
+                vm.originalDashboardDepthwindow = angular.copy(vm.dashboardDepthwindow);
+            }
+            $timeout(function() {
+                vm.dashboardDepthwindow = depthService.toHistoryDepthwindow(vm.dashboardDepthwindow, startDepthFt, endDepthFt);
             }, 0);
         }
     };
@@ -1000,8 +1028,21 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
         }
     }
 
+    function hasDepthwindow(widget) {
+        if (widget.type === types.widgetType.depthseries.value || widget.type === types.widgetType.alarm.value) {
+            return angular.isDefined(widget.config.useDashboardDepthwindow) ?
+                !widget.config.useDashboardDepthwindow : false;
+        } else {
+            return false;
+        }
+    }
+
     function hasAggregation(widget) {
         return widget.type === types.widgetType.timeseries.value;
+    }
+
+    function hasDepthAggregation(widget) {
+        return widget.type === types.widgetType.depthseries.value;
     }
 
     function adoptMaxRows() {
@@ -1025,6 +1066,15 @@ function DashboardController($scope, $rootScope, $element, $timeout, $mdMedia, $
             vm.dashboardTimewindowWatch = $scope.$watch('vm.dashboardTimewindow', function () {
                 $scope.$broadcast('dashboardTimewindowChanged', vm.dashboardTimewindow);
             }, true);
+
+            if (vm.dashboardDepthwindowWatch) {
+                vm.dashboardDepthwindowWatch();
+                vm.dashboardDepthwindowWatch = null;
+            }
+            vm.dashboardDepthwindowWatch = $scope.$watch('vm.dashboardDepthwindow', function () {
+                $scope.$broadcast('dashboardDepthwindowChanged', vm.dashboardDepthwindow);
+            }, true);
+
             adoptMaxRows();
             vm.dashboardLoading = false;
             if ($scope.gridsterScopeWatcher) {

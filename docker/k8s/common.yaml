@@ -14,20 +14,11 @@
 # limitations under the License.
 #
 
----
-apiVersion: storage.k8s.io/v1beta1
 kind: StorageClass
+apiVersion: storage.k8s.io/v1
 metadata:
-  name: slow
-provisioner: kubernetes.io/gce-pd
+  name: ebs-gp2
+provisioner: kubernetes.io/aws-ebs
 parameters:
-  type: pd-standard
----
-apiVersion: storage.k8s.io/v1beta1
-kind: StorageClass
-metadata:
-  name: fast
-provisioner: kubernetes.io/gce-pd
-parameters:
-  type: pd-ssd
----
+  type: gp2
+  zone: us-west-2a

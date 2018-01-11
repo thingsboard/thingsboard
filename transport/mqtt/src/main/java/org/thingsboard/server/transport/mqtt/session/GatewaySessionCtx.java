@@ -146,6 +146,30 @@ public class GatewaySessionCtx {
         }
     }
 
+    public void onDeviceDepthTelemetry(MqttPublishMessage mqttMsg) throws AdaptorException {
+        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
+        int requestId = mqttMsg.variableHeader().messageId();
+        if (json.isJsonObject()) {
+            JsonObject jsonObj = json.getAsJsonObject();
+            for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
+                String deviceName = checkDeviceConnected(deviceEntry.getKey());
+                if (!deviceEntry.getValue().isJsonArray()) {
+                    throw new JsonSyntaxException("Can't parse value: " + json);
+                }
+                BasicDepthTelemetryUploadRequest request = new BasicDepthTelemetryUploadRequest(requestId);
+                JsonArray deviceData = deviceEntry.getValue().getAsJsonArray();
+                for (JsonElement element : deviceData) {
+                    JsonConverter.parseWithDepth(request, element.getAsJsonObject());
+                }
+                GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
+                processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+                        new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
+            }
+        } else {
+            throw new JsonSyntaxException("Can't parse value: " + json);
+        }
+    }
+
     public void onDeviceRpcResponse(MqttPublishMessage mqttMsg) throws AdaptorException {
         JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
         if (json.isJsonObject()) {

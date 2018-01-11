@@ -26,13 +26,11 @@ import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryRpcMsgHandler;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryWebsocketMsgHandler;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.Subscription;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionState;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.extensions.core.plugin.telemetry.sub.*;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * @author Andrew Shvayka
@@ -51,7 +49,8 @@ public class SubscriptionManager {
 
     public void addLocalWsSubscription(PluginContext ctx, String sessionId, EntityId entityId, SubscriptionState sub) {
         Optional<ServerAddress> server = ctx.resolve(entityId);
-        Subscription subscription;
+
+        Subscription<Long> subscription;
         if (server.isPresent()) {
             ServerAddress address = server.get();
             log.trace("[{}] Forwarding subscription [{}] for device [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId, address);
@@ -60,11 +59,34 @@ public class SubscriptionManager {
         } else {
             log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), entityId);
             subscription = new Subscription(sub, true);
+            /*if(sub.getType() == SubscriptionType.DEPTHSERIES) {
+                depthSubscriptionState = (DepthSubscriptionState) sub;
+                subscription = new DepthSubscription(sub,true,depthSubscriptionState);
+            }
+            else {
+                subscription = new Subscription(sub, true);
+            }*/
         }
         registerSubscription(sessionId, entityId, subscription);
     }
 
-    public void addRemoteWsSubscription(PluginContext ctx, ServerAddress address, String sessionId, Subscription subscription) {
+    public void addLocalWsDepthSubscription(PluginContext ctx, String sessionId, EntityId entityId, SubscriptionState sub) {
+        Optional<ServerAddress> server = ctx.resolve(entityId);
+        Subscription<Double> subscription;
+        if (server.isPresent()) {
+            ServerAddress address = server.get();
+            log.trace("[{}] Forwarding subscription [{}] for device [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId, address);
+            subscription = new Subscription(sub, true, address);
+            //rpcHandler.onNewSubscription(ctx, address, sessionId, subscription);
+        } else {
+            log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), entityId);
+            //subscription = new Subscription(sub, true,(DepthSubscriptionState) sub);
+            subscription = new Subscription(sub, true);
+        }
+        registerSubscription(sessionId, entityId, subscription);
+    }
+
+    public void addRemoteWsSubscription(PluginContext ctx, ServerAddress address, String sessionId, Subscription<Long> subscription) {
         EntityId entityId = subscription.getEntityId();
         log.trace("[{}] Registering remote subscription [{}] for device [{}] to [{}]", sessionId, subscription.getSubscriptionId(), entityId, address);
         registerSubscription(sessionId, entityId, subscription);
@@ -125,6 +147,7 @@ public class SubscriptionManager {
             sessionSubscriptions = new HashMap<>();
             subscriptionsByWsSessionId.put(sessionId, sessionSubscriptions);
         }
+        log.debug("subscriptionsByWsSessionId " + subscriptionsByWsSessionId);
         sessionSubscriptions.put(subscription.getSubscriptionId(), subscription);
     }
 
@@ -168,16 +191,19 @@ public class SubscriptionManager {
         }
     }
 
-    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f) {
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription<Long>, List<TsKvEntry>> f) {
         Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
         if (deviceSubscriptions != null) {
             deviceSubscriptions.stream().filter(s -> type == s.getType()).forEach(s -> {
+                log.debug("\n Inside foreach " + s);
                 String sessionId = s.getWsSessionId();
                 List<TsKvEntry> subscriptionUpdate = f.apply(s);
                 if (!subscriptionUpdate.isEmpty()) {
+                    log.debug("subscriptionId TS " + s.getSubscriptionId());
                     SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
                     if (s.isLocal()) {
                         updateSubscriptionState(sessionId, s, update);
+                        log.debug("on local update for ts "+update);
                         websocketHandler.sendWsMsg(ctx, sessionId, update);
                     } else {
                         rpcHandler.onSubscriptionUpdate(ctx, s.getServer(), sessionId, update);
@@ -186,6 +212,29 @@ public class SubscriptionManager {
             });
         } else {
             log.debug("[{}] No device subscriptions to process!", entityId);
+        }
+    }
+
+    public void onLocalSubscriptionUpdateForDepth(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription<Double>, List<DsKvEntry>> f) {
+        Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
+        if (deviceSubscriptions != null) {
+            log.debug("Subscriptions by entity id "+ deviceSubscriptions);
+            deviceSubscriptions.stream().filter(s -> type == s.getType()).forEach(s -> {
+                //DepthSubscription depthSubscription = (DepthSubscription)s;
+                String sessionId = s.getWsSessionId();
+                List<DsKvEntry> subscriptionUpdate = f.apply(s);
+                if (!subscriptionUpdate.isEmpty()) {
+                    DepthSubscriptionUpdate update = new DepthSubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
+                    if (s.isLocal()) {
+                        updateDepthSubscriptionState(sessionId, s, update);
+                        websocketHandler.sendWsMsg(ctx, sessionId, update);
+                    } else {
+                        //rpcHandler.onSubscriptionUpdate(ctx, s.getServer(), sessionId, update);
+                    }
+                }
+            });
+        } else {
+            log.debug("No device subscriptions to process! for " + entityId);
         }
     }
 
@@ -232,8 +281,14 @@ public class SubscriptionManager {
         }
     }
 
-    private void updateSubscriptionState(String sessionId, Subscription subState, SubscriptionUpdate update) {
+    private void updateSubscriptionState(String sessionId, Subscription<Long> subState, SubscriptionUpdate update) {
         log.trace("[{}] updating subscription state {} using onUpdate {}", sessionId, subState, update);
+        update.getLatestValues().entrySet().forEach(e -> subState.setKeyState(e.getKey(), e.getValue()));
+    }
+
+    private void updateDepthSubscriptionState(String sessionId, Subscription<Double> subState, DepthSubscriptionUpdate update) {
+        log.trace("[{}] updating subscription state {} using onUpdate {}", sessionId, subState, update);
+        //DepthSubscription depthSubState = (DepthSubscription) subState;
         update.getLatestValues().entrySet().forEach(e -> subState.setKeyState(e.getKey(), e.getValue()));
     }
 
