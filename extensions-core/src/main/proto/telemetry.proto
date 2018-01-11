@@ -27,6 +27,7 @@ message SubscriptionProto {
   string type = 5;
   bool allKeys = 6;
   repeated SubscriptionKetStateProto keyStates = 7;
+  string scope = 8;
 }
 
 message SubscriptionUpdateProto {

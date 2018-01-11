@@ -33,6 +33,7 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionU
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author Andrew Shvayka
@@ -174,9 +175,13 @@ public class SubscriptionManager {
     }
 
     public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f) {
+        onLocalSubscriptionUpdate(ctx, entityId, s -> type == s.getType(), f);
+    }
+
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, Predicate<Subscription> filter, Function<Subscription, List<TsKvEntry>> f) {
         Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
         if (deviceSubscriptions != null) {
-            deviceSubscriptions.stream().filter(s -> type == s.getType()).forEach(s -> {
+            deviceSubscriptions.stream().filter(filter).forEach(s -> {
                 String sessionId = s.getWsSessionId();
                 List<TsKvEntry> subscriptionUpdate = f.apply(s);
                 if (!subscriptionUpdate.isEmpty()) {
@@ -206,7 +211,7 @@ public class SubscriptionManager {
     public void onAttributesUpdateFromServer(PluginContext ctx, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         Optional<ServerAddress> serverAddress = ctx.resolve(entityId);
         if (!serverAddress.isPresent()) {
-            onLocalSubscriptionUpdate(ctx, entityId, SubscriptionType.ATTRIBUTES, s -> {
+            onLocalSubscriptionUpdate(ctx, entityId, s -> SubscriptionType.ATTRIBUTES == s.getType() && scope.equals(s.getScope()), s -> {
                 List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
                 for (AttributeKvEntry kv : attributes) {
                     if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {
