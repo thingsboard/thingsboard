@@ -25,6 +25,7 @@ import thingsboardEntitiesTableWidget from '../widget/lib/entities-table-widget'
 import thingsboardRpcWidgets from '../widget/lib/rpc';
 
 import TbFlot from '../widget/lib/flot-widget';
+import TbDsFlot from '../widget/lib/depth-flot-widget';
 import TbAnalogueLinearGauge from '../widget/lib/analogue-linear-gauge';
 import TbAnalogueRadialGauge from '../widget/lib/analogue-radial-gauge';
 import TbCanvasDigitalGauge from '../widget/lib/canvas-digital-gauge';
@@ -55,6 +56,7 @@ function WidgetService($rootScope, $http, $q, $filter, $ocLazyLoad, $window, $tr
     $window.lazyLoad = $ocLazyLoad;
 
     $window.TbFlot = TbFlot;
+    $window.TbDsFlot = TbDsFlot;
     $window.TbAnalogueLinearGauge = TbAnalogueLinearGauge;
     $window.TbAnalogueRadialGauge = TbAnalogueRadialGauge;
     $window.TbCanvasDigitalGauge = TbCanvasDigitalGauge;

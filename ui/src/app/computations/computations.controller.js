@@ -15,7 +15,7 @@
  */
 
 /*@ngInject*/
-export default function ComputationsController($scope, $q, $rootScope, $log, computationService){
+export default function ComputationsController($scope, $q, $rootScope, $log, computationService, toast){
 
     var vm = this;
 
@@ -31,6 +31,7 @@ export default function ComputationsController($scope, $q, $rootScope, $log, com
                 function success(fileInfo) {
                     //$rootScope.$broadcast('deviceSaved');
                     $log.log("Got file info", fileInfo);
+                    toast.showSuccess(file.name + ' uploaded successfully!');
                 },
                 function fail() {
                     $log.log("Failed to upload file");
