@@ -108,6 +108,25 @@ public class ApplicationController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/applications/rule/{ruleId}", method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> findApplicationsByruleId(@PathVariable("ruleId") String strRuleId) throws ThingsboardException {
+        checkParameter("ruleId", strRuleId);
+        RuleId ruleId = new RuleId(toUUID(strRuleId));
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return applicationService.findApplicationByRuleId(tenantId, ruleId);
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/applications/dashboard/{dashboardId}", method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> findApplicationsByDashboardId(@PathVariable("dashboardId") String strDashboardId) throws ThingsboardException {
+        checkParameter("dashboardId", strDashboardId);
+        DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return applicationService.findApplicationByDashboardId(tenantId, dashboardId);
+    }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/application/{applicationId}", method = RequestMethod.POST)

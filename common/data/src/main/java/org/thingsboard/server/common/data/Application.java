@@ -30,7 +30,7 @@ public class Application extends SearchTextBased<ApplicationId> implements HasNa
     private CustomerId customerId;
     private DashboardId dashboardId;
     private DashboardId miniDashboardId;
-    private List<RuleId> rules;
+    private List<RuleId> rules = Arrays.asList();
     private String name;
     private String description;
     private List<String> deviceTypes = Arrays.asList();

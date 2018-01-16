@@ -34,6 +34,10 @@ public interface ApplicationService {
 
     List<Application> findApplicationsByDeviceType(TenantId tenantId, String deviceType);
 
+    List<String> findApplicationByRuleId(TenantId tenantId, RuleId ruleId);
+
+    List<String> findApplicationByDashboardId(TenantId tenantId, DashboardId dashboardId);
+
     Application assignApplicationToCustomer(ApplicationId applicationId, CustomerId customerId);
 
     Application unassignApplicationFromCustomer(ApplicationId applicationId);

@@ -30,6 +30,7 @@ public class ModelConstants {
 
     public static UUID NULL_UUID = UUIDs.startOf(0);
     public static String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
+    public static String NULL_DEVICE_TYPE = "!NULL__DEVICE__TYPE!";
 
     /**
      * Generic constants.
@@ -152,6 +153,8 @@ public class ModelConstants {
     public static final String APPLICATION_RULES_COLUMN = "application_rules";
     public static final String APPLICATION_DEVICE_TYPES_COLUMN = "application_device_types";
     public static final String APPLICATION_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "application_by_tenant_and_search_text";
+    public static final String APPLICATION_BY_TENANT_AND_DASHBOARD_COLUMN_FAMILY= "application_by_dashboard";
+    public static final String APPLICATION_BY_TENANT_AND_MINI_DASHBOARD_COLUMN_FAMILY= "application_by_mini_dashboard";
     public static final String APPLICATION_BY_TENANT_AND_NAME_VIEW_NAME = "application_by_tenant_and_name";
 
     /**

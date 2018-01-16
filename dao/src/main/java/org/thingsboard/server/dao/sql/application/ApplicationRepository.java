@@ -37,5 +37,13 @@ public interface ApplicationRepository extends CrudRepository<ApplicationEntity,
     List<ApplicationEntity> findByDeviceType(@Param("tenantId") String tenantId, @Param("deviceType") String deviceType);
 
 
+    @Query("SELECT a.name FROM ApplicationEntity a WHERE :ruleId member a.rules AND a.tenantId = :tenantId ORDER BY a.id")
+    List<String> findByRuleId(@Param("tenantId") String tenantId, @Param("ruleId") String ruleId);
+
+
+    @Query("SELECT a.name FROM ApplicationEntity a WHERE a.tenantId = :tenantId AND (a.dashboardId = :dashboardId OR a.miniDashboardId = :dashboardId) ORDER BY a.id")
+    List<String> findByDashboardId(@Param("tenantId") String tenantId, @Param("dashboardId") String dashboardId);
+
+
     ApplicationEntity findByTenantIdAndName(String tenantId, String name);
 }

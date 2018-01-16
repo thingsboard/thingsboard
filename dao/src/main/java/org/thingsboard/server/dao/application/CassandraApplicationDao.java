@@ -26,10 +26,8 @@ import org.thingsboard.server.dao.model.nosql.ApplicationEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.contains;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -55,6 +53,35 @@ public class CassandraApplicationDao extends CassandraAbstractSearchTextDao<Appl
         query.and(eq(APPLICATION_TENANT_ID_PROPERTY, tenantId));
         query.and(contains(APPLICATION_DEVICE_TYPES_COLUMN, deviceType));
         return DaoUtil.convertDataList(findListByStatement(query));
+    }
+
+    @Override
+    public List<String> findApplicationByRuleId(UUID tenantId, UUID ruleId){
+        log.debug("Trying to find applications by rule id for tenantId [{}] and rule id [{}]", tenantId, ruleId);
+        Select select = select().from(APPLICATION_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME).allowFiltering();
+        Select.Where query = select.where();
+        query.and(eq(APPLICATION_TENANT_ID_PROPERTY, tenantId));
+        query.and(contains(APPLICATION_RULES_COLUMN, ruleId));
+        return findListByStatement(query).stream().map(ApplicationEntity::getName).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> findApplicationsByDashboardId(UUID tenantId, UUID dashboardId) {
+        log.debug("Trying to find applications by dashboard id for tenantId [{}] and dashboard id [{}]", tenantId, dashboardId);
+
+        Select.Where dashBoardQuery =select().from(APPLICATION_BY_TENANT_AND_DASHBOARD_COLUMN_FAMILY).where();
+        dashBoardQuery.and(eq(APPLICATION_TENANT_ID_PROPERTY, tenantId));
+        dashBoardQuery.and(eq(APPLICATION_DASHBOARD_ID_PROPERTY, dashboardId));
+        List<String> dashboardApplications =  findListByStatement(dashBoardQuery).stream().map(ApplicationEntity::getName).collect(Collectors.toList());
+
+        Select.Where miniDashBoardQuery = select().from(APPLICATION_BY_TENANT_AND_MINI_DASHBOARD_COLUMN_FAMILY).where();
+        miniDashBoardQuery.and(eq(APPLICATION_TENANT_ID_PROPERTY, tenantId));
+        miniDashBoardQuery.and(eq(APPLICATION_MINI_DASHBOARD_ID_PROPERTY, dashboardId));
+        List<String> miniDashboardApplications =  findListByStatement(miniDashBoardQuery).stream().map(ApplicationEntity::getName).collect(Collectors.toList());
+
+        Set<String> combined = new LinkedHashSet<>(dashboardApplications);
+        combined.addAll(miniDashboardApplications);
+        return new ArrayList<>(combined);
     }
 
 

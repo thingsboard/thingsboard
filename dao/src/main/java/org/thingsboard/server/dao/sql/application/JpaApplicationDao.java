@@ -76,4 +76,16 @@ public class JpaApplicationDao extends JpaAbstractSearchTextDao<ApplicationEntit
     public List<Application> findApplicationByDeviceType(UUID tenantId, String deviceType) {
         return DaoUtil.convertDataList(applicationRepository.findByDeviceType(fromTimeUUID(tenantId), deviceType));
     }
+
+    @Override
+    public List<String> findApplicationByRuleId(UUID tenantId, UUID ruleId) {
+        return applicationRepository.findByRuleId(fromTimeUUID(tenantId), fromTimeUUID(ruleId));
+    }
+
+    @Override
+    public List<String> findApplicationsByDashboardId(UUID tenantId, UUID dashboardId) {
+        return applicationRepository.findByDashboardId(fromTimeUUID(tenantId), fromTimeUUID(dashboardId));
+    }
+
+
 }

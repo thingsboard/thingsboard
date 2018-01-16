@@ -45,7 +45,7 @@ public interface ApplicationDao extends Dao<Application>{
 
 
     /**
-     * Find application by tenantId and device id.
+     * Find application by tenantId and device type.
      *
      * @param tenantId the tenantId
      * @param deviceType the device type
@@ -53,5 +53,24 @@ public interface ApplicationDao extends Dao<Application>{
      */
     List<Application> findApplicationByDeviceType(UUID tenantId, String deviceType);
 
+
+    /**
+     * Find application by tenantId and rule id.
+     *
+     * @param tenantId the tenantId
+     * @param ruleId the ruleId
+     * @return the list of application names
+     */
+    List<String> findApplicationByRuleId(UUID tenantId, UUID ruleId);
+
+
+    /**
+     * Find application by tenantId and dashboardId.
+     *
+     * @param tenantId the tenantId
+     * @param dashboardId the dashboardId
+     * @return the list of application names
+     */
+    List<String> findApplicationsByDashboardId(UUID tenantId, UUID dashboardId);
 
 }

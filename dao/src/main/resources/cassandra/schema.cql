@@ -225,6 +225,20 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.application_by_tenant_and_nam
     PRIMARY KEY ( tenant_id, name, id, customer_id)
     WITH CLUSTERING ORDER BY ( name ASC, id DESC, customer_id DESC);
 
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.application_by_dashboard AS
+    SELECT *
+    from thingsboard.application
+    WHERE tenant_id IS NOT NULL AND dashboard_id IS NOT NULL AND id IS NOT NULL AND customer_id IS NOT NULL
+    PRIMARY KEY ( tenant_id, dashboard_id, customer_id, id)
+    WITH CLUSTERING ORDER BY (id DESC, dashboard_id DESC);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.application_by_mini_dashboard AS
+    SELECT *
+    from thingsboard.application
+    WHERE tenant_id IS NOT NULL AND mini_dashboard_id IS NOT NULL AND id IS NOT NULL AND customer_id IS NOT NULL
+    PRIMARY KEY ( tenant_id, mini_dashboard_id, customer_id, id)
+    WITH CLUSTERING ORDER BY (id DESC, mini_dashboard_id DESC);
+
 CREATE TABLE IF NOT EXISTS thingsboard.device_credentials (
 	id timeuuid PRIMARY KEY,
 	device_id timeuuid,

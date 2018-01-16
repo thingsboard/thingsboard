@@ -26,16 +26,20 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.rule.RuleDao;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import java.util.Arrays;
 import java.util.List;
 
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_DEVICE_TYPE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -56,12 +60,14 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
     @Autowired
     private DashboardDao dashboardDao;
 
+    @Autowired
+    private RuleDao ruleDao;
+
     @Override
     public Application saveApplication(Application application) {
         log.trace("Executing saveApplication [{}]", application);
         applicationValidator.validate(application);
-        Application savedApplication = applicationDao.save(application);
-        return savedApplication;
+        return applicationDao.save(application);
     }
 
     @Override
@@ -93,7 +99,23 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
     public List<Application> findApplicationsByDeviceType(TenantId tenantId, String deviceType){
         log.trace("Executing findApplicationsByDeviceType,  tenantId [{}], device Type [{}]", tenantId, deviceType);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
-        return applicationDao.findApplicationByDeviceType( tenantId.getId(), deviceType);
+        return applicationDao.findApplicationByDeviceType(tenantId.getId(), deviceType);
+    }
+
+    @Override
+    public List<String> findApplicationByRuleId(TenantId tenantId, RuleId ruleId) {
+        log.trace("Executing findApplicationByRuleId,  tenantId [{}], ruleId [{}]", tenantId, ruleId);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(ruleId, "Incorrect ruleId " + ruleId);
+        return applicationDao.findApplicationByRuleId(tenantId.getId(), ruleId.getId());
+    }
+
+    @Override
+    public List<String> findApplicationByDashboardId(TenantId tenantId, DashboardId dashboardId){
+        log.trace("Executing findApplicationByDashboardId,  tenantId [{}], dashboardId [{}]", tenantId, dashboardId);
+        validateId(tenantId, "Incorrect tenantId " + tenantId);
+        validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
+        return applicationDao.findApplicationsByDashboardId(tenantId.getId(), dashboardId.getId());
     }
 
     @Override
@@ -211,6 +233,21 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
                         if(dashboard == null) {
                             throw new DataValidationException("Can't assign application to non-existent dashboard!");
                         }
+                    }
+
+                    if(application.getRules() == null || application.getRules().isEmpty()) {
+                        application.setRules(Arrays.asList(new RuleId(NULL_UUID)));
+                    } else if(!application.getRules().get(0).getId().equals(NULL_UUID)) {
+                        for(RuleId ruleId: application.getRules()) {
+                            RuleMetaData ruleMetaData = ruleDao.findById(ruleId);
+                            if(ruleMetaData == null) {
+                              throw new DataValidationException("Can't assign application to non-existent rule!");
+                            }
+                        }
+                    }
+
+                    if(application.getDeviceTypes() == null || application.getDeviceTypes().isEmpty()) {
+                        application.setDeviceTypes(Arrays.asList(NULL_DEVICE_TYPE));
                     }
 
                     if(application.getMiniDashboardId() == null) {
