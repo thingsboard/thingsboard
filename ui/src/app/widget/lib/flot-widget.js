@@ -405,9 +405,13 @@ export default class TbFlot {
                 }
             }
             series.lines = {
-                fill: keySettings.fillLines === true,
-                show: this.chartType === 'line' ? keySettings.showLines !== false : keySettings.showLines === true
+                fill: keySettings.fillLines === true
             };
+            if (this.chartType === 'line' || this.chartType === 'state') {
+                series.lines.show = keySettings.showLines !== false
+            } else {
+                series.lines.show = keySettings.showLines === true;
+            }
 
             if (angular.isDefined(keySettings.lineWidth)) {
                 series.lines.lineWidth = keySettings.lineWidth;
@@ -1016,18 +1020,18 @@ export default class TbFlot {
                     "properties": {
                     "showLines": {
                         "title": "Show lines",
-                            "type": "boolean",
-                            "default": defaultShowLines
+                        "type": "boolean",
+                        "default": defaultShowLines
                     },
                     "fillLines": {
                         "title": "Fill lines",
-                            "type": "boolean",
-                            "default": false
+                        "type": "boolean",
+                        "default": false
                     },
                     "showPoints": {
                         "title": "Show points",
-                            "type": "boolean",
-                            "default": false
+                        "type": "boolean",
+                        "default": false
                     },
                     "tooltipValueFormatter": {
                         "title": "Tooltip value format function, f(value)",
