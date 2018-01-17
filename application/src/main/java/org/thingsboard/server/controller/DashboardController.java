@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
@@ -88,6 +89,7 @@ public class DashboardController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             checkDashboardId(dashboardId);
             dashboardService.deleteDashboard(dashboardId);
+            actorService.onDashboardStateChange(getTenantId(), dashboardId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }

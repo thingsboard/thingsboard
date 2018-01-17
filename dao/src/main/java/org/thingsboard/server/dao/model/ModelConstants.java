@@ -142,6 +142,7 @@ public class ModelConstants {
     public static final String APPLICATION_DASHBOARD_ID_PROPERTY = "dashboard_id";
     public static final String APPLICATION_MINI_DASHBOARD_ID_PROPERTY = "mini_dashboard_id";
     public static final String APPLICATION_NAME = "name";
+    public static final String APPLICATION_IS_VALID = "is_valid";
     public static final String APPLICATION_DESCRIPTION = "description";
     public static final String APPLICATION_DEVICE_TYPES_TABLE = "application_device_types";
     public static final String APPLICATION_RULES_ASSOCIATION_TABLE = "application_associated_rules";

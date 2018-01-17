@@ -58,6 +58,9 @@ public final class ApplicationEntity implements SearchTextEntity<Application> {
     @Column(name = APPLICATION_NAME)
     private String name;
 
+    @Column(name = APPLICATION_IS_VALID)
+    private Boolean isValid;
+
     @Column(name = APPLICATION_DESCRIPTION)
     private String description;
 
@@ -99,6 +102,7 @@ public final class ApplicationEntity implements SearchTextEntity<Application> {
         }
 
         this.name = application.getName();
+        this.isValid = application.getIsValid();
         this.description = application.getDescription();
         this.deviceTypes = application.getDeviceTypes();
     }
@@ -162,6 +166,14 @@ public final class ApplicationEntity implements SearchTextEntity<Application> {
         this.name = name;
     }
 
+    public Boolean getIsValid() {
+        return isValid;
+    }
+
+    public void setIsValid(Boolean valid) {
+        isValid = valid;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -213,6 +225,7 @@ public final class ApplicationEntity implements SearchTextEntity<Application> {
             application.setRules(rules.stream().map(RuleId::new).collect(Collectors.toList()));
         }
         application.setName(name);
+        application.setIsValid(isValid);
         application.setDescription(description);
         if(deviceTypes !=null) {
             application.setDeviceTypes(deviceTypes);
@@ -234,6 +247,7 @@ public final class ApplicationEntity implements SearchTextEntity<Application> {
             return false;
         if (dashboardId != null ? !dashboardId.equals(that.dashboardId) : that.dashboardId != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (isValid != null ? !isValid.equals(that.isValid) : that.isValid != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (searchText != null ? !searchText.equals(that.searchText) : that.searchText != null) return false;
         if (rules != null ? !rules.equals(that.rules) : that.rules != null) return false;
@@ -248,6 +262,7 @@ public final class ApplicationEntity implements SearchTextEntity<Application> {
         result = 31 * result + (miniDashboardId != null ? miniDashboardId.hashCode() : 0);
         result = 31 * result + (dashboardId != null ? dashboardId.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (isValid != null ? isValid.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (searchText != null ? searchText.hashCode() : 0);
         result = 31 * result + (rules != null ? rules.hashCode() : 0);

@@ -78,13 +78,13 @@ public class JpaApplicationDao extends JpaAbstractSearchTextDao<ApplicationEntit
     }
 
     @Override
-    public List<String> findApplicationByRuleId(UUID tenantId, UUID ruleId) {
-        return applicationRepository.findByRuleId(fromTimeUUID(tenantId), fromTimeUUID(ruleId));
+    public List<Application> findApplicationByRuleId(UUID tenantId, UUID ruleId) {
+        return DaoUtil.convertDataList(applicationRepository.findByRuleId(fromTimeUUID(tenantId), fromTimeUUID(ruleId)));
     }
 
     @Override
-    public List<String> findApplicationsByDashboardId(UUID tenantId, UUID dashboardId) {
-        return applicationRepository.findByDashboardId(fromTimeUUID(tenantId), fromTimeUUID(dashboardId));
+    public List<Application> findApplicationsByDashboardId(UUID tenantId, UUID dashboardId) {
+        return DaoUtil.convertDataList(applicationRepository.findByDashboardId(fromTimeUUID(tenantId), fromTimeUUID(dashboardId)));
     }
 
 

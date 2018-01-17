@@ -16,10 +16,10 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.Application;
 import org.thingsboard.server.common.data.id.*;
@@ -54,7 +54,8 @@ public final class ApplicationEntity extends BaseSqlEntity<Application> implemen
     @Column(name = ModelConstants.APPLICATION_DASHBOARD_ID_PROPERTY)
     private String dashboardId;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     @CollectionTable(name = ModelConstants.APPLICATION_RULES_ASSOCIATION_TABLE, joinColumns = @JoinColumn(name = ModelConstants.APPLICATION_ID_COLUMN))
     @Column(name = ModelConstants.APPLICATION_RULE_ID_COLUMN)
     private List<String> rules;
@@ -62,13 +63,17 @@ public final class ApplicationEntity extends BaseSqlEntity<Application> implemen
     @Column(name = ModelConstants.APPLICATION_NAME)
     private String name;
 
+    @Column(name = ModelConstants.APPLICATION_IS_VALID)
+    private Boolean isValid;
+
     @Column(name = ModelConstants.APPLICATION_DESCRIPTION)
     private String description;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     @CollectionTable(name = ModelConstants.APPLICATION_DEVICE_TYPES_TABLE, joinColumns = @JoinColumn(name = ModelConstants.APPLICATION_ID_COLUMN))
     @Column(name = ModelConstants.APPLICATION_DEVICE_TYPES)
     private List<String> deviceTypes;
@@ -102,6 +107,7 @@ public final class ApplicationEntity extends BaseSqlEntity<Application> implemen
         }
 
         this.name = application.getName();
+        this.isValid = application.getIsValid();
         this.description = application.getDescription();
         this.deviceTypes = application.getDeviceTypes();
     }
@@ -139,6 +145,7 @@ public final class ApplicationEntity extends BaseSqlEntity<Application> implemen
             application.setRules(rules.stream().map(r -> new RuleId(toUUID(r))).collect(Collectors.toList()));
         }
         application.setName(name);
+        application.setIsValid(isValid);
         application.setDescription(description);
         application.setDeviceTypes(deviceTypes);
         return application;
@@ -161,6 +168,7 @@ public final class ApplicationEntity extends BaseSqlEntity<Application> implemen
         if (dashboardId != null ? !dashboardId.equals(that.dashboardId) : that.dashboardId != null) return false;
         if (rules != null ? !rules.equals(that.rules) : that.rules != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
+        if (isValid != null ? !isValid.equals(that.isValid) : that.isValid != null) return false;
         if (description != null ? !description.equals(that.description) : that.description != null) return false;
         if (searchText != null ? !searchText.equals(that.searchText) : that.searchText != null) return false;
         return deviceTypes != null ? deviceTypes.equals(that.deviceTypes) : that.deviceTypes == null;
@@ -175,6 +183,7 @@ public final class ApplicationEntity extends BaseSqlEntity<Application> implemen
         result = 31 * result + (dashboardId != null ? dashboardId.hashCode() : 0);
         result = 31 * result + (rules != null ? rules.hashCode() : 0);
         result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (isValid != null ? isValid.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (searchText != null ? searchText.hashCode() : 0);
         result = 31 * result + (deviceTypes != null ? deviceTypes.hashCode() : 0);
