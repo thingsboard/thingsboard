@@ -272,6 +272,7 @@ CREATE TABLE IF NOT EXISTS application (
     mini_dashboard_id varchar(31),
     search_text varchar(255),
     dashboard_id varchar(31),
+    is_valid boolean,
     name varchar(255),
     description varchar(255)
 );

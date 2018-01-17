@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.application;
 
 import org.thingsboard.server.common.data.Application;
+import org.thingsboard.server.common.data.id.RuleId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -59,9 +61,9 @@ public interface ApplicationDao extends Dao<Application>{
      *
      * @param tenantId the tenantId
      * @param ruleId the ruleId
-     * @return the list of application names
+     * @return the list of applications
      */
-    List<String> findApplicationByRuleId(UUID tenantId, UUID ruleId);
+    List<Application> findApplicationByRuleId(UUID tenantId, UUID ruleId);
 
 
     /**
@@ -69,8 +71,8 @@ public interface ApplicationDao extends Dao<Application>{
      *
      * @param tenantId the tenantId
      * @param dashboardId the dashboardId
-     * @return the list of application names
+     * @return the list of application
      */
-    List<String> findApplicationsByDashboardId(UUID tenantId, UUID dashboardId);
+    List<Application> findApplicationsByDashboardId(UUID tenantId, UUID dashboardId);
 
 }
