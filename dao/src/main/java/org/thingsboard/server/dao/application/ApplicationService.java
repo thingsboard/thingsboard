@@ -50,8 +50,4 @@ public interface ApplicationService {
 
     Application assignDeviceTypesToApplication(ApplicationId applicationId, List<String> deviceTypes);
 
-    void updateApplicationOnRuleDelete(RuleId ruleId, TenantId tenantId);
-
-    void updateApplicationOnDashboardDelete(DashboardId dashboardIdId, TenantId tenantId);
-
 }

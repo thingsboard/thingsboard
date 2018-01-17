@@ -38,7 +38,6 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_DEVICE_TYPE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -108,7 +107,7 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
         log.trace("Executing findApplicationByRuleId,  tenantId [{}], ruleId [{}]", tenantId, ruleId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(ruleId, "Incorrect ruleId " + ruleId);
-        return applicationDao.findApplicationByRuleId(tenantId.getId(), ruleId.getId()).stream().map(Application::getName).collect(Collectors.toList());
+        return applicationDao.findApplicationByRuleId(tenantId.getId(), ruleId.getId());
     }
 
     @Override
@@ -116,7 +115,7 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
         log.trace("Executing findApplicationByDashboardId,  tenantId [{}], dashboardId [{}]", tenantId, dashboardId);
         validateId(tenantId, "Incorrect tenantId " + tenantId);
         validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
-        return applicationDao.findApplicationsByDashboardId(tenantId.getId(), dashboardId.getId()).stream().map(Application::getName).collect(Collectors.toList());
+        return applicationDao.findApplicationsByDashboardId(tenantId.getId(), dashboardId.getId());
     }
 
     @Override
@@ -178,30 +177,6 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
         return application;
     }
 
-    @Override
-    public void updateApplicationOnRuleDelete(RuleId ruleId, TenantId tenantId) {
-        log.trace("Executing updateApplicationOnRuleDelete,  tenantId [{}], ruleId [{}]", tenantId, ruleId);
-        List<Application> applications = applicationDao.findApplicationByRuleId(tenantId.getId(), ruleId.getId());
-        if(!applications.isEmpty()) {
-            for(Application a: applications) {
-                a.setIsValid(Boolean.FALSE);
-                saveApplication(a);
-            }
-        }
-    }
-
-    @Override
-    public void updateApplicationOnDashboardDelete(DashboardId dashboardId, TenantId tenantId) {
-        log.trace("Executing updateApplicationOnDashboardDelete,  tenantId [{}], dashboardId [{}]", tenantId, dashboardId);
-        List<Application> applications = applicationDao.findApplicationsByDashboardId(tenantId.getId(), dashboardId.getId());
-        if(!applications.isEmpty()) {
-            for(Application a: applications) {
-                a.setIsValid(Boolean.FALSE);
-                saveApplication(a);
-            }
-        }
-    }
-
 
     private DataValidator<Application> applicationValidator =
             new DataValidator<Application>() {
@@ -228,7 +203,6 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
 
                 @Override
                 protected void validateDataImpl(Application application) {
-                    Boolean isValid = true;
                     if (StringUtils.isEmpty(application.getName())) {
                         throw new DataValidationException("Application name should be specified!");
                     }
@@ -257,7 +231,7 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
                     } else if(!application.getDashboardId().getId().equals(NULL_UUID)) {
                         Dashboard dashboard = dashboardDao.findById(application.getDashboardId().getId());
                         if(dashboard == null) {
-                            isValid =false;
+                            throw new DataValidationException("Can't assign application to non-existent dashboard!");
                         }
                     }
 
@@ -267,7 +241,7 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
                         for(RuleId ruleId: application.getRules()) {
                             RuleMetaData ruleMetaData = ruleDao.findById(ruleId);
                             if(ruleMetaData == null) {
-                              isValid = false;
+                              throw new DataValidationException("Can't assign application to non-existent rule!");
                             }
                         }
                     }
@@ -281,10 +255,9 @@ public class ApplicationServiceImpl extends AbstractEntityService implements App
                     } else if(!application.getMiniDashboardId().getId().equals(NULL_UUID)) {
                         Dashboard miniDashboard = dashboardDao.findById(application.getMiniDashboardId().getId());
                         if(miniDashboard == null) {
-                            isValid = false;
+                            throw new DataValidationException("Can't assign application to non-existent mini dashboard!");
                         }
                     }
-                   application.setIsValid(isValid);
                 }
             };
 }
