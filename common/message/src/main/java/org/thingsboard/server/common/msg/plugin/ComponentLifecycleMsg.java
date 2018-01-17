@@ -18,7 +18,6 @@ package org.thingsboard.server.common.msg.plugin;
 import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,27 +37,21 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
     private final TenantId tenantId;
     private final PluginId pluginId;
     private final RuleId ruleId;
-    private final DashboardId dashboardId;
     @Getter
     private final ComponentLifecycleEvent event;
 
     public static ComponentLifecycleMsg forPlugin(TenantId tenantId, PluginId pluginId, ComponentLifecycleEvent event) {
-        return new ComponentLifecycleMsg(tenantId, pluginId, null, null,event);
+        return new ComponentLifecycleMsg(tenantId, pluginId, null, event);
     }
 
     public static ComponentLifecycleMsg forRule(TenantId tenantId, RuleId ruleId, ComponentLifecycleEvent event) {
-        return new ComponentLifecycleMsg(tenantId, null, ruleId, null,event);
+        return new ComponentLifecycleMsg(tenantId, null, ruleId, event);
     }
 
-    public static ComponentLifecycleMsg forDashboard(TenantId tenantId, DashboardId dashboardId, ComponentLifecycleEvent event) {
-        return new ComponentLifecycleMsg(tenantId, null, null, dashboardId, event);
-    }
-
-    private ComponentLifecycleMsg(TenantId tenantId, PluginId pluginId, RuleId ruleId, DashboardId dashboardId, ComponentLifecycleEvent event) {
+    private ComponentLifecycleMsg(TenantId tenantId, PluginId pluginId, RuleId ruleId, ComponentLifecycleEvent event) {
         this.tenantId = tenantId;
         this.pluginId = pluginId;
         this.ruleId = ruleId;
-        this.dashboardId = dashboardId;
         this.event = event;
     }
 
@@ -68,9 +61,5 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
 
     public Optional<RuleId> getRuleId() {
         return Optional.ofNullable(ruleId);
-    }
-
-    public Optional<DashboardId> getDashboardId() {
-        return Optional.ofNullable(dashboardId);
     }
 }
