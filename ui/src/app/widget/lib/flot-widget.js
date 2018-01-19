@@ -238,23 +238,22 @@ export default class TbFlot {
                 if (this.ticksFormatterFunction) {
                     return this.ticksFormatterFunction(value);
                 }
-                if (angular.isNumber(this.tickDecimals)) {
-                    var factor = this.tickDecimals ? Math.pow(10, this.tickDecimals) : 1,
-                        formatted = "" + Math.round(value * factor) / factor;
-                    if (this.tickDecimals != null) {
-                        var decimal = formatted.indexOf("."),
-                            precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
 
-                        if (precision < this.tickDecimals) {
-                            value = (precision ? formatted : formatted + ".") + ("" + factor).substr(1, this.tickDecimals - precision);
-                        }
+                var factor = this.tickDecimals ? Math.pow(10, this.tickDecimals) : 1,
+                    formatted = "" + Math.round(value * factor) / factor;
+                if (this.tickDecimals != null) {
+                    var decimal = formatted.indexOf("."),
+                        precision = decimal === -1 ? 0 : formatted.length - decimal - 1;
+
+                    if (precision < this.tickDecimals) {
+                        formatted = (precision ? formatted : formatted + ".") + ("" + factor).substr(1, this.tickDecimals - precision);
                     }
                 }
                 if (this.tickUnits) {
-                    value = value + ' ' + this.tickUnits;
+                     formatted += ' ' + this.tickUnits;
                 }
-
-                return value;
+             
+                return formatted;
             };
 
             this.yaxis.tickFormatter = ctx.yAxisTickFormatter;
