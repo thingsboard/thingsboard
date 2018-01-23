@@ -15,9 +15,16 @@
  */
 package org.thingsboard.server.actors.rule;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.velocity.tools.generic.DateTool;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.plugin.RuleToPluginMsgWrapper;
@@ -25,27 +32,37 @@ import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.core.BasicRequest;
-import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
 import org.thingsboard.server.common.msg.core.RuleEngineError;
+import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
-import org.thingsboard.server.common.msg.session.ex.ProcessingTimeoutException;
-import org.thingsboard.server.extensions.api.rules.*;
+import org.thingsboard.server.extensions.api.device.DeviceAttributes;
+import org.thingsboard.server.extensions.api.device.DeviceMetaData;
 import org.thingsboard.server.extensions.api.plugins.PluginAction;
 import org.thingsboard.server.extensions.api.plugins.msg.PluginToRuleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
+import org.thingsboard.server.extensions.api.rules.RuleException;
+import org.thingsboard.server.extensions.api.rules.RuleFilter;
+import org.thingsboard.server.extensions.api.rules.RuleInitializationException;
+import org.thingsboard.server.extensions.api.rules.RuleLifecycleComponent;
+import org.thingsboard.server.extensions.api.rules.RuleProcessingMetaData;
+import org.thingsboard.server.extensions.api.rules.RuleProcessor;
+import org.thingsboard.server.extensions.core.action.mail.SendMailAction;
+import org.thingsboard.server.extensions.core.filter.NashornJsEvaluator;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
+import javassist.expr.Instanceof;
 
 class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
 
@@ -140,6 +157,33 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
         }
     }
 
+    private void pushAttributes(RuleProcessingMetaData ruleMetaData, Collection<AttributeKvEntry> deviceAttributes, String prefix) {
+        Map<String, String> values = new HashMap<>();
+        deviceAttributes.forEach(v -> values.put(v.getKey(), v.getValueAsString()));
+        ruleMetaData.put(prefix, values);
+    }
+    private void pushMetaData(RuleProcessingMetaData ruleMetaData ,DeviceMetaData deviceMetaData , FromDeviceMsg payload ) {
+    	DeviceAttributes deviceAttributes = deviceMetaData.getDeviceAttributes();
+    	pushAttributes(ruleMetaData, deviceAttributes.getClientSideAttributes(), NashornJsEvaluator.CLIENT_SIDE);
+        pushAttributes(ruleMetaData, deviceAttributes.getServerSideAttributes(), NashornJsEvaluator.SERVER_SIDE);
+        pushAttributes(ruleMetaData, deviceAttributes.getServerSidePublicAttributes(), NashornJsEvaluator.SHARED);
+        ruleMetaData.put("date", new DateTool());
+        switch (payload.getMsgType()) {
+            case POST_TELEMETRY_REQUEST:
+            	((TelemetryUploadRequest)payload).getData().forEach((k, vList) -> {
+                    vList.forEach(v -> {
+                    	ruleMetaData.put(v.getKey(), new BasicTsKvEntry(k, v));
+                    });
+                });
+            	break;
+            default:
+                break;
+        }
+
+        ruleMetaData.put("deviceId", deviceMetaData.getDeviceId().getId().toString());
+        ruleMetaData.put("deviceName", deviceMetaData.getDeviceName());
+        ruleMetaData.put("deviceType", deviceMetaData.getDeviceType());
+    }
     protected void onRuleProcessingMsg(ActorContext context, RuleProcessingMsg msg) throws RuleException {
         if (state != ComponentLifecycleState.ACTIVE) {
             pushToNextRule(context, msg.getCtx(), RuleEngineError.NO_ACTIVE_RULES);
@@ -163,10 +207,17 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
             logger.debug("[{}] Going to process in msg: {}", entityId, inMsg);
             inMsgMd = processor.process(ruleCtx, inMsg);
         } else {
-            inMsgMd = new RuleProcessingMetaData();
+        	inMsgMd = new RuleProcessingMetaData();
         }
         logger.debug("[{}] Going to convert in msg: {}", entityId, inMsg);
         if (action != null) {
+        	// in case processor is not set, then fill the Meta Data that might needed by actions 
+        	// we need to do this here not in the action because action wont know about processors 
+        	// Existence. 
+			if (processor == null && action instanceof SendMailAction) {
+				FromDeviceMsg fromDeviceMsg = inMsg.getPayload();
+				pushMetaData(inMsgMd, ruleCtx.getDeviceMetaData(), fromDeviceMsg);
+			}
             Optional<RuleToPluginMsg<?>> ruleToPluginMsgOptional = action.convert(ruleCtx, inMsg, inMsgMd);
             if (ruleToPluginMsgOptional.isPresent()) {
                 RuleToPluginMsg<?> ruleToPluginMsg = ruleToPluginMsgOptional.get();
@@ -185,6 +236,7 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
         logger.debug("[{}] Nothing to send to plugin: {}", entityId, pluginId);
         pushToNextRule(context, msg.getCtx(), RuleEngineError.NO_TWO_WAY_ACTIONS);
     }
+    
 
     void onPluginMsg(ActorContext context, PluginToRuleMsg<?> msg) {
         RuleProcessingMsg pendingMsg = pendingMsgMap.remove(msg.getUid());
@@ -342,4 +394,6 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
             filters.forEach(f -> f.stop());
         }
     }
+    
+
 }
