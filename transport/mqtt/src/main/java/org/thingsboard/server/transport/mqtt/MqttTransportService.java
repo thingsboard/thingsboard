@@ -24,6 +24,7 @@ import io.netty.util.ResourceLeakDetector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
@@ -39,6 +40,7 @@ import javax.annotation.PreDestroy;
  * @author Andrew Shvayka
  */
 @Service("MqttTransportService")
+@ConditionalOnProperty(prefix = "mqtt", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
 public class MqttTransportService {
 
