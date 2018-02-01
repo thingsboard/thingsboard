@@ -41,7 +41,7 @@
         <md-tabs flex md-selected="vm.sourceIndex" ng-class="{'tb-headless': vm.sources.length === 1}"
                  id="tabs" md-border-bottom flex>
             <md-tab ng-repeat="source in vm.sources" label="{{ source.datasource.name }}">
-                <md-table-container class="tb-absolute-fill layout-column">
+                <md-table-container class="flex">
                     <table md-table>
                         <thead md-head md-order="source.query.order" md-on-reorder="vm.onReorder(source)">
                             <tr md-row>

@@ -20,7 +20,13 @@ import UrlHandler from './url.handler';
 export default function AppRun($rootScope, $window, $injector, $location, $log, $state, $mdDialog, $filter, loginService, userService, $translate) {
 
     $window.Flow = Flow;
-    var frame = $window.frameElement;
+    var frame = null;
+    try {
+        frame = $window.frameElement;
+    } catch(e) {
+        // ie11 fix
+    }
+
     var unauthorizedDialog = null;
     var forbiddenDialog = null;
 
