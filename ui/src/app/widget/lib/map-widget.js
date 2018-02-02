@@ -276,7 +276,7 @@ export default class TbMapWidget {
                     this.locationsSettings[i].useMarkerImage = true;
                     var url = this.ctx.settings.markerImage;
                     var size = this.ctx.settings.markerImageSize || 34;
-                    this.locationSettings.currentImage = {
+                    this.locationsSettings[i].currentImage = {
                         url: url,
                         size: size
                     };
