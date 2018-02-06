@@ -212,6 +212,15 @@ cache:
       policy: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_POLICY:PER_NODE}"
       size: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_SIZE:1000000}"
 
+caching:
+  specs:
+    relations:
+      timeToLive: 1
+      maxSize: 500
+    deviceCredentials:
+      timeToLive: 2
+      maxSize: 500
+
 # Check new version updates parameters
 updates:
   # Enable/disable updates checking.
