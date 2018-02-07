@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.*;
@@ -47,6 +49,8 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CACHE;
+import static org.thingsboard.server.common.data.CacheConstants.RELATIONS_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.*;
@@ -85,18 +89,16 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return deviceDao.findByIdAsync(deviceId.getId());
     }
 
+    @Cacheable(cacheNames = DEVICE_CACHE, key = "{#tenantId, #name}")
     @Override
-    public Optional<Device> findDeviceByTenantIdAndName(TenantId tenantId, String name) {
+    public Device findDeviceByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findDeviceByTenantIdAndName [{}][{}]", tenantId, name);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         Optional<Device> deviceOpt = deviceDao.findDeviceByTenantIdAndName(tenantId.getId(), name);
-        if (deviceOpt.isPresent()) {
-            return Optional.of(deviceOpt.get());
-        } else {
-            return Optional.empty();
-        }
+        return deviceOpt.orElse(null);
     }
 
+    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
     @Override
     public Device saveDevice(Device device) {
         log.trace("Executing saveDevice [{}]", device);
