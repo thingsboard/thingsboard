@@ -215,11 +215,11 @@ cache:
 caching:
   specs:
     relations:
-      timeToLive: 1
-      maxSize: 500
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
     deviceCredentials:
-      timeToLive: 2
-      maxSize: 500
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 # Check new version updates parameters
 updates:
