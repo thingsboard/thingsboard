@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -35,12 +37,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
@@ -50,7 +52,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CACHE;
-import static org.thingsboard.server.common.data.CacheConstants.RELATIONS_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.*;
@@ -74,6 +75,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired
+    private CacheManager cacheManager;
 
     @Override
     public Device findDeviceById(DeviceId deviceId) {
@@ -131,12 +135,18 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     @Override
     public void deleteDevice(DeviceId deviceId) {
         log.trace("Executing deleteDevice [{}]", deviceId);
+        Cache cache = cacheManager.getCache(DEVICE_CACHE);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(deviceId);
         if (deviceCredentials != null) {
             deviceCredentialsService.deleteDeviceCredentials(deviceCredentials);
         }
         deleteEntityRelations(deviceId);
+        Device device = deviceDao.findById(deviceId.getId());
+        List<Object> list = new ArrayList<>();
+        list.add(device.getTenantId());
+        list.add(device.getName());
+        cache.evict(list);
         deviceDao.removeById(deviceId.getId());
     }
 
@@ -192,7 +202,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validateString(type, "Incorrect type " + type);
         validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
-        List<Device> devices =  deviceDao.findDevicesByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
+        List<Device> devices = deviceDao.findDevicesByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
         return new TextPageData<>(devices, pageLink);
     }
 
@@ -246,10 +256,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         ListenableFuture<List<EntitySubtype>> tenantDeviceTypes = deviceDao.findTenantDeviceTypesAsync(tenantId.getId());
         return Futures.transform(tenantDeviceTypes,
-            (Function<List<EntitySubtype>, List<EntitySubtype>>) deviceTypes -> {
-                deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
-                return deviceTypes;
-        });
+                (Function<List<EntitySubtype>, List<EntitySubtype>>) deviceTypes -> {
+                    deviceTypes.sort(Comparator.comparing(EntitySubtype::getType));
+                    return deviceTypes;
+                });
     }
 
     private DataValidator<Device> deviceValidator =
