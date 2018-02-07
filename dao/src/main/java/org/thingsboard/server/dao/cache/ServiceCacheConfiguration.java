@@ -57,7 +57,7 @@ public class ServiceCacheConfiguration {
     private CaffeineCache buildCache(String name, CacheSpecs cacheSpec) {
         final Caffeine<Object, Object> caffeineBuilder
                 = Caffeine.newBuilder()
-                .expireAfterWrite(cacheSpec.getTimeToLive(), TimeUnit.MINUTES)
+                .expireAfterWrite(cacheSpec.getTimeToLiveInMinutes(), TimeUnit.MINUTES)
                 .maximumSize(cacheSpec.getMaxSize())
                 .ticker(ticker());
         return new CaffeineCache(name, caffeineBuilder.build());
