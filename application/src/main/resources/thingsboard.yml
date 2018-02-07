@@ -77,6 +77,8 @@ http:
 
 # MQTT server parameters
 mqtt:
+  # Enable/disable mqtt transport protocol.
+  enabled: "${MQTT_ENABLED:true}"
   bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${MQTT_BIND_PORT:1883}"
   adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
@@ -102,6 +104,8 @@ mqtt:
 
 # CoAP server parameters
 coap:
+  # Enable/disable coap transport protocol.
+  enabled: "${COAP_ENABLED:true}"
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${COAP_BIND_PORT:5683}"
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
@@ -207,6 +211,18 @@ cache:
       # FREE_HEAP_PERCENTAGE: Minimum free heap size percentage for each JVM.
       policy: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_POLICY:PER_NODE}"
       size: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_SIZE:1000000}"
+
+caching:
+  specs:
+    relations:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
+    deviceCredentials:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
+    devices:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 # Check new version updates parameters
 updates:

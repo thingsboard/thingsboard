@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.service.sql;
 
-public class CacheConstants {
-    public static final String DEVICE_CREDENTIALS_CACHE = "deviceCredentials";
-    public static final String RELATIONS_CACHE = "relations";
-    public static final String DEVICE_CACHE = "devices";
+import org.thingsboard.server.dao.service.BaseRelationCacheTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+
+@DaoSqlTest
+public class RelationCacheSqlTest extends BaseRelationCacheTest {
 }
