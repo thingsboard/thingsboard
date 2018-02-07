@@ -1,0 +1,17 @@
+package org.thingsboard.rule.engine.metadata;
+
+import lombok.Data;
+
+import java.util.List;
+
+/**
+ * Created by ashvayka on 19.01.18.
+ */
+@Data
+public class TbGetAttributesNodeConfiguration {
+
+    private List<String> clientAttributeNames;
+    private List<String> sharedAttributeNames;
+    private List<String> serverAttributeNames;
+
+}

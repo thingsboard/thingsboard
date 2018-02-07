@@ -85,6 +85,7 @@
         <module>extensions-api</module>
         <module>extensions-core</module>
         <module>extensions</module>
+        <module>rule-engine</module>
         <module>transport</module>
         <module>ui</module>
         <module>tools</module>
