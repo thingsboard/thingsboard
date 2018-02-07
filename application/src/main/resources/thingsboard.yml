@@ -220,6 +220,9 @@ caching:
     deviceCredentials:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    devices:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 # Check new version updates parameters
 updates:
