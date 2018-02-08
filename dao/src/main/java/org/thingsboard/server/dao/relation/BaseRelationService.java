@@ -200,8 +200,10 @@ public class BaseRelationService implements RelationService {
     private void checkFromDeleteSync(Cache cache, List<Boolean> results, EntityRelation relation, boolean isRemove) {
         if (isRemove) {
             results.add(relationDao.deleteRelation(relation));
+            cacheEviction(relation, relation.getTo(), cache);
+        } else {
+            cacheEviction(relation, relation.getFrom(), cache);
         }
-        cacheEviction(relation, relation.getTo(), cache);
     }
 
     @Override
@@ -209,12 +211,12 @@ public class BaseRelationService implements RelationService {
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
         log.trace("Executing deleteEntityRelationsAsync [{}]", entity);
         validate(entity);
-        List<ListenableFuture<List<EntityRelation>>> inboundRelationsList = new ArrayList<>();
+        List<ListenableFuture<List<EntityRelation>>> inboundRelationsListTo = new ArrayList<>();
         for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            inboundRelationsList.add(relationDao.findAllByTo(entity, typeGroup));
+            inboundRelationsListTo.add(relationDao.findAllByTo(entity, typeGroup));
         }
-        ListenableFuture<List<List<EntityRelation>>> inboundRelations = Futures.allAsList(inboundRelationsList);
-        ListenableFuture<List<Boolean>> inboundDeletions = Futures.transform(inboundRelations,
+        ListenableFuture<List<List<EntityRelation>>> inboundRelationsTo = Futures.allAsList(inboundRelationsListTo);
+        ListenableFuture<List<Boolean>> inboundDeletions = Futures.transform(inboundRelationsTo,
                 (AsyncFunction<List<List<EntityRelation>>, List<Boolean>>) relations -> {
             List<ListenableFuture<Boolean>> results = getListenableFutures(relations, cache, true);
             return Futures.allAsList(results);
@@ -222,12 +224,12 @@ public class BaseRelationService implements RelationService {
 
         ListenableFuture<Boolean> inboundFuture = Futures.transform(inboundDeletions, getListToBooleanFunction());
 
-        List<ListenableFuture<List<EntityRelation>>> inboundRelationsList1 = new ArrayList<>();
+        List<ListenableFuture<List<EntityRelation>>> inboundRelationsListFrom = new ArrayList<>();
         for (RelationTypeGroup typeGroup : RelationTypeGroup.values()) {
-            inboundRelationsList1.add(relationDao.findAllByTo(entity, typeGroup));
+            inboundRelationsListFrom.add(relationDao.findAllByTo(entity, typeGroup));
         }
-        ListenableFuture<List<List<EntityRelation>>> inboundRelations1 = Futures.allAsList(inboundRelationsList1);
-        Futures.transform(inboundRelations1, (AsyncFunction<List<List<EntityRelation>>, List<Boolean>>) relations -> {
+        ListenableFuture<List<List<EntityRelation>>> inboundRelationsFrom = Futures.allAsList(inboundRelationsListFrom);
+        Futures.transform(inboundRelationsFrom, (AsyncFunction<List<List<EntityRelation>>, List<Boolean>>) relations -> {
             List<ListenableFuture<Boolean>> results = getListenableFutures(relations, cache, false);
             return Futures.allAsList(results);
         });
@@ -249,8 +251,10 @@ public class BaseRelationService implements RelationService {
     private void checkFromDeleteAsync(Cache cache, List<ListenableFuture<Boolean>> results, EntityRelation relation, boolean isRemove) {
         if (isRemove) {
             results.add(relationDao.deleteRelationAsync(relation));
+            cacheEviction(relation, relation.getTo(), cache);
+        } else {
+            cacheEviction(relation, relation.getFrom(), cache);
         }
-        cacheEviction(relation, relation.getTo(), cache);
     }
 
     private void cacheEviction(EntityRelation relation, EntityId entityId, Cache cache) {
