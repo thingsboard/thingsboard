@@ -47,9 +47,37 @@ function TimeseriesTableWidget() {
 /*@ngInject*/
 function TimeseriesTableWidgetController($element, $scope, $filter) {
     var vm = this;
+    let dateFormatFilter = 'yyyy-MM-dd HH:mm:ss';
 
     vm.sources = [];
     vm.sourceIndex = 0;
+    vm.defaultPageSize = 10;
+    vm.defaultSortOrder = '-0';
+    vm.query = {
+        "search": null
+    };
+
+    vm.enterFilterMode = enterFilterMode;
+    vm.exitFilterMode = exitFilterMode;
+
+    function enterFilterMode () {
+        vm.query.search = '';
+        vm.ctx.hideTitlePanel = true;
+    }
+
+    function exitFilterMode () {
+        vm.query.search = null;
+        vm.ctx.hideTitlePanel = false;
+    }
+
+    vm.searchAction = {
+        name: 'action.search',
+        show: true,
+        onAction: function() {
+            vm.enterFilterMode();
+        },
+        icon: 'search'
+    };
 
     $scope.$watch('vm.ctx', function() {
        if (vm.ctx) {
@@ -62,6 +90,7 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
     });
 
     function initialize() {
+        vm.ctx.widgetActions = [ vm.searchAction ];
         vm.showTimestamp = vm.settings.showTimestamp !== false;
         var origColor = vm.widgetConfig.color || 'rgba(0, 0, 0, 0.87)';
         var defaultColor = tinycolor(origColor);
@@ -107,6 +136,8 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
         cssParser.cssPreviewNamespace = namespace;
         cssParser.createStyleElement(namespace, cssString);
         $element.addClass(namespace);
+
+        vm.displayPagination = angular.isDefined(vm.settings.displayPagination) ? vm.settings.displayPagination : true;
 
         function hashCode(str) {
             var hash = 0;
@@ -163,7 +194,7 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
 
     vm.cellContent = function(source, index, row, value) {
         if (index === 0) {
-            return $filter('date')(value, 'yyyy-MM-dd HH:mm:ss');
+            return $filter('date')(value, dateFormatFilter);
         } else {
             var strContent = '';
             if (angular.isDefined(value)) {
@@ -211,7 +242,7 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
                 source.data = [];
                 source.rawData = [];
                 source.query = {
-                    limit: 5,
+                    limit: vm.settings.defaultPageSize || 10,
                     page: 1,
                     order: '-0'
                 }
@@ -287,7 +318,30 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
     }
 
     function reorder(source) {
+        let searchRegExp = new RegExp(vm.query.search);
+
         source.data = $filter('orderBy')(source.data, source.query.order);
+        if (vm.query.search !== null) {
+            source.data = source.data.filter(function(item){
+                for (let i = 0; i < item.length; i++) {
+                    if (vm.showTimestamp) {
+                        if (i === 0) {
+                            if (searchRegExp.test($filter('date')(item[i], dateFormatFilter))) {
+                                return true;
+                            }
+                        } else {
+                            if (searchRegExp.test(item[i])) {
+                                return true;
+                            }
+                        }
+                    } else {
+                        if (searchRegExp.test(item[i])) {
+                            return true;
+                        }
+                    }
+                }
+            });
+        }
     }
 
     function convertData(data) {

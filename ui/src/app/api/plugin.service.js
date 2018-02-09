@@ -50,11 +50,11 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         tenantPlugins = undefined;
     }
 
-    function loadPluginsCache() {
+    function loadPluginsCache(config) {
         var deferred = $q.defer();
         if (!allPlugins) {
             var url = '/api/plugins';
-            $http.get(url, null).then(function success(response) {
+            $http.get(url, config).then(function success(response) {
                 componentDescriptorService.getComponentDescriptorsByType(types.componentType.plugin).then(
                     function success(pluginComponents) {
                         allPlugins = response.data;
@@ -93,9 +93,9 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         return deferred.promise;
     }
 
-    function getSystemPlugins(pageLink) {
+    function getSystemPlugins(pageLink, config) {
         var deferred = $q.defer();
-        loadPluginsCache().then(
+        loadPluginsCache(config).then(
             function success() {
                 utils.filterSearchTextEntities(systemPlugins, 'name', pageLink, deferred);
             },
@@ -106,9 +106,9 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         return deferred.promise;
     }
 
-    function getTenantPlugins(pageLink) {
+    function getTenantPlugins(pageLink, config) {
         var deferred = $q.defer();
-        loadPluginsCache().then(
+        loadPluginsCache(config).then(
             function success() {
                 utils.filterSearchTextEntities(tenantPlugins, 'name', pageLink, deferred);
             },
@@ -119,9 +119,9 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         return deferred.promise;
     }
 
-    function getAllActionPlugins(pageLink) {
+    function getAllActionPlugins(pageLink, config) {
         var deferred = $q.defer();
-        loadPluginsCache().then(
+        loadPluginsCache(config).then(
             function success() {
                 utils.filterSearchTextEntities(allActionPlugins, 'name', pageLink, deferred);
             },
@@ -132,9 +132,9 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         return deferred.promise;
     }
 
-    function getAllPlugins(pageLink) {
+    function getAllPlugins(pageLink, config) {
         var deferred = $q.defer();
-        loadPluginsCache().then(
+        loadPluginsCache(config).then(
             function success() {
                 utils.filterSearchTextEntities(allPlugins, 'name', pageLink, deferred);
             },
@@ -156,10 +156,10 @@ function PluginService($http, $q, $rootScope, $filter, componentDescriptorServic
         return deferred.promise;
     }
 
-    function getPlugin(pluginId) {
+    function getPlugin(pluginId, config) {
         var deferred = $q.defer();
         var url = '/api/plugin/' + pluginId;
-        $http.get(url, null).then(function success(response) {
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail(response) {
             deferred.reject(response.data);

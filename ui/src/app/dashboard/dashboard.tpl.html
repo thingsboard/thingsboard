@@ -110,7 +110,7 @@
     </section>
     <section class="tb-dashboard-container tb-absolute-fill"
              ng-class="{ 'is-fullscreen': forceFullscreen, 'tb-dashboard-toolbar-opened': vm.toolbarOpened, 'tb-dashboard-toolbar-closed': !vm.toolbarOpened }">
-        <section ng-show="!loading && vm.dashboardConfigurationError()" layout-align="center center"
+        <section ng-show="!$root.loading && vm.dashboardConfigurationError()" layout-align="center center"
                  ng-style="{'color': vm.dashboard.configuration.settings.titleColor}"
                  ng-class="{'tb-padded' : !vm.widgetEditMode}"
                  style="text-transform: uppercase; display: flex; z-index: 1;"
@@ -277,10 +277,10 @@
             </div>
         </tb-details-sidenav>
         <section layout="row" layout-wrap class="tb-footer-buttons md-fab" layout-align="start end">
-            <md-fab-speed-dial ng-disabled="loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
+            <md-fab-speed-dial ng-disabled="$root.loading" ng-show="!vm.isAddingWidget && vm.isEdit && !vm.widgetEditMode"
                                md-open="vm.addItemActionsOpen" class="md-scale" md-direction="up">
                 <md-fab-trigger>
-                    <md-button ng-disabled="loading"
+                    <md-button ng-disabled="$root.loading"
                                class="tb-btn-footer md-accent md-hue-2 md-fab"
                                aria-label="{{ 'dashboard.add-widget' | translate }}">
                         <md-tooltip md-direction="top">
@@ -290,7 +290,7 @@
                     </md-button>
                 </md-fab-trigger>
                 <md-fab-actions>
-                    <md-button ng-disabled="loading"
+                    <md-button ng-disabled="$root.loading"
                                class="tmd-accent md-hue-2 md-fab" ng-click="vm.addWidget($event)"
                                aria-label="{{ 'action.create' | translate }}">
                         <md-tooltip md-direction="top">
@@ -298,7 +298,7 @@
                         </md-tooltip>
                         <ng-md-icon icon="insert_drive_file"></ng-md-icon>
                     </md-button>
-                    <md-button ng-disabled="loading"
+                    <md-button ng-disabled="$root.loading"
                                class="tmd-accent md-hue-2 md-fab" ng-click="vm.importWidget($event)"
                                aria-label="{{ 'action.import' | translate }}">
                         <md-tooltip md-direction="top">
@@ -308,7 +308,7 @@
                     </md-button>
                 </md-fab-actions>
             </md-fab-speed-dial>
-            <md-button ng-if="(vm.isTenantAdmin() || vm.isSystemAdmin()) && !forceFullscreen" ng-show="vm.isEdit && !vm.isAddingWidget && !loading" ng-disabled="loading"
+            <md-button ng-if="(vm.isTenantAdmin() || vm.isSystemAdmin()) && !forceFullscreen" ng-show="vm.isEdit && !vm.isAddingWidget && !$root.loading" ng-disabled="$root.loading"
                        class="tb-btn-footer md-accent md-hue-2 md-fab"
                        aria-label="{{ 'action.apply' | translate }}"
                        ng-click="vm.saveDashboard()">
@@ -317,8 +317,8 @@
                 </md-tooltip>
                 <ng-md-icon icon="done"></ng-md-icon>
             </md-button>
-            <md-button ng-show="!vm.isAddingWidget && !loading"
-                       ng-if="(vm.isTenantAdmin() || vm.isSystemAdmin()) && !forceFullscreen" ng-disabled="loading"
+            <md-button ng-show="!vm.isAddingWidget && !$root.loading"
+                       ng-if="(vm.isTenantAdmin() || vm.isSystemAdmin()) && !forceFullscreen" ng-disabled="$root.loading"
                        class="tb-btn-footer md-accent md-hue-2 md-fab"
                        aria-label="{{ 'action.edit-mode' | translate }}"
                        ng-click="vm.toggleDashboardEditMode()">

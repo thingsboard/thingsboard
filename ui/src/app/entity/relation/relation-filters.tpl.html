@@ -37,7 +37,7 @@
                         allowed-entity-types="allowedEntityTypes"
                         tb-required="false">
                 </tb-entity-type-list>
-                <md-button ng-disabled="loading" class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"
+                <md-button ng-disabled="$root.loading" class="md-icon-button md-primary" style="width: 40px; min-width: 40px;"
                            ng-click="removeFilter($event, filter)" aria-label="{{ 'action.remove' | translate }}">
                     <md-tooltip md-direction="top">
                         {{ 'relation.remove-relation-filter' | translate }}
@@ -54,7 +54,7 @@
               class="tb-prompt" translate>relation.any-relation</span>
     </div>
     <div>
-        <md-button ng-disabled="loading" class="md-primary md-raised" ng-click="addFilter($event)" aria-label="{{ 'action.add' | translate }}">
+        <md-button ng-disabled="$root.loading" class="md-primary md-raised" ng-click="addFilter($event)" aria-label="{{ 'action.add' | translate }}">
             <md-tooltip md-direction="top">
                 {{ 'relation.add-relation-filter' | translate }}
             </md-tooltip>

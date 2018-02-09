@@ -444,7 +444,7 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
         }
     }
 
-    function handleWidgetAction($event, descriptor, entityId, entityName) {
+    function handleWidgetAction($event, descriptor, entityId, entityName, additionalParams) {
         var type = descriptor.type;
         var targetEntityParamName = descriptor.stateEntityParamName;
         var targetEntityId;
@@ -485,8 +485,11 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                 var customFunction = descriptor.customFunction;
                 if (angular.isDefined(customFunction) && customFunction.length > 0) {
                     try {
-                        var customActionFunction = new Function('$event', 'widgetContext', 'entityId', 'entityName', customFunction);
-                        customActionFunction($event, widgetContext, entityId, entityName);
+                        if (!additionalParams) {
+                            additionalParams = {};
+                        }
+                        var customActionFunction = new Function('$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', customFunction);
+                        customActionFunction($event, widgetContext, entityId, entityName, additionalParams);
                     } catch (e) {
                         //
                     }

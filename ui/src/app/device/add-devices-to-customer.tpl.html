@@ -26,8 +26,8 @@
                 </md-button>
             </div>
         </md-toolbar>
-        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!loading" ng-show="loading"></md-progress-linear>
-        <span style="min-height: 5px;" flex="" ng-show="!loading"></span>
+        <md-progress-linear class="md-warn" md-mode="indeterminate" ng-disabled="!$root.loading" ng-show="$root.loading"></md-progress-linear>
+        <span style="min-height: 5px;" flex="" ng-show="!$root.loading"></span>
         <md-dialog-content>
             <div class="md-dialog-content">
                 <fieldset>
@@ -65,11 +65,11 @@
         </md-dialog-content>
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-disabled="loading || vm.devices.selectedCount == 0" type="submit"
+            <md-button ng-disabled="$root.loading || vm.devices.selectedCount == 0" type="submit"
                        class="md-raised md-primary">
                 {{ 'action.assign' | translate }}
             </md-button>
-            <md-button ng-disabled="loading" ng-click="vm.cancel()" style="margin-right:20px;">{{ 'action.cancel' |
+            <md-button ng-disabled="$root.loading" ng-click="vm.cancel()" style="margin-right:20px;">{{ 'action.cancel' |
                 translate }}
             </md-button>
         </md-dialog-actions>

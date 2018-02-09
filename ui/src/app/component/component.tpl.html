@@ -24,7 +24,7 @@
         {{ componentTypeName }}
     </span>
     <span ng-if="readOnly" style="min-width: 40px; min-height: 40px; margin: 0 6px;"></br></span>
-    <md-button ng-disabled="loading" class="md-icon-button md-primary"
+    <md-button ng-disabled="$root.loading" class="md-icon-button md-primary"
                style="min-width: 40px;"
                ng-click="openComponent($event)"
                aria-label="{{ (readOnly ? 'action.view' : 'action.edit') | translate }}">
@@ -43,7 +43,7 @@
             edit
         </md-icon>
     </md-button>
-    <md-button ng-if="!readOnly" ng-disabled="loading" class="md-icon-button md-primary"
+    <md-button ng-if="!readOnly" ng-disabled="$root.loading" class="md-icon-button md-primary"
                style="min-width: 40px;"
                ng-click="onRemoveComponent({event: $event})"
                aria-label="{{ 'action.remove' | translate }}">

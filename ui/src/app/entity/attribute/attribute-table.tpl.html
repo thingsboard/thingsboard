@@ -19,7 +19,7 @@
     <section ng-show="!disableAttributeScopeSelection">
         <md-input-container class="md-block" style="width: 200px;">
             <label translate>attribute.attributes-scope</label>
-            <md-select ng-model="attributeScope" ng-disabled="loading() || attributeScopeSelectionReadonly">
+            <md-select ng-model="attributeScope" ng-disabled="$root.loading || attributeScopeSelectionReadonly">
                 <md-option ng-repeat="scope in attributeScopes" ng-value="scope">
                     {{scope.name | translate}}
                 </md-option>
