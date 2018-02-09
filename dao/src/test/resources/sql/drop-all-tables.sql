@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS admin_settings;
 DROP TABLE IF EXISTS alarm;
 DROP TABLE IF EXISTS asset;
+DROP TABLE IF EXISTS audit_log;
 DROP TABLE IF EXISTS attribute_kv;
 DROP TABLE IF EXISTS component_descriptor;
 DROP TABLE IF EXISTS customer;

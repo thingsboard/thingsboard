@@ -44,6 +44,13 @@ public class ModelConstants {
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
 
+    public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
+    public static final String ENTITY_ID_COLUMN = "entity_id";
+    public static final String ATTRIBUTE_TYPE_COLUMN = "attribute_type";
+    public static final String ATTRIBUTE_KEY_COLUMN = "attribute_key";
+    public static final String LAST_UPDATE_TS_COLUMN = "last_update_ts";
+
+
     /**
      * Cassandra user constants.
      */
@@ -133,6 +140,29 @@ public class ModelConstants {
     public static final String DEVICE_BY_CUSTOMER_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_by_type_and_search_text";
     public static final String DEVICE_BY_TENANT_AND_NAME_VIEW_NAME = "device_by_tenant_and_name";
     public static final String DEVICE_TYPES_BY_TENANT_VIEW_NAME = "device_types_by_tenant";
+
+    /**
+     * Cassandra audit log constants.
+     */
+    public static final String AUDIT_LOG_COLUMN_FAMILY_NAME = "audit_log";
+
+    public static final String AUDIT_LOG_BY_ENTITY_ID_CF = "audit_log_by_entity_id";
+    public static final String AUDIT_LOG_BY_TENANT_ID_CF = "audit_log_by_tenant_id";
+    public static final String AUDIT_LOG_BY_TENANT_ID_PARTITIONS_CF = "audit_log_by_tenant_id_partitions";
+
+    public static final String AUDIT_LOG_ID_PROPERTY = ID_PROPERTY;
+    public static final String AUDIT_LOG_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String AUDIT_LOG_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
+    public static final String AUDIT_LOG_ENTITY_TYPE_PROPERTY = ENTITY_TYPE_PROPERTY;
+    public static final String AUDIT_LOG_ENTITY_ID_PROPERTY = ENTITY_ID_COLUMN;
+    public static final String AUDIT_LOG_ENTITY_NAME_PROPERTY = "entity_name";
+    public static final String AUDIT_LOG_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String AUDIT_LOG_PARTITION_PROPERTY = "partition";
+    public static final String AUDIT_LOG_USER_NAME_PROPERTY = "user_name";
+    public static final String AUDIT_LOG_ACTION_TYPE_PROPERTY = "action_type";
+    public static final String AUDIT_LOG_ACTION_DATA_PROPERTY = "action_data";
+    public static final String AUDIT_LOG_ACTION_STATUS_PROPERTY = "action_status";
+    public static final String AUDIT_LOG_ACTION_FAILURE_DETAILS_PROPERTY = "action_failure_details";
 
     /**
      * Cassandra asset constants.
@@ -309,13 +339,6 @@ public class ModelConstants {
     public static final String TS_KV_CF = "ts_kv_cf";
     public static final String TS_KV_PARTITIONS_CF = "ts_kv_partitions_cf";
     public static final String TS_KV_LATEST_CF = "ts_kv_latest_cf";
-
-
-    public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
-    public static final String ENTITY_ID_COLUMN = "entity_id";
-    public static final String ATTRIBUTE_TYPE_COLUMN = "attribute_type";
-    public static final String ATTRIBUTE_KEY_COLUMN = "attribute_key";
-    public static final String LAST_UPDATE_TS_COLUMN = "last_update_ts";
 
     public static final String PARTITION_COLUMN = "partition";
     public static final String KEY_COLUMN = "key";

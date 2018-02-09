@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -116,6 +117,9 @@ public abstract class BaseController {
 
     @Autowired
     protected RelationService relationService;
+
+    @Autowired
+    protected AuditLogService auditLogService;
 
 
     @ExceptionHandler(ThingsboardException.class)

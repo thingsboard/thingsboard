@@ -548,3 +548,44 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.event_by_id AS
     AND event_type IS NOT NULL AND event_uid IS NOT NULL
     PRIMARY KEY ((tenant_id, entity_type, entity_id), id, event_type, event_uid)
     WITH CLUSTERING ORDER BY (id ASC, event_type ASC, event_uid ASC);
+
+
+CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_entity_id (
+  tenant_id timeuuid,
+  id timeuuid,
+  customer_id timeuuid,
+  entity_id timeuuid,
+  entity_type text,
+  entity_name text,
+  user_id timeuuid,
+  user_name text,
+  action_type text,
+  action_data text,
+  action_status text,
+  action_failure_details text,
+  PRIMARY KEY ((tenant_id, entity_id, entity_type), id)
+);
+
+CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_tenant_id (
+  tenant_id timeuuid,
+  id timeuuid,
+  partition bigint,
+  customer_id timeuuid,
+  entity_id timeuuid,
+  entity_type text,
+  entity_name text,
+  user_id timeuuid,
+  user_name text,
+  action_type text,
+  action_data text,
+  action_status text,
+  action_failure_details text,
+  PRIMARY KEY ((tenant_id, partition), id)
+);
+
+CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_tenant_id_partitions (
+  tenant_id timeuuid,
+  partition bigint,
+  PRIMARY KEY (( tenant_id ), partition)
+) WITH CLUSTERING ORDER BY ( partition ASC )
+AND compaction = { 'class' :  'LeveledCompactionStrategy'  };

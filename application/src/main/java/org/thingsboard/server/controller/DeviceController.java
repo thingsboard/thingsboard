@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.audit.ActionStatus;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -29,7 +32,6 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardErrorCode;
@@ -75,12 +77,21 @@ public class DeviceController extends BaseController {
                 }
             }
             Device savedDevice = checkNotNull(deviceService.saveDevice(device));
+
             actorService
                     .onDeviceNameOrTypeUpdate(
                             savedDevice.getTenantId(),
                             savedDevice.getId(),
                             savedDevice.getName(),
                             savedDevice.getType());
+
+            // TODO: refactor to ANNOTATION usage
+            if (device.getId() == null) {
+                logDeviceAction(savedDevice, ActionType.ADDED);
+            } else {
+                logDeviceAction(savedDevice, ActionType.UPDATED);
+            }
+
             return savedDevice;
         } catch (Exception e) {
             throw handleException(e);
@@ -94,8 +105,10 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            checkDeviceId(deviceId);
+            Device device = checkDeviceId(deviceId);
             deviceService.deleteDevice(deviceId);
+            // TODO: refactor to ANNOTATION usage
+            logDeviceAction(device, ActionType.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -173,9 +186,11 @@ public class DeviceController extends BaseController {
     public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
         try {
-            checkDeviceId(deviceCredentials.getDeviceId());
+            Device device = checkDeviceId(deviceCredentials.getDeviceId());
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(deviceCredentials));
             actorService.onCredentialsUpdate(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId());
+            // TODO: refactor to ANNOTATION usage
+            logDeviceAction(device, ActionType.CREDENTIALS_UPDATED);
             return result;
         } catch (Exception e) {
             throw handleException(e);
@@ -307,4 +322,18 @@ public class DeviceController extends BaseController {
         }
     }
 
+    // TODO: refactor to ANNOTATION usage
+    private void logDeviceAction(Device device, ActionType actionType) throws ThingsboardException {
+        auditLogService.logAction(
+                getCurrentUser().getTenantId(),
+                device.getId(),
+                device.getName(),
+                device.getCustomerId(),
+                getCurrentUser().getId(),
+                getCurrentUser().getName(),
+                actionType,
+                null,
+                ActionStatus.SUCCESS,
+                null);
+    }
 }
