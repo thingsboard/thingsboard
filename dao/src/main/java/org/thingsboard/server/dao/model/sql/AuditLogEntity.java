@@ -25,10 +25,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
-import org.thingsboard.server.common.data.id.AuditLogId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -100,6 +97,9 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
             this.entityId = toString(auditLog.getEntityId().getId());
             this.entityType = auditLog.getEntityId().getEntityType();
         }
+        if (auditLog.getUserId() != null) {
+            this.userId = toString(auditLog.getUserId().getId());
+        }
         this.entityName = auditLog.getEntityName();
         this.userName = auditLog.getUserName();
         this.actionType = auditLog.getActionType();
@@ -120,6 +120,9 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
         }
         if (entityId != null) {
             auditLog.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));
+        }
+        if (userId != null) {
+            auditLog.setUserId(new UserId(toUUID(entityId)));
         }
         auditLog.setEntityName(this.entityName);
         auditLog.setUserName(this.userName);
