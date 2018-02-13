@@ -66,6 +66,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
                 //Dump devices, assets and relations
 
+                cluster.getSession();
+
                 KeyspaceMetadata ks = cluster.getCluster().getMetadata().getKeyspace(cluster.getKeyspaceName());
 
                 log.info("Dumping devices ...");
