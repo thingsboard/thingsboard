@@ -18,20 +18,64 @@ package org.thingsboard.server.controller;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.exception.ThingsboardException;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 public class AuditLogController extends BaseController {
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/audit/logs/{entityType}/{entityId}", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/audit/logs/customer/{customerId}", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
-    public TimePageData<AuditLog> getAuditLogs(
+    public TimePageData<AuditLog> getAuditLogsByCustomerId(
+            @PathVariable("customerId") String strCustomerId,
+            @RequestParam int limit,
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
+            @RequestParam(required = false) String offset) throws ThingsboardException {
+        try {
+            checkParameter("CustomerId", strCustomerId);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            return checkNotNull(auditLogService.findAuditLogsByTenantIdAndCustomerId(tenantId, new CustomerId(UUID.fromString(strCustomerId)), pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/audit/logs/user/{userId}", params = {"limit"}, method = RequestMethod.GET)
+    @ResponseBody
+    public TimePageData<AuditLog> getAuditLogsByUserId(
+            @PathVariable("userId") String strUserId,
+            @RequestParam int limit,
+            @RequestParam(required = false) Long startTime,
+            @RequestParam(required = false) Long endTime,
+            @RequestParam(required = false, defaultValue = "false") boolean ascOrder,
+            @RequestParam(required = false) String offset) throws ThingsboardException {
+        try {
+            checkParameter("UserId", strUserId);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            TimePageLink pageLink = createPageLink(limit, startTime, endTime, ascOrder, offset);
+            return checkNotNull(auditLogService.findAuditLogsByTenantIdAndUserId(tenantId, new UserId(UUID.fromString(strUserId)), pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"limit"}, method = RequestMethod.GET)
+    @ResponseBody
+    public TimePageData<AuditLog> getAuditLogsByEntityId(
             @PathVariable("entityType") String strEntityType,
             @PathVariable("entityId") String strEntityId,
             @RequestParam int limit,

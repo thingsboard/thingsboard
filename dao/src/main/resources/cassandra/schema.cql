@@ -566,6 +566,40 @@ CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_entity_id (
   PRIMARY KEY ((tenant_id, entity_id, entity_type), id)
 );
 
+CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_customer_id (
+  tenant_id timeuuid,
+  id timeuuid,
+  customer_id timeuuid,
+  entity_id timeuuid,
+  entity_type text,
+  entity_name text,
+  user_id timeuuid,
+  user_name text,
+  action_type text,
+  action_data text,
+  action_status text,
+  action_failure_details text,
+  PRIMARY KEY ((tenant_id, customer_id), id)
+);
+
+CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_user_id (
+  tenant_id timeuuid,
+  id timeuuid,
+  customer_id timeuuid,
+  entity_id timeuuid,
+  entity_type text,
+  entity_name text,
+  user_id timeuuid,
+  user_name text,
+  action_type text,
+  action_data text,
+  action_status text,
+  action_failure_details text,
+  PRIMARY KEY ((tenant_id, user_id), id)
+);
+
+
+
 CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_tenant_id (
   tenant_id timeuuid,
   id timeuuid,

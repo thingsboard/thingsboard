@@ -244,7 +244,6 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:sa}"
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
-
 # PostgreSQL DAO Configuration
 #spring:
 #  data:
@@ -260,3 +259,8 @@ spring:
 #    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
 #    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
 #    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+
+# Audit log parameters
+audit_log:
+  # Enable/disable audit log functionality.
+  enabled: "${AUDIT_LOG_ENABLED:true}"

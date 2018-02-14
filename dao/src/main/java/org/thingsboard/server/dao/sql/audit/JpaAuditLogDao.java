@@ -23,7 +23,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.audit.AuditLogDao;
@@ -77,6 +79,16 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     }
 
     @Override
+    public ListenableFuture<Void> saveByTenantIdAndCustomerId(AuditLog auditLog) {
+        return insertService.submit(() -> null);
+    }
+
+    @Override
+    public ListenableFuture<Void> saveByTenantIdAndUserId(AuditLog auditLog) {
+        return insertService.submit(() -> null);
+    }
+
+    @Override
     public ListenableFuture<Void> savePartitionsByTenantId(AuditLog auditLog) {
         return insertService.submit(() -> null);
     }
@@ -88,6 +100,26 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
                         fromTimeUUID(tenantId),
                         fromTimeUUID(entityId.getId()),
                         entityId.getEntityType(),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())));
+    }
+
+    @Override
+    public List<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, TimePageLink pageLink) {
+        return DaoUtil.convertDataList(
+                auditLogRepository.findByTenantIdAndCustomerId(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(customerId.getId()),
+                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
+                        new PageRequest(0, pageLink.getLimit())));
+    }
+
+    @Override
+    public List<AuditLog> findAuditLogsByTenantIdAndUserId(UUID tenantId, UserId userId, TimePageLink pageLink) {
+        return DaoUtil.convertDataList(
+                auditLogRepository.findByTenantIdAndUserId(
+                        fromTimeUUID(tenantId),
+                        fromTimeUUID(userId.getId()),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())));
     }

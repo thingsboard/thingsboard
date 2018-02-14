@@ -147,6 +147,8 @@ public class ModelConstants {
     public static final String AUDIT_LOG_COLUMN_FAMILY_NAME = "audit_log";
 
     public static final String AUDIT_LOG_BY_ENTITY_ID_CF = "audit_log_by_entity_id";
+    public static final String AUDIT_LOG_BY_CUSTOMER_ID_CF = "audit_log_by_customer_id";
+    public static final String AUDIT_LOG_BY_USER_ID_CF = "audit_log_by_user_id";
     public static final String AUDIT_LOG_BY_TENANT_ID_CF = "audit_log_by_tenant_id";
     public static final String AUDIT_LOG_BY_TENANT_ID_PARTITIONS_CF = "audit_log_by_tenant_id_partitions";
 

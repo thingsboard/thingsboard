@@ -85,12 +85,16 @@ public class DeviceController extends BaseController {
                             savedDevice.getName(),
                             savedDevice.getType());
 
-            // TODO: refactor to ANNOTATION usage
-            if (device.getId() == null) {
-                logDeviceAction(savedDevice, ActionType.ADDED);
-            } else {
-                logDeviceAction(savedDevice, ActionType.UPDATED);
-            }
+            auditLogService.logEntityAction(
+                    getCurrentUser(),
+                    savedDevice.getId(),
+                    savedDevice.getName(),
+                    savedDevice.getCustomerId(),
+                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED,
+                    null,
+                    ActionStatus.SUCCESS,
+                    null);
+
 
             return savedDevice;
         } catch (Exception e) {
@@ -107,8 +111,15 @@ public class DeviceController extends BaseController {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId);
             deviceService.deleteDevice(deviceId);
-            // TODO: refactor to ANNOTATION usage
-            logDeviceAction(device, ActionType.DELETED);
+            auditLogService.logEntityAction(
+                    getCurrentUser(),
+                    device.getId(),
+                    device.getName(),
+                    device.getCustomerId(),
+                    ActionType.DELETED,
+                    null,
+                    ActionStatus.SUCCESS,
+                    null);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -189,8 +200,15 @@ public class DeviceController extends BaseController {
             Device device = checkDeviceId(deviceCredentials.getDeviceId());
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(deviceCredentials));
             actorService.onCredentialsUpdate(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId());
-            // TODO: refactor to ANNOTATION usage
-            logDeviceAction(device, ActionType.CREDENTIALS_UPDATED);
+            auditLogService.logEntityAction(
+                    getCurrentUser(),
+                    device.getId(),
+                    device.getName(),
+                    device.getCustomerId(),
+                    ActionType.CREDENTIALS_UPDATED,
+                    null,
+                    ActionStatus.SUCCESS,
+                    null);
             return result;
         } catch (Exception e) {
             throw handleException(e);
@@ -320,20 +338,5 @@ public class DeviceController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
-    }
-
-    // TODO: refactor to ANNOTATION usage
-    private void logDeviceAction(Device device, ActionType actionType) throws ThingsboardException {
-        auditLogService.logAction(
-                getCurrentUser().getTenantId(),
-                device.getId(),
-                device.getName(),
-                device.getCustomerId(),
-                getCurrentUser().getId(),
-                getCurrentUser().getName(),
-                actionType,
-                null,
-                ActionStatus.SUCCESS,
-                null);
     }
 }

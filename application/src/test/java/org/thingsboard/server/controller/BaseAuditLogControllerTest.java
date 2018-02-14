@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public abstract class BaseAuditLogControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
+    private User tenantAdmin;
 
     @Before
     public void beforeTest() throws Exception {
@@ -46,14 +48,14 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
         savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
 
-        User tenantAdmin = new User();
+        tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(savedTenant.getId());
         tenantAdmin.setEmail("tenant2@thingsboard.org");
         tenantAdmin.setFirstName("Joe");
         tenantAdmin.setLastName("Downs");
 
-        createUserAndLogin(tenantAdmin, "testPassword1");
+        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
     }
 
     @After
@@ -65,7 +67,7 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
     }
 
     @Test
-    public void testSaveDeviceAuditLogs() throws Exception {
+    public void testAuditLogs() throws Exception {
         for (int i = 0; i < 178; i++) {
             Device device = new Device();
             device.setName("Device" + i);
@@ -87,10 +89,38 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
         } while (pageData.hasNext());
 
         Assert.assertEquals(178, loadedAuditLogs.size());
+
+        loadedAuditLogs = new ArrayList<>();
+        pageLink = new TimePageLink(23);
+        do {
+            pageData = doGetTypedWithTimePageLink("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?",
+                    new TypeReference<TimePageData<AuditLog>>() {
+                    }, pageLink);
+            loadedAuditLogs.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageData.getNextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Assert.assertEquals(178, loadedAuditLogs.size());
+
+        loadedAuditLogs = new ArrayList<>();
+        pageLink = new TimePageLink(23);
+        do {
+            pageData = doGetTypedWithTimePageLink("/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?",
+                    new TypeReference<TimePageData<AuditLog>>() {
+                    }, pageLink);
+            loadedAuditLogs.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageData.getNextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Assert.assertEquals(178, loadedAuditLogs.size());
     }
 
     @Test
-    public void testUpdateDeviceAuditLogs() throws Exception {
+    public void testAuditLogs_byTenantIdAndEntityId() throws Exception {
         Device device = new Device();
         device.setName("Device name");
         device.setType("default");
@@ -104,7 +134,7 @@ public abstract class BaseAuditLogControllerTest extends AbstractControllerTest 
         TimePageLink pageLink = new TimePageLink(23);
         TimePageData<AuditLog> pageData;
         do {
-            pageData = doGetTypedWithTimePageLink("/api/audit/logs/DEVICE/" + savedDevice.getId().getId() + "?",
+            pageData = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?",
                     new TypeReference<TimePageData<AuditLog>>() {
                     }, pageLink);
             loadedAuditLogs.addAll(pageData.getData());

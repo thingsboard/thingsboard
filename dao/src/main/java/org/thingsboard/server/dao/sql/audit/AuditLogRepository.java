@@ -41,4 +41,20 @@ public interface AuditLogRepository extends CrudRepository<AuditLogEntity, Strin
                                                    @Param("entityType") EntityType entityType,
                                                    @Param("idOffset") String idOffset,
                                                    Pageable pageable);
+
+    @Query("SELECT al FROM AuditLogEntity al WHERE al.tenantId = :tenantId " +
+            "AND al.customerId = :customerId " +
+            "AND al.id > :idOffset ORDER BY al.id")
+    List<AuditLogEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
+                                                     @Param("customerId") String customerId,
+                                                     @Param("idOffset") String idOffset,
+                                                     Pageable pageable);
+
+    @Query("SELECT al FROM AuditLogEntity al WHERE al.tenantId = :tenantId " +
+            "AND al.userId = :userId " +
+            "AND al.id > :idOffset ORDER BY al.id")
+    List<AuditLogEntity> findByTenantIdAndUserId(@Param("tenantId") String tenantId,
+                                                 @Param("userId") String userId,
+                                                 @Param("idOffset") String idOffset,
+                                                 Pageable pageable);
 }
