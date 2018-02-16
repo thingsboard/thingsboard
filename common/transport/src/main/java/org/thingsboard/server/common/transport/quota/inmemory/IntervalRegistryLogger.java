@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -64,8 +63,11 @@ public class IntervalRegistryLogger {
     }
 
     public void logStatistic() {
-        Map<String, Long> top = getTopElements(intervalRegistry.getContent());
-        log(top);
+        Map<String, Long> registryContent = intervalRegistry.getContent();
+        int uniqHosts = registryContent.size();
+        long requestsCount = registryContent.values().stream().mapToLong(i -> i).sum();
+        Map<String, Long> top = getTopElements(registryContent);
+        log(top, uniqHosts, requestsCount);
     }
 
     protected Map<String, Long> getTopElements(Map<String, Long> countMap) {
@@ -77,10 +79,15 @@ public class IntervalRegistryLogger {
         return topQueue.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private void log(Map<String, Long> top) {
+    private void log(Map<String, Long> top, int uniqHosts, long requestsCount) {
+        long rps = requestsCount / TimeUnit.MINUTES.toSeconds(logIntervalMin);
         StringBuilder builder = new StringBuilder("Quota Statistic : ");
+        builder.append("uniqHosts : ").append(uniqHosts).append("; ");
+        builder.append("requestsCount : ").append(requestsCount).append("; ");
+        builder.append("RPS : ").append(rps).append(" ");
+        builder.append("top -> ");
         for (Map.Entry<String, Long> host : top.entrySet()) {
-            builder.append(host.getKey()).append(" : ").append(host.getValue()).append(" ; ");
+            builder.append(host.getKey()).append(" : ").append(host.getValue()).append("; ");
         }
 
         log.info(builder.toString());
