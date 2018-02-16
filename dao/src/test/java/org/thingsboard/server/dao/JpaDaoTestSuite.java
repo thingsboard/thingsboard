@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.sql.*AAATest"
+        "org.thingsboard.server.dao.sql.*THIS_MUST_BE_FIXED_Test"
 })
 public class JpaDaoTestSuite {
 

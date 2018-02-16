@@ -267,7 +267,6 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:sa}"
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
-
 # PostgreSQL DAO Configuration
 #spring:
 #  data:
@@ -283,3 +282,15 @@ spring:
 #    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
 #    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
 #    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+
+# Audit log parameters
+audit_log:
+  # Enable/disable audit log functionality.
+  enabled: "${AUDIT_LOG_ENABLED:true}"
+  # Specify partitioning size for audit log by tenant id storage. Example MINUTES, HOURS, DAYS, MONTHS
+  by_tenant_partitioning: "${AUDIT_LOG_BY_TENANT_PARTITIONING:MONTHS}"
+  # Number of days as history period if startTime and endTime are not specified
+  default_query_period: "${AUDIT_LOG_DEFAULT_QUERY_PERIOD:30}"
+  exceptions:
+    # Enable/disable audit log functionality for exceptions.
+    enabled: "${AUDIT_LOG_EXCEPTIONS_ENABLED:true}"
