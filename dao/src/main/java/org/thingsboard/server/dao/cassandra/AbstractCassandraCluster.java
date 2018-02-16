@@ -75,6 +75,7 @@ public abstract class AbstractCassandraCluster {
     private Environment environment;
 
     private Cluster cluster;
+    private Cluster.Builder clusterBuilder;
 
     @Getter(AccessLevel.NONE) private Session session;
 
@@ -88,29 +89,27 @@ public abstract class AbstractCassandraCluster {
 
     protected void init(String keyspaceName) {
         this.keyspaceName = keyspaceName;
-        Cluster.Builder builder = Cluster.builder()
+        this.clusterBuilder = Cluster.builder()
                 .addContactPointsWithPorts(getContactPoints(url))
                 .withClusterName(clusterName)
                 .withSocketOptions(socketOpts.getOpts())
                 .withPoolingOptions(new PoolingOptions()
                         .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
                         .setMaxRequestsPerConnection(HostDistance.REMOTE, 32768));
-        builder.withQueryOptions(queryOpts.getOpts());
-        builder.withCompression(StringUtils.isEmpty(compression) ? Compression.NONE : Compression.valueOf(compression.toUpperCase()));
+        this.clusterBuilder.withQueryOptions(queryOpts.getOpts());
+        this.clusterBuilder.withCompression(StringUtils.isEmpty(compression) ? Compression.NONE : Compression.valueOf(compression.toUpperCase()));
         if (ssl) {
-            builder.withSSL();
+            this.clusterBuilder.withSSL();
         }
         if (!jmx) {
-            builder.withoutJMXReporting();
+            this.clusterBuilder.withoutJMXReporting();
         }
         if (!metrics) {
-            builder.withoutMetrics();
+            this.clusterBuilder.withoutMetrics();
         }
         if (credentials) {
-            builder.withCredentials(username, password);
+            this.clusterBuilder.withCredentials(username, password);
         }
-        cluster = builder.build();
-        cluster.init();
         if (!isInstall()) {
             initSession();
         }
@@ -139,7 +138,8 @@ public abstract class AbstractCassandraCluster {
         long endTime = System.currentTimeMillis() + initTimeout;
         while (System.currentTimeMillis() < endTime) {
             try {
-
+                cluster = clusterBuilder.build();
+                cluster.init();
                 if (this.keyspaceName != null) {
                     session = cluster.connect(keyspaceName);
                 } else {

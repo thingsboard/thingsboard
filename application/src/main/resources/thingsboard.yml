@@ -77,6 +77,8 @@ http:
 
 # MQTT server parameters
 mqtt:
+  # Enable/disable mqtt transport protocol.
+  enabled: "${MQTT_ENABLED:true}"
   bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${MQTT_BIND_PORT:1883}"
   adaptor: "${MQTT_ADAPTOR_NAME:JsonMqttAdaptor}"
@@ -102,6 +104,8 @@ mqtt:
 
 # CoAP server parameters
 coap:
+  # Enable/disable coap transport protocol.
+  enabled: "${COAP_ENABLED:true}"
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${COAP_BIND_PORT:5683}"
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
@@ -157,6 +161,13 @@ cassandra:
     # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
 
+# SQL configuration parameters
+sql:
+    # Specify executor service type used to perform timeseries insert tasks: SINGLE FIXED CACHED
+    ts_inserts_executor_type: "${SQL_TS_INSERTS_EXECUTOR_TYPE:fixed}"
+    # Specify thread pool size for FIXED executor service type
+    ts_inserts_fixed_thread_pool_size: "${SQL_TS_INSERTS_FIXED_THREAD_POOL_SIZE:10}"
+
 # Actor system parameters
 actors:
   tenant:
@@ -200,6 +211,18 @@ cache:
       # FREE_HEAP_PERCENTAGE: Minimum free heap size percentage for each JVM.
       policy: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_POLICY:PER_NODE}"
       size: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_SIZE:1000000}"
+
+caching:
+  specs:
+    relations:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
+    deviceCredentials:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
+    devices:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 # Check new version updates parameters
 updates:

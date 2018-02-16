@@ -13,10 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.timeseries;
 
-public class CacheConstants {
-    public static final String DEVICE_CREDENTIALS_CACHE = "deviceCredentials";
-    public static final String RELATIONS_CACHE = "relations";
-    public static final String DEVICE_CACHE = "devices";
+import java.util.Optional;
+
+public enum TsInsertExecutorType {
+    SINGLE,
+    FIXED,
+    CACHED;
+
+    public static Optional<TsInsertExecutorType> parse(String name) {
+        TsInsertExecutorType executorType = null;
+        if (name != null) {
+            for (TsInsertExecutorType type : TsInsertExecutorType.values()) {
+                if (type.name().equalsIgnoreCase(name)) {
+                    executorType = type;
+                    break;
+                }
+            }
+        }
+        return Optional.of(executorType);
+    }
 }

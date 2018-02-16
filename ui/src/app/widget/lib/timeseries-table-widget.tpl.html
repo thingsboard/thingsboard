@@ -41,7 +41,7 @@
         <md-tabs flex md-selected="vm.sourceIndex" ng-class="{'tb-headless': vm.sources.length === 1}"
                  id="tabs" md-border-bottom flex>
             <md-tab ng-repeat="source in vm.sources" label="{{ source.datasource.name }}">
-                <md-table-container>
+                <md-table-container class="flex">
                     <table md-table>
                         <thead md-head md-order="source.query.order" md-on-reorder="vm.onReorder(source)">
                             <tr md-row>
@@ -70,16 +70,20 @@
                             </tr>
                         </tbody>
                     </table>
+                    <md-divider></md-divider>
+                    <span ng-show="!vm.sources[vm.sourceIndex].data.length"
+                          layout-align="center center"
+                          class="no-data-found" translate>widget.no-data-found</span>
                 </md-table-container>
-                <md-table-pagination ng-if="vm.displayPagination"
-                                     md-limit="source.query.limit"
-                                     md-limit-options="vm.limitOptions"
-                                     md-page="source.query.page"
-                                     md-total="{{source.data.length}}"
-                                     md-on-paginate="vm.onPaginate(source)"
-                                     md-page-select>
-                </md-table-pagination>
             </md-tab>
         </md-tabs>
+        <md-table-pagination ng-if="vm.displayPagination"
+                             md-limit="vm.sources[vm.sourceIndex].query.limit"
+                             md-limit-options="vm.limitOptions"
+                             md-page="vm.sources[vm.sourceIndex].query.page"
+                             md-total="{{vm.sources[vm.sourceIndex].data.length}}"
+                             md-on-paginate="vm.onPaginate(vm.sources[vm.sourceIndex])"
+                             md-page-select>
+        </md-table-pagination>
     </div>
 </div>

@@ -33,6 +33,7 @@ public class SubscriptionState {
     @Getter private final SubscriptionType type;
     @Getter private final boolean allKeys;
     @Getter private final Map<String, Long> keyStates;
+    @Getter private final String scope;
 
     @Override
     public boolean equals(Object o) {

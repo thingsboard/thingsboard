@@ -553,7 +553,9 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             var aspect = imageAspectMap[urlHashCode];
             if (angular.isUndefined(aspect)) {
                 var testImage = document.createElement('img'); // eslint-disable-line
-                testImage.style.visibility = 'hidden';
+                testImage.style.position = 'absolute';
+                testImage.style.left = '-99999px';
+                testImage.style.top = '-99999px';
                 testImage.onload = function() {
                     aspect = testImage.width / testImage.height;
                     document.body.removeChild(testImage); //eslint-disable-line
