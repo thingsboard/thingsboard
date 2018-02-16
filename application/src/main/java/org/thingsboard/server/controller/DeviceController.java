@@ -85,20 +85,11 @@ public class DeviceController extends BaseController {
                             savedDevice.getName(),
                             savedDevice.getType());
 
-            auditLogService.logEntityAction(
-                    getCurrentUser(),
-                    savedDevice.getId(),
-                    savedDevice.getName(),
-                    savedDevice.getCustomerId(),
-                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED,
-                    null,
-                    ActionStatus.SUCCESS,
-                    null);
-
+            logEntityAddedOrUpdated(savedDevice.getId(), savedDevice.getName(), savedDevice.getCustomerId(), device.getId() == null);
 
             return savedDevice;
         } catch (Exception e) {
-            throw handleException(e);
+            throw handleException(e, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, "addDevice(" + device + ")");
         }
     }
 
@@ -111,17 +102,9 @@ public class DeviceController extends BaseController {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId);
             deviceService.deleteDevice(deviceId);
-            auditLogService.logEntityAction(
-                    getCurrentUser(),
-                    device.getId(),
-                    device.getName(),
-                    device.getCustomerId(),
-                    ActionType.DELETED,
-                    null,
-                    ActionStatus.SUCCESS,
-                    null);
+            logEntityDeleted(device.getId(), device.getName(), device.getCustomerId());
         } catch (Exception e) {
-            throw handleException(e);
+            throw handleException(e, ActionType.DELETED, "deleteDevice(" + strDeviceId + ")");
         }
     }
 
@@ -200,18 +183,10 @@ public class DeviceController extends BaseController {
             Device device = checkDeviceId(deviceCredentials.getDeviceId());
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(deviceCredentials));
             actorService.onCredentialsUpdate(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId());
-            auditLogService.logEntityAction(
-                    getCurrentUser(),
-                    device.getId(),
-                    device.getName(),
-                    device.getCustomerId(),
-                    ActionType.CREDENTIALS_UPDATED,
-                    null,
-                    ActionStatus.SUCCESS,
-                    null);
+            logEntitySuccess(device.getId(), device.getName(), device.getCustomerId(), ActionType.CREDENTIALS_UPDATED);
             return result;
         } catch (Exception e) {
-            throw handleException(e);
+            throw handleException(e, ActionType.CREDENTIALS_UPDATED, "saveDeviceCredentials(" + deviceCredentials + ")");
         }
     }
 

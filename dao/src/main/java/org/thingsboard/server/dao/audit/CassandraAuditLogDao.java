@@ -81,9 +81,12 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
 
     protected ExecutorService readResultsProcessingExecutor;
 
-    @Value("${cassandra.query.ts_key_value_partitioning}")
+    @Value("${audit_log.by_tenant_partitioning}")
     private String partitioning;
     private TsPartitionDate tsFormat;
+
+    @Value("${audit_log.default_query_period}")
+    private Integer defaultQueryPeriodInDays;
 
     private PreparedStatement partitionInsertStmt;
     private PreparedStatement saveByTenantStmt;
@@ -304,7 +307,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
         if (pageLink.getStartTime() != null && pageLink.getStartTime() != 0) {
             minPartition = toPartitionTs(pageLink.getStartTime());
         } else {
-            minPartition = toPartitionTs(LocalDate.now().minusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
+            minPartition = toPartitionTs(LocalDate.now().minusDays(defaultQueryPeriodInDays).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
         }
 
         long maxPartition;

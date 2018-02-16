@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.audit;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.thingsboard.server.common.data.User;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
+import java.util.Collections;
 import java.util.List;
 
 @ConditionalOnProperty(prefix = "audit_log", value = "enabled", havingValue = "false")
@@ -36,26 +38,26 @@ public class DummyAuditLogServiceImpl implements AuditLogService {
 
     @Override
     public TimePageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink) {
-        return null;
+        return new TimePageData<>(null, pageLink);
     }
 
     @Override
     public TimePageData<AuditLog> findAuditLogsByTenantIdAndUserId(TenantId tenantId, UserId userId, TimePageLink pageLink) {
-        return null;
+        return new TimePageData<>(null, pageLink);
     }
 
     @Override
     public TimePageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, TimePageLink pageLink) {
-        return null;
+        return new TimePageData<>(null, pageLink);
     }
 
     @Override
     public TimePageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, TimePageLink pageLink) {
-        return null;
+        return new TimePageData<>(null, pageLink);
     }
 
     @Override
     public ListenableFuture<List<Void>> logEntityAction(User user, EntityId entityId, String entityName, CustomerId customerId, ActionType actionType, JsonNode actionData, ActionStatus actionStatus, String actionFailureDetails) {
-        return null;
+        return Futures.immediateFuture(Collections.emptyList());
     }
 }

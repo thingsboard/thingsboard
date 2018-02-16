@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -27,6 +30,8 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.audit.ActionStatus;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -73,6 +78,10 @@ public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
+
+    @Value("${audit_log.exceptions.enabled}")
+    private boolean auditLogExceptionsEnabled;
+
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
 
@@ -131,6 +140,11 @@ public abstract class BaseController {
         return handleException(exception, true);
     }
 
+    ThingsboardException handleException(Exception exception, ActionType actionType, String actionData) {
+        logExceptionToAuditLog(exception, actionType, actionData);
+        return handleException(exception, true);
+    }
+
     private ThingsboardException handleException(Exception exception, boolean logException) {
         if (logException) {
             log.error("Error [{}]", exception.getMessage());
@@ -150,6 +164,36 @@ public abstract class BaseController {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else {
             return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
+        }
+    }
+
+    private void logExceptionToAuditLog(Exception exception, ActionType actionType, String actionData) {
+        try {
+            if (auditLogExceptionsEnabled) {
+                SecurityUser currentUser = getCurrentUser();
+                EntityId entityId;
+                CustomerId customerId;
+                if (!currentUser.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                    entityId = currentUser.getCustomerId();
+                    customerId = currentUser.getCustomerId();
+                } else {
+                    entityId = currentUser.getTenantId();
+                    customerId = new CustomerId(ModelConstants.NULL_UUID);
+                }
+
+                JsonNode actionDataNode = new ObjectMapper().createObjectNode().put("actionData", actionData);
+
+                auditLogService.logEntityAction(currentUser,
+                        entityId,
+                        null,
+                        customerId,
+                        actionType,
+                        actionDataNode,
+                        ActionStatus.FAILURE,
+                        exception.getMessage());
+            }
+        } catch (Exception e) {
+            log.error("Exception happend during saving to audit log", e);
         }
     }
 
@@ -544,5 +588,25 @@ public abstract class BaseController {
                 request.getServerName(),
                 serverPort);
         return baseUrl;
+    }
+
+    protected void logEntityDeleted(EntityId entityId, String entityName, CustomerId customerId) throws ThingsboardException {
+        logEntitySuccess(entityId, entityName, customerId, ActionType.DELETED);
+    }
+
+    protected void logEntityAddedOrUpdated(EntityId entityId, String entityName, CustomerId customerId, boolean isAddAction) throws ThingsboardException {
+        logEntitySuccess(entityId, entityName, customerId, isAddAction ? ActionType.ADDED : ActionType.UPDATED);
+    }
+
+    protected void logEntitySuccess(EntityId entityId, String entityName, CustomerId customerId, ActionType actionType) throws ThingsboardException {
+        auditLogService.logEntityAction(
+                getCurrentUser(),
+                entityId,
+                entityName,
+                customerId,
+                actionType,
+                null,
+                ActionStatus.SUCCESS,
+                null);
     }
 }
