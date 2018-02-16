@@ -19,6 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.thingsboard.server.common.transport.SessionMsgProcessor;
+import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -35,6 +39,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
+@ConditionalOnProperty(prefix = "coap", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class CoapTransportService {
 

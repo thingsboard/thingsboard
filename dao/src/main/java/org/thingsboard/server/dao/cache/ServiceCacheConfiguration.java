@@ -15,76 +15,57 @@
  */
 package org.thingsboard.server.dao.cache;
 
-import com.hazelcast.config.*;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.instance.GroupProperty;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
-import com.hazelcast.zookeeper.ZookeeperDiscoveryProperties;
-import com.hazelcast.zookeeper.ZookeeperDiscoveryStrategyFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Ticker;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.cache.interceptor.KeyGenerator;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.thingsboard.server.common.data.CacheConstants;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Configuration
+@ConfigurationProperties(prefix = "caching")
 @EnableCaching
-@ConditionalOnProperty(prefix = "cache", value = "enabled", havingValue = "true")
+@Data
 public class ServiceCacheConfiguration {
 
-    private static final String HAZELCAST_CLUSTER_NAME = "hazelcast";
-
-    @Value("${cache.device_credentials.max_size.size}")
-    private Integer cacheDeviceCredentialsMaxSizeSize;
-    @Value("${cache.device_credentials.max_size.policy}")
-    private String cacheDeviceCredentialsMaxSizePolicy;
-    @Value("${cache.device_credentials.time_to_live}")
-    private Integer cacheDeviceCredentialsTTL;
-
-    @Value("${zk.enabled}")
-    private boolean zkEnabled;
-    @Value("${zk.url}")
-    private String zkUrl;
-    @Value("${zk.zk_dir}")
-    private String zkDir;
+    private Map<String, CacheSpecs> specs;
 
     @Bean
-    public HazelcastInstance hazelcastInstance() {
-        Config config = new Config();
-
-        if (zkEnabled) {
-            addZkConfig(config);
+    public CacheManager cacheManager() {
+        SimpleCacheManager manager = new SimpleCacheManager();
+        if (specs != null) {
+            List<CaffeineCache> caches =
+                    specs.entrySet().stream()
+                            .map(entry -> buildCache(entry.getKey(),
+                                    entry.getValue()))
+                            .collect(Collectors.toList());
+            manager.setCaches(caches);
         }
-
-        config.addMapConfig(createDeviceCredentialsCacheConfig());
-
-        return Hazelcast.newHazelcastInstance(config);
+        return manager;
     }
 
-    private void addZkConfig(Config config) {
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.setProperty(GroupProperty.DISCOVERY_SPI_ENABLED.getName(), Boolean.TRUE.toString());
-        DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(new ZookeeperDiscoveryStrategyFactory());
-        discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_URL.key(), zkUrl);
-        discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_PATH.key(), zkDir);
-        discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.GROUP.key(), HAZELCAST_CLUSTER_NAME);
-        config.getNetworkConfig().getJoin().getDiscoveryConfig().addDiscoveryStrategyConfig(discoveryStrategyConfig);
+    private CaffeineCache buildCache(String name, CacheSpecs cacheSpec) {
+        final Caffeine<Object, Object> caffeineBuilder
+                = Caffeine.newBuilder()
+                .expireAfterWrite(cacheSpec.getTimeToLiveInMinutes(), TimeUnit.MINUTES)
+                .maximumSize(cacheSpec.getMaxSize())
+                .ticker(ticker());
+        return new CaffeineCache(name, caffeineBuilder.build());
     }
 
-    private MapConfig createDeviceCredentialsCacheConfig() {
-        MapConfig deviceCredentialsCacheConfig = new MapConfig(CacheConstants.DEVICE_CREDENTIALS_CACHE);
-        deviceCredentialsCacheConfig.setTimeToLiveSeconds(cacheDeviceCredentialsTTL);
-        deviceCredentialsCacheConfig.setEvictionPolicy(EvictionPolicy.LRU);
-        deviceCredentialsCacheConfig.setMaxSizeConfig(
-                new MaxSizeConfig(
-                        cacheDeviceCredentialsMaxSizeSize,
-                        MaxSizeConfig.MaxSizePolicy.valueOf(cacheDeviceCredentialsMaxSizePolicy))
-        );
-        return deviceCredentialsCacheConfig;
+    @Bean
+    public Ticker ticker() {
+        return Ticker.systemTicker();
     }
 
     @Bean
@@ -92,8 +73,4 @@ public class ServiceCacheConfiguration {
         return new PreviousDeviceCredentialsIdKeyGenerator();
     }
 
-    @Bean
-    public CacheManager cacheManager() {
-        return new HazelcastCacheManager(hazelcastInstance());
-    }
 }

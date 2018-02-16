@@ -84,16 +84,15 @@ public class GatewaySessionCtx {
 
     private void onDeviceConnect(String deviceName, String deviceType) {
         if (!devices.containsKey(deviceName)) {
-            Optional<Device> deviceOpt = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
-            Device device = deviceOpt.orElseGet(() -> {
-                Device newDevice = new Device();
-                newDevice.setTenantId(gateway.getTenantId());
-                newDevice.setName(deviceName);
-                newDevice.setType(deviceType);
-                newDevice = deviceService.saveDevice(newDevice);
-                relationService.saveRelationAsync(new EntityRelation(gateway.getId(), newDevice.getId(), "Created"));
-                return newDevice;
-            });
+            Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
+            if (device == null) {
+                device = new Device();
+                device.setTenantId(gateway.getTenantId());
+                device.setName(deviceName);
+                device.setType(deviceType);
+                device = deviceService.saveDevice(device);
+                relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
+            }
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
             devices.put(deviceName, ctx);
             log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);

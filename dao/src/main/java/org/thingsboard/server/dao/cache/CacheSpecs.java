@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.cache;
 
-public class CacheConstants {
-    public static final String DEVICE_CREDENTIALS_CACHE = "deviceCredentials";
-    public static final String RELATIONS_CACHE = "relations";
-    public static final String DEVICE_CACHE = "devices";
+import lombok.Data;
+
+@Data
+public class CacheSpecs {
+    private Integer timeToLiveInMinutes;
+    private Integer maxSize;
 }
