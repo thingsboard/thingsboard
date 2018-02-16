@@ -44,11 +44,23 @@ public class HostRequestsQuotaServiceTest {
     }
 
     @Test
-    public void hostQuotaValidated() {
+    public void quotaExceededIfRequestCountBiggerThanAllowed() {
+        when(requestRegistry.tick("key")).thenReturn(10L);
+        when(requestsPolicy.isValid(10L)).thenReturn(false);
+
+        assertTrue(quotaService.isQuotaExceeded("key"));
+
+        verify(requestRegistry).tick("key");
+        verify(requestsPolicy).isValid(10L);
+        verifyNoMoreInteractions(requestRegistry, requestsPolicy);
+    }
+
+    @Test
+    public void quotaNotExceededIfRequestCountLessThanAllowed() {
         when(requestRegistry.tick("key")).thenReturn(10L);
         when(requestsPolicy.isValid(10L)).thenReturn(true);
 
-        assertTrue(quotaService.isQuotaExceeded("key"));
+        assertFalse(quotaService.isQuotaExceeded("key"));
 
         verify(requestRegistry).tick("key");
         verify(requestsPolicy).isValid(10L);

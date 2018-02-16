@@ -80,7 +80,7 @@ public class IntervalRegistryLogger {
     private void log(Map<String, Long> top) {
         StringBuilder builder = new StringBuilder("Quota Statistic : ");
         for (Map.Entry<String, Long> host : top.entrySet()) {
-            builder.append(host.getKey()).append(" : ").append(host.getValue());
+            builder.append(host.getKey()).append(" : ").append(host.getValue()).append(" ; ");
         }
 
         log.info(builder.toString());

@@ -75,7 +75,6 @@ public class CoapTransportResource extends CoapResource {
     @Override
     public void handleGET(CoapExchange exchange) {
         if(quotaService.isQuotaExceeded(exchange.getSourceAddress().getHostAddress())) {
-            log.warn("Missing feature type parameter");
             log.warn("COAP Quota exceeded for [{}:{}] . Disconnect", exchange.getSourceAddress().getHostAddress(), exchange.getSourcePort());
             exchange.respond(ResponseCode.BAD_REQUEST);
             return;
