@@ -13,17 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.rule.engine.queue.jpa;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Data;
-
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Data
-public class TbNodeConfiguration {
-
-    private JsonNode data;
-
+//@todo-vp: implement
+public class SqlMsgQueue {
 }

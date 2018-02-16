@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.rule.engine.queue.cassandra;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Data
-public class TbNodeConfiguration {
+import java.util.UUID;
 
-    private JsonNode data;
+@Data
+public class MsgAck {
+
+    private final UUID msgId;
+    private final UUID nodeId;
+    private final long clusteredHash;
+    private final long partition;
+    private final long ts;
 
 }

@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.rule.engine.queue.cassandra;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Data;
+import org.thingsboard.rule.engine.api.TbMsg;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Data
-public class TbNodeConfiguration {
+import java.util.Collection;
+import java.util.Collections;
 
-    private JsonNode data;
+public class UnprocessedMsgFilter {
 
+    public Collection<TbMsg> filter(Iterable<TbMsg> msgs, Iterable<MsgAck> acks) {
+        return Collections.emptyList();
+    }
 }

@@ -548,3 +548,55 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.event_by_id AS
     AND event_type IS NOT NULL AND event_uid IS NOT NULL
     PRIMARY KEY ((tenant_id, entity_type, entity_id), id, event_type, event_uid)
     WITH CLUSTERING ORDER BY (id ASC, event_type ASC, event_uid ASC);
+
+CREATE TABLE IF NOT EXISTS thingsboard.msg_queue (
+    node_id         timeuuid,
+    clustered_hash    bigint,
+    partition       bigint,
+    ts              bigint,
+    msg             blob,
+	PRIMARY KEY ((node_id, cluster_hash, partition), ts)
+	WITH CLUSTERING ORDER BY (ts DESC)
+	AND compaction = {
+        'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
+        'min_threshold': '5',
+        'base_time_seconds': '43200',
+        'max_window_size_seconds': '43200'
+        'tombstone_threshold': '0.9',
+        'unchecked_tombstone_compaction': 'true',
+    };
+);
+
+CREATE TABLE IF NOT EXISTS thingsboard.msg_ack_queue (
+    node_id         timeuuid,
+    clustered_hash    bigint,
+    partition       bigint,
+    ts              bigint,
+    msg_id              timeuuid,
+	PRIMARY KEY ((node_id, cluster_hash, partition), ts)
+	WITH CLUSTERING ORDER BY (ts DESC)
+	AND compaction = {
+        'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
+        'min_threshold': '5',
+        'base_time_seconds': '43200',
+        'max_window_size_seconds': '43200'
+        'tombstone_threshold': '0.9',
+        'unchecked_tombstone_compaction': 'true',
+    };
+);
+
+CREATE TABLE IF NOT EXISTS thingsboard.processed_msg_partitions (
+    node_id         timeuuid,
+    clustered_hash    bigint,
+    partition       bigint,
+	PRIMARY KEY ((node_id, cluster_hash), partition)
+	WITH CLUSTERING ORDER BY (partition DESC)
+	AND compaction = {
+        'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
+        'min_threshold': '5',
+        'base_time_seconds': '43200',
+        'max_window_size_seconds': '43200'
+        'tombstone_threshold': '0.9',
+        'unchecked_tombstone_compaction': 'true',
+    };
+);

@@ -15,15 +15,15 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Data;
+import com.google.common.util.concurrent.ListenableFuture;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Data
-public class TbNodeConfiguration {
+import java.util.UUID;
 
-    private JsonNode data;
+public interface MsqQueue {
 
+    ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusteredHash);
+
+    ListenableFuture<Void> ack(TbMsg msg, UUID nodeId, long clusteredHash);
+
+    Iterable<TbMsg> findUnprocessed(UUID nodeId, long clusteredHash);
 }
