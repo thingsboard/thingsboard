@@ -111,6 +111,27 @@ coap:
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
   timeout: "${COAP_TIMEOUT:10000}"
 
+#Quota parameters
+quota:
+  host:
+    # Max allowed number of API requests in interval for single host
+    limit: "${QUOTA_HOST_LIMIT:10000}"
+    # Interval duration
+    intervalMs: "${QUOTA_HOST_INTERVAL_MS:60000}"
+    # Maximum silence duration for host after which Host removed from QuotaService. Must be bigger than intervalMs
+    ttlMs: "${QUOTA_HOST_TTL_MS:60000}"
+    # Interval for scheduled task that cleans expired records. TTL is used for expiring
+    cleanPeriodMs: "${QUOTA_HOST_CLEAN_PERIOD_MS:300000}"
+    # Enable Host API Limits
+    enabled: "${QUOTA_HOST_ENABLED:false}"
+    # Array of whitelist hosts
+    whitelist: "${QUOTA_HOST_WHITELIST:localhost,127.0.0.1}"
+    # Array of blacklist hosts
+    blacklist: "${QUOTA_HOST_BLACKLIST:}"
+  log:
+    topSize: 10
+    intervalMin: 2
+
 database:
   type: "${DATABASE_TYPE:sql}" # cassandra OR sql
 
@@ -193,26 +214,11 @@ actors:
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 
-# Cache parameters
 cache:
-  # Enable/disable cache functionality.
-  enabled: "${CACHE_ENABLED:false}"
-  device_credentials:
-    # Default time to store device credentials in cache, in seconds
-    time_to_live: "${CACHE_DEVICE_CREDENTIAL_TTL:3600}"
-    # Maximum size of the map. When maximum size is reached, the map is evicted based on the policy defined.
-    max_size:
-      # Max size policy options:
-      # PER_NODE: Maximum number of map entries in each JVM.
-      # PER_PARTITION: Maximum number of map entries within each partition.
-      # USED_HEAP_SIZE: Maximum used heap size in megabytes for each JVM.
-      # USED_HEAP_PERCENTAGE: Maximum used heap size percentage for each JVM.
-      # FREE_HEAP_SIZE: Minimum free heap size in megabytes for each JVM.
-      # FREE_HEAP_PERCENTAGE: Minimum free heap size percentage for each JVM.
-      policy: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_POLICY:PER_NODE}"
-      size: "${CACHE_DEVICE_CREDENTIAL_MAX_SIZE_SIZE:1000000}"
+  # caffeine or redis
+  type: "${CACHE_TYPE:caffeine}"
 
-caching:
+caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
@@ -223,6 +229,15 @@ caching:
     devices:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+
+redis:
+  # standalone or cluster
+  connection:
+    type: standalone
+    host: "${REDIS_HOST:localhost}"
+    port: "${REDIS_PORT:6379}"
+    db: "${REDIS_DB:0}"
+    password: "${REDIS_PASSWORD:}"
 
 # Check new version updates parameters
 updates:

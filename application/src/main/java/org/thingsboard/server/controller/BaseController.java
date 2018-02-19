@@ -130,6 +130,10 @@ public abstract class BaseController {
     @Autowired
     protected AuditLogService auditLogService;
 
+    @ExceptionHandler(Exception.class)
+    public void handleException(Exception ex, HttpServletResponse response) {
+        errorResponseHandler.handle(ex, response);
+    }
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {

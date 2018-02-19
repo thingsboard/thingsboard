@@ -429,12 +429,12 @@ public final class PluginProcessingContext implements PluginContext {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType) {
-        return this.pluginCtx.relationService.findByFromAndType(from, relationType, RelationTypeGroup.COMMON);
+        return this.pluginCtx.relationService.findByFromAndTypeAsync(from, relationType, RelationTypeGroup.COMMON);
     }
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByToAndType(EntityId from, String relationType) {
-        return this.pluginCtx.relationService.findByToAndType(from, relationType, RelationTypeGroup.COMMON);
+        return this.pluginCtx.relationService.findByToAndTypeAsync(from, relationType, RelationTypeGroup.COMMON);
     }
 
     @Override

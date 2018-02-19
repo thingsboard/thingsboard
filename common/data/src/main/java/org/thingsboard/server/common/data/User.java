@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
-public class User extends SearchTextBased<UserId> implements HasName {
+public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -35,7 +35,6 @@ public class User extends SearchTextBased<UserId> implements HasName {
     private Authority authority;
     private String firstName;
     private String lastName;
-    private transient JsonNode additionalInfo;
 
     public User() {
         super();
@@ -53,7 +52,6 @@ public class User extends SearchTextBased<UserId> implements HasName {
         this.authority = user.getAuthority();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
-        this.additionalInfo = user.getAdditionalInfo();
     }
 
     public TenantId getTenantId() {
@@ -110,14 +108,6 @@ public class User extends SearchTextBased<UserId> implements HasName {
         this.lastName = lastName;
     }
 
-    public JsonNode getAdditionalInfo() {
-        return additionalInfo;
-    }
-
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
-    }
-    
     @Override
     public String getSearchText() {
         return getEmail();
@@ -139,7 +129,7 @@ public class User extends SearchTextBased<UserId> implements HasName {
         builder.append(", lastName=");
         builder.append(lastName);
         builder.append(", additionalInfo=");
-        builder.append(additionalInfo);
+        builder.append(getAdditionalInfo());
         builder.append(", createdTime=");
         builder.append(createdTime);
         builder.append(", id=");

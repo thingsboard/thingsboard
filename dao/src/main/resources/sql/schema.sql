@@ -59,7 +59,6 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_type varchar(255),
     action_data varchar(255),
     action_status varchar(255),
-    search_text varchar(255),
     action_failure_details varchar
 );
 
