@@ -20,4 +20,12 @@ md-card.tb-login-card {
   @media (min-width: $layout-breakpoint-sm) {
     width: 450px !important;
   }
+  md-card-title {
+    img.tb-login-logo {
+      height: 50px;
+    }
+  }
+  md-card-content {
+    margin-top: -50px;
+  }
 }
