@@ -117,6 +117,10 @@ public abstract class BaseController {
     @Autowired
     protected RelationService relationService;
 
+    @ExceptionHandler(Exception.class)
+    public void handleException(Exception ex, HttpServletResponse response) {
+        errorResponseHandler.handle(ex, response);
+    }
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {

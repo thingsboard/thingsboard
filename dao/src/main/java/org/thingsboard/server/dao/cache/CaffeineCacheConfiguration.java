@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Ticker;
 import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -33,10 +34,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Configuration
-@ConfigurationProperties(prefix = "caching")
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
+@ConfigurationProperties(prefix = "caffeine")
 @EnableCaching
 @Data
-public class ServiceCacheConfiguration {
+public class CaffeineCacheConfiguration {
 
     private Map<String, CacheSpecs> specs;
 

@@ -31,7 +31,9 @@ public interface RelationService {
 
     ListenableFuture<Boolean> checkRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<EntityRelation> getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+    EntityRelation getRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+
+    ListenableFuture<EntityRelation> getRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     boolean saveRelation(EntityRelation relation);
 
@@ -49,17 +51,25 @@ public interface RelationService {
 
     ListenableFuture<Boolean> deleteEntityRelationsAsync(EntityId entity);
 
-    ListenableFuture<List<EntityRelation>> findByFrom(EntityId from, RelationTypeGroup typeGroup);
+    List<EntityRelation> findByFrom(EntityId from, RelationTypeGroup typeGroup);
+
+    ListenableFuture<List<EntityRelation>> findByFromAsync(EntityId from, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelationInfo>> findInfoByFrom(EntityId from, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup);
+    List<EntityRelation> findByFromAndType(EntityId from, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findByTo(EntityId to, RelationTypeGroup typeGroup);
+    ListenableFuture<List<EntityRelation>> findByFromAndTypeAsync(EntityId from, String relationType, RelationTypeGroup typeGroup);
+
+    List<EntityRelation> findByTo(EntityId to, RelationTypeGroup typeGroup);
+
+    ListenableFuture<List<EntityRelation>> findByToAsync(EntityId to, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelationInfo>> findInfoByTo(EntityId to, RelationTypeGroup typeGroup);
 
-    ListenableFuture<List<EntityRelation>> findByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup);
+    List<EntityRelation> findByToAndType(EntityId to, String relationType, RelationTypeGroup typeGroup);
+
+    ListenableFuture<List<EntityRelation>> findByToAndTypeAsync(EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<List<EntityRelation>> findByQuery(EntityRelationsQuery query);
 
