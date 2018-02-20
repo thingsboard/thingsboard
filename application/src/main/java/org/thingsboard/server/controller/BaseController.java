@@ -117,11 +117,6 @@ public abstract class BaseController {
     @Autowired
     protected RelationService relationService;
 
-    @ExceptionHandler(Exception.class)
-    public void handleException(Exception ex, HttpServletResponse response) {
-        errorResponseHandler.handle(ex, response);
-    }
-
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
         errorResponseHandler.handle(ex, response);
@@ -133,7 +128,7 @@ public abstract class BaseController {
 
     private ThingsboardException handleException(Exception exception, boolean logException) {
         if (logException) {
-            log.error("Error [{}]", exception.getMessage());
+            log.error("Error [{}]", exception.getMessage(), exception);
         }
 
         String cause = "";
