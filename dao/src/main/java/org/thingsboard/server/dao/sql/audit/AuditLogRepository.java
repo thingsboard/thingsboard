@@ -15,46 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.audit;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 
-import java.util.List;
+public interface AuditLogRepository extends CrudRepository<AuditLogEntity, String>, JpaSpecificationExecutor<AuditLogEntity> {
 
-public interface AuditLogRepository extends CrudRepository<AuditLogEntity, String> {
-
-    @Query("SELECT al FROM AuditLogEntity al WHERE al.tenantId = :tenantId " +
-            "AND al.id > :idOffset ORDER BY al.id")
-    List<AuditLogEntity> findByTenantId(@Param("tenantId") String tenantId,
-                                        @Param("idOffset") String idOffset,
-                                        Pageable pageable);
-
-    @Query("SELECT al FROM AuditLogEntity al WHERE al.tenantId = :tenantId " +
-            "AND al.entityType = :entityType " +
-            "AND al.entityId = :entityId " +
-            "AND al.id > :idOffset ORDER BY al.id")
-    List<AuditLogEntity> findByTenantIdAndEntityId(@Param("tenantId") String tenantId,
-                                                   @Param("entityId") String entityId,
-                                                   @Param("entityType") EntityType entityType,
-                                                   @Param("idOffset") String idOffset,
-                                                   Pageable pageable);
-
-    @Query("SELECT al FROM AuditLogEntity al WHERE al.tenantId = :tenantId " +
-            "AND al.customerId = :customerId " +
-            "AND al.id > :idOffset ORDER BY al.id")
-    List<AuditLogEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
-                                                     @Param("customerId") String customerId,
-                                                     @Param("idOffset") String idOffset,
-                                                     Pageable pageable);
-
-    @Query("SELECT al FROM AuditLogEntity al WHERE al.tenantId = :tenantId " +
-            "AND al.userId = :userId " +
-            "AND al.id > :idOffset ORDER BY al.id")
-    List<AuditLogEntity> findByTenantIdAndUserId(@Param("tenantId") String tenantId,
-                                                 @Param("userId") String userId,
-                                                 @Param("idOffset") String idOffset,
-                                                 Pageable pageable);
 }

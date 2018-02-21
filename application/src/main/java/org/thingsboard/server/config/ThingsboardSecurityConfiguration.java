@@ -40,6 +40,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.rest.RestLoginProcessingFilter;
@@ -197,5 +198,10 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
             source.setCorsConfigurations(mvcCorsProperties.getMappings());
             return new CorsFilter(source);
         }
+    }
+
+    @Bean
+    public AuditLogLevelFilter auditLogLevelFilter(@Autowired AuditLogLevelProperties auditLogLevelProperties) {
+        return new AuditLogLevelFilter(auditLogLevelProperties.getMask());
     }
 }

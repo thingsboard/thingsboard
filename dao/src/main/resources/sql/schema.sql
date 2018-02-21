@@ -57,9 +57,9 @@ CREATE TABLE IF NOT EXISTS audit_log (
     user_id varchar(31),
     user_name varchar(255),
     action_type varchar(255),
-    action_data varchar(255),
+    action_data varchar(1000000),
     action_status varchar(255),
-    action_failure_details varchar
+    action_failure_details varchar(1000000)
 );
 
 CREATE TABLE IF NOT EXISTS attribute_kv (

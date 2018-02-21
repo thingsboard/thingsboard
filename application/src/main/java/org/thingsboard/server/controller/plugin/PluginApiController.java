@@ -30,6 +30,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -68,7 +69,10 @@ public class PluginApiController extends BaseController {
                 if(tenantId != null && ModelConstants.NULL_UUID.equals(tenantId.getId())){
                     tenantId = null;
                 }
-                PluginApiCallSecurityContext securityCtx = new PluginApiCallSecurityContext(pluginMd.getTenantId(), pluginMd.getId(), tenantId, customerId);
+                UserId userId = getCurrentUser().getId();
+                String userName = getCurrentUser().getName();
+                PluginApiCallSecurityContext securityCtx = new PluginApiCallSecurityContext(pluginMd.getTenantId(), pluginMd.getId(),
+                        tenantId, customerId, userId, userName);
                 actorService.process(new BasicPluginRestMsg(securityCtx, new RestRequest(requestEntity, request), result));
             } else {
                 result.setResult(new ResponseEntity<>(HttpStatus.FORBIDDEN));

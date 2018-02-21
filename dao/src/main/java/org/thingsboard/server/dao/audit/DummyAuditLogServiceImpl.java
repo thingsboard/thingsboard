@@ -19,14 +19,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
@@ -57,7 +56,8 @@ public class DummyAuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> logEntityAction(User user, EntityId entityId, String entityName, CustomerId customerId, ActionType actionType, JsonNode actionData, ActionStatus actionStatus, String actionFailureDetails) {
-        return Futures.immediateFuture(Collections.emptyList());
+    public <E extends BaseData<I> & HasName, I extends UUIDBased & EntityId> ListenableFuture<List<Void>> logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity, ActionType actionType, Exception e, Object... additionalInfo) {
+        return null;
     }
+
 }

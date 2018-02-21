@@ -156,6 +156,63 @@ export default angular.module('thingsboard.types', [])
                     color: "green"
                 }
             },
+            auditLogActionType: {
+                "ADDED": {
+                    name: "audit-log.type-added"
+                },
+                "DELETED": {
+                    name: "audit-log.type-deleted"
+                },
+                "UPDATED": {
+                    name: "audit-log.type-updated"
+                },
+                "ATTRIBUTES_UPDATED": {
+                    name: "audit-log.type-attributes-updated"
+                },
+                "ATTRIBUTES_DELETED": {
+                    name: "audit-log.type-attributes-deleted"
+                },
+                "RPC_CALL": {
+                    name: "audit-log.type-rpc-call"
+                },
+                "CREDENTIALS_UPDATED": {
+                    name: "audit-log.type-credentials-updated"
+                },
+                "ASSIGNED_TO_CUSTOMER": {
+                    name: "audit-log.type-assigned-to-customer"
+                },
+                "UNASSIGNED_FROM_CUSTOMER": {
+                    name: "audit-log.type-unassigned-from-customer"
+                },
+                "ACTIVATED": {
+                    name: "audit-log.type-activated"
+                },
+                "SUSPENDED": {
+                    name: "audit-log.type-suspended"
+                },
+                "CREDENTIALS_READ": {
+                    name: "audit-log.type-credentials-read"
+                },
+                "ATTRIBUTES_READ": {
+                    name: "audit-log.type-attributes-read"
+                }
+            },
+            auditLogActionStatus: {
+                "SUCCESS": {
+                    value: "SUCCESS",
+                    name: "audit-log.status-success"
+                },
+                "FAILURE": {
+                    value: "FAILURE",
+                    name: "audit-log.status-failure"
+                }
+            },
+            auditLogMode: {
+                tenant: "tenant",
+                entity: "entity",
+                user: "user",
+                customer: "customer"
+            },
             aliasFilterType: {
                 singleEntity: {
                     value: 'singleEntity',

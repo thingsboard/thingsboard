@@ -306,6 +306,14 @@ audit_log:
   by_tenant_partitioning: "${AUDIT_LOG_BY_TENANT_PARTITIONING:MONTHS}"
   # Number of days as history period if startTime and endTime are not specified
   default_query_period: "${AUDIT_LOG_DEFAULT_QUERY_PERIOD:30}"
-  exceptions:
-    # Enable/disable audit log functionality for exceptions.
-    enabled: "${AUDIT_LOG_EXCEPTIONS_ENABLED:true}"
+  # Logging levels per each entity type.
+  # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
+  logging_level:
+    mask:
+      "device": "W"
+      "asset": "W"
+      "dashboard": "W"
+      "customer": "W"
+      "user": "W"
+      "rule": "W"
+      "plugin": "W"

@@ -17,6 +17,9 @@ package org.thingsboard.server.dao.audit;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -24,16 +27,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.User;
+import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.List;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
@@ -44,11 +55,19 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @ConditionalOnProperty(prefix = "audit_log", value = "enabled", havingValue = "true")
 public class AuditLogServiceImpl implements AuditLogService {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final int INSERTS_PER_ENTRY = 3;
 
     @Autowired
+    private AuditLogLevelFilter auditLogLevelFilter;
+
+    @Autowired
     private AuditLogDao auditLogDao;
+
+    @Autowired
+    private EntityService entityService;
 
     @Override
     public TimePageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink) {
@@ -86,25 +105,149 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> logEntityAction(User user,
-                                                        EntityId entityId,
-                                                        String entityName,
-                                                        CustomerId customerId,
-                                                        ActionType actionType,
-                                                        JsonNode actionData,
-                                                        ActionStatus actionStatus,
-                                                        String actionFailureDetails) {
-        return logAction(
-                user.getTenantId(),
-                entityId,
-                entityName,
-                customerId,
-                user.getId(),
-                user.getName(),
-                actionType,
-                actionData,
-                actionStatus,
-                actionFailureDetails);
+    public <E extends BaseData<I> & HasName, I extends UUIDBased & EntityId> ListenableFuture<List<Void>>
+        logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
+                               ActionType actionType, Exception e, Object... additionalInfo) {
+        if (canLog(entityId.getEntityType(), actionType)) {
+            JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
+            ActionStatus actionStatus = ActionStatus.SUCCESS;
+            String failureDetails = "";
+            String entityName = "";
+            if (entity != null) {
+                entityName = entity.getName();
+            } else {
+                try {
+                    entityName = entityService.fetchEntityNameAsync(entityId).get();
+                } catch (Exception ex) {}
+            }
+            if (e != null) {
+                actionStatus = ActionStatus.FAILURE;
+                failureDetails = getFailureStack(e);
+            }
+            if (actionType == ActionType.RPC_CALL) {
+                String rpcErrorString = extractParameter(String.class, additionalInfo);
+                if (!StringUtils.isEmpty(rpcErrorString)) {
+                    actionStatus = ActionStatus.FAILURE;
+                    failureDetails = rpcErrorString;
+                }
+            }
+            return logAction(tenantId,
+                    entityId,
+                    entityName,
+                    customerId,
+                    userId,
+                    userName,
+                    actionType,
+                    actionData,
+                    actionStatus,
+                    failureDetails);
+        } else {
+            return null;
+        }
+    }
+
+    private <E extends BaseData<I> & HasName, I extends UUIDBased & EntityId> JsonNode constructActionData(I entityId,
+                                                                                                           E entity,
+                                                                                                           ActionType actionType,
+                                                                                                           Object... additionalInfo) {
+        ObjectNode actionData = objectMapper.createObjectNode();
+        switch(actionType) {
+            case ADDED:
+            case UPDATED:
+                ObjectNode entityNode = objectMapper.valueToTree(entity);
+                if (entityId.getEntityType() == EntityType.DASHBOARD) {
+                    entityNode.put("configuration", "");
+                }
+                actionData.set("entity", entityNode);
+                break;
+            case DELETED:
+            case ACTIVATED:
+            case SUSPENDED:
+            case CREDENTIALS_READ:
+                String strEntityId = extractParameter(String.class, additionalInfo);
+                actionData.put("entityId", strEntityId);
+                break;
+            case ATTRIBUTES_UPDATED:
+                actionData.put("entityId", entityId.toString());
+                String scope = extractParameter(String.class, 0, additionalInfo);
+                List<AttributeKvEntry> attributes = extractParameter(List.class, 1, additionalInfo);
+                actionData.put("scope", scope);
+                ObjectNode attrsNode = objectMapper.createObjectNode();
+                if (attributes != null) {
+                    for (AttributeKvEntry attr : attributes) {
+                        attrsNode.put(attr.getKey(), attr.getValueAsString());
+                    }
+                }
+                actionData.set("attributes", attrsNode);
+                break;
+            case ATTRIBUTES_DELETED:
+            case ATTRIBUTES_READ:
+                actionData.put("entityId", entityId.toString());
+                scope = extractParameter(String.class, 0, additionalInfo);
+                actionData.put("scope", scope);
+                List<String> keys = extractParameter(List.class, 1, additionalInfo);
+                ArrayNode attrsArrayNode =  actionData.putArray("attributes");
+                if (keys != null) {
+                    keys.forEach(attrsArrayNode::add);
+                }
+                break;
+            case RPC_CALL:
+                actionData.put("entityId", entityId.toString());
+                Boolean oneWay = extractParameter(Boolean.class, 1, additionalInfo);
+                String method = extractParameter(String.class, 2, additionalInfo);
+                String params = extractParameter(String.class, 3, additionalInfo);
+                actionData.put("oneWay", oneWay);
+                actionData.put("method", method);
+                actionData.put("params", params);
+                break;
+            case CREDENTIALS_UPDATED:
+                actionData.put("entityId", entityId.toString());
+                DeviceCredentials deviceCredentials = extractParameter(DeviceCredentials.class, additionalInfo);
+                actionData.set("credentials", objectMapper.valueToTree(deviceCredentials));
+                break;
+            case ASSIGNED_TO_CUSTOMER:
+                strEntityId = extractParameter(String.class, 0, additionalInfo);
+                String strCustomerId = extractParameter(String.class, 1, additionalInfo);
+                String strCustomerName = extractParameter(String.class, 2, additionalInfo);
+                actionData.put("entityId", strEntityId);
+                actionData.put("assignedCustomerId", strCustomerId);
+                actionData.put("assignedCustomerName", strCustomerName);
+                break;
+            case UNASSIGNED_FROM_CUSTOMER:
+                strEntityId = extractParameter(String.class, 0, additionalInfo);
+                strCustomerId = extractParameter(String.class, 1, additionalInfo);
+                strCustomerName = extractParameter(String.class, 2, additionalInfo);
+                actionData.put("entityId", strEntityId);
+                actionData.put("unassignedCustomerId", strCustomerId);
+                actionData.put("unassignedCustomerName", strCustomerName);
+                break;
+        }
+        return actionData;
+    }
+
+    private <T> T extractParameter(Class<T> clazz, Object... additionalInfo) {
+        return extractParameter(clazz, 0, additionalInfo);
+    }
+
+    private <T> T extractParameter(Class<T> clazz, int index, Object... additionalInfo) {
+        T result = null;
+        if (additionalInfo != null && additionalInfo.length > index) {
+            Object paramObject = additionalInfo[index];
+            if (clazz.isInstance(paramObject)) {
+                result = clazz.cast(paramObject);
+            }
+        }
+        return result;
+    }
+
+    private String getFailureStack(Exception e) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
+    }
+
+    private boolean canLog(EntityType entityType, ActionType actionType) {
+        return auditLogLevelFilter.logEnabled(entityType, actionType);
     }
 
     private AuditLog createAuditLogEntry(TenantId tenantId,

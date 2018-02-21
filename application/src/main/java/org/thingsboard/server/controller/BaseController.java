@@ -79,9 +79,6 @@ public abstract class BaseController {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
 
-    @Value("${audit_log.exceptions.enabled}")
-    private boolean auditLogExceptionsEnabled;
-
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
 
@@ -130,22 +127,12 @@ public abstract class BaseController {
     @Autowired
     protected AuditLogService auditLogService;
 
-    @ExceptionHandler(Exception.class)
-    public void handleException(Exception ex, HttpServletResponse response) {
-        errorResponseHandler.handle(ex, response);
-    }
-
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
         errorResponseHandler.handle(ex, response);
     }
 
     ThingsboardException handleException(Exception exception) {
-        return handleException(exception, true);
-    }
-
-    ThingsboardException handleException(Exception exception, ActionType actionType, String actionData) {
-        logExceptionToAuditLog(exception, actionType, actionData);
         return handleException(exception, true);
     }
 
@@ -168,36 +155,6 @@ public abstract class BaseController {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else {
             return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
-        }
-    }
-
-    private void logExceptionToAuditLog(Exception exception, ActionType actionType, String actionData) {
-        try {
-            if (auditLogExceptionsEnabled) {
-                SecurityUser currentUser = getCurrentUser();
-                EntityId entityId;
-                CustomerId customerId;
-                if (!currentUser.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                    entityId = currentUser.getCustomerId();
-                    customerId = currentUser.getCustomerId();
-                } else {
-                    entityId = currentUser.getTenantId();
-                    customerId = new CustomerId(ModelConstants.NULL_UUID);
-                }
-
-                JsonNode actionDataNode = new ObjectMapper().createObjectNode().put("actionData", actionData);
-
-                auditLogService.logEntityAction(currentUser,
-                        entityId,
-                        null,
-                        customerId,
-                        actionType,
-                        actionDataNode,
-                        ActionStatus.FAILURE,
-                        exception.getMessage());
-            }
-        } catch (Exception e) {
-            log.error("Exception happend during saving to audit log", e);
         }
     }
 
@@ -594,23 +551,19 @@ public abstract class BaseController {
         return baseUrl;
     }
 
-    protected void logEntityDeleted(EntityId entityId, String entityName, CustomerId customerId) throws ThingsboardException {
-        logEntitySuccess(entityId, entityName, customerId, ActionType.DELETED);
+    protected <I extends UUIDBased & EntityId> I emptyId(EntityType entityType) {
+        return (I)EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
-    protected void logEntityAddedOrUpdated(EntityId entityId, String entityName, CustomerId customerId, boolean isAddAction) throws ThingsboardException {
-        logEntitySuccess(entityId, entityName, customerId, isAddAction ? ActionType.ADDED : ActionType.UPDATED);
+    protected <E extends BaseData<I> & HasName,
+            I extends UUIDBased & EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
+                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+        User user = getCurrentUser();
+        if (customerId == null || customerId.isNullUid()) {
+            customerId = user.getCustomerId();
+        }
+        auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
 
-    protected void logEntitySuccess(EntityId entityId, String entityName, CustomerId customerId, ActionType actionType) throws ThingsboardException {
-        auditLogService.logEntityAction(
-                getCurrentUser(),
-                entityId,
-                entityName,
-                customerId,
-                actionType,
-                null,
-                ActionStatus.SUCCESS,
-                null);
-    }
+
 }
