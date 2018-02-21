@@ -138,7 +138,7 @@ public abstract class BaseController {
 
     private ThingsboardException handleException(Exception exception, boolean logException) {
         if (logException) {
-            log.error("Error [{}]", exception.getMessage());
+            log.error("Error [{}]", exception.getMessage(), exception);
         }
 
         String cause = "";
