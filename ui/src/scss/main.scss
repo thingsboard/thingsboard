@@ -203,6 +203,19 @@ md-sidenav {
  * THINGSBOARD SPECIFIC
  ***********************/
 
+label {
+  &.tb-title {
+    pointer-events: none;
+    color: #666;
+    font-size: 13px;
+    font-weight: 400;
+    padding-bottom: 15px;
+    &.no-padding {
+      padding-bottom: 0px;
+    }
+  }
+}
+
 .tb-noselect {
   -webkit-touch-callout: none; /* iOS Safari */
   -webkit-user-select: none; /* Safari */

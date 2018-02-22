@@ -42,6 +42,8 @@ export default function UserController(userService, toast, $scope, $mdDialog, $d
 
     var vm = this;
 
+    vm.types = types;
+
     vm.userGridConfig = {
         deleteItemTitleFunc: deleteUserTitle,
         deleteItemContentFunc: deleteUserText,

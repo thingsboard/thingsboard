@@ -77,7 +77,7 @@ public class RpcRuleMsgHandler implements RuleMsgHandler {
                             @Override
                             public void onSuccess(PluginContext ctx, Void value) {
                                 ctx.sendRpcRequest(new ToDeviceRpcRequest(UUID.randomUUID(),
-                                        tenantId, tmpId, true, expirationTime, body)
+                                        null, tenantId, tmpId, true, expirationTime, body)
                                 );
                                 log.trace("[{}] Sent RPC Call Action msg", tmpId);
                             }

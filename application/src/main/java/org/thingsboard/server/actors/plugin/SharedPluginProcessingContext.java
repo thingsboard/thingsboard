@@ -27,6 +27,7 @@ import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.plugin.PluginService;
@@ -63,6 +64,7 @@ public final class SharedPluginProcessingContext {
     final ClusterRpcService rpcService;
     final ClusterRoutingService routingService;
     final RelationService relationService;
+    final AuditLogService auditLogService;
     final PluginId pluginId;
     final TenantId tenantId;
 
@@ -86,6 +88,7 @@ public final class SharedPluginProcessingContext {
         this.customerService = sysContext.getCustomerService();
         this.tenantService = sysContext.getTenantService();
         this.relationService = sysContext.getRelationService();
+        this.auditLogService = sysContext.getAuditLogService();
     }
 
     public PluginId getPluginId() {

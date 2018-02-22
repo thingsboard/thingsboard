@@ -152,7 +152,7 @@ public class DeviceMessagingRuleMsgHandler implements RuleMsgHandler {
                         pendingMsgs.put(uid, requestMd);
                         log.trace("[{}] Forwarding {} to [{}]", uid, params, targetDeviceId);
                         ToDeviceRpcRequestBody requestBody = new ToDeviceRpcRequestBody(ON_MSG_METHOD_NAME, GSON.toJson(params.get("body")));
-                        ctx.sendRpcRequest(new ToDeviceRpcRequest(uid, targetDevice.getTenantId(), targetDeviceId, oneWay, System.currentTimeMillis() + timeout, requestBody));
+                        ctx.sendRpcRequest(new ToDeviceRpcRequest(uid, null, targetDevice.getTenantId(), targetDeviceId, oneWay, System.currentTimeMillis() + timeout, requestBody));
                     } else {
                         replyWithError(ctx, requestMd, RpcError.FORBIDDEN);
                     }
