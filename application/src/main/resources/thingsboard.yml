@@ -310,10 +310,10 @@ audit_log:
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
   logging_level:
     mask:
-      "device": "W"
-      "asset": "W"
-      "dashboard": "W"
-      "customer": "W"
-      "user": "W"
-      "rule": "W"
-      "plugin": "W"
+      "device": "${AUDIT_LOG_MASK_DEVICE:W}"
+      "asset": "${AUDIT_LOG_MASK_ASSET:W}"
+      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}"
+      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}"
+      "user": "${AUDIT_LOG_MASK_USER:W}"
+      "rule": "${AUDIT_LOG_MASK_RULE:W}"
+      "plugin": "${AUDIT_LOG_MASK_PLUGIN:W}"

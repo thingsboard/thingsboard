@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.model.nosql;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -114,10 +115,11 @@ public class AuditLogEntity implements BaseEntity<AuditLog> {
     @Override
     public AuditLog toData() {
         AuditLog auditLog = new AuditLog(new AuditLogId(id));
+        auditLog.setCreatedTime(UUIDs.unixTimestamp(id));
         if (tenantId != null) {
             auditLog.setTenantId(new TenantId(tenantId));
         }
-        if (entityId != null & entityType != null) {
+        if (entityId != null && entityType != null) {
             auditLog.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         }
         if (customerId != null) {

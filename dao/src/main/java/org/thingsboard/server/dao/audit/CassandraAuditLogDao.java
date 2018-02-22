@@ -48,10 +48,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -135,12 +132,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
 
         long partition = toPartitionTs(LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
         BoundStatement stmt = getSaveByTenantStmt().bind();
-        stmt = stmt.setUUID(0, auditLog.getId().getId())
-                .setUUID(1, auditLog.getTenantId().getId())
-                .setUUID(2, auditLog.getEntityId().getId())
-                .setString(3, auditLog.getEntityId().getEntityType().name())
-                .setString(4, auditLog.getActionType().name())
-                .setLong(5, partition);
+        stmt = setSaveStmtVariables(stmt, auditLog, partition);
         return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
@@ -149,7 +141,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
         log.debug("Save saveByTenantIdAndEntityId [{}] ", auditLog);
 
         BoundStatement stmt = getSaveByTenantIdAndEntityIdStmt().bind();
-        stmt = setSaveStmtVariables(stmt, auditLog);
+        stmt = setSaveStmtVariables(stmt, auditLog, -1);
         return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
@@ -158,7 +150,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
         log.debug("Save saveByTenantIdAndCustomerId [{}] ", auditLog);
 
         BoundStatement stmt = getSaveByTenantIdAndCustomerIdStmt().bind();
-        stmt = setSaveStmtVariables(stmt, auditLog);
+        stmt = setSaveStmtVariables(stmt, auditLog, -1);
         return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
@@ -167,12 +159,12 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
         log.debug("Save saveByTenantIdAndUserId [{}] ", auditLog);
 
         BoundStatement stmt = getSaveByTenantIdAndUserIdStmt().bind();
-        stmt = setSaveStmtVariables(stmt, auditLog);
+        stmt = setSaveStmtVariables(stmt, auditLog, -1);
         return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
-    private BoundStatement setSaveStmtVariables(BoundStatement stmt, AuditLog auditLog) {
-        return stmt.setUUID(0, auditLog.getId().getId())
+    private BoundStatement setSaveStmtVariables(BoundStatement stmt, AuditLog auditLog, long partition) {
+         stmt.setUUID(0, auditLog.getId().getId())
                 .setUUID(1, auditLog.getTenantId().getId())
                 .setUUID(2, auditLog.getCustomerId().getId())
                 .setUUID(3, auditLog.getEntityId().getId())
@@ -184,6 +176,10 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
                 .setString(9, auditLog.getActionData() != null ? auditLog.getActionData().toString() : null)
                 .setString(10, auditLog.getActionStatus().name())
                 .setString(11, auditLog.getActionFailureDetails());
+        if (partition > -1) {
+            stmt.setLong(12, partition);
+        }
+        return stmt;
     }
 
     @Override
@@ -198,42 +194,57 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
         return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
+    private PreparedStatement getSaveByTenantStmt() {
+        if (saveByTenantStmt == null) {
+            saveByTenantStmt = getSaveByTenantIdAndCFName(ModelConstants.AUDIT_LOG_BY_TENANT_ID_CF, true);
+        }
+        return saveByTenantStmt;
+    }
+
     private PreparedStatement getSaveByTenantIdAndEntityIdStmt() {
         if (saveByTenantIdAndEntityIdStmt == null) {
-            saveByTenantIdAndEntityIdStmt = getSaveByTenantIdAndCFName(ModelConstants.AUDIT_LOG_BY_ENTITY_ID_CF);
+            saveByTenantIdAndEntityIdStmt = getSaveByTenantIdAndCFName(ModelConstants.AUDIT_LOG_BY_ENTITY_ID_CF, false);
         }
         return saveByTenantIdAndEntityIdStmt;
     }
 
     private PreparedStatement getSaveByTenantIdAndCustomerIdStmt() {
         if (saveByTenantIdAndCustomerIdStmt == null) {
-            saveByTenantIdAndCustomerIdStmt = getSaveByTenantIdAndCFName(ModelConstants.AUDIT_LOG_BY_CUSTOMER_ID_CF);
+            saveByTenantIdAndCustomerIdStmt = getSaveByTenantIdAndCFName(ModelConstants.AUDIT_LOG_BY_CUSTOMER_ID_CF, false);
         }
         return saveByTenantIdAndCustomerIdStmt;
     }
 
     private PreparedStatement getSaveByTenantIdAndUserIdStmt() {
         if (saveByTenantIdAndUserIdStmt == null) {
-            saveByTenantIdAndUserIdStmt = getSaveByTenantIdAndCFName(ModelConstants.AUDIT_LOG_BY_USER_ID_CF);
+            saveByTenantIdAndUserIdStmt = getSaveByTenantIdAndCFName(ModelConstants.AUDIT_LOG_BY_USER_ID_CF, false);
         }
         return saveByTenantIdAndUserIdStmt;
     }
 
-    private PreparedStatement getSaveByTenantIdAndCFName(String cfName) {
-        return getSession().prepare(INSERT_INTO + cfName +
-                "(" + ModelConstants.AUDIT_LOG_ID_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_CUSTOMER_ID_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_ENTITY_ID_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_ENTITY_TYPE_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_ENTITY_NAME_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_USER_ID_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_USER_NAME_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_ACTION_TYPE_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_ACTION_DATA_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_ACTION_STATUS_PROPERTY +
-                "," + ModelConstants.AUDIT_LOG_ACTION_FAILURE_DETAILS_PROPERTY + ")" +
-                " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    private PreparedStatement getSaveByTenantIdAndCFName(String cfName, boolean hasPartition) {
+        List columnsList = new ArrayList();
+        columnsList.add(ModelConstants.AUDIT_LOG_ID_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_CUSTOMER_ID_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_ENTITY_ID_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_ENTITY_TYPE_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_ENTITY_NAME_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_USER_ID_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_USER_NAME_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_ACTION_TYPE_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_ACTION_DATA_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_ACTION_STATUS_PROPERTY);
+        columnsList.add(ModelConstants.AUDIT_LOG_ACTION_FAILURE_DETAILS_PROPERTY);
+        if (hasPartition) {
+            columnsList.add(ModelConstants.AUDIT_LOG_PARTITION_PROPERTY);
+        }
+        StringJoiner values = new StringJoiner(",");
+        for (int i=0;i<columnsList.size();i++) {
+            values.add("?");
+        }
+        String statementString = INSERT_INTO + cfName + " (" + String.join(",", columnsList) + ") VALUES (" + values.toString() + ")";
+        return getSession().prepare(statementString);
     }
 
     private PreparedStatement getPartitionInsertStmt() {
@@ -244,20 +255,6 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
                     " VALUES(?, ?)");
         }
         return partitionInsertStmt;
-    }
-
-    private PreparedStatement getSaveByTenantStmt() {
-        if (saveByTenantStmt == null) {
-            saveByTenantStmt = getSession().prepare(INSERT_INTO + ModelConstants.AUDIT_LOG_BY_TENANT_ID_CF +
-                    "(" + ModelConstants.AUDIT_LOG_ID_PROPERTY +
-                    "," + ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY +
-                    "," + ModelConstants.AUDIT_LOG_ENTITY_ID_PROPERTY +
-                    "," + ModelConstants.AUDIT_LOG_ENTITY_TYPE_PROPERTY +
-                    "," + ModelConstants.AUDIT_LOG_ACTION_TYPE_PROPERTY +
-                    "," + ModelConstants.AUDIT_LOG_PARTITION_PROPERTY + ")" +
-                    " VALUES(?, ?, ?, ?, ?, ?)");
-        }
-        return saveByTenantStmt;
     }
 
     private long toPartitionTs(long ts) {
