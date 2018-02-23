@@ -19,20 +19,40 @@ import tinycolor from 'tinycolor2';
 import canvasGauges from 'canvas-gauges';
 import CanvasDigitalGauge from './CanvasDigitalGauge';
 
+import {processGaugePattern, fillGaugePattern} from './widget-utils';
+
 /* eslint-disable angular/angularelement */
 export default class TbCanvasDigitalGauge {
 
     constructor(ctx, canvasId) {
         this.ctx = ctx;
+        this.attributeService = ctx.$scope.$injector.get('attributeService');
+        this.$q = ctx.$scope.$injector.get('$q');
+        this.utils = ctx.$scope.$injector.get('utils');
+        /*var log = this.ctx.$scope.$injector.get('$log');*/
 
         canvasGauges.performance = window.performance; // eslint-disable-line no-undef, angular/window-service
 
         var gaugeElement = $('#'+canvasId, ctx.$container);
         var settings = ctx.settings;
 
+        var allReplaceInfo = [];
+        var allMatchedAttributes;
+
         this.localSettings = {};
+
         this.localSettings.minValue = settings.minValue || 0;
+        this.localSettings.minValueReplaceInfo = processGaugePattern(this.localSettings.minValue);
+        if(this.localSettings.minValueReplaceInfo.variables.length) {
+            allReplaceInfo.push(this.localSettings.minValueReplaceInfo);
+        }
+
         this.localSettings.maxValue = settings.maxValue || 100;
+        this.localSettings.maxValueReplaceInfo = processGaugePattern(this.localSettings.maxValue);
+        if(this.localSettings.maxValueReplaceInfo.variables.length) {
+            allReplaceInfo.push(this.localSettings.maxValueReplaceInfo);
+        }
+
         this.localSettings.gaugeType = settings.gaugeType || 'arc';
         this.localSettings.neonGlowBrightness = settings.neonGlowBrightness || 0;
         this.localSettings.dashThickness = settings.dashThickness || 0;
@@ -43,7 +63,12 @@ export default class TbCanvasDigitalGauge {
 
         this.localSettings.unitTitle = ((settings.showUnitTitle === true) ?
             (settings.unitTitle && settings.unitTitle.length > 0 ?
-                settings.unitTitle : dataKey.label) : '');
+                this.utils.createLabelFromDatasource(this.ctx.datasources[0], settings.unitTitle) : dataKey.label) : '');
+
+        this.localSettings.unitTitleReplaceInfo = processGaugePattern(this.localSettings.unitTitle);
+        if(this.localSettings.unitTitleReplaceInfo.variables.length) {
+            allReplaceInfo.push(this.localSettings.unitTitleReplaceInfo);
+        }
 
         this.localSettings.showTimestamp = settings.showTimestamp == true ? true : false;
         this.localSettings.timestampFormat = settings.timestampFormat && settings.timestampFormat.length ? settings.timestampFormat : 'yyyy-MM-dd HH:mm:ss';
@@ -69,7 +94,12 @@ export default class TbCanvasDigitalGauge {
 
         this.localSettings.title = ((settings.showTitle === true) ?
             (settings.title && settings.title.length > 0 ?
-                settings.title : dataKey.label) : '');
+                this.utils.createLabelFromDatasource(this.ctx.datasources[0], settings.title) : dataKey.label) : '');
+
+        this.localSettings.titleReplaceInfo = processGaugePattern(this.localSettings.title);
+        if(this.localSettings.titleReplaceInfo.variables.length) {
+            allReplaceInfo.push(this.localSettings.titleReplaceInfo);
+        }
 
         this.localSettings.titleFont = {};
         var settingsTitleFont = settings.titleFont;
@@ -83,6 +113,18 @@ export default class TbCanvasDigitalGauge {
                 family = 'Roboto';
             }
             return family;
+        }
+
+        function combineMatchedAttributes(allReplaceInfo) {
+            var attributes = [];
+            for(let i=0; i < allReplaceInfo.length; i++) {
+                for(let j=0; j < allReplaceInfo[i].variables.length; j++) {
+                    if(attributes.indexOf(allReplaceInfo[i].variables[j].attrName) == -1) {
+                        attributes.push(allReplaceInfo[i].variables[j].attrName);
+                    }
+                }
+            }
+            return attributes;
         }
 
         this.localSettings.titleFont.family = getFontFamily(settingsTitleFont);
@@ -127,7 +169,6 @@ export default class TbCanvasDigitalGauge {
         this.localSettings.labelFont.weight = settingsLabelFont.weight ? settingsLabelFont.weight : '500';
         this.localSettings.labelFont.color = settingsLabelFont.color ? settingsLabelFont.color : keyColor;
 
-
         var gaugeData = {
 
             renderTo: gaugeElement[0],
@@ -135,8 +176,6 @@ export default class TbCanvasDigitalGauge {
             gaugeWidthScale: this.localSettings.gaugeWidthScale,
             gaugeColor: this.localSettings.gaugeColor,
             levelColors: this.localSettings.levelColors,
-
-            title: this.localSettings.title,
 
             fontTitleSize: this.localSettings.titleFont.size,
             fontTitleStyle: this.localSettings.titleFont.style,
@@ -162,14 +201,11 @@ export default class TbCanvasDigitalGauge {
             colorLabel: this.localSettings.labelFont.color,
             fontLabel: this.localSettings.labelFont.family,
 
-            minValue: this.localSettings.minValue,
-            maxValue: this.localSettings.maxValue,
             gaugeType: this.localSettings.gaugeType,
             dashThickness: this.localSettings.dashThickness,
             roundedLineCap: this.localSettings.roundedLineCap,
 
             symbol: this.localSettings.units,
-            label: this.localSettings.unitTitle,
             showTimestamp: this.localSettings.showTimestamp,
             hideValue: this.localSettings.hideValue,
             hideMinMax: this.localSettings.hideMinMax,
@@ -187,8 +223,75 @@ export default class TbCanvasDigitalGauge {
 
         };
 
-        this.gauge = new CanvasDigitalGauge(gaugeData).draw();
+        if(allReplaceInfo.length) {
+            allMatchedAttributes = combineMatchedAttributes(allReplaceInfo);
+        }
 
+        if(allMatchedAttributes) {
+            this.getAttributesValues(allMatchedAttributes).then(
+                (attributes) => {
+                    if(this.localSettings.unitTitleReplaceInfo.variables.length) {
+                        this.localSettings.unitTitle = fillGaugePattern(this.localSettings.unitTitle, this.localSettings.unitTitleReplaceInfo, attributes);
+                    }
+                    if(this.localSettings.titleReplaceInfo.variables.length) {
+                        this.localSettings.title = fillGaugePattern(this.localSettings.title, this.localSettings.titleReplaceInfo, attributes);
+                    }
+                    if(this.localSettings.minValueReplaceInfo.variables.length) {
+                        this.localSettings.minValue = fillGaugePattern(this.localSettings.minValue, this.localSettings.minValueReplaceInfo, attributes);
+                    }
+                    if(this.localSettings.maxValueReplaceInfo.variables.length) {
+                        this.localSettings.maxValue = fillGaugePattern(this.localSettings.maxValue, this.localSettings.maxValueReplaceInfo, attributes);
+                    }
+
+                    var updatingObject = {
+                        title: this.localSettings.title,
+                        minValue: (+this.localSettings.minValue) ? this.localSettings.minValue : 0,
+                        maxValue: (+this.localSettings.maxValue) ? this.localSettings.maxValue : 100
+                    };
+                    if(!this.localSettings.showTimestamp) {
+                        updatingObject.label = this.localSettings.unitTitle;
+                    }
+                    this.gauge.update(updatingObject);
+                },
+                () => {
+                    var updatingObject = {
+                        title: this.localSettings.title,
+                        minValue: (+this.localSettings.minValue) ? this.localSettings.minValue : 0,
+                        maxValue: (+this.localSettings.maxValue) ? this.localSettings.maxValue : 100
+                    };
+                    if(!this.localSettings.showTimestamp) {
+                        updatingObject.label = this.localSettings.unitTitle;
+                    }
+                    this.gauge.update(updatingObject);
+                }
+            );
+        } else {
+            gaugeData.label = this.localSettings.unitTitle;
+            gaugeData.title = this.localSettings.title;
+            gaugeData.minValue = (+this.localSettings.minValue) ? this.localSettings.minValue : 0;
+            gaugeData.maxValue = (+this.localSettings.maxValue) ? this.localSettings.maxValue : 100;
+        }
+
+        this.gauge = new CanvasDigitalGauge(gaugeData).draw();
+    }
+
+    getAttributesValues(matchedAttributes) {
+        var datasource = this.ctx.datasources[0];
+        var deferred = this.$q.defer();
+        this.attributeService.getEntityAttributesValues(datasource.entityType, datasource.entityId,
+            '', matchedAttributes, {ignoreLoading: true}).then(
+            (attributes) => {
+                if (attributes && attributes.length) {
+                    deferred.resolve(attributes);
+                } else {
+                    deferred.reject();
+                }
+            },
+            () => {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
     }
 
     update() {
@@ -231,13 +334,13 @@ export default class TbCanvasDigitalGauge {
                 "properties": {
                     "minValue": {
                         "title": "Minimum value",
-                        "type": "number",
-                        "default": 0
+                        "type": "string",
+                        "default": "0"
                     },
                     "maxValue": {
                         "title": "Maximum value",
-                        "type": "number",
-                        "default": 100
+                        "type": "string",
+                        "default": "100"
                     },
                     "gaugeType": {
                         "title": "Gauge type",

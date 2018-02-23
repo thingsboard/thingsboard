@@ -72,6 +72,31 @@ export function processPattern(pattern, datasources, dsIndex) {
     return replaceInfo;
 }
 
+export function processGaugePattern(pattern) {
+    var match = varsRegex.exec(pattern);
+    var replaceInfo = {};
+    replaceInfo.variables = [];
+    while(match !== null) {
+        var variableInfo = {};
+        var variable = match[0];
+        var label = match[1];
+        var valDec = 2;
+        var splitVals = label.split(':');
+        if (splitVals.length > 1) {
+            label = splitVals[0];
+            valDec = parseFloat(splitVals[1]);
+        }
+        variableInfo.attrPattern = variable;
+        variableInfo.valDec = valDec;
+        variableInfo.attrName = label;
+
+        replaceInfo.variables.push(variableInfo);
+        match = varsRegex.exec(pattern);
+    }
+
+    return replaceInfo;
+}
+
 export function fillPattern(pattern, replaceInfo, data) {
     var text = angular.copy(pattern);
     for (var v = 0; v < replaceInfo.variables.length; v++) {
@@ -89,6 +114,29 @@ export function fillPattern(pattern, replaceInfo, data) {
             }
         }
         text = text.split(variableInfo.variable).join(txtVal);
+    }
+    return text;
+}
+
+export function fillGaugePattern(pattern, replaceInfo, attributes) {
+    var text = angular.copy(pattern);
+    for(let i=0; i < replaceInfo.variables.length; i++) {
+        var variableInfo = replaceInfo.variables[i];
+        var txtVal = '';
+        for(let k=0; k < attributes.length; k++) {
+            if(variableInfo.attrName == attributes[k].key) {
+                var val = attributes[k].value;
+                if (isNumber(val)) {
+                    txtVal = padValue(val, variableInfo.valDec, 0);
+                } else {
+                    txtVal = val;
+                }
+                break;
+            } else {
+                txtVal = variableInfo.attrPattern;
+            }
+        }
+        text = text.split(variableInfo.attrPattern).join(txtVal);
     }
     return text;
 }
