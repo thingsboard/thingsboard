@@ -66,5 +66,12 @@
                                entity-type="{{vm.types.entityType.rule}}">
             </tb-relation-table>
         </md-tab>
+        <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleEditable(vm.grid.operatingItem()) && vm.grid.isTenantAdmin()"
+                md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">
+            <tb-audit-log-table flex entity-type="vm.types.entityType.rule"
+                                entity-id="vm.grid.operatingItem().id.id"
+                                audit-log-mode="{{vm.types.auditLogMode.entity}}">
+            </tb-audit-log-table>
+        </md-tab>
     </md-tabs>
 </tb-grid>

@@ -63,6 +63,7 @@ import thingsboardApiTime from './api/time.service';
 import thingsboardKeyboardShortcut from './components/keyboard-shortcut.filter';
 import thingsboardHelp from './help/help.directive';
 import thingsboardToast from './services/toast';
+import thingsboardClipboard from './services/clipboard.service';
 import thingsboardHome from './layout';
 import thingsboardApiLogin from './api/login.service';
 import thingsboardApiDevice from './api/device.service';
@@ -72,6 +73,7 @@ import thingsboardApiAsset from './api/asset.service';
 import thingsboardApiAttribute from './api/attribute.service';
 import thingsboardApiEntity from './api/entity.service';
 import thingsboardApiAlarm from './api/alarm.service';
+import thingsboardApiAuditLog from './api/audit-log.service';
 
 import 'typeface-roboto';
 import 'font-awesome/css/font-awesome.min.css';
@@ -123,6 +125,7 @@ angular.module('thingsboard', [
     thingsboardKeyboardShortcut,
     thingsboardHelp,
     thingsboardToast,
+    thingsboardClipboard,
     thingsboardHome,
     thingsboardApiLogin,
     thingsboardApiDevice,
@@ -132,6 +135,7 @@ angular.module('thingsboard', [
     thingsboardApiAttribute,
     thingsboardApiEntity,
     thingsboardApiAlarm,
+    thingsboardApiAuditLog,
     uiRouter])
     .config(AppConfig)
     .factory('globalInterceptor', GlobalInterceptor)

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
@@ -29,6 +30,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,6 +42,8 @@ import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
+import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -58,6 +62,8 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -227,4 +233,14 @@ public abstract class AbstractServiceTest {
         oNode.set("configuration", readFromResource(configuration));
         return oNode;
     }
+
+    @Bean
+    public AuditLogLevelFilter auditLogLevelFilter() {
+        Map<String,String> mask = new HashMap<>();
+        for (EntityType entityType : EntityType.values()) {
+            mask.put(entityType.name().toLowerCase(), AuditLogLevelMask.RW.name());
+        }
+        return new AuditLogLevelFilter(mask);
+    }
+
 }

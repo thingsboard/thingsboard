@@ -39,10 +39,8 @@
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
         <span translate>device.copyId</span>
     </md-button>
-    <md-button ngclipboard data-clipboard-action="copy"
-               ngclipboard-success="onAccessTokenCopied(e)"
-               data-clipboard-text="{{deviceCredentials.credentialsId}}" ng-show="!isEdit"
-               class="md-raised">
+    <md-button ng-show="!isEdit"
+               class="md-raised" ng-click="copyAccessToken($event)">
         <md-icon md-svg-icon="mdi:clipboard-arrow-left"></md-icon>
         <span translate>device.copyAccessToken</span>
     </md-button>

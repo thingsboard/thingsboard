@@ -94,11 +94,12 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
 
     private boolean handleDeviceRPCRequest(PluginContext ctx, final PluginRestMsg msg, TenantId tenantId, DeviceId deviceId, RpcRequest cmd, boolean oneWay) throws JsonProcessingException {
         long timeout = System.currentTimeMillis() + (cmd.getTimeout() != null ? cmd.getTimeout() : defaultTimeout);
+        ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
         ctx.checkAccess(deviceId, new PluginCallback<Void>() {
             @Override
             public void onSuccess(PluginContext ctx, Void value) {
-                ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
                 ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(UUID.randomUUID(),
+                        msg.getSecurityCtx(),
                         tenantId,
                         deviceId,
                         oneWay,
@@ -116,15 +117,17 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
                 } else {
                     response = new ResponseEntity(HttpStatus.UNAUTHORIZED);
                 }
+                ctx.logRpcRequest(msg.getSecurityCtx(), deviceId, body, oneWay, Optional.empty(), e);
                 msg.getResponseHolder().setResult(response);
             }
         });
         return true;
     }
 
-    public void reply(PluginContext ctx, DeferredResult<ResponseEntity> responseWriter, FromDeviceRpcResponse response) {
+    public void reply(PluginContext ctx, ToDeviceRpcRequest rpcRequest, DeferredResult<ResponseEntity> responseWriter, FromDeviceRpcResponse response) {
         Optional<RpcError> rpcError = response.getError();
         if (rpcError.isPresent()) {
+            ctx.logRpcRequest(rpcRequest.getSecurityCtx(), rpcRequest.getDeviceId(), rpcRequest.getBody(), rpcRequest.isOneway(), rpcError, null);
             RpcError error = rpcError.get();
             switch (error) {
                 case TIMEOUT:
@@ -142,12 +145,15 @@ public class RpcRestMsgHandler extends DefaultRestMsgHandler {
             if (responseData.isPresent() && !StringUtils.isEmpty(responseData.get())) {
                 String data = responseData.get();
                 try {
+                    ctx.logRpcRequest(rpcRequest.getSecurityCtx(), rpcRequest.getDeviceId(), rpcRequest.getBody(), rpcRequest.isOneway(), rpcError, null);
                     responseWriter.setResult(new ResponseEntity<>(jsonMapper.readTree(data), HttpStatus.OK));
                 } catch (IOException e) {
                     log.debug("Failed to decode device response: {}", data, e);
+                    ctx.logRpcRequest(rpcRequest.getSecurityCtx(), rpcRequest.getDeviceId(), rpcRequest.getBody(), rpcRequest.isOneway(), rpcError, e);
                     responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE));
                 }
             } else {
+                ctx.logRpcRequest(rpcRequest.getSecurityCtx(), rpcRequest.getDeviceId(), rpcRequest.getBody(), rpcRequest.isOneway(), rpcError, null);
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.OK));
             }
         }

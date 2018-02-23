@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -92,8 +94,17 @@ public class UserController extends BaseController {
                     throw e;
                 }
             }
+
+            logEntityAction(savedUser.getId(), savedUser,
+                    savedUser.getCustomerId(),
+                    user.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
             return savedUser;
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.USER), user,
+                    null, user.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+
             throw handleException(e);
         }
     }
@@ -156,9 +167,18 @@ public class UserController extends BaseController {
         checkParameter(USER_ID, strUserId);
         try {
             UserId userId = new UserId(toUUID(strUserId));
-            checkUserId(userId);
+            User user = checkUserId(userId);
             userService.deleteUser(userId);
+
+            logEntityAction(userId, user,
+                    user.getCustomerId(),
+                    ActionType.DELETED, null, strUserId);
+
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.USER),
+                    null,
+                    null,
+                    ActionType.DELETED, e, strUserId);
             throw handleException(e);
         }
     }
