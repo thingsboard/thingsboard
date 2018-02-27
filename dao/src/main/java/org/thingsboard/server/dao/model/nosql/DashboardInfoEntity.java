@@ -19,14 +19,21 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.type.JsonCodec;
 
+import java.util.HashMap;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
@@ -34,7 +41,10 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Table(name = DASHBOARD_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
+@Slf4j
 public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
@@ -44,15 +54,14 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
     @Column(name = DASHBOARD_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @PartitionKey(value = 2)
-    @Column(name = DASHBOARD_CUSTOMER_ID_PROPERTY)
-    private UUID customerId;
-
     @Column(name = DASHBOARD_TITLE_PROPERTY)
     private String title;
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
+
+    @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY, codec = JsonCodec.class)
+    private JsonNode assignedCustomers;
 
     public DashboardInfoEntity() {
         super();
@@ -65,10 +74,10 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
         if (dashboardInfo.getTenantId() != null) {
             this.tenantId = dashboardInfo.getTenantId().getId();
         }
-        if (dashboardInfo.getCustomerId() != null) {
-            this.customerId = dashboardInfo.getCustomerId().getId();
-        }
         this.title = dashboardInfo.getTitle();
+        if (dashboardInfo.getAssignedCustomers() != null) {
+            this.assignedCustomers = objectMapper.valueToTree(dashboardInfo.getAssignedCustomers());
+        }
     }
 
     public UUID getId() {
@@ -87,20 +96,20 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
         this.tenantId = tenantId;
     }
 
-    public UUID getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(UUID customerId) {
-        this.customerId = customerId;
-    }
-
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public JsonNode getAssignedCustomers() {
+        return assignedCustomers;
+    }
+
+    public void setAssignedCustomers(JsonNode assignedCustomers) {
+        this.assignedCustomers = assignedCustomers;
     }
 
     @Override
@@ -124,10 +133,14 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
         if (tenantId != null) {
             dashboardInfo.setTenantId(new TenantId(tenantId));
         }
-        if (customerId != null) {
-            dashboardInfo.setCustomerId(new CustomerId(customerId));
-        }
         dashboardInfo.setTitle(title);
+        if (assignedCustomers != null) {
+            try {
+                dashboardInfo.setAssignedCustomers(objectMapper.treeToValue(assignedCustomers, HashMap.class));
+            } catch (JsonProcessingException e) {
+                log.warn("Unable to parse assigned customers!", e);
+            }
+        }
         return dashboardInfo;
     }
 

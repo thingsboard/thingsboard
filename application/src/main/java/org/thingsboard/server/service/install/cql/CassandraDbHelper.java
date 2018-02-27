@@ -17,7 +17,6 @@
 package org.thingsboard.server.service.install.cql;
 
 import com.datastax.driver.core.*;
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -28,9 +27,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-public class CassandraDbHelper {
+import static org.thingsboard.server.service.install.DatabaseHelper.CSV_DUMP_FORMAT;
 
-    private static final CSVFormat CSV_DUMP_FORMAT = CSVFormat.DEFAULT.withNullString("\\N");
+public class CassandraDbHelper {
 
     public static Path dumpCfIfExists(KeyspaceMetadata ks, Session session, String cfName,
                                       String[] columns, String[] defaultValues, String dumpPrefix) throws Exception {

@@ -97,7 +97,9 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
         customerValidator.validate(customer);
-        return customerDao.save(customer);
+        Customer savedCustomer = customerDao.save(customer);
+        dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId(), savedCustomer.getTitle());
+        return savedCustomer;
     }
 
     @Override

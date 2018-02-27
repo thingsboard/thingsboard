@@ -339,8 +339,10 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                             JsonNode dashboardJson = objectMapper.readTree(path.toFile());
                             Dashboard dashboard = objectMapper.treeToValue(dashboardJson, Dashboard.class);
                             dashboard.setTenantId(tenantId);
-                            dashboard.setCustomerId(customerId);
-                            dashboardService.saveDashboard(dashboard);
+                            Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
+                            if (customerId != null && !customerId.isNullUid()) {
+                                dashboardService.assignDashboardToCustomer(savedDashboard.getId(), customerId);
+                            }
                         } catch (Exception e) {
                             log.error("Unable to load dashboard from json: [{}]", path.toString());
                             throw new RuntimeException("Unable to load dashboard from json", e);

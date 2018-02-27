@@ -79,8 +79,6 @@ public class Dashboard extends DashboardInfo {
         StringBuilder builder = new StringBuilder();
         builder.append("Dashboard [tenantId=");
         builder.append(getTenantId());
-        builder.append(", customerId=");
-        builder.append(getCustomerId());
         builder.append(", title=");
         builder.append(getTitle());
         builder.append(", configuration=");

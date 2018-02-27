@@ -20,11 +20,16 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName {
 
     private TenantId tenantId;
-    private CustomerId customerId;
     private String title;
+    private Map<String, String> assignedCustomers;
 
     public DashboardInfo() {
         super();
@@ -37,8 +42,8 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     public DashboardInfo(DashboardInfo dashboardInfo) {
         super(dashboardInfo);
         this.tenantId = dashboardInfo.getTenantId();
-        this.customerId = dashboardInfo.getCustomerId();
         this.title = dashboardInfo.getTitle();
+        this.assignedCustomers = dashboardInfo.getAssignedCustomers();
     }
 
     public TenantId getTenantId() {
@@ -49,20 +54,50 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         this.tenantId = tenantId;
     }
 
-    public CustomerId getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(CustomerId customerId) {
-        this.customerId = customerId;
-    }
-
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Map<String, String> getAssignedCustomers() {
+        return assignedCustomers;
+    }
+
+    public void setAssignedCustomers(Map<String, String> assignedCustomers) {
+        this.assignedCustomers = assignedCustomers;
+    }
+
+    public boolean addAssignedCustomer(CustomerId customerId, String title) {
+        if (this.assignedCustomers != null && this.assignedCustomers.containsKey(customerId.toString())) {
+            return false;
+        } else {
+            if (this.assignedCustomers == null) {
+                this.assignedCustomers = new HashMap<>();
+            }
+            this.assignedCustomers.put(customerId.toString(), title);
+            return true;
+        }
+    }
+
+    public boolean updateAssignedCustomer(CustomerId customerId, String title) {
+        if (this.assignedCustomers != null && this.assignedCustomers.containsKey(customerId.toString())) {
+            this.assignedCustomers.put(customerId.toString(), title);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean removeAssignedCustomer(CustomerId customerId) {
+        if (this.assignedCustomers != null && this.assignedCustomers.containsKey(customerId.toString())) {
+            this.assignedCustomers.remove(customerId.toString());
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -80,7 +115,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
         result = prime * result + ((title == null) ? 0 : title.hashCode());
         return result;
@@ -95,11 +129,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         if (getClass() != obj.getClass())
             return false;
         DashboardInfo other = (DashboardInfo) obj;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
         if (tenantId == null) {
             if (other.tenantId != null)
                 return false;
@@ -118,8 +147,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         StringBuilder builder = new StringBuilder();
         builder.append("DashboardInfo [tenantId=");
         builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
         builder.append(", title=");
         builder.append(title);
         builder.append("]");
