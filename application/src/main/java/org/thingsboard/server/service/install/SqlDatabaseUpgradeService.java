@@ -79,7 +79,7 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     Path dashboardsDump = SqlDbHelper.dumpTableIfExists(conn, DASHBOARD,
                             new String[]{ID, TENANT_ID, CUSTOMER_ID, TITLE, SEARCH_TEXT, ASSIGNED_CUSTOMERS, CONFIGURATION},
                             new String[]{"", "", "", "", "", "", ""},
-                            "tb-dashboards");
+                            "tb-dashboards", true);
                     log.info("Dashboards dumped.");
 
                     log.info("Updating schema ...");
@@ -91,7 +91,7 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     log.info("Restoring dashboards ...");
                     if (dashboardsDump != null) {
                         SqlDbHelper.loadTable(conn, DASHBOARD,
-                                new String[]{ID, TENANT_ID, TITLE, SEARCH_TEXT, CONFIGURATION}, dashboardsDump);
+                                new String[]{ID, TENANT_ID, TITLE, SEARCH_TEXT, CONFIGURATION}, dashboardsDump, true);
                         DatabaseHelper.upgradeTo40_assignDashboards(dashboardsDump, dashboardService, true);
                         Files.deleteIfExists(dashboardsDump);
                     }

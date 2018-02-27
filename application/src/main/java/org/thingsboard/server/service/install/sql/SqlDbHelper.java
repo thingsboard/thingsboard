@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.install.sql;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
@@ -38,6 +39,11 @@ public class SqlDbHelper {
 
     public static Path dumpTableIfExists(Connection conn, String tableName,
                                          String[] columns, String[] defaultValues, String dumpPrefix) throws Exception {
+        return dumpTableIfExists(conn, tableName, columns, defaultValues, dumpPrefix, false);
+    }
+
+    public static Path dumpTableIfExists(Connection conn, String tableName,
+                                         String[] columns, String[] defaultValues, String dumpPrefix, boolean printHeader) throws Exception {
 
         DatabaseMetaData metaData = conn.getMetaData();
         ResultSet res = metaData.getTables(null, null, tableName,
@@ -46,7 +52,11 @@ public class SqlDbHelper {
             res.close();
             Path dumpFile = Files.createTempFile(dumpPrefix, null);
             Files.deleteIfExists(dumpFile);
-            try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(dumpFile), CSV_DUMP_FORMAT)) {
+            CSVFormat csvFormat = CSV_DUMP_FORMAT;
+            if (printHeader) {
+                csvFormat = csvFormat.withHeader(columns);
+            }
+            try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(dumpFile), csvFormat)) {
                 try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM " + tableName)) {
                     try (ResultSet tableRes = stmt.executeQuery()) {
                         ResultSetMetaData resMetaData = tableRes.getMetaData();
@@ -68,19 +78,30 @@ public class SqlDbHelper {
     }
 
     public static void loadTable(Connection conn, String tableName, String[] columns, Path sourceFile) throws Exception {
-        PreparedStatement prepared = conn.prepareStatement(createInsertStatement(tableName, columns));
-        prepared.getParameterMetaData();
-        try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(sourceFile), CSV_DUMP_FORMAT.withHeader(columns))) {
-            csvParser.forEach(record -> {
-                try {
-                    for (int i=0;i<columns.length;i++) {
-                        setColumnValue(i, columns[i], record, prepared);
+        loadTable(conn, tableName, columns, sourceFile, false);
+    }
+
+    public static void loadTable(Connection conn, String tableName, String[] columns, Path sourceFile, boolean parseHeader) throws Exception {
+        CSVFormat csvFormat = CSV_DUMP_FORMAT;
+        if (parseHeader) {
+            csvFormat = csvFormat.withFirstRecordAsHeader();
+        } else {
+            csvFormat = CSV_DUMP_FORMAT.withHeader(columns);
+        }
+        try (PreparedStatement prepared = conn.prepareStatement(createInsertStatement(tableName, columns))) {
+            prepared.getParameterMetaData();
+            try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(sourceFile), csvFormat)) {
+                csvParser.forEach(record -> {
+                    try {
+                        for (int i = 0; i < columns.length; i++) {
+                            setColumnValue(i, columns[i], record, prepared);
+                        }
+                        prepared.execute();
+                    } catch (SQLException e) {
+                        log.error("Unable to load table record!", e);
                     }
-                    prepared.execute();
-                } catch (SQLException e) {
-                    log.error("Unable to load table record!", e);
-                }
-            });
+                });
+            }
         }
     }
 
