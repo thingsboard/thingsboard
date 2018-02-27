@@ -211,6 +211,12 @@ function Menu(userService, $state, $rootScope) {
                             type: 'link',
                             state: 'home.dashboards',
                             icon: 'dashboards'
+                        },
+                        {
+                            name: 'audit-log.audit-logs',
+                            type: 'link',
+                            state: 'home.auditLogs',
+                            icon: 'track_changes'
                         }];
 
                     homeSections =
@@ -271,6 +277,16 @@ function Menu(userService, $state, $rootScope) {
                                         name: 'dashboard.dashboards',
                                         icon: 'dashboard',
                                         state: 'home.dashboards'
+                                    }
+                                ]
+                            },
+                            {
+                                name: 'audit-log.audit',
+                                places: [
+                                    {
+                                        name: 'audit-log.audit-logs',
+                                        icon: 'track_changes',
+                                        state: 'home.auditLogs'
                                     }
                                 ]
                             }];

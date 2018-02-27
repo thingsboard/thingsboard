@@ -286,6 +286,38 @@ export default angular.module('thingsboard.locale', [])
                     "selected-attributes": "{ count, select, 1 {1 attribute} other {# attributes} } selected",
                     "selected-telemetry": "{ count, select, 1 {1 telemetry unit} other {# telemetry units} } selected"
                 },
+                "audit-log": {
+                    "audit": "Audit",
+                    "audit-logs": "Audit Logs",
+                    "timestamp": "Timestamp",
+                    "entity-type": "Entity Type",
+                    "entity-name": "Entity Name",
+                    "user": "User",
+                    "type": "Type",
+                    "status": "Status",
+                    "details": "Details",
+                    "type-added": "Added",
+                    "type-deleted": "Deleted",
+                    "type-updated": "Updated",
+                    "type-attributes-updated": "Attributes updated",
+                    "type-attributes-deleted": "Attributes deleted",
+                    "type-rpc-call": "RPC call",
+                    "type-credentials-updated": "Credentials updated",
+                    "type-assigned-to-customer": "Assigned to Customer",
+                    "type-unassigned-from-customer": "Unassigned from Customer",
+                    "type-activated": "Activated",
+                    "type-suspended": "Suspended",
+                    "type-credentials-read": "Credentials read",
+                    "type-attributes-read": "Attributes read",
+                    "status-success": "Success",
+                    "status-failure": "Failure",
+                    "audit-log-details": "Audit log details",
+                    "no-audit-logs-prompt": "No logs found",
+                    "action-data": "Action data",
+                    "failure-details": "Failure details",
+                    "search": "Search audit logs",
+                    "clear-search": "Clear search"
+                },
                 "confirm-on-exit": {
                     "message": "You have unsaved changes. Are you sure you want to leave this page?",
                     "html-message": "You have unsaved changes.<br/>Are you sure you want to leave this page?",
@@ -1183,7 +1215,8 @@ export default angular.module('thingsboard.locale', [])
                     "activation-link": "User activation link",
                     "activation-link-text": "In order to activate user use the following <a href='{{activationLink}}' target='_blank'>activation link</a> :",
                     "copy-activation-link": "Copy activation link",
-                    "activation-link-copied-message": "User activation link has been copied to clipboard"
+                    "activation-link-copied-message": "User activation link has been copied to clipboard",
+                    "details": "Details"
                 },
                 "value": {
                     "type": "Value type",

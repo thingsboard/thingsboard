@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -75,8 +77,17 @@ public class DashboardController extends BaseController {
     public Dashboard saveDashboard(@RequestBody Dashboard dashboard) throws ThingsboardException {
         try {
             dashboard.setTenantId(getCurrentUser().getTenantId());
-            return checkNotNull(dashboardService.saveDashboard(dashboard));
+            Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
+
+            logEntityAction(savedDashboard.getId(), savedDashboard,
+                    savedDashboard.getCustomerId(),
+                    dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            return savedDashboard;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DASHBOARD), dashboard,
+                    null, dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+
             throw handleException(e);
         }
     }
@@ -88,9 +99,20 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         try {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            checkDashboardId(dashboardId);
+            Dashboard dashboard = checkDashboardId(dashboardId);
             dashboardService.deleteDashboard(dashboardId);
+
+            logEntityAction(dashboardId, dashboard,
+                    dashboard.getCustomerId(),
+                    ActionType.DELETED, null, strDashboardId);
+
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD),
+                    null,
+                    null,
+                    ActionType.DELETED, e, strDashboardId);
+
             throw handleException(e);
         }
     }
@@ -104,13 +126,25 @@ public class DashboardController extends BaseController {
         checkParameter(DASHBOARD_ID, strDashboardId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            checkCustomerId(customerId);
+            Customer customer = checkCustomerId(customerId);
 
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             checkDashboardId(dashboardId);
             
-            return checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
+            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
+
+            logEntityAction(dashboardId, savedDashboard,
+                    savedDashboard.getCustomerId(),
+                    ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, strCustomerId, customer.getName());
+
+
+            return savedDashboard;
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strDashboardId, strCustomerId);
+
             throw handleException(e);
         }
     }
@@ -126,8 +160,22 @@ public class DashboardController extends BaseController {
             if (dashboard.getCustomerId() == null || dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                 throw new IncorrectParameterException("Dashboard isn't assigned to any customer!");
             }
-            return checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId));
+
+            Customer customer = checkCustomerId(dashboard.getCustomerId());
+
+            Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId));
+
+            logEntityAction(dashboardId, dashboard,
+                    dashboard.getCustomerId(),
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customer.getId().toString(), customer.getName());
+
+            return savedDashboard;
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDashboardId);
+
             throw handleException(e);
         }
     }
@@ -141,8 +189,19 @@ public class DashboardController extends BaseController {
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
             Dashboard dashboard = checkDashboardId(dashboardId);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(dashboard.getTenantId());
-            return checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, publicCustomer.getId()));
+            Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, publicCustomer.getId()));
+
+            logEntityAction(dashboardId, savedDashboard,
+                    savedDashboard.getCustomerId(),
+                    ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, publicCustomer.getId().toString(), publicCustomer.getName());
+
+            return savedDashboard;
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strDashboardId);
+
             throw handleException(e);
         }
     }

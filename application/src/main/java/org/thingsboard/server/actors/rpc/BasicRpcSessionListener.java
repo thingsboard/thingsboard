@@ -148,7 +148,7 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
         DeviceId deviceId = new DeviceId(toUUID(msg.getDeviceId()));
 
         ToDeviceRpcRequestBody requestBody = new ToDeviceRpcRequestBody(msg.getMethod(), msg.getParams());
-        ToDeviceRpcRequest request = new ToDeviceRpcRequest(toUUID(msg.getMsgId()), deviceTenantId, deviceId, msg.getOneway(), msg.getExpTime(), requestBody);
+        ToDeviceRpcRequest request = new ToDeviceRpcRequest(toUUID(msg.getMsgId()), null, deviceTenantId, deviceId, msg.getOneway(), msg.getExpTime(), requestBody);
 
         return new ToDeviceRpcRequestPluginMsg(serverAddress, pluginId, pluginTenantId, request);
     }
