@@ -55,7 +55,7 @@ public class DatabaseHelper {
 
     public static void upgradeTo40_assignDashboards(Path dashboardsDump, DashboardService dashboardService, boolean sql) throws Exception {
         String[] columns = new String[]{ID, TENANT_ID, CUSTOMER_ID, TITLE, SEARCH_TEXT, ASSIGNED_CUSTOMERS, CONFIGURATION};
-        try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(dashboardsDump), CSV_DUMP_FORMAT.withHeader(columns))) {
+        try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(dashboardsDump), CSV_DUMP_FORMAT.withFirstRecordAsHeader())) {
             csvParser.forEach(record -> {
                 String customerIdString = record.get(CUSTOMER_ID);
                 String assignedCustomersString = record.get(ASSIGNED_CUSTOMERS);
@@ -66,14 +66,20 @@ public class DatabaseHelper {
                         JsonNode assignedCustomersJson = objectMapper.readTree(assignedCustomersString);
                         Map<String,String> assignedCustomers = objectMapper.treeToValue(assignedCustomersJson, HashMap.class);
                         assignedCustomers.forEach((strCustomerId, title) -> {
-                            customerIds.add(new CustomerId(UUID.fromString(strCustomerId)));
+                            CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
+                            if (!customerId.isNullUid()) {
+                                customerIds.add(new CustomerId(UUID.fromString(strCustomerId)));
+                            }
                         });
                     } catch (IOException e) {
                         log.error("Unable to parse assigned customers field", e);
                     }
                 }
                 if (!StringUtils.isEmpty(customerIdString)) {
-                    customerIds.add(new CustomerId(toUUID(customerIdString, sql)));
+                    CustomerId customerId = new CustomerId(toUUID(customerIdString, sql));
+                    if (!customerId.isNullUid()) {
+                        customerIds.add(new CustomerId(toUUID(customerIdString, sql)));
+                    }
                 }
                 for (CustomerId customerId : customerIds) {
                     dashboardService.assignDashboardToCustomer(dashboardId, customerId);
