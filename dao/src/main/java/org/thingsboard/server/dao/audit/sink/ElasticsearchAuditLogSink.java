@@ -50,8 +50,6 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
 
     private static final String TENANT_PLACEHOLDER = "@{TENANT}";
     private static final String DATE_PLACEHOLDER = "@{DATE}";
-    private static final String DATE_FORMAT = "YYYY.MM.dd";
-
     private static final String INDEX_TYPE = "audit_log";
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -68,6 +66,8 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private String userName;
     @Value("${audit_log.sink.password}")
     private String password;
+    @Value("${audit_log.sink.date_format}")
+    private String dateFormat;
 
     private RestClient restClient;
 
@@ -152,7 +152,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
         }
         if (indexName.contains(DATE_PLACEHOLDER)) {
             LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateFormat);
             indexName = indexName.replace(DATE_PLACEHOLDER, now.format(formatter));
         }
         return indexName.toLowerCase();

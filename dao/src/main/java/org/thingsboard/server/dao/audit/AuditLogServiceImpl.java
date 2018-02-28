@@ -300,7 +300,6 @@ public class AuditLogServiceImpl implements AuditLogService {
         futures.add(auditLogDao.saveByTenantIdAndCustomerId(auditLogEntry));
         futures.add(auditLogDao.saveByTenantIdAndUserId(auditLogEntry));
 
-        // TODO: is this correct place to log action into sink?
         auditLogSink.logAction(auditLogEntry);
 
         return Futures.allAsList(futures);
