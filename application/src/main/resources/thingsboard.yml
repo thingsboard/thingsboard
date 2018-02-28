@@ -318,9 +318,9 @@ audit_log:
       "rule": "${AUDIT_LOG_MASK_RULE:W}"
       "plugin": "${AUDIT_LOG_MASK_PLUGIN:W}"
   sink:
-    # type of external sink. possible options: none, elasticsearch
+    # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
-    # name of the index where audit logs stored
+    # Name of the index where audit logs stored
     # Index name could contain next placeholders (not mandatory):
     # @{TENANT} - substituted by tenant ID
     # @{DATE} - substituted by current date in YYYY.MM.DD format
