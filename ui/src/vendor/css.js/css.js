@@ -148,7 +148,7 @@ fi.prototype.parseRules = function (rules) {
     var ret = [];
 
     // Split all rules but keep semicolon for base64 url data
-    rules = rules.split(/;(?!base64)/);
+    rules = rules.split(/;(?![^\(]*\))/);
 
     //proccess rules line by line
     for (var i = 0; i < rules.length; i++) {
