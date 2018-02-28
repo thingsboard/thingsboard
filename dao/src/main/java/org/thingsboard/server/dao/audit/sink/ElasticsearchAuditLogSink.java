@@ -66,7 +66,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private int port;
     @Value("${audit_log.sink.user_name}")
     private String userName;
-    @Value("${audit_log.sink.epassword}")
+    @Value("${audit_log.sink.password}")
     private String password;
 
     private RestClient restClient;
