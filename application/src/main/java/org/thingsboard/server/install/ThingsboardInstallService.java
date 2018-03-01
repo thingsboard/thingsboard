@@ -94,6 +94,7 @@ public class ThingsboardInstallService {
                         systemDataLoaderService.deleteSystemWidgetBundle("alarm_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("control_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("maps_v2");
+                        systemDataLoaderService.deleteSystemWidgetBundle("gateway_widgets");
 
                         systemDataLoaderService.loadSystemWidgets();
 
