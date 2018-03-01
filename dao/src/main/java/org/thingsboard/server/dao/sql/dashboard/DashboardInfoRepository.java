@@ -39,12 +39,4 @@ public interface DashboardInfoRepository extends CrudRepository<DashboardInfoEnt
                                              @Param("idOffset") String idOffset,
                                              Pageable pageable);
 
-    @Query("SELECT di FROM DashboardInfoEntity di WHERE di.tenantId = :tenantId " +
-            "AND di.customerId = :customerId AND LOWER(di.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND di.id > :idOffset ORDER BY di.id")
-    List<DashboardInfoEntity> findByTenantIdAndCustomerId(@Param("tenantId") String tenantId,
-                                                          @Param("customerId") String customerId,
-                                                          @Param("searchText") String searchText,
-                                                          @Param("idOffset") String idOffset,
-                                                          Pageable pageable);
 }

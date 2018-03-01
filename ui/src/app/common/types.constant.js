@@ -296,6 +296,9 @@ export default angular.module('thingsboard.types', [])
                 dashboard: "DASHBOARD",
                 alarm: "ALARM"
             },
+            aliasEntityType: {
+                current_customer: "CURRENT_CUSTOMER"
+            },
             entityTypeTranslations: {
                 "DEVICE": {
                     type: 'entity.type-device',
@@ -350,6 +353,10 @@ export default angular.module('thingsboard.types', [])
                     typePlural: 'entity.type-alarms',
                     list: 'entity.list-of-alarms',
                     nameStartsWith: 'entity.alarm-name-starts-with'
+                },
+                "CURRENT_CUSTOMER": {
+                    type: 'entity.type-current-customer',
+                    list: 'entity.type-current-customer'
                 }
             },
             entitySearchDirection: {
