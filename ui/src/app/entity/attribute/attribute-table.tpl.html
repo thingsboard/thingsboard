@@ -16,17 +16,17 @@
 
 -->
 <md-content flex class="md-padding tb-absolute-fill" layout="column">
-    <section layout="row" ng-show="!disableAttributeScopeSelection">
+    <section ng-show="!disableAttributeScopeSelection">
         <md-input-container class="md-block" style="width: 200px;">
             <label translate>attribute.attributes-scope</label>
-            <md-select ng-model="attributeScope" ng-disabled="loading() || attributeScopeSelectionReadonly">
+            <md-select ng-model="attributeScope" ng-disabled="$root.loading || attributeScopeSelectionReadonly">
                 <md-option ng-repeat="scope in attributeScopes" ng-value="scope">
                     {{scope.name | translate}}
                 </md-option>
             </md-select>
         </md-input-container>
     </section>
-    <div layout="column" class="md-whiteframe-z1" ng-class="{flex: mode==='widget'}">
+    <div class="md-whiteframe-z1" ng-class="{flex: mode==='widget'}">
         <md-toolbar class="md-table-toolbar md-default" ng-show="mode==='default'
                                                                  && !selectedAttributes.length
                                                                  && query.search === null">

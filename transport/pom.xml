@@ -28,7 +28,7 @@
     <packaging>pom</packaging>
 
     <name>Thingsboard Server Transport Modules</name>
-    <url>http://thingsboard.org</url>
+    <url>https://thingsboard.io</url>
 
     <properties>
         <main.dir>${basedir}/..</main.dir>

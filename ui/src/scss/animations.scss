@@ -39,6 +39,6 @@
 @include keyframes(tbMoveToBottomFade) {
   to {
     opacity: 0;
-    @include transform(translate(0, 100%));
+    @include transform(translate(0, 150%));
   }
 }

@@ -1,0 +1,25 @@
+{
+  "widgetsBundle": {
+    "alias": "gateway_widgets",
+    "title": "Gateway widgets",
+    "image": null
+  },
+  "widgetTypes": [
+    {
+      "alias": "extension_configuration_widget",
+      "name": "Extensions table",
+      "descriptor": {
+        "type": "latest",
+        "sizeX": 9,
+        "sizeY": 6.5,
+        "resources": [],
+        "templateHtml": "<tb-extensions-table-widget \n    ctx=\"ctx\">\n</tb-extensions-table-widget>",
+        "templateCss": "#container {\n    overflow: auto;\n}",
+        "controllerScript": "self.onInit = function() {\n    var scope = self.ctx.$scope;\n    scope.ctx = self.ctx;\n}\n\nself.onDataUpdated = function() {\n}\n\nself.onResize = function() {\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1\n    };\n}\n\nself.onDestroy = function() {\n}\n",
+        "settingsSchema": "{\n    \"schema\": {\n        \"type\": \"object\",\n        \"title\": \"ExtensionTableSettings\",\n        \"properties\": {\n            \"extensionsTitle\": {\n                \"title\": \"Extension table title\",\n                \"type\": \"string\",\n                \"default\": \"\"\n            }\n        },\n        \"required\": []\n    },\n    \"form\": [\n        \"extensionsTitle\"\n    ]\n}",
+        "dataKeySettingsSchema": "{}\n",
+        "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"4px\",\"settings\":{},\"title\":\"Extensions table\",\"dropShadow\":true,\"enableFullscreen\":true,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"18px\",\"fontWeight\":400,\"padding\":\"5px 10px 5px 10px\"},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
+      }
+    }
+  ]
+}

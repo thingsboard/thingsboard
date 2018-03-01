@@ -120,7 +120,7 @@ public class EntityRelationController extends BaseController {
             checkEntityId(fromId);
             checkEntityId(toId);
             RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
-            return checkNotNull(relationService.getRelation(fromId, toId, strRelationType, typeGroup).get());
+            return checkNotNull(relationService.getRelation(fromId, toId, strRelationType, typeGroup));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -138,7 +138,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByFrom(entityId, typeGroup).get());
+            return checkNotNull(relationService.findByFrom(entityId, typeGroup));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -176,7 +176,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByFromAndType(entityId, strRelationType, typeGroup).get());
+            return checkNotNull(relationService.findByFromAndType(entityId, strRelationType, typeGroup));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -194,7 +194,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByTo(entityId, typeGroup).get());
+            return checkNotNull(relationService.findByTo(entityId, typeGroup));
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -232,7 +232,7 @@ public class EntityRelationController extends BaseController {
         checkEntityId(entityId);
         RelationTypeGroup typeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         try {
-            return checkNotNull(relationService.findByToAndType(entityId, strRelationType, typeGroup).get());
+            return checkNotNull(relationService.findByToAndType(entityId, strRelationType, typeGroup));
         } catch (Exception e) {
             throw handleException(e);
         }

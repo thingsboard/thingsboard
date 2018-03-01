@@ -125,7 +125,7 @@ function Grid() {
 }
 
 /*@ngInject*/
-function GridController($scope, $state, $mdDialog, $document, $q, $mdUtil, $timeout, $translate, $mdMedia, $templateCache, $window) {
+function GridController($scope, $state, $mdDialog, $document, $q, $mdUtil, $timeout, $translate, $mdMedia, $templateCache, $window, userService) {
 
     var vm = this;
 
@@ -157,6 +157,7 @@ function GridController($scope, $state, $mdDialog, $document, $q, $mdUtil, $time
     vm.saveItem = saveItem;
     vm.toggleItemSelection = toggleItemSelection;
     vm.triggerResize = triggerResize;
+    vm.isTenantAdmin = isTenantAdmin;
 
     $scope.$watch(function () {
         return $mdMedia('xs') || $mdMedia('sm');
@@ -632,6 +633,10 @@ function GridController($scope, $state, $mdDialog, $document, $q, $mdUtil, $time
     function triggerResize() {
         var w = angular.element($window);
         w.triggerHandler('resize');
+    }
+
+    function isTenantAdmin() {
+        return userService.getAuthority() == 'TENANT_ADMIN';
     }
 
     function moveToTop() {

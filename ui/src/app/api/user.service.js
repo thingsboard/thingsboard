@@ -54,6 +54,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         refreshJwtToken: refreshJwtToken,
         refreshTokenPending: refreshTokenPending,
         updateAuthorizationHeader: updateAuthorizationHeader,
+        setAuthorizationRequestHeader: setAuthorizationRequestHeader,
         gotoDefaultPlace: gotoDefaultPlace,
         forceDefaultPlace: forceDefaultPlace,
         updateLastPublicDashboardId: updateLastPublicDashboardId,
@@ -265,9 +266,9 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
             var pageLink = {limit: 100};
             var fetchDashboardsPromise;
             if (currentUser.authority === 'TENANT_ADMIN') {
-                fetchDashboardsPromise = dashboardService.getTenantDashboards(pageLink, false);
+                fetchDashboardsPromise = dashboardService.getTenantDashboards(pageLink);
             } else {
-                fetchDashboardsPromise = dashboardService.getCustomerDashboards(currentUser.customerId, pageLink, false);
+                fetchDashboardsPromise = dashboardService.getCustomerDashboards(currentUser.customerId, pageLink);
             }
             fetchDashboardsPromise.then(
                 function success(result) {
@@ -367,6 +368,14 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         return jwtToken;
     }
 
+    function setAuthorizationRequestHeader(request) {
+        var jwtToken = store.get('jwt_token');
+        if (jwtToken) {
+            request.setRequestHeader('X-Authorization', 'Bearer ' + jwtToken);
+        }
+        return jwtToken;
+    }
+
     function getTenantAdmins(tenantId, pageLink) {
         var deferred = $q.defer();
         var url = '/api/tenant/' + tenantId + '/users?limit=' + pageLink.limit;
@@ -421,10 +430,14 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         return deferred.promise;
     }
 
-    function getUser(userId, ignoreErrors) {
+    function getUser(userId, ignoreErrors, config) {
         var deferred = $q.defer();
         var url = '/api/user/' + userId;
-        $http.get(url, { ignoreErrors: ignoreErrors }).then(function success(response) {
+        if (!config) {
+            config = {};
+        }
+        config = Object.assign(config, { ignoreErrors: ignoreErrors });
+        $http.get(url, config).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

@@ -19,7 +19,7 @@
     <section layout="row">
         <md-input-container class="md-block" style="width: 200px;">
             <label translate>relation.direction</label>
-            <md-select ng-model="vm.direction" ng-disabled="loading">
+            <md-select ng-model="vm.direction" ng-disabled="$root.loading">
                 <md-option ng-repeat="direction in vm.types.entitySearchDirection" ng-value="direction">
                     {{ ('relation.search-direction.' + direction) | translate}}
                 </md-option>

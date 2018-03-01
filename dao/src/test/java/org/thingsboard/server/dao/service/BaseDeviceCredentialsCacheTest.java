@@ -15,16 +15,14 @@
  */
 package org.thingsboard.server.dao.service;
 
-import com.hazelcast.core.HazelcastInstance;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Device;
@@ -40,7 +38,6 @@ import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 
-@TestPropertySource(properties = {"cache.enabled = true"})
 public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest {
 
     private static final String CREDENTIALS_ID_1 = RandomStringUtils.randomAlphanumeric(20);
@@ -53,7 +50,7 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
     private DeviceService deviceService;
 
     @Autowired
-    private HazelcastInstance hazelcastInstance;
+    private CacheManager cacheManager;
 
     private UUID deviceId = UUID.randomUUID();
 
@@ -67,7 +64,7 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
 
     @After
     public void cleanup() {
-        hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).evictAll();
+        cacheManager.getCache(CacheConstants.DEVICE_CREDENTIALS_CACHE).clear();
     }
 
     @Test
@@ -77,7 +74,6 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
 
-        Assert.assertEquals(1, hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).size());
         verify(deviceCredentialsDao, times(1)).findByCredentialsId(CREDENTIALS_ID_1);
     }
 
@@ -88,17 +84,13 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
 
-        Assert.assertEquals(1, hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).size());
         verify(deviceCredentialsDao, times(1)).findByCredentialsId(CREDENTIALS_ID_1);
 
         deviceCredentialsService.deleteDeviceCredentials(createDummyDeviceCredentials(CREDENTIALS_ID_1, deviceId));
 
-        Assert.assertEquals(0, hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).size());
-
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
 
-        Assert.assertEquals(1, hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).size());
         verify(deviceCredentialsDao, times(2)).findByCredentialsId(CREDENTIALS_ID_1);
     }
 
@@ -109,7 +101,6 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
 
-        Assert.assertEquals(1, hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).size());
         verify(deviceCredentialsDao, times(1)).findByCredentialsId(CREDENTIALS_ID_1);
 
         when(deviceCredentialsDao.findByDeviceId(deviceId)).thenReturn(createDummyDeviceCredentialsEntity(CREDENTIALS_ID_1));
@@ -119,13 +110,11 @@ public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest
         when(deviceService.findDeviceById(new DeviceId(deviceId))).thenReturn(new Device());
 
         deviceCredentialsService.updateDeviceCredentials(createDummyDeviceCredentials(deviceCredentialsId, CREDENTIALS_ID_2, deviceId));
-        Assert.assertEquals(0, hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).size());
 
         when(deviceCredentialsDao.findByCredentialsId(CREDENTIALS_ID_1)).thenReturn(null);
 
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
         deviceCredentialsService.findDeviceCredentialsByCredentialsId(CREDENTIALS_ID_1);
-        Assert.assertEquals(0, hazelcastInstance.getMap(CacheConstants.DEVICE_CREDENTIALS_CACHE).size());
 
         verify(deviceCredentialsDao, times(3)).findByCredentialsId(CREDENTIALS_ID_1);
     }

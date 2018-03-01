@@ -24,10 +24,12 @@ import io.netty.util.ResourceLeakDetector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.common.transport.quota.QuotaService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
@@ -39,6 +41,7 @@ import javax.annotation.PreDestroy;
  * @author Andrew Shvayka
  */
 @Service("MqttTransportService")
+@ConditionalOnProperty(prefix = "mqtt", value = "enabled", havingValue = "true", matchIfMissing = false)
 @Slf4j
 public class MqttTransportService {
 
@@ -62,6 +65,9 @@ public class MqttTransportService {
 
     @Autowired(required = false)
     private MqttSslHandlerProvider sslHandlerProvider;
+
+    @Autowired(required = false)
+    private QuotaService quotaService;
 
     @Value("${mqtt.bind_address}")
     private String host;
@@ -99,7 +105,8 @@ public class MqttTransportService {
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new MqttTransportServerInitializer(processor, deviceService, authService, relationService, adaptor, sslHandlerProvider));
+                .childHandler(new MqttTransportServerInitializer(processor, deviceService, authService, relationService,
+                        adaptor, sslHandlerProvider, quotaService));
 
         serverChannel = b.bind(host, port).sync().channel();
         log.info("Mqtt transport started!");

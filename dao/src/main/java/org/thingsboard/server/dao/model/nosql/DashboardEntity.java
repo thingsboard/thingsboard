@@ -19,16 +19,23 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
@@ -36,8 +43,13 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Table(name = DASHBOARD_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
+@Slf4j
 public final class DashboardEntity implements SearchTextEntity<Dashboard> {
-    
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final JavaType assignedCustomersType =
+            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
+
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
     private UUID id;
@@ -46,16 +58,15 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     @Column(name = DASHBOARD_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @PartitionKey(value = 2)
-    @Column(name = DASHBOARD_CUSTOMER_ID_PROPERTY)
-    private UUID customerId;
-
     @Column(name = DASHBOARD_TITLE_PROPERTY)
     private String title;
     
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
-    
+
+    @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
+    private String assignedCustomers;
+
     @Column(name = DASHBOARD_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
     private JsonNode configuration;
 
@@ -70,10 +81,14 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
         if (dashboard.getTenantId() != null) {
             this.tenantId = dashboard.getTenantId().getId();
         }
-        if (dashboard.getCustomerId() != null) {
-            this.customerId = dashboard.getCustomerId().getId();
-        }
         this.title = dashboard.getTitle();
+        if (dashboard.getAssignedCustomers() != null) {
+            try {
+                this.assignedCustomers = objectMapper.writeValueAsString(dashboard.getAssignedCustomers());
+            } catch (JsonProcessingException e) {
+                log.error("Unable to serialize assigned customers to string!", e);
+            }
+        }
         this.configuration = dashboard.getConfiguration();
     }
     
@@ -93,20 +108,20 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
         this.tenantId = tenantId;
     }
 
-    public UUID getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(UUID customerId) {
-        this.customerId = customerId;
-    }
-    
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getAssignedCustomers() {
+        return assignedCustomers;
+    }
+
+    public void setAssignedCustomers(String assignedCustomers) {
+        this.assignedCustomers = assignedCustomers;
     }
 
     public JsonNode getConfiguration() {
@@ -138,10 +153,14 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
         if (tenantId != null) {
             dashboard.setTenantId(new TenantId(tenantId));
         }
-        if (customerId != null) {
-            dashboard.setCustomerId(new CustomerId(customerId));
-        }
         dashboard.setTitle(title);
+        if (!StringUtils.isEmpty(assignedCustomers)) {
+            try {
+                dashboard.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
+            } catch (IOException e) {
+                log.warn("Unable to parse assigned customers!", e);
+            }
+        }
         dashboard.setConfiguration(configuration);
         return dashboard;
     }

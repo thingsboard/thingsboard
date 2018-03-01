@@ -81,6 +81,8 @@ public class ThingsboardInstallService {
                     case "1.3.1":
                         log.info("Upgrading ThingsBoard from version 1.3.1 to 1.4.0 ...");
 
+                        databaseUpgradeService.upgradeDatabase("1.3.1");
+
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");
@@ -92,6 +94,7 @@ public class ThingsboardInstallService {
                         systemDataLoaderService.deleteSystemWidgetBundle("alarm_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("control_widgets");
                         systemDataLoaderService.deleteSystemWidgetBundle("maps_v2");
+                        systemDataLoaderService.deleteSystemWidgetBundle("gateway_widgets");
 
                         systemDataLoaderService.loadSystemWidgets();
 

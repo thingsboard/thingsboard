@@ -156,6 +156,63 @@ export default angular.module('thingsboard.types', [])
                     color: "green"
                 }
             },
+            auditLogActionType: {
+                "ADDED": {
+                    name: "audit-log.type-added"
+                },
+                "DELETED": {
+                    name: "audit-log.type-deleted"
+                },
+                "UPDATED": {
+                    name: "audit-log.type-updated"
+                },
+                "ATTRIBUTES_UPDATED": {
+                    name: "audit-log.type-attributes-updated"
+                },
+                "ATTRIBUTES_DELETED": {
+                    name: "audit-log.type-attributes-deleted"
+                },
+                "RPC_CALL": {
+                    name: "audit-log.type-rpc-call"
+                },
+                "CREDENTIALS_UPDATED": {
+                    name: "audit-log.type-credentials-updated"
+                },
+                "ASSIGNED_TO_CUSTOMER": {
+                    name: "audit-log.type-assigned-to-customer"
+                },
+                "UNASSIGNED_FROM_CUSTOMER": {
+                    name: "audit-log.type-unassigned-from-customer"
+                },
+                "ACTIVATED": {
+                    name: "audit-log.type-activated"
+                },
+                "SUSPENDED": {
+                    name: "audit-log.type-suspended"
+                },
+                "CREDENTIALS_READ": {
+                    name: "audit-log.type-credentials-read"
+                },
+                "ATTRIBUTES_READ": {
+                    name: "audit-log.type-attributes-read"
+                }
+            },
+            auditLogActionStatus: {
+                "SUCCESS": {
+                    value: "SUCCESS",
+                    name: "audit-log.status-success"
+                },
+                "FAILURE": {
+                    value: "FAILURE",
+                    name: "audit-log.status-failure"
+                }
+            },
+            auditLogMode: {
+                tenant: "tenant",
+                entity: "entity",
+                user: "user",
+                customer: "customer"
+            },
             aliasFilterType: {
                 singleEntity: {
                     value: 'singleEntity',
@@ -239,6 +296,9 @@ export default angular.module('thingsboard.types', [])
                 dashboard: "DASHBOARD",
                 alarm: "ALARM"
             },
+            aliasEntityType: {
+                current_customer: "CURRENT_CUSTOMER"
+            },
             entityTypeTranslations: {
                 "DEVICE": {
                     type: 'entity.type-device',
@@ -293,6 +353,10 @@ export default angular.module('thingsboard.types', [])
                     typePlural: 'entity.type-alarms',
                     list: 'entity.list-of-alarms',
                     nameStartsWith: 'entity.alarm-name-starts-with'
+                },
+                "CURRENT_CUSTOMER": {
+                    type: 'entity.type-current-customer',
+                    list: 'entity.type-current-customer'
                 }
             },
             entitySearchDirection: {
@@ -316,6 +380,53 @@ export default angular.module('thingsboard.types', [])
                     value: "STATS",
                     name: "event.type-stats"
                 }
+            },
+            extensionType: {
+                http: "HTTP",
+                mqtt: "MQTT",
+                opc: "OPC UA"
+            },
+            extensionValueType: {
+                string: 'value.string',
+                long: 'value.long',
+                double: 'value.double',
+                boolean: 'value.boolean'
+            },
+            extensionTransformerType: {
+                toDouble: 'extension.to-double',
+                custom: 'extension.custom'
+            },
+            mqttConverterTypes: {
+                json: 'extension.converter-json',
+                custom: 'extension.custom'
+            },
+            mqttCredentialTypes: {
+                anonymous:  {
+                    value: "anonymous",
+                    name: "extension.anonymous"
+                },
+                basic: {
+                    value: "basic",
+                    name: "extension.basic"
+                },
+                pem: {
+                    value: "cert.PEM",
+                    name: "extension.pem"
+                }
+            },
+            extensionOpcSecurityTypes: {
+                Basic128Rsa15: "Basic128Rsa15",
+                Basic256: "Basic256",
+                Basic256Sha256: "Basic256Sha256",
+                None: "None"
+            },
+            extensionIdentityType: {
+                anonymous: "extension.anonymous",
+                username: "extension.username"
+            },
+            extensionKeystoreType: {
+                PKCS12: "PKCS12",
+                JKS: "JKS"
             },
             latestTelemetry: {
                 value: "LATEST_TELEMETRY",

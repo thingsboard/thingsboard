@@ -19,10 +19,20 @@
 	<details-buttons tb-help="'users'" help-container-id="help-container">
 		<div id="help-container"></div>
 	</details-buttons>
-	<tb-user user="vm.grid.operatingItem()"
-			 is-edit="vm.grid.detailsConfig.isDetailsEditMode"
-			 the-form="vm.grid.detailsForm"
-			 on-display-activation-link="vm.displayActivationLink(event, vm.grid.detailsConfig.currentItem)"
-			 on-resend-activation="vm.resendActivation(vm.grid.detailsConfig.currentItem)"
-			 on-delete-user="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-user>
+	<md-tabs ng-class="{'tb-headless': vm.grid.detailsConfig.isDetailsEditMode}"
+			 id="tabs" md-border-bottom flex class="tb-absolute-fill">
+		<md-tab label="{{ 'user.details' | translate }}">
+			<tb-user user="vm.grid.operatingItem()"
+					 is-edit="vm.grid.detailsConfig.isDetailsEditMode"
+					 the-form="vm.grid.detailsForm"
+					 on-display-activation-link="vm.displayActivationLink(event, vm.grid.detailsConfig.currentItem)"
+					 on-resend-activation="vm.resendActivation(vm.grid.detailsConfig.currentItem)"
+					 on-delete-user="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-user>
+		</md-tab>
+		<md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.grid.isTenantAdmin()" md-on-select="vm.grid.triggerResize()" label="{{ 'audit-log.audit-logs' | translate }}">
+			<tb-audit-log-table flex user-id="vm.grid.operatingItem().id.id"
+								audit-log-mode="{{vm.types.auditLogMode.user}}">
+			</tb-audit-log-table>
+		</md-tab>
+	</md-tabs>
 </tb-grid>

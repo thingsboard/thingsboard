@@ -15,26 +15,18 @@
  */
 package org.thingsboard.server.transport.mqtt;
 
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.mqtt.MqttDecoder;
 import io.netty.handler.codec.mqtt.MqttEncoder;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
-import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.common.transport.quota.QuotaService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
-
-import javax.net.ssl.SSLException;
-import java.security.cert.CertificateException;
 
 /**
  * @author Andrew Shvayka
@@ -49,16 +41,18 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
     private final RelationService relationService;
     private final MqttTransportAdaptor adaptor;
     private final MqttSslHandlerProvider sslHandlerProvider;
+    private final QuotaService quotaService;
 
     public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService,
-                                          MqttTransportAdaptor adaptor,
-                                          MqttSslHandlerProvider sslHandlerProvider) {
+                                          MqttTransportAdaptor adaptor, MqttSslHandlerProvider sslHandlerProvider,
+                                          QuotaService quotaService) {
         this.processor = processor;
         this.deviceService = deviceService;
         this.authService = authService;
         this.relationService = relationService;
         this.adaptor = adaptor;
         this.sslHandlerProvider = sslHandlerProvider;
+        this.quotaService = quotaService;
     }
 
     @Override
@@ -72,7 +66,9 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast("decoder", new MqttDecoder(MAX_PAYLOAD_SIZE));
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
-        MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, relationService, adaptor, sslHandler);
+        MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, relationService,
+                adaptor, sslHandler, quotaService);
+
         pipeline.addLast(handler);
         ch.closeFuture().addListener(handler);
     }

@@ -66,6 +66,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.service.mail.TestMailService;
@@ -105,6 +106,11 @@ public abstract class AbstractControllerTest {
 
     protected static final String CUSTOMER_USER_EMAIL = "testcustomer@thingsboard.org";
     private static final String CUSTOMER_USER_PASSWORD = "customer";
+
+    /** See {@link org.springframework.test.web.servlet.DefaultMvcResult#getAsyncResult(long)}
+     *  and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
+     */
+    private static final long DEFAULT_TIMEOUT = -1L;
 
     protected MediaType contentType = new MediaType(MediaType.APPLICATION_JSON.getType(),
             MediaType.APPLICATION_JSON.getSubtype(),
@@ -331,12 +337,41 @@ public abstract class AbstractControllerTest {
         return readResponse(doGet(urlTemplate, vars).andExpect(status().isOk()), responseType);
     }
 
+    protected <T> T  doGetTypedWithTimePageLink(String urlTemplate, TypeReference<T> responseType,
+                                                TimePageLink pageLink,
+                                                Object... urlVariables) throws Exception {
+        List<Object> pageLinkVariables = new ArrayList<>();
+        urlTemplate += "limit={limit}";
+        pageLinkVariables.add(pageLink.getLimit());
+        if (pageLink.getStartTime() != null) {
+            urlTemplate += "&startTime={startTime}";
+            pageLinkVariables.add(pageLink.getStartTime());
+        }
+        if (pageLink.getEndTime() != null) {
+            urlTemplate += "&endTime={endTime}";
+            pageLinkVariables.add(pageLink.getEndTime());
+        }
+        if (pageLink.getIdOffset() != null) {
+            urlTemplate += "&offset={offset}";
+            pageLinkVariables.add(pageLink.getIdOffset().toString());
+        }
+        if (pageLink.isAscOrder()) {
+            urlTemplate += "&ascOrder={ascOrder}";
+            pageLinkVariables.add(pageLink.isAscOrder());
+        }
+        Object[] vars = new Object[urlVariables.length + pageLinkVariables.size()];
+        System.arraycopy(urlVariables, 0, vars, 0, urlVariables.length);
+        System.arraycopy(pageLinkVariables.toArray(), 0, vars, urlVariables.length, pageLinkVariables.size());
+
+        return readResponse(doGet(urlTemplate, vars).andExpect(status().isOk()), responseType);
+    }
+
     protected <T> T doPost(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, params).andExpect(status().isOk()), responseClass);
     }
 
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
-        return readResponse(doPost(urlTemplate, params).andExpect(resultMatcher), responseClass);
+        return readResponse(doPost(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
     }
 
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) throws Exception {
@@ -344,7 +379,11 @@ public abstract class AbstractControllerTest {
     }
 
     protected <T> T doPostAsync(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
-        return readResponse(doPostAsync(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
+        return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
+    }
+
+    protected <T> T doPostAsync(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, Long timeout, String... params) throws Exception {
+        return readResponse(doPostAsync(urlTemplate, content, timeout, params).andExpect(resultMatcher), responseClass);
     }
 
     protected <T> T doDelete(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
@@ -366,12 +405,13 @@ public abstract class AbstractControllerTest {
         return mockMvc.perform(postRequest);
     }
 
-    protected <T> ResultActions doPostAsync(String urlTemplate, T content, String... params)  throws Exception {
+    protected <T> ResultActions doPostAsync(String urlTemplate, T content, Long timeout, String... params)  throws Exception {
         MockHttpServletRequestBuilder postRequest = post(urlTemplate);
         setJwtToken(postRequest);
         String json = json(content);
         postRequest.contentType(contentType).content(json);
         MvcResult result = mockMvc.perform(postRequest).andReturn();
+        result.getAsyncResult(timeout);
         return mockMvc.perform(asyncDispatch(result));
     }
 
@@ -384,8 +424,8 @@ public abstract class AbstractControllerTest {
 
     protected void populateParams(MockHttpServletRequestBuilder request, String... params) {
         if (params != null && params.length > 0) {
-            Assert.assertEquals(params.length % 2, 0);
-            MultiValueMap<String, String> paramsMap = new LinkedMultiValueMap<String, String>();
+            Assert.assertEquals(0, params.length % 2);
+            MultiValueMap<String, String> paramsMap = new LinkedMultiValueMap<>();
             for (int i = 0; i < params.length; i += 2) {
                 paramsMap.add(params[i], params[i + 1]);
             }

@@ -52,6 +52,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
 
     private static final String PUBLIC_CUSTOMER_TITLE = "Public";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
     private CustomerDao customerDao;
@@ -79,6 +80,13 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     }
 
     @Override
+    public Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title) {
+        log.trace("Executing findCustomerByTenantIdAndTitle [{}] [{}]", tenantId, title);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title);
+    }
+
+    @Override
     public ListenableFuture<Customer> findCustomerByIdAsync(CustomerId customerId) {
         log.trace("Executing findCustomerByIdAsync [{}]", customerId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
@@ -89,7 +97,9 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
         customerValidator.validate(customer);
-        return customerDao.save(customer);
+        Customer savedCustomer = customerDao.save(customer);
+        dashboardService.updateCustomerDashboards(savedCustomer.getId());
+        return savedCustomer;
     }
 
     @Override
@@ -100,7 +110,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         if (customer == null) {
             throw new IncorrectParameterException("Unable to delete non-existent customer.");
         }
-        dashboardService.unassignCustomerDashboards(customer.getTenantId(), customerId);
+        dashboardService.unassignCustomerDashboards(customerId);
         assetService.unassignCustomerAssets(customer.getTenantId(), customerId);
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);

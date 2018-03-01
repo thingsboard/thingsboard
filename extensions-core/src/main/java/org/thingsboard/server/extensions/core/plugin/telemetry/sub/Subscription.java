@@ -51,6 +51,10 @@ public class Subscription {
         return getSub().getType();
     }
 
+    public String getScope() {
+        return getSub().getScope();
+    }
+
     public boolean isAllKeys() {
         return getSub().isAllKeys();
     }

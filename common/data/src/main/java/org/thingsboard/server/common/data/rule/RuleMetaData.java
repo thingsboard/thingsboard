@@ -15,18 +15,23 @@
  */
 package org.thingsboard.server.common.data.rule;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.SearchTextBased;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class RuleMetaData extends SearchTextBased<RuleId> implements HasName {
+@Slf4j
+public class RuleMetaData extends SearchTextBasedWithAdditionalInfo<RuleId> implements HasName {
 
     private static final long serialVersionUID = -5656679015122935465L;
 
@@ -38,7 +43,13 @@ public class RuleMetaData extends SearchTextBased<RuleId> implements HasName {
     private transient JsonNode filters;
     private transient JsonNode processor;
     private transient JsonNode action;
-    private transient JsonNode additionalInfo;
+    @JsonIgnore
+    private byte[] filtersBytes;
+    @JsonIgnore
+    private byte[] processorBytes;
+    @JsonIgnore
+    private byte[] actionBytes;
+
 
     public RuleMetaData() {
         super();
@@ -55,10 +66,9 @@ public class RuleMetaData extends SearchTextBased<RuleId> implements HasName {
         this.state = rule.getState();
         this.weight = rule.getWeight();
         this.pluginToken = rule.getPluginToken();
-        this.filters = rule.getFilters();
-        this.processor = rule.getProcessor();
-        this.action = rule.getAction();
-        this.additionalInfo = rule.getAdditionalInfo();
+        this.setFilters(rule.getFilters());
+        this.setProcessor(rule.getProcessor());
+        this.setAction(rule.getAction());
     }
 
     @Override
@@ -70,5 +80,30 @@ public class RuleMetaData extends SearchTextBased<RuleId> implements HasName {
     public String getName() {
         return name;
     }
+
+    public JsonNode getFilters() {
+        return SearchTextBasedWithAdditionalInfo.getJson(() -> filters, () -> filtersBytes);
+    }
+
+    public JsonNode getProcessor() {
+        return SearchTextBasedWithAdditionalInfo.getJson(() -> processor, () -> processorBytes);
+    }
+
+    public JsonNode getAction() {
+        return SearchTextBasedWithAdditionalInfo.getJson(() -> action, () -> actionBytes);
+    }
+
+    public void setFilters(JsonNode data) {
+        setJson(data, json -> this.filters = json, bytes -> this.filtersBytes = bytes);
+    }
+
+    public void setProcessor(JsonNode data) {
+        setJson(data, json -> this.processor = json, bytes -> this.processorBytes = bytes);
+    }
+
+    public void setAction(JsonNode data) {
+        setJson(data, json -> this.action = json, bytes -> this.actionBytes = bytes);
+    }
+
 
 }

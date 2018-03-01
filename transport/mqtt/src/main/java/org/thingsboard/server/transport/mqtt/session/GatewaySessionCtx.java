@@ -41,10 +41,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor.validateJsonPayload;
@@ -87,16 +84,15 @@ public class GatewaySessionCtx {
 
     private void onDeviceConnect(String deviceName, String deviceType) {
         if (!devices.containsKey(deviceName)) {
-            Optional<Device> deviceOpt = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
-            Device device = deviceOpt.orElseGet(() -> {
-                Device newDevice = new Device();
-                newDevice.setTenantId(gateway.getTenantId());
-                newDevice.setName(deviceName);
-                newDevice.setType(deviceType);
-                newDevice = deviceService.saveDevice(newDevice);
-                relationService.saveRelationAsync(new EntityRelation(gateway.getId(), newDevice.getId(), "Created"));
-                return newDevice;
-            });
+            Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
+            if (device == null) {
+                device = new Device();
+                device.setTenantId(gateway.getTenantId());
+                device.setName(deviceName);
+                device.setType(deviceType);
+                device = deviceService.saveDevice(device);
+                relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
+            }
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
             devices.put(deviceName, ctx);
             log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);
@@ -186,24 +182,34 @@ public class GatewaySessionCtx {
         }
     }
 
-    public void onDeviceAttributesRequest(MqttPublishMessage mqttMsg) throws AdaptorException {
-        JsonElement json = validateJsonPayload(gatewaySessionId, mqttMsg.payload());
+    public void onDeviceAttributesRequest(MqttPublishMessage msg) throws AdaptorException {
+        JsonElement json = validateJsonPayload(gatewaySessionId, msg.payload());
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
             int requestId = jsonObj.get("id").getAsInt();
             String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
             boolean clientScope = jsonObj.get("client").getAsBoolean();
-            String key = jsonObj.get("key").getAsString();
+            Set<String> keys;
+            if (jsonObj.has("key")) {
+                keys = Collections.singleton(jsonObj.get("key").getAsString());
+            } else {
+                JsonArray keysArray = jsonObj.get("keys").getAsJsonArray();
+                keys = new HashSet<>();
+                for (JsonElement keyObj : keysArray) {
+                    keys.add(keyObj.getAsString());
+                }
+            }
 
             BasicGetAttributesRequest request;
             if (clientScope) {
-                request = new BasicGetAttributesRequest(requestId, Collections.singleton(key), null);
+                request = new BasicGetAttributesRequest(requestId, keys, null);
             } else {
-                request = new BasicGetAttributesRequest(requestId, null, Collections.singleton(key));
+                request = new BasicGetAttributesRequest(requestId, null, keys);
             }
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
             processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
+            ack(msg);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }
@@ -251,7 +257,7 @@ public class GatewaySessionCtx {
     }
 
     private void ack(MqttPublishMessage msg) {
-        if(msg.variableHeader().messageId() > 0) {
+        if (msg.variableHeader().messageId() > 0) {
             writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msg.variableHeader().messageId()));
         }
     }

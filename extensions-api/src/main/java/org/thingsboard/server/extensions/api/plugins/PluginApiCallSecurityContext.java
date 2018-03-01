@@ -15,10 +15,7 @@
  */
 package org.thingsboard.server.extensions.api.plugins;
 
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.PluginId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 
 import java.io.Serializable;
 
@@ -30,13 +27,18 @@ public final class PluginApiCallSecurityContext implements Serializable {
     private final PluginId pluginId;
     private final TenantId tenantId;
     private final CustomerId customerId;
+    private final UserId userId;
+    private final String userName;
 
-    public PluginApiCallSecurityContext(TenantId pluginTenantId, PluginId pluginId, TenantId tenantId, CustomerId customerId) {
+    public PluginApiCallSecurityContext(TenantId pluginTenantId, PluginId pluginId, TenantId tenantId, CustomerId customerId,
+                                        UserId userId, String userName) {
         super();
         this.pluginTenantId = pluginTenantId;
         this.pluginId = pluginId;
         this.tenantId = tenantId;
         this.customerId = customerId;
+        this.userId = userId;
+        this.userName = userName;
     }
 
     public TenantId getPluginTenantId(){
@@ -65,6 +67,14 @@ public final class PluginApiCallSecurityContext implements Serializable {
 
     public CustomerId getCustomerId() {
         return customerId;
+    }
+
+    public UserId getUserId() {
+        return userId;
+    }
+
+    public String getUserName() {
+        return userName;
     }
 
 }

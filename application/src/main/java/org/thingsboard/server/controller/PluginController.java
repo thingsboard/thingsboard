@@ -18,6 +18,8 @@ package org.thingsboard.server.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -71,8 +73,17 @@ public class PluginController extends BaseController {
             PluginMetaData plugin = checkNotNull(pluginService.savePlugin(source));
             actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
+            logEntityAction(plugin.getId(), plugin,
+                    null,
+                    created ? ActionType.ADDED : ActionType.UPDATED, null);
+
             return plugin;
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.PLUGIN), source,
+                    null, source.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+
             throw handleException(e);
         }
     }
@@ -87,7 +98,18 @@ public class PluginController extends BaseController {
             PluginMetaData plugin = checkPlugin(pluginService.findPluginById(pluginId));
             pluginService.activatePluginById(pluginId);
             actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.ACTIVATED);
+
+            logEntityAction(plugin.getId(), plugin,
+                    null,
+                    ActionType.ACTIVATED, null, strPluginId);
+
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.PLUGIN),
+                    null,
+                    null,
+                    ActionType.ACTIVATED, e, strPluginId);
+
             throw handleException(e);
         }
     }
@@ -102,7 +124,18 @@ public class PluginController extends BaseController {
             PluginMetaData plugin = checkPlugin(pluginService.findPluginById(pluginId));
             pluginService.suspendPluginById(pluginId);
             actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.SUSPENDED);
+
+            logEntityAction(plugin.getId(), plugin,
+                    null,
+                    ActionType.SUSPENDED, null, strPluginId);
+
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.PLUGIN),
+                    null,
+                    null,
+                    ActionType.SUSPENDED, e, strPluginId);
+
             throw handleException(e);
         }
     }
@@ -189,7 +222,16 @@ public class PluginController extends BaseController {
             PluginMetaData plugin = checkPlugin(pluginService.findPluginById(pluginId));
             pluginService.deletePluginById(pluginId);
             actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.DELETED);
+
+            logEntityAction(pluginId, plugin,
+                    null,
+                    ActionType.DELETED, null, strPluginId);
+
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.PLUGIN),
+                    null,
+                    null,
+                    ActionType.DELETED, e, strPluginId);
             throw handleException(e);
         }
     }

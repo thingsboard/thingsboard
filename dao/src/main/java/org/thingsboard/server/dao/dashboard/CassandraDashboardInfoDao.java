@@ -15,16 +15,26 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.nosql.DashboardInfoEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +46,9 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 @Slf4j
 @NoSqlDao
 public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<DashboardInfoEntity, DashboardInfo> implements DashboardInfoDao {
+
+    @Autowired
+    private RelationDao relationDao;
 
     @Override
     protected Class<DashboardInfoEntity> getColumnFamilyClass() {
@@ -59,15 +72,18 @@ public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<Da
     }
 
     @Override
-    public List<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
+    public ListenableFuture<List<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TimePageLink pageLink) {
         log.debug("Try to find dashboards by tenantId [{}], customerId[{}] and pageLink [{}]", tenantId, customerId, pageLink);
-        List<DashboardInfoEntity> dashboardEntities = findPageWithTextSearch(DASHBOARD_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(DASHBOARD_CUSTOMER_ID_PROPERTY, customerId),
-                        eq(DASHBOARD_TENANT_ID_PROPERTY, tenantId)),
-                pageLink);
 
-        log.trace("Found dashboards [{}] by tenantId [{}], customerId [{}] and pageLink [{}]", dashboardEntities, tenantId, customerId, pageLink);
-        return DaoUtil.convertDataList(dashboardEntities);
+        ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new CustomerId(customerId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD, EntityType.DASHBOARD, pageLink);
+
+        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<DashboardInfo>>) input -> {
+            List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(input.size());
+            for (EntityRelation relation : input) {
+                dashboardFutures.add(findByIdAsync(relation.getTo().getId()));
+            }
+            return Futures.successfulAsList(dashboardFutures);
+        });
     }
 
 }

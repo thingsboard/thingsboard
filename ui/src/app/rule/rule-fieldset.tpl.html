@@ -39,7 +39,7 @@
 </div>
 
 <md-content class="md-padding tb-rule" layout="column">
-    <fieldset ng-disabled="loading || !isEdit || isReadOnly">
+    <fieldset ng-disabled="$root.loading || !isEdit || isReadOnly">
         <md-input-container class="md-block">
             <label translate>rule.name</label>
             <input required name="name" ng-model="rule.name">
@@ -109,7 +109,7 @@
                         </div>
                     </div>
                     <div ng-if="isEdit && !isReadOnly" flex layout="row" layout-align="start center">
-                        <md-button ng-disabled="loading" class="md-primary md-raised"
+                        <md-button ng-disabled="$root.loading" class="md-primary md-raised"
                                    ng-click="addFilter($event)" aria-label="{{ 'action.add' | translate }}">
                             <md-tooltip md-direction="top">
                                 {{ 'rule.add-filter' | translate }}
@@ -149,7 +149,7 @@
                                     <span ng-if="!isEdit || isReadOnly" translate layout-align="center center"
                                           class="tb-prompt">rule.no-processor-configured</span>
                         <div ng-if="isEdit && !isReadOnly" flex layout="row" layout-align="start center">
-                            <md-button ng-disabled="loading" class="md-primary md-raised"
+                            <md-button ng-disabled="$root.loading" class="md-primary md-raised"
                                        ng-click="addProcessor($event)" aria-label="{{ 'action.create' | translate }}">
                                 <md-tooltip md-direction="top">
                                     {{ 'rule.create-processor' | translate }}
@@ -162,7 +162,7 @@
                 </v-pane-content>
             </v-pane>
         </v-accordion>
-        <fieldset ng-disabled="loading || !isEdit || isReadOnly">
+        <fieldset ng-disabled="$root.loading || !isEdit || isReadOnly">
             <md-input-container ng-if="!isEdit || isReadOnly" flex class="md-block">
                 <label translate>plugin.plugin</label>
                 <input name="name" ng-model="plugin.name">
@@ -203,7 +203,7 @@
                         <span translate layout-align="center center"
                               class="tb-prompt">rule.create-action-prompt</span>
                         <div ng-if="isEdit && !isReadOnly" flex layout="row" layout-align="start center">
-                            <md-button ng-disabled="loading" class="md-primary md-raised"
+                            <md-button ng-disabled="$root.loading" class="md-primary md-raised"
                                        ng-click="addAction($event)" aria-label="{{ 'action.create' | translate }}">
                                 <md-tooltip md-direction="top">
                                     {{ 'rule.create-action' | translate }}

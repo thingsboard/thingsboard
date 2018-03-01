@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -128,12 +129,16 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
         Optional<Long> interval = request.getLongParamValue("interval");
         Optional<Integer> limit = request.getIntParamValue("limit");
 
+        // If some of these params are specified, they all must be
         if (startTs.isPresent() || endTs.isPresent() || interval.isPresent() || limit.isPresent()) {
-            if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent()) {
+            if (!startTs.isPresent() || !endTs.isPresent() || !interval.isPresent() || interval.get() < 0) {
                 msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
                 return;
             }
-            Aggregation agg = Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
+
+            // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
+            Aggregation agg = (interval.isPresent() && interval.get() == 0) ? Aggregation.valueOf(Aggregation.NONE.name()) :
+                                                                              Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
 
             List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
                     .collect(Collectors.toList());
@@ -146,18 +151,19 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
     private void handleHttpGetAttributesValues(PluginContext ctx, PluginRestMsg msg,
                                                RestRequest request, String scope, EntityId entityId) throws ServletException {
         String keys = request.getParameter("keys", "");
-
-        PluginCallback<List<AttributeKvEntry>> callback = getAttributeValuesPluginCallback(msg);
+        List<String> keyList = null;
+        if (!StringUtils.isEmpty(keys)) {
+            keyList = Arrays.asList(keys.split(","));
+        }
+        PluginCallback<List<AttributeKvEntry>> callback = getAttributeValuesPluginCallback(msg, scope, entityId, keyList);
         if (!StringUtils.isEmpty(scope)) {
-            if (!StringUtils.isEmpty(keys)) {
-                List<String> keyList = Arrays.asList(keys.split(","));
+            if (keyList != null && !keyList.isEmpty()) {
                 ctx.loadAttributes(entityId, scope, keyList, callback);
             } else {
                 ctx.loadAttributes(entityId, scope, callback);
             }
         } else {
-            if (!StringUtils.isEmpty(keys)) {
-                List<String> keyList = Arrays.asList(keys.split(","));
+            if (keyList != null && !keyList.isEmpty()) {
                 ctx.loadAttributes(entityId, Arrays.asList(DataConstants.allScopes()), keyList, callback);
             } else {
                 ctx.loadAttributes(entityId, Arrays.asList(DataConstants.allScopes()), callback);
@@ -226,9 +232,11 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                 if (attributes.isEmpty()) {
                     throw new IllegalArgumentException("No attributes data found in request body!");
                 }
+
                 ctx.saveAttributes(ctx.getSecurityCtx().orElseThrow(IllegalArgumentException::new).getTenantId(), entityId, scope, attributes, new PluginCallback<Void>() {
                     @Override
                     public void onSuccess(PluginContext ctx, Void value) {
+                        ctx.logAttributesUpdated(msg.getSecurityCtx(), entityId, scope, attributes, null);
                         msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
                         subscriptionManager.onAttributesUpdateFromServer(ctx, entityId, scope, attributes);
                     }
@@ -236,6 +244,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                     @Override
                     public void onFailure(PluginContext ctx, Exception e) {
                         log.error("Failed to save attributes", e);
+                        ctx.logAttributesUpdated(msg.getSecurityCtx(), entityId, scope, attributes, e);
                         handleError(e, msg, HttpStatus.BAD_REQUEST);
                     }
                 });
@@ -330,15 +339,18 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                 String keysParam = request.getParameter("keys");
                 if (!StringUtils.isEmpty(keysParam)) {
                     String[] keys = keysParam.split(",");
-                    ctx.removeAttributes(ctx.getSecurityCtx().orElseThrow(IllegalArgumentException::new).getTenantId(), entityId, scope, Arrays.asList(keys), new PluginCallback<Void>() {
+                    List<String> keyList = Arrays.asList(keys);
+                    ctx.removeAttributes(ctx.getSecurityCtx().orElseThrow(IllegalArgumentException::new).getTenantId(), entityId, scope, keyList, new PluginCallback<Void>() {
                         @Override
                         public void onSuccess(PluginContext ctx, Void value) {
+                            ctx.logAttributesDeleted(msg.getSecurityCtx(), entityId, scope, keyList, null);
                             msg.getResponseHolder().setResult(new ResponseEntity<>(HttpStatus.OK));
                         }
 
                         @Override
                         public void onFailure(PluginContext ctx, Exception e) {
                             log.error("Failed to remove attributes", e);
+                            ctx.logAttributesDeleted(msg.getSecurityCtx(), entityId, scope, keyList, e);
                             handleError(e, msg, HttpStatus.INTERNAL_SERVER_ERROR);
                         }
                     });
@@ -369,18 +381,21 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
         };
     }
 
-    private PluginCallback<List<AttributeKvEntry>> getAttributeValuesPluginCallback(final PluginRestMsg msg) {
+    private PluginCallback<List<AttributeKvEntry>> getAttributeValuesPluginCallback(final PluginRestMsg msg, final String scope,
+                                                                                    final EntityId entityId, final List<String> keyList) {
         return new PluginCallback<List<AttributeKvEntry>>() {
             @Override
             public void onSuccess(PluginContext ctx, List<AttributeKvEntry> attributes) {
                 List<AttributeData> values = attributes.stream().map(attribute -> new AttributeData(attribute.getLastUpdateTs(),
                         attribute.getKey(), attribute.getValue())).collect(Collectors.toList());
+                ctx.logAttributesRead(msg.getSecurityCtx(), entityId, scope, keyList, null);
                 msg.getResponseHolder().setResult(new ResponseEntity<>(values, HttpStatus.OK));
             }
 
             @Override
             public void onFailure(PluginContext ctx, Exception e) {
                 log.error("Failed to fetch attributes", e);
+                ctx.logAttributesRead(msg.getSecurityCtx(), entityId, scope, keyList, e);
                 handleError(e, msg, HttpStatus.INTERNAL_SERVER_ERROR);
             }
         };

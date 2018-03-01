@@ -26,9 +26,15 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.support.HttpRequestWrapper;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
 import java.io.IOException;
@@ -71,16 +77,76 @@ public class RestClient implements ClientHttpRequestInterceptor {
         }
     }
 
-    public Device createDevice(String name) {
+    public Optional<Customer> findCustomer(String title) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("customerTitle", title);
+        try {
+            ResponseEntity<Customer> customerEntity = restTemplate.getForEntity(baseURL + "/api/tenant/customers?customerTitle={customerTitle}", Customer.class, params);
+            return Optional.of(customerEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Optional<Asset> findAsset(String name) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("assetName", name);
+        try {
+            ResponseEntity<Asset> assetEntity = restTemplate.getForEntity(baseURL + "/api/tenant/assets?assetName={assetName}", Asset.class, params);
+            return Optional.of(assetEntity.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Customer createCustomer(String title) {
+        Customer customer = new Customer();
+        customer.setTitle(title);
+        return restTemplate.postForEntity(baseURL + "/api/customer", customer, Customer.class).getBody();
+    }
+
+    public Device createDevice(String name, String type) {
         Device device = new Device();
         device.setName(name);
+        device.setType(type);
         return restTemplate.postForEntity(baseURL + "/api/device", device, Device.class).getBody();
     }
 
+    public Asset createAsset(String name, String type) {
+        Asset asset = new Asset();
+        asset.setName(name);
+        asset.setType(type);
+        return restTemplate.postForEntity(baseURL + "/api/asset", asset, Asset.class).getBody();
+    }
+
+    public Alarm createAlarm(Alarm alarm) {
+        return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
+    }
 
     public Device assignDevice(CustomerId customerId, DeviceId deviceId) {
         return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/device/{deviceId}", null, Device.class,
                 customerId.toString(), deviceId.toString()).getBody();
+    }
+
+    public Asset assignAsset(CustomerId customerId, AssetId assetId) {
+        return restTemplate.postForEntity(baseURL + "/api/customer/{customerId}/asset/{assetId}", null, Asset.class,
+                customerId.toString(), assetId.toString()).getBody();
+    }
+
+    public EntityRelation makeRelation(String relationType, EntityId idFrom, EntityId idTo) {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(idFrom);
+        relation.setTo(idTo);
+        relation.setType(relationType);
+        return restTemplate.postForEntity(baseURL + "/api/relation", relation, EntityRelation.class).getBody();
     }
 
     public DeviceCredentials getCredentials(DeviceId id) {
@@ -91,11 +157,14 @@ public class RestClient implements ClientHttpRequestInterceptor {
         return restTemplate;
     }
 
+    public String getToken() {
+        return token;
+    }
+
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes, ClientHttpRequestExecution execution) throws IOException {
         HttpRequest wrapper = new HttpRequestWrapper(request);
         wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
         return execution.execute(wrapper, bytes);
     }
-
 }
