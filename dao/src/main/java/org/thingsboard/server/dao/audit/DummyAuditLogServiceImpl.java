@@ -15,23 +15,20 @@
  */
 package org.thingsboard.server.dao.audit;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
-import java.util.Collections;
 import java.util.List;
 
+@Service
 @ConditionalOnProperty(prefix = "audit_log", value = "enabled", havingValue = "false")
 public class DummyAuditLogServiceImpl implements AuditLogService {
 
