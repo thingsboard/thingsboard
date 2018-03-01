@@ -45,11 +45,7 @@ public class SqlDbHelper {
     public static Path dumpTableIfExists(Connection conn, String tableName,
                                          String[] columns, String[] defaultValues, String dumpPrefix, boolean printHeader) throws Exception {
 
-        DatabaseMetaData metaData = conn.getMetaData();
-        ResultSet res = metaData.getTables(null, null, tableName,
-                new String[] {"TABLE"});
-        if (res.next()) {
-            res.close();
+        if (tableExists(conn, tableName)) {
             Path dumpFile = Files.createTempFile(dumpPrefix, null);
             Files.deleteIfExists(dumpFile);
             CSVFormat csvFormat = CSV_DUMP_FORMAT;
@@ -61,9 +57,9 @@ public class SqlDbHelper {
                     try (ResultSet tableRes = stmt.executeQuery()) {
                         ResultSetMetaData resMetaData = tableRes.getMetaData();
                         Map<String, Integer> columnIndexMap = new HashMap<>();
-                        for (int i = 0; i < resMetaData.getColumnCount(); i++) {
+                        for (int i = 1; i <= resMetaData.getColumnCount(); i++) {
                             String columnName = resMetaData.getColumnName(i);
-                            columnIndexMap.put(columnName, i);
+                            columnIndexMap.put(columnName.toUpperCase(), i);
                         }
                         while(tableRes.next()) {
                             dumpRow(tableRes, columnIndexMap, columns, defaultValues, csvPrinter);
@@ -74,6 +70,15 @@ public class SqlDbHelper {
             return dumpFile;
         } else {
             return null;
+        }
+    }
+
+    private static boolean tableExists(Connection conn, String tableName) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.executeQuery("select * from " + tableName + " where 1=0");
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -89,7 +94,6 @@ public class SqlDbHelper {
             csvFormat = CSV_DUMP_FORMAT.withHeader(columns);
         }
         try (PreparedStatement prepared = conn.prepareStatement(createInsertStatement(tableName, columns))) {
-            prepared.getParameterMetaData();
             try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(sourceFile), csvFormat)) {
                 csvParser.forEach(record -> {
                     try {
@@ -122,13 +126,13 @@ public class SqlDbHelper {
     }
 
     private static String getColumnValue(String column, String defaultValue, Map<String, Integer> columnIndexMap, ResultSet res) {
-        int index = columnIndexMap.containsKey(column) ? columnIndexMap.get(column) : -1;
+        int index = columnIndexMap.containsKey(column.toUpperCase()) ? columnIndexMap.get(column.toUpperCase()) : -1;
         if (index > -1) {
             String str;
             try {
                 Object obj = res.getObject(index);
                 if (obj == null) {
-                    str = "";
+                    return null;
                 } else {
                     str = obj.toString();
                 }
