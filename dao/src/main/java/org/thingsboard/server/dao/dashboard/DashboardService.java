@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
-import java.sql.Time;
+import java.util.Set;
 
 public interface DashboardService {
     
@@ -52,8 +52,8 @@ public interface DashboardService {
 
     ListenableFuture<TimePageData<DashboardInfo>> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TimePageLink pageLink);
 
-    void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
+    void unassignCustomerDashboards(CustomerId customerId);
 
-    void updateCustomerDashboards(TenantId tenantId, CustomerId customerId, String customerTitle);
+    void updateCustomerDashboards(CustomerId customerId);
 
 }

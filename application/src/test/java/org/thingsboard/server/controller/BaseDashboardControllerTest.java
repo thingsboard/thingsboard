@@ -138,10 +138,10 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         Dashboard assignedDashboard = doPost("/api/customer/" + savedCustomer.getId().getId().toString() 
                 + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
-        Assert.assertTrue(assignedDashboard.getAssignedCustomers().containsKey(savedCustomer.getId().toString()));
+        Assert.assertTrue(assignedDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
-        Assert.assertTrue(foundDashboard.getAssignedCustomers().containsKey(savedCustomer.getId().toString()));
+        Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
 
         Dashboard unassignedDashboard = 
                 doDelete("/api/customer/"+savedCustomer.getId().getId().toString()+"/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);

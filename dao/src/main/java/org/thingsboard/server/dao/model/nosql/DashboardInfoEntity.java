@@ -20,20 +20,20 @@ import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import java.util.HashMap;
-import java.util.Set;
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
@@ -45,6 +45,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final JavaType assignedCustomersType =
+            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
@@ -60,8 +62,8 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY, codec = JsonCodec.class)
-    private JsonNode assignedCustomers;
+    @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
+    private String assignedCustomers;
 
     public DashboardInfoEntity() {
         super();
@@ -76,7 +78,11 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
         }
         this.title = dashboardInfo.getTitle();
         if (dashboardInfo.getAssignedCustomers() != null) {
-            this.assignedCustomers = objectMapper.valueToTree(dashboardInfo.getAssignedCustomers());
+            try {
+                this.assignedCustomers = objectMapper.writeValueAsString(dashboardInfo.getAssignedCustomers());
+            } catch (JsonProcessingException e) {
+                log.error("Unable to serialize assigned customers to string!", e);
+            }
         }
     }
 
@@ -104,11 +110,11 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
         this.title = title;
     }
 
-    public JsonNode getAssignedCustomers() {
+    public String getAssignedCustomers() {
         return assignedCustomers;
     }
 
-    public void setAssignedCustomers(JsonNode assignedCustomers) {
+    public void setAssignedCustomers(String assignedCustomers) {
         this.assignedCustomers = assignedCustomers;
     }
 
@@ -134,10 +140,10 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
             dashboardInfo.setTenantId(new TenantId(tenantId));
         }
         dashboardInfo.setTitle(title);
-        if (assignedCustomers != null) {
+        if (!StringUtils.isEmpty(assignedCustomers)) {
             try {
-                dashboardInfo.setAssignedCustomers(objectMapper.treeToValue(assignedCustomers, HashMap.class));
-            } catch (JsonProcessingException e) {
+                dashboardInfo.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
+            } catch (IOException e) {
                 log.warn("Unable to parse assigned customers!", e);
             }
         }

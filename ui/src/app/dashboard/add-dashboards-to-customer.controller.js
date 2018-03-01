@@ -52,7 +52,7 @@ export default function AddDashboardsToCustomerController(dashboardService, $mdD
         fetchMoreItems_: function () {
             if (vm.dashboards.hasNext && !vm.dashboards.pending) {
                 vm.dashboards.pending = true;
-                dashboardService.getTenantDashboards(vm.dashboards.nextPageLink, false).then(
+                dashboardService.getTenantDashboards(vm.dashboards.nextPageLink).then(
                     function success(dashboards) {
                         vm.dashboards.data = vm.dashboards.data.concat(dashboards.data);
                         vm.dashboards.nextPageLink = dashboards.nextPageLink;

@@ -15,12 +15,13 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.StringUtils;
-import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -54,7 +55,8 @@ public class DatabaseHelper {
     public static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static void upgradeTo40_assignDashboards(Path dashboardsDump, DashboardService dashboardService, boolean sql) throws Exception {
-        String[] columns = new String[]{ID, TENANT_ID, CUSTOMER_ID, TITLE, SEARCH_TEXT, ASSIGNED_CUSTOMERS, CONFIGURATION};
+        JavaType assignedCustomersType =
+                objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
         try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(dashboardsDump), CSV_DUMP_FORMAT.withFirstRecordAsHeader())) {
             csvParser.forEach(record -> {
                 String customerIdString = record.get(CUSTOMER_ID);
@@ -63,12 +65,11 @@ public class DatabaseHelper {
                 List<CustomerId> customerIds = new ArrayList<>();
                 if (!StringUtils.isEmpty(assignedCustomersString)) {
                     try {
-                        JsonNode assignedCustomersJson = objectMapper.readTree(assignedCustomersString);
-                        Map<String,String> assignedCustomers = objectMapper.treeToValue(assignedCustomersJson, HashMap.class);
-                        assignedCustomers.forEach((strCustomerId, title) -> {
-                            CustomerId customerId = new CustomerId(UUID.fromString(strCustomerId));
+                        Set<ShortCustomerInfo> assignedCustomers = objectMapper.readValue(assignedCustomersString, assignedCustomersType);
+                        assignedCustomers.forEach((customerInfo) -> {
+                            CustomerId customerId = customerInfo.getCustomerId();
                             if (!customerId.isNullUid()) {
-                                customerIds.add(new CustomerId(UUID.fromString(strCustomerId)));
+                                customerIds.add(customerId);
                             }
                         });
                     } catch (IOException e) {
@@ -78,7 +79,7 @@ public class DatabaseHelper {
                 if (!StringUtils.isEmpty(customerIdString)) {
                     CustomerId customerId = new CustomerId(toUUID(customerIdString, sql));
                     if (!customerId.isNullUid()) {
-                        customerIds.add(new CustomerId(toUUID(customerIdString, sql)));
+                        customerIds.add(customerId);
                     }
                 }
                 for (CustomerId customerId : customerIds) {

@@ -434,7 +434,6 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(dashboardId);
-            SecurityUser authUser = getCurrentUser();
             checkDashboard(dashboardInfo);
             return dashboardInfo;
         } catch (Exception e) {
@@ -447,7 +446,7 @@ public abstract class BaseController {
         checkTenantId(dashboard.getTenantId());
         SecurityUser authUser = getCurrentUser();
         if (authUser.getAuthority() == Authority.CUSTOMER_USER) {
-            if (dashboard.getAssignedCustomers() == null || !dashboard.getAssignedCustomers().containsKey(authUser.getCustomerId().toString())) {
+            if (!dashboard.isAssignedToCustomer(authUser.getCustomerId())) {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }

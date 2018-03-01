@@ -17,11 +17,13 @@
 
 import addDashboardTemplate from './add-dashboard.tpl.html';
 import dashboardCard from './dashboard-card.tpl.html';
-import assignToCustomerTemplate from './assign-to-customer.tpl.html';
 import addDashboardsToCustomerTemplate from './add-dashboards-to-customer.tpl.html';
 import makeDashboardPublicDialogTemplate from './make-dashboard-public-dialog.tpl.html';
+import manageAssignedCustomersTemplate from './manage-assigned-customers.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
+
+import './dashboard-card.scss';
 
 /*@ngInject*/
 export function MakeDashboardPublicDialogController($mdDialog, $translate, toast, dashboardService, dashboard) {
@@ -48,23 +50,8 @@ export function MakeDashboardPublicDialogController($mdDialog, $translate, toast
 export function DashboardCardController(types) {
 
     var vm = this;
-
     vm.types = types;
 
-    vm.isAssignedToCustomer = function() {
-        if (vm.item && vm.item.customerId && vm.parentCtl.dashboardsScope === 'tenant' &&
-            vm.item.customerId.id != vm.types.id.nullUid && !vm.item.assignedCustomer.isPublic) {
-            return true;
-        }
-        return false;
-    }
-
-    vm.isPublic = function() {
-        if (vm.item && vm.item.assignedCustomer && vm.parentCtl.dashboardsScope === 'tenant' && vm.item.assignedCustomer.isPublic) {
-            return true;
-        }
-        return false;
-    }
 }
 
 /*@ngInject*/
@@ -135,8 +122,9 @@ export function DashboardsController(userService, dashboardService, customerServ
 
     vm.dashboardsScope = $state.$current.data.dashboardsType;
 
-    vm.assignToCustomer = assignToCustomer;
     vm.makePublic = makePublic;
+    vm.makePrivate = makePrivate;
+    vm.manageAssignedCustomers = manageAssignedCustomers;
     vm.unassignFromCustomer = unassignFromCustomer;
     vm.exportDashboard = exportDashboard;
 
@@ -155,6 +143,7 @@ export function DashboardsController(userService, dashboardService, customerServ
         }
 
         if (customerId) {
+            vm.customerId = customerId;
             vm.customerDashboardsTitle = $translate.instant('customer.dashboards');
             customerService.getShortCustomerInfo(customerId).then(
                 function success(info) {
@@ -167,7 +156,7 @@ export function DashboardsController(userService, dashboardService, customerServ
 
         if (vm.dashboardsScope === 'tenant') {
             fetchDashboardsFunction = function (pageLink) {
-                return dashboardService.getTenantDashboards(pageLink, true);
+                return dashboardService.getTenantDashboards(pageLink);
             };
             deleteDashboardFunction = function (dashboardId) {
                 return dashboardService.deleteDashboard(dashboardId);
@@ -194,11 +183,33 @@ export function DashboardsController(userService, dashboardService, customerServ
                     details: function() { return $translate.instant('dashboard.make-public') },
                     icon: "share",
                     isEnabled: function(dashboard) {
-                        return dashboard && (!dashboard.customerId || dashboard.customerId.id === types.id.nullUid);
+                        return dashboard && !dashboard.publicCustomerId;
                     }
                 });
-
             dashboardActionsList.push({
+                onAction: function ($event, item) {
+                    makePrivate($event, item);
+                },
+                name: function() { return $translate.instant('action.make-private') },
+                details: function() { return $translate.instant('dashboard.make-private') },
+                icon: "reply",
+                isEnabled: function(dashboard) {
+                    return dashboard && dashboard.publicCustomerId;
+                }
+            });
+            dashboardActionsList.push({
+                onAction: function ($event, item) {
+                    manageAssignedCustomers($event, item);
+                },
+                name: function() { return $translate.instant('action.assign') },
+                details: function() { return $translate.instant('dashboard.manage-assigned-customers') },
+                icon: "assignment_ind",
+                isEnabled: function(dashboard) {
+                    return dashboard;
+                }
+            });
+
+            /*dashboardActionsList.push({
                     onAction: function ($event, item) {
                         assignToCustomer($event, [ item.id.id ]);
                     },
@@ -208,8 +219,8 @@ export function DashboardsController(userService, dashboardService, customerServ
                     isEnabled: function(dashboard) {
                         return dashboard && (!dashboard.customerId || dashboard.customerId.id === types.id.nullUid);
                     }
-                });
-            dashboardActionsList.push({
+                });*/
+            /*dashboardActionsList.push({
                     onAction: function ($event, item) {
                         unassignFromCustomer($event, item, false);
                     },
@@ -219,18 +230,7 @@ export function DashboardsController(userService, dashboardService, customerServ
                     isEnabled: function(dashboard) {
                         return dashboard && dashboard.customerId && dashboard.customerId.id !== types.id.nullUid && !dashboard.assignedCustomer.isPublic;
                     }
-                });
-            dashboardActionsList.push({
-                    onAction: function ($event, item) {
-                        unassignFromCustomer($event, item, true);
-                    },
-                    name: function() { return $translate.instant('action.make-private') },
-                    details: function() { return $translate.instant('dashboard.make-private') },
-                    icon: "reply",
-                    isEnabled: function(dashboard) {
-                        return dashboard && dashboard.customerId && dashboard.customerId.id !== types.id.nullUid && dashboard.assignedCustomer.isPublic;
-                    }
-                });
+                });*/
 
             dashboardActionsList.push(
                 {
@@ -246,7 +246,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             dashboardGroupActionsList.push(
                     {
                         onAction: function ($event, items) {
-                            assignDashboardsToCustomer($event, items);
+                            assignDashboardsToCustomers($event, items);
                         },
                         name: function() { return $translate.instant('dashboard.assign-dashboards') },
                         details: function(selectedCount) {
@@ -254,6 +254,17 @@ export function DashboardsController(userService, dashboardService, customerServ
                         },
                         icon: "assignment_ind"
                     }
+            );
+            dashboardGroupActionsList.push(
+                {
+                    onAction: function ($event, items) {
+                        unassignDashboardsFromCustomers($event, items);
+                    },
+                    name: function() { return $translate.instant('dashboard.unassign-dashboards') },
+                    details: function(selectedCount) {
+                        return $translate.instant('dashboard.unassign-dashboards-action-text', {count: selectedCount}, "messageformat");
+                    },
+                    icon: "assignment_return"                }
             );
 
             dashboardGroupActionsList.push(
@@ -290,10 +301,10 @@ export function DashboardsController(userService, dashboardService, customerServ
             });
         } else if (vm.dashboardsScope === 'customer' || vm.dashboardsScope === 'customer_user') {
             fetchDashboardsFunction = function (pageLink) {
-                return dashboardService.getCustomerDashboards(customerId, pageLink, true);
+                return dashboardService.getCustomerDashboards(customerId, pageLink);
             };
             deleteDashboardFunction = function (dashboardId) {
-                return dashboardService.unassignDashboardFromCustomer(dashboardId);
+                return dashboardService.unassignDashboardFromCustomer(customerId, dashboardId);
             };
             refreshDashboardsParamsFunction = function () {
                 return {"customerId": customerId, "topIndex": vm.topIndex};
@@ -314,26 +325,27 @@ export function DashboardsController(userService, dashboardService, customerServ
                 dashboardActionsList.push(
                     {
                         onAction: function ($event, item) {
-                            unassignFromCustomer($event, item, false);
-                        },
-                        name: function() { return $translate.instant('action.unassign') },
-                        details: function() { return $translate.instant('dashboard.unassign-from-customer') },
-                        icon: "assignment_return",
-                        isEnabled: function(dashboard) {
-                            return dashboard && !dashboard.assignedCustomer.isPublic;
-                        }
-                    }
-                );
-                dashboardActionsList.push(
-                    {
-                        onAction: function ($event, item) {
-                            unassignFromCustomer($event, item, true);
+                            makePrivate($event, item);
                         },
                         name: function() { return $translate.instant('action.make-private') },
                         details: function() { return $translate.instant('dashboard.make-private') },
                         icon: "reply",
                         isEnabled: function(dashboard) {
-                            return dashboard && dashboard.assignedCustomer.isPublic;
+                            return dashboard && customerId == dashboard.publicCustomerId;
+                        }
+                    }
+                );
+
+                dashboardActionsList.push(
+                    {
+                        onAction: function ($event, item) {
+                            unassignFromCustomer($event, item, customerId);
+                        },
+                        name: function() { return $translate.instant('action.unassign') },
+                        details: function() { return $translate.instant('dashboard.unassign-from-customer') },
+                        icon: "assignment_return",
+                        isEnabled: function(dashboard) {
+                            return dashboard && customerId != dashboard.publicCustomerId;
                         }
                     }
                 );
@@ -341,7 +353,7 @@ export function DashboardsController(userService, dashboardService, customerServ
                 dashboardGroupActionsList.push(
                     {
                         onAction: function ($event, items) {
-                            unassignDashboardsFromCustomer($event, items);
+                            unassignDashboardsFromCustomer($event, items, customerId);
                         },
                         name: function() { return $translate.instant('dashboard.unassign-dashboards') },
                         details: function(selectedCount) {
@@ -350,7 +362,6 @@ export function DashboardsController(userService, dashboardService, customerServ
                         icon: "assignment_return"
                     }
                 );
-
 
                 vm.dashboardGridConfig.addItemAction = {
                     onAction: function ($event) {
@@ -428,39 +439,42 @@ export function DashboardsController(userService, dashboardService, customerServ
         return deferred.promise;
     }
 
-    function assignToCustomer($event, dashboardIds) {
+    function manageAssignedCustomers($event, dashboard) {
+        showManageAssignedCustomersDialog($event, [dashboard.id.id], 'manage', dashboard.assignedCustomersIds);
+    }
+
+    function assignDashboardsToCustomers($event, items) {
+        var dashboardIds = [];
+        for (var id in items.selections) {
+            dashboardIds.push(id);
+        }
+        showManageAssignedCustomersDialog($event, dashboardIds, 'assign');
+    }
+
+    function unassignDashboardsFromCustomers($event, items) {
+        var dashboardIds = [];
+        for (var id in items.selections) {
+            dashboardIds.push(id);
+        }
+        showManageAssignedCustomersDialog($event, dashboardIds, 'unassign');
+    }
+
+    function showManageAssignedCustomersDialog($event, dashboardIds, actionType, assignedCustomers) {
         if ($event) {
             $event.stopPropagation();
         }
-        var pageSize = 10;
-        customerService.getCustomers({limit: pageSize, textSearch: ''}).then(
-            function success(_customers) {
-                var customers = {
-                    pageSize: pageSize,
-                    data: _customers.data,
-                    nextPageLink: _customers.nextPageLink,
-                    selection: null,
-                    hasNext: _customers.hasNext,
-                    pending: false
-                };
-                if (customers.hasNext) {
-                    customers.nextPageLink.limit = pageSize;
-                }
-                $mdDialog.show({
-                    controller: 'AssignDashboardToCustomerController',
-                    controllerAs: 'vm',
-                    templateUrl: assignToCustomerTemplate,
-                    locals: {dashboardIds: dashboardIds, customers: customers},
-                    parent: angular.element($document[0].body),
-                    fullscreen: true,
-                    targetEvent: $event
-                }).then(function () {
-                    vm.grid.refreshList();
-                }, function () {
-                });
-            },
-            function fail() {
-            });
+        $mdDialog.show({
+            controller: 'ManageAssignedCustomersController',
+            controllerAs: 'vm',
+            templateUrl: manageAssignedCustomersTemplate,
+            locals: {actionType: actionType, dashboardIds: dashboardIds, assignedCustomers: assignedCustomers},
+            parent: angular.element($document[0].body),
+            fullscreen: true,
+            targetEvent: $event
+        }).then(function () {
+            vm.grid.refreshList();
+        }, function () {
+        });
     }
 
     function addDashboardsToCustomer($event) {
@@ -468,7 +482,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             $event.stopPropagation();
         }
         var pageSize = 10;
-        dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''}, false).then(
+        dashboardService.getTenantDashboards({limit: pageSize, textSearch: ''}).then(
             function success(_dashboards) {
                 var dashboards = {
                     pageSize: pageSize,
@@ -499,30 +513,13 @@ export function DashboardsController(userService, dashboardService, customerServ
             });
     }
 
-    function assignDashboardsToCustomer($event, items) {
-        var dashboardIds = [];
-        for (var id in items.selections) {
-            dashboardIds.push(id);
-        }
-        assignToCustomer($event, dashboardIds);
-    }
-
-    function unassignFromCustomer($event, dashboard, isPublic) {
+    function unassignFromCustomer($event, dashboard, customerId) {
         if ($event) {
             $event.stopPropagation();
         }
-        var title;
-        var content;
-        var label;
-        if (isPublic) {
-            title = $translate.instant('dashboard.make-private-dashboard-title', {dashboardTitle: dashboard.title});
-            content = $translate.instant('dashboard.make-private-dashboard-text');
-            label = $translate.instant('dashboard.make-private-dashboard');
-        } else {
-            title = $translate.instant('dashboard.unassign-dashboard-title', {dashboardTitle: dashboard.title});
-            content = $translate.instant('dashboard.unassign-dashboard-text');
-            label = $translate.instant('dashboard.unassign-dashboard');
-        }
+        var title = $translate.instant('dashboard.unassign-dashboard-title', {dashboardTitle: dashboard.title});
+        var content = $translate.instant('dashboard.unassign-dashboard-text');
+        var label = $translate.instant('dashboard.unassign-dashboard');
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
             .title(title)
@@ -531,7 +528,7 @@ export function DashboardsController(userService, dashboardService, customerServ
             .cancel($translate.instant('action.no'))
             .ok($translate.instant('action.yes'));
         $mdDialog.show(confirm).then(function () {
-            dashboardService.unassignDashboardFromCustomer(dashboard.id.id).then(function success() {
+            dashboardService.unassignDashboardFromCustomer(customerId, dashboard.id.id).then(function success() {
                 vm.grid.refreshList();
             });
         });
@@ -556,12 +553,33 @@ export function DashboardsController(userService, dashboardService, customerServ
         });
     }
 
+    function makePrivate($event, dashboard) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var title = $translate.instant('dashboard.make-private-dashboard-title', {dashboardTitle: dashboard.title});
+        var content = $translate.instant('dashboard.make-private-dashboard-text');
+        var label = $translate.instant('dashboard.make-private-dashboard');
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title(title)
+            .htmlContent(content)
+            .ariaLabel(label)
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            dashboardService.makeDashboardPrivate(dashboard.id.id).then(function success() {
+                vm.grid.refreshList();
+            });
+        });
+    }
+
     function exportDashboard($event, dashboard) {
         $event.stopPropagation();
         importExport.exportDashboard(dashboard.id.id);
     }
 
-    function unassignDashboardsFromCustomer($event, items) {
+    function unassignDashboardsFromCustomer($event, items, customerId) {
         var confirm = $mdDialog.confirm()
             .targetEvent($event)
             .title($translate.instant('dashboard.unassign-dashboards-title', {count: items.selectedCount}, 'messageformat'))
@@ -572,7 +590,7 @@ export function DashboardsController(userService, dashboardService, customerServ
         $mdDialog.show(confirm).then(function () {
             var tasks = [];
             for (var id in items.selections) {
-                tasks.push(dashboardService.unassignDashboardFromCustomer(id));
+                tasks.push(dashboardService.unassignDashboardFromCustomer(customerId, id));
             }
             $q.all(tasks).then(function () {
                 vm.grid.refreshList();

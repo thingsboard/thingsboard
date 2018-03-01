@@ -20,16 +20,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName {
 
     private TenantId tenantId;
     private String title;
-    private Map<String, String> assignedCustomers;
+    private Set<ShortCustomerInfo> assignedCustomers;
 
     public DashboardInfo() {
         super();
@@ -62,38 +59,56 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         this.title = title;
     }
 
-    public Map<String, String> getAssignedCustomers() {
+    public Set<ShortCustomerInfo> getAssignedCustomers() {
         return assignedCustomers;
     }
 
-    public void setAssignedCustomers(Map<String, String> assignedCustomers) {
+    public void setAssignedCustomers(Set<ShortCustomerInfo> assignedCustomers) {
         this.assignedCustomers = assignedCustomers;
     }
 
-    public boolean addAssignedCustomer(CustomerId customerId, String title) {
-        if (this.assignedCustomers != null && this.assignedCustomers.containsKey(customerId.toString())) {
+    public boolean isAssignedToCustomer(CustomerId customerId) {
+        return this.assignedCustomers != null && this.assignedCustomers.contains(new ShortCustomerInfo(customerId, null, false));
+    }
+
+    public ShortCustomerInfo getAssignedCustomerInfo(CustomerId customerId) {
+        if (this.assignedCustomers != null) {
+            for (ShortCustomerInfo customerInfo : this.assignedCustomers) {
+                if (customerInfo.getCustomerId().equals(customerId)) {
+                    return customerInfo;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean addAssignedCustomer(Customer customer) {
+        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
+        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
             return false;
         } else {
             if (this.assignedCustomers == null) {
-                this.assignedCustomers = new HashMap<>();
+                this.assignedCustomers = new HashSet<>();
             }
-            this.assignedCustomers.put(customerId.toString(), title);
+            this.assignedCustomers.add(customerInfo);
             return true;
         }
     }
 
-    public boolean updateAssignedCustomer(CustomerId customerId, String title) {
-        if (this.assignedCustomers != null && this.assignedCustomers.containsKey(customerId.toString())) {
-            this.assignedCustomers.put(customerId.toString(), title);
+    public boolean updateAssignedCustomer(Customer customer) {
+        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
+        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
+            this.assignedCustomers.add(customerInfo);
             return true;
         } else {
             return false;
         }
     }
 
-    public boolean removeAssignedCustomer(CustomerId customerId) {
-        if (this.assignedCustomers != null && this.assignedCustomers.containsKey(customerId.toString())) {
-            this.assignedCustomers.remove(customerId.toString());
+    public boolean removeAssignedCustomer(Customer customer) {
+        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
+        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
+            this.assignedCustomers.remove(customerInfo);
             return true;
         } else {
             return false;

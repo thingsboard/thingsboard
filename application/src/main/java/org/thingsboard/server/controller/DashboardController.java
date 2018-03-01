@@ -18,10 +18,7 @@ package org.thingsboard.server.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -33,6 +30,9 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -171,6 +171,158 @@ public class DashboardController extends BaseController {
                     ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customer.getId().toString(), customer.getName());
 
             return savedDashboard;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDashboardId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/customers", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard updateDashboardCustomers(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                              @RequestBody String[] strCustomerIds) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId);
+
+            Set<CustomerId> customerIds = new HashSet<>();
+            if (strCustomerIds != null) {
+                for (String strCustomerId : strCustomerIds) {
+                    customerIds.add(new CustomerId(toUUID(strCustomerId)));
+                }
+            }
+
+            Set<CustomerId> addedCustomerIds = new HashSet<>();
+            Set<CustomerId> removedCustomerIds = new HashSet<>();
+            for (CustomerId customerId : customerIds) {
+                if (!dashboard.isAssignedToCustomer(customerId)) {
+                    addedCustomerIds.add(customerId);
+                }
+            }
+
+            Set<ShortCustomerInfo> assignedCustomers = dashboard.getAssignedCustomers();
+            if (assignedCustomers != null) {
+                for (ShortCustomerInfo customerInfo : assignedCustomers) {
+                    if (!customerIds.contains(customerInfo.getCustomerId())) {
+                        removedCustomerIds.add(customerInfo.getCustomerId());
+                    }
+                }
+            }
+
+            if (addedCustomerIds.isEmpty() && removedCustomerIds.isEmpty()) {
+                return dashboard;
+            } else {
+                Dashboard savedDashboard = null;
+                for (CustomerId customerId : addedCustomerIds) {
+                    savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
+                    ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
+                    logEntityAction(dashboardId, savedDashboard,
+                            customerId,
+                            ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+                }
+                for (CustomerId customerId : removedCustomerIds) {
+                    ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
+                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId, customerId));
+                    logEntityAction(dashboardId, dashboard,
+                            customerId,
+                            ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+
+                }
+                return savedDashboard;
+            }
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strDashboardId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/customers/add", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard addDashboardCustomers(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                           @RequestBody String[] strCustomerIds) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId);
+
+            Set<CustomerId> customerIds = new HashSet<>();
+            if (strCustomerIds != null) {
+                for (String strCustomerId : strCustomerIds) {
+                    CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+                    if (!dashboard.isAssignedToCustomer(customerId)) {
+                        customerIds.add(customerId);
+                    }
+                }
+            }
+
+            if (customerIds.isEmpty()) {
+                return dashboard;
+            } else {
+                Dashboard savedDashboard = null;
+                for (CustomerId customerId : customerIds) {
+                    savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
+                    ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
+                    logEntityAction(dashboardId, savedDashboard,
+                            customerId,
+                            ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+                }
+                return savedDashboard;
+            }
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.DASHBOARD), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strDashboardId);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/dashboard/{dashboardId}/customers/remove", method = RequestMethod.POST)
+    @ResponseBody
+    public Dashboard removeDashboardCustomers(@PathVariable(DASHBOARD_ID) String strDashboardId,
+                                              @RequestBody String[] strCustomerIds) throws ThingsboardException {
+        checkParameter(DASHBOARD_ID, strDashboardId);
+        try {
+            DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+            Dashboard dashboard = checkDashboardId(dashboardId);
+
+            Set<CustomerId> customerIds = new HashSet<>();
+            if (strCustomerIds != null) {
+                for (String strCustomerId : strCustomerIds) {
+                    CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+                    if (dashboard.isAssignedToCustomer(customerId)) {
+                        customerIds.add(customerId);
+                    }
+                }
+            }
+
+            if (customerIds.isEmpty()) {
+                return dashboard;
+            } else {
+                Dashboard savedDashboard = null;
+                for (CustomerId customerId : customerIds) {
+                    ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
+                    savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId, customerId));
+                    logEntityAction(dashboardId, dashboard,
+                            customerId,
+                            ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+
+                }
+                return savedDashboard;
+            }
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.DASHBOARD), null,

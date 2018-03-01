@@ -17,7 +17,7 @@ export default angular.module('thingsboard.api.dashboard', [])
     .factory('dashboardService', DashboardService).name;
 
 /*@ngInject*/
-function DashboardService($rootScope, $http, $q, $location, customerService) {
+function DashboardService($rootScope, $http, $q, $location, $filter) {
 
     var stDiffPromise;
 
@@ -37,7 +37,11 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         deleteDashboard: deleteDashboard,
         saveDashboard: saveDashboard,
         unassignDashboardFromCustomer: unassignDashboardFromCustomer,
+        updateDashboardCustomers: updateDashboardCustomers,
+        addDashboardCustomers: addDashboardCustomers,
+        removeDashboardCustomers: removeDashboardCustomers,
         makeDashboardPublic: makeDashboardPublic,
+        makeDashboardPrivate: makeDashboardPrivate,
         getPublicDashboardLink: getPublicDashboardLink
     }
 
@@ -56,14 +60,14 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
             url += '&textOffset=' + pageLink.textOffset;
         }
         $http.get(url, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDashboards(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function getTenantDashboards(pageLink, applyCustomersInfo, config) {
+    function getTenantDashboards(pageLink, config) {
         var deferred = $q.defer();
         var url = '/api/tenant/dashboards?limit=' + pageLink.limit;
         if (angular.isDefined(pageLink.textSearch)) {
@@ -76,51 +80,25 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
             url += '&textOffset=' + pageLink.textOffset;
         }
         $http.get(url, config).then(function success(response) {
-            if (applyCustomersInfo) {
-                customerService.applyAssignedCustomersInfo(response.data.data).then(
-                    function success(data) {
-                        response.data.data = data;
-                        deferred.resolve(response.data);
-                    },
-                    function fail() {
-                        deferred.reject();
-                    }
-                );
-            } else {
-                deferred.resolve(response.data);
-            }
+            deferred.resolve(prepareDashboards(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function getCustomerDashboards(customerId, pageLink, applyCustomersInfo, config) {
+    function getCustomerDashboards(customerId, pageLink, config) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/dashboards?limit=' + pageLink.limit;
-        if (angular.isDefined(pageLink.textSearch)) {
-            url += '&textSearch=' + pageLink.textSearch;
-        }
         if (angular.isDefined(pageLink.idOffset)) {
-            url += '&idOffset=' + pageLink.idOffset;
-        }
-        if (angular.isDefined(pageLink.textOffset)) {
-            url += '&textOffset=' + pageLink.textOffset;
+            url += '&offset=' + pageLink.idOffset;
         }
         $http.get(url, config).then(function success(response) {
-            if (applyCustomersInfo) {
-                customerService.applyAssignedCustomerInfo(response.data.data, customerId).then(
-                    function success(data) {
-                        response.data.data = data;
-                        deferred.resolve(response.data);
-                    },
-                    function fail() {
-                        deferred.reject();
-                    }
-                );
-            } else {
-                deferred.resolve(response.data);
+            response.data = prepareDashboards(response.data);
+            if (pageLink.textSearch) {
+                response.data.data = $filter('filter')(response.data.data, {title: pageLink.textSearch});
             }
+            deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();
         });
@@ -151,7 +129,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         var deferred = $q.defer();
         var url = '/api/dashboard/' + dashboardId;
         $http.get(url, null).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDashboard(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -162,7 +140,7 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         var deferred = $q.defer();
         var url = '/api/dashboard/info/' + dashboardId;
         $http.get(url, config).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDashboard(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -172,8 +150,8 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
     function saveDashboard(dashboard) {
         var deferred = $q.defer();
         var url = '/api/dashboard';
-        $http.post(url, dashboard).then(function success(response) {
-            deferred.resolve(response.data);
+        $http.post(url, cleanDashboard(dashboard)).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -195,18 +173,51 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         var deferred = $q.defer();
         var url = '/api/customer/' + customerId + '/dashboard/' + dashboardId;
         $http.post(url, null).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDashboard(response.data));
         }, function fail() {
             deferred.reject();
         });
         return deferred.promise;
     }
 
-    function unassignDashboardFromCustomer(dashboardId) {
+    function unassignDashboardFromCustomer(customerId, dashboardId) {
         var deferred = $q.defer();
-        var url = '/api/customer/dashboard/' + dashboardId;
+        var url = '/api/customer/' + customerId + '/dashboard/' + dashboardId;
         $http.delete(url).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDashboard(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function updateDashboardCustomers(dashboardId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/' + dashboardId + '/customers';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function addDashboardCustomers(dashboardId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/' + dashboardId + '/customers/add';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function removeDashboardCustomers(dashboardId, customerIds) {
+        var deferred = $q.defer();
+        var url = '/api/dashboard/' + dashboardId + '/customers/remove';
+        $http.post(url, customerIds).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -217,7 +228,18 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         var deferred = $q.defer();
         var url = '/api/customer/public/dashboard/' + dashboardId;
         $http.post(url, null).then(function success(response) {
-            deferred.resolve(response.data);
+            deferred.resolve(prepareDashboard(response.data));
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function makeDashboardPrivate(dashboardId) {
+        var deferred = $q.defer();
+        var url = '/api/customer/public/dashboard/' + dashboardId;
+        $http.delete(url).then(function success(response) {
+            deferred.resolve(prepareDashboard(response.data));
         }, function fail() {
             deferred.reject();
         });
@@ -230,8 +252,44 @@ function DashboardService($rootScope, $http, $q, $location, customerService) {
         if (port != 80 && port != 443) {
             url += ":" + port;
         }
-        url += "/dashboards/" + dashboard.id.id + "?publicId=" + dashboard.customerId.id;
+        url += "/dashboards/" + dashboard.id.id + "?publicId=" + dashboard.publicCustomerId;
         return url;
+    }
+
+    function prepareDashboards(dashboardsData) {
+        if (dashboardsData.data) {
+            for (var i = 0; i < dashboardsData.data.length; i++) {
+                dashboardsData.data[i] = prepareDashboard(dashboardsData.data[i]);
+            }
+        }
+        return dashboardsData;
+    }
+
+    function prepareDashboard(dashboard) {
+        dashboard.publicCustomerId = null;
+        dashboard.assignedCustomersText = "";
+        dashboard.assignedCustomersIds = [];
+        if (dashboard.assignedCustomers && dashboard.assignedCustomers.length) {
+            var assignedCustomersTitles = [];
+            for (var i = 0; i < dashboard.assignedCustomers.length; i++) {
+                var assignedCustomer = dashboard.assignedCustomers[i];
+                dashboard.assignedCustomersIds.push(assignedCustomer.customerId.id);
+                if (assignedCustomer.public) {
+                    dashboard.publicCustomerId = assignedCustomer.customerId.id;
+                } else {
+                    assignedCustomersTitles.push(assignedCustomer.title);
+                }
+            }
+            dashboard.assignedCustomersText = assignedCustomersTitles.join(', ');
+        }
+        return dashboard;
+    }
+
+    function cleanDashboard(dashboard) {
+        delete dashboard.publicCustomerId;
+        delete dashboard.assignedCustomersText;
+        delete dashboard.assignedCustomersIds;
+        return dashboard;
     }
 
 }

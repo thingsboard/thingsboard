@@ -320,7 +320,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         
         Assert.assertEquals(dashboards, loadedDashboards);
         
-        dashboardService.unassignCustomerDashboards(tenantId, customerId);
+        dashboardService.unassignCustomerDashboards(customerId);
 
         pageLink = new TimePageLink(42);
         pageData = dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink).get();

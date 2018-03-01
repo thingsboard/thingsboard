@@ -20,18 +20,22 @@ import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
-import java.util.HashMap;
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
@@ -43,6 +47,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.*;
 public final class DashboardEntity implements SearchTextEntity<Dashboard> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final JavaType assignedCustomersType =
+            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
@@ -58,8 +64,8 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
 
-    @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY, codec = JsonCodec.class)
-    private JsonNode assignedCustomers;
+    @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
+    private String assignedCustomers;
 
     @Column(name = DASHBOARD_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
     private JsonNode configuration;
@@ -77,7 +83,11 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
         }
         this.title = dashboard.getTitle();
         if (dashboard.getAssignedCustomers() != null) {
-            this.assignedCustomers = objectMapper.valueToTree(dashboard.getAssignedCustomers());
+            try {
+                this.assignedCustomers = objectMapper.writeValueAsString(dashboard.getAssignedCustomers());
+            } catch (JsonProcessingException e) {
+                log.error("Unable to serialize assigned customers to string!", e);
+            }
         }
         this.configuration = dashboard.getConfiguration();
     }
@@ -106,11 +116,11 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
         this.title = title;
     }
 
-    public JsonNode getAssignedCustomers() {
+    public String getAssignedCustomers() {
         return assignedCustomers;
     }
 
-    public void setAssignedCustomers(JsonNode assignedCustomers) {
+    public void setAssignedCustomers(String assignedCustomers) {
         this.assignedCustomers = assignedCustomers;
     }
 
@@ -144,10 +154,10 @@ public final class DashboardEntity implements SearchTextEntity<Dashboard> {
             dashboard.setTenantId(new TenantId(tenantId));
         }
         dashboard.setTitle(title);
-        if (assignedCustomers != null) {
+        if (!StringUtils.isEmpty(assignedCustomers)) {
             try {
-                dashboard.setAssignedCustomers(objectMapper.treeToValue(assignedCustomers, HashMap.class));
-            } catch (JsonProcessingException e) {
+                dashboard.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
+            } catch (IOException e) {
                 log.warn("Unable to parse assigned customers!", e);
             }
         }

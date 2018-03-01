@@ -39,7 +39,7 @@ export default function EntityTypeSelect($compile, $templateCache, utils, entity
 
         scope.ngModelCtrl = ngModelCtrl;
 
-        scope.entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes);
+        scope.entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes, scope.useAliasEntityTypes);
 
         scope.typeName = function(type) {
             return type ? types.entityTypeTranslations[type].type : '';
@@ -79,7 +79,8 @@ export default function EntityTypeSelect($compile, $templateCache, utils, entity
             theForm: '=?',
             tbRequired: '=?',
             disabled:'=ngDisabled',
-            allowedEntityTypes: "=?"
+            allowedEntityTypes: "=?",
+            useAliasEntityTypes: "=?"
         }
     };
 }
