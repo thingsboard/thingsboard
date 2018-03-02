@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.queue.cassandra.repository;
+package org.thingsboard.rule.engine.queue.cassandra.repository.impl;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.rule.engine.queue.cassandra.MsgAck;
+import org.cassandraunit.CassandraCQLUnit;
+import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
+import org.junit.ClassRule;
 
-import java.util.List;
-import java.util.UUID;
 
-public interface AckRepository {
+public abstract class SimpleAbstractCassandraDaoTest {
 
-    ListenableFuture<Void> ack(MsgAck msgAck);
+    @ClassRule
+    public static CassandraCQLUnit cassandraUnit = new CassandraCQLUnit(
+            new ClassPathCQLDataSet("cassandra/system-test.cql", "thingsboard"));
 
-    List<MsgAck> findAcks(UUID nodeId, long clusteredHash, long partition);
+
 }

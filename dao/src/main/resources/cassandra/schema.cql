@@ -555,48 +555,45 @@ CREATE TABLE IF NOT EXISTS thingsboard.msg_queue (
     partition       bigint,
     ts              bigint,
     msg             blob,
-	PRIMARY KEY ((node_id, cluster_hash, partition), ts)
-	WITH CLUSTERING ORDER BY (ts DESC)
-	AND compaction = {
-        'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
-        'min_threshold': '5',
-        'base_time_seconds': '43200',
-        'max_window_size_seconds': '43200'
-        'tombstone_threshold': '0.9',
-        'unchecked_tombstone_compaction': 'true',
-    };
-);
+	PRIMARY KEY ((node_id, clustered_hash, partition), ts))
+WITH CLUSTERING ORDER BY (ts DESC)
+AND compaction = {
+    'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
+    'min_threshold': '5',
+    'base_time_seconds': '43200',
+    'max_window_size_seconds': '43200',
+    'tombstone_threshold': '0.9',
+    'unchecked_tombstone_compaction': 'true'
+};
+
 
 CREATE TABLE IF NOT EXISTS thingsboard.msg_ack_queue (
     node_id         timeuuid,
     clustered_hash    bigint,
     partition       bigint,
-    ts              bigint,
     msg_id              timeuuid,
-	PRIMARY KEY ((node_id, cluster_hash, partition), ts)
-	WITH CLUSTERING ORDER BY (ts DESC)
-	AND compaction = {
-        'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
-        'min_threshold': '5',
-        'base_time_seconds': '43200',
-        'max_window_size_seconds': '43200'
-        'tombstone_threshold': '0.9',
-        'unchecked_tombstone_compaction': 'true',
-    };
-);
+	PRIMARY KEY ((node_id, clustered_hash, partition), msg_id))
+WITH CLUSTERING ORDER BY (msg_id DESC)
+AND compaction = {
+    'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
+    'min_threshold': '5',
+    'base_time_seconds': '43200',
+    'max_window_size_seconds': '43200',
+    'tombstone_threshold': '0.9',
+    'unchecked_tombstone_compaction': 'true'
+};
 
 CREATE TABLE IF NOT EXISTS thingsboard.processed_msg_partitions (
     node_id         timeuuid,
     clustered_hash    bigint,
     partition       bigint,
-	PRIMARY KEY ((node_id, cluster_hash), partition)
-	WITH CLUSTERING ORDER BY (partition DESC)
-	AND compaction = {
-        'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
-        'min_threshold': '5',
-        'base_time_seconds': '43200',
-        'max_window_size_seconds': '43200'
-        'tombstone_threshold': '0.9',
-        'unchecked_tombstone_compaction': 'true',
-    };
-);
+	PRIMARY KEY ((node_id, clustered_hash), partition))
+WITH CLUSTERING ORDER BY (partition DESC)
+AND compaction = {
+    'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
+    'min_threshold': '5',
+    'base_time_seconds': '43200',
+    'max_window_size_seconds': '43200',
+    'tombstone_threshold': '0.9',
+    'unchecked_tombstone_compaction': 'true'
+};

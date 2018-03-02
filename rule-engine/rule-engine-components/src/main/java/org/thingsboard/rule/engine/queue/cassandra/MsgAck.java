@@ -15,17 +15,21 @@
  */
 package org.thingsboard.rule.engine.queue.cassandra;
 
+import com.datastax.driver.core.utils.UUIDs;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.rule.engine.api.TbMsg;
+import org.thingsboard.server.common.data.UUIDConverter;
 
 import java.util.UUID;
 
 @Data
+@EqualsAndHashCode
 public class MsgAck {
 
     private final UUID msgId;
     private final UUID nodeId;
     private final long clusteredHash;
     private final long partition;
-    private final long ts;
 
 }

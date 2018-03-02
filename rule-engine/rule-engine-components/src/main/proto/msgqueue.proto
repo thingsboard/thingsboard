@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.queue.cassandra;
+syntax = "proto3";
+package msgqueue;
 
-import org.springframework.stereotype.Component;
-import org.thingsboard.rule.engine.api.TbMsg;
+option java_package = "org.thingsboard.rule.engine.queue.cassandra.repository.gen";
+option java_outer_classname = "MsgQueueProtos";
 
-import java.util.UUID;
 
-@Component
-public class AckBuilder {
+message TbMsgProto {
+    string id = 1;
+    string type = 2;
+    string entityType = 3;
+    string entityId = 4;
 
-    public MsgAck build(TbMsg msg, UUID nodeId, long clusteredHash) {
-        return null;
+    message TbMsgMetaDataProto {
+        map<string, string> data = 1;
     }
+
+    repeated TbMsgMetaDataProto metaData = 5;
+
+    bytes data = 6;
 }

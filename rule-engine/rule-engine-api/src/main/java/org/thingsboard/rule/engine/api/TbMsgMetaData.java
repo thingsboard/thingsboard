@@ -19,6 +19,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ashvayka on 13.01.18.
@@ -26,7 +27,7 @@ import java.util.Map;
 @Data
 public final class TbMsgMetaData implements Serializable {
 
-    private Map<String, String> data;
+    private Map<String, String> data = new ConcurrentHashMap<>();
 
     public String getValue(String key) {
         return data.get(key);

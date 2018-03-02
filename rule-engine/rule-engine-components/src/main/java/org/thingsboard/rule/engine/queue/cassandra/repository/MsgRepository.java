@@ -18,12 +18,13 @@ package org.thingsboard.rule.engine.queue.cassandra.repository;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.TbMsg;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface MsgRepository {
 
-    ListenableFuture<Void> save(TbMsg msg, UUID nodeId, long clusteredHash, long partition);
+    ListenableFuture<Void> save(TbMsg msg, UUID nodeId, long clusteredHash, long partition, long msgTs);
 
-    Iterable<TbMsg> findMsgs(UUID nodeId, long clusteredHash, long partition);
+    List<TbMsg> findMsgs(UUID nodeId, long clusteredHash, long partition);
 
 }

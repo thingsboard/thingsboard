@@ -15,68 +15,65 @@
  */
 package org.thingsboard.rule.engine.queue.cassandra;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.MsqQueue;
 import org.thingsboard.rule.engine.api.TbMsg;
 import org.thingsboard.rule.engine.queue.cassandra.repository.AckRepository;
 import org.thingsboard.rule.engine.queue.cassandra.repository.MsgRepository;
-import org.thingsboard.rule.engine.queue.cassandra.repository.ProcessedPartitionRepository;
+import org.thingsboard.server.common.data.UUIDConverter;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Component
+@Slf4j
 public class CassandraMsqQueue implements MsqQueue {
 
-    @Autowired
-    private MsgRepository msgRepository;
+    private final MsgRepository msgRepository;
+    private final AckRepository ackRepository;
+    private final UnprocessedMsgFilter unprocessedMsgFilter;
+    private final QueuePartitioner queuePartitioner;
 
-    @Autowired
-    private AckRepository ackRepository;
+    public CassandraMsqQueue(MsgRepository msgRepository, AckRepository ackRepository,
+                             UnprocessedMsgFilter unprocessedMsgFilter, QueuePartitioner queuePartitioner) {
+        this.msgRepository = msgRepository;
+        this.ackRepository = ackRepository;
+        this.unprocessedMsgFilter = unprocessedMsgFilter;
+        this.queuePartitioner = queuePartitioner;
+    }
 
-    @Autowired
-    private AckBuilder ackBuilder;
-
-    @Autowired
-    private UnprocessedMsgFilter unprocessedMsgFilter;
-
-    @Autowired
-    private ProcessedPartitionRepository processedPartitionRepository;
 
     @Override
     public ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusteredHash) {
-        return msgRepository.save(msg, nodeId, clusteredHash, getPartition(msg));
+        long msgTime = getMsgTime(msg);
+        long partition = queuePartitioner.getPartition(msgTime);
+        return msgRepository.save(msg, nodeId, clusteredHash, partition, msgTime);
     }
 
     @Override
     public ListenableFuture<Void> ack(TbMsg msg, UUID nodeId, long clusteredHash) {
-        MsgAck ack = ackBuilder.build(msg, nodeId, clusteredHash);
+        long partition = queuePartitioner.getPartition(getMsgTime(msg));
+        MsgAck ack = new MsgAck(msg.getId(), nodeId, clusteredHash, partition);
         return ackRepository.ack(ack);
     }
 
     @Override
     public Iterable<TbMsg> findUnprocessed(UUID nodeId, long clusteredHash) {
         List<TbMsg> unprocessedMsgs = Lists.newArrayList();
-        for (Long partition : findUnprocessedPartitions(nodeId, clusteredHash)) {
-            Iterable<TbMsg> msgs = msgRepository.findMsgs(nodeId, clusteredHash, partition);
-            Iterable<MsgAck> acks = ackRepository.findAcks(nodeId, clusteredHash, partition);
+        for (Long partition : queuePartitioner.findUnprocessedPartitions(nodeId, clusteredHash)) {
+            List<TbMsg> msgs = msgRepository.findMsgs(nodeId, clusteredHash, partition);
+            List<MsgAck> acks = ackRepository.findAcks(nodeId, clusteredHash, partition);
             unprocessedMsgs.addAll(unprocessedMsgFilter.filter(msgs, acks));
         }
         return unprocessedMsgs;
     }
 
-    private List<Long> findUnprocessedPartitions(UUID nodeId, long clusteredHash) {
-        Optional<Long> lastPartition = processedPartitionRepository.findLastProcessedPartition(nodeId, clusteredHash);
-        return Collections.emptyList();
-    }
-
-    private long getPartition(TbMsg msg) {
-        return Long.MIN_VALUE;
+    private long getMsgTime(TbMsg msg) {
+        return UUIDs.unixTimestamp(msg.getId());
     }
 
 }

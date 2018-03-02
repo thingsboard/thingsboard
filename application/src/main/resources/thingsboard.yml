@@ -251,6 +251,9 @@ spring:
     username: "${SPRING_DATASOURCE_USERNAME:sa}"
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
+rule:
+  queue:
+    msg_partitioning: "${QUEUE_MSG_PARTITIONING:HOURS}"
 
 # PostgreSQL DAO Configuration
 #spring:

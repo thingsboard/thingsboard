@@ -15,14 +15,20 @@
  */
 package org.thingsboard.rule.engine.queue.cassandra;
 
+import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.TbMsg;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Component
 public class UnprocessedMsgFilter {
 
-    public Collection<TbMsg> filter(Iterable<TbMsg> msgs, Iterable<MsgAck> acks) {
-        return Collections.emptyList();
+    public Collection<TbMsg> filter(List<TbMsg> msgs, List<MsgAck> acks) {
+        Set<UUID> processedIds = acks.stream().map(MsgAck::getMsgId).collect(Collectors.toSet());
+        return msgs.stream().filter(i -> !processedIds.contains(i.getId())).collect(Collectors.toList());
     }
 }
