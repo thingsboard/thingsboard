@@ -20,8 +20,6 @@ import java.util.UUID;
 
 public abstract class UUIDBased implements Serializable {
 
-    public static final UUID EMPTY = new UUID(0L, 0L);
-
     private static final long serialVersionUID = 1L;
 
     private final UUID id;
