@@ -101,7 +101,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
             @Override
             public void onSuccess(PluginContext ctx, Void data) {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
-                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), SubscriptionType.TIMESERIES, s ->
+    	                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), s -> SubscriptionType.TIMESERIES == s.getType(), s ->
     	                    prepareSubscriptionUpdate(request, s),dataAtt
                 );
             }

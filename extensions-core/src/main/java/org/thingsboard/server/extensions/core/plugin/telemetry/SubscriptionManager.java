@@ -175,9 +175,12 @@ public class SubscriptionManager {
     }
 
     public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f) {
-        onLocalSubscriptionUpdate(ctx, entityId, s -> type == s.getType(), f);
+    	onLocalSubscriptionUpdate(ctx,entityId,s -> type == s.getType(),f,null);
     }
-    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f,List<AttributeKvEntry> dataAtt) {
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, Predicate<Subscription> filter, Function<Subscription, List<TsKvEntry>> f) {      
+        onLocalSubscriptionUpdate(ctx,entityId,filter,f,null);
+    }
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, Predicate<Subscription> filter, Function<Subscription, List<TsKvEntry>> f,List<AttributeKvEntry> dataAtt) {
         log.debug("[{}] entityId",entityId);
         Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
         if (deviceSubscriptions != null) {

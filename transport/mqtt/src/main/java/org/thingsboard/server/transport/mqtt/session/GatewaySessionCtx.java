@@ -25,6 +25,7 @@ import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -100,6 +101,30 @@ public class GatewaySessionCtx {
             processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
         }
     }
+    private void onDeviceConnect(String deviceName, JsonObject extendedData) throws AdaptorException {
+        String devType=getDeviceType(extendedData);
+        String relatedTo = getDeviceRelation(extendedData);
+        if (!devices.containsKey(deviceName)) {
+            Device device = deviceService.findDeviceByTenantIdAndName(gateway.getTenantId(), deviceName);
+            if (device == null) {
+                DeviceId relId = gateway.getId();
+                if (relatedTo!=null && devices.containsKey(relatedTo)) {
+                    relId = devices.get(relatedTo).getDevice().getId();
+                }
+                device = new Device();
+                device.setTenantId(gateway.getTenantId());
+                device.setName(deviceName);
+                device.setType(devType);
+                device = deviceService.saveDevice(device);
+                relationService.saveRelationAsync(new EntityRelation(relId, device.getId(), "Created"));
+            };
+            GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
+            devices.put(deviceName, ctx);
+            log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);
+            processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
+            processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
+        }
+    }
 
     public void onDeviceDisconnect(MqttPublishMessage msg) throws AdaptorException {
         String deviceName = checkDeviceName(getDeviceName(getJson(msg)));
@@ -126,12 +151,24 @@ public class GatewaySessionCtx {
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
             for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
-                String deviceName = checkDeviceConnected(deviceEntry.getKey());
+			
+                JsonArray deviceData = null;
+                JsonObject extendedData = null;
                 if (!deviceEntry.getValue().isJsonArray()) {
+                    if (!deviceEntry.getValue().isJsonObject()) {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+                    } else {
+                        if (!deviceEntry.getValue().getAsJsonObject().get("data").isJsonArray()) {
+                            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
+                        }
+                        extendedData = deviceEntry.getValue().getAsJsonObject();
+                        deviceData = extendedData.get("data").getAsJsonArray(); 
+                    }
+                } else {
+                    deviceData = deviceEntry.getValue().getAsJsonArray();
                 }
                 BasicTelemetryUploadRequest request = new BasicTelemetryUploadRequest(requestId);
-                JsonArray deviceData = deviceEntry.getValue().getAsJsonArray();
+                String deviceName = checkDeviceConnected(deviceEntry.getKey(),extendedData);
                 for (JsonElement element : deviceData) {
                     JsonConverter.parseWithTs(request, element.getAsJsonObject());
                 }
@@ -215,10 +252,13 @@ public class GatewaySessionCtx {
         }
     }
 
-    private String checkDeviceConnected(String deviceName) {
+    private String checkDeviceConnected(String deviceName) throws AdaptorException {
+        return checkDeviceConnected(deviceName,null);
+    }
+    private String checkDeviceConnected(String deviceName,JsonObject extendedData) throws AdaptorException {
         if (!devices.containsKey(deviceName)) {
             log.debug("[{}] Missing device [{}] for the gateway session", gatewaySessionId, deviceName);
-            onDeviceConnect(deviceName, DEFAULT_DEVICE_TYPE);
+            onDeviceConnect(deviceName, extendedData);
         }
         return deviceName;
     }
@@ -236,8 +276,15 @@ public class GatewaySessionCtx {
     }
 
     private String getDeviceType(JsonElement json) throws AdaptorException {
-        JsonElement type = json.getAsJsonObject().get("type");
+        return getDeviceType(json.getAsJsonObject());
+    }
+    private String getDeviceType(JsonObject json) throws AdaptorException {
+        JsonElement type = json.get("type");
         return type == null ? DEFAULT_DEVICE_TYPE : type.getAsString();
+    }
+    private String getDeviceRelation(JsonObject json) throws AdaptorException {
+        JsonElement type = json.get("relatedto");
+        return type == null ? null : type.getAsString();
     }
 
     private JsonElement getJson(MqttPublishMessage mqttMsg) throws AdaptorException {
