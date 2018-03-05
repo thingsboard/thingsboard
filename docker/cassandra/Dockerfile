@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM cassandra:3.9
+FROM cassandra:3.11.2
 
 ADD ready-probe.sh /ready-probe.sh
 

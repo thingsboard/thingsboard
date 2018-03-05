@@ -18,7 +18,7 @@ version: '2'
 
 services:
   tb:
-    image: "thingsboard/application:1.3.1"
+    image: "thingsboard/application:1.4.0"
     ports:
       - "8080:8080"
       - "1883:1883"
@@ -32,7 +32,7 @@ services:
       - "${HSQLDB_DATA_DIR}:/usr/share/thingsboard/data/sql"
     entrypoint: /run-application.sh
   cassandra:
-    image: "cassandra:3.9"
+    image: "cassandra:3.11.2"
     ports:
       - "9042"
       - "9160"
