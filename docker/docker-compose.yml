@@ -39,7 +39,7 @@ services:
     volumes:
       - "${CASSANDRA_DATA_DIR}:/var/lib/cassandra"
   zk:
-    image: "zookeeper:3.4.9"
+    image: "zookeeper:3.4.10"
     ports:
       - "2181"
     restart: always
