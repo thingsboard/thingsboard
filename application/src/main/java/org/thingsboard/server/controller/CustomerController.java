@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -86,8 +88,18 @@ public class CustomerController extends BaseController {
     public Customer saveCustomer(@RequestBody Customer customer) throws ThingsboardException {
         try {
             customer.setTenantId(getCurrentUser().getTenantId());
-            return checkNotNull(customerService.saveCustomer(customer));
+            Customer savedCustomer = checkNotNull(customerService.saveCustomer(customer));
+
+            logEntityAction(savedCustomer.getId(), savedCustomer,
+                    savedCustomer.getId(),
+                    customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            return savedCustomer;
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.CUSTOMER), customer,
+                    null, customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+
             throw handleException(e);
         }
     }
@@ -99,9 +111,20 @@ public class CustomerController extends BaseController {
         checkParameter(CUSTOMER_ID, strCustomerId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            checkCustomerId(customerId);
+            Customer customer = checkCustomerId(customerId);
             customerService.deleteCustomer(customerId);
+
+            logEntityAction(customerId, customer,
+                    customer.getId(),
+                    ActionType.DELETED, null, strCustomerId);
+
         } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.CUSTOMER),
+                    null,
+                    null,
+                    ActionType.DELETED, e, strCustomerId);
+
             throw handleException(e);
         }
     }

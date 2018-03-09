@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import './ie.support';
 
 import 'event-source-polyfill';
@@ -63,6 +62,7 @@ import thingsboardApiTime from './api/time.service';
 import thingsboardKeyboardShortcut from './components/keyboard-shortcut.filter';
 import thingsboardHelp from './help/help.directive';
 import thingsboardToast from './services/toast';
+import thingsboardClipboard from './services/clipboard.service';
 import thingsboardHome from './layout';
 import thingsboardApiLogin from './api/login.service';
 import thingsboardApiDevice from './api/device.service';
@@ -72,6 +72,7 @@ import thingsboardApiAsset from './api/asset.service';
 import thingsboardApiAttribute from './api/attribute.service';
 import thingsboardApiEntity from './api/entity.service';
 import thingsboardApiAlarm from './api/alarm.service';
+import thingsboardApiAuditLog from './api/audit-log.service';
 
 import 'typeface-roboto';
 import 'font-awesome/css/font-awesome.min.css';
@@ -123,6 +124,7 @@ angular.module('thingsboard', [
     thingsboardKeyboardShortcut,
     thingsboardHelp,
     thingsboardToast,
+    thingsboardClipboard,
     thingsboardHome,
     thingsboardApiLogin,
     thingsboardApiDevice,
@@ -132,6 +134,7 @@ angular.module('thingsboard', [
     thingsboardApiAttribute,
     thingsboardApiEntity,
     thingsboardApiAlarm,
+    thingsboardApiAuditLog,
     uiRouter])
     .config(AppConfig)
     .factory('globalInterceptor', GlobalInterceptor)

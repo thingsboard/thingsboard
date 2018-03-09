@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.audit.ActionStatus;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -29,7 +33,6 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardErrorCode;
@@ -75,14 +78,22 @@ public class DeviceController extends BaseController {
                 }
             }
             Device savedDevice = checkNotNull(deviceService.saveDevice(device));
+
             actorService
                     .onDeviceNameOrTypeUpdate(
                             savedDevice.getTenantId(),
                             savedDevice.getId(),
                             savedDevice.getName(),
                             savedDevice.getType());
+
+            logEntityAction(savedDevice.getId(), savedDevice,
+                    savedDevice.getCustomerId(),
+                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
             return savedDevice;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), device,
+                    null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
     }
@@ -94,9 +105,18 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            checkDeviceId(deviceId);
+            Device device = checkDeviceId(deviceId);
             deviceService.deleteDevice(deviceId);
+
+            logEntityAction(deviceId, device,
+                    device.getCustomerId(),
+                    ActionType.DELETED, null, strDeviceId);
+
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE),
+                    null,
+                    null,
+                    ActionType.DELETED, e, strDeviceId);
             throw handleException(e);
         }
     }
@@ -110,13 +130,22 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
-            checkCustomerId(customerId);
+            Customer customer = checkCustomerId(customerId);
 
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             checkDeviceId(deviceId);
 
-            return checkNotNull(deviceService.assignDeviceToCustomer(deviceId, customerId));
+            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(deviceId, customerId));
+
+            logEntityAction(deviceId, savedDevice,
+                    savedDevice.getCustomerId(),
+                    ActionType.ASSIGNED_TO_CUSTOMER, null, strDeviceId, strCustomerId, customer.getName());
+
+            return savedDevice;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strDeviceId, strCustomerId);
             throw handleException(e);
         }
     }
@@ -132,8 +161,19 @@ public class DeviceController extends BaseController {
             if (device.getCustomerId() == null || device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                 throw new IncorrectParameterException("Device isn't assigned to any customer!");
             }
-            return checkNotNull(deviceService.unassignDeviceFromCustomer(deviceId));
+            Customer customer = checkCustomerId(device.getCustomerId());
+
+            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromCustomer(deviceId));
+
+            logEntityAction(deviceId, device,
+                    device.getCustomerId(),
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDeviceId, customer.getId().toString(), customer.getName());
+
+            return savedDevice;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDeviceId);
             throw handleException(e);
         }
     }
@@ -147,8 +187,17 @@ public class DeviceController extends BaseController {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId);
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(device.getTenantId());
-            return checkNotNull(deviceService.assignDeviceToCustomer(deviceId, publicCustomer.getId()));
+            Device savedDevice = checkNotNull(deviceService.assignDeviceToCustomer(deviceId, publicCustomer.getId()));
+
+            logEntityAction(deviceId, savedDevice,
+                    savedDevice.getCustomerId(),
+                    ActionType.ASSIGNED_TO_CUSTOMER, null, strDeviceId, publicCustomer.getId().toString(), publicCustomer.getName());
+
+            return savedDevice;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strDeviceId);
             throw handleException(e);
         }
     }
@@ -160,9 +209,16 @@ public class DeviceController extends BaseController {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            checkDeviceId(deviceId);
-            return checkNotNull(deviceCredentialsService.findDeviceCredentialsByDeviceId(deviceId));
+            Device device = checkDeviceId(deviceId);
+            DeviceCredentials deviceCredentials = checkNotNull(deviceCredentialsService.findDeviceCredentialsByDeviceId(deviceId));
+            logEntityAction(deviceId, device,
+                    device.getCustomerId(),
+                    ActionType.CREDENTIALS_READ, null, strDeviceId);
+            return deviceCredentials;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), null,
+                    null,
+                    ActionType.CREDENTIALS_READ, e, strDeviceId);
             throw handleException(e);
         }
     }
@@ -173,11 +229,17 @@ public class DeviceController extends BaseController {
     public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
         try {
-            checkDeviceId(deviceCredentials.getDeviceId());
+            Device device = checkDeviceId(deviceCredentials.getDeviceId());
             DeviceCredentials result = checkNotNull(deviceCredentialsService.updateDeviceCredentials(deviceCredentials));
             actorService.onCredentialsUpdate(getCurrentUser().getTenantId(), deviceCredentials.getDeviceId());
+            logEntityAction(device.getId(), device,
+                    device.getCustomerId(),
+                    ActionType.CREDENTIALS_UPDATED, null, deviceCredentials);
             return result;
         } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), null,
+                    null,
+                    ActionType.CREDENTIALS_UPDATED, e, deviceCredentials);
             throw handleException(e);
         }
     }
@@ -306,5 +368,4 @@ public class DeviceController extends BaseController {
             throw handleException(e);
         }
     }
-
 }

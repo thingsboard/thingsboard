@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,12 +108,12 @@ public class MailPlugin extends AbstractPlugin<MailPluginConfiguration> implemen
         MimeMessage mailMsg = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
         helper.setFrom(msg.getFrom());
-        helper.setTo(msg.getTo());
+        helper.setTo(msg.getTo().split("\\s*,\\s*"));
         if (!StringUtils.isEmpty(msg.getCc())) {
-            helper.setCc(msg.getCc());
+            helper.setCc(msg.getCc().split("\\s*,\\s*"));
         }
         if (!StringUtils.isEmpty(msg.getBcc())) {
-            helper.setBcc(msg.getBcc());
+            helper.setBcc(msg.getBcc().split("\\s*,\\s*"));
         }
         helper.setSubject(msg.getSubject());
         helper.setText(msg.getBody());

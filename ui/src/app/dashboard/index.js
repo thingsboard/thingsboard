@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ import DashboardRoutes from './dashboard.routes';
 import {DashboardsController, DashboardCardController, MakeDashboardPublicDialogController} from './dashboards.controller';
 import DashboardController from './dashboard.controller';
 import DashboardSettingsController from './dashboard-settings.controller';
-import AssignDashboardToCustomerController from './assign-to-customer.controller';
 import AddDashboardsToCustomerController from './add-dashboards-to-customer.controller';
+import ManageAssignedCustomersController from './manage-assigned-customers.controller';
 import AddWidgetController from './add-widget.controller';
 import DashboardDirective from './dashboard.directive';
 import EditWidgetDirective from './edit-widget.directive';
@@ -74,8 +74,8 @@ export default angular.module('thingsboard.dashboard', [
     .controller('MakeDashboardPublicDialogController', MakeDashboardPublicDialogController)
     .controller('DashboardController', DashboardController)
     .controller('DashboardSettingsController', DashboardSettingsController)
-    .controller('AssignDashboardToCustomerController', AssignDashboardToCustomerController)
     .controller('AddDashboardsToCustomerController', AddDashboardsToCustomerController)
+    .controller('ManageAssignedCustomersController', ManageAssignedCustomersController)
     .controller('AddWidgetController', AddWidgetController)
     .directive('tbDashboardDetails', DashboardDirective)
     .directive('tbEditWidget', EditWidgetDirective)

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.extensions.api.plugins.msg;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @Data
 public class ToDeviceRpcRequest implements Serializable {
     private final UUID id;
+    private final PluginApiCallSecurityContext securityCtx;
     private final TenantId tenantId;
     private final DeviceId deviceId;
     private final boolean oneway;

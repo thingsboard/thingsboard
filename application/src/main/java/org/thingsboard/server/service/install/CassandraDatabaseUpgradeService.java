@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.thingsboard.server.service.install;
 
 import com.datastax.driver.core.KeyspaceMetadata;
@@ -24,6 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cassandra.CassandraInstallCluster;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.service.install.cql.CQLStatementsParser;
 import org.thingsboard.server.service.install.cql.CassandraDbHelper;
@@ -33,6 +33,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.thingsboard.server.service.install.DatabaseHelper.*;
+
 @Service
 @NoSqlDao
 @Profile("install")
@@ -40,12 +42,6 @@ import java.util.List;
 public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
     private static final String SCHEMA_UPDATE_CQL = "schema_update.cql";
-    public static final String DEVICE = "device";
-    public static final String TENANT_ID = "tenant_id";
-    public static final String CUSTOMER_ID = "customer_id";
-    public static final String SEARCH_TEXT = "search_text";
-    public static final String ADDITIONAL_INFO = "additional_info";
-    public static final String ASSET = "asset";
 
     @Value("${install.data_dir}")
     private String dataDir;
@@ -56,6 +52,9 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
     @Autowired
     private CassandraInstallCluster installCluster;
 
+    @Autowired
+    private DashboardService dashboardService;
+
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
 
@@ -65,6 +64,8 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Upgrading Cassandara DataBase from version {} to 1.3.0 ...", fromVersion);
 
                 //Dump devices, assets and relations
+
+                cluster.getSession();
 
                 KeyspaceMetadata ks = cluster.getCluster().getMetadata().getKeyspace(cluster.getKeyspaceName());
 
@@ -156,6 +157,34 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
                 break;
             case "1.3.0":
+                break;
+            case "1.3.1":
+
+                cluster.getSession();
+
+                ks = cluster.getCluster().getMetadata().getKeyspace(cluster.getKeyspaceName());
+
+                log.info("Dumping dashboards ...");
+                Path dashboardsDump = CassandraDbHelper.dumpCfIfExists(ks, cluster.getSession(), DASHBOARD,
+                        new String[]{ID, TENANT_ID, CUSTOMER_ID, TITLE, SEARCH_TEXT, ASSIGNED_CUSTOMERS, CONFIGURATION},
+                        new String[]{"", "", "", "", "", "", ""},
+                        "tb-dashboards", true);
+                log.info("Dashboards dumped.");
+
+
+                log.info("Updating schema ...");
+                schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.4.0", SCHEMA_UPDATE_CQL);
+                loadCql(schemaUpdateFile);
+                log.info("Schema updated.");
+
+                log.info("Restoring dashboards ...");
+                if (dashboardsDump != null) {
+                    CassandraDbHelper.loadCf(ks, cluster.getSession(), DASHBOARD,
+                            new String[]{ID, TENANT_ID, TITLE, SEARCH_TEXT, CONFIGURATION}, dashboardsDump, true);
+                    DatabaseHelper.upgradeTo40_assignDashboards(dashboardsDump, dashboardService, false);
+                    Files.deleteIfExists(dashboardsDump);
+                }
+                log.info("Dashboards restored.");
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade Cassandra database, unsupported fromVersion: " + fromVersion);

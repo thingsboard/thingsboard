@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -41,9 +42,7 @@ import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotific
 import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
-import org.thingsboard.server.extensions.api.plugins.msg.PluginToRuleMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequest;
+import org.thingsboard.server.extensions.api.plugins.msg.*;
 import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.RpcMsg;
 import org.thingsboard.server.extensions.api.plugins.ws.PluginWebsocketSessionRef;
@@ -194,6 +193,52 @@ public final class PluginProcessingContext implements PluginContext {
             ListenableFuture<List<TsKvEntry>> future = pluginCtx.tsService.findAllLatest(entityId);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
+    }
+
+    @Override
+    public void logAttributesUpdated(PluginApiCallSecurityContext ctx, EntityId entityId, String attributeType,
+                                                                     List<AttributeKvEntry> attributes, Exception e) {
+        pluginCtx.auditLogService.logEntityAction(
+                ctx.getTenantId(),
+                ctx.getCustomerId(),
+                ctx.getUserId(),
+                ctx.getUserName(),
+                (UUIDBased & EntityId)entityId,
+                null,
+                ActionType.ATTRIBUTES_UPDATED,
+                e,
+                attributeType,
+                attributes);
+    }
+
+    @Override
+    public void logAttributesDeleted(PluginApiCallSecurityContext ctx, EntityId entityId, String attributeType, List<String> keys, Exception e) {
+        pluginCtx.auditLogService.logEntityAction(
+                ctx.getTenantId(),
+                ctx.getCustomerId(),
+                ctx.getUserId(),
+                ctx.getUserName(),
+                (UUIDBased & EntityId)entityId,
+                null,
+                ActionType.ATTRIBUTES_DELETED,
+                e,
+                attributeType,
+                keys);
+    }
+
+    @Override
+    public void logAttributesRead(PluginApiCallSecurityContext ctx, EntityId entityId, String attributeType, List<String> keys, Exception e) {
+        pluginCtx.auditLogService.logEntityAction(
+                ctx.getTenantId(),
+                ctx.getCustomerId(),
+                ctx.getUserId(),
+                ctx.getUserName(),
+                (UUIDBased & EntityId)entityId,
+                null,
+                ActionType.ATTRIBUTES_READ,
+                e,
+                attributeType,
+                keys);
     }
 
     @Override
@@ -429,12 +474,12 @@ public final class PluginProcessingContext implements PluginContext {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByFromAndType(EntityId from, String relationType) {
-        return this.pluginCtx.relationService.findByFromAndType(from, relationType, RelationTypeGroup.COMMON);
+        return this.pluginCtx.relationService.findByFromAndTypeAsync(from, relationType, RelationTypeGroup.COMMON);
     }
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByToAndType(EntityId from, String relationType) {
-        return this.pluginCtx.relationService.findByToAndType(from, relationType, RelationTypeGroup.COMMON);
+        return this.pluginCtx.relationService.findByToAndTypeAsync(from, relationType, RelationTypeGroup.COMMON);
     }
 
     @Override
@@ -458,6 +503,29 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void sendRpcRequest(ToDeviceRpcRequest msg) {
         pluginCtx.sendRpcRequest(msg);
+    }
+
+    @Override
+    public void logRpcRequest(PluginApiCallSecurityContext ctx, DeviceId deviceId, ToDeviceRpcRequestBody body, boolean oneWay, Optional<RpcError> rpcError, Exception e) {
+        String rpcErrorStr = "";
+        if (rpcError.isPresent()) {
+            rpcErrorStr = "RPC Error: " + rpcError.get().name();
+        }
+        String method = body.getMethod();
+        String params = body.getParams();
+        pluginCtx.auditLogService.logEntityAction(
+                ctx.getTenantId(),
+                ctx.getCustomerId(),
+                ctx.getUserId(),
+                ctx.getUserName(),
+                deviceId,
+                null,
+                ActionType.RPC_CALL,
+                e,
+                rpcErrorStr,
+                new Boolean(oneWay),
+                method,
+                params);
     }
 
     @Override

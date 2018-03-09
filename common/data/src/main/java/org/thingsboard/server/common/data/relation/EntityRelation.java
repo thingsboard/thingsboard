@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,20 @@
  */
 package org.thingsboard.server.common.data.relation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 
-public class EntityRelation {
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.Serializable;
+
+@Slf4j
+public class EntityRelation implements Serializable {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -29,7 +39,9 @@ public class EntityRelation {
     private EntityId to;
     private String type;
     private RelationTypeGroup typeGroup;
-    private JsonNode additionalInfo;
+    private transient JsonNode additionalInfo;
+    @JsonIgnore
+    private byte[] additionalInfoBytes;
 
     public EntityRelation() {
         super();
@@ -92,11 +104,11 @@ public class EntityRelation {
     }
 
     public JsonNode getAdditionalInfo() {
-        return additionalInfo;
+        return SearchTextBasedWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
     }
 
-    public void setAdditionalInfo(JsonNode additionalInfo) {
-        this.additionalInfo = additionalInfo;
+    public void setAdditionalInfo(JsonNode addInfo) {
+        SearchTextBasedWithAdditionalInfo.setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* eslint-disable import/no-unresolved, import/default */
+
+import logoSvg from '../../svg/logo_title_white.svg';
+
+/* eslint-enable import/no-unresolved, import/default */
+
 /*@ngInject*/
 export default function LoginController(toast, loginService, userService/*, $rootScope, $log, $translate*/) {
     var vm = this;
+
+    vm.logoSvg = logoSvg;
 
     vm.user = {
         name: '',

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -540,7 +540,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             function success(dashboard) {
                 var name = dashboard.title;
                 name = name.toLowerCase().replace(/\W/g,"_");
-                exportToPc(prepareExport(dashboard), name + '.json');
+                exportToPc(prepareDashboardExport(dashboard), name + '.json');
             },
             function fail(rejection) {
                 var message = rejection;
@@ -550,6 +550,15 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
                 toast.showError($translate.instant('dashboard.export-failed-error', {error: message}));
             }
         );
+    }
+
+    function prepareDashboardExport(dashboard) {
+        dashboard = prepareExport(dashboard);
+        delete dashboard.assignedCustomers;
+        delete dashboard.publicCustomerId;
+        delete dashboard.assignedCustomersText;
+        delete dashboard.assignedCustomersIds;
+        return dashboard;
     }
 
     function importDashboard($event) {

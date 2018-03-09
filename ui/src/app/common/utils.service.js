@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /* eslint-disable import/no-unresolved, import/default */
 
 import materialIconsCodepoints from 'raw-loader!material-design-icons/iconfont/codepoints';
@@ -553,7 +552,9 @@ function Utils($mdColorPalette, $rootScope, $window, $translate, $q, $timeout, t
             var aspect = imageAspectMap[urlHashCode];
             if (angular.isUndefined(aspect)) {
                 var testImage = document.createElement('img'); // eslint-disable-line
-                testImage.style.visibility = 'hidden';
+                testImage.style.position = 'absolute';
+                testImage.style.left = '-99999px';
+                testImage.style.top = '-99999px';
                 testImage.onload = function() {
                     aspect = testImage.width / testImage.height;
                     document.body.removeChild(testImage); //eslint-disable-line

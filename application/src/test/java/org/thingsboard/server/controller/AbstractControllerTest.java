@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.service.mail.TestMailService;
@@ -329,6 +330,35 @@ public abstract class AbstractControllerTest {
             pageLinkVariables.add(pageLink.getTextOffset());
         }
 
+        Object[] vars = new Object[urlVariables.length + pageLinkVariables.size()];
+        System.arraycopy(urlVariables, 0, vars, 0, urlVariables.length);
+        System.arraycopy(pageLinkVariables.toArray(), 0, vars, urlVariables.length, pageLinkVariables.size());
+
+        return readResponse(doGet(urlTemplate, vars).andExpect(status().isOk()), responseType);
+    }
+
+    protected <T> T  doGetTypedWithTimePageLink(String urlTemplate, TypeReference<T> responseType,
+                                                TimePageLink pageLink,
+                                                Object... urlVariables) throws Exception {
+        List<Object> pageLinkVariables = new ArrayList<>();
+        urlTemplate += "limit={limit}";
+        pageLinkVariables.add(pageLink.getLimit());
+        if (pageLink.getStartTime() != null) {
+            urlTemplate += "&startTime={startTime}";
+            pageLinkVariables.add(pageLink.getStartTime());
+        }
+        if (pageLink.getEndTime() != null) {
+            urlTemplate += "&endTime={endTime}";
+            pageLinkVariables.add(pageLink.getEndTime());
+        }
+        if (pageLink.getIdOffset() != null) {
+            urlTemplate += "&offset={offset}";
+            pageLinkVariables.add(pageLink.getIdOffset().toString());
+        }
+        if (pageLink.isAscOrder()) {
+            urlTemplate += "&ascOrder={ascOrder}";
+            pageLinkVariables.add(pageLink.isAscOrder());
+        }
         Object[] vars = new Object[urlVariables.length + pageLinkVariables.size()];
         System.arraycopy(urlVariables, 0, vars, 0, urlVariables.length);
         System.arraycopy(pageLinkVariables.toArray(), 0, vars, urlVariables.length, pageLinkVariables.size());

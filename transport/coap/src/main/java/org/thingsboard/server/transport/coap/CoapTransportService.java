@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,28 @@
  */
 package org.thingsboard.server.transport.coap;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
-import org.thingsboard.server.common.transport.SessionMsgProcessor;
-import org.thingsboard.server.common.transport.auth.DeviceAuthService;
-import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.transport.SessionMsgProcessor;
+import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.common.transport.quota.QuotaService;
+import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
+@ConditionalOnProperty(prefix = "coap", value = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class CoapTransportService {
 
@@ -53,6 +53,9 @@ public class CoapTransportService {
 
     @Autowired(required = false)
     private DeviceAuthService authService;
+
+    @Autowired(required = false)
+    private QuotaService quotaService;
 
 
     @Value("${coap.bind_address}")
@@ -83,7 +86,7 @@ public class CoapTransportService {
 
     private void createResources() {
         CoapResource api = new CoapResource(API);
-        api.add(new CoapTransportResource(processor, authService, adaptor, V1, timeout));
+        api.add(new CoapTransportResource(processor, authService, adaptor, V1, timeout, quotaService));
         server.add(api);
     }
 

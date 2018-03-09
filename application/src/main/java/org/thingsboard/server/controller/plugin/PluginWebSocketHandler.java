@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.actors.service.ActorService;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.extensions.api.plugins.PluginConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -151,8 +152,10 @@ public class PluginWebSocketHandler extends TextWebSocketHandler implements Plug
             TenantId tenantId = currentUser.getTenantId();
             CustomerId customerId = currentUser.getCustomerId();
             if (PluginApiController.validatePluginAccess(pluginMd, tenantId, customerId)) {
+                UserId userId = currentUser.getId();
+                String userName = currentUser.getName();
                 PluginApiCallSecurityContext securityCtx = new PluginApiCallSecurityContext(pluginMd.getTenantId(), pluginMd.getId(), tenantId,
-                        currentUser.getCustomerId());
+                        currentUser.getCustomerId(), userId, userName);
                 return new BasicPluginWebsocketSessionRef(UUID.randomUUID().toString(), securityCtx, session.getUri(), session.getAttributes(),
                         session.getLocalAddress(), session.getRemoteAddress());
             } else {

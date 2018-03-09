@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -27,6 +30,8 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.audit.ActionStatus;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -39,6 +44,7 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -72,6 +78,7 @@ public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
+
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
 
@@ -117,6 +124,8 @@ public abstract class BaseController {
     @Autowired
     protected RelationService relationService;
 
+    @Autowired
+    protected AuditLogService auditLogService;
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
@@ -129,7 +138,7 @@ public abstract class BaseController {
 
     private ThingsboardException handleException(Exception exception, boolean logException) {
         if (logException) {
-            log.error("Error [{}]", exception.getMessage());
+            log.error("Error [{}]", exception.getMessage(), exception);
         }
 
         String cause = "";
@@ -414,7 +423,7 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             Dashboard dashboard = dashboardService.findDashboardById(dashboardId);
-            checkDashboard(dashboard, true);
+            checkDashboard(dashboard);
             return dashboard;
         } catch (Exception e) {
             throw handleException(e, false);
@@ -425,27 +434,22 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(dashboardId);
-            SecurityUser authUser = getCurrentUser();
-            checkDashboard(dashboardInfo, authUser.getAuthority() != Authority.SYS_ADMIN);
+            checkDashboard(dashboardInfo);
             return dashboardInfo;
         } catch (Exception e) {
             throw handleException(e, false);
         }
     }
 
-    private void checkDashboard(DashboardInfo dashboard, boolean checkCustomerId) throws ThingsboardException {
+    private void checkDashboard(DashboardInfo dashboard) throws ThingsboardException {
         checkNotNull(dashboard);
         checkTenantId(dashboard.getTenantId());
         SecurityUser authUser = getCurrentUser();
         if (authUser.getAuthority() == Authority.CUSTOMER_USER) {
-            if (dashboard.getCustomerId() == null || dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            if (!dashboard.isAssignedToCustomer(authUser.getCustomerId())) {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
-        }
-        if (checkCustomerId &&
-                dashboard.getCustomerId() != null && !dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(dashboard.getCustomerId());
         }
     }
 
@@ -541,4 +545,20 @@ public abstract class BaseController {
                 serverPort);
         return baseUrl;
     }
+
+    protected <I extends UUIDBased & EntityId> I emptyId(EntityType entityType) {
+        return (I)EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
+    }
+
+    protected <E extends BaseData<I> & HasName,
+            I extends UUIDBased & EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
+                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
+        User user = getCurrentUser();
+        if (customerId == null || customerId.isNullUid()) {
+            customerId = user.getCustomerId();
+        }
+        auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
+    }
+
+
 }

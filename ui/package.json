@@ -1,7 +1,7 @@
 {
   "name": "thingsboard",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Thingsboard UI",
   "licenses": [
     {

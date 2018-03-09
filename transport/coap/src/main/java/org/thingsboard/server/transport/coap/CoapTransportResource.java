@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.thingsboard.server.common.msg.session.*;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
+import org.thingsboard.server.common.transport.quota.QuotaService;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 import org.thingsboard.server.transport.coap.session.CoapExchangeObserverProxy;
 import org.thingsboard.server.transport.coap.session.CoapSessionCtx;
@@ -51,13 +52,16 @@ public class CoapTransportResource extends CoapResource {
     private final CoapTransportAdaptor adaptor;
     private final SessionMsgProcessor processor;
     private final DeviceAuthService authService;
+    private final QuotaService quotaService;
     private final Field observerField;
     private final long timeout;
 
-    public CoapTransportResource(SessionMsgProcessor processor, DeviceAuthService authService, CoapTransportAdaptor adaptor, String name, long timeout) {
+    public CoapTransportResource(SessionMsgProcessor processor, DeviceAuthService authService, CoapTransportAdaptor adaptor, String name,
+                                 long timeout, QuotaService quotaService) {
         super(name);
         this.processor = processor;
         this.authService = authService;
+        this.quotaService = quotaService;
         this.adaptor = adaptor;
         this.timeout = timeout;
         // This is important to turn off existing observable logic in
@@ -70,6 +74,12 @@ public class CoapTransportResource extends CoapResource {
 
     @Override
     public void handleGET(CoapExchange exchange) {
+        if(quotaService.isQuotaExceeded(exchange.getSourceAddress().getHostAddress())) {
+            log.warn("COAP Quota exceeded for [{}:{}] . Disconnect", exchange.getSourceAddress().getHostAddress(), exchange.getSourcePort());
+            exchange.respond(ResponseCode.BAD_REQUEST);
+            return;
+        }
+
         Optional<FeatureType> featureType = getFeatureType(exchange.advanced().getRequest());
         if (!featureType.isPresent()) {
             log.trace("Missing feature type parameter");

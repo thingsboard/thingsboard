@@ -1,0 +1,68 @@
+<!--
+
+    Copyright © 2016-2018 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<md-content flex class="md-padding tb-absolute-fill" layout="column">
+    <div flex layout="column" class="tb-audit-logs" ng-class="{'md-whiteframe-z1': pageMode}">
+        <div layout="column" layout-gt-sm="row" layout-align-gt-sm="start center" class="tb-audit-log-toolbar" ng-class="{'md-padding': pageMode, 'tb-audit-log-margin-18px': !pageMode}">
+            <tb-timewindow ng-model="timewindow" history-only as-button="true"></tb-timewindow>
+            <div flex layout="row" layout-align="start center">
+                <md-button class="md-icon-button" aria-label="{{ 'action.search' | translate }}">
+                    <md-icon aria-label="{{ 'action.search' | translate }}" class="material-icons">search</md-icon>
+                    <md-tooltip md-direction="top">
+                        {{'audit-log.search' | translate}}
+                    </md-tooltip>
+                </md-button>
+                <md-input-container flex class="tb-audit-log-search-input">
+                    <label>&nbsp;</label>
+                    <input ng-model="searchText" placeholder="{{'audit-log.search' | translate}}"/>
+                </md-input-container>
+                <md-button ng-disabled="$root.loading" class="md-icon-button" aria-label="Close" ng-click="searchText = ''">
+                    <md-icon aria-label="Close" class="material-icons">close</md-icon>
+                    <md-tooltip md-direction="top">
+                        {{ 'audit-log.clear-search' | translate }}
+                    </md-tooltip>
+                </md-button>
+                <md-button ng-disabled="$root.loading"
+                           class="md-icon-button" ng-click="reload()">
+                    <md-icon>refresh</md-icon>
+                    <md-tooltip md-direction="top">
+                        {{ 'action.refresh' | translate }}
+                    </md-tooltip>
+                </md-button>
+            </div>
+        </div>
+        <div flex layout="column" class="tb-audit-log-container" ng-class="{'md-whiteframe-z1': !pageMode}">
+            <md-list flex layout="column" class="tb-audit-log-table" ng-class="{'tb-audit-log-table-full': pageMode}">
+                <md-list class="tb-row tb-header" layout="row" layout-align="start center" tb-audit-log-header audit-log-mode="{{auditLogMode}}">
+                </md-list>
+                <md-progress-linear style="max-height: 0px;" md-mode="indeterminate" ng-disabled="!$root.loading"
+                                    ng-show="$root.loading"></md-progress-linear>
+                <md-divider></md-divider>
+                <span translate layout-align="center center"
+                      style="margin-top: 25px;"
+                      class="tb-prompt" ng-show="noData()">audit-log.no-audit-logs-prompt</span>
+                <md-virtual-repeat-container ng-show="hasData()" flex md-top-index="topIndex" tb-scope-element="repeatContainer">
+                    <md-list-item md-virtual-repeat="auditLog in theAuditLogs" md-on-demand flex ng-style="hasScroll() ? {'margin-right':'-15px'} : {}">
+                        <md-list class="tb-row" flex layout="row" layout-align="start center" tb-audit-log-row audit-log-mode="{{auditLogMode}}" audit-log="{{auditLog}}">
+                        </md-list>
+                        <md-divider flex></md-divider>
+                    </md-list-item>
+                </md-virtual-repeat-container>
+            </md-list>
+        </div>
+    </div>
+</md-content>

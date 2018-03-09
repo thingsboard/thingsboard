@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -337,7 +337,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
 
     private void updateRelations(Alarm alarm, AlarmStatus oldStatus, AlarmStatus newStatus) {
         try {
-            List<EntityRelation> relations = relationService.findByTo(alarm.getId(), RelationTypeGroup.ALARM).get();
+            List<EntityRelation> relations = relationService.findByToAsync(alarm.getId(), RelationTypeGroup.ALARM).get();
             Set<EntityId> parents = relations.stream().map(EntityRelation::getFrom).collect(Collectors.toSet());
             for (EntityId parentId : parents) {
                 updateAlarmRelation(parentId, alarm.getId(), oldStatus, newStatus);
