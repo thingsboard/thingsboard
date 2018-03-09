@@ -212,8 +212,8 @@
                                                     </md-input-container>
 
                                                     <section class="dropdown-section">
-                                                        <div class="tb-container" ng-class="{'ng-invalid':!server.keystore.file}">
-                                                            <span ng-init='fieldsToFill = {"fileName":"fileName", "file":"file"}'></span>
+                                                        <div class="tb-container" ng-class="{'ng-invalid':!server.keystore.location}">
+                                                            <span ng-init='fieldsToFill = {"fileName":"fileName", "location":"location"}'></span>
                                                             <label class="tb-label" translate>extension.opc-keystore-location</label>
                                                             <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, server.keystore, fieldsToFill)' class="tb-file-select-container">
                                                                 <div class="tb-file-clear-container">
@@ -231,7 +231,7 @@
                                                                            class="file-input"
                                                                            flow-btn id="dropFileKeystore_{{serverIndex}}"
                                                                            name="keystoreFile"
-                                                                           ng-model="server.keystore.file"
+                                                                           ng-model="server.keystore.location"
                                                                     >
                                                                 </div>
                                                             </div>

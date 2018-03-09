@@ -129,7 +129,7 @@ export default function ExtensionFormOpcDirective($compile, $templateCache, $tra
 
                         if (addedFile && addedFile.length > 0) {
                             model[options.fileName] = $file.name;
-                            model[options.file] = addedFile.replace(/^data.*base64,/, "");
+                            model[options.location] = addedFile.replace(/^data.*base64,/, "");
 
                         }
                     }
@@ -143,7 +143,7 @@ export default function ExtensionFormOpcDirective($compile, $templateCache, $tra
             scope.theForm.$setDirty();
 
             model[options.fileName] = null;
-            model[options.file] = null;
+            model[options.location] = null;
 
         };
 
