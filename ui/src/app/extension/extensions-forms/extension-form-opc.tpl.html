@@ -215,8 +215,8 @@
                                                     </md-input-container>
 
                                                     <section class="dropdown-section">
-                                                        <div class="tb-container" ng-class="{'ng-invalid':!server.keystore.file}">
-                                                            <span ng-init='fieldsToFill = {"fileName":"fileName", "file":"file"}'></span>
+                                                        <div class="tb-container" ng-class="{'ng-invalid':!server.keystore.fileContent}">
+                                                            <span ng-init='fieldsToFill = {"location":"location", "fileContent":"fileContent"}'></span>
                                                             <label class="tb-label" translate>extension.opc-keystore-location</label>
                                                             <div flow-init="{singleFile:true}" flow-file-added='fileAdded($file, server.keystore, fieldsToFill)' class="tb-file-select-container">
                                                                 <div class="tb-file-clear-container">
@@ -234,14 +234,14 @@
                                                                            class="file-input"
                                                                            flow-btn id="dropFileKeystore_{{serverIndex}}"
                                                                            name="keystoreFile"
-                                                                           ng-model="server.keystore.file"
+                                                                           ng-model="server.keystore.fileContent"
                                                                     >
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="dropdown-messages">
-                                                            <div ng-if="!server.keystore[fieldsToFill.fileName]" class="tb-error-message" translate>extension.no-file</div>
-                                                            <div ng-if="server.keystore[fieldsToFill.fileName]">{{server.keystore[fieldsToFill.fileName]}}</div>
+                                                            <div ng-if="!server.keystore[fieldsToFill.location]" class="tb-error-message" translate>extension.no-file</div>
+                                                            <div ng-if="server.keystore[fieldsToFill.location]">{{server.keystore[fieldsToFill.location]}}</div>
                                                         </div>
                                                     </section>
 
