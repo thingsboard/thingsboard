@@ -1,0 +1,134 @@
+/**
+ * Copyright © 2016-2018 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.dao.model.nosql;
+
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.type.JsonCodec;
+
+import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
+@Table(name = RULE_NODE_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
+public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
+
+    @PartitionKey
+    @Column(name = ID_PROPERTY)
+    private UUID id;
+    @Column(name = RULE_NODE_TYPE_PROPERTY)
+    private String type;
+    @Column(name = RULE_NODE_NAME_PROPERTY)
+    private String name;
+    @Column(name = SEARCH_TEXT_PROPERTY)
+    private String searchText;
+    @Column(name = RULE_NODE_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
+    private JsonNode configuration;
+    @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    private JsonNode additionalInfo;
+
+    public RuleNodeEntity() {
+    }
+
+    public RuleNodeEntity(RuleNode ruleNode) {
+        if (ruleNode.getId() != null) {
+            this.id = ruleNode.getUuidId();
+        }
+        this.type = ruleNode.getType();
+        this.name = ruleNode.getName();
+        this.searchText = ruleNode.getName();
+        this.configuration = ruleNode.getConfiguration();
+        this.additionalInfo = ruleNode.getAdditionalInfo();
+    }
+
+    @Override
+    public String getSearchTextSource() {
+        return getSearchText();
+    }
+
+    @Override
+    public void setSearchText(String searchText) {
+        this.searchText = searchText;
+    }
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSearchText() {
+        return searchText;
+    }
+
+    public JsonNode getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(JsonNode configuration) {
+        this.configuration = configuration;
+    }
+
+    public JsonNode getAdditionalInfo() {
+        return additionalInfo;
+    }
+
+    public void setAdditionalInfo(JsonNode additionalInfo) {
+        this.additionalInfo = additionalInfo;
+    }
+
+    @Override
+    public RuleNode toData() {
+        RuleNode ruleNode = new RuleNode(new RuleNodeId(id));
+        ruleNode.setCreatedTime(UUIDs.unixTimestamp(id));
+        ruleNode.setType(this.type);
+        ruleNode.setName(this.name);
+        ruleNode.setConfiguration(this.configuration);
+        ruleNode.setAdditionalInfo(this.additionalInfo);
+        return ruleNode;
+    }
+
+}

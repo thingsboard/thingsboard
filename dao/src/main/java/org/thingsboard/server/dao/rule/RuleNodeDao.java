@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+
+package org.thingsboard.server.dao.rule;
+
+import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.Dao;
 
 /**
- * @author Andrew Shvayka
+ * Created by igor on 3/12/18.
  */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE;
+public interface RuleNodeDao extends Dao<RuleNode> {
+
 }

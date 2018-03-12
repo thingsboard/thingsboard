@@ -13,11 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+
+package org.thingsboard.server.dao.rule;
+
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.Dao;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
- * @author Andrew Shvayka
+ * Created by igor on 3/12/18.
  */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE;
+public interface RuleChainDao extends Dao<RuleChain> {
+
+    /**
+     * Find rule chains by tenantId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of rule chain objects
+     */
+    List<RuleChain> findRuleChainsByTenantId(UUID tenantId, TextPageLink pageLink);
+
 }

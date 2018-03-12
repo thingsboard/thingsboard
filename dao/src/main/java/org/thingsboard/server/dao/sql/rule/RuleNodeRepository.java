@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.sql.rule;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE;
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
+import org.thingsboard.server.dao.util.SqlDao;
+
+@SqlDao
+public interface RuleNodeRepository extends CrudRepository<RuleNodeEntity, String> {
+
 }

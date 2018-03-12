@@ -13,11 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.id;
 
-/**
- * @author Andrew Shvayka
- */
-public enum EntityType {
-    TENANT, CUSTOMER, USER, RULE, PLUGIN, DASHBOARD, ASSET, DEVICE, ALARM, RULE_CHAIN, RULE_NODE;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.thingsboard.server.common.data.EntityType;
+
+import java.util.UUID;
+
+public class RuleChainId extends UUIDBased implements EntityId {
+
+    @JsonCreator
+    public RuleChainId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+    @JsonIgnore
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RULE_CHAIN;
+    }
 }

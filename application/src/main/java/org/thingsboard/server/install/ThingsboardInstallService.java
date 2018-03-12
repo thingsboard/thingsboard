@@ -77,10 +77,15 @@ public class ThingsboardInstallService {
 
                         databaseUpgradeService.upgradeDatabase("1.3.0");
 
-                    case "1.3.1":
+                    case "1.3.1": //NOSONAR, Need to execute gradual upgrade starting from upgradeFromVersion
                         log.info("Upgrading ThingsBoard from version 1.3.1 to 1.4.0 ...");
 
                         databaseUpgradeService.upgradeDatabase("1.3.1");
+
+                    case "1.4.0":
+                        log.info("Upgrading ThingsBoard from version 1.4.0 to 1.5.0 ...");
+
+                        databaseUpgradeService.upgradeDatabase("1.4.0");
 
                         log.info("Updating system data...");
 

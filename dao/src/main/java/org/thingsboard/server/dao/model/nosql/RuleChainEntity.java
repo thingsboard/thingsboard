@@ -1,0 +1,165 @@
+/**
+ * Copyright © 2016-2018 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.dao.model.nosql;
+
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.ClusteringColumn;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.type.JsonCodec;
+
+import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.*;
+
+@Table(name = RULE_CHAIN_COLUMN_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
+public class RuleChainEntity implements SearchTextEntity<RuleChain> {
+
+    @PartitionKey
+    @Column(name = ID_PROPERTY)
+    private UUID id;
+    @ClusteringColumn
+    @Column(name = RULE_CHAIN_TENANT_ID_PROPERTY)
+    private UUID tenantId;
+    @Column(name = RULE_CHAIN_NAME_PROPERTY)
+    private String name;
+    @Column(name = SEARCH_TEXT_PROPERTY)
+    private String searchText;
+    @Column(name = RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY)
+    private UUID firstRuleNodeId;
+    @Column(name = RULE_CHAIN_IS_ROOT_PROPERTY)
+    private boolean isRoot;
+    @Column(name = RULE_CHAIN_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
+    private JsonNode configuration;
+    @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
+    private JsonNode additionalInfo;
+
+    public RuleChainEntity() {
+    }
+
+    public RuleChainEntity(RuleChain ruleChain) {
+        if (ruleChain.getId() != null) {
+            this.id = ruleChain.getUuidId();
+        }
+        this.tenantId = DaoUtil.getId(ruleChain.getTenantId());
+        this.name = ruleChain.getName();
+        this.searchText = ruleChain.getName();
+        this.firstRuleNodeId = DaoUtil.getId(ruleChain.getFirstRuleNodeId());
+        this.isRoot = ruleChain.isRoot();
+        this.configuration = ruleChain.getConfiguration();
+        this.additionalInfo = ruleChain.getAdditionalInfo();
+    }
+
+    @Override
+    public String getSearchTextSource() {
+        return getSearchText();
+    }
+
+    @Override
+    public void setSearchText(String searchText) {
+        this.searchText = searchText;
+    }
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(UUID tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public UUID getFirstRuleNodeId() {
+        return firstRuleNodeId;
+    }
+
+    public void setFirstRuleNodeId(UUID firstRuleNodeId) {
+        this.firstRuleNodeId = firstRuleNodeId;
+    }
+
+    public boolean isRoot() {
+        return isRoot;
+    }
+
+    public void setRoot(boolean isRoot) {
+        this.isRoot = isRoot;
+    }
+
+    public String getSearchText() {
+        return searchText;
+    }
+
+    public JsonNode getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(JsonNode configuration) {
+        this.configuration = configuration;
+    }
+
+    public JsonNode getAdditionalInfo() {
+        return additionalInfo;
+    }
+
+    public void setAdditionalInfo(JsonNode additionalInfo) {
+        this.additionalInfo = additionalInfo;
+    }
+
+    @Override
+    public RuleChain toData() {
+        RuleChain ruleChain = new RuleChain(new RuleChainId(id));
+        ruleChain.setCreatedTime(UUIDs.unixTimestamp(id));
+        ruleChain.setTenantId(new TenantId(tenantId));
+        ruleChain.setName(name);
+        if (this.firstRuleNodeId != null) {
+            ruleChain.setFirstRuleNodeId(new RuleNodeId(this.firstRuleNodeId));
+        }
+        ruleChain.setRoot(this.isRoot);
+        ruleChain.setConfiguration(this.configuration);
+        ruleChain.setAdditionalInfo(this.additionalInfo);
+        return ruleChain;
+    }
+
+}
