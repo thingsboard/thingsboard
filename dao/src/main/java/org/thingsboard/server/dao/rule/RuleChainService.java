@@ -16,7 +16,15 @@
 
 package org.thingsboard.server.dao.rule;
 
+import org.thingsboard.server.common.data.id.PluginId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleChain;
+
+import java.util.List;
 
 /**
  * Created by igor on 3/12/18.
@@ -24,5 +32,17 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 public interface RuleChainService {
 
     RuleChain saveRuleChain(RuleChain ruleChain);
+
+    RuleChain findRuleChainById(RuleChainId ruleChainId);
+
+    TextPageData<RuleChain> findSystemRuleChains(TextPageLink pageLink);
+
+    TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink);
+
+    TextPageData<RuleChain> findAllTenantRuleChainsByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
+
+    void deleteRuleChainById(RuleChainId ruleChainId);
+
+    void deleteRuleChainsByTenantId(TenantId tenantId);
 
 }
