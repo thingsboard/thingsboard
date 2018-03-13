@@ -13,33 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.queue;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.dao.attributes.AttributesService;
 
 import java.util.UUID;
 
-/**
- * Created by ashvayka on 13.01.18.
- */
-public interface TbContext {
+public interface MsqQueue {
 
-    void tellNext(TbMsg msg);
+    ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusterPartition);
 
-    void tellNext(TbMsg msg, String relationType);
+    ListenableFuture<Void> ack(TbMsg msg, UUID nodeId, long clusterPartition);
 
-    void tellSelf(TbMsg msg, long delayMs);
-
-    void tellOthers(TbMsg msg);
-
-    void tellSibling(TbMsg msg, ServerAddress address);
-
-    void spawn(TbMsg msg);
-
-    void ack(UUID msg);
-
-    AttributesService getAttributesService();
-
+    Iterable<TbMsg> findUnprocessed(UUID nodeId, long clusterPartition);
 }

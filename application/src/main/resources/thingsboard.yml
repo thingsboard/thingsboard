@@ -182,6 +182,12 @@ cassandra:
     # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
 
+  queue:
+    msg.ttl: 604800 # 7 days
+    ack.ttl: 604800 # 7 days
+    partitions.ttl: 604800 # 7 days
+    partitioning: "HOURS"
+
 # SQL configuration parameters
 sql:
     # Specify executor service type used to perform timeseries insert tasks: SINGLE FIXED CACHED

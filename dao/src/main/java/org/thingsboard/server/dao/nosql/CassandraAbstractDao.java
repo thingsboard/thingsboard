@@ -22,11 +22,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.model.type.*;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 @Slf4j
 public abstract class CassandraAbstractDao {
 
     @Autowired
     protected CassandraCluster cluster;
+
+    private ConcurrentMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
+
+    protected PreparedStatement prepare(String query) {
+        return preparedStatementMap.computeIfAbsent(query, i -> getSession().prepare(i));
+    }
 
     private Session session;
 

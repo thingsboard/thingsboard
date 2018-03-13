@@ -16,11 +16,11 @@
 
 CREATE TABLE IF NOT EXISTS thingsboard.msg_queue (
     node_id         timeuuid,
-    clustered_hash    bigint,
-    partition       bigint,
+    cluster_partition    bigint,
+    ts_partition       bigint,
     ts              bigint,
     msg             blob,
-	PRIMARY KEY ((node_id, clustered_hash, partition), ts))
+	PRIMARY KEY ((node_id, cluster_partition, ts_partition), ts))
 WITH CLUSTERING ORDER BY (ts DESC)
 AND compaction = {
     'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
@@ -33,10 +33,10 @@ AND compaction = {
 
 CREATE TABLE IF NOT EXISTS thingsboard.msg_ack_queue (
     node_id         timeuuid,
-    clustered_hash    bigint,
-    partition       bigint,
+    cluster_partition    bigint,
+    ts_partition       bigint,
     msg_id              timeuuid,
-	PRIMARY KEY ((node_id, clustered_hash, partition), msg_id))
+	PRIMARY KEY ((node_id, cluster_partition, ts_partition), msg_id))
 WITH CLUSTERING ORDER BY (msg_id DESC)
 AND compaction = {
     'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
@@ -49,10 +49,10 @@ AND compaction = {
 
 CREATE TABLE IF NOT EXISTS thingsboard.processed_msg_partitions (
     node_id         timeuuid,
-    clustered_hash    bigint,
-    partition       bigint,
-	PRIMARY KEY ((node_id, clustered_hash), partition))
-WITH CLUSTERING ORDER BY (partition DESC)
+    cluster_partition    bigint,
+    ts_partition       bigint,
+	PRIMARY KEY ((node_id, cluster_partition), ts_partition))
+WITH CLUSTERING ORDER BY (ts_partition DESC)
 AND compaction = {
     'class': 'org.apache.cassandra.db.compaction.DateTieredCompactionStrategy',
     'min_threshold': '5',

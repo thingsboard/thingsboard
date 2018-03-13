@@ -13,33 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.service.queue.cassandra;
 
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.dao.attributes.AttributesService;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-/**
- * Created by ashvayka on 13.01.18.
- */
-public interface TbContext {
+@Component
+public class UnprocessedMsgFilter {
 
-    void tellNext(TbMsg msg);
-
-    void tellNext(TbMsg msg, String relationType);
-
-    void tellSelf(TbMsg msg, long delayMs);
-
-    void tellOthers(TbMsg msg);
-
-    void tellSibling(TbMsg msg, ServerAddress address);
-
-    void spawn(TbMsg msg);
-
-    void ack(UUID msg);
-
-    AttributesService getAttributesService();
-
+    public Collection<TbMsg> filter(List<TbMsg> msgs, List<MsgAck> acks) {
+        Set<UUID> processedIds = acks.stream().map(MsgAck::getMsgId).collect(Collectors.toSet());
+        return msgs.stream().filter(i -> !processedIds.contains(i.getId())).collect(Collectors.toList());
+    }
 }

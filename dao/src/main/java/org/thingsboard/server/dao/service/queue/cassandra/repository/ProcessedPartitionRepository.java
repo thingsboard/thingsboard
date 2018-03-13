@@ -13,33 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.service.queue.cassandra.repository;
 
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.dao.attributes.AttributesService;
+import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Created by ashvayka on 13.01.18.
- */
-public interface TbContext {
+public interface ProcessedPartitionRepository {
 
-    void tellNext(TbMsg msg);
+    ListenableFuture<Void> partitionProcessed(UUID nodeId, long clusteredHash, long partition);
 
-    void tellNext(TbMsg msg, String relationType);
-
-    void tellSelf(TbMsg msg, long delayMs);
-
-    void tellOthers(TbMsg msg);
-
-    void tellSibling(TbMsg msg, ServerAddress address);
-
-    void spawn(TbMsg msg);
-
-    void ack(UUID msg);
-
-    AttributesService getAttributesService();
+    Optional<Long> findLastProcessedPartition(UUID nodeId, long clusteredHash);
 
 }

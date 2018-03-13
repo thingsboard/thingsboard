@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.msg;
 
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.dao.attributes.AttributesService;
+import lombok.Data;
 
-import java.util.UUID;
+import java.io.Serializable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by ashvayka on 13.01.18.
  */
-public interface TbContext {
+@Data
+public final class TbMsgMetaData implements Serializable {
 
-    void tellNext(TbMsg msg);
+    private Map<String, String> data = new ConcurrentHashMap<>();
 
-    void tellNext(TbMsg msg, String relationType);
+    public String getValue(String key) {
+        return data.get(key);
+    }
 
-    void tellSelf(TbMsg msg, long delayMs);
-
-    void tellOthers(TbMsg msg);
-
-    void tellSibling(TbMsg msg, ServerAddress address);
-
-    void spawn(TbMsg msg);
-
-    void ack(UUID msg);
-
-    AttributesService getAttributesService();
+    public void putValue(String key, String value) {
+        data.put(key, value);
+    }
 
 }

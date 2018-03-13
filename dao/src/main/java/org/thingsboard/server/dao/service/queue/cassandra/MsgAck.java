@@ -13,33 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.dao.service.queue.cassandra;
 
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.dao.attributes.AttributesService;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.UUID;
 
-/**
- * Created by ashvayka on 13.01.18.
- */
-public interface TbContext {
+@Data
+@EqualsAndHashCode
+public class MsgAck {
 
-    void tellNext(TbMsg msg);
-
-    void tellNext(TbMsg msg, String relationType);
-
-    void tellSelf(TbMsg msg, long delayMs);
-
-    void tellOthers(TbMsg msg);
-
-    void tellSibling(TbMsg msg, ServerAddress address);
-
-    void spawn(TbMsg msg);
-
-    void ack(UUID msg);
-
-    AttributesService getAttributesService();
+    private final UUID msgId;
+    private final UUID nodeId;
+    private final long clusteredPartition;
+    private final long tsPartition;
 
 }

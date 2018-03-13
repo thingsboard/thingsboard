@@ -35,7 +35,7 @@
         <spring-data-redis.version>1.8.10.RELEASE</spring-data-redis.version>
         <jedis.version>2.9.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
-         <json-path.version>2.2.0</json-path.version>
+        <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
@@ -79,17 +79,19 @@
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
         <postgresql.driver.version>9.4.1211</postgresql.driver.version>
-        <sonar.exclusions>org/thingsboard/server/gen/**/*, org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*</sonar.exclusions>
+        <sonar.exclusions>org/thingsboard/server/gen/**/*,
+            org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
+        </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
     </properties>
 
     <modules>
         <module>common</module>
+        <module>rule-engine</module>
         <module>dao</module>
         <module>extensions-api</module>
         <module>extensions-core</module>
         <module>extensions</module>
-        <module>rule-engine</module>
         <module>transport</module>
         <module>ui</module>
         <module>tools</module>
@@ -369,6 +371,11 @@
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>data</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.rule-engine</groupId>
+                <artifactId>rule-engine-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
