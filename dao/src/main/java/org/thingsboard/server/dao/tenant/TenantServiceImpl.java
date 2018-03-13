@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.plugin.PluginService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -76,6 +77,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     @Autowired
     private PluginService pluginService;
 
+    @Autowired
+    private RuleChainService ruleChainService;
+
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
@@ -108,6 +112,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         assetService.deleteAssetsByTenantId(tenantId);
         deviceService.deleteDevicesByTenantId(tenantId);
         userService.deleteTenantAdmins(tenantId);
+        ruleChainService.deleteRuleChainsByTenantId(tenantId);
         ruleService.deleteRulesByTenantId(tenantId);
         pluginService.deletePluginsByTenantId(tenantId);
         tenantDao.removeById(tenantId.getId());
