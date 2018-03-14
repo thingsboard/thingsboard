@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -54,6 +55,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
@@ -117,6 +119,9 @@ public abstract class BaseController {
 
     @Autowired
     protected PluginService pluginService;
+
+    @Autowired
+    protected RuleChainService ruleChainService;
 
     @Autowired
     protected ActorService actorService;
@@ -294,6 +299,9 @@ public abstract class BaseController {
                     return;
                 case RULE:
                     checkRule(new RuleId(entityId.getId()));
+                    return;
+                case RULE_CHAIN:
+                    checkRuleChain(new RuleChainId(entityId.getId()));
                     return;
                 case ASSET:
                     checkAsset(assetService.findAssetById(new AssetId(entityId.getId())));
@@ -525,6 +533,28 @@ public abstract class BaseController {
         }
         return rule;
     }
+
+    protected RuleChain checkRuleChain(RuleChainId ruleChainId) throws ThingsboardException {
+        checkNotNull(ruleChainId);
+        return checkRuleChain(ruleChainService.findRuleChainById(ruleChainId));
+    }
+
+    protected RuleChain checkRuleChain(RuleChain ruleChain) throws ThingsboardException {
+        checkNotNull(ruleChain);
+        SecurityUser authUser = getCurrentUser();
+        TenantId tenantId = ruleChain.getTenantId();
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        if (authUser.getAuthority() != Authority.SYS_ADMIN) {
+            if (authUser.getTenantId() == null ||
+                    !tenantId.getId().equals(ModelConstants.NULL_UUID) && !authUser.getTenantId().equals(tenantId)) {
+                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
+                        ThingsboardErrorCode.PERMISSION_DENIED);
+
+            }
+        }
+        return ruleChain;
+    }
+
 
     protected String constructBaseUrl(HttpServletRequest request) {
         String scheme = request.getScheme();
