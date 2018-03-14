@@ -36,7 +36,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     private TenantId tenantId;
     private String name;
     private RuleNodeId firstRuleNodeId;
-    private boolean isRoot;
+    private boolean root;
     private transient JsonNode configuration;
     @JsonIgnore
     private byte[] configurationBytes;
@@ -54,7 +54,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         this.tenantId = ruleChain.getTenantId();
         this.name = ruleChain.getName();
         this.firstRuleNodeId = ruleChain.getFirstRuleNodeId();
-        this.isRoot = ruleChain.isRoot();
+        this.root = ruleChain.isRoot();
         this.setConfiguration(ruleChain.getConfiguration());
     }
 

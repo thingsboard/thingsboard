@@ -668,7 +668,7 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_chain (
     name text,
     search_text text,
     first_rule_node_id uuid,
-    is_root boolean,
+    root boolean,
     configuration text,
     additional_info text,
     PRIMARY KEY (id, tenant_id)

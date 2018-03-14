@@ -339,7 +339,7 @@ public class ModelConstants {
     public static final String RULE_CHAIN_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String RULE_CHAIN_NAME_PROPERTY = "name";
     public static final String RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY = "first_rule_node_id";
-    public static final String RULE_CHAIN_IS_ROOT_PROPERTY = "is_root";
+    public static final String RULE_CHAIN_ROOT_PROPERTY = "root";
     public static final String RULE_CHAIN_CONFIGURATION_PROPERTY = "configuration";
 
     public static final String RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_chain_by_tenant_and_search_text";

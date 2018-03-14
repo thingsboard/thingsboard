@@ -52,8 +52,8 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
     private String searchText;
     @Column(name = RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY)
     private UUID firstRuleNodeId;
-    @Column(name = RULE_CHAIN_IS_ROOT_PROPERTY)
-    private boolean isRoot;
+    @Column(name = RULE_CHAIN_ROOT_PROPERTY)
+    private boolean root;
     @Column(name = RULE_CHAIN_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
     private JsonNode configuration;
     @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
@@ -70,7 +70,7 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
         this.name = ruleChain.getName();
         this.searchText = ruleChain.getName();
         this.firstRuleNodeId = DaoUtil.getId(ruleChain.getFirstRuleNodeId());
-        this.isRoot = ruleChain.isRoot();
+        this.root = ruleChain.isRoot();
         this.configuration = ruleChain.getConfiguration();
         this.additionalInfo = ruleChain.getAdditionalInfo();
     }
@@ -120,11 +120,11 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
     }
 
     public boolean isRoot() {
-        return isRoot;
+        return root;
     }
 
-    public void setRoot(boolean isRoot) {
-        this.isRoot = isRoot;
+    public void setRoot(boolean root) {
+        this.root = root;
     }
 
     public String getSearchText() {
@@ -156,7 +156,7 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
         if (this.firstRuleNodeId != null) {
             ruleChain.setFirstRuleNodeId(new RuleNodeId(this.firstRuleNodeId));
         }
-        ruleChain.setRoot(this.isRoot);
+        ruleChain.setRoot(this.root);
         ruleChain.setConfiguration(this.configuration);
         ruleChain.setAdditionalInfo(this.additionalInfo);
         return ruleChain;
