@@ -19,3 +19,5 @@ DROP TABLE IF EXISTS ts_kv_latest;
 DROP TABLE IF EXISTS user_credentials;
 DROP TABLE IF EXISTS widget_type;
 DROP TABLE IF EXISTS widgets_bundle;
+DROP TABLE IF EXISTS rule_node;
+DROP TABLE IF EXISTS rule_chain;
