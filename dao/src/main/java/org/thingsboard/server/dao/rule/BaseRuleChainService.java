@@ -16,6 +16,7 @@
 
 package org.thingsboard.server.dao.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -216,6 +217,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public RuleChain findRuleChainById(RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
         return ruleChainDao.findById(ruleChainId.getId());
+    }
+
+    @Override
+    public ListenableFuture<RuleChain> findRuleChainByIdAsync(RuleChainId ruleChainId) {
+        Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
+        return ruleChainDao.findByIdAsync(ruleChainId.getId());
     }
 
     @Override

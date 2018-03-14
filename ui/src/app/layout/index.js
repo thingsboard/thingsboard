@@ -49,6 +49,7 @@ import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardPlugin from '../plugin';
 import thingsboardRule from '../rule';
+import thingsboardRuleChain from '../rulechain';
 
 import thingsboardJsonForm from '../jsonform';
 
@@ -81,6 +82,7 @@ export default angular.module('thingsboard.home', [
     thingsboardDashboard,
     thingsboardPlugin,
     thingsboardRule,
+    thingsboardRuleChain,
     thingsboardJsonForm,
     thingsboardApiDevice,
     thingsboardApiLogin,

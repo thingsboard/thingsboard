@@ -550,6 +550,8 @@ public abstract class BaseController {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
 
+            } else if (tenantId.getId().equals(ModelConstants.NULL_UUID)) {
+                ruleChain.setConfiguration(null);
             }
         }
         return ruleChain;

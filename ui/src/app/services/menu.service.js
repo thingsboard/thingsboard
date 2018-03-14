@@ -79,6 +79,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'settings_ethernet'
                         },
                         {
+                            name: 'rulechain.rulechains',
+                            type: 'link',
+                            state: 'home.ruleChains',
+                            icon: 'settings_ethernet'
+                        },
+                        {
                             name: 'tenant.tenants',
                             type: 'link',
                             state: 'home.tenants',
@@ -124,6 +130,16 @@ function Menu(userService, $state, $rootScope) {
                                     name: 'rule.rules',
                                     icon: 'settings_ethernet',
                                     state: 'home.rules'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'rulechain.management',
+                            places: [
+                                {
+                                    name: 'rulechain.rulechains',
+                                    icon: 'settings_ethernet',
+                                    state: 'home.ruleChains'
                                 }
                             ]
                         },
@@ -183,6 +199,12 @@ function Menu(userService, $state, $rootScope) {
                             icon: 'settings_ethernet'
                         },
                         {
+                            name: 'rulechain.rulechains',
+                            type: 'link',
+                            state: 'home.ruleChains',
+                            icon: 'settings_ethernet'
+                        },
+                        {
                             name: 'customer.customers',
                             type: 'link',
                             state: 'home.customers',
@@ -232,6 +254,16 @@ function Menu(userService, $state, $rootScope) {
                                     name: 'rule.rules',
                                     icon: 'settings_ethernet',
                                     state: 'home.rules'
+                                }
+                            ]
+                        },
+                        {
+                            name: 'rulechain.management',
+                            places: [
+                                {
+                                    name: 'rulechain.rulechains',
+                                    icon: 'settings_ethernet',
+                                    state: 'home.ruleChains'
                                 }
                             ]
                         },

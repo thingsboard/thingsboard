@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -95,6 +96,9 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter private RuleService ruleService;
+
+    @Autowired
+    @Getter private RuleChainService ruleChainService;
 
     @Autowired
     @Getter private PluginService pluginService;

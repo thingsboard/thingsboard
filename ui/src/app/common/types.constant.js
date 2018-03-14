@@ -294,7 +294,8 @@ export default angular.module('thingsboard.types', [])
                 customer: "CUSTOMER",
                 user: "USER",
                 dashboard: "DASHBOARD",
-                alarm: "ALARM"
+                alarm: "ALARM",
+                rulechain: "RULE_CHAIN"
             },
             aliasEntityType: {
                 current_customer: "CURRENT_CUSTOMER"
@@ -353,6 +354,12 @@ export default angular.module('thingsboard.types', [])
                     typePlural: 'entity.type-alarms',
                     list: 'entity.list-of-alarms',
                     nameStartsWith: 'entity.alarm-name-starts-with'
+                },
+                "RULE_CHAIN": {
+                    type: 'entity.type-rulechain',
+                    typePlural: 'entity.type-rulechains',
+                    list: 'entity.list-of-rulechains',
+                    nameStartsWith: 'entity.rulechain-name-starts-with'
                 },
                 "CURRENT_CUSTOMER": {
                     type: 'entity.type-current-customer',

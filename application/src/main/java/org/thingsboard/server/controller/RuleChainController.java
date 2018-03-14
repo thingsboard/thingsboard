@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
@@ -54,6 +55,21 @@ public class RuleChainController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/metadata", method = RequestMethod.GET)
+    @ResponseBody
+    public RuleChainMetaData getRuleChainMetaData(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+        checkParameter(RULE_CHAIN_ID, strRuleChainId);
+        try {
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            checkRuleChain(ruleChainId);
+            return ruleChainService.loadRuleChainMetaData(ruleChainId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
     @ResponseBody
     public RuleChain saveRuleChain(@RequestBody RuleChain ruleChain) throws ThingsboardException {
@@ -71,6 +87,28 @@ public class RuleChainController extends BaseController {
 
             logEntityAction(emptyId(EntityType.RULE_CHAIN), ruleChain,
                     null, ruleChain.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/metadata", method = RequestMethod.POST)
+    @ResponseBody
+    public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
+        try {
+            RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId());
+            RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(ruleChainMetaData));
+
+            logEntityAction(ruleChain.getId(), ruleChain,
+                    null,
+                    ActionType.UPDATED, null, ruleChainMetaData);
+
+            return savedRuleChainMetaData;
+        } catch (Exception e) {
+
+            logEntityAction(emptyId(EntityType.RULE_CHAIN), null,
+                    null, ActionType.UPDATED, e, ruleChainMetaData);
 
             throw handleException(e);
         }
