@@ -73,7 +73,7 @@ public class RuleController extends BaseController {
             boolean created = source.getId() == null;
             source.setTenantId(getCurrentUser().getTenantId());
             RuleMetaData rule = checkNotNull(ruleService.saveRule(source));
-            actorService.onRuleStateChange(rule.getTenantId(), rule.getId(),
+            actorService.onEntityStateChange(rule.getTenantId(), rule.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(rule.getId(), rule,
@@ -99,7 +99,7 @@ public class RuleController extends BaseController {
             RuleId ruleId = new RuleId(toUUID(strRuleId));
             RuleMetaData rule = checkRule(ruleService.findRuleById(ruleId));
             ruleService.activateRuleById(ruleId);
-            actorService.onRuleStateChange(rule.getTenantId(), rule.getId(), ComponentLifecycleEvent.ACTIVATED);
+            actorService.onEntityStateChange(rule.getTenantId(), rule.getId(), ComponentLifecycleEvent.ACTIVATED);
 
             logEntityAction(rule.getId(), rule,
                     null,
@@ -125,7 +125,7 @@ public class RuleController extends BaseController {
             RuleId ruleId = new RuleId(toUUID(strRuleId));
             RuleMetaData rule = checkRule(ruleService.findRuleById(ruleId));
             ruleService.suspendRuleById(ruleId);
-            actorService.onRuleStateChange(rule.getTenantId(), rule.getId(), ComponentLifecycleEvent.SUSPENDED);
+            actorService.onEntityStateChange(rule.getTenantId(), rule.getId(), ComponentLifecycleEvent.SUSPENDED);
 
             logEntityAction(rule.getId(), rule,
                     null,
@@ -219,7 +219,7 @@ public class RuleController extends BaseController {
             RuleId ruleId = new RuleId(toUUID(strRuleId));
             RuleMetaData rule = checkRule(ruleService.findRuleById(ruleId));
             ruleService.deleteRuleById(ruleId);
-            actorService.onRuleStateChange(rule.getTenantId(), rule.getId(), ComponentLifecycleEvent.DELETED);
+            actorService.onEntityStateChange(rule.getTenantId(), rule.getId(), ComponentLifecycleEvent.DELETED);
 
             logEntityAction(ruleId, rule,
                     null,

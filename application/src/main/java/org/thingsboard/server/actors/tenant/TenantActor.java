@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,52 +15,38 @@
  */
 package org.thingsboard.server.actors.tenant;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
-import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.device.DeviceActor;
-import org.thingsboard.server.actors.plugin.PluginTerminationMsg;
-import org.thingsboard.server.actors.rule.ComplexRuleActorChain;
-import org.thingsboard.server.actors.rule.RuleActorChain;
-import org.thingsboard.server.actors.service.ContextAwareActor;
-import org.thingsboard.server.actors.service.ContextBasedCreator;
-import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.actors.shared.plugin.PluginManager;
-import org.thingsboard.server.actors.shared.plugin.TenantPluginManager;
-import org.thingsboard.server.actors.shared.rule.RuleManager;
-import org.thingsboard.server.actors.shared.rule.TenantRuleManager;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.PluginId;
-import org.thingsboard.server.common.data.id.RuleId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.device.DeviceActor;
+import org.thingsboard.server.actors.plugin.PluginTerminationMsg;
+import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
+import org.thingsboard.server.actors.service.ContextBasedCreator;
+import org.thingsboard.server.actors.service.DefaultActorService;
+import org.thingsboard.server.actors.shared.plugin.TenantPluginManager;
+import org.thingsboard.server.actors.shared.rulechain.TenantRuleChainManager;
+import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
-import org.thingsboard.server.extensions.api.rules.ToRuleActorMsg;
 
-public class TenantActor extends ContextAwareActor {
+import java.util.HashMap;
+import java.util.Map;
+
+public class TenantActor extends RuleChainManagerActor {
 
     private final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
 
     private final TenantId tenantId;
-    private final RuleManager ruleManager;
-    private final PluginManager pluginManager;
     private final Map<DeviceId, ActorRef> deviceActors;
 
     private TenantActor(ActorSystemContext systemContext, TenantId tenantId) {
-        super(systemContext);
+        super(systemContext, new TenantRuleChainManager(systemContext, tenantId), new TenantPluginManager(systemContext, tenantId));
         this.tenantId = tenantId;
-        this.ruleManager = new TenantRuleManager(systemContext, tenantId);
-        this.pluginManager = new TenantPluginManager(systemContext, tenantId);
         this.deviceActors = new HashMap<>();
     }
 
@@ -68,8 +54,7 @@ public class TenantActor extends ContextAwareActor {
     public void preStart() {
         logger.info("[{}] Starting tenant actor.", tenantId);
         try {
-            ruleManager.init(this.context());
-            pluginManager.init(this.context());
+            initRuleChains();
             logger.info("[{}] Tenant actor started.", tenantId);
         } catch (Exception e) {
             logger.error(e, "[{}] Unknown failure", tenantId);
@@ -79,14 +64,10 @@ public class TenantActor extends ContextAwareActor {
     @Override
     public void onReceive(Object msg) throws Exception {
         logger.debug("[{}] Received message: {}", tenantId, msg);
-        if (msg instanceof RuleChainDeviceMsg) {
-            process((RuleChainDeviceMsg) msg);
-        } else if (msg instanceof ToDeviceActorMsg) {
+        if (msg instanceof ToDeviceActorMsg) {
             onToDeviceActorMsg((ToDeviceActorMsg) msg);
         } else if (msg instanceof ToPluginActorMsg) {
             onToPluginMsg((ToPluginActorMsg) msg);
-        } else if (msg instanceof ToRuleActorMsg) {
-            onToRuleMsg((ToRuleActorMsg) msg);
         } else if (msg instanceof ToDeviceActorNotificationMsg) {
             onToDeviceActorMsg((ToDeviceActorNotificationMsg) msg);
         } else if (msg instanceof ClusterEventMsg) {
@@ -113,14 +94,9 @@ public class TenantActor extends ContextAwareActor {
         getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());
     }
 
-    private void onToRuleMsg(ToRuleActorMsg msg) {
-        ActorRef target = ruleManager.getOrCreateRuleActor(this.context(), msg.getRuleId());
-        target.tell(msg, ActorRef.noSender());
-    }
-
     private void onToPluginMsg(ToPluginActorMsg msg) {
         if (msg.getPluginTenantId().equals(tenantId)) {
-            ActorRef pluginActor = pluginManager.getOrCreatePluginActor(this.context(), msg.getPluginId());
+            ActorRef pluginActor = pluginManager.getOrCreateActor(this.context(), msg.getPluginId());
             pluginActor.tell(msg, ActorRef.noSender());
         } else {
             context().parent().tell(msg, ActorRef.noSender());
@@ -128,23 +104,11 @@ public class TenantActor extends ContextAwareActor {
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        Optional<PluginId> pluginId = msg.getPluginId();
-        Optional<RuleId> ruleId = msg.getRuleId();
-        if (pluginId.isPresent()) {
-            ActorRef pluginActor = pluginManager.getOrCreatePluginActor(this.context(), pluginId.get());
-            pluginActor.tell(msg, ActorRef.noSender());
-        } else if (ruleId.isPresent()) {
-            ActorRef target;
-            Optional<ActorRef> ref = ruleManager.update(this.context(), ruleId.get(), msg.getEvent());
-            if (ref.isPresent()) {
-                target = ref.get();
-            } else {
-                logger.debug("Failed to find actor for rule: [{}]", ruleId);
-                return;
-            }
+        ActorRef target = getEntityActorRef(msg.getEntityId());
+        if (target != null) {
             target.tell(msg, ActorRef.noSender());
         } else {
-            logger.debug("[{}] Invalid component lifecycle msg.", tenantId);
+            logger.debug("Invalid component lifecycle msg: {}", msg);
         }
     }
 
@@ -152,13 +116,6 @@ public class TenantActor extends ContextAwareActor {
         pluginManager.remove(msg.getId());
     }
 
-    private void process(RuleChainDeviceMsg msg) {
-        ToDeviceActorMsg toDeviceActorMsg = msg.getToDeviceActorMsg();
-        ActorRef deviceActor = getOrCreateDeviceActor(toDeviceActorMsg.getDeviceId());
-        RuleActorChain tenantChain = ruleManager.getRuleChain(this.context());
-        RuleActorChain chain = new ComplexRuleActorChain(msg.getRuleChain(), tenantChain);
-        deviceActor.tell(new RuleChainDeviceMsg(toDeviceActorMsg, chain), context().self());
-    }
 
     private ActorRef getOrCreateDeviceActor(DeviceId deviceId) {
         return deviceActors.computeIfAbsent(deviceId, k -> context().actorOf(Props.create(new DeviceActor.ActorCreator(systemContext, tenantId, deviceId))

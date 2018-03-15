@@ -13,45 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.shared.plugin;
+package org.thingsboard.server.actors.shared.rulechain;
 
-import akka.actor.ActorContext;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.DefaultActorService;
+import org.thingsboard.server.actors.shared.plugin.PluginManager;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.plugin.BasePluginService;
 
-public class TenantPluginManager extends PluginManager {
+public class SystemRuleChainManager extends RuleChainManager {
 
-    private final TenantId tenantId;
-
-    public TenantPluginManager(ActorSystemContext systemContext, TenantId tenantId) {
+    public SystemRuleChainManager(ActorSystemContext systemContext) {
         super(systemContext);
-        this.tenantId = tenantId;
     }
 
     @Override
-    public void init(ActorContext context) {
-        if (systemContext.isTenantComponentsInitEnabled()) {
-            super.init(context);
-        }
-    }
-
-    @Override
-    protected FetchFunction<PluginMetaData> getFetchEntitiesFunction() {
-        return link -> pluginService.findTenantPlugins(tenantId, link);
+    protected FetchFunction<RuleChain> getFetchEntitiesFunction() {
+        return service::findSystemRuleChains;
     }
 
     @Override
     protected TenantId getTenantId() {
-        return tenantId;
+        return BasePluginService.SYSTEM_TENANT;
     }
 
     @Override
     protected String getDispatcherName() {
-        return DefaultActorService.TENANT_PLUGIN_DISPATCHER_NAME;
+        return DefaultActorService.SYSTEM_RULE_DISPATCHER_NAME;
     }
-
 }
