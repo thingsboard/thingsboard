@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
-public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName {
+public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId {
 
     private static final long serialVersionUID = 8250339805336035966L;
 

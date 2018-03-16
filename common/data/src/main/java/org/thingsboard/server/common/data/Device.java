@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
