@@ -23,6 +23,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.plugin.PluginService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -70,5 +71,7 @@ public interface TbContext {
     RuleChainService getRuleChainService();
 
     TimeseriesService getTimeseriesService();
+
+    RelationService getRelationService();
 
 }
