@@ -25,6 +25,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.UUID;
@@ -67,5 +68,7 @@ public interface TbContext {
     AlarmService getAlarmService();
 
     RuleChainService getRuleChainService();
+
+    TimeseriesService getTimeseriesService();
 
 }

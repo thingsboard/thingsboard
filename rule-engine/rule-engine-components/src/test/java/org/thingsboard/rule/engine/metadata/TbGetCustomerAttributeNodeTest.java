@@ -35,14 +35,13 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Collections;
@@ -68,6 +67,8 @@ public class TbGetCustomerAttributeNodeTest {
     @Mock
     private AttributesService attributesService;
     @Mock
+    private TimeseriesService timeseriesService;
+    @Mock
     private UserService userService;
     @Mock
     private AssetService assetService;
@@ -82,6 +83,7 @@ public class TbGetCustomerAttributeNodeTest {
         Map<String, String> attrMapping = new HashMap<>();
         attrMapping.putIfAbsent("temperature", "tempo");
         config.setAttrMapping(attrMapping);
+        config.setTelemetry(false);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
         nodeConfiguration.setData(mapper.valueToTree(config));
@@ -212,6 +214,42 @@ public class TbGetCustomerAttributeNodeTest {
         when(deviceService.findDeviceByIdAsync(deviceId)).thenReturn(Futures.immediateFuture(device));
 
         entityAttributeFetched(customerId);
+    }
+
+    @Test
+    public void deviceCustomerTelemetryFetched() throws TbNodeException {
+        TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
+        Map<String, String> attrMapping = new HashMap<>();
+        attrMapping.putIfAbsent("temperature", "tempo");
+        config.setAttrMapping(attrMapping);
+        config.setTelemetry(true);
+        ObjectMapper mapper = new ObjectMapper();
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
+        nodeConfiguration.setData(mapper.valueToTree(config));
+
+        node = new TbGetCustomerAttributeNode();
+        node.init(nodeConfiguration, null);
+
+
+        DeviceId deviceId = new DeviceId(UUIDs.timeBased());
+        CustomerId customerId = new CustomerId(UUIDs.timeBased());
+        Device device = new Device();
+        device.setCustomerId(customerId);
+
+        msg = new TbMsg(UUIDs.timeBased(), "USER", deviceId, new TbMsgMetaData(), new byte[4]);
+
+        when(ctx.getDeviceService()).thenReturn(deviceService);
+        when(deviceService.findDeviceByIdAsync(deviceId)).thenReturn(Futures.immediateFuture(device));
+
+        List<TsKvEntry> timeseries = Lists.newArrayList(new BasicTsKvEntry(1L, new StringDataEntry("temperature", "highest")));
+
+        when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
+        when(timeseriesService.findLatest(customerId, Collections.singleton("temperature")))
+                .thenReturn(Futures.immediateFuture(timeseries));
+
+        node.onMsg(ctx, msg);
+        verify(ctx).tellNext(msg);
+        assertEquals(msg.getMetaData().getValue("tempo"), "highest");
     }
 
     private void entityAttributeFetched(CustomerId customerId) {

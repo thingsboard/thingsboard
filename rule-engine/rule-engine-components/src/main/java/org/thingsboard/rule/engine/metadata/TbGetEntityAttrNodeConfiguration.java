@@ -24,4 +24,5 @@ import java.util.Optional;
 public class TbGetEntityAttrNodeConfiguration {
 
     private Map<String, String> attrMapping;
+    private boolean isTelemetry = false;
 }
