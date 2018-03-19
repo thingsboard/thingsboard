@@ -28,7 +28,12 @@ public class DonAsynchron {
         Futures.addCallback(future, new FutureCallback<T>() {
             @Override
             public void onSuccess(@Nullable T result) {
-                onSuccess.accept(result);
+                try {
+                    onSuccess.accept(result);
+                } catch (Throwable th) {
+                    onFailure(th);
+                }
+
             }
 
             @Override

@@ -56,7 +56,9 @@ public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
     }
 
     private <T extends HasTenantId> ListenableFuture<TenantId> getTenantAsync(ListenableFuture<T> future) {
-        return Futures.transform(future, (AsyncFunction<HasTenantId, TenantId>) in -> Futures.immediateFuture(in.getTenantId()));
+        return Futures.transform(future, (AsyncFunction<HasTenantId, TenantId>) in -> {
+            return in != null ? Futures.immediateFuture(in.getTenantId())
+                : Futures.immediateFailedFuture(new IllegalStateException("Tenant not found"));});
     }
 
 }

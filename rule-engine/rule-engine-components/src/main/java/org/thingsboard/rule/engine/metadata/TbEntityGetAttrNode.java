@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,14 +38,18 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(
-                findEntityAsync(ctx, msg.getOriginator()),
-                entityId -> withCallback(
-                        ctx.getAttributesService().find(entityId, SERVER_SCOPE, config.getAttrMapping().keySet()),
-                        attributes -> putAttributesAndTell(ctx, msg, attributes),
-                        t -> ctx.tellError(msg, t)
-                ),
-                t -> ctx.tellError(msg, t));
+        try {
+            withCallback(
+                    findEntityAsync(ctx, msg.getOriginator()),
+                    entityId -> withCallback(
+                            ctx.getAttributesService().find(entityId, SERVER_SCOPE, config.getAttrMapping().keySet()),
+                            attributes -> putAttributesAndTell(ctx, msg, attributes),
+                            t -> ctx.tellError(msg, t)
+                    ),
+                    t -> ctx.tellError(msg, t));
+        } catch (Throwable th) {
+            ctx.tellError(msg, th);
+        }
     }
 
     private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<AttributeKvEntry> attributes) {

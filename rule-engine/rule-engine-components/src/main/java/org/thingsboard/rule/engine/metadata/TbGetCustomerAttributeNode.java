@@ -43,7 +43,9 @@ public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> 
     }
 
     private <T extends HasCustomerId> ListenableFuture<CustomerId> getCustomerAsync(ListenableFuture<T> future) {
-        return Futures.transform(future, (AsyncFunction<HasCustomerId, CustomerId>) in -> Futures.immediateFuture(in.getCustomerId()));
+        return Futures.transform(future, (AsyncFunction<HasCustomerId, CustomerId>) in -> {
+            return in != null ? Futures.immediateFuture(in.getCustomerId())
+                    : Futures.immediateFailedFuture(new IllegalStateException("Customer not found"));});
     }
 
 }
