@@ -82,8 +82,9 @@ public class BaseRelationService implements RelationService {
     }
 
     @Caching(evict = {
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.to, #relation.type, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.type, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup}")
     })
@@ -95,8 +96,9 @@ public class BaseRelationService implements RelationService {
     }
 
     @Caching(evict = {
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.to, #relation.type, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.type, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup}")
     })
@@ -108,11 +110,11 @@ public class BaseRelationService implements RelationService {
     }
 
     @Caching(evict = {
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.to, #relation.type, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.type, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.typeGroup}"),
             @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.typeGroup}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.to, #relation.type, #relation.typeGroup}")
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup}")
     })
     @Override
     public boolean deleteRelation(EntityRelation relation) {
@@ -122,11 +124,11 @@ public class BaseRelationService implements RelationService {
     }
 
     @Caching(evict = {
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "#relation.from"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.type}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "#relation.to"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.to, #relation.type, #relation.typeGroup}")
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.to, #relation.type, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.type, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.from, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#relation.to, #relation.type, #relation.typeGroup}")
     })
     @Override
     public ListenableFuture<Boolean> deleteRelationAsync(EntityRelation relation) {
@@ -136,11 +138,11 @@ public class BaseRelationService implements RelationService {
     }
 
     @Caching(evict = {
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "#from"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "#to"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #relationType}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType}")
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #relationType, #typeGroup}")
     })
     @Override
     public boolean deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
@@ -150,11 +152,11 @@ public class BaseRelationService implements RelationService {
     }
 
     @Caching(evict = {
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "#from"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "#to"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #relationType}"),
-            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType}")
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #typeGroup}"),
+            @CacheEvict(cacheNames = RELATIONS_CACHE, key = "{#to, #relationType, #typeGroup}")
     })
     @Override
     public ListenableFuture<Boolean> deleteRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
