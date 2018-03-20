@@ -23,6 +23,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
@@ -54,6 +55,12 @@ public class RpcManagerActor extends ContextAwareActor {
                 .forEach(otherServer -> onCreateSessionRequest(
                         new RpcSessionCreateRequestMsg(UUID.randomUUID(), otherServer.getServerAddress(), null)));
 
+    }
+
+    @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg
+        return false;
     }
 
     @Override

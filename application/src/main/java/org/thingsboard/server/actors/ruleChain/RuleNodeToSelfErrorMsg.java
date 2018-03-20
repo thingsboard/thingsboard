@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.rule;
+package org.thingsboard.server.actors.ruleChain;
 
-public class RuleProcessingMsg {
+import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbMsg;
 
-    private final ChainProcessingContext ctx;
+/**
+ * Created by ashvayka on 19.03.18.
+ */
+@Data
+final class RuleNodeToSelfErrorMsg implements TbActorMsg {
 
-    public RuleProcessingMsg(ChainProcessingContext ctx) {
-        super();
-        this.ctx = ctx;
-    }
+    private final TbMsg msg;
+    private final Throwable error;
 
-    public ChainProcessingContext getCtx() {
-        return ctx;
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.RULE_TO_SELF_ERROR_MSG;
     }
 
 }

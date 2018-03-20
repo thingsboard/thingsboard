@@ -78,7 +78,7 @@ public class RuleChainController extends BaseController {
             ruleChain.setTenantId(getCurrentUser().getTenantId());
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
-            actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(),
+            actorService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedRuleChain.getId(), savedRuleChain,

@@ -13,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.rule;
+package org.thingsboard.server.rules.flow;
 
-import java.io.Serializable;
-import java.util.UUID;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.mqtt.rpc.AbstractMqttServerSideRpcIntegrationTest;
 
-public class RuleToPluginTimeoutMsg implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    private final UUID msgId;
-
-    public RuleToPluginTimeoutMsg(UUID msgId) {
-        super();
-        this.msgId = msgId;
-    }
-
-    public UUID getMsgId() {
-        return msgId;
-    }
-
+/**
+ * Created by Valerii Sosliuk on 8/22/2017.
+ */
+@DaoSqlTest
+public class RuleEngineFlowSqlIntegrationTest extends AbstractRuleEngineFlowIntegrationTest {
 }

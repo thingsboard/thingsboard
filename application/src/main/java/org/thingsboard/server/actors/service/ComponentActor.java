@@ -141,7 +141,6 @@ public abstract class ComponentActor<T extends EntityId, P extends ComponentMsgP
         messagesProcessed++;
     }
 
-
     protected void logAndPersist(String method, Exception e) {
         logAndPersist(method, e, false);
     }

@@ -18,11 +18,13 @@ package org.thingsboard.rule.engine.metadata;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.rule.engine.api.EnrichmentNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.id.*;
 
+@EnrichmentNode(name="Get Customer Attributes Node")
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
 
     @Override

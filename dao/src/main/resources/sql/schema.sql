@@ -263,6 +263,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
     name varchar(255),
     first_rule_node_id varchar(31),
     root boolean,
+    debug_mode boolean,
     search_text varchar(255),
     tenant_id varchar(31)
 );
@@ -273,5 +274,6 @@ CREATE TABLE IF NOT EXISTS rule_node (
     configuration varchar(10000000),
     type varchar(255),
     name varchar(255),
+    debug_mode boolean,
     search_text varchar(255)
 );

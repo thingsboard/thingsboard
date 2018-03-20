@@ -58,8 +58,6 @@ public interface TbContext {
 
     UserService getUserService();
 
-    RuleService getRuleService();
-
     PluginService getPluginService();
 
     AssetService getAssetService();

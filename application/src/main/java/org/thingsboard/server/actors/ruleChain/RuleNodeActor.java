@@ -35,12 +35,32 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     }
 
     @Override
-    protected void process(TbActorMsg msg) {
+    protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
             case RULE_CHAIN_TO_RULE_MSG:
-                processor.onRuleChainToRuleNodeMsg((RuleChainToRuleNodeMsg) msg);
+                onRuleChainToRuleNodeMsg((RuleChainToRuleNodeMsg) msg);
                 break;
+            case RULE_TO_SELF_ERROR_MSG:
+                onRuleNodeToSelfErrorMsg((RuleNodeToSelfErrorMsg) msg);
+                break;
+            default:
+                return false;
         }
+        return true;
+    }
+
+    private void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) {
+        logger.debug("[{}] Going to process rule msg: {}", id, msg.getMsg());
+        try {
+            processor.onRuleChainToRuleNodeMsg(msg);
+            increaseMessagesProcessedCount();
+        } catch (Exception e) {
+            logAndPersist("onRuleMsg", e);
+        }
+    }
+
+    private void onRuleNodeToSelfErrorMsg(RuleNodeToSelfErrorMsg msg) {
+        logAndPersist("onRuleMsg", ActorSystemContext.toException(msg.getError()));
     }
 
     public static class ActorCreator extends ContextBasedCreator<RuleNodeActor> {
@@ -68,5 +88,7 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     protected long getErrorPersistFrequency() {
         return systemContext.getRuleNodeErrorPersistFrequency();
     }
+
+    //TODO: failover strategy
 
 }

@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -54,6 +56,10 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
     private UUID firstRuleNodeId;
     @Column(name = RULE_CHAIN_ROOT_PROPERTY)
     private boolean root;
+    @Getter
+    @Setter
+    @Column(name = DEBUG_MODE)
+    private boolean debugMode;
     @Column(name = RULE_CHAIN_CONFIGURATION_PROPERTY, codec = JsonCodec.class)
     private JsonNode configuration;
     @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
@@ -71,6 +77,7 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
         this.searchText = ruleChain.getName();
         this.firstRuleNodeId = DaoUtil.getId(ruleChain.getFirstRuleNodeId());
         this.root = ruleChain.isRoot();
+        this.debugMode = ruleChain.isDebugMode();
         this.configuration = ruleChain.getConfiguration();
         this.additionalInfo = ruleChain.getAdditionalInfo();
     }
@@ -157,6 +164,7 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
             ruleChain.setFirstRuleNodeId(new RuleNodeId(this.firstRuleNodeId));
         }
         ruleChain.setRoot(this.root);
+        ruleChain.setDebugMode(this.debugMode);
         ruleChain.setConfiguration(this.configuration);
         ruleChain.setAdditionalInfo(this.additionalInfo);
         return ruleChain;

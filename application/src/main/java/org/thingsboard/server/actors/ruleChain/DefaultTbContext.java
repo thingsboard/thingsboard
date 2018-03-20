@@ -1,10 +1,34 @@
+/**
+ * Copyright © 2016-2018 The Thingsboard Authors
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.actors.ruleChain;
 
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.plugin.PluginService;
+import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.user.UserService;
 
 /**
  * Created by ashvayka on 19.03.18.
@@ -26,27 +50,30 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellNext(TbMsg msg, String relationType) {
-        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelfId(), relationType, msg), nodeCtx.getSelf());
+        if (nodeCtx.getSelf().isDebugMode()) {
+            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg);
+        }
+        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), relationType, msg), nodeCtx.getSelfActor());
     }
 
     @Override
     public void tellSelf(TbMsg msg, long delayMs) {
-
+        throw new RuntimeException("Not Implemented!");
     }
 
     @Override
     public void tellOthers(TbMsg msg) {
-
+        throw new RuntimeException("Not Implemented!");
     }
 
     @Override
     public void tellSibling(TbMsg msg, ServerAddress address) {
-
+        throw new RuntimeException("Not Implemented!");
     }
 
     @Override
     public void spawn(TbMsg msg) {
-
+        throw new RuntimeException("Not Implemented!");
     }
 
     @Override
@@ -55,7 +82,60 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public void tellError(TbMsg msg, Throwable th) {
+        if (nodeCtx.getSelf().isDebugMode()) {
+            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, th);
+        }
+        nodeCtx.getSelfActor().tell(new RuleNodeToSelfErrorMsg(msg, th), nodeCtx.getSelfActor());
+    }
+
+    @Override
     public AttributesService getAttributesService() {
         return mainCtx.getAttributesService();
+    }
+
+    @Override
+    public CustomerService getCustomerService() {
+        return mainCtx.getCustomerService();
+    }
+
+    @Override
+    public UserService getUserService() {
+        return mainCtx.getUserService();
+    }
+
+    @Override
+    public PluginService getPluginService() {
+        return mainCtx.getPluginService();
+    }
+
+    @Override
+    public AssetService getAssetService() {
+        return mainCtx.getAssetService();
+    }
+
+    @Override
+    public DeviceService getDeviceService() {
+        return mainCtx.getDeviceService();
+    }
+
+    @Override
+    public AlarmService getAlarmService() {
+        return mainCtx.getAlarmService();
+    }
+
+    @Override
+    public RuleChainService getRuleChainService() {
+        return mainCtx.getRuleChainService();
+    }
+
+    @Override
+    public TimeseriesService getTimeseriesService() {
+        return mainCtx.getTsService();
+    }
+
+    @Override
+    public RelationService getRelationService() {
+        return mainCtx.getRelationService();
     }
 }

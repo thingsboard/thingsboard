@@ -220,6 +220,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    public RuleNode findRuleNodeById(RuleNodeId ruleNodeId) {
+        Validator.validateId(ruleNodeId, "Incorrect rule node id for search request.");
+        return ruleNodeDao.findById(ruleNodeId.getId());
+    }
+
+    @Override
     public ListenableFuture<RuleChain> findRuleChainByIdAsync(RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
         return ruleChainDao.findByIdAsync(ruleChainId.getId());
@@ -325,7 +331,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         }
                         if (ruleChain.isRoot()) {
                             RuleChain rootRuleChain = getRootTenantRuleChain(ruleChain.getTenantId());
-                            if (ruleChain.getId() == null || !ruleChain.getId().equals(rootRuleChain.getId())) {
+                            if (rootRuleChain != null && !rootRuleChain.getId().equals(ruleChain.getId())) {
                                 throw new DataValidationException("Another root rule chain is present in scope of current tenant!");
                             }
                         }

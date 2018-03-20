@@ -20,10 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbNodeState;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -33,6 +30,7 @@ import java.util.List;
 
 import static org.thingsboard.server.common.data.relation.RelationTypeGroup.COMMON;
 
+@EnrichmentNode(name="Get Related Entity Attributes Node")
 public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
 
     private TbGetRelatedAttrNodeConfiguration config;

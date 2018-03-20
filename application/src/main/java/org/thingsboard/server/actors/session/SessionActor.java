@@ -23,6 +23,7 @@ import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ToDeviceActorSessionMsg;
@@ -58,6 +59,12 @@ public class SessionActor extends ContextAwareActor {
                         return OneForOneStrategy.resume();
                     }
                 });
+    }
+
+    @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg
+        return false;
     }
 
     @Override

@@ -38,6 +38,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     private String name;
     private RuleNodeId firstRuleNodeId;
     private boolean root;
+    private boolean debugMode;
     private transient JsonNode configuration;
     @JsonIgnore
     private byte[] configurationBytes;

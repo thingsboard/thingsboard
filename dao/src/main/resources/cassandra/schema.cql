@@ -669,6 +669,7 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_chain (
     search_text text,
     first_rule_node_id uuid,
     root boolean,
+    debug_mode boolean,
     configuration text,
     additional_info text,
     PRIMARY KEY (id, tenant_id)
@@ -685,6 +686,7 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_node (
     id uuid,
     type text,
     name text,
+    debug_mode boolean,
     search_text text,
     configuration text,
     additional_info text,

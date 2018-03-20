@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EnrichmentNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.id.*;
 
 @Slf4j
+@EnrichmentNode(name="Get Tenant Attributes Node")
 public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 
     @Override
@@ -38,8 +40,6 @@ public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
                 return getTenantAsync(ctx.getCustomerService().findCustomerByIdAsync((CustomerId) originator));
             case USER:
                 return getTenantAsync(ctx.getUserService().findUserByIdAsync((UserId) originator));
-            case RULE:
-                return getTenantAsync(ctx.getRuleService().findRuleByIdAsync((RuleId) originator));
             case PLUGIN:
                 return getTenantAsync(ctx.getPluginService().findPluginByIdAsync((PluginId) originator));
             case ASSET:

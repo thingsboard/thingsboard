@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package org.thingsboard.server.common.msg;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -30,6 +31,7 @@ import java.util.UUID;
  * Created by ashvayka on 13.01.18.
  */
 @Data
+@AllArgsConstructor
 public final class TbMsg implements Serializable {
 
     private final UUID id;
@@ -38,6 +40,15 @@ public final class TbMsg implements Serializable {
     private final TbMsgMetaData metaData;
     private final TbMsgDataType dataType;
     private final byte[] data;
+
+    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, byte[] data) {
+        this.id = id;
+        this.type = type;
+        this.originator = originator;
+        this.metaData = metaData;
+        this.dataType = TbMsgDataType.JSON;
+        this.data = data;
+    }
 
     public static ByteBuffer toBytes(TbMsg msg) {
         MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
@@ -61,14 +72,19 @@ public final class TbMsg implements Serializable {
     public static TbMsg fromBytes(ByteBuffer buffer) {
         try {
             MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(buffer.array());
-            TbMsgMetaData metaData = new TbMsgMetaData();
-            metaData.setData(proto.getMetaData().getDataMap());
-
+            TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
             EntityId entityId = EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId());
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
             return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData().toByteArray());
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
+    }
+
+    public TbMsg copy() {
+        int dataSize = data.length;
+        byte[] dataCopy = new byte[dataSize];
+        System.arraycopy( data, 0, dataCopy, 0, data.length );
+        return new TbMsg(id, type, originator, metaData.copy(), dataType, dataCopy);
     }
 }

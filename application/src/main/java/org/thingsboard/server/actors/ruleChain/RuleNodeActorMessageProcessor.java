@@ -17,28 +17,28 @@ package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
-import akka.actor.Props;
 import akka.event.LoggingAdapter;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.util.Base64Utils;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeState;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Andrew Shvayka
@@ -48,6 +48,8 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private final ActorRef parent;
     private final ActorRef self;
     private final RuleChainService service;
+    private RuleNode ruleNode;
+    private TbNode tbNode;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, ActorSystemContext systemContext
             , LoggingAdapter logger, ActorRef parent, ActorRef self) {
@@ -55,15 +57,17 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         this.parent = parent;
         this.self = self;
         this.service = systemContext.getRuleChainService();
+        this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(entityId);
     }
 
     @Override
     public void start(ActorContext context) throws Exception {
-
+        tbNode = initComponent(ruleNode);
     }
 
     @Override
     public void stop(ActorContext context) throws Exception {
+        tbNode.destroy();
     }
 
     @Override
@@ -71,8 +75,18 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     }
 
-    void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) {
+    void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) throws Exception {
+        if (ruleNode.isDebugMode()) {
+            systemContext.persistDebugInput(tenantId, entityId, msg.getMsg());
+        }
+        tbNode.onMsg(msg.getCtx(), msg.getMsg());
+    }
 
+    private TbNode initComponent(RuleNode ruleNode) throws Exception {
+        Class<?> componentClazz = Class.forName(ruleNode.getType());
+        TbNode tbNode = (TbNode) (componentClazz.newInstance());
+        tbNode.init(new TbNodeConfiguration(ruleNode.getConfiguration()), new TbNodeState());
+        return tbNode;
     }
 
 }

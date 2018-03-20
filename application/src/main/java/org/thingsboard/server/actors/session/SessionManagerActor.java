@@ -26,6 +26,7 @@ import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 
 import akka.event.Logging;
@@ -46,6 +47,12 @@ public class SessionManagerActor extends ContextAwareActor {
     public SessionManagerActor(ActorSystemContext systemContext) {
         super(systemContext);
         this.sessionActors = new HashMap<>(INITIAL_SESSION_MAP_SIZE);
+    }
+
+    @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg
+        return false;
     }
 
     @Override
