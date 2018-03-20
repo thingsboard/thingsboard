@@ -30,7 +30,7 @@ import java.util.UUID;
  * Created by ashvayka on 13.01.18.
  */
 @Data
-public final class TbMsg implements Serializable {
+public final class TbMsg implements Serializable, Cloneable {
 
     private final UUID id;
     private final String type;
@@ -38,6 +38,11 @@ public final class TbMsg implements Serializable {
     private final TbMsgMetaData metaData;
 
     private final byte[] data;
+
+    @Override
+    public TbMsg clone() {
+        return fromBytes(toBytes(this));
+    }
 
     public static ByteBuffer toBytes(TbMsg msg) {
         MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
@@ -77,4 +82,5 @@ public final class TbMsg implements Serializable {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
     }
+
 }

@@ -13,46 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.filter;
+package org.thingsboard.rule.engine.transform;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
-import org.thingsboard.rule.engine.js.NashornJsEngine;
 import org.thingsboard.server.common.msg.TbMsg;
-
-import javax.script.Bindings;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
+/**
+ * Created by ashvayka on 19.01.18.
+ */
 @Slf4j
-public class TbJsFilterNode implements TbNode {
+public abstract class TbAbstractTransformNode implements TbNode {
 
-    private TbJsFilterNodeConfiguration config;
-    private NashornJsEngine jsEngine;
+    private TbTransformNodeConfiguration config;
 
     @Override
     public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbJsFilterNodeConfiguration.class);
-        this.jsEngine = new NashornJsEngine(config.getJsScript());
+        this.config = TbNodeUtils.convert(configuration, TbTransformNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ListeningExecutor jsExecutor = ctx.getJsExecutor();
-        withCallback(jsExecutor.executeAsync(() -> jsEngine.executeFilter(toBindings(msg))),
-                filterResult -> ctx.tellNext(msg, Boolean.toString(filterResult)),
+        withCallback(transform(ctx, msg),
+                m -> routeMsg(ctx, m),
                 t -> ctx.tellError(msg, t));
     }
 
-    private Bindings toBindings(TbMsg msg) {
-        return NashornJsEngine.bindMsg(msg);
+    protected abstract ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg);
+
+    private void routeMsg(TbContext ctx, TbMsg msg) {
+        if (config.isStartNewChain()) {
+            ctx.spawn(msg);
+        } else {
+            ctx.tellNext(msg);
+        }
     }
 
-    @Override
-    public void destroy() {
-        if (jsEngine != null) {
-            jsEngine.destroy();
-        }
+    public void setConfig(TbTransformNodeConfiguration config) {
+        this.config = config;
     }
 }

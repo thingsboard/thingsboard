@@ -70,7 +70,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
     }
 
 
-    private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<KvEntry> attributes) {
+    private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> attributes) {
         attributes.forEach(r -> {
             String attrName = config.getAttrMapping().get(r.getKey());
             msg.getMetaData().putValue(attrName, r.getValueAsString());
@@ -84,5 +84,9 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
     }
 
     protected abstract ListenableFuture<T> findEntityAsync(TbContext ctx, EntityId originator);
+
+    public void setConfig(TbGetEntityAttrNodeConfiguration config) {
+        this.config = config;
+    }
 
 }

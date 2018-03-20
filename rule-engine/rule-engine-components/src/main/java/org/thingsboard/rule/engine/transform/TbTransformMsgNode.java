@@ -13,36 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.filter;
+package org.thingsboard.rule.engine.transform;
 
-import lombok.extern.slf4j.Slf4j;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbNodeState;
 import org.thingsboard.rule.engine.js.NashornJsEngine;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.Bindings;
 
-import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+public class TbTransformMsgNode extends TbAbstractTransformNode {
 
-@Slf4j
-public class TbJsFilterNode implements TbNode {
-
-    private TbJsFilterNodeConfiguration config;
+    private TbTransformMsgNodeConfiguration config;
     private NashornJsEngine jsEngine;
 
     @Override
     public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbJsFilterNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
         this.jsEngine = new NashornJsEngine(config.getJsScript());
+        setConfig(config);
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
-        ListeningExecutor jsExecutor = ctx.getJsExecutor();
-        withCallback(jsExecutor.executeAsync(() -> jsEngine.executeFilter(toBindings(msg))),
-                filterResult -> ctx.tellNext(msg, Boolean.toString(filterResult)),
-                t -> ctx.tellError(msg, t));
+    protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
+        return ctx.getJsExecutor().executeAsync(() -> jsEngine.executeUpdate(toBindings(msg), msg));
     }
 
     private Bindings toBindings(TbMsg msg) {

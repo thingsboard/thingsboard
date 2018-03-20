@@ -15,15 +15,20 @@
  */
 package org.thingsboard.rule.engine.js;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Sets;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.*;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 
 @Slf4j
@@ -68,6 +73,32 @@ public class NashornJsEngine {
         }
     }
 
+    private static TbMsg unbindMsg(Bindings bindings, TbMsg msg) throws JsonProcessingException {
+        for (Map.Entry<String, String> entry : msg.getMetaData().getData().entrySet()) {
+            Object obj = entry.getValue();
+            entry.setValue(obj.toString());
+        }
+
+        Object payload = bindings.get(DATA);
+        if (payload != null) {
+            ObjectMapper mapper = new ObjectMapper();
+            byte[] bytes = mapper.writeValueAsBytes(payload);
+            return new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), bytes);
+        }
+
+        return msg;
+    }
+
+    public TbMsg executeUpdate(Bindings bindings, TbMsg msg) throws ScriptException {
+        try {
+            engine.eval(bindings);
+            return unbindMsg(bindings, msg);
+        } catch (Throwable th) {
+            th.printStackTrace();
+            throw new IllegalArgumentException("Cannot unbind js args", th);
+        }
+    }
+
     public boolean executeFilter(Bindings bindings) throws ScriptException {
         Object eval = engine.eval(bindings);
         if (eval instanceof Boolean) {
@@ -78,14 +109,28 @@ public class NashornJsEngine {
         }
     }
 
-    public String executeSwitch(Bindings bindings) throws ScriptException, NoSuchMethodException {
+    public Set<String> executeSwitch(Bindings bindings) throws ScriptException, NoSuchMethodException {
         Object eval = this.engine.eval(bindings);
         if (eval instanceof String) {
-            return (String) eval;
-        } else {
-            log.warn("Wrong result type: {}", eval);
-            throw new ScriptException("Wrong result type: " + eval);
+            return Collections.singleton((String) eval);
+        } else if (eval instanceof ScriptObjectMirror) {
+            ScriptObjectMirror mir = (ScriptObjectMirror) eval;
+            if (mir.isArray()) {
+                Set<String> nextStates = Sets.newHashSet();
+                for (Map.Entry<String, Object> entry : mir.entrySet()) {
+                    if (entry.getValue() instanceof String) {
+                        nextStates.add((String) entry.getValue());
+                    } else {
+                        log.warn("Wrong result type: {}", eval);
+                        throw new ScriptException("Wrong result type: " + eval);
+                    }
+                }
+                return nextStates;
+            }
         }
+
+        log.warn("Wrong result type: {}", eval);
+        throw new ScriptException("Wrong result type: " + eval);
     }
 
     public void destroy() {

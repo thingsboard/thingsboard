@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.filter;
+package org.thingsboard.rule.engine.transform;
 
 import lombok.Data;
-
-import java.util.Set;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
-public class TbJsSwitchNodeConfiguration {
+public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfiguration{
 
-    private String jsScript;
-    private Set<String> allowedRelations;
-    private boolean routeToAllWithNoCheck;
+    private String originatorSource;
+    private EntitySearchDirection direction;
+    private String relationType;
 }

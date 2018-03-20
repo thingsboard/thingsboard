@@ -15,37 +15,17 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.HasCustomerId;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
 
     @Override
     protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
-
-        switch (originator.getEntityType()) {
-            case CUSTOMER:
-                return Futures.immediateFuture((CustomerId) originator);
-            case USER:
-                return getCustomerAsync(ctx.getUserService().findUserByIdAsync((UserId) originator));
-            case ASSET:
-                return getCustomerAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) originator));
-            case DEVICE:
-                return getCustomerAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) originator));
-            default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType " + originator));
-        }
-    }
-
-    private <T extends HasCustomerId> ListenableFuture<CustomerId> getCustomerAsync(ListenableFuture<T> future) {
-        return Futures.transform(future, (AsyncFunction<HasCustomerId, CustomerId>) in -> {
-            return in != null ? Futures.immediateFuture(in.getCustomerId())
-                    : Futures.immediateFailedFuture(new IllegalStateException("Customer not found"));});
+        return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator);
     }
 
 }

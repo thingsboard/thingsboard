@@ -34,14 +34,13 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbJsSwitchNodeTest {
@@ -54,6 +53,41 @@ public class TbJsSwitchNodeTest {
     private ListeningExecutor executor;
 
     @Test
+    public void routeToAllDoNotEvaluatesJs() throws TbNodeException {
+        HashSet<String> relations = Sets.newHashSet("one", "two");
+        initWithScript("test qwerty", relations, true);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}".getBytes());
+
+        node.onMsg(ctx, msg);
+        verify(ctx).tellNext(msg, relations);
+        verifyNoMoreInteractions(ctx, executor);
+    }
+
+    @Test
+    public void multipleRoutesAreAllowed() throws TbNodeException {
+        String jsCode = "function nextRelation(meta, msg) {\n" +
+                "    if(msg.passed == 5 && meta.temp == 10)\n" +
+                "        return ['three', 'one']\n" +
+                "    else\n" +
+                "        return 'two';\n" +
+                "};\n" +
+                "\n" +
+                "nextRelation(meta, msg);";
+        initWithScript(jsCode, Sets.newHashSet("one", "two", "three"), false);
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("temp", "10");
+        metaData.putValue("humidity", "99");
+        String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
+
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
+        mockJsExecutor();
+
+        node.onMsg(ctx, msg);
+        verify(ctx).getJsExecutor();
+        verify(ctx).tellNext(msg, Sets.newHashSet("one", "three"));
+    }
+
+    @Test
     public void allowedRelationPassed() throws TbNodeException {
         String jsCode = "function nextRelation(meta, msg) {\n" +
                 "    if(msg.passed == 5 && meta.temp == 10)\n" +
@@ -63,7 +97,7 @@ public class TbJsSwitchNodeTest {
                 "};\n" +
                 "\n" +
                 "nextRelation(meta, msg);";
-        initWithScript(jsCode, Sets.newHashSet("one", "two"));
+        initWithScript(jsCode, Sets.newHashSet("one", "two"), false);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -74,17 +108,17 @@ public class TbJsSwitchNodeTest {
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
-        verify(ctx).tellNext(msg, "one");
+        verify(ctx).tellNext(msg, Sets.newHashSet("one"));
     }
 
     @Test
     public void unknownRelationThrowsException() throws TbNodeException {
         String jsCode = "function nextRelation(meta, msg) {\n" +
-                "    return 'nine';" +
+                "    return ['one','nine'];" +
                 "};\n" +
                 "\n" +
                 "nextRelation(meta, msg);";
-        initWithScript(jsCode, Sets.newHashSet("one", "two"));
+        initWithScript(jsCode, Sets.newHashSet("one", "two"), false);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -95,13 +129,14 @@ public class TbJsSwitchNodeTest {
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
-        verifyError(msg, "Unsupported relation for switch nine", IllegalStateException.class);
+        verifyError(msg, "Unsupported relation for switch [nine, one]", IllegalStateException.class);
     }
 
-    private void initWithScript(String script, Set<String> relations) throws TbNodeException {
+    private void initWithScript(String script, Set<String> relations, boolean routeToAll) throws TbNodeException {
         TbJsSwitchNodeConfiguration config = new TbJsSwitchNodeConfiguration();
         config.setJsScript(script);
         config.setAllowedRelations(relations);
+        config.setRouteToAllWithNoCheck(routeToAll);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
         nodeConfiguration.setData(mapper.valueToTree(config));
@@ -112,10 +147,10 @@ public class TbJsSwitchNodeTest {
 
     private void mockJsExecutor() {
         when(ctx.getJsExecutor()).thenReturn(executor);
-        doAnswer((Answer<ListenableFuture<String>>) invocationOnMock -> {
+        doAnswer((Answer<ListenableFuture<Set<String>>>) invocationOnMock -> {
             try {
                 Callable task = (Callable) (invocationOnMock.getArguments())[0];
-                return Futures.immediateFuture((String) task.call());
+                return Futures.immediateFuture((Set<String>) task.call());
             } catch (Throwable th) {
                 return Futures.immediateFailedFuture(th);
             }

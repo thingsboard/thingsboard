@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.js.NashornJsEngine;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.Bindings;
+import java.util.Set;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
@@ -34,28 +35,38 @@ public class TbJsSwitchNode implements TbNode {
     @Override
     public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsSwitchNodeConfiguration.class);
-        this.jsEngine = new NashornJsEngine(config.getJsScript());
         if (config.getAllowedRelations().size() < 1) {
             String message = "Switch node should have at least 1 relation";
             log.error(message);
             throw new IllegalStateException(message);
         }
+        if (!config.isRouteToAllWithNoCheck()) {
+            this.jsEngine = new NashornJsEngine(config.getJsScript());
+        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        if (config.isRouteToAllWithNoCheck()) {
+            ctx.tellNext(msg, config.getAllowedRelations());
+            return;
+        }
         ListeningExecutor jsExecutor = ctx.getJsExecutor();
         withCallback(jsExecutor.executeAsync(() -> jsEngine.executeSwitch(toBindings(msg))),
                 result -> processSwitch(ctx, msg, result),
                 t -> ctx.tellError(msg, t));
     }
 
-    private void processSwitch(TbContext ctx, TbMsg msg, String nextRelation) {
-        if (config.getAllowedRelations().contains(nextRelation)) {
-            ctx.tellNext(msg, nextRelation);
+    private void processSwitch(TbContext ctx, TbMsg msg, Set<String> nextRelations) {
+        if (validateRelations(nextRelations)) {
+            ctx.tellNext(msg, nextRelations);
         } else {
-            ctx.tellError(msg, new IllegalStateException("Unsupported relation for switch " + nextRelation));
+            ctx.tellError(msg, new IllegalStateException("Unsupported relation for switch " + nextRelations));
         }
+    }
+
+    private boolean validateRelations(Set<String> nextRelations) {
+        return config.getAllowedRelations().containsAll(nextRelations);
     }
 
     private Bindings toBindings(TbMsg msg) {
