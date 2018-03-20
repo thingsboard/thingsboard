@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.thingsboard.server.common.data.id.TenantId;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public class TbNodeException extends Exception {
+public interface HasTenantId {
 
-    public TbNodeException(String message) {
-        super(message);
-    }
-
-    public TbNodeException(Exception e) {
-        super(e);
-    }
-
+    TenantId getTenantId();
 }

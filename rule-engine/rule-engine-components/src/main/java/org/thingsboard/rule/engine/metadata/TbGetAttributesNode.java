@@ -15,15 +15,19 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.attributes.AttributesService;
 
 import java.util.List;
+
+import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.server.common.data.DataConstants.*;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -31,7 +35,7 @@ import java.util.List;
 @Slf4j
 public class TbGetAttributesNode implements TbNode {
 
-    TbGetAttributesNodeConfiguration config;
+    private TbGetAttributesNodeConfiguration config;
 
     @Override
     public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
@@ -40,25 +44,24 @@ public class TbGetAttributesNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        try {
-            //TODO: refactor this to work async and fetch attributes from cache.
-            AttributesService service = ctx.getAttributesService();
-            fetchAttributes(msg, service, config.getClientAttributeNames(), DataConstants.CLIENT_SCOPE, "cs.");
-            fetchAttributes(msg, service, config.getServerAttributeNames(), DataConstants.SERVER_SCOPE, "ss.");
-            fetchAttributes(msg, service, config.getSharedAttributeNames(), DataConstants.SHARED_SCOPE, "shared.");
-            ctx.tellNext(msg);
-        } catch (Exception e) {
-            log.warn("[{}][{}] Failed to fetch attributes", msg.getOriginator(), msg.getId(), e);
-            throw new TbNodeException(e);
-        }
+        ListenableFuture<List<Void>> future = Futures.allAsList(
+                putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs."),
+                putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared."),
+                putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss."));
+
+        withCallback(future, i -> ctx.tellNext(msg), t -> ctx.tellError(msg, t));
     }
 
-    private void fetchAttributes(TbMsg msg, AttributesService service, List<String> attributeNames, String scope, String prefix) throws InterruptedException, java.util.concurrent.ExecutionException {
-        if (attributeNames != null && attributeNames.isEmpty()) {
-            List<AttributeKvEntry> attributes = service.find(msg.getOriginator(), scope, attributeNames).get();
-            attributes.forEach(attr -> msg.getMetaData().putValue(prefix + attr.getKey(), attr.getValueAsString()));
-        }
+    private ListenableFuture<Void> putAttributesAsync(TbMsg msg, List<AttributeKvEntry> attributes, String prefix) {
+        attributes.forEach(r -> msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString()));
+        return Futures.immediateFuture(null);
     }
+
+    private ListenableFuture<Void> putAttrAsync(TbContext ctx, TbMsg msg, String scope, List<String> attributes, String prefix) {
+        return Futures.transform(ctx.getAttributesService().find(msg.getOriginator(), scope, attributes),
+                (AsyncFunction<List<AttributeKvEntry>, Void>) i -> putAttributesAsync(msg, i, prefix));
+    }
+
 
     @Override
     public void destroy() {

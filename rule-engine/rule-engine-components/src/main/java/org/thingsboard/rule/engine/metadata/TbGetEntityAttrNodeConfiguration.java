@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.Data;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public class TbNodeException extends Exception {
+import java.util.Map;
+import java.util.Optional;
 
-    public TbNodeException(String message) {
-        super(message);
-    }
+@Data
+public class TbGetEntityAttrNodeConfiguration {
 
-    public TbNodeException(Exception e) {
-        super(e);
-    }
-
+    private Map<String, String> attrMapping;
+    private boolean isTelemetry = false;
 }
