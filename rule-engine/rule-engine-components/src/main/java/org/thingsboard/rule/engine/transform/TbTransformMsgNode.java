@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.metadata;
+package org.thingsboard.rule.engine.transform;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.TbNodeUtils;
@@ -21,24 +21,36 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbNodeState;
-import org.thingsboard.rule.engine.api.EnrichmentNode;
-import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
+import org.thingsboard.rule.engine.js.NashornJsEngine;
+import org.thingsboard.server.common.msg.TbMsg;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import javax.script.Bindings;
 
-@EnrichmentNode(name="Get Related Entity Attributes Node")
-public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
+public class TbTransformMsgNode extends TbAbstractTransformNode {
 
-    private TbGetRelatedAttrNodeConfiguration config;
+    private TbTransformMsgNodeConfiguration config;
+    private NashornJsEngine jsEngine;
 
     @Override
     public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
+        this.jsEngine = new NashornJsEngine(config.getJsScript());
         setConfig(config);
     }
 
     @Override
-    protected ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, config.getDirection(), config.getRelationType());
+    protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
+        return ctx.getJsExecutor().executeAsync(() -> jsEngine.executeUpdate(toBindings(msg), msg));
+    }
+
+    private Bindings toBindings(TbMsg msg) {
+        return NashornJsEngine.bindMsg(msg);
+    }
+
+    @Override
+    public void destroy() {
+        if (jsEngine != null) {
+            jsEngine.destroy();
+        }
     }
 }

@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
+import org.thingsboard.rule.engine.api.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -29,6 +30,8 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+
+import java.util.Set;
 
 /**
  * Created by ashvayka on 19.03.18.
@@ -45,7 +48,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellNext(TbMsg msg) {
-        tellNext(msg, null);
+        tellNext(msg, (String) null);
     }
 
     @Override
@@ -87,6 +90,16 @@ class DefaultTbContext implements TbContext {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, th);
         }
         nodeCtx.getSelfActor().tell(new RuleNodeToSelfErrorMsg(msg, th), nodeCtx.getSelfActor());
+    }
+
+    @Override
+    public void tellNext(TbMsg msg, Set<String> relationTypes) {
+        relationTypes.forEach(type -> tellNext(msg, type));
+    }
+
+    @Override
+    public ListeningExecutor getJsExecutor() {
+        return mainCtx.getExecutor();
     }
 
     @Override

@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.metadata;
+package org.thingsboard.rule.engine.api;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.rule.engine.api.EnrichmentNode;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
 
-@EnrichmentNode(name="Get Customer Attributes Node")
-public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
+import java.util.concurrent.Callable;
 
-    @Override
-    protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator);
-    }
+public interface ListeningExecutor {
 
+    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+
+    void onDestroy();
 }

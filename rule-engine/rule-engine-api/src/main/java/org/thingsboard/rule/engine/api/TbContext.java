@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -39,6 +40,8 @@ public interface TbContext {
     void tellNext(TbMsg msg);
 
     void tellNext(TbMsg msg, String relationType);
+
+    void tellNext(TbMsg msg, Set<String> relationTypes);
 
     void tellSelf(TbMsg msg, long delayMs);
 
@@ -71,5 +74,7 @@ public interface TbContext {
     TimeseriesService getTimeseriesService();
 
     RelationService getRelationService();
+
+    ListeningExecutor getJsExecutor();
 
 }

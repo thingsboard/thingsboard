@@ -19,7 +19,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
-public class TbGetRelatedAttrNodeConfiguration {
+public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfiguration  {
 
     private String relationType;
     private EntitySearchDirection direction;

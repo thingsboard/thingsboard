@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.metadata;
+package org.thingsboard.rule.engine.filter;
 
 import lombok.Data;
 
-import java.util.List;
-
-/**
- * Created by ashvayka on 19.01.18.
- */
 @Data
-public class TbGetAttributesNodeConfiguration {
+public class TbJsFilterNodeConfiguration {
 
-    private List<String> clientAttributeNames;
-    private List<String> sharedAttributeNames;
-    private List<String> serverAttributeNames;
-
-    private List<String> latestTsKeyNames;
-
+    private String jsScript;
 }

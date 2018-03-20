@@ -15,16 +15,13 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.EnrichmentNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.alarm.AlarmId;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Slf4j
 @EnrichmentNode(name="Get Tenant Attributes Node")
@@ -32,33 +29,7 @@ public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 
     @Override
     protected ListenableFuture<TenantId> findEntityAsync(TbContext ctx, EntityId originator) {
-
-        switch (originator.getEntityType()) {
-            case TENANT:
-                return Futures.immediateFuture((TenantId) originator);
-            case CUSTOMER:
-                return getTenantAsync(ctx.getCustomerService().findCustomerByIdAsync((CustomerId) originator));
-            case USER:
-                return getTenantAsync(ctx.getUserService().findUserByIdAsync((UserId) originator));
-            case PLUGIN:
-                return getTenantAsync(ctx.getPluginService().findPluginByIdAsync((PluginId) originator));
-            case ASSET:
-                return getTenantAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) originator));
-            case DEVICE:
-                return getTenantAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) originator));
-            case ALARM:
-                return getTenantAsync(ctx.getAlarmService().findAlarmByIdAsync((AlarmId) originator));
-            case RULE_CHAIN:
-                return getTenantAsync(ctx.getRuleChainService().findRuleChainByIdAsync((RuleChainId) originator));
-            default:
-                return Futures.immediateFailedFuture(new TbNodeException("Unexpected originator EntityType " + originator));
-        }
-    }
-
-    private <T extends HasTenantId> ListenableFuture<TenantId> getTenantAsync(ListenableFuture<T> future) {
-        return Futures.transform(future, (AsyncFunction<HasTenantId, TenantId>) in -> {
-            return in != null ? Futures.immediateFuture(in.getTenantId())
-                : Futures.immediateFailedFuture(new IllegalStateException("Tenant not found"));});
+        return EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, originator);
     }
 
 }
