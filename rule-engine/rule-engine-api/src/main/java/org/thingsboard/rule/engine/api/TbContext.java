@@ -74,4 +74,6 @@ public interface TbContext {
 
     RelationService getRelationService();
 
+    ListeningExecutor getJsExecutor();
+
 }

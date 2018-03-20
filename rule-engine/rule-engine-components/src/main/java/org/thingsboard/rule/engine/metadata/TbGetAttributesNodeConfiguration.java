@@ -29,4 +29,6 @@ public class TbGetAttributesNodeConfiguration {
     private List<String> sharedAttributeNames;
     private List<String> serverAttributeNames;
 
+    private List<String> latestTsKeyNames;
+
 }
