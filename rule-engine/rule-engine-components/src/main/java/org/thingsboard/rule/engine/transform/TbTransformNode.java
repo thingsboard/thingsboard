@@ -44,6 +44,7 @@ public class TbTransformNode implements TbNode {
         try {
             //TODO: refactor this to work async and fetch attributes from cache.
             AttributesService service = ctx.getAttributesService();
+
             fetchAttributes(msg, service, config.getClientAttributeNames(), DataConstants.CLIENT_SCOPE, "cs.");
             fetchAttributes(msg, service, config.getServerAttributeNames(), DataConstants.SERVER_SCOPE, "ss.");
             fetchAttributes(msg, service, config.getSharedAttributeNames(), DataConstants.SHARED_SCOPE, "shared.");

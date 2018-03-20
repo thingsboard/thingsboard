@@ -19,54 +19,54 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 
-public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMessageProcessor> {
+public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessageProcessor> {
 
-    private RuleChainActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId) {
-        super(systemContext, tenantId, ruleChainId);
-        setProcessor(new RuleChainActorMessageProcessor(tenantId, ruleChainId, systemContext,
+    private final RuleChainId ruleChainId;
+
+    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        super(systemContext, tenantId, ruleNodeId);
+        this.ruleChainId = ruleChainId;
+        setProcessor(new RuleNodeActorMessageProcessor(tenantId, ruleChainId, ruleNodeId, systemContext,
                 logger, context().parent(), context().self()));
     }
 
     @Override
     protected void process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
-            case COMPONENT_LIFE_CYCLE_MSG:
-                onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
-                break;
-            case SERVICE_TO_RULE_ENGINE_MSG:
-                processor.onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
-                break;
-            case RULE_TO_RULE_CHAIN_TELL_NEXT_MSG:
-                processor.onTellNext((RuleNodeToRuleChainTellNextMsg) msg);
+            case RULE_CHAIN_TO_RULE_MSG:
+                processor.onRuleChainToRuleNodeMsg((RuleChainToRuleNodeMsg) msg);
                 break;
         }
     }
 
-    public static class ActorCreator extends ContextBasedCreator<RuleChainActor> {
+    public static class ActorCreator extends ContextBasedCreator<RuleNodeActor> {
         private static final long serialVersionUID = 1L;
 
         private final TenantId tenantId;
         private final RuleChainId ruleChainId;
+        private final RuleNodeId ruleNodeId;
 
-        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId pluginId) {
+        public ActorCreator(ActorSystemContext context, TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
             super(context);
             this.tenantId = tenantId;
-            this.ruleChainId = pluginId;
+            this.ruleChainId = ruleChainId;
+            this.ruleNodeId = ruleNodeId;
+
         }
 
         @Override
-        public RuleChainActor create() throws Exception {
-            return new RuleChainActor(context, tenantId, ruleChainId);
+        public RuleNodeActor create() throws Exception {
+            return new RuleNodeActor(context, tenantId, ruleChainId, ruleNodeId);
         }
     }
 
     @Override
     protected long getErrorPersistFrequency() {
-        return systemContext.getRuleChainErrorPersistFrequency();
+        return systemContext.getRuleNodeErrorPersistFrequency();
     }
+
 }

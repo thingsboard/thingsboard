@@ -17,6 +17,8 @@ package org.thingsboard.server.actors.service;
 
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryServiceListener;
 import org.thingsboard.server.service.cluster.rpc.RpcMsgListener;
@@ -24,6 +26,8 @@ import org.thingsboard.server.service.cluster.rpc.RpcMsgListener;
 public interface ActorService extends SessionMsgProcessor, WebSocketMsgProcessor, RestMsgProcessor, RpcMsgListener, DiscoveryServiceListener {
 
     void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
+
+    void onMsg(ServiceToRuleEngineMsg msg);
 
     void onCredentialsUpdate(TenantId tenantId, DeviceId deviceId);
 

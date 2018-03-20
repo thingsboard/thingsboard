@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public final class TbMsg implements Serializable {
     private final String type;
     private final EntityId originator;
     private final TbMsgMetaData metaData;
-
+    private final TbMsgDataType dataType;
     private final byte[] data;
 
     public static ByteBuffer toBytes(TbMsg msg) {
@@ -49,11 +49,10 @@ public final class TbMsg implements Serializable {
         }
 
         if (msg.getMetaData() != null) {
-            MsgProtos.TbMsgProto.TbMsgMetaDataProto.Builder metadataBuilder = MsgProtos.TbMsgProto.TbMsgMetaDataProto.newBuilder();
-            metadataBuilder.putAllData(msg.getMetaData().getData());
-            builder.addMetaData(metadataBuilder.build());
+            builder.setMetaData(MsgProtos.TbMsgMetaDataProto.newBuilder().putAllData(msg.getMetaData().getData()).build());
         }
 
+        builder.setDataType(msg.getDataType().ordinal());
         builder.setData(ByteString.copyFrom(msg.getData()));
         byte[] bytes = builder.build().toByteArray();
         return ByteBuffer.wrap(bytes);
@@ -63,16 +62,11 @@ public final class TbMsg implements Serializable {
         try {
             MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(buffer.array());
             TbMsgMetaData metaData = new TbMsgMetaData();
-            if (proto.getMetaDataCount() > 0) {
-                metaData.setData(proto.getMetaData(0).getDataMap());
-            }
+            metaData.setData(proto.getMetaData().getDataMap());
 
-            EntityId entityId = null;
-            if (proto.getEntityId() != null) {
-                entityId = EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId());
-            }
-
-            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, proto.getData().toByteArray());
+            EntityId entityId = EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId());
+            TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
+            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData().toByteArray());
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }

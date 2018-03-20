@@ -43,13 +43,16 @@ public abstract class EntityActorsManager<T extends EntityId, A extends UntypedA
 
     public void init(ActorContext context) {
         for (M entity : new PageDataIterable<>(getFetchEntitiesFunction(), ContextAwareActor.ENTITY_PACK_LIMIT)) {
-            log.debug("[{}] Creating plugin actor", entity.getId());
+            T entityId = (T) entity.getId();
+            log.debug("[{}|{}] Creating entity actor", entityId.getEntityType(), entityId.getId());
             //TODO: remove this cast making UUIDBased subclass of EntityId an interface and vice versa.
-            getOrCreateActor(context, (T) entity.getId());
-            log.debug("[{}] Plugin actor created.", entity.getId());
+            ActorRef actorRef = getOrCreateActor(context, entityId);
+            visit(entity, actorRef);
+            log.debug("[{}|{}] Entity actor created.", entityId.getEntityType(), entityId.getId());
         }
     }
 
+    protected void visit(M entity, ActorRef actorRef) {}
 
     public ActorRef getOrCreateActor(ActorContext context, T entityId) {
         return actors.computeIfAbsent(entityId, eId ->

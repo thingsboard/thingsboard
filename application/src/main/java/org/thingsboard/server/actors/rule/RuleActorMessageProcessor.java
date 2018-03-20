@@ -68,7 +68,7 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
     }
 
     @Override
-    public void start() throws Exception {
+    public void start(ActorContext context) throws Exception {
         logger.info("[{}][{}] Starting rule actor.", entityId, tenantId);
         ruleMd = systemContext.getRuleService().findRuleById(entityId);
         if (ruleMd == null) {
@@ -86,7 +86,7 @@ class RuleActorMessageProcessor extends ComponentMsgProcessor<RuleId> {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(ActorContext context) throws Exception {
         onStop();
     }
 

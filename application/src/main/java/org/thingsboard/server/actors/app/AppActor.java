@@ -33,9 +33,11 @@ import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
@@ -86,26 +88,47 @@ public class AppActor extends RuleChainManagerActor {
     }
 
     @Override
-    public void onReceive(Object msg) throws Exception {
-        logger.debug("Received message: {}", msg);
-        if (msg instanceof ToDeviceActorMsg) {
-            processDeviceMsg((ToDeviceActorMsg) msg);
-        } else if (msg instanceof ToPluginActorMsg) {
-            onToPluginMsg((ToPluginActorMsg) msg);
-        } else if (msg instanceof ToDeviceActorNotificationMsg) {
-            onToDeviceActorMsg((ToDeviceActorNotificationMsg) msg);
-        } else if (msg instanceof Terminated) {
-            processTermination((Terminated) msg);
-        } else if (msg instanceof ClusterEventMsg) {
-            broadcast(msg);
-        } else if (msg instanceof ComponentLifecycleMsg) {
-            onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
-        } else if (msg instanceof PluginTerminationMsg) {
-            onPluginTerminated((PluginTerminationMsg) msg);
-        } else {
-            logger.warning("Unknown message: {}!", msg);
+    protected void process(TbActorMsg msg) {
+        switch (msg.getMsgType()) {
+            case COMPONENT_LIFE_CYCLE_MSG:
+                onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
+                break;
+            case SERVICE_TO_RULE_ENGINE_MSG:
+                onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+                break;
         }
     }
+
+    private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
+        if (SYSTEM_TENANT.equals(msg.getTenantId())) {
+            //TODO: ashvayka handle this.
+        } else {
+            getOrCreateTenantActor(msg.getTenantId()).tell(msg, self());
+        }
+    }
+
+
+//    @Override
+//    public void onReceive(Object msg) throws Exception {
+//        logger.debug("Received message: {}", msg);
+//        if (msg instanceof ToDeviceActorMsg) {
+//            processDeviceMsg((ToDeviceActorMsg) msg);
+//        } else if (msg instanceof ToPluginActorMsg) {
+//            onToPluginMsg((ToPluginActorMsg) msg);
+//        } else if (msg instanceof ToDeviceActorNotificationMsg) {
+//            onToDeviceActorMsg((ToDeviceActorNotificationMsg) msg);
+//        } else if (msg instanceof Terminated) {
+//            processTermination((Terminated) msg);
+//        } else if (msg instanceof ClusterEventMsg) {
+//            broadcast(msg);
+//        } else if (msg instanceof ComponentLifecycleMsg) {
+//            onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
+//        } else if (msg instanceof PluginTerminationMsg) {
+//            onPluginTerminated((PluginTerminationMsg) msg);
+//        } else {
+//            logger.warning("Unknown message: {}!", msg);
+//        }
+//    }
 
     private void onPluginTerminated(PluginTerminationMsg msg) {
         pluginManager.remove(msg.getId());

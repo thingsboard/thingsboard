@@ -136,6 +136,12 @@ public class ActorSystemContext {
     @Value("${actors.plugin.error_persist_frequency}")
     @Getter private long pluginErrorPersistFrequency;
 
+    @Value("${actors.rule.chain.error_persist_frequency}")
+    @Getter private long ruleChainErrorPersistFrequency;
+
+    @Value("${actors.rule.node.error_persist_frequency}")
+    @Getter private long ruleNodeErrorPersistFrequency;
+
     @Value("${actors.rule.termination.delay}")
     @Getter private long ruleActorTerminationDelay;
 

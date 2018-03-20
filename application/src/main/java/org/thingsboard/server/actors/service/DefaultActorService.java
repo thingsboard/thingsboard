@@ -37,6 +37,7 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -123,6 +124,11 @@ public class DefaultActorService implements ActorService {
         } catch (Exception e) {
             log.error("Failed to terminate actor system.", e);
         }
+    }
+
+    @Override
+    public void onMsg(ServiceToRuleEngineMsg msg) {
+        appActor.tell(msg, ActorRef.noSender());
     }
 
     @Override
