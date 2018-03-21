@@ -17,9 +17,9 @@ export default angular.module('thingsboard.api.ruleChain', [])
     .factory('ruleChainService', RuleChainService).name;
 
 /*@ngInject*/
-function RuleChainService($http, $q, $filter, types) {
+function RuleChainService($http, $q, $filter, types, componentDescriptorService) {
 
-    var ruleNodeTypes = null;
+    var ruleNodeComponents = null;
 
     var service = {
         getSystemRuleChains: getSystemRuleChains,
@@ -30,8 +30,8 @@ function RuleChainService($http, $q, $filter, types) {
         deleteRuleChain: deleteRuleChain,
         getRuleChainMetaData: getRuleChainMetaData,
         saveRuleChainMetaData: saveRuleChainMetaData,
-        getRuleNodeTypes: getRuleNodeTypes,
-        getRuleNodeComponentType: getRuleNodeComponentType,
+        getRuleNodeComponents: getRuleNodeComponents,
+        getRuleNodeComponentByClazz: getRuleNodeComponentByClazz,
         getRuleNodeSupportedLinks: getRuleNodeSupportedLinks,
         resolveTargetRuleChains: resolveTargetRuleChains
     };
@@ -165,21 +165,18 @@ function RuleChainService($http, $q, $filter, types) {
         return deferred.promise;
     }
 
-    function getRuleNodeTypes() {
+    function getRuleNodeComponents() {
         var deferred = $q.defer();
-        if (ruleNodeTypes) {
-            deferred.resolve(ruleNodeTypes);
+        if (ruleNodeComponents) {
+            deferred.resolve(ruleNodeComponents);
         } else {
-            loadRuleNodeTypes().then(
-                (nodeTypes) => {
-                    ruleNodeTypes = nodeTypes;
-                    ruleNodeTypes.push(
-                        {
-                            nodeType: types.ruleNodeType.RULE_CHAIN.value,
-                            type: 'Rule chain'
-                        }
+            loadRuleNodeComponents().then(
+                (components) => {
+                    ruleNodeComponents = components;
+                    ruleNodeComponents.push(
+                        types.ruleChainNodeComponent
                     );
-                    deferred.resolve(ruleNodeTypes);
+                    deferred.resolve(ruleNodeComponents);
                 },
                 () => {
                     deferred.reject();
@@ -189,10 +186,10 @@ function RuleChainService($http, $q, $filter, types) {
         return deferred.promise;
     }
 
-    function getRuleNodeComponentType(type) {
-        var res = $filter('filter')(ruleNodeTypes, {type: type}, true);
+    function getRuleNodeComponentByClazz(clazz) {
+        var res = $filter('filter')(ruleNodeComponents, {clazz: clazz}, true);
         if (res && res.length) {
-            return res[0].nodeType;
+            return res[0];
         }
         return null;
     }
@@ -222,61 +219,8 @@ function RuleChainService($http, $q, $filter, types) {
         return deferred.promise;
     }
 
-    function loadRuleNodeTypes() {
-        var deferred = $q.defer();
-        deferred.resolve(
-            [
-                {
-                    nodeType: types.ruleNodeType.FILTER.value,
-                    type: 'Filter'
-                },
-                {
-                    nodeType: types.ruleNodeType.FILTER.value,
-                    type: 'Switch'
-                },
-                {
-                    nodeType: types.ruleNodeType.ENRICHMENT.value,
-                    type: 'Self'
-                },
-                {
-                    nodeType: types.ruleNodeType.ENRICHMENT.value,
-                    type: 'Tenant/Customer'
-                },
-                {
-                    nodeType: types.ruleNodeType.ENRICHMENT.value,
-                    type: 'Related Entity'
-                },
-                {
-                    nodeType: types.ruleNodeType.ENRICHMENT.value,
-                    type: 'Last Telemetry'
-                },
-                {
-                    nodeType: types.ruleNodeType.TRANSFORMATION.value,
-                    type: 'Modify'
-                },
-                {
-                    nodeType: types.ruleNodeType.TRANSFORMATION.value,
-                    type: 'New/Update'
-                },
-                {
-                    nodeType: types.ruleNodeType.ACTION.value,
-                    type: 'Telemetry'
-                },
-                {
-                    nodeType: types.ruleNodeType.ACTION.value,
-                    type: 'RPC call'
-                },
-                {
-                    nodeType: types.ruleNodeType.ACTION.value,
-                    type: 'Send email'
-                },
-                {
-                    nodeType: types.ruleNodeType.ACTION.value,
-                    type: 'Alarm'
-                }
-            ]
-        );
-        return deferred.promise;
+    function loadRuleNodeComponents() {
+        return componentDescriptorService.getComponentDescriptorsByTypes(types.ruleNodeTypeComponentTypes);
     }
 
 

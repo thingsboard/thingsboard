@@ -457,6 +457,17 @@ export default angular.module('thingsboard.types', [])
                     clientSide: false
                 }
             },
+            ruleNodeTypeComponentTypes: ["FILTER", "ENRICHMENT", "TRANSFORMATION", "ACTION"],
+            ruleChainNodeComponent: {
+                type: 'RULE_CHAIN',
+                name: 'Rule chain',
+                clazz: 'tb.internal.RuleChain'
+            },
+            inputNodeComponent: {
+                type: 'INPUT',
+                name: 'Input',
+                clazz: 'tb.internal.Input'
+            },
             ruleNodeType: {
                 FILTER: {
                     value: "FILTER",

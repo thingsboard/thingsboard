@@ -21,7 +21,7 @@
     <section class="tb-rulechain-container" flex layout="column">
         <div class="tb-rulechain-layout" flex layout="row">
             <div class="tb-rulechain-library">
-                <md-expansion-panel-group class="tb-rulechain-library-panel-group" md-component-id="libraryPanelGroup" auto-expand="true" multiple>
+                <md-expansion-panel-group ng-if="vm.ruleChainLibraryLoaded" class="tb-rulechain-library-panel-group" md-component-id="libraryPanelGroup" auto-expand="true" multiple>
                     <md-expansion-panel md-component-id="{{typeId}}" id="{{typeId}}" ng-repeat="(typeId, typeModel) in vm.ruleNodeTypesModel">
                         <md-expansion-panel-collapsed>
                             <div class="tb-panel-title" translate>{{vm.types.ruleNodeType[typeId].name}}</div>

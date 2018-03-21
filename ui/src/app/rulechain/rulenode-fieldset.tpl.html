@@ -23,9 +23,9 @@
     <fieldset ng-disabled="$root.loading || !isEdit || isReadOnly">
         <md-input-container class="md-block">
             <label translate>rulenode.type</label>
-            <input readonly name="type" ng-model="ruleNode.type">
+            <input readonly name="type" ng-model="ruleNode.component.name">
         </md-input-container>
-        <section ng-if="ruleNode.nodeType != types.ruleNodeType.RULE_CHAIN.value">
+        <section ng-if="ruleNode.component.type != types.ruleNodeType.RULE_CHAIN.value">
             <md-input-container class="md-block">
                 <label translate>rulenode.name</label>
                 <input required name="name" ng-model="ruleNode.name">
@@ -34,11 +34,16 @@
                 </div>
             </md-input-container>
             <md-input-container class="md-block">
+                <md-checkbox ng-disabled="$root.loading || !isEdit" aria-label="{{ 'rulenode.debug-mode' | translate }}"
+                             ng-model="ruleNode.debugMode">{{ 'rulenode.debug-mode' | translate }}
+                </md-checkbox>
+            </md-input-container>
+            <md-input-container class="md-block">
                 <label translate>rulenode.description</label>
                 <textarea ng-model="ruleNode.additionalInfo.description" rows="2"></textarea>
             </md-input-container>
         </section>
-        <section ng-if="ruleNode.nodeType == types.ruleNodeType.RULE_CHAIN.value">
+        <section ng-if="ruleNode.component.type == types.ruleNodeType.RULE_CHAIN.value">
             <tb-entity-autocomplete the-form="theForm"
                                     ng-disabled="$root.loading || !isEdit || isReadOnly"
                                     tb-required="true"

@@ -23,7 +23,7 @@
         <md-icon aria-label="node-type-icon" flex="15"
                  class="material-icons">{{node.icon}}</md-icon>
         <div layout="column" flex="85" layout-align="center">
-            <span class="tb-node-type">{{ node.type }}</span>
+            <span class="tb-node-type">{{ node.component.name }}</span>
             <span class="tb-node-title" ng-if="node.name">{{ node.name }}</span>
         </div>
         <div class="{{flowchartConstants.leftConnectorClass}}">

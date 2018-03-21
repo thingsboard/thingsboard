@@ -204,6 +204,15 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     @Override
+    public List<ComponentDescriptor> getComponents(Set<ComponentType> types) {
+        List<ComponentDescriptor> result = new ArrayList<>();
+        for (ComponentType type : types) {
+            result.addAll(componentsMap.get(type));
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    @Override
     public Optional<ComponentDescriptor> getComponent(String clazz) {
         return Optional.ofNullable(components.get(clazz));
     }

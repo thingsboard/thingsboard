@@ -54,6 +54,7 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
     };
 
     vm.ruleNodeTypesModel = {};
+    vm.ruleChainLibraryLoaded = false;
     for (var type in types.ruleNodeType) {
         if (!types.ruleNodeType[type].special) {
             vm.ruleNodeTypesModel[type] = {
@@ -141,8 +142,8 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
     vm.editCallbacks = {
         edgeDoubleClick: function (event, edge) {
             var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
-            if (sourceNode.nodeType != types.ruleNodeType.INPUT.value) {
-                ruleChainService.getRuleNodeSupportedLinks(sourceNode.type).then(
+            if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
+                ruleChainService.getRuleNodeSupportedLinks(sourceNode.component.clazz).then(
                     (labels) => {
                         vm.isEditingRuleNode = false;
                         vm.editingRuleNode = null;
@@ -156,7 +157,7 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
         },
         nodeCallbacks: {
             'doubleClick': function (event, node) {
-                if (node.nodeType != types.ruleNodeType.INPUT.value) {
+                if (node.component.type != types.ruleNodeType.INPUT.value) {
                     vm.isEditingRuleNodeLink = false;
                     vm.editingRuleNodeLink = null;
                     vm.isEditingRuleNode = true;
@@ -171,9 +172,9 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
         createEdge: function (event, edge) {
             var deferred = $q.defer();
             var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
-            if (sourceNode.nodeType == types.ruleNodeType.INPUT.value) {
+            if (sourceNode.component.type == types.ruleNodeType.INPUT.value) {
                 var destNode = vm.modelservice.nodes.getNodeByConnectorId(edge.destination);
-                if (destNode.nodeType == types.ruleNodeType.RULE_CHAIN.value) {
+                if (destNode.component.type == types.ruleNodeType.RULE_CHAIN.value) {
                     deferred.reject();
                 } else {
                     var res = $filter('filter')(vm.ruleChainModel.edges, {source: vm.inputConnectorId});
@@ -183,7 +184,7 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
                     deferred.resolve(edge);
                 }
             } else {
-                ruleChainService.getRuleNodeSupportedLinks(sourceNode.type).then(
+                ruleChainService.getRuleNodeSupportedLinks(sourceNode.component.clazz).then(
                     (labels) => {
                         addRuleNodeLink(event, edge, labels).then(
                             (link) => {
@@ -209,24 +210,23 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
     loadRuleChainLibrary();
 
     function loadRuleChainLibrary() {
-        ruleChainService.getRuleNodeTypes().then(
-            (ruleNodeTypes) => {
-                for (var i=0;i<ruleNodeTypes.length;i++) {
-                    var ruleNodeType = ruleNodeTypes[i];
-                    var nodeType = ruleNodeType.nodeType;
-                    var model = vm.ruleNodeTypesModel[nodeType].model;
+        ruleChainService.getRuleNodeComponents().then(
+            (ruleNodeComponents) => {
+                for (var i=0;i<ruleNodeComponents.length;i++) {
+                    var ruleNodeComponent = ruleNodeComponents[i];
+                    var componentType = ruleNodeComponent.type;
+                    var model = vm.ruleNodeTypesModel[componentType].model;
                     var node = {
                         id: model.nodes.length,
-                        nodeType: nodeType,
-                        type: ruleNodeType.type,
+                        component: ruleNodeComponent,
                         name: '',
-                        nodeClass: vm.types.ruleNodeType[nodeType].nodeClass,
-                        icon: vm.types.ruleNodeType[nodeType].icon,
+                        nodeClass: vm.types.ruleNodeType[componentType].nodeClass,
+                        icon: vm.types.ruleNodeType[componentType].icon,
                         x: 30,
                         y: 10+50*model.nodes.length,
                         connectors: []
                     };
-                    if (nodeType == types.ruleNodeType.RULE_CHAIN.value) {
+                    if (componentType == types.ruleNodeType.RULE_CHAIN.value) {
                         node.connectors.push(
                             {
                                 type: flowchartConstants.leftConnectorType,
@@ -249,6 +249,7 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
                     }
                     model.nodes.push(node);
                 }
+                vm.ruleChainLibraryLoaded = true;
                 prepareRuleChain();
             }
         );
@@ -273,9 +274,8 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
         vm.ruleChainModel.nodes.push(
             {
                 id: vm.nextNodeID++,
-                type: "Input",
+                component: types.inputNodeComponent,
                 name: "",
-                nodeType: types.ruleNodeType.INPUT.value,
                 nodeClass: types.ruleNodeType.INPUT.nodeClass,
                 icon: types.ruleNodeType.INPUT.icon,
                 readonly: true,
@@ -301,20 +301,20 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
         var nodes = [];
         for (var i=0;i<vm.ruleChainMetaData.nodes.length;i++) {
             var ruleNode = vm.ruleChainMetaData.nodes[i];
-            var nodeType = ruleChainService.getRuleNodeComponentType(ruleNode.type);
-            if (nodeType) {
+            var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
+            if (component) {
                 var node = {
                     id: vm.nextNodeID++,
                     ruleNodeId: ruleNode.id,
                     additionalInfo: ruleNode.additionalInfo,
                     configuration: ruleNode.configuration,
+                    debugMode: ruleNode.debugMode,
                     x: ruleNode.additionalInfo.layoutX,
                     y: ruleNode.additionalInfo.layoutY,
-                    type: ruleNode.type,
+                    component: component,
                     name: ruleNode.name,
-                    nodeType: nodeType,
-                    nodeClass: vm.types.ruleNodeType[nodeType].nodeClass,
-                    icon: vm.types.ruleNodeType[nodeType].icon,
+                    nodeClass: vm.types.ruleNodeType[component.type].nodeClass,
+                    icon: vm.types.ruleNodeType[component.type].icon,
                     connectors: [
                         {
                             type: flowchartConstants.leftConnectorType,
@@ -347,7 +347,7 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
 
         if (vm.ruleChainMetaData.connections) {
             for (i = 0; i < vm.ruleChainMetaData.connections.length; i++) {
-                var connection = vm.ruleChainMetaData.connections[0];
+                var connection = vm.ruleChainMetaData.connections[i];
                 var sourceNode = nodes[connection.fromIndex];
                 destNode = nodes[connection.toIndex];
                 if (sourceNode && destNode) {
@@ -379,9 +379,8 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
                             targetRuleChainId: ruleChainConnection.targetRuleChainId.id,
                             x: ruleChainConnection.additionalInfo.layoutX,
                             y: ruleChainConnection.additionalInfo.layoutY,
-                            type: 'Rule chain',
+                            component: types.ruleChainNodeComponent,
                             name: ruleChain.name,
-                            nodeType: vm.types.ruleNodeType.RULE_CHAIN.value,
                             nodeClass: vm.types.ruleNodeType.RULE_CHAIN.nodeClass,
                             icon: vm.types.ruleNodeType.RULE_CHAIN.icon,
                             connectors: [
@@ -410,7 +409,9 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
             }
         }
 
-        vm.canvasControl.adjustCanvasSize();
+        if (vm.canvasControl.adjustCanvasSize) {
+            vm.canvasControl.adjustCanvasSize();
+        }
 
         vm.isDirty = false;
 
@@ -437,15 +438,16 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
 
         for (var i=0;i<vm.ruleChainModel.nodes.length;i++) {
             var node = vm.ruleChainModel.nodes[i];
-            if (node.nodeType != types.ruleNodeType.INPUT.value && node.nodeType != types.ruleNodeType.RULE_CHAIN.value) {
+            if (node.component.type != types.ruleNodeType.INPUT.value && node.component.type != types.ruleNodeType.RULE_CHAIN.value) {
                 var ruleNode = {};
                 if (node.ruleNodeId) {
                     ruleNode.id = node.ruleNodeId;
                 }
-                ruleNode.type = node.type;
+                ruleNode.type = node.component.clazz;
                 ruleNode.name = node.name;
                 ruleNode.configuration = node.configuration;
                 ruleNode.additionalInfo = node.additionalInfo;
+                ruleNode.debugMode = node.debugMode;
                 if (!ruleNode.additionalInfo) {
                     ruleNode.additionalInfo = {};
                 }
@@ -465,9 +467,9 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
             var edge = vm.ruleChainModel.edges[i];
             var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
             var destNode = vm.modelservice.nodes.getNodeByConnectorId(edge.destination);
-            if (sourceNode.nodeType != types.ruleNodeType.INPUT.value) {
+            if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
                 var fromIndex = nodes.indexOf(sourceNode);
-                if (destNode.nodeType == types.ruleNodeType.RULE_CHAIN.value) {
+                if (destNode.component.type == types.ruleNodeType.RULE_CHAIN.value) {
                     var ruleChainConnection = {
                         fromIndex: fromIndex,
                         targetRuleChainId: {entityType: vm.types.entityType.rulechain, id: destNode.targetRuleChainId},
@@ -522,7 +524,7 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
                     type: flowchartConstants.leftConnectorType
                 }
             );
-            if (ruleNode.nodeType != types.ruleNodeType.RULE_CHAIN.value) {
+            if (ruleNode.component.type != types.ruleNodeType.RULE_CHAIN.value) {
                 ruleNode.connectors.push(
                     {
                         id: vm.nextConnectorID++,

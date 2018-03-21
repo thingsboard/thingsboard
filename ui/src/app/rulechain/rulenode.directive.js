@@ -33,7 +33,7 @@ export default function RuleNodeDirective($compile, $templateCache, ruleChainSer
         };
 
         scope.$watch('ruleNode', function() {
-            if (scope.ruleNode && scope.ruleNode.nodeType == types.ruleNodeType.RULE_CHAIN.value) {
+            if (scope.ruleNode && scope.ruleNode.component.type == types.ruleNodeType.RULE_CHAIN.value) {
                 scope.params.targetRuleChainId = scope.ruleNode.targetRuleChainId;
                 watchTargetRuleChain();
             } else {

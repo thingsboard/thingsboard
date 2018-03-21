@@ -42,6 +42,11 @@
             </div>
         </md-input-container>
         <md-input-container class="md-block">
+            <md-checkbox ng-disabled="$root.loading || !isEdit" aria-label="{{ 'rulechain.debug-mode' | translate }}"
+                         ng-model="ruleChain.debugMode">{{ 'rulechain.debug-mode' | translate }}
+            </md-checkbox>
+        </md-input-container>
+        <md-input-container class="md-block">
             <label translate>rulechain.description</label>
             <textarea ng-model="ruleChain.additionalInfo.description" rows="2"></textarea>
         </md-input-container>

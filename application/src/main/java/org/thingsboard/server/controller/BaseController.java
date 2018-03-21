@@ -71,6 +71,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -475,6 +476,15 @@ public abstract class BaseController {
         try {
             log.debug("[{}] Lookup component descriptors", type);
             return componentDescriptorService.getComponents(type);
+        } catch (Exception e) {
+            throw handleException(e, false);
+        }
+    }
+
+    List<ComponentDescriptor> checkComponentDescriptorsByTypes(Set<ComponentType> types) throws ThingsboardException {
+        try {
+            log.debug("[{}] Lookup component descriptors", types);
+            return componentDescriptorService.getComponents(types);
         } catch (Exception e) {
             throw handleException(e, false);
         }

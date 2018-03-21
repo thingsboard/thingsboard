@@ -1167,7 +1167,8 @@ export default angular.module('thingsboard.locale', [])
                     "select-rulechain": "Select rule chain",
                     "no-rulechains-matching": "No rule chains matching '{{entity}}' were found.",
                     "rulechain-required": "Rule chain is required",
-                    "management": "Rules management"
+                    "management": "Rules management",
+                    "debug-mode": "Debug mode"
                 },
                 "rulenode": {
                     "add": "Add rule node",
@@ -1177,6 +1178,7 @@ export default angular.module('thingsboard.locale', [])
                     "description": "Description",
                     "delete": "Delete rule node",
                     "rulenode-details": "Rule node details",
+                    "debug-mode": "Debug mode",
                     "link-details": "Rule node link details",
                     "add-link": "Add link",
                     "link-label": "Link label",
