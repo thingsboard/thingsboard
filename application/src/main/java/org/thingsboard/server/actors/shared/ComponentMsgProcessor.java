@@ -20,12 +20,14 @@ import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 
 public abstract class ComponentMsgProcessor<T> extends AbstractContextAwareMsgProcessor {
 
     protected final TenantId tenantId;
     protected final T entityId;
+    protected ComponentLifecycleState state;
 
     protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
         super(systemContext, logger);
@@ -33,23 +35,44 @@ public abstract class ComponentMsgProcessor<T> extends AbstractContextAwareMsgPr
         this.entityId = id;
     }
 
-    public abstract void start() throws Exception;
+    public abstract void start(ActorContext context) throws Exception;
 
-    public abstract void stop() throws Exception;
-
-    public abstract void onCreated(ActorContext context) throws Exception;
-
-    public abstract void onUpdate(ActorContext context) throws Exception;
-
-    public abstract void onActivate(ActorContext context) throws Exception;
-
-    public abstract void onSuspend(ActorContext context) throws Exception;
-
-    public abstract void onStop(ActorContext context) throws Exception;
+    public abstract void stop(ActorContext context) throws Exception;
 
     public abstract void onClusterEventMsg(ClusterEventMsg msg) throws Exception;
 
+    public void onCreated(ActorContext context) throws Exception {
+        start(context);
+    }
+
+    public void onUpdate(ActorContext context) throws Exception {
+        restart(context);
+    }
+
+    public void onActivate(ActorContext context) throws Exception {
+        restart(context);
+    }
+
+    public void onSuspend(ActorContext context) throws Exception {
+        stop(context);
+    }
+
+    public void onStop(ActorContext context) throws Exception {
+        stop(context);
+    }
+
+    private void restart(ActorContext context) throws Exception {
+        stop(context);
+        start(context);
+    }
+
     public void scheduleStatsPersistTick(ActorContext context, long statsPersistFrequency) {
         schedulePeriodicMsgWithDelay(context, new StatsPersistTick(), statsPersistFrequency, statsPersistFrequency);
+    }
+
+    protected void checkActive() {
+        if (state != ComponentLifecycleState.ACTIVE) {
+            throw new IllegalStateException("Rule chain is not active!");
+        }
     }
 }

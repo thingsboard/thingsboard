@@ -141,8 +141,7 @@ public class TbJsFilterNodeTest {
         TbJsFilterNodeConfiguration config = new TbJsFilterNodeConfiguration();
         config.setJsScript(script);
         ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
-        nodeConfiguration.setData(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbJsFilterNode();
         node.init(nodeConfiguration, null);

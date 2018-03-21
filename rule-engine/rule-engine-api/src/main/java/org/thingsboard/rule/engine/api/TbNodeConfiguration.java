@@ -22,8 +22,8 @@ import lombok.Data;
  * Created by ashvayka on 19.01.18.
  */
 @Data
-public class TbNodeConfiguration {
+public final class TbNodeConfiguration {
 
-    private JsonNode data;
+    private final JsonNode data;
 
 }

@@ -17,6 +17,7 @@ package org.thingsboard.server.common.msg;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -30,18 +31,23 @@ import java.util.UUID;
  * Created by ashvayka on 13.01.18.
  */
 @Data
-public final class TbMsg implements Serializable, Cloneable {
+@AllArgsConstructor
+public final class TbMsg implements Serializable {
 
     private final UUID id;
     private final String type;
     private final EntityId originator;
     private final TbMsgMetaData metaData;
-
+    private final TbMsgDataType dataType;
     private final byte[] data;
 
-    @Override
-    public TbMsg clone() {
-        return fromBytes(toBytes(this));
+    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, byte[] data) {
+        this.id = id;
+        this.type = type;
+        this.originator = originator;
+        this.metaData = metaData;
+        this.dataType = TbMsgDataType.JSON;
+        this.data = data;
     }
 
     public static ByteBuffer toBytes(TbMsg msg) {
@@ -54,11 +60,10 @@ public final class TbMsg implements Serializable, Cloneable {
         }
 
         if (msg.getMetaData() != null) {
-            MsgProtos.TbMsgProto.TbMsgMetaDataProto.Builder metadataBuilder = MsgProtos.TbMsgProto.TbMsgMetaDataProto.newBuilder();
-            metadataBuilder.putAllData(msg.getMetaData().getData());
-            builder.addMetaData(metadataBuilder.build());
+            builder.setMetaData(MsgProtos.TbMsgMetaDataProto.newBuilder().putAllData(msg.getMetaData().getData()).build());
         }
 
+        builder.setDataType(msg.getDataType().ordinal());
         builder.setData(ByteString.copyFrom(msg.getData()));
         byte[] bytes = builder.build().toByteArray();
         return ByteBuffer.wrap(bytes);
@@ -67,20 +72,19 @@ public final class TbMsg implements Serializable, Cloneable {
     public static TbMsg fromBytes(ByteBuffer buffer) {
         try {
             MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(buffer.array());
-            TbMsgMetaData metaData = new TbMsgMetaData();
-            if (proto.getMetaDataCount() > 0) {
-                metaData.setData(proto.getMetaData(0).getDataMap());
-            }
-
-            EntityId entityId = null;
-            if (proto.getEntityId() != null) {
-                entityId = EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId());
-            }
-
-            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, proto.getData().toByteArray());
+            TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
+            EntityId entityId = EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId());
+            TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
+            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData().toByteArray());
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
     }
 
+    public TbMsg copy() {
+        int dataSize = data.length;
+        byte[] dataCopy = new byte[dataSize];
+        System.arraycopy( data, 0, dataCopy, 0, data.length );
+        return new TbMsg(id, type, originator, metaData.copy(), dataType, dataCopy);
+    }
 }

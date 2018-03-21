@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -67,67 +66,7 @@ public class BaseRuleService extends AbstractEntityService implements RuleServic
 
     @Override
     public RuleMetaData saveRule(RuleMetaData rule) {
-        ruleValidator.validate(rule);
-        if (rule.getTenantId() == null) {
-            log.trace("Save system rule metadata with predefined id {}", systemTenantId);
-            rule.setTenantId(systemTenantId);
-        }
-        if (rule.getId() != null) {
-            RuleMetaData oldVersion = ruleDao.findById(rule.getId());
-            if (rule.getState() == null) {
-                rule.setState(oldVersion.getState());
-            } else if (rule.getState() != oldVersion.getState()) {
-                throw new IncorrectParameterException("Use Activate/Suspend method to control state of the rule!");
-            }
-        } else {
-            if (rule.getState() == null) {
-                rule.setState(ComponentLifecycleState.SUSPENDED);
-            } else if (rule.getState() != ComponentLifecycleState.SUSPENDED) {
-                throw new IncorrectParameterException("Use Activate/Suspend method to control state of the rule!");
-            }
-        }
-
-        validateFilters(rule.getFilters());
-        if (rule.getProcessor() != null && !rule.getProcessor().isNull()) {
-            validateComponentJson(rule.getProcessor(), ComponentType.PROCESSOR);
-        }
-        if (rule.getAction() != null && !rule.getAction().isNull()) {
-            validateComponentJson(rule.getAction(), ComponentType.ACTION);
-        }
-        validateRuleAndPluginState(rule);
-        return ruleDao.save(rule);
-    }
-
-    private void validateFilters(JsonNode filtersJson) {
-        if (filtersJson == null || filtersJson.isNull()) {
-            throw new IncorrectParameterException("Rule filters are required!");
-        }
-        if (!filtersJson.isArray()) {
-            throw new IncorrectParameterException("Filters json is not an array!");
-        }
-        ArrayNode filtersArray = (ArrayNode) filtersJson;
-        for (int i = 0; i < filtersArray.size(); i++) {
-            validateComponentJson(filtersArray.get(i), ComponentType.FILTER);
-        }
-    }
-
-    private void validateComponentJson(JsonNode json, ComponentType type) {
-        if (json == null || json.isNull()) {
-            throw new IncorrectParameterException(type.name() + " is required!");
-        }
-        String clazz = getIfValid(type.name(), json, "clazz", JsonNode::isTextual, JsonNode::asText);
-        String name = getIfValid(type.name(), json, "name", JsonNode::isTextual, JsonNode::asText);
-        JsonNode configuration = getIfValid(type.name(), json, "configuration", JsonNode::isObject, node -> node);
-        ComponentDescriptor descriptor = componentDescriptorService.findByClazz(clazz);
-        if (descriptor == null) {
-            throw new IncorrectParameterException(type.name() + " clazz " + clazz + " is not a valid component!");
-        }
-        if (descriptor.getType() != type) {
-            throw new IncorrectParameterException("Clazz " + clazz + " is not a valid " + type.name() + " component!");
-        }
-        if (!componentDescriptorService.validate(descriptor, configuration)) {
-            throw new IncorrectParameterException(type.name() + " configuration is not valid!");
-        }
+        throw new RuntimeException("Not supported since v1.5!");
     }
 
     private void validateRuleAndPluginState(RuleMetaData rule) {

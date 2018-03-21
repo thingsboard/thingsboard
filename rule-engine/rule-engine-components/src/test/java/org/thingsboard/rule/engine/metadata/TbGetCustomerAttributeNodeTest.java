@@ -85,8 +85,7 @@ public class TbGetCustomerAttributeNodeTest {
         config.setAttrMapping(attrMapping);
         config.setTelemetry(false);
         ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
-        nodeConfiguration.setData(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();
         node.init(nodeConfiguration, null);
@@ -224,8 +223,7 @@ public class TbGetCustomerAttributeNodeTest {
         config.setAttrMapping(attrMapping);
         config.setTelemetry(true);
         ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
-        nodeConfiguration.setData(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();
         node.init(nodeConfiguration, null);

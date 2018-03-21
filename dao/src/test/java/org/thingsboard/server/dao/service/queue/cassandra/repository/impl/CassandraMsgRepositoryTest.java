@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
@@ -44,7 +45,7 @@ public class CassandraMsgRepositoryTest extends AbstractServiceTest {
 
     @Test
     public void msgCanBeSavedAndRead() throws ExecutionException, InterruptedException {
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, new byte[4]);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, TbMsgDataType.JSON, new byte[4]);
         UUID nodeId = UUIDs.timeBased();
         ListenableFuture<Void> future = msgRepository.save(msg, nodeId, 1L, 1L, 1L);
         future.get();
@@ -54,7 +55,7 @@ public class CassandraMsgRepositoryTest extends AbstractServiceTest {
 
     @Test
     public void expiredMsgsAreNotReturned() throws ExecutionException, InterruptedException {
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, new byte[4]);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, TbMsgDataType.JSON, new byte[4]);
         UUID nodeId = UUIDs.timeBased();
         ListenableFuture<Void> future = msgRepository.save(msg, nodeId, 2L, 2L, 2L);
         future.get();
@@ -67,7 +68,7 @@ public class CassandraMsgRepositoryTest extends AbstractServiceTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("key", "value");
         String dataStr = "someContent";
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), metaData, dataStr.getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), metaData, TbMsgDataType.JSON, dataStr.getBytes());
         UUID nodeId = UUIDs.timeBased();
         ListenableFuture<Void> future = msgRepository.save(msg, nodeId, 1L, 1L, 1L);
         future.get();

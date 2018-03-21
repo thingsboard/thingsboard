@@ -35,8 +35,6 @@ public class EntitiesTenantIdAsyncLoader {
                 return getTenantAsync(ctx.getCustomerService().findCustomerByIdAsync((CustomerId) original));
             case USER:
                 return getTenantAsync(ctx.getUserService().findUserByIdAsync((UserId) original));
-            case RULE:
-                return getTenantAsync(ctx.getRuleService().findRuleByIdAsync((RuleId) original));
             case PLUGIN:
                 return getTenantAsync(ctx.getPluginService().findPluginByIdAsync((PluginId) original));
             case ASSET:

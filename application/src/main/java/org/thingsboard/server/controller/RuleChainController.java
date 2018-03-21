@@ -78,6 +78,9 @@ public class RuleChainController extends BaseController {
             ruleChain.setTenantId(getCurrentUser().getTenantId());
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
+            actorService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
+                    created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+
             logEntityAction(savedRuleChain.getId(), savedRuleChain,
                     null,
                     created ? ActionType.ADDED : ActionType.UPDATED, null);
@@ -99,6 +102,8 @@ public class RuleChainController extends BaseController {
         try {
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId());
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.saveRuleChainMetaData(ruleChainMetaData));
+
+            actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(ruleChain.getId(), ruleChain,
                     null,
@@ -182,6 +187,8 @@ public class RuleChainController extends BaseController {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId);
             ruleChainService.deleteRuleChainById(ruleChainId);
+
+            actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
 
             logEntityAction(ruleChainId, ruleChain,
                     null,

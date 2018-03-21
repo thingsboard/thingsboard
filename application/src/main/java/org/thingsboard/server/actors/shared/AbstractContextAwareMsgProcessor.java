@@ -102,9 +102,6 @@ public abstract class AbstractContextAwareMsgProcessor {
             case FILTER:
                 configurationClazz = ((Filter) componentClazz.getAnnotation(Filter.class)).configuration();
                 break;
-            case PROCESSOR:
-                configurationClazz = ((Processor) componentClazz.getAnnotation(Processor.class)).configuration();
-                break;
             case ACTION:
                 configurationClazz = ((Action) componentClazz.getAnnotation(Action.class)).configuration();
                 break;

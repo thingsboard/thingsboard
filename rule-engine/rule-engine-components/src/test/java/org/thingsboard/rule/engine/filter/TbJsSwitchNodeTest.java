@@ -138,8 +138,7 @@ public class TbJsSwitchNodeTest {
         config.setAllowedRelations(relations);
         config.setRouteToAllWithNoCheck(routeToAll);
         ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
-        nodeConfiguration.setData(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbJsSwitchNode();
         node.init(nodeConfiguration, null);

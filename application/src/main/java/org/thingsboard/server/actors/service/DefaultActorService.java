@@ -30,16 +30,14 @@ import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
 import org.thingsboard.server.actors.rpc.RpcSessionTellMsg;
 import org.thingsboard.server.actors.session.SessionManagerActor;
 import org.thingsboard.server.actors.stats.StatsActor;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.PluginId;
-import org.thingsboard.server.common.data.id.RuleId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -129,6 +127,11 @@ public class DefaultActorService implements ActorService {
     }
 
     @Override
+    public void onMsg(ServiceToRuleEngineMsg msg) {
+        appActor.tell(msg, ActorRef.noSender());
+    }
+
+    @Override
     public void process(SessionAwareMsg msg) {
         log.debug("Processing session aware msg: {}", msg);
         sessionManagerActor.tell(msg, ActorRef.noSender());
@@ -212,15 +215,9 @@ public class DefaultActorService implements ActorService {
     }
 
     @Override
-    public void onPluginStateChange(TenantId tenantId, PluginId pluginId, ComponentLifecycleEvent state) {
-        log.trace("[{}] Processing onPluginStateChange event: {}", pluginId, state);
-        broadcast(ComponentLifecycleMsg.forPlugin(tenantId, pluginId, state));
-    }
-
-    @Override
-    public void onRuleStateChange(TenantId tenantId, RuleId ruleId, ComponentLifecycleEvent state) {
-        log.trace("[{}] Processing onRuleStateChange event: {}", ruleId, state);
-        broadcast(ComponentLifecycleMsg.forRule(tenantId, ruleId, state));
+    public void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state) {
+        log.trace("[{}] Processing {} state change event: {}", tenantId, entityId.getEntityType(), state);
+        broadcast(new ComponentLifecycleMsg(tenantId, entityId, state));
     }
 
     @Override

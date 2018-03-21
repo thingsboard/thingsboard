@@ -42,6 +42,8 @@ public interface RuleChainService {
 
     RuleChain findRuleChainById(RuleChainId ruleChainId);
 
+    RuleNode findRuleNodeById(RuleNodeId ruleNodeId);
+
     ListenableFuture<RuleChain> findRuleChainByIdAsync(RuleChainId ruleChainId);
 
     RuleChain getRootTenantRuleChain(TenantId tenantId);

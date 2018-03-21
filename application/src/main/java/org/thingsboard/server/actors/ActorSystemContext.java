@@ -28,12 +28,16 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Base64Utils;
+import org.thingsboard.rule.engine.api.ListeningExecutor;
+import org.thingsboard.rule.engine.js.JsExecutorService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
@@ -50,6 +54,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
@@ -57,6 +62,7 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Component
@@ -65,101 +71,154 @@ public class ActorSystemContext {
 
     protected final ObjectMapper mapper = new ObjectMapper();
 
-    @Getter @Setter private ActorService actorService;
+    @Getter
+    @Setter
+    private ActorService actorService;
 
     @Autowired
-    @Getter private DiscoveryService discoveryService;
+    @Getter
+    private DiscoveryService discoveryService;
 
     @Autowired
-    @Getter @Setter private ComponentDiscoveryService componentService;
+    @Getter
+    @Setter
+    private ComponentDiscoveryService componentService;
 
     @Autowired
-    @Getter private ClusterRoutingService routingService;
+    @Getter
+    private ClusterRoutingService routingService;
 
     @Autowired
-    @Getter private ClusterRpcService rpcService;
+    @Getter
+    private ClusterRpcService rpcService;
 
     @Autowired
-    @Getter private DeviceAuthService deviceAuthService;
+    @Getter
+    private DeviceAuthService deviceAuthService;
 
     @Autowired
-    @Getter private DeviceService deviceService;
+    @Getter
+    private DeviceService deviceService;
 
     @Autowired
-    @Getter private AssetService assetService;
+    @Getter
+    private AssetService assetService;
 
     @Autowired
-    @Getter private TenantService tenantService;
+    @Getter
+    private TenantService tenantService;
 
     @Autowired
-    @Getter private CustomerService customerService;
+    @Getter
+    private CustomerService customerService;
 
     @Autowired
-    @Getter private RuleService ruleService;
+    @Getter
+    private UserService userService;
 
     @Autowired
-    @Getter private RuleChainService ruleChainService;
+    @Getter
+    private RuleService ruleService;
 
     @Autowired
-    @Getter private PluginService pluginService;
+    @Getter
+    private RuleChainService ruleChainService;
 
     @Autowired
-    @Getter private TimeseriesService tsService;
+    @Getter
+    private PluginService pluginService;
 
     @Autowired
-    @Getter private AttributesService attributesService;
+    @Getter
+    private TimeseriesService tsService;
 
     @Autowired
-    @Getter private EventService eventService;
+    @Getter
+    private AttributesService attributesService;
 
     @Autowired
-    @Getter private AlarmService alarmService;
+    @Getter
+    private EventService eventService;
 
     @Autowired
-    @Getter private RelationService relationService;
+    @Getter
+    private AlarmService alarmService;
 
     @Autowired
-    @Getter private AuditLogService auditLogService;
+    @Getter
+    private RelationService relationService;
 
     @Autowired
-    @Getter @Setter private PluginWebSocketMsgEndpoint wsMsgEndpoint;
+    @Getter
+    private AuditLogService auditLogService;
+
+    @Autowired
+    @Getter
+    @Setter
+    private PluginWebSocketMsgEndpoint wsMsgEndpoint;
 
     @Value("${actors.session.sync.timeout}")
-    @Getter private long syncSessionTimeout;
+    @Getter
+    private long syncSessionTimeout;
 
     @Value("${actors.plugin.termination.delay}")
-    @Getter private long pluginActorTerminationDelay;
+    @Getter
+    private long pluginActorTerminationDelay;
 
     @Value("${actors.plugin.processing.timeout}")
-    @Getter private long pluginProcessingTimeout;
+    @Getter
+    private long pluginProcessingTimeout;
 
     @Value("${actors.plugin.error_persist_frequency}")
-    @Getter private long pluginErrorPersistFrequency;
+    @Getter
+    private long pluginErrorPersistFrequency;
+
+    @Value("${actors.rule.chain.error_persist_frequency}")
+    @Getter
+    private long ruleChainErrorPersistFrequency;
+
+    @Value("${actors.rule.node.error_persist_frequency}")
+    @Getter
+    private long ruleNodeErrorPersistFrequency;
 
     @Value("${actors.rule.termination.delay}")
-    @Getter private long ruleActorTerminationDelay;
+    @Getter
+    private long ruleActorTerminationDelay;
 
     @Value("${actors.rule.error_persist_frequency}")
-    @Getter private long ruleErrorPersistFrequency;
+    @Getter
+    private long ruleErrorPersistFrequency;
 
     @Value("${actors.statistics.enabled}")
-    @Getter private boolean statisticsEnabled;
+    @Getter
+    private boolean statisticsEnabled;
 
     @Value("${actors.statistics.persist_frequency}")
-    @Getter private long statisticsPersistFrequency;
+    @Getter
+    private long statisticsPersistFrequency;
 
     @Value("${actors.tenant.create_components_on_init}")
-    @Getter private boolean tenantComponentsInitEnabled;
+    @Getter
+    private boolean tenantComponentsInitEnabled;
 
-    @Getter @Setter private ActorSystem actorSystem;
+    @Getter
+    @Setter
+    private ActorSystem actorSystem;
 
-    @Getter @Setter private ActorRef appActor;
+    @Getter
+    @Setter
+    private ActorRef appActor;
 
-    @Getter @Setter private ActorRef sessionManagerActor;
+    @Getter
+    @Setter
+    private ActorRef sessionManagerActor;
 
-    @Getter @Setter private ActorRef statsActor;
+    @Getter
+    @Setter
+    private ActorRef statsActor;
 
-    @Getter private final Config config;
+    @Getter
+    private final Config config;
 
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());
@@ -191,7 +250,7 @@ public class ActorSystemContext {
         eventService.save(event);
     }
 
-    private String toString(Exception e) {
+    private String toString(Throwable e) {
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
         return sw.toString();
@@ -211,4 +270,69 @@ public class ActorSystemContext {
     private JsonNode toBodyJson(ServerAddress server, String method, String body) {
         return mapper.createObjectNode().put("server", server.toString()).put("method", method).put("error", body);
     }
+
+    public String getServerAddress() {
+        return discoveryService.getCurrentServer().getServerAddress().toString();
+    }
+
+    public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
+        persistDebug(tenantId, entityId, "IN", tbMsg, null);
+    }
+
+    public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, Throwable error) {
+        persistDebug(tenantId, entityId, "IN", tbMsg, error);
+    }
+
+    public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, Throwable error) {
+        persistDebug(tenantId, entityId, "OUT", tbMsg, error);
+    }
+
+    public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
+        persistDebug(tenantId, entityId, "OUT", tbMsg, null);
+    }
+
+    private void persistDebug(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, Throwable error) {
+        Event event = new Event();
+        event.setTenantId(tenantId);
+        event.setEntityId(entityId);
+        event.setType(DataConstants.DEBUG);
+
+        ObjectNode node = mapper.createObjectNode()
+                .put("type", type)
+                .put("server", getServerAddress())
+                .put("entityId", tbMsg.getOriginator().getId().toString())
+                .put("entityName", tbMsg.getOriginator().getEntityType().name())
+                .put("msgId", tbMsg.getId().toString())
+                .put("msgType", tbMsg.getType())
+                .put("dataType", tbMsg.getDataType().name());
+
+        ObjectNode mdNode = node.putObject("metadata");
+        tbMsg.getMetaData().getData().forEach(mdNode::put);
+
+        switch (tbMsg.getDataType()) {
+            case BINARY:
+                node.put("data", Base64Utils.encodeUrlSafe(tbMsg.getData()));
+                break;
+            default:
+                node.put("data", new String(tbMsg.getData(), StandardCharsets.UTF_8));
+                break;
+        }
+
+        if (error != null) {
+            node = node.put("error", toString(error));
+        }
+
+        event.setBody(node);
+        eventService.save(event);
+    }
+
+    public static Exception toException(Throwable error) {
+        return Exception.class.isInstance(error) ? (Exception) error : new Exception(error);
+    }
+
+    public ListeningExecutor getExecutor() {
+        //TODO: take thread count from yml.
+        return new JsExecutorService(1);
+    }
+
 }

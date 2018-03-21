@@ -16,9 +16,13 @@
 package org.thingsboard.server.actors.service;
 
 import akka.actor.UntypedActor;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
 public abstract class ContextAwareActor extends UntypedActor {
+    protected final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
 
     public static final int ENTITY_PACK_LIMIT = 1024;
 
@@ -28,4 +32,20 @@ public abstract class ContextAwareActor extends UntypedActor {
         super();
         this.systemContext = systemContext;
     }
+
+    @Override
+    public void onReceive(Object msg) throws Exception {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Processing msg: {}", msg);
+        }
+        if (msg instanceof TbActorMsg) {
+            if(!process((TbActorMsg) msg)){
+                logger.warning("Unknown message: {}!", msg);
+            }
+        } else {
+            logger.warning("Unknown message: {}!", msg);
+        }
+    }
+
+    protected abstract boolean process(TbActorMsg msg);
 }

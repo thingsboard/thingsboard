@@ -23,6 +23,7 @@ import io.grpc.stub.StreamObserver;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.gen.cluster.ClusterRpcServiceGrpc;
@@ -45,6 +46,12 @@ public class RpcSessionActor extends ContextAwareActor {
     public RpcSessionActor(ActorSystemContext systemContext, UUID sessionId) {
         super(systemContext);
         this.sessionId = sessionId;
+    }
+
+    @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg
+        return false;
     }
 
     @Override

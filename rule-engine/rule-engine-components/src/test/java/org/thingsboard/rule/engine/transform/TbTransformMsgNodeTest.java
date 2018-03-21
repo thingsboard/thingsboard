@@ -111,8 +111,7 @@ public class TbTransformMsgNodeTest {
         TbTransformMsgNodeConfiguration config = new TbTransformMsgNodeConfiguration();
         config.setJsScript(script);
         ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
-        nodeConfiguration.setData(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbTransformMsgNode();
         node.init(nodeConfiguration, null);

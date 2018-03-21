@@ -58,18 +58,4 @@ public class RuleChainMetaData {
         ruleChainConnections.add(connectionInfo);
     }
 
-    @Data
-    public class NodeConnectionInfo {
-        private int fromIndex;
-        private int toIndex;
-        private String type;
-    }
-
-    @Data
-    public class RuleChainConnectionInfo {
-        private int fromIndex;
-        private RuleChainId targetRuleChainId;
-        private String type;
-    }
-
 }

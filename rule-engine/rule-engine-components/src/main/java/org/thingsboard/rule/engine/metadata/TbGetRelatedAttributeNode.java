@@ -21,9 +21,12 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbNodeState;
+import org.thingsboard.rule.engine.api.EnrichmentNode;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
+
 import org.thingsboard.server.common.data.id.EntityId;
 
+@EnrichmentNode(name="Get Related Entity Attributes Node")
 public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
 
     private TbGetRelatedAttrNodeConfiguration config;

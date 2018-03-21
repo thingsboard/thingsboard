@@ -29,12 +29,12 @@ public class SystemPluginManager extends PluginManager {
     }
 
     @Override
-    FetchFunction<PluginMetaData> getFetchPluginsFunction() {
+    protected FetchFunction<PluginMetaData> getFetchEntitiesFunction() {
         return pluginService::findSystemPlugins;
     }
 
     @Override
-    TenantId getTenantId() {
+    protected TenantId getTenantId() {
         return BasePluginService.SYSTEM_TENANT;
     }
 

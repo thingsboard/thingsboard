@@ -51,7 +51,7 @@ public interface TbContext {
 
     void spawn(TbMsg msg);
 
-    void ack(UUID msg);
+    void ack(TbMsg msg);
 
     void tellError(TbMsg msg, Throwable th);
 
@@ -60,8 +60,6 @@ public interface TbContext {
     CustomerService getCustomerService();
 
     UserService getUserService();
-
-    RuleService getRuleService();
 
     PluginService getPluginService();
 

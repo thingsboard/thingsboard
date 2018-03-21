@@ -17,12 +17,14 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EnrichmentNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Slf4j
+@EnrichmentNode(name="Get Tenant Attributes Node")
 public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 
     @Override

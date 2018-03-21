@@ -116,8 +116,7 @@ public class TbChangeOriginatorNodeTest {
         config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
         config.setStartNewChain(startNewChain);
         ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration();
-        nodeConfiguration.setData(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbChangeOriginatorNode();
         node.init(nodeConfiguration, null);

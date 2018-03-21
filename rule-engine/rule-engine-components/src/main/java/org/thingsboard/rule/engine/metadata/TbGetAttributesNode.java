@@ -21,9 +21,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TbNodeState;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.EnrichmentNode;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -36,6 +40,7 @@ import static org.thingsboard.server.common.data.DataConstants.*;
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
+@EnrichmentNode(name = "Get Attributes Node")
 public class TbGetAttributesNode implements TbNode {
 
     private TbGetAttributesNodeConfiguration config;
@@ -61,21 +66,22 @@ public class TbGetAttributesNode implements TbNode {
         }
     }
 
-    private ListenableFuture<Void> putAttr(TbMsg msg, List<KvEntry> attributes, String prefix) {
-        attributes.forEach(r -> msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString()));
-        return Futures.immediateFuture(null);
-    }
-
-    private ListenableFuture<Void> putAttrAsync(TbContext ctx, TbMsg msg, String scope, List<String> attributes, String prefix) {
-        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(msg.getOriginator(), scope, attributes);
+    private ListenableFuture<Void> putAttrAsync(TbContext ctx, TbMsg msg, String scope, List<String> keys, String prefix) {
+        if (keys == null) {
+            return Futures.immediateFuture(null);
+        }
+        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(msg.getOriginator(), scope, keys);
         return Futures.transform(latest, (Function<? super List<AttributeKvEntry>, Void>) l -> {
             l.forEach(r -> msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString()));
             return null;
         });
     }
 
-    private ListenableFuture<Void> getLatestTelemetry(TbContext ctx, TbMsg msg, List<String> attributes) {
-        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(msg.getOriginator(), attributes);
+    private ListenableFuture<Void> getLatestTelemetry(TbContext ctx, TbMsg msg, List<String> keys) {
+        if (keys == null) {
+            return Futures.immediateFuture(null);
+        }
+        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(msg.getOriginator(), keys);
         return Futures.transform(latest, (Function<? super List<TsKvEntry>, Void>) l -> {
             l.forEach(r -> msg.getMetaData().putValue(r.getKey(), r.getValueAsString()));
             return null;
