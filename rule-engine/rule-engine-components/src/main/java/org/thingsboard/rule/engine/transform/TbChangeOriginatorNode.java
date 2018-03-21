@@ -22,10 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbNodeState;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
@@ -35,6 +32,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.HashSet;
 
 @Slf4j
+@EnrichmentNode(name = "Change Originator Node")
 public class TbChangeOriginatorNode extends TbAbstractTransformNode {
 
     protected static final String CUSTOMER_SOURCE = "CUSTOMER";
