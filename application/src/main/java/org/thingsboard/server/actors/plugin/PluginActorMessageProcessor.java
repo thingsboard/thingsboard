@@ -57,7 +57,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
     }
 
     @Override
-    public void start() throws Exception {
+    public void start(ActorContext context) throws Exception {
         logger.info("[{}] Going to start plugin actor.", entityId);
         pluginMd = systemContext.getPluginService().findPluginById(entityId);
         if (pluginMd == null) {
@@ -76,7 +76,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop(ActorContext context) throws Exception {
         onStop();
     }
 
@@ -191,7 +191,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
             if (pluginImpl != null) {
                 pluginImpl.stop(trustedCtx);
             }
-            start();
+            start(context);
         }
     }
 
@@ -217,7 +217,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
             pluginImpl.resume(trustedCtx);
             logger.info("[{}] Plugin resumed.", entityId);
         } else {
-            start();
+            start(context);
         }
     }
 

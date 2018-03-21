@@ -62,7 +62,7 @@ cluster:
 # Plugins configuration parameters
 plugins:
   # Comma seperated package list used during classpath scanning for plugins
-  scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions}"
+  scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions,org.thingsboard.rule.engine}"
 
 # JWT Token parameters
 security.jwt:
@@ -215,6 +215,12 @@ actors:
     termination.delay: "${ACTORS_RULE_TERMINATION_DELAY:30000}"
     # Errors for particular actor are persisted once per specified amount of milliseconds
     error_persist_frequency: "${ACTORS_RULE_ERROR_FREQUENCY:3000}"
+    chain:
+      # Errors for particular actor are persisted once per specified amount of milliseconds
+      error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
+    node:
+      # Errors for particular actor are persisted once per specified amount of milliseconds
+      error_persist_frequency: "${ACTORS_RULE_NODE_ERROR_FREQUENCY:3000}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"

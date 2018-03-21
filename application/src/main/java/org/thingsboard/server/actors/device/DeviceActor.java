@@ -18,19 +18,19 @@ package org.thingsboard.server.actors.device;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.rule.RulesProcessedMsg;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
-import org.thingsboard.server.actors.tenant.RuleChainDeviceMsg;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.*;
+import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
+import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequestPluginMsg;
 
 public class DeviceActor extends ContextAwareActor {
 
@@ -48,12 +48,17 @@ public class DeviceActor extends ContextAwareActor {
     }
 
     @Override
+    protected boolean process(TbActorMsg msg) {
+        return false;
+    }
+
+    @Override
     public void onReceive(Object msg) throws Exception {
-        if (msg instanceof RuleChainDeviceMsg) {
-            processor.process(context(), (RuleChainDeviceMsg) msg);
-        } else if (msg instanceof RulesProcessedMsg) {
-            processor.onRulesProcessedMsg(context(), (RulesProcessedMsg) msg);
-        } else if (msg instanceof ToDeviceActorMsg) {
+//        if (msg instanceof RuleChainDeviceMsg) {
+//            processor.process(context(), (RuleChainDeviceMsg) msg);
+//        } else if (msg instanceof RulesProcessedMsg) {
+//            processor.onRulesProcessedMsg(context(), (RulesProcessedMsg) msg);
+        if (msg instanceof ToDeviceActorMsg) {
             processor.process(context(), (ToDeviceActorMsg) msg);
         } else if (msg instanceof ToDeviceActorNotificationMsg) {
             if (msg instanceof DeviceAttributesEventNotificationMsg) {

@@ -217,10 +217,10 @@ public abstract class AbstractServiceTest {
         ruleMetaData.setWeight(weight);
         ruleMetaData.setPluginToken(pluginToken);
 
-        ruleMetaData.setAction(createNode(ComponentScope.TENANT, ComponentType.ACTION,
+        ruleMetaData.setAction(createNode(ComponentScope.TENANT, ComponentType.OLD_ACTION,
                 "org.thingsboard.component.ActionTest", "TestJsonDescriptor.json", "TestJsonData.json"));
-        ruleMetaData.setProcessor(createNode(ComponentScope.TENANT, ComponentType.PROCESSOR,
-                "org.thingsboard.component.ProcessorTest", "TestJsonDescriptor.json", "TestJsonData.json"));
+//        ruleMetaData.setProcessor(createNode(ComponentScope.TENANT, ComponentType.PROCESSOR,
+//                "org.thingsboard.component.ProcessorTest", "TestJsonDescriptor.json", "TestJsonData.json"));
         ruleMetaData.setFilters(mapper.createArrayNode().add(
                 createNode(ComponentScope.TENANT, ComponentType.FILTER,
                         "org.thingsboard.component.FilterTest", "TestJsonDescriptor.json", "TestJsonData.json")

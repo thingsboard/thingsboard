@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.annotation.Nullable;
@@ -125,7 +126,7 @@ public class QueueBenchmark implements CommandLineRunner {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("key", "value");
         String dataStr = "someContent";
-        return new TbMsg(UUIDs.timeBased(), "type", null, metaData, dataStr.getBytes());
+        return new TbMsg(UUIDs.timeBased(), "type", null, metaData, TbMsgDataType.JSON, dataStr.getBytes());
     }
 
     @Bean

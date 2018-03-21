@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,7 +33,7 @@ import java.io.IOException;
 
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class PluginMetaData extends SearchTextBasedWithAdditionalInfo<PluginId> implements HasName {
+public class PluginMetaData extends SearchTextBasedWithAdditionalInfo<PluginId> implements HasName, HasTenantId {
 
     private static final long serialVersionUID = 1L;
 

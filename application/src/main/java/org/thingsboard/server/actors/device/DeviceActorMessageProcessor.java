@@ -19,9 +19,7 @@ import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.rule.*;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
-import org.thingsboard.server.actors.tenant.RuleChainDeviceMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -37,15 +35,10 @@ import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.MsgType;
 import org.thingsboard.server.common.msg.session.SessionType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
-import org.thingsboard.server.extensions.api.device.*;
-import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
-import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
-import org.thingsboard.server.extensions.api.plugins.msg.TimeoutIntMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequest;
-import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequestBody;
-import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequestPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ToPluginRpcResponseDeviceMsg;
+import org.thingsboard.server.extensions.api.device.DeviceAttributes;
+import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.extensions.api.plugins.msg.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -230,18 +223,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    void process(ActorContext context, RuleChainDeviceMsg srcMsg) {
-        ChainProcessingMetaData md = new ChainProcessingMetaData(srcMsg.getRuleChain(),
-                srcMsg.getToDeviceActorMsg(), new DeviceMetaData(deviceId, deviceName, deviceType, deviceAttributes), context.self());
-        ChainProcessingContext ctx = new ChainProcessingContext(md);
-        if (ctx.getChainLength() > 0) {
-            RuleProcessingMsg msg = new RuleProcessingMsg(ctx);
-            ActorRef ruleActorRef = ctx.getCurrentActor();
-            ruleActorRef.tell(msg, ActorRef.noSender());
-        } else {
-            context.self().tell(new RulesProcessedMsg(ctx), context.self());
-        }
-    }
+//    void process(ActorContext context, RuleChainDeviceMsg srcMsg) {
+//        ChainProcessingMetaData md = new ChainProcessingMetaData(srcMsg.getRuleChain(),
+//                srcMsg.getToDeviceActorMsg(), new DeviceMetaData(deviceId, deviceName, deviceType, deviceAttributes), context.self());
+//        ChainProcessingContext ctx = new ChainProcessingContext(md);
+//        if (ctx.getChainLength() > 0) {
+//            RuleProcessingMsg msg = new RuleProcessingMsg(ctx);
+//            ActorRef ruleActorRef = ctx.getCurrentActor();
+//            ruleActorRef.tell(msg, ActorRef.noSender());
+//        } else {
+//            context.self().tell(new RulesProcessedMsg(ctx), context.self());
+//        }
+//    }
 
     void processRpcResponses(ActorContext context, ToDeviceActorMsg msg) {
         SessionId sessionId = msg.getSessionId();
@@ -302,18 +295,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         );
     }
 
-    void onRulesProcessedMsg(ActorContext context, RulesProcessedMsg msg) {
-        ChainProcessingContext ctx = msg.getCtx();
-        ToDeviceActorMsg inMsg = ctx.getInMsg();
-        SessionId sid = inMsg.getSessionId();
-        ToDeviceSessionActorMsg response;
-        if (ctx.getResponse() != null) {
-            response = new BasicToDeviceSessionActorMsg(ctx.getResponse(), sid);
-        } else {
-            response = new BasicToDeviceSessionActorMsg(ctx.getError(), sid);
-        }
-        sendMsgToSessionActor(response, inMsg.getServerAddress());
-    }
+//    void onRulesProcessedMsg(ActorContext context, RulesProcessedMsg msg) {
+//        ChainProcessingContext ctx = msg.getCtx();
+//        ToDeviceActorMsg inMsg = ctx.getInMsg();
+//        SessionId sid = inMsg.getSessionId();
+//        ToDeviceSessionActorMsg response;
+//        if (ctx.getResponse() != null) {
+//            response = new BasicToDeviceSessionActorMsg(ctx.getResponse(), sid);
+//        } else {
+//            response = new BasicToDeviceSessionActorMsg(ctx.getError(), sid);
+//        }
+//        sendMsgToSessionActor(response, inMsg.getServerAddress());
+//    }
 
     private void processSubscriptionCommands(ActorContext context, ToDeviceActorMsg msg) {
         SessionId sessionId = msg.getSessionId();

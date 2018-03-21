@@ -34,6 +34,7 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
 
     private String type;
     private String name;
+    private boolean debugMode;
     private transient JsonNode configuration;
     @JsonIgnore
     private byte[] configurationBytes;

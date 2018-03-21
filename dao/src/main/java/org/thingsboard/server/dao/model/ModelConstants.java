@@ -332,6 +332,8 @@ public class ModelConstants {
     public static final String EVENT_BY_TYPE_AND_ID_VIEW_NAME = "event_by_type_and_id";
     public static final String EVENT_BY_ID_VIEW_NAME = "event_by_id";
 
+    public static final String DEBUG_MODE = "debug_mode";
+
     /**
      * Cassandra rule chain constants.
      */

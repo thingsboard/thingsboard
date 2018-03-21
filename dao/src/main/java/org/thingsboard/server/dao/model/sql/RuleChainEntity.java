@@ -58,6 +58,9 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
     @Column(name = ModelConstants.RULE_CHAIN_ROOT_PROPERTY)
     private boolean root;
 
+    @Column(name = ModelConstants.DEBUG_MODE)
+    private boolean debugMode;
+
     @Type(type = "json")
     @Column(name = ModelConstants.RULE_CHAIN_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -80,6 +83,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
             this.firstRuleNodeId = UUIDConverter.fromTimeUUID(ruleChain.getFirstRuleNodeId().getId());
         }
         this.root = ruleChain.isRoot();
+        this.debugMode = ruleChain.isDebugMode();
         this.configuration = ruleChain.getConfiguration();
         this.additionalInfo = ruleChain.getAdditionalInfo();
     }
@@ -104,6 +108,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
             ruleChain.setFirstRuleNodeId(new RuleNodeId(UUIDConverter.fromString(firstRuleNodeId)));
         }
         ruleChain.setRoot(root);
+        ruleChain.setDebugMode(debugMode);
         ruleChain.setConfiguration(configuration);
         ruleChain.setAdditionalInfo(additionalInfo);
         return ruleChain;

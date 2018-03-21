@@ -379,6 +379,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.rule-engine</groupId>
+                <artifactId>rule-engine-components</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>message</artifactId>
                 <version>${project.version}</version>

@@ -19,6 +19,7 @@ import akka.actor.ActorContext;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 
@@ -39,12 +40,12 @@ public class TenantPluginManager extends PluginManager {
     }
 
     @Override
-    FetchFunction<PluginMetaData> getFetchPluginsFunction() {
+    protected FetchFunction<PluginMetaData> getFetchEntitiesFunction() {
         return link -> pluginService.findTenantPlugins(tenantId, link);
     }
 
     @Override
-    TenantId getTenantId() {
+    protected TenantId getTenantId() {
         return tenantId;
     }
 

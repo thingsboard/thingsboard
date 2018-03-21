@@ -56,6 +56,9 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
+    @Column(name = ModelConstants.DEBUG_MODE)
+    private boolean debugMode;
+
     public RuleNodeEntity() {
     }
 
@@ -65,6 +68,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
         }
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
+        this.debugMode = ruleNode.isDebugMode();
         this.searchText = ruleNode.getName();
         this.configuration = ruleNode.getConfiguration();
         this.additionalInfo = ruleNode.getAdditionalInfo();
@@ -86,6 +90,7 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
         ruleNode.setCreatedTime(UUIDs.unixTimestamp(getId()));
         ruleNode.setType(type);
         ruleNode.setName(name);
+        ruleNode.setDebugMode(debugMode);
         ruleNode.setConfiguration(configuration);
         ruleNode.setAdditionalInfo(additionalInfo);
         return ruleNode;

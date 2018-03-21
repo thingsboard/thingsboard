@@ -22,6 +22,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
  */
 public class TbNodeException extends Exception {
 
+    public TbNodeException(String message) {
+        super(message);
+    }
+
     public TbNodeException(Exception e) {
         super(e);
     }
