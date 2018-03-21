@@ -27,6 +27,7 @@ import java.util.Set;
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
 @Slf4j
+@FilterNode(name = "Switch Node", customRelations = true)
 public class TbJsSwitchNode implements TbNode {
 
     private TbJsSwitchNodeConfiguration config;

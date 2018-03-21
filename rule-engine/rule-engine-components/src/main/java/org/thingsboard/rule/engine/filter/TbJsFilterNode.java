@@ -26,6 +26,7 @@ import javax.script.Bindings;
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
 @Slf4j
+@FilterNode(name = "Filter Node", relationTypes = {"True", "False", "Failure"})
 public class TbJsFilterNode implements TbNode {
 
     private TbJsFilterNodeConfiguration config;

@@ -24,6 +24,7 @@ import org.thingsboard.server.common.msg.TbMsg;
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
+@FilterNode(name = "Message Type Filter Node")
 public class TbMsgTypeFilterNode implements TbNode {
 
     TbMsgTypeFilterNodeConfiguration config;

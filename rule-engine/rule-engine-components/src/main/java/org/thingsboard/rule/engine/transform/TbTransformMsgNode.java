@@ -17,15 +17,13 @@ package org.thingsboard.rule.engine.transform;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbNodeState;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.js.NashornJsEngine;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.Bindings;
 
+@EnrichmentNode(name = "Transformation Node")
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;
