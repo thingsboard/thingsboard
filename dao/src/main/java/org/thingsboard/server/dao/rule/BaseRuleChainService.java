@@ -166,7 +166,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 EntityId to = nodeToRuleChainConnection.getTargetRuleChainId();
                 String type = nodeToRuleChainConnection.getType();
                 try {
-                    createRelation(new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE));
+                    createRelation(new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE, nodeToRuleChainConnection.getAdditionalInfo()));
                 } catch (ExecutionException | InterruptedException e) {
                     log.warn("[{}] Failed to create rule node to rule chain relation. from: [{}], to: [{}]", from, to);
                     throw new RuntimeException(e);
@@ -206,7 +206,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     ruleChainMetaData.addConnectionInfo(fromIndex, toIndex, type);
                 } else if (nodeRelation.getTo().getEntityType() == EntityType.RULE_CHAIN) {
                     RuleChainId targetRuleChainId = new RuleChainId(nodeRelation.getTo().getId());
-                    ruleChainMetaData.addRuleChainConnectionInfo(fromIndex, targetRuleChainId, type);
+                    ruleChainMetaData.addRuleChainConnectionInfo(fromIndex, targetRuleChainId, type, nodeRelation.getAdditionalInfo());
                 }
             }
         }

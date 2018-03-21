@@ -15,11 +15,19 @@
  */
 
 import RuleChainRoutes from './rulechain.routes';
-import RuleChainController from './rulechain.controller';
+import RuleChainsController from './rulechains.controller';
+import {RuleChainController, AddRuleNodeController, AddRuleNodeLinkController} from './rulechain.controller';
 import RuleChainDirective from './rulechain.directive';
+import RuleNodeDirective from './rulenode.directive';
+import LinkDirective from './link.directive';
 
 export default angular.module('thingsboard.ruleChain', [])
     .config(RuleChainRoutes)
+    .controller('RuleChainsController', RuleChainsController)
     .controller('RuleChainController', RuleChainController)
+    .controller('AddRuleNodeController', AddRuleNodeController)
+    .controller('AddRuleNodeLinkController', AddRuleNodeLinkController)
     .directive('tbRuleChain', RuleChainDirective)
+    .directive('tbRuleNode', RuleNodeDirective)
+    .directive('tbRuleNodeLink', LinkDirective)
     .name;

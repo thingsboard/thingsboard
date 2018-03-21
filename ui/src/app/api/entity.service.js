@@ -22,7 +22,7 @@ export default angular.module('thingsboard.api.entity', [thingsboardTypes])
 /*@ngInject*/
 function EntityService($http, $q, $filter, $translate, $log, userService, deviceService,
                        assetService, tenantService, customerService,
-                       ruleService, pluginService, dashboardService, entityRelationService, attributeService, types, utils) {
+                       ruleService, pluginService, ruleChainService, dashboardService, entityRelationService, attributeService, types, utils) {
     var service = {
         getEntity: getEntity,
         getEntities: getEntities,
@@ -72,6 +72,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.user:
                 promise = userService.getUser(entityId, true, config);
+                break;
+            case types.entityType.rulechain:
+                promise = ruleChainService.getRuleChain(entityId, config);
                 break;
             case types.entityType.alarm:
                 $log.error('Get Alarm Entity is not implemented!');
@@ -270,6 +273,9 @@ function EntityService($http, $q, $filter, $translate, $log, userService, device
                 break;
             case types.entityType.plugin:
                 promise = pluginService.getAllPlugins(pageLink, config);
+                break;
+            case types.entityType.rulechain:
+                promise = ruleChainService.getRuleChains(pageLink, config);
                 break;
             case types.entityType.dashboard:
                 if (user.authority === 'CUSTOMER_USER') {

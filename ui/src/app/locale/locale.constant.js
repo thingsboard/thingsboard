@@ -1169,6 +1169,26 @@ export default angular.module('thingsboard.locale', [])
                     "rulechain-required": "Rule chain is required",
                     "management": "Rules management"
                 },
+                "rulenode": {
+                    "add": "Add rule node",
+                    "name": "Name",
+                    "name-required": "Name is required.",
+                    "type": "Type",
+                    "description": "Description",
+                    "delete": "Delete rule node",
+                    "rulenode-details": "Rule node details",
+                    "link-details": "Rule node link details",
+                    "add-link": "Add link",
+                    "link-label": "Link label",
+                    "link-label-required": "Link label is required.",
+                    "custom-link-label": "Custom link label",
+                    "custom-link-label-required": "Custom link label is required.",
+                    "type-filter": "Filter",
+                    "type-enrichment": "Enrichment",
+                    "type-transformation": "Transformation",
+                    "type-action": "Action",
+                    "type-rule-chain": "Rule Chain"
+                },
                 "rule-plugin": {
                     "management": "Rules and plugins management"
                 },

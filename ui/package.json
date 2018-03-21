@@ -69,6 +69,7 @@
     "moment": "^2.15.0",
     "ngclipboard": "^1.1.1",
     "ngreact": "^0.3.0",
+    "ngFlowchart": "git://github.com/ikulikov/ngFlowchart.git#master",
     "objectpath": "^1.2.1",
     "oclazyload": "^1.0.9",
     "raphael": "^2.2.7",

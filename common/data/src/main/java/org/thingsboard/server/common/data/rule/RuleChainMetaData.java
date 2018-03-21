@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.RuleChainId;
 
@@ -47,11 +48,12 @@ public class RuleChainMetaData {
         }
         connections.add(connectionInfo);
     }
-    public void addRuleChainConnectionInfo(int fromIndex, RuleChainId targetRuleChainId, String type) {
+    public void addRuleChainConnectionInfo(int fromIndex, RuleChainId targetRuleChainId, String type, JsonNode additionalInfo) {
         RuleChainConnectionInfo connectionInfo = new RuleChainConnectionInfo();
         connectionInfo.setFromIndex(fromIndex);
         connectionInfo.setTargetRuleChainId(targetRuleChainId);
         connectionInfo.setType(type);
+        connectionInfo.setAdditionalInfo(additionalInfo);
         if (ruleChainConnections == null) {
             ruleChainConnections = new ArrayList<>();
         }
@@ -59,16 +61,17 @@ public class RuleChainMetaData {
     }
 
     @Data
-    public class NodeConnectionInfo {
+    public static class NodeConnectionInfo {
         private int fromIndex;
         private int toIndex;
         private String type;
     }
 
     @Data
-    public class RuleChainConnectionInfo {
+    public static class RuleChainConnectionInfo {
         private int fromIndex;
         private RuleChainId targetRuleChainId;
+        private JsonNode additionalInfo;
         private String type;
     }
 

@@ -17,7 +17,9 @@ export default angular.module('thingsboard.api.ruleChain', [])
     .factory('ruleChainService', RuleChainService).name;
 
 /*@ngInject*/
-function RuleChainService($http, $q) {
+function RuleChainService($http, $q, $filter, types) {
+
+    var ruleNodeTypes = null;
 
     var service = {
         getSystemRuleChains: getSystemRuleChains,
@@ -27,7 +29,11 @@ function RuleChainService($http, $q) {
         saveRuleChain: saveRuleChain,
         deleteRuleChain: deleteRuleChain,
         getRuleChainMetaData: getRuleChainMetaData,
-        saveRuleChainMetaData: saveRuleChainMetaData
+        saveRuleChainMetaData: saveRuleChainMetaData,
+        getRuleNodeTypes: getRuleNodeTypes,
+        getRuleNodeComponentType: getRuleNodeComponentType,
+        getRuleNodeSupportedLinks: getRuleNodeSupportedLinks,
+        resolveTargetRuleChains: resolveTargetRuleChains
     };
 
     return service;
@@ -146,5 +152,132 @@ function RuleChainService($http, $q) {
         });
         return deferred.promise;
     }
+
+    function getRuleNodeSupportedLinks(nodeType) { //eslint-disable-line
+        //TODO:
+        var deferred = $q.defer();
+        var linkLabels = [
+            { name: 'Success', custom: false },
+            { name: 'Fail', custom: false },
+            { name: 'Custom', custom: true },
+        ];
+        deferred.resolve(linkLabels);
+        return deferred.promise;
+    }
+
+    function getRuleNodeTypes() {
+        var deferred = $q.defer();
+        if (ruleNodeTypes) {
+            deferred.resolve(ruleNodeTypes);
+        } else {
+            loadRuleNodeTypes().then(
+                (nodeTypes) => {
+                    ruleNodeTypes = nodeTypes;
+                    ruleNodeTypes.push(
+                        {
+                            nodeType: types.ruleNodeType.RULE_CHAIN.value,
+                            type: 'Rule chain'
+                        }
+                    );
+                    deferred.resolve(ruleNodeTypes);
+                },
+                () => {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    function getRuleNodeComponentType(type) {
+        var res = $filter('filter')(ruleNodeTypes, {type: type}, true);
+        if (res && res.length) {
+            return res[0].nodeType;
+        }
+        return null;
+    }
+
+    function resolveTargetRuleChains(ruleChainConnections) {
+        var deferred = $q.defer();
+        if (ruleChainConnections && ruleChainConnections.length) {
+            var tasks = [];
+            for (var i = 0; i < ruleChainConnections.length; i++) {
+                tasks.push(getRuleChain(ruleChainConnections[i].targetRuleChainId.id));
+            }
+            $q.all(tasks).then(
+                (ruleChains) => {
+                    var ruleChainsMap = {};
+                    for (var i = 0; i < ruleChains.length; i++) {
+                        ruleChainsMap[ruleChains[i].id.id] = ruleChains[i];
+                    }
+                    deferred.resolve(ruleChainsMap);
+                },
+                () => {
+                    deferred.reject();
+                }
+            );
+        } else {
+            deferred.resolve({});
+        }
+        return deferred.promise;
+    }
+
+    function loadRuleNodeTypes() {
+        var deferred = $q.defer();
+        deferred.resolve(
+            [
+                {
+                    nodeType: types.ruleNodeType.FILTER.value,
+                    type: 'Filter'
+                },
+                {
+                    nodeType: types.ruleNodeType.FILTER.value,
+                    type: 'Switch'
+                },
+                {
+                    nodeType: types.ruleNodeType.ENRICHMENT.value,
+                    type: 'Self'
+                },
+                {
+                    nodeType: types.ruleNodeType.ENRICHMENT.value,
+                    type: 'Tenant/Customer'
+                },
+                {
+                    nodeType: types.ruleNodeType.ENRICHMENT.value,
+                    type: 'Related Entity'
+                },
+                {
+                    nodeType: types.ruleNodeType.ENRICHMENT.value,
+                    type: 'Last Telemetry'
+                },
+                {
+                    nodeType: types.ruleNodeType.TRANSFORMATION.value,
+                    type: 'Modify'
+                },
+                {
+                    nodeType: types.ruleNodeType.TRANSFORMATION.value,
+                    type: 'New/Update'
+                },
+                {
+                    nodeType: types.ruleNodeType.ACTION.value,
+                    type: 'Telemetry'
+                },
+                {
+                    nodeType: types.ruleNodeType.ACTION.value,
+                    type: 'RPC call'
+                },
+                {
+                    nodeType: types.ruleNodeType.ACTION.value,
+                    type: 'Send email'
+                },
+                {
+                    nodeType: types.ruleNodeType.ACTION.value,
+                    type: 'Alarm'
+                }
+            ]
+        );
+        return deferred.promise;
+    }
+
 
 }

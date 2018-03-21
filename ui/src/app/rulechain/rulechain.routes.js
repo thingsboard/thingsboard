@@ -15,12 +15,16 @@
  */
 /* eslint-disable import/no-unresolved, import/default */
 
+import ruleNodeTemplate from './rulenode.tpl.html';
 import ruleChainsTemplate from './rulechains.tpl.html';
+import ruleChainTemplate from './rulechain.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleChainRoutes($stateProvider) {
+export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider) {
+
+    NodeTemplatePathProvider.setTemplatePath(ruleNodeTemplate);
 
     $stateProvider
         .state('home.ruleChains', {
@@ -32,7 +36,7 @@ export default function RuleChainRoutes($stateProvider) {
                 "content@home": {
                     templateUrl: ruleChainsTemplate,
                     controllerAs: 'vm',
-                    controller: 'RuleChainController'
+                    controller: 'RuleChainsController'
                 }
             },
             data: {
@@ -42,5 +46,36 @@ export default function RuleChainRoutes($stateProvider) {
             ncyBreadcrumb: {
                 label: '{"icon": "settings_ethernet", "label": "rulechain.rulechains"}'
             }
-        });
+        }).state('home.ruleChains.ruleChain', {
+            url: '/:ruleChainId',
+            reloadOnSearch: false,
+            module: 'private',
+            auth: ['SYS_ADMIN', 'TENANT_ADMIN'],
+            views: {
+                "content@home": {
+                    templateUrl: ruleChainTemplate,
+                    controller: 'RuleChainController',
+                    controllerAs: 'vm'
+                }
+            },
+            resolve: {
+                ruleChain:
+                    /*@ngInject*/
+                    function($stateParams, ruleChainService) {
+                        return ruleChainService.getRuleChain($stateParams.ruleChainId);
+                    },
+                ruleChainMetaData:
+                /*@ngInject*/
+                    function($stateParams, ruleChainService) {
+                        return ruleChainService.getRuleChainMetaData($stateParams.ruleChainId);
+                    }
+            },
+            data: {
+                searchEnabled: false,
+                pageTitle: 'rulechain.rulechain'
+            },
+            ncyBreadcrumb: {
+                label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
+            }
+    });
 }

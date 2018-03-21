@@ -457,6 +457,44 @@ export default angular.module('thingsboard.types', [])
                     clientSide: false
                 }
             },
+            ruleNodeType: {
+                FILTER: {
+                    value: "FILTER",
+                    name: "rulenode.type-filter",
+                    nodeClass: "tb-filter-type",
+                    icon: "filter_list"
+                },
+                ENRICHMENT: {
+                    value: "ENRICHMENT",
+                    name: "rulenode.type-enrichment",
+                    nodeClass: "tb-enrichment-type",
+                    icon: "playlist_add"
+                },
+                TRANSFORMATION: {
+                    value: "TRANSFORMATION",
+                    name: "rulenode.type-transformation",
+                    nodeClass: "tb-transformation-type",
+                    icon: "transform"
+                },
+                ACTION: {
+                    value: "ACTION",
+                    name: "rulenode.type-action",
+                    nodeClass: "tb-action-type",
+                    icon: "flash_on"
+                },
+                RULE_CHAIN: {
+                    value: "RULE_CHAIN",
+                    name: "rulenode.type-rule-chain",
+                    nodeClass: "tb-rule-chain-type",
+                    icon: "settings_ethernet"
+                },
+                INPUT: {
+                    value: "INPUT",
+                    nodeClass: "tb-input-type",
+                    icon: "input",
+                    special: true
+                }
+            },
             valueType: {
                 string: {
                     value: "string",
