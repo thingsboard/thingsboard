@@ -31,7 +31,9 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -148,7 +150,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ruleChainDao.save(ruleChain);
         }
         if (ruleChainMetaData.getConnections() != null) {
-            for (RuleChainMetaData.NodeConnectionInfo nodeConnection : ruleChainMetaData.getConnections()) {
+            for (NodeConnectionInfo nodeConnection : ruleChainMetaData.getConnections()) {
                 EntityId from = nodes.get(nodeConnection.getFromIndex()).getId();
                 EntityId to = nodes.get(nodeConnection.getToIndex()).getId();
                 String type = nodeConnection.getType();
@@ -161,7 +163,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
         if (ruleChainMetaData.getRuleChainConnections() != null) {
-            for (RuleChainMetaData.RuleChainConnectionInfo nodeToRuleChainConnection : ruleChainMetaData.getRuleChainConnections()) {
+            for (RuleChainConnectionInfo nodeToRuleChainConnection : ruleChainMetaData.getRuleChainConnections()) {
                 EntityId from = nodes.get(nodeToRuleChainConnection.getFromIndex()).getId();
                 EntityId to = nodeToRuleChainConnection.getTargetRuleChainId();
                 String type = nodeToRuleChainConnection.getType();
@@ -314,7 +316,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     private void createRelation(EntityRelation relation) throws ExecutionException, InterruptedException {
         log.debug("Creating relation: {}", relation);
-        relationService.saveRelationAsync(relation).get();
+        relationService.saveRelation(relation);
     }
 
     private DataValidator<RuleChain> ruleChainValidator =

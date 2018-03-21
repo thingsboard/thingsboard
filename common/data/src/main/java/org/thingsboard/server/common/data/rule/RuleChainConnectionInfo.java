@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rules;
+package org.thingsboard.server.common.data.rule;
 
-import org.junit.ClassRule;
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.runner.RunWith;
-import org.thingsboard.server.dao.CustomSqlUnit;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleChainId;
 
-import java.util.Arrays;
-
-@RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.rules.flow.*Test"})
-public class RuleEngineSqlTestSuite {
-
-    @ClassRule
-    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema.sql", "sql/system-data.sql"),
-            "sql/drop-all-tables.sql",
-            "sql-test.properties");
+/**
+ * Created by ashvayka on 21.03.18.
+ */
+@Data
+public class RuleChainConnectionInfo {
+    private int fromIndex;
+    private RuleChainId targetRuleChainId;
+    private String type;
 }

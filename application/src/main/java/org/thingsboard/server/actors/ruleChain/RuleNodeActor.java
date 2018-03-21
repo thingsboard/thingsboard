@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 
 public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessageProcessor> {
 
@@ -37,6 +38,9 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     @Override
     protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
+            case COMPONENT_LIFE_CYCLE_MSG:
+                onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
+                break;
             case RULE_CHAIN_TO_RULE_MSG:
                 onRuleChainToRuleNodeMsg((RuleChainToRuleNodeMsg) msg);
                 break;
@@ -88,7 +92,5 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
     protected long getErrorPersistFrequency() {
         return systemContext.getRuleNodeErrorPersistFrequency();
     }
-
-    //TODO: failover strategy
 
 }

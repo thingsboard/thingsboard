@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.ruleChain;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;

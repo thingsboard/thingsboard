@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 /**
  * Created by ashvayka on 20.03.18.
  */
-public class AbstractRuleEngineControllerTest extends AbstractControllerTest{
+public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
 
     protected RuleChain saveRuleChain(RuleChain ruleChain) throws Exception {
         return doPost("/api/ruleChain", ruleChain, RuleChain.class);

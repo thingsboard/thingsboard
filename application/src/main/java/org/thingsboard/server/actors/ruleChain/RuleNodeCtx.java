@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorRef;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 

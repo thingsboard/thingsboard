@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.rule.sql;
+package org.thingsboard.server.common.data.rule;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.service.rule.BaseRuleServiceTest;
+import lombok.Data;
 
-@DaoSqlTest
-public class RuleServiceSqlTest extends BaseRuleServiceTest {
+/**
+ * Created by ashvayka on 21.03.18.
+ */
+@Data
+public class NodeConnectionInfo {
+    private int fromIndex;
+    private int toIndex;
+    private String type;
 }

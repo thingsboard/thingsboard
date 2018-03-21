@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.rule.nosql;
+package org.thingsboard.server.rules.lifecycle;
 
-import org.thingsboard.server.dao.service.DaoNoSqlTest;
-import org.thingsboard.server.dao.service.rule.BaseRuleServiceTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.rules.flow.AbstractRuleEngineFlowIntegrationTest;
 
-@DaoNoSqlTest
-public class RuleServiceNoSqlTest extends BaseRuleServiceTest {
+/**
+ * Created by Valerii Sosliuk on 8/22/2017.
+ */
+@DaoSqlTest
+public class RuleEngineLifecycleSqlIntegrationTest extends AbstractRuleEngineLifecycleIntegrationTest {
 }

@@ -20,12 +20,14 @@ import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 
 public abstract class ComponentMsgProcessor<T> extends AbstractContextAwareMsgProcessor {
 
     protected final TenantId tenantId;
     protected final T entityId;
+    protected ComponentLifecycleState state;
 
     protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
         super(systemContext, logger);
@@ -66,5 +68,11 @@ public abstract class ComponentMsgProcessor<T> extends AbstractContextAwareMsgPr
 
     public void scheduleStatsPersistTick(ActorContext context, long statsPersistFrequency) {
         schedulePeriodicMsgWithDelay(context, new StatsPersistTick(), statsPersistFrequency, statsPersistFrequency);
+    }
+
+    protected void checkActive() {
+        if (state != ComponentLifecycleState.ACTIVE) {
+            throw new IllegalStateException("Rule chain is not active!");
+        }
     }
 }

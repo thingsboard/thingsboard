@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
+import akka.actor.OneForOneStrategy;
+import akka.actor.SupervisorStrategy;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -23,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import scala.concurrent.duration.Duration;
 
 public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMessageProcessor> {
 
@@ -73,5 +76,13 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
         return systemContext.getRuleChainErrorPersistFrequency();
     }
 
-    //TODO: failover strategy
+    @Override
+    public SupervisorStrategy supervisorStrategy() {
+        return strategy;
+    }
+
+    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), t -> {
+        logAndPersist("Unknown Failure", ActorSystemContext.toException(t));
+        return SupervisorStrategy.resume();
+    });
 }

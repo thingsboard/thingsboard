@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rules.flow;
+package org.thingsboard.server.rules.lifecycle;
 
 import com.datastax.driver.core.utils.UUIDs;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -25,7 +24,11 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -38,9 +41,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.rule.RuleChainService;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Valerii Sosliuk
  */
 @Slf4j
-public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRuleEngineControllerTest {
+public abstract class AbstractRuleEngineLifecycleIntegrationTest extends AbstractRuleEngineControllerTest {
 
     protected Tenant savedTenant;
     protected User tenantAdmin;
@@ -59,9 +60,6 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
     @Autowired
     protected AttributesService attributesService;
-
-    @Autowired
-    protected RuleChainService ruleChainService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -91,7 +89,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
     }
 
     @Test
-    public void testRuleChainWithTwoRules() throws Exception {
+    public void testRuleChainWithOneRule() throws Exception {
         // Creating Rule Chain
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("Simple Rule Chain");
@@ -104,26 +102,17 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleChainMetaData metaData = new RuleChainMetaData();
         metaData.setRuleChainId(ruleChain.getId());
 
-        RuleNode ruleNode1 = new RuleNode();
-        ruleNode1.setName("Simple Rule Node 1");
-        ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
-        ruleNode1.setDebugMode(true);
-        TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
-        configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
-        ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
+        RuleNode ruleNode = new RuleNode();
+        ruleNode.setName("Simple Rule Node");
+        ruleNode.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode.setDebugMode(true);
+        TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
+        configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));
+        ruleNode.setConfiguration(mapper.valueToTree(configuration));
 
-        RuleNode ruleNode2 = new RuleNode();
-        ruleNode2.setName("Simple Rule Node 2");
-        ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
-        ruleNode2.setDebugMode(true);
-        TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
-        configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
-        ruleNode2.setConfiguration(mapper.valueToTree(configuration2));
-
-
-        metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
+        metaData.setNodes(Collections.singletonList(ruleNode));
         metaData.setFirstNodeIndex(0);
-        metaData.addConnectionInfo(0, 1, "Success");
+
         metaData = saveRuleChainMetaData(metaData);
         Assert.assertNotNull(metaData);
 
@@ -137,10 +126,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         device = doPost("/api/device", device, Device.class);
 
         attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey1", "serverAttributeValue1"), System.currentTimeMillis())));
-        attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey2", "serverAttributeValue2"), System.currentTimeMillis())));
-
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
 
         Thread.sleep(1000);
 
@@ -166,25 +152,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Assert.assertEquals(ruleChain.getFirstRuleNodeId(), outEvent.getEntityId());
         Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
 
-        Assert.assertEquals("serverAttributeValue1", outEvent.getBody().get("metadata").get("ss.serverAttributeKey1").asText());
-
-        RuleChain finalRuleChain = ruleChain;
-        RuleNode lastRuleNode = metaData.getNodes().stream().filter(node -> !node.getId().equals(finalRuleChain.getFirstRuleNodeId())).findFirst().get();
-
-        events = getDebugEvents(savedTenant.getId(), lastRuleNode.getId(), 1000);
-
-        Assert.assertEquals(2, events.getData().size());
-
-        inEvent = events.getData().stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst().get();
-        Assert.assertEquals(lastRuleNode.getId(), inEvent.getEntityId());
-        Assert.assertEquals(device.getId().getId().toString(), inEvent.getBody().get("entityId").asText());
-
-        outEvent = events.getData().stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst().get();
-        Assert.assertEquals(lastRuleNode.getId(), outEvent.getEntityId());
-        Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
-
-        Assert.assertEquals("serverAttributeValue1", outEvent.getBody().get("metadata").get("ss.serverAttributeKey1").asText());
-        Assert.assertEquals("serverAttributeValue2", outEvent.getBody().get("metadata").get("ss.serverAttributeKey2").asText());
+        Assert.assertEquals("serverAttributeValue", outEvent.getBody().get("metadata").get("ss.serverAttributeKey").asText());
     }
 
 }
