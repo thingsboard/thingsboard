@@ -25,35 +25,35 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
 
 public interface UserService {
-	
-	User findUserById(UserId userId);
 
-	ListenableFuture<User> findUserByIdAsync(UserId userId);
+    User findUserById(UserId userId);
 
-	User findUserByEmail(String email);
+    ListenableFuture<User> findUserByIdAsync(UserId userId);
 
-	User saveUser(User user);
+    User findUserByEmail(String email);
 
-	UserCredentials findUserCredentialsByUserId(UserId userId);
-	
-	UserCredentials findUserCredentialsByActivateToken(String activateToken);
+    User saveUser(User user);
 
-	UserCredentials findUserCredentialsByResetToken(String resetToken);
+    UserCredentials findUserCredentialsByUserId(UserId userId);
 
-	UserCredentials saveUserCredentials(UserCredentials userCredentials);
-	
-	UserCredentials activateUserCredentials(String activateToken, String password);
-	
-	UserCredentials requestPasswordReset(String email);
+    UserCredentials findUserCredentialsByActivateToken(String activateToken);
 
-	void deleteUser(UserId userId);
-	
-	TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink);
-	
-	void deleteTenantAdmins(TenantId tenantId);
-	
-	TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
-	    
-	void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
-	
+    UserCredentials findUserCredentialsByResetToken(String resetToken);
+
+    UserCredentials saveUserCredentials(UserCredentials userCredentials);
+
+    UserCredentials activateUserCredentials(String activateToken, String password);
+
+    UserCredentials requestPasswordReset(String email);
+
+    void deleteUser(UserId userId);
+
+    TextPageData<User> findTenantAdmins(TenantId tenantId, TextPageLink pageLink);
+
+    void deleteTenantAdmins(TenantId tenantId);
+
+    TextPageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+
+    void deleteCustomerUsers(TenantId tenantId, CustomerId customerId);
+
 }
