@@ -45,7 +45,7 @@ function AlarmsTableWidget() {
 }
 
 /*@ngInject*/
-function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDialog, $document, $translate, $q, alarmService, utils, types) {
+function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDialog, $document, $translate, $q, $timeout, alarmService, utils, types) {
     var vm = this;
 
     vm.stylesInfo = {};
@@ -266,6 +266,9 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     function enterFilterMode () {
         vm.query.search = '';
         vm.ctx.hideTitlePanel = true;
+        $timeout(()=>{
+            angular.element(vm.ctx.$container).find('.searchInput').focus();
+        })
     }
 
     function exitFilterMode () {
