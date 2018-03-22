@@ -23,12 +23,15 @@
             <div class="tb-rulechain-library">
                 <md-expansion-panel-group ng-if="vm.ruleChainLibraryLoaded" class="tb-rulechain-library-panel-group" md-component-id="libraryPanelGroup" auto-expand="true" multiple>
                     <md-expansion-panel md-component-id="{{typeId}}" id="{{typeId}}" ng-repeat="(typeId, typeModel) in vm.ruleNodeTypesModel">
-                        <md-expansion-panel-collapsed>
+                        <md-expansion-panel-collapsed ng-mouseenter="vm.typeHeaderMouseEnter($event, typeId)"
+                                                      ng-mouseleave="vm.destroyTooltips()">
                             <div class="tb-panel-title" translate>{{vm.types.ruleNodeType[typeId].name}}</div>
                             <md-expansion-panel-icon></md-expansion-panel-icon>
                         </md-expansion-panel-collapsed>
                         <md-expansion-panel-expanded>
-                            <md-expansion-panel-header ng-click="vm.$mdExpansionPanel(typeId).collapse()">
+                            <md-expansion-panel-header ng-mouseenter="vm.typeHeaderMouseEnter($event, typeId)"
+                                                       ng-mouseleave="vm.destroyTooltips()"
+                                                       ng-click="vm.$mdExpansionPanel(typeId).collapse()">
                                 <div class="tb-panel-title" translate>{{vm.types.ruleNodeType[typeId].name}}</div>
                                 <md-expansion-panel-icon></md-expansion-panel-icon>
                             </md-expansion-panel-header>
@@ -36,6 +39,7 @@
                                 <fc-canvas id="tb-rulechain-{{typeId}}"
                                            model="vm.ruleNodeTypesModel[typeId].model" selected-objects="vm.ruleNodeTypesModel[typeId].selectedObjects"
                                            automatic-resize="false"
+                                           callbacks="vm.nodeLibCallbacks"
                                            node-width="170"
                                            node-height="50"
                                            drop-target-id="'tb-rulchain-canvas'"></fc-canvas>

@@ -18,7 +18,10 @@
 <div
         id="{{node.id}}"
         ng-attr-style="position: absolute; top: {{ node.y }}px; left: {{ node.x }}px;"
-        ng-dblclick="callbacks.doubleClick($event, node)">
+        ng-dblclick="callbacks.doubleClick($event, node)"
+        ng-mouseover="callbacks.mouseOver($event, node)"
+        ng-mouseenter="callbacks.mouseEnter($event, node)"
+        ng-mouseleave="callbacks.mouseLeave($event, node)">
     <div class="tb-rule-node {{node.nodeClass}}">
         <md-icon aria-label="node-type-icon" flex="15"
                  class="material-icons">{{node.icon}}</md-icon>

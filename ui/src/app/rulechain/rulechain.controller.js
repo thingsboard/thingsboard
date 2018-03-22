@@ -16,6 +16,10 @@
 
 import './rulechain.scss';
 
+import 'tooltipster/dist/css/tooltipster.bundle.min.css';
+import 'tooltipster/dist/js/tooltipster.bundle.min.js';
+import 'tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import addRuleNodeTemplate from './add-rulenode.tpl.html';
@@ -30,7 +34,7 @@ const aKeyCode = 65;
 const escKeyCode = 27;
 
 /*@ngInject*/
-export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpansionPanel, $document, $mdDialog, $filter, types, ruleChainService, Modelfactory, flowchartConstants, ruleChain, ruleChainMetaData) {
+export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $document, $mdDialog, $filter, types, ruleChainService, Modelfactory, flowchartConstants, ruleChain, ruleChainMetaData) {
 
     var vm = this;
 
@@ -138,6 +142,82 @@ export function RuleChainController($stateParams, $scope, $q, $mdUtil, $mdExpans
         var edge = vm.ruleChainModel.edges[vm.editingRuleNodeLinkIndex];
         vm.editingRuleNodeLink = angular.copy(edge);
     };
+
+    vm.nodeLibCallbacks = {
+        nodeCallbacks: {
+            'mouseEnter': function (event, node) {
+                displayNodeDescriptionTooltip(event, node);
+            },
+            'mouseLeave': function () {
+                destroyTooltips();
+            }
+        }
+    };
+
+    vm.typeHeaderMouseEnter = function(event, typeId) {
+        displayTooltip(event,
+            '<div class="tb-rule-node-tooltip">' +
+            '<div id="tooltip-content" layout="column">' +
+            '<div class="tb-node-title">' + typeId + '</div>' +
+            '<div class="tb-node-description">' + 'Some description of component type' + '</div>' +
+            '</div>' +
+            '</div>'
+        );
+    };
+
+    vm.destroyTooltips = destroyTooltips;
+
+    function destroyTooltips() {
+        if (vm.tooltipTimeout) {
+            $timeout.cancel(vm.tooltipTimeout);
+            vm.tooltipTimeout = null;
+        }
+        var instances = angular.element.tooltipster.instances();
+        instances.forEach((instance) => {
+            instance.destroy();
+        });
+    }
+
+    function displayNodeDescriptionTooltip(event, node) {
+        displayTooltip(event,
+            '<div class="tb-rule-node-tooltip">' +
+            '<div id="tooltip-content" layout="column">' +
+            '<div class="tb-node-title">' + node.component.name + '</div>' +
+            '<div class="tb-node-description">' + 'Some description of node' + '</div>' +
+            '</div>' +
+            '</div>'
+        );
+    }
+
+    function displayTooltip(event, content) {
+        destroyTooltips();
+        vm.tooltipTimeout = $timeout(() => {
+            var element = angular.element(event.target);
+            element.tooltipster(
+                {
+                    theme: 'tooltipster-shadow',
+                    delay: 100,
+                    trigger: 'custom',
+                    triggerOpen: {
+                        click: false,
+                        tap: false
+                    },
+                    triggerClose: {
+                        click: true,
+                        tap: true,
+                        scroll: true
+                    },
+                    side: 'right',
+                    trackOrigin: true
+                }
+            );
+            var contentElement = angular.element(content);
+            $compile(contentElement)($scope);
+            var tooltip = element.tooltipster('instance');
+            tooltip.content(contentElement);
+            tooltip.open();
+        }, 500);
+    }
 
     vm.editCallbacks = {
         edgeDoubleClick: function (event, edge) {
