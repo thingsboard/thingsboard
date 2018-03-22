@@ -227,9 +227,9 @@ public class DefaultActorServiceTest {
         when(pluginMock.getConfiguration()).thenReturn(pluginAdditionalInfo);
         when(pluginMock.getClazz()).thenReturn(TelemetryStoragePlugin.class.getName());
 
-        when(attributesService.findAll(deviceId, DataConstants.CLIENT_SCOPE)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        when(attributesService.findAll(deviceId, DataConstants.SHARED_SCOPE)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        when(attributesService.findAll(deviceId, DataConstants.SERVER_SCOPE)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        when(attributesService.findAll(deviceId, DataConstants.CLIENT_SCOPE,false)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        when(attributesService.findAll(deviceId, DataConstants.SHARED_SCOPE,false)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        when(attributesService.findAll(deviceId, DataConstants.SERVER_SCOPE,false)).thenReturn(Futures.immediateFuture(Collections.emptyList()));
 
         initActorSystem();
         Thread.sleep(1000);

@@ -118,7 +118,7 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void loadAttribute(EntityId entityId, String attributeType, String attributeKey, final PluginCallback<Optional<AttributeKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<Optional<AttributeKvEntry>> future = pluginCtx.attributesService.find(entityId, attributeType, attributeKey);
+            ListenableFuture<Optional<AttributeKvEntry>> future = pluginCtx.attributesService.find(entityId, attributeType, attributeKey,false);
             Futures.addCallback(future, getCallback(callback, v -> v), executor);
         }));
     }
@@ -126,16 +126,24 @@ public final class PluginProcessingContext implements PluginContext {
     @Override
     public void loadAttributes(EntityId entityId, String attributeType, Collection<String> attributeKeys, final PluginCallback<List<AttributeKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.find(entityId, attributeType, attributeKeys);
-            Futures.addCallback(future, getCallback(callback, v -> v), executor);
+            List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+            futures.add(pluginCtx.attributesService.find(entityId, attributeType, attributeKeys,false));
+            ArrayList<String> l=new ArrayList<String>();
+            l.add(attributeType);
+            getRelatedAttribute(entityId,l,attributeKeys,futures,0);
+            convertFuturesAndAddCallback(callback, futures);
         }));
     }
 
     @Override
     public void loadAttributes(EntityId entityId, String attributeType, PluginCallback<List<AttributeKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
-            ListenableFuture<List<AttributeKvEntry>> future = pluginCtx.attributesService.findAll(entityId, attributeType);
-            Futures.addCallback(future, getCallback(callback, v -> v), executor);
+            List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+            futures.add(pluginCtx.attributesService.findAll(entityId, attributeType,false));
+            ArrayList<String> l=new ArrayList<String>();
+            l.add(attributeType);
+            getRelatedAttributes(entityId,l,futures,0);
+            convertFuturesAndAddCallback(callback, futures);
         }));
     }
 
@@ -143,7 +151,10 @@ public final class PluginProcessingContext implements PluginContext {
     public void loadAttributes(final EntityId entityId, final Collection<String> attributeTypes, final PluginCallback<List<AttributeKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
             List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-            attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.findAll(entityId, attributeType)));
+            attributeTypes.forEach(attributeType -> {
+                futures.add(pluginCtx.attributesService.findAll(entityId, attributeType,false)); 
+            });
+            getRelatedAttributes(entityId,attributeTypes,futures,0);
             convertFuturesAndAddCallback(callback, futures);
         }));
     }
@@ -152,9 +163,44 @@ public final class PluginProcessingContext implements PluginContext {
     public void loadAttributes(final EntityId entityId, final Collection<String> attributeTypes, final Collection<String> attributeKeys, final PluginCallback<List<AttributeKvEntry>> callback) {
         validate(entityId, new ValidationCallback(callback, ctx -> {
             List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-            attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.find(entityId, attributeType, attributeKeys)));
+            attributeTypes.forEach(attributeType -> futures.add(pluginCtx.attributesService.find(entityId, attributeType, attributeKeys,false)));
+            getRelatedAttribute(entityId,attributeTypes,attributeKeys,futures,0);
             convertFuturesAndAddCallback(callback, futures);
         }));
+    }    
+    private void getRelatedAttributes(final EntityId entityId,final Collection<String> attributeTypes,List<ListenableFuture<List<AttributeKvEntry>>> futures,int lvl) {
+        log.debug("Processing lvl {}",lvl);
+        if (lvl>10) {
+            log.error("Sorry max of 10 levels of Inheritance allowed");
+            return;
+        }
+        List<EntityRelation> relList=pluginCtx.relationService.findByTo(entityId, RelationTypeGroup.COMMON);
+        relList.forEach(rel->{
+            log.debug("Processing Relation {} for child {}",rel.getFrom().toString(),entityId.toString());
+            if (!rel.getAdditionalInfo().has("noinherit") || !rel.getAdditionalInfo().get("noinherit").asBoolean()) {
+                attributeTypes.forEach(attributeType -> {
+                    futures.add(pluginCtx.attributesService.findAll(rel.getFrom(), attributeType,true)); 
+                });
+                getRelatedAttributes(rel.getFrom(),attributeTypes,futures,lvl+1);
+            }
+        });
+    }
+    private void getRelatedAttribute(final EntityId entityId,final Collection<String> attributeTypes,final Collection<String> attributeKeys,List<ListenableFuture<List<AttributeKvEntry>>> futures,int lvl) {
+        log.debug("Processing lvl {}",lvl);
+        if (lvl>10) {
+            log.error("Sorry max of 10 levels of Inheritance allowed");
+            return;
+        }
+        List<EntityRelation> relList=pluginCtx.relationService.findByTo(entityId, RelationTypeGroup.COMMON);
+        relList.forEach(rel->{
+            log.debug("Processing Relation {} for child {}",rel.getFrom().toString(),entityId.toString());
+            if (!rel.getAdditionalInfo().has("noinherit") || !rel.getAdditionalInfo().get("noinherit").asBoolean()) {
+                attributeTypes.forEach(attributeType -> {
+                    futures.add(pluginCtx.attributesService.find(rel.getFrom(), attributeType, attributeKeys,true)); 
+                });
+                getRelatedAttribute(rel.getFrom(),attributeTypes,attributeKeys,futures,lvl+1);
+            }
+        });
     }
 
     @Override

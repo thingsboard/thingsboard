@@ -420,7 +420,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private List<AttributeKvEntry> fetchAttributes(String scope) {
         try {
             //TODO: replace this with async operation. Happens only during actor creation, but is still criticla for performance,    	
-            return systemContext.getAttributesService().findAll(this.deviceId, scope).get();
+            return systemContext.getAttributesService().findAll(this.deviceId, scope,false).get();
         } catch (InterruptedException | ExecutionException e) {
             logger.warning("[{}] Failed to fetch attributes for scope: {}", deviceId, scope);
             throw new RuntimeException(e);

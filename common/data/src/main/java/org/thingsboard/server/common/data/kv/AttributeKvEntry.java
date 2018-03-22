@@ -21,5 +21,7 @@ package org.thingsboard.server.common.data.kv;
 public interface AttributeKvEntry extends KvEntry {
 
     long getLastUpdateTs();
+    boolean getIsInherited();
+    void setIsInherited();
 
 }

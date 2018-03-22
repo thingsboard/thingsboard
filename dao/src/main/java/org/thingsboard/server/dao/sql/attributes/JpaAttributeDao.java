@@ -47,7 +47,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     private AttributeKvRepository attributeKvRepository;
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey,boolean isInherited) {
         AttributeKvCompositeKey compositeKey =
                 getAttributeKvCompositeKey(entityId, attributeType, attributeKey);
         return Futures.immediateFuture(
@@ -55,7 +55,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKeys,boolean isInherited) {
         List<AttributeKvCompositeKey> compositeKeys =
                 attributeKeys
                         .stream()
@@ -67,7 +67,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType,boolean isInherited) {
         return Futures.immediateFuture(
                 DaoUtil.convertDataList(Lists.newArrayList(
                         attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(

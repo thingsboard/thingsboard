@@ -39,23 +39,23 @@ public class BaseAttributesService implements AttributesService {
     private AttributesDao attributesDao;
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String scope, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String scope, String attributeKey,boolean isInherited) {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
-        return attributesDao.find(entityId, scope, attributeKey);
+        return attributesDao.find(entityId, scope, attributeKey,isInherited);
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String scope, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String scope, Collection<String> attributeKeys,boolean isInherited) {
         validate(entityId, scope);
         attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
-        return attributesDao.find(entityId, scope, attributeKeys);
+        return attributesDao.find(entityId, scope, attributeKeys,isInherited);
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String scope) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String scope,boolean isInherited) {
         validate(entityId, scope);
-        return attributesDao.findAll(entityId, scope);
+        return attributesDao.findAll(entityId, scope,isInherited);
     }
 
     @Override
