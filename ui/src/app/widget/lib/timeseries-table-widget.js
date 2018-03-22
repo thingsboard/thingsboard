@@ -44,7 +44,7 @@ function TimeseriesTableWidget() {
 }
 
 /*@ngInject*/
-function TimeseriesTableWidgetController($element, $scope, $filter) {
+function TimeseriesTableWidgetController($element, $scope, $filter, $timeout) {
     var vm = this;
     let dateFormatFilter = 'yyyy-MM-dd HH:mm:ss';
 
@@ -62,6 +62,9 @@ function TimeseriesTableWidgetController($element, $scope, $filter) {
     function enterFilterMode () {
         vm.query.search = '';
         vm.ctx.hideTitlePanel = true;
+        $timeout(()=>{
+            angular.element(vm.ctx.$container).find('.searchInput').focus();
+        })
     }
 
     function exitFilterMode () {
