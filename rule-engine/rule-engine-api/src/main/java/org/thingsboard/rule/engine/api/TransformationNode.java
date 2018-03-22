@@ -32,6 +32,14 @@ public @interface TransformationNode {
 
     String name();
 
+    String nodeDescription();
+
+    String nodeDetails();
+
+    boolean inEnabled() default true;
+
+    boolean outEnabled() default true;
+
     ComponentScope scope() default ComponentScope.TENANT;
 
     String descriptor() default "EmptyNodeDescriptor.json";

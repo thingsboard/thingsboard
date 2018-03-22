@@ -26,7 +26,12 @@ import javax.script.Bindings;
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
 @Slf4j
-@FilterNode(name = "Filter Node", relationTypes = {"True", "False", "Failure"})
+@FilterNode(name = "script", relationTypes = {"True", "False", "Failure"},
+        nodeDescription = "Filter incoming messages using JS script",
+        nodeDetails = "Evaluate incoming Message with configured JS condition. " +
+                "If 'True' - send Message via 'True' chain, otherwise 'False' chain is used." +
+                "Message payload can be accessed via 'msg' property. For example 'msg.temperature < 10;'" +
+                "Message metadata can be accessed via 'meta' property. For example 'meta.customerName === 'John';'")
 public class TbJsFilterNode implements TbNode {
 
     private TbJsFilterNodeConfiguration config;
