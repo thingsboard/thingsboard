@@ -40,12 +40,12 @@ div.tb-widget {
     position: absolute;
     top: 8px;
     right: 8px;
-    z-index: 1;
-    margin: 0px;
+    z-index: 19;
+    margin: 0;
 
     .md-button.md-icon-button {
-      margin: 0px !important;
-      padding: 0px !important;
+      margin: 0 !important;
+      padding: 0 !important;
       line-height: 20px;
       width: 32px;
       height: 32px;
