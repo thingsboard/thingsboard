@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.*;
+
 public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName {
 
     private TenantId tenantId;
-    private CustomerId customerId;
     private String title;
+    private Set<ShortCustomerInfo> assignedCustomers;
 
     public DashboardInfo() {
         super();
@@ -37,8 +39,8 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     public DashboardInfo(DashboardInfo dashboardInfo) {
         super(dashboardInfo);
         this.tenantId = dashboardInfo.getTenantId();
-        this.customerId = dashboardInfo.getCustomerId();
         this.title = dashboardInfo.getTitle();
+        this.assignedCustomers = dashboardInfo.getAssignedCustomers();
     }
 
     public TenantId getTenantId() {
@@ -49,20 +51,68 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         this.tenantId = tenantId;
     }
 
-    public CustomerId getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(CustomerId customerId) {
-        this.customerId = customerId;
-    }
-
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Set<ShortCustomerInfo> getAssignedCustomers() {
+        return assignedCustomers;
+    }
+
+    public void setAssignedCustomers(Set<ShortCustomerInfo> assignedCustomers) {
+        this.assignedCustomers = assignedCustomers;
+    }
+
+    public boolean isAssignedToCustomer(CustomerId customerId) {
+        return this.assignedCustomers != null && this.assignedCustomers.contains(new ShortCustomerInfo(customerId, null, false));
+    }
+
+    public ShortCustomerInfo getAssignedCustomerInfo(CustomerId customerId) {
+        if (this.assignedCustomers != null) {
+            for (ShortCustomerInfo customerInfo : this.assignedCustomers) {
+                if (customerInfo.getCustomerId().equals(customerId)) {
+                    return customerInfo;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean addAssignedCustomer(Customer customer) {
+        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
+        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
+            return false;
+        } else {
+            if (this.assignedCustomers == null) {
+                this.assignedCustomers = new HashSet<>();
+            }
+            this.assignedCustomers.add(customerInfo);
+            return true;
+        }
+    }
+
+    public boolean updateAssignedCustomer(Customer customer) {
+        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
+        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
+            this.assignedCustomers.add(customerInfo);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean removeAssignedCustomer(Customer customer) {
+        ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
+        if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
+            this.assignedCustomers.remove(customerInfo);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -80,7 +130,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((customerId == null) ? 0 : customerId.hashCode());
         result = prime * result + ((tenantId == null) ? 0 : tenantId.hashCode());
         result = prime * result + ((title == null) ? 0 : title.hashCode());
         return result;
@@ -95,11 +144,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         if (getClass() != obj.getClass())
             return false;
         DashboardInfo other = (DashboardInfo) obj;
-        if (customerId == null) {
-            if (other.customerId != null)
-                return false;
-        } else if (!customerId.equals(other.customerId))
-            return false;
         if (tenantId == null) {
             if (other.tenantId != null)
                 return false;
@@ -118,8 +162,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         StringBuilder builder = new StringBuilder();
         builder.append("DashboardInfo [tenantId=");
         builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
         builder.append(", title=");
         builder.append(title);
         builder.append("]");

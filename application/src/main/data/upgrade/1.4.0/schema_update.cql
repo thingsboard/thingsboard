@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2017 The Thingsboard Authors
+-- Copyright © 2016-2018 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -87,3 +87,26 @@ CREATE TABLE IF NOT EXISTS thingsboard.audit_log_by_tenant_id_partitions (
   PRIMARY KEY (( tenant_id ), partition)
 ) WITH CLUSTERING ORDER BY ( partition ASC )
 AND compaction = { 'class' :  'LeveledCompactionStrategy'  };
+
+DROP MATERIALIZED VIEW IF EXISTS thingsboard.dashboard_by_tenant_and_search_text;
+DROP MATERIALIZED VIEW IF EXISTS thingsboard.dashboard_by_customer_and_search_text;
+
+DROP TABLE IF EXISTS thingsboard.dashboard;
+
+CREATE TABLE IF NOT EXISTS thingsboard.dashboard (
+	id timeuuid,
+	tenant_id timeuuid,
+	title text,
+	search_text text,
+	assigned_customers text,
+	configuration text,
+	PRIMARY KEY (id, tenant_id)
+);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.dashboard_by_tenant_and_search_text AS
+	SELECT *
+	from thingsboard.dashboard
+	WHERE tenant_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
+	PRIMARY KEY ( tenant_id, search_text, id )
+	WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );
+

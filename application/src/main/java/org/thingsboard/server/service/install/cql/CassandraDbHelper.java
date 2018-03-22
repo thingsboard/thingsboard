@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.thingsboard.server.service.install.cql;
 
 import com.datastax.driver.core.*;
@@ -28,16 +27,25 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
-public class CassandraDbHelper {
+import static org.thingsboard.server.service.install.DatabaseHelper.CSV_DUMP_FORMAT;
 
-    private static final CSVFormat CSV_DUMP_FORMAT = CSVFormat.DEFAULT.withNullString("\\N");
+public class CassandraDbHelper {
 
     public static Path dumpCfIfExists(KeyspaceMetadata ks, Session session, String cfName,
                                       String[] columns, String[] defaultValues, String dumpPrefix) throws Exception {
+        return dumpCfIfExists(ks, session, cfName, columns, defaultValues, dumpPrefix, false);
+    }
+
+    public static Path dumpCfIfExists(KeyspaceMetadata ks, Session session, String cfName,
+                                      String[] columns, String[] defaultValues, String dumpPrefix, boolean printHeader) throws Exception {
         if (ks.getTable(cfName) != null) {
             Path dumpFile = Files.createTempFile(dumpPrefix, null);
             Files.deleteIfExists(dumpFile);
-            try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(dumpFile), CSV_DUMP_FORMAT)) {
+            CSVFormat csvFormat = CSV_DUMP_FORMAT;
+            if (printHeader) {
+                csvFormat = csvFormat.withHeader(columns);
+            }
+            try (CSVPrinter csvPrinter = new CSVPrinter(Files.newBufferedWriter(dumpFile), csvFormat)) {
                 Statement stmt = new SimpleStatement("SELECT * FROM " + cfName);
                 stmt.setFetchSize(1000);
                 ResultSet rs = session.execute(stmt);
@@ -75,9 +83,19 @@ public class CassandraDbHelper {
     }
 
     public static void loadCf(KeyspaceMetadata ks, Session session, String cfName, String[] columns, Path sourceFile) throws Exception {
+        loadCf(ks, session, cfName, columns, sourceFile, false);
+    }
+
+    public static void loadCf(KeyspaceMetadata ks, Session session, String cfName, String[] columns, Path sourceFile, boolean parseHeader) throws Exception {
         TableMetadata tableMetadata = ks.getTable(cfName);
         PreparedStatement prepared = session.prepare(createInsertStatement(cfName, columns));
-        try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(sourceFile), CSV_DUMP_FORMAT.withHeader(columns))) {
+        CSVFormat csvFormat = CSV_DUMP_FORMAT;
+        if (parseHeader) {
+            csvFormat = csvFormat.withFirstRecordAsHeader();
+        } else {
+            csvFormat = CSV_DUMP_FORMAT.withHeader(columns);
+        }
+        try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(sourceFile), csvFormat)) {
             csvParser.forEach(record -> {
                 BoundStatement boundStatement = prepared.bind();
                 for (String column : columns) {

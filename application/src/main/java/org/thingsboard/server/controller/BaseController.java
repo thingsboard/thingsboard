@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -423,7 +423,7 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             Dashboard dashboard = dashboardService.findDashboardById(dashboardId);
-            checkDashboard(dashboard, true);
+            checkDashboard(dashboard);
             return dashboard;
         } catch (Exception e) {
             throw handleException(e, false);
@@ -434,27 +434,22 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(dashboardId);
-            SecurityUser authUser = getCurrentUser();
-            checkDashboard(dashboardInfo, authUser.getAuthority() != Authority.SYS_ADMIN);
+            checkDashboard(dashboardInfo);
             return dashboardInfo;
         } catch (Exception e) {
             throw handleException(e, false);
         }
     }
 
-    private void checkDashboard(DashboardInfo dashboard, boolean checkCustomerId) throws ThingsboardException {
+    private void checkDashboard(DashboardInfo dashboard) throws ThingsboardException {
         checkNotNull(dashboard);
         checkTenantId(dashboard.getTenantId());
         SecurityUser authUser = getCurrentUser();
         if (authUser.getAuthority() == Authority.CUSTOMER_USER) {
-            if (dashboard.getCustomerId() == null || dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            if (!dashboard.isAssignedToCustomer(authUser.getCustomerId())) {
                 throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
                         ThingsboardErrorCode.PERMISSION_DENIED);
             }
-        }
-        if (checkCustomerId &&
-                dashboard.getCustomerId() != null && !dashboard.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-            checkCustomerId(dashboard.getCustomerId());
         }
     }
 

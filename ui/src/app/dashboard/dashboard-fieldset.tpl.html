@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2017 The Thingsboard Authors
+    Copyright © 2016-2018 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,24 +19,29 @@
 		   ng-show="!isEdit && dashboardScope === 'tenant'"
 		   class="md-raised md-primary">{{ 'dashboard.export' | translate }}</md-button>
 <md-button ng-click="onMakePublic({event: $event})"
-		   ng-show="!isEdit && dashboardScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+		   ng-show="!isEdit && dashboardScope === 'tenant' && !dashboard.publicCustomerId"
 		   class="md-raised md-primary">{{ 'dashboard.make-public' | translate }}</md-button>
-<md-button ng-click="onAssignToCustomer({event: $event})"
-		   ng-show="!isEdit && dashboardScope === 'tenant' && !isAssignedToCustomer"
-		   class="md-raised md-primary">{{ 'dashboard.assign-to-customer' | translate }}</md-button>
-<md-button ng-click="onUnassignFromCustomer({event: $event, isPublic: isPublic})"
-		   ng-show="!isEdit && (dashboardScope === 'customer' || dashboardScope === 'tenant') && isAssignedToCustomer"
-		   class="md-raised md-primary">{{ isPublic ? 'dashboard.make-private' : 'dashboard.unassign-from-customer' | translate }}</md-button>
+<md-button ng-click="onMakePrivate({event: $event})"
+		   ng-show="!isEdit && ((dashboardScope === 'tenant' && dashboard.publicCustomerId ||
+		   						dashboardScope === 'customer' && customerId == dashboard.publicCustomerId))"
+		   class="md-raised md-primary">{{ 'dashboard.make-private' | translate }}</md-button>
+<md-button ng-click="onManageAssignedCustomers({event: $event})"
+		   ng-show="!isEdit && dashboardScope === 'tenant'"
+		   class="md-raised md-primary">{{ 'dashboard.manage-assigned-customers' | translate }}</md-button>
+<md-button ng-click="onUnassignFromCustomer({event: $event})"
+		   ng-show="!isEdit && dashboardScope === 'customer' && customerId != dashboard.publicCustomerId"
+		   class="md-raised md-primary">{{ 'dashboard.unassign-from-customer' | translate }}</md-button>
 <md-button ng-click="onDeleteDashboard({event: $event})"
 		   ng-show="!isEdit && dashboardScope === 'tenant'"
 		   class="md-raised md-primary">{{ 'dashboard.delete' | translate }}</md-button>
 <md-content class="md-padding" layout="column">
 	<md-input-container class="md-block"
-						ng-show="!isEdit && isAssignedToCustomer && !isPublic && dashboardScope === 'tenant'">
-		<label translate>dashboard.assignedToCustomer</label>
-		<input ng-model="assignedCustomer.title" disabled>
+						ng-show="!isEdit && dashboard.assignedCustomersText && dashboardScope === 'tenant'">
+		<label translate>dashboard.assignedToCustomers</label>
+		<input ng-model="dashboard.assignedCustomersText" disabled>
 	</md-input-container>
-	<div layout="column" ng-show="!isEdit && isPublic && (dashboardScope === 'customer' || dashboardScope === 'tenant')">
+	<div layout="column" ng-show="!isEdit && ((dashboardScope === 'tenant' && dashboard.publicCustomerId ||
+		   						               dashboardScope === 'customer' && customerId == dashboard.publicCustomerId))">
 		<tb-social-share-panel style="padding-bottom: 10px;"
 							   share-title="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle: dashboard.title} }}"
 							   share-text="{{ 'dashboard.socialshare-text' | translate:{dashboardTitle: dashboard.title} }}"

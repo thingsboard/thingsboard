@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2017 The Thingsboard Authors
+# Copyright © 2016-2018 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ ZK_LOG_DIR=/var/log/zookeeper \
 JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 
 ARG GPG_KEY=C823E3E5B12AF29C67F81976F5CECB3CB5E9BD2D
-ARG ZK_DIST=zookeeper-3.4.9
+ARG ZK_DIST=zookeeper-3.4.10
 RUN set -x \
     && apt-get update \
     && apt-get install -y openjdk-8-jre-headless wget netcat-openbsd \

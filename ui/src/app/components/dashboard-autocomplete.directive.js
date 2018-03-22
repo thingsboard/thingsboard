@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 The Thingsboard Authors
+ * Copyright © 2016-2018 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
             var promise;
             if (scope.dashboardsScope === 'customer' || userService.getAuthority() === 'CUSTOMER_USER') {
                 if (scope.customerId) {
-                    promise = dashboardService.getCustomerDashboards(scope.customerId, pageLink, false, {ignoreLoading: true});
+                    promise = dashboardService.getCustomerDashboards(scope.customerId, pageLink, {ignoreLoading: true});
                 } else {
                     promise = $q.when({data: []});
                 }
@@ -60,7 +60,7 @@ function DashboardAutocomplete($compile, $templateCache, $q, dashboardService, u
                         promise = $q.when({data: []});
                     }
                 } else {
-                    promise = dashboardService.getTenantDashboards(pageLink, false, {ignoreLoading: true});
+                    promise = dashboardService.getTenantDashboards(pageLink, {ignoreLoading: true});
                 }
             }
 
