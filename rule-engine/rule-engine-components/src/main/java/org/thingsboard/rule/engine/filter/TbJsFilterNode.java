@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.js.NashornJsEngine;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.Bindings;
@@ -26,12 +27,14 @@ import javax.script.Bindings;
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
 @Slf4j
-@FilterNode(name = "script", relationTypes = {"True", "False", "Failure"},
+@RuleNode(
+        type = ComponentType.FILTER,
+        name = "script", relationTypes = {"True", "False", "Failure"},
         nodeDescription = "Filter incoming messages using JS script",
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
-                "If 'True' - send Message via 'True' chain, otherwise 'False' chain is used." +
-                "Message payload can be accessed via 'msg' property. For example 'msg.temperature < 10;'" +
-                "Message metadata can be accessed via 'meta' property. For example 'meta.customerName === 'John';'")
+                "If <b>True</b> - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used." +
+                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code>" +
+                "Message metadata can be accessed via <code>meta</code> property. For example <code>meta.customerName === 'John';</code>")
 public class TbJsFilterNode implements TbNode {
 
     private TbJsFilterNodeConfiguration config;

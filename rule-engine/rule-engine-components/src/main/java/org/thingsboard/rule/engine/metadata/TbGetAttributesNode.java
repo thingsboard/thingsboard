@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -35,11 +36,12 @@ import static org.thingsboard.server.common.data.DataConstants.*;
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
-@EnrichmentNode(name = "originator attributes",
-        nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
-        nodeDetails = "If Attributes enrichment configured, CLIENT/SHARED/SERVER attributes are added into Message metadata " +
-                "with specific prefix: cs/shared/ss. To access those attributes in other nodes this template can be used " +
-                "'meta.cs.temperature' or 'meta.shared.limit' " +
+@RuleNode(type = ComponentType.ENRICHMENT,
+          name = "originator attributes",
+          nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
+          nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
+                "with specific prefix: <i>cs/shared/ss</i>. To access those attributes in other nodes this template can be used " +
+                "<code>meta.cs.temperature</code> or <code>meta.shared.limit</code> " +
                 "If Latest Telemetry enrichment configured, latest telemetry added into metadata without prefix.")
 public class TbGetAttributesNode implements TbNode {
 

@@ -16,17 +16,20 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.rule.engine.api.EnrichmentNode;
+import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 
-@EnrichmentNode(name="customer attributes",
+@RuleNode(
+        type = ComponentType.ENRICHMENT,
+        name="customer attributes",
         nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata",
         nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
                 "To access those attributes in other nodes this template can be used " +
-                "'meta.temperature'. If Latest Telemetry enrichment configured, latest telemetry added into metadata")
+                "<code>meta.temperature</code>. If Latest Telemetry enrichment configured, latest telemetry added into metadata")
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {
 
     @Override

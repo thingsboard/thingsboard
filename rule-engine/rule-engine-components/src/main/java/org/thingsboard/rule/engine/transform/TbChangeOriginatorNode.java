@@ -27,12 +27,15 @@ import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.HashSet;
 
 @Slf4j
-@TransformationNode(name="change originator",
+@RuleNode(
+        type = ComponentType.TRANSFORMATION,
+        name="change originator",
         nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
                 "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ")

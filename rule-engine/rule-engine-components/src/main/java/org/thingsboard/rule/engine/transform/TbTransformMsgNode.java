@@ -19,15 +19,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.js.NashornJsEngine;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.Bindings;
 
-@TransformationNode(name = "script",
+@RuleNode(
+        type = ComponentType.TRANSFORMATION,
+        name = "script",
         nodeDescription = "Change Message payload and Metadata using JavaScript",
-        nodeDetails = "JavaScript function recieve 2 input parameters that can be changed inside. " +
-                "'meta' - is a Message metadata. " +
-                "'msg' - is a Message payload. Any properties can be changed/removed/added in those objects.")
+        nodeDetails = "JavaScript function recieve 2 input parameters that can be changed inside.<br/> " +
+                "<code>meta</code> - is a Message metadata.<br/>" +
+                "<code>msg</code> - is a Message payload.<br/>Any properties can be changed/removed/added in those objects.")
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;

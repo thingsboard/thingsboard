@@ -16,28 +16,34 @@
 package org.thingsboard.rule.engine.api;
 
 import org.thingsboard.server.common.data.plugin.ComponentScope;
-import org.thingsboard.server.extensions.api.component.EmptyComponentConfiguration;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * @author Andrew Shvayka
- */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface ActionNode {
+public @interface RuleNode {
+
+    ComponentType type();
 
     String name();
 
+    String nodeDescription();
+
+    String nodeDetails();
+
+    boolean inEnabled() default true;
+
+    boolean outEnabled() default true;
+
     ComponentScope scope() default ComponentScope.TENANT;
 
-    String descriptor() default "EmptyNodeDescriptor.json";
+    String defaultConfigResource() default "EmptyNodeConfig.json";
 
-    String[] relationTypes() default {"Success","Failure"};
+    String[] relationTypes() default {"Success", "Failure"};
 
     boolean customRelations() default false;
-
 }

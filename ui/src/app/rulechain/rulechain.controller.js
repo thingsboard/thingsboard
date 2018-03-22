@@ -183,7 +183,8 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             '<div class="tb-rule-node-tooltip">' +
             '<div id="tooltip-content" layout="column">' +
             '<div class="tb-node-title">' + node.component.name + '</div>' +
-            '<div class="tb-node-description">' + 'Some description of node' + '</div>' +
+            '<div class="tb-node-description">' + node.component.configurationDescriptor.nodeDefinition.description + '</div>' +
+            '<div class="tb-node-details">' + node.component.configurationDescriptor.nodeDefinition.details + '</div>' +
             '</div>' +
             '</div>'
         );

@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.js.NashornJsEngine;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.Bindings;
@@ -27,12 +28,14 @@ import java.util.Set;
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
 @Slf4j
-@FilterNode(name = "switch", customRelations = true,
+@RuleNode(
+        type = ComponentType.FILTER,
+        name = "switch", customRelations = true,
         nodeDescription = "Route incoming Message to one or multiple output chains",
         nodeDetails = "Node executes configured JS script. Script should return array of next Chain names where Message should be routed. " +
                 "If Array is empty - message not routed to next Node. " +
-                "Message payload can be accessed via 'msg' property. For example 'msg.temperature < 10;' " +
-                "Message metadata can be accessed via 'meta' property. For example 'meta.customerName === 'John';' ")
+                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code> " +
+                "Message metadata can be accessed via <code>meta</code> property. For example <code>meta.customerName === 'John';</code>")
 public class TbJsSwitchNode implements TbNode {
 
     private TbJsSwitchNodeConfiguration config;

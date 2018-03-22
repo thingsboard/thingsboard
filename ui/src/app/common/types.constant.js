@@ -460,8 +460,19 @@ export default angular.module('thingsboard.types', [])
             ruleNodeTypeComponentTypes: ["FILTER", "ENRICHMENT", "TRANSFORMATION", "ACTION"],
             ruleChainNodeComponent: {
                 type: 'RULE_CHAIN',
-                name: 'Rule chain',
-                clazz: 'tb.internal.RuleChain'
+                name: 'rule chain',
+                clazz: 'tb.internal.RuleChain',
+                configurationDescriptor: {
+                    nodeDefinition: {
+                        description: "Forwards incoming messages to specified Rule Chain",
+                        details: "Forwards incoming messages to specified Rule Chain",
+                        inEnabled: true,
+                        outEnabled: false,
+                        relationTypes: [],
+                        customRelations: false,
+                        defaultConfiguration: {}
+                    }
+                }
             },
             inputNodeComponent: {
                 type: 'INPUT',

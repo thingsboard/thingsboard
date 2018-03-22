@@ -18,16 +18,19 @@ package org.thingsboard.rule.engine.filter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 /**
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
-@FilterNode(name = "message type",
+@RuleNode(
+        type = ComponentType.FILTER,
+        name = "message type",
         nodeDescription = "Filter incoming messages by Message Type",
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
-                "If incoming MessageType is expected - send Message via 'Success' chain, otherwise 'Failure' chain is used.")
+                "If incoming MessageType is expected - send Message via <b>Success</b> chain, otherwise <b>Failure</b> chain is used.")
 public class TbMsgTypeFilterNode implements TbNode {
 
     TbMsgTypeFilterNodeConfiguration config;
