@@ -26,7 +26,13 @@ import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 
 import org.thingsboard.server.common.data.id.EntityId;
 
-@EnrichmentNode(name="Get Related Entity Attributes Node")
+@EnrichmentNode(name="related attributes",
+        nodeDescription = "Add Originators Related Entity Attributes or Latest Telemetry into Message Metadata",
+        nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
+                "If multiple Related Entities are found, only first Entity is used for attributes enrichment, other entities are discarded. " +
+                "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
+                "To access those attributes in other nodes this template can be used " +
+                "'meta.temperature'. If Latest Telemetry enrichment configured, latest telemetry added into metadata")
 public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
 
     private TbGetRelatedAttrNodeConfiguration config;

@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.api;
 
 import org.thingsboard.server.common.data.plugin.ComponentScope;
-import org.thingsboard.server.extensions.api.component.EmptyComponentConfiguration;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -32,11 +31,19 @@ public @interface EnrichmentNode {
 
     String name();
 
+    String nodeDescription();
+
+    String nodeDetails();
+
+    boolean inEnabled() default true;
+
+    boolean outEnabled() default true;
+
     ComponentScope scope() default ComponentScope.TENANT;
 
     String descriptor() default "EmptyNodeDescriptor.json";
 
-    String[] relationTypes() default {"Success","Failure"};
+    String[] relationTypes() default {"Success", "Failure"};
 
     boolean customRelations() default false;
 }

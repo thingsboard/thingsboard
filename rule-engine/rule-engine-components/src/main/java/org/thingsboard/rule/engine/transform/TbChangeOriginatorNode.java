@@ -32,7 +32,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.HashSet;
 
 @Slf4j
-@EnrichmentNode(name = "Change Originator Node")
+@TransformationNode(name="change originator",
+        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
+        nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
+                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ")
 public class TbChangeOriginatorNode extends TbAbstractTransformNode {
 
     protected static final String CUSTOMER_SOURCE = "CUSTOMER";

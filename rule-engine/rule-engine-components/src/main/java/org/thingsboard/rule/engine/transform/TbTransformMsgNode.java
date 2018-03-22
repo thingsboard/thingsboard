@@ -23,7 +23,11 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.Bindings;
 
-@EnrichmentNode(name = "Transformation Node")
+@TransformationNode(name = "script",
+        nodeDescription = "Change Message payload and Metadata using JavaScript",
+        nodeDetails = "JavaScript function recieve 2 input parameters that can be changed inside. " +
+                "'meta' - is a Message metadata. " +
+                "'msg' - is a Message payload. Any properties can be changed/removed/added in those objects.")
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;

@@ -24,7 +24,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Slf4j
-@EnrichmentNode(name="Get Tenant Attributes Node")
+@EnrichmentNode(name="tenant attributes",
+        nodeDescription = "Add Originators Tenant Attributes or Latest Telemetry into Message Metadata",
+        nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
+                "To access those attributes in other nodes this template can be used " +
+                "'meta.temperature'. If Latest Telemetry enrichment configured, latest telemetry added into metadata")
 public class TbGetTenantAttributeNode extends TbEntityGetAttrNode<TenantId> {
 
     @Override

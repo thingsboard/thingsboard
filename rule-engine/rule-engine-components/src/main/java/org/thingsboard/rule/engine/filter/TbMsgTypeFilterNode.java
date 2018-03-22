@@ -24,7 +24,10 @@ import org.thingsboard.server.common.msg.TbMsg;
  * Created by ashvayka on 19.01.18.
  */
 @Slf4j
-@FilterNode(name = "Message Type Filter Node")
+@FilterNode(name = "message type",
+        nodeDescription = "Filter incoming messages by Message Type",
+        nodeDetails = "Evaluate incoming Message with configured JS condition. " +
+                "If incoming MessageType is expected - send Message via 'Success' chain, otherwise 'Failure' chain is used.")
 public class TbMsgTypeFilterNode implements TbNode {
 
     TbMsgTypeFilterNodeConfiguration config;
