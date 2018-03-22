@@ -34,7 +34,8 @@ const aKeyCode = 65;
 const escKeyCode = 27;
 
 /*@ngInject*/
-export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $document, $mdDialog, $filter, types, ruleChainService, Modelfactory, flowchartConstants, ruleChain, ruleChainMetaData) {
+export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $document, $mdDialog,
+                                    $filter, $translate, types, ruleChainService, Modelfactory, flowchartConstants, ruleChain, ruleChainMetaData) {
 
     var vm = this;
 
@@ -155,11 +156,12 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     };
 
     vm.typeHeaderMouseEnter = function(event, typeId) {
+        var ruleNodeType = types.ruleNodeType[typeId];
         displayTooltip(event,
             '<div class="tb-rule-node-tooltip">' +
             '<div id="tooltip-content" layout="column">' +
-            '<div class="tb-node-title">' + typeId + '</div>' +
-            '<div class="tb-node-description">' + 'Some description of component type' + '</div>' +
+            '<div class="tb-node-title">' + $translate.instant(ruleNodeType.name) + '</div>' +
+            '<div class="tb-node-details">' + $translate.instant(ruleNodeType.details) + '</div>' +
             '</div>' +
             '</div>'
         );

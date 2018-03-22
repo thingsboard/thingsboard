@@ -1186,10 +1186,15 @@ export default angular.module('thingsboard.locale', [])
                     "custom-link-label": "Custom link label",
                     "custom-link-label-required": "Custom link label is required.",
                     "type-filter": "Filter",
+                    "type-filter-details": "Filter incoming messages with configured conditions",
                     "type-enrichment": "Enrichment",
+                    "type-enrichment-details": "Add additional information into Message Metadata",
                     "type-transformation": "Transformation",
+                    "type-transformation-details": "Change Message payload and Metadata",
                     "type-action": "Action",
-                    "type-rule-chain": "Rule Chain"
+                    "type-action-details": "Perform special action",
+                    "type-rule-chain": "Rule Chain",
+                    "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain"
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"

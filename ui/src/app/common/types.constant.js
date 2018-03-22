@@ -464,7 +464,7 @@ export default angular.module('thingsboard.types', [])
                 clazz: 'tb.internal.RuleChain',
                 configurationDescriptor: {
                     nodeDefinition: {
-                        description: "Forwards incoming messages to specified Rule Chain",
+                        description: "",
                         details: "Forwards incoming messages to specified Rule Chain",
                         inEnabled: true,
                         outEnabled: false,
@@ -483,30 +483,35 @@ export default angular.module('thingsboard.types', [])
                 FILTER: {
                     value: "FILTER",
                     name: "rulenode.type-filter",
+                    details: "rulenode.type-filter-details",
                     nodeClass: "tb-filter-type",
                     icon: "filter_list"
                 },
                 ENRICHMENT: {
                     value: "ENRICHMENT",
                     name: "rulenode.type-enrichment",
+                    details: "rulenode.type-enrichment-details",
                     nodeClass: "tb-enrichment-type",
                     icon: "playlist_add"
                 },
                 TRANSFORMATION: {
                     value: "TRANSFORMATION",
                     name: "rulenode.type-transformation",
+                    details: "rulenode.type-transformation-details",
                     nodeClass: "tb-transformation-type",
                     icon: "transform"
                 },
                 ACTION: {
                     value: "ACTION",
                     name: "rulenode.type-action",
+                    details: "rulenode.type-action-details",
                     nodeClass: "tb-action-type",
                     icon: "flash_on"
                 },
                 RULE_CHAIN: {
                     value: "RULE_CHAIN",
                     name: "rulenode.type-rule-chain",
+                    details: "rulenode.type-rule-chain-details",
                     nodeClass: "tb-rule-chain-type",
                     icon: "settings_ethernet"
                 },
