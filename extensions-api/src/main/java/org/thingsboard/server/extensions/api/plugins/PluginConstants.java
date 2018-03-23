@@ -19,5 +19,7 @@ package org.thingsboard.server.extensions.api.plugins;
  * @author Andrew Shvayka
  */
 public class PluginConstants {
+    public static final String TELEMETRY_URL_PREFIX = "/api/plugins/telemetry";
+    public static final String RPC_URL_PREFIX = "/api/plugins/rpc";
     public static final String PLUGIN_URL_PREFIX = "/api/plugins";
 }

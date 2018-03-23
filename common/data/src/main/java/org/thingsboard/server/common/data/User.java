@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -138,4 +139,15 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         return builder.toString();
     }
 
+    public boolean isSystemAdmin() {
+        return tenantId == null || EntityId.NULL_UUID.equals(tenantId.getId());
+    }
+
+    public boolean isTenantAdmin() {
+        return !isSystemAdmin() && (customerId == null || EntityId.NULL_UUID.equals(customerId.getId()));
+    }
+
+    public boolean isCustomerUser() {
+        return !isSystemAdmin() && !isTenantAdmin();
+    }
 }
