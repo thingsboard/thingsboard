@@ -106,6 +106,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
             try {
                 pluginImpl.process(trustedCtx, msg.getRuleTenantId(), msg.getRuleId(), msg.getMsg());
             } catch (Exception ex) {
+                logger.debug("[{}] Failed to process RuleToPlugin msg: [{}] [{}]", tenantId, msg.getMsg(), ex);
                 RuleToPluginMsg ruleMsg = msg.getMsg();
                 MsgType responceMsgType = MsgType.RULE_ENGINE_ERROR;
                 Integer requestId = 0;

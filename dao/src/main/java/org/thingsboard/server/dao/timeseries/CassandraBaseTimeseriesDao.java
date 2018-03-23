@@ -439,8 +439,6 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     private PreparedStatement getLatestStmt() {
         if (latestInsertStmt == null) {
-//            latestInsertStmt = new PreparedStatement[DataType.values().length];
-//            for (DataType type : DataType.values()) {
             latestInsertStmt = prepare(INSERT_INTO + ModelConstants.TS_KV_LATEST_CF +
                     "(" + ModelConstants.ENTITY_TYPE_COLUMN +
                     "," + ModelConstants.ENTITY_ID_COLUMN +
@@ -451,7 +449,6 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     "," + ModelConstants.LONG_VALUE_COLUMN +
                     "," + ModelConstants.DOUBLE_VALUE_COLUMN + ")" +
                     " VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
-//            }
         }
         return latestInsertStmt;
     }
