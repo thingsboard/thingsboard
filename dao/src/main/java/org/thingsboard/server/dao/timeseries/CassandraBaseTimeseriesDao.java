@@ -450,7 +450,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     "," + ModelConstants.STRING_VALUE_COLUMN +
                     "," + ModelConstants.LONG_VALUE_COLUMN +
                     "," + ModelConstants.DOUBLE_VALUE_COLUMN + ")" +
-                    " VALUES(?, ?, ?, ?, ?)");
+                    " VALUES(?, ?, ?, ?, ?, ?, ?, ?)");
 //            }
         }
         return latestInsertStmt;
