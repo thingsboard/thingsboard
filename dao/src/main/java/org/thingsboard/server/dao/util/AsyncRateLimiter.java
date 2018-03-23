@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.filter;
+package org.thingsboard.server.dao.util;
 
-import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import com.google.common.util.concurrent.ListenableFuture;
 
-@Data
-public class TbJsFilterNodeConfiguration implements NodeConfiguration {
+public interface AsyncRateLimiter {
 
-    private String jsScript;
+    ListenableFuture<Void> acquireAsync();
 
-    @Override
-    public TbJsFilterNodeConfiguration defaultConfiguration() {
-        TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
-        configuration.setJsScript("msg.passed < 15 && msg.name === 'Vit' && meta.temp == 10 && msg.bigObj.prop == 42;");
-        return configuration;
-    }
+    void release();
 }

@@ -187,7 +187,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void loadSystemRules() throws Exception {
-        loadRules(Paths.get(dataDir, JSON_DIR, SYSTEM_DIR, RULES_DIR), null);
+//        loadRules(Paths.get(dataDir, JSON_DIR, SYSTEM_DIR, RULES_DIR), null);
     }
 
     @Override
@@ -228,7 +228,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                 "Raspberry Pi GPIO control sample application");
 
         loadPlugins(Paths.get(dataDir, JSON_DIR, DEMO_DIR, PLUGINS_DIR), demoTenant.getId());
-        loadRules(Paths.get(dataDir, JSON_DIR, DEMO_DIR, RULES_DIR), demoTenant.getId());
+//        loadRules(Paths.get(dataDir, JSON_DIR, DEMO_DIR, RULES_DIR), demoTenant.getId());
         loadDashboards(Paths.get(dataDir, JSON_DIR, DEMO_DIR, DASHBOARDS_DIR), demoTenant.getId(), null);
     }
 

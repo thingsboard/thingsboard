@@ -1179,6 +1179,7 @@ export default angular.module('thingsboard.locale', [])
                     "delete": "Delete rule node",
                     "rulenode-details": "Rule node details",
                     "debug-mode": "Debug mode",
+                    "configuration": "Configuration",
                     "link-details": "Rule node link details",
                     "add-link": "Add link",
                     "link-label": "Link label",

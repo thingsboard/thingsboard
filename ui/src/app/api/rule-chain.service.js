@@ -153,16 +153,21 @@ function RuleChainService($http, $q, $filter, types, componentDescriptorService)
         return deferred.promise;
     }
 
-    function getRuleNodeSupportedLinks(nodeType) { //eslint-disable-line
-        //TODO:
-        var deferred = $q.defer();
-        var linkLabels = [
-            { name: 'Success', custom: false },
-            { name: 'Fail', custom: false },
-            { name: 'Custom', custom: true },
-        ];
-        deferred.resolve(linkLabels);
-        return deferred.promise;
+    function getRuleNodeSupportedLinks(component) {
+        var relationTypes = component.configurationDescriptor.nodeDefinition.relationTypes;
+        var customRelations = component.configurationDescriptor.nodeDefinition.customRelations;
+        var linkLabels = [];
+        for (var i=0;i<relationTypes.length;i++) {
+            linkLabels.push({
+                name: relationTypes[i], custom: false
+            });
+        }
+        if (customRelations) {
+            linkLabels.push(
+                { name: 'Custom', custom: true }
+            );
+        }
+        return linkLabels;
     }
 
     function getRuleNodeComponents() {

@@ -22,6 +22,8 @@ import thingsboardToast from '../services/toast';
 import thingsboardUtils from '../common/utils.service';
 import thingsboardExpandFullscreen from './expand-fullscreen.directive';
 
+import fixAceEditor from './ace-editor-fix';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import jsFuncTemplate from './js-func.tpl.html';
@@ -83,6 +85,7 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
                 scope.js_editor.session.on("change", function () {
                     scope.cleanupJsErrors();
                 });
+                fixAceEditor(_ace);
             }
         };
 

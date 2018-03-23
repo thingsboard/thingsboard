@@ -16,12 +16,24 @@
 package org.thingsboard.rule.engine.transform;
 
 import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
-public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfiguration{
+public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfiguration implements NodeConfiguration {
 
     private String originatorSource;
     private EntitySearchDirection direction;
     private String relationType;
+
+    @Override
+    public TbChangeOriginatorNodeConfiguration defaultConfiguration() {
+        TbChangeOriginatorNodeConfiguration configuration = new TbChangeOriginatorNodeConfiguration();
+        configuration.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
+        configuration.setDirection(EntitySearchDirection.FROM);
+        configuration.setRelationType(EntityRelation.CONTAINS_TYPE);
+        configuration.setStartNewChain(false);
+        return configuration;
+    }
 }

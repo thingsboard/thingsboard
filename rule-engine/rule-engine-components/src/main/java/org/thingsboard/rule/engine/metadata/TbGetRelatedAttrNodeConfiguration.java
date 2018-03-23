@@ -16,11 +16,28 @@
 package org.thingsboard.rule.engine.metadata;
 
 import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
-public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfiguration  {
+public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfiguration {
 
     private String relationType;
     private EntitySearchDirection direction;
+
+    @Override
+    public TbGetRelatedAttrNodeConfiguration defaultConfiguration() {
+        TbGetRelatedAttrNodeConfiguration configuration = new TbGetRelatedAttrNodeConfiguration();
+        Map<String, String> attrMapping = new HashMap<>();
+        attrMapping.putIfAbsent("temperature", "tempo");
+        configuration.setAttrMapping(attrMapping);
+        configuration.setTelemetry(true);
+        configuration.setRelationType(EntityRelation.CONTAINS_TYPE);
+        configuration.setDirection(EntitySearchDirection.FROM);
+        return configuration;
+    }
 }

@@ -27,6 +27,7 @@ import javax.script.Bindings;
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "script",
+        configClazz = TbTransformMsgNodeConfiguration.class,
         nodeDescription = "Change Message payload and Metadata using JavaScript",
         nodeDetails = "JavaScript function recieve 2 input parameters that can be changed inside.<br/> " +
                 "<code>meta</code> - is a Message metadata.<br/>" +

@@ -16,9 +16,18 @@
 package org.thingsboard.rule.engine.transform;
 
 import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbTransformMsgNodeConfiguration extends TbTransformNodeConfiguration {
+public class TbTransformMsgNodeConfiguration extends TbTransformNodeConfiguration implements NodeConfiguration {
 
     private String jsScript;
+
+    @Override
+    public TbTransformMsgNodeConfiguration defaultConfiguration() {
+        TbTransformMsgNodeConfiguration configuration = new TbTransformMsgNodeConfiguration();
+        configuration.setStartNewChain(false);
+        configuration.setJsScript("msg.passed = msg.passed * meta.temp; msg.bigObj.newProp = 'Ukraine' ");
+        return configuration;
+    }
 }

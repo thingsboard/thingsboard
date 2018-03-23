@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name="tenant attributes",
+        configClazz = TbGetEntityAttrNodeConfiguration.class,
         nodeDescription = "Add Originators Tenant Attributes or Latest Telemetry into Message Metadata",
         nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
                 "To access those attributes in other nodes this template can be used " +

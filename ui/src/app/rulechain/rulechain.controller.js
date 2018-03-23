@@ -151,6 +151,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             },
             'mouseLeave': function () {
                 destroyTooltips();
+            },
+            'mouseDown': function () {
+                destroyTooltips();
             }
         }
     };
@@ -226,16 +229,12 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
         edgeDoubleClick: function (event, edge) {
             var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
             if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
-                ruleChainService.getRuleNodeSupportedLinks(sourceNode.component.clazz).then(
-                    (labels) => {
-                        vm.isEditingRuleNode = false;
-                        vm.editingRuleNode = null;
-                        vm.editingRuleNodeLinkLabels = labels;
-                        vm.isEditingRuleNodeLink = true;
-                        vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
-                        vm.editingRuleNodeLink = angular.copy(edge);
-                    }
-                );
+                vm.isEditingRuleNode = false;
+                vm.editingRuleNode = null;
+                vm.editingRuleNodeLinkLabels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+                vm.isEditingRuleNodeLink = true;
+                vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
+                vm.editingRuleNodeLink = angular.copy(edge);
             }
         },
         nodeCallbacks: {
@@ -267,16 +266,10 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     deferred.resolve(edge);
                 }
             } else {
-                ruleChainService.getRuleNodeSupportedLinks(sourceNode.component.clazz).then(
-                    (labels) => {
-                        addRuleNodeLink(event, edge, labels).then(
-                            (link) => {
-                                deferred.resolve(link);
-                            },
-                            () => {
-                                deferred.reject();
-                            }
-                        );
+                var labels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+                addRuleNodeLink(event, edge, labels).then(
+                    (link) => {
+                        deferred.resolve(link);
                     },
                     () => {
                         deferred.reject();
@@ -309,24 +302,19 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                         y: 10+50*model.nodes.length,
                         connectors: []
                     };
-                    if (componentType == types.ruleNodeType.RULE_CHAIN.value) {
+                    if (ruleNodeComponent.configurationDescriptor.nodeDefinition.inEnabled) {
                         node.connectors.push(
                             {
                                 type: flowchartConstants.leftConnectorType,
-                                id: model.nodes.length
+                                id: model.nodes.length * 2
                             }
                         );
-                    } else {
-                        node.connectors.push(
-                            {
-                                type: flowchartConstants.leftConnectorType,
-                                id: model.nodes.length*2
-                            }
-                        );
+                    }
+                    if (ruleNodeComponent.configurationDescriptor.nodeDefinition.outEnabled) {
                         node.connectors.push(
                             {
                                 type: flowchartConstants.rightConnectorType,
-                                id: model.nodes.length*2+1
+                                id: model.nodes.length * 2 + 1
                             }
                         );
                     }
@@ -398,17 +386,24 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     name: ruleNode.name,
                     nodeClass: vm.types.ruleNodeType[component.type].nodeClass,
                     icon: vm.types.ruleNodeType[component.type].icon,
-                    connectors: [
+                    connectors: []
+                };
+                if (component.configurationDescriptor.nodeDefinition.inEnabled) {
+                    node.connectors.push(
                         {
                             type: flowchartConstants.leftConnectorType,
                             id: vm.nextConnectorID++
-                        },
+                        }
+                    );
+                }
+                if (component.configurationDescriptor.nodeDefinition.outEnabled) {
+                    node.connectors.push(
                         {
                             type: flowchartConstants.rightConnectorType,
                             id: vm.nextConnectorID++
                         }
-                    ]
-                };
+                    );
+                }
                 nodes.push(node);
                 vm.ruleChainModel.nodes.push(node);
             }
@@ -590,6 +585,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     }
 
     function addRuleNode($event, ruleNode) {
+
+        ruleNode.configuration = angular.copy(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
+
         $mdDialog.show({
             controller: 'AddRuleNodeController',
             controllerAs: 'vm',
@@ -601,13 +599,15 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
         }).then(function (ruleNode) {
             ruleNode.id = vm.nextNodeID++;
             ruleNode.connectors = [];
-            ruleNode.connectors.push(
-                {
-                    id: vm.nextConnectorID++,
-                    type: flowchartConstants.leftConnectorType
-                }
-            );
-            if (ruleNode.component.type != types.ruleNodeType.RULE_CHAIN.value) {
+            if (ruleNode.component.configurationDescriptor.nodeDefinition.inEnabled) {
+                ruleNode.connectors.push(
+                    {
+                        id: vm.nextConnectorID++,
+                        type: flowchartConstants.leftConnectorType
+                    }
+                );
+            }
+            if (ruleNode.component.configurationDescriptor.nodeDefinition.outEnabled) {
                 ruleNode.connectors.push(
                     {
                         id: vm.nextConnectorID++,
