@@ -81,6 +81,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     vm.saveRuleChain = saveRuleChain;
     vm.revertRuleChain = revertRuleChain;
 
+    vm.objectsSelected = objectsSelected;
+    vm.deleteSelected = deleteSelected;
+
     vm.keyDown = function (evt) {
         if (evt.keyCode === ctrlKeyCode) {
             vm.ctrlDown = true;
@@ -632,6 +635,14 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
         });
     }
 
+    function objectsSelected() {
+        return vm.modelservice.nodes.getSelectedNodes().length > 0 ||
+            vm.modelservice.edges.getSelectedEdges().length > 0
+    }
+
+    function deleteSelected() {
+        vm.modelservice.deleteSelected();
+    }
 }
 
 /*@ngInject*/

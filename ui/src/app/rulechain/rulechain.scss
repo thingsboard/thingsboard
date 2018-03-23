@@ -121,16 +121,32 @@
 .fc-node {
   z-index: 1;
   outline: none;
-  &.fc-hover, &.fc-selected {
-    -webkit-filter: brightness(70%);
-    filter: brightness(70%);
-  }
   &.fc-dragging {
     z-index: 10;
   }
   p {
     padding: 0 15px;
     text-align: center;
+  }
+  .fc-node-overlay {
+    position: absolute;
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000;
+    opacity: 0;
+  }
+  &.fc-hover {
+    .fc-node-overlay {
+      opacity: 0.25;
+    }
+  }
+  &.fc-selected {
+    .fc-node-overlay {
+      opacity: 0.25;
+    }
   }
 }
 
@@ -181,6 +197,7 @@
   stroke: gray;
   stroke-width: 4;
   fill: transparent;
+  transition: stroke-width .2s;
   &.fc-selected {
     stroke: red;
     stroke-width: 4;
@@ -232,20 +249,29 @@
 .fc-edge-label {
   position: absolute;
   user-select: none;
-  pointer-events: none;
+  transition: transform .2s;
   opacity: 0.8;
+  &.fc-hover {
+    transform: scale(1.25);
+  }
+  &.fc-selected {
+    .fc-edge-label-text {
+      span {
+        border: solid red;
+        color: red;
+      }
+    }
+  }
 }
 
 .fc-edge-label-text {
   position: absolute;
-  left: 50%;
-  -webkit-transform: translateX(-50%);
-  transform: translateX(-50%);
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
   white-space: nowrap;
   text-align: center;
   font-size: 14px;
   font-weight: 600;
-  top: 5px;
   span {
     border: solid 2px #003a79;
     border-radius: 10px;
@@ -253,6 +279,13 @@
     background-color: #fff;
     padding: 3px 5px;
   }
+}
+
+.fc-select-rectangle {
+  border: 2px dashed #5262ff;
+  position: absolute;
+  background: rgba(20,125,255,0.1);
+  z-index: 2;
 }
 
 @keyframes dash {
