@@ -238,7 +238,7 @@ caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 100000
     deviceCredentials:
       timeToLiveInMinutes: 1440
       maxSize: 100000
