@@ -29,6 +29,7 @@ import thingsboardNoAnimate from '../components/no-animate.directive';
 import thingsboardOnFinishRender from '../components/finish-render.directive';
 import thingsboardSideMenu from '../components/side-menu.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
+import thingsboardJsonObjectEdit from '../components/json-object-edit.directive';
 
 import thingsboardUserMenu from './user-menu.directive';
 
@@ -90,7 +91,8 @@ export default angular.module('thingsboard.home', [
     thingsboardNoAnimate,
     thingsboardOnFinishRender,
     thingsboardSideMenu,
-    thingsboardDashboardAutocomplete
+    thingsboardDashboardAutocomplete,
+    thingsboardJsonObjectEdit
 ])
     .config(HomeRoutes)
     .controller('HomeController', HomeController)

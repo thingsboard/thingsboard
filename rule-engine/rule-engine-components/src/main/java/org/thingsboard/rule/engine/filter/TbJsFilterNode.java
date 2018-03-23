@@ -30,6 +30,7 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 @RuleNode(
         type = ComponentType.FILTER,
         name = "script", relationTypes = {"True", "False", "Failure"},
+        configClazz = TbJsFilterNodeConfiguration.class,
         nodeDescription = "Filter incoming messages using JS script",
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
                 "If <b>True</b> - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used." +

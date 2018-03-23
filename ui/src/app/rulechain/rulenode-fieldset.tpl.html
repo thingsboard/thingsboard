@@ -38,6 +38,11 @@
                              ng-model="ruleNode.debugMode">{{ 'rulenode.debug-mode' | translate }}
                 </md-checkbox>
             </md-input-container>
+            <tb-json-object-edit class="tb-rule-node-configuration-json" ng-model="ruleNode.configuration"
+                                 label="{{ 'rulenode.configuration' | translate }}"
+                                 ng-required="true"
+                                 fill-height="true">
+            </tb-json-object-edit>
             <md-input-container class="md-block">
                 <label translate>rulenode.description</label>
                 <textarea ng-model="ruleNode.additionalInfo.description" rows="2"></textarea>

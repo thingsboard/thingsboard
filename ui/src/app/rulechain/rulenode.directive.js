@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import './rulenode.scss';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import ruleNodeFieldsetTemplate from './rulenode-fieldset.tpl.html';

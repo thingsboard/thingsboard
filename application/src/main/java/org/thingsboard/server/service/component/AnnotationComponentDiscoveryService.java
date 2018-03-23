@@ -180,7 +180,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         return scannedComponent;
     }
 
-    private NodeDefinition prepareNodeDefinition(RuleNode nodeAnnotation) throws IOException {
+    private NodeDefinition prepareNodeDefinition(RuleNode nodeAnnotation) throws Exception {
         NodeDefinition nodeDefinition = new NodeDefinition();
         nodeDefinition.setDetails(nodeAnnotation.nodeDetails());
         nodeDefinition.setDescription(nodeAnnotation.nodeDescription());
@@ -188,9 +188,10 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         nodeDefinition.setOutEnabled(nodeAnnotation.outEnabled());
         nodeDefinition.setRelationTypes(nodeAnnotation.relationTypes());
         nodeDefinition.setCustomRelations(nodeAnnotation.customRelations());
-        String defaultConfigResourceName = nodeAnnotation.defaultConfigResource();
-        nodeDefinition.setDefaultConfiguration(mapper.readTree(
-                Resources.toString(Resources.getResource(defaultConfigResourceName), Charsets.UTF_8)));
+        Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
+        NodeConfiguration config = configClazz.newInstance();
+        NodeConfiguration defaultConfiguration = config.defaultConfiguration();
+        nodeDefinition.setDefaultConfiguration(mapper.valueToTree(defaultConfiguration));
         return nodeDefinition;
     }
 

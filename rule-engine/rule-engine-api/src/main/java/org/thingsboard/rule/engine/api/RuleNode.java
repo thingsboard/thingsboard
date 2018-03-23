@@ -35,15 +35,16 @@ public @interface RuleNode {
 
     String nodeDetails();
 
+    Class<? extends NodeConfiguration> configClazz();
+
     boolean inEnabled() default true;
 
     boolean outEnabled() default true;
 
     ComponentScope scope() default ComponentScope.TENANT;
 
-    String defaultConfigResource() default "EmptyNodeConfig.json";
-
     String[] relationTypes() default {"Success", "Failure"};
 
     boolean customRelations() default false;
+
 }
