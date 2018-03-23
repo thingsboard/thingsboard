@@ -36,6 +36,7 @@ import java.util.HashSet;
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name="change originator",
+        configClazz = TbChangeOriginatorNodeConfiguration.class,
         nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
                 "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ")

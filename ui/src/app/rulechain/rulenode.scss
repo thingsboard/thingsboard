@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.filter;
 
-import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
-
-@Data
-public class TbJsFilterNodeConfiguration implements NodeConfiguration {
-
-    private String jsScript;
-
-    @Override
-    public TbJsFilterNodeConfiguration defaultConfiguration() {
-        TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
-        configuration.setJsScript("msg.passed < 15 && msg.name === 'Vit' && meta.temp == 10 && msg.bigObj.prop == 42;");
-        return configuration;
-    }
+.tb-rulenode {
+  tb-json-object-edit.tb-rule-node-configuration-json {
+    height: 300px;
+    display: block;
+  }
 }

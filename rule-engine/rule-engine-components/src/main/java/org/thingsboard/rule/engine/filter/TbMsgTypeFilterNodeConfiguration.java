@@ -16,15 +16,24 @@
 package org.thingsboard.rule.engine.filter;
 
 import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by ashvayka on 19.01.18.
  */
 @Data
-public class TbMsgTypeFilterNodeConfiguration {
+public class TbMsgTypeFilterNodeConfiguration implements NodeConfiguration {
 
     private List<String> messageTypes;
 
+    @Override
+    public TbMsgTypeFilterNodeConfiguration defaultConfiguration() {
+        TbMsgTypeFilterNodeConfiguration configuration = new TbMsgTypeFilterNodeConfiguration();
+        configuration.setMessageTypes(Arrays.asList("GET_ATTRIBUTES","POST_ATTRIBUTES","POST_TELEMETRY","RPC_REQUEST"));
+        return configuration;
+    }
 }

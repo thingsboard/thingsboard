@@ -28,6 +28,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(
         type = ComponentType.FILTER,
         name = "message type",
+        configClazz = TbMsgTypeFilterNodeConfiguration.class,
         nodeDescription = "Filter incoming messages by Message Type",
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
                 "If incoming MessageType is expected - send Message via <b>Success</b> chain, otherwise <b>Failure</b> chain is used.")

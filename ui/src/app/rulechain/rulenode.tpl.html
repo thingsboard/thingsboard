@@ -19,7 +19,7 @@
         id="{{node.id}}"
         ng-attr-style="position: absolute; top: {{ node.y }}px; left: {{ node.x }}px;"
         ng-dblclick="callbacks.doubleClick($event, node)"
-        ng-mouseover="callbacks.mouseOver($event, node)"
+        ng-mousedown="callbacks.mouseDown($event, node)"
         ng-mouseenter="callbacks.mouseEnter($event, node)"
         ng-mouseleave="callbacks.mouseLeave($event, node)">
     <div class="tb-rule-node {{node.nodeClass}}">

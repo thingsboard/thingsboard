@@ -38,6 +38,7 @@ import static org.thingsboard.server.common.data.DataConstants.*;
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
           name = "originator attributes",
+          configClazz = TbGetAttributesNodeConfiguration.class,
           nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
           nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
                 "with specific prefix: <i>cs/shared/ss</i>. To access those attributes in other nodes this template can be used " +
