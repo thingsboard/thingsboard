@@ -28,9 +28,14 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
+import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
+import org.thingsboard.server.common.msg.session.MsgType;
 import org.thingsboard.server.extensions.api.plugins.Plugin;
 import org.thingsboard.server.extensions.api.plugins.PluginInitializationException;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
+import org.thingsboard.server.extensions.api.plugins.msg.ResponsePluginToRuleMsg;
+import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
@@ -98,7 +103,19 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
 
     public void onRuleToPluginMsg(RuleToPluginMsgWrapper msg) throws RuleException {
         if (state == ComponentLifecycleState.ACTIVE) {
-            pluginImpl.process(trustedCtx, msg.getRuleTenantId(), msg.getRuleId(), msg.getMsg());
+            try {
+                pluginImpl.process(trustedCtx, msg.getRuleTenantId(), msg.getRuleId(), msg.getMsg());
+            } catch (Exception ex) {
+                RuleToPluginMsg ruleMsg = msg.getMsg();
+                MsgType responceMsgType = MsgType.RULE_ENGINE_ERROR;
+                Integer requestId = 0;
+                if (ruleMsg.getPayload() instanceof FromDeviceRequestMsg) {
+                    requestId = ((FromDeviceRequestMsg) ruleMsg.getPayload()).getRequestId();
+                }
+                trustedCtx.reply(
+                        new ResponsePluginToRuleMsg(ruleMsg.getUid(), tenantId, msg.getRuleId(),
+                                BasicStatusCodeResponse.onError(responceMsgType, requestId, ex)));
+            }
         } else {
             //TODO: reply with plugin suspended message
         }

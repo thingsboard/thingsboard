@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.core;
+package org.thingsboard.server.dao.util;
 
-import lombok.Data;
-import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import com.google.common.util.concurrent.ListenableFuture;
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public class ToServerRpcRequestMsg implements FromDeviceRequestMsg {
+public interface AsyncRateLimiter {
 
-    private final Integer requestId;
-    private final String method;
-    private final String params;
+    ListenableFuture<Void> acquireAsync();
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.TO_SERVER_RPC_REQUEST;
-    }
+    void release();
 }

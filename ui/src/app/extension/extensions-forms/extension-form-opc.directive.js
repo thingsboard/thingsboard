@@ -128,8 +128,8 @@ export default function ExtensionFormOpcDirective($compile, $templateCache, $tra
                         let addedFile = event.target.result;
 
                         if (addedFile && addedFile.length > 0) {
-                            model[options.fileName] = $file.name;
-                            model[options.file] = addedFile.replace(/^data.*base64,/, "");
+                            model[options.location] = $file.name;
+                            model[options.fileContent] = addedFile.replace(/^data.*base64,/, "");
 
                         }
                     }
@@ -142,8 +142,8 @@ export default function ExtensionFormOpcDirective($compile, $templateCache, $tra
         scope.clearFile = function(model, options) {
             scope.theForm.$setDirty();
 
-            model[options.fileName] = null;
-            model[options.file] = null;
+            model[options.location] = null;
+            model[options.fileContent] = null;
 
         };
 
