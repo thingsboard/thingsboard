@@ -63,7 +63,7 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
         List<E> list = Collections.emptyList();
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-            ResultSet resultSet = getSession().execute(statement);
+            ResultSet resultSet = executeRead(statement);
             Result<E> result = getMapper().map(resultSet);
             if (result != null) {
                 list = result.all();
@@ -75,7 +75,7 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
     protected ListenableFuture<List<D>> findListByStatementAsync(Statement statement) {
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-            ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+            ResultSetFuture resultSetFuture = executeAsyncRead(statement);
             return Futures.transform(resultSetFuture, new Function<ResultSet, List<D>>() {
                 @Nullable
                 @Override
@@ -97,7 +97,7 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
         E object = null;
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-            ResultSet resultSet = getSession().execute(statement);
+            ResultSet resultSet = executeRead(statement);
             Result<E> result = getMapper().map(resultSet);
             if (result != null) {
                 object = result.one();
@@ -109,7 +109,7 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
     protected ListenableFuture<D> findOneByStatementAsync(Statement statement) {
         if (statement != null) {
             statement.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-            ResultSetFuture resultSetFuture = getSession().executeAsync(statement);
+            ResultSetFuture resultSetFuture = executeAsyncRead(statement);
             return Futures.transform(resultSetFuture, new Function<ResultSet, D>() {
                 @Nullable
                 @Override
@@ -184,7 +184,7 @@ public abstract class CassandraAbstractModelDao<E extends BaseEntity<D>, D> exte
     public boolean removeById(UUID key) {
         Statement delete = QueryBuilder.delete().all().from(getColumnFamilyName()).where(eq(ModelConstants.ID_PROPERTY, key));
         log.debug("Remove request: {}", delete.toString());
-        return getSession().execute(delete).wasApplied();
+        return executeWrite(delete).wasApplied();
     }
 
     @Override
