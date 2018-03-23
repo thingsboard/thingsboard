@@ -133,7 +133,7 @@ quota:
     intervalMin: 2
 
 database:
-  type: "${DATABASE_TYPE:cassandra}" # cassandra OR sql
+  type: "${DATABASE_TYPE:sql}" # cassandra OR sql
 
 # Cassandra driver configuration parameters
 cassandra:
