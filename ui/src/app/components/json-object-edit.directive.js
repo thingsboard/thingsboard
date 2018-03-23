@@ -19,6 +19,8 @@ import 'brace/ext/language_tools';
 import 'brace/mode/json';
 import 'ace-builds/src-min-noconflict/snippets/json';
 
+import fixAceEditor from './ace-editor-fix';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import jsonObjectEditTemplate from './json-object-edit.tpl.html';
@@ -30,7 +32,7 @@ export default angular.module('thingsboard.directives.jsonObjectEdit', [])
     .name;
 
 /*@ngInject*/
-function JsonObjectEdit($compile, $templateCache, toast, utils) {
+function JsonObjectEdit($compile, $templateCache, $document, toast, utils) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(jsonObjectEditTemplate);
@@ -67,6 +69,7 @@ function JsonObjectEdit($compile, $templateCache, toast, utils) {
                 scope.json_editor.session.on("change", function () {
                     scope.cleanupJsonErrors();
                 });
+                fixAceEditor(_ace);
             }
         };
 
