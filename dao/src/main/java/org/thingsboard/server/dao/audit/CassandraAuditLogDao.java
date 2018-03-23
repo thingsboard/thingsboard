@@ -244,12 +244,12 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
             values.add("?");
         }
         String statementString = INSERT_INTO + cfName + " (" + String.join(",", columnsList) + ") VALUES (" + values.toString() + ")";
-        return getSession().prepare(statementString);
+        return prepare(statementString);
     }
 
     private PreparedStatement getPartitionInsertStmt() {
         if (partitionInsertStmt == null) {
-            partitionInsertStmt = getSession().prepare(INSERT_INTO + ModelConstants.AUDIT_LOG_BY_TENANT_ID_PARTITIONS_CF +
+            partitionInsertStmt = prepare(INSERT_INTO + ModelConstants.AUDIT_LOG_BY_TENANT_ID_PARTITIONS_CF +
                     "(" + ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY +
                     "," + ModelConstants.AUDIT_LOG_PARTITION_PROPERTY + ")" +
                     " VALUES(?, ?)");
@@ -343,7 +343,7 @@ public class CassandraAuditLogDao extends CassandraAbstractSearchTimeDao<AuditLo
                 .where(eq(ModelConstants.AUDIT_LOG_TENANT_ID_PROPERTY, tenantId));
         select.and(QueryBuilder.gte(ModelConstants.PARTITION_COLUMN, minPartition));
         select.and(QueryBuilder.lte(ModelConstants.PARTITION_COLUMN, maxPartition));
-        return getSession().execute(select);
+        return executeRead(select);
     }
 
 }

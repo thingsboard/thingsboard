@@ -147,12 +147,12 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
                 .and(eq(ATTRIBUTE_TYPE_COLUMN, attributeType))
                 .and(eq(ATTRIBUTE_KEY_COLUMN, key));
         log.debug("Remove request: {}", delete.toString());
-        return getFuture(getSession().executeAsync(delete), rs -> null);
+        return getFuture(executeAsyncWrite(delete), rs -> null);
     }
 
     private PreparedStatement getSaveStmt() {
         if (saveStmt == null) {
-            saveStmt = getSession().prepare("INSERT INTO " + ModelConstants.ATTRIBUTES_KV_CF +
+            saveStmt = prepare("INSERT INTO " + ModelConstants.ATTRIBUTES_KV_CF +
                     "(" + ENTITY_TYPE_COLUMN +
                     "," + ENTITY_ID_COLUMN +
                     "," + ATTRIBUTE_TYPE_COLUMN +
