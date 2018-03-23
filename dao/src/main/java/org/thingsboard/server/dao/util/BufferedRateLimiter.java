@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @Slf4j
+@NoSqlDao
 public class BufferedRateLimiter implements AsyncRateLimiter {
 
     private final ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
@@ -113,6 +114,9 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
                     lockedFuture.cancelFuture();
                     return Futures.immediateFailedFuture(new IllegalStateException("Rate Limit Buffer is full. Reject"));
                 }
+                if(permits.get() < permitsLimit) {
+                    reprocessQueue();
+                }
                 return lockedFuture.future;
             } catch (InterruptedException e) {
                 return Futures.immediateFailedFuture(new IllegalStateException("Rate Limit Task interrupted. Reject"));
@@ -130,8 +134,8 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
                 expiredCount++;
             }
         }
-        log.info("Permits maxBuffer is [{}] max concurrent [{}] expired [{}]", maxQueueSize.getAndSet(0),
-                maxGrantedPermissions.getAndSet(0), expiredCount);
+        log.info("Permits maxBuffer is [{}] max concurrent [{}] expired [{}] current granted [{}]", maxQueueSize.getAndSet(0),
+                maxGrantedPermissions.getAndSet(0), expiredCount, permits.get());
     }
 
     private class LockedFuture {
