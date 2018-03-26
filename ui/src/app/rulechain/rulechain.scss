@@ -75,6 +75,7 @@
   padding: 5px 10px;
   border-radius: 5px;
   background-color: #F15B26;
+  pointer-events: none;
   color: #333;
   border: solid 1px #777;
   font-size: 12px;
@@ -186,10 +187,25 @@
   margin: 10px;
   border-radius: 5px;
   background-color: #ccc;
+  pointer-events: all;
 }
 
 .fc-connector.fc-hover {
   background-color: #000;
+}
+
+.fc-arrow-marker {
+  polygon {
+    stroke: gray;
+    fill: gray;
+  }
+}
+
+.fc-arrow-marker-selected {
+  polygon {
+    stroke: red;
+    fill: red;
+  }
 }
 
 .fc-edge {
@@ -246,11 +262,23 @@
   cursor: pointer;
 }
 
+.fc-noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
 .fc-edge-label {
   position: absolute;
-  user-select: none;
   transition: transform .2s;
   opacity: 0.8;
+  &.ng-leave {
+    transition: 0s none;
+  }
   &.fc-hover {
     transform: scale(1.25);
   }
@@ -261,6 +289,13 @@
         color: red;
       }
     }
+  }
+  .fc-nodedelete {
+    right: -13px;
+    top: -30px;
+  }
+  &:focus {
+    outline: 0;
   }
 }
 
@@ -273,6 +308,7 @@
   font-size: 14px;
   font-weight: 600;
   span {
+    cursor: default;
     border: solid 2px #003a79;
     border-radius: 10px;
     color: #003a79;

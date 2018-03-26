@@ -68,6 +68,11 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
                 /*@ngInject*/
                     function($stateParams, ruleChainService) {
                         return ruleChainService.getRuleChainMetaData($stateParams.ruleChainId);
+                    },
+                ruleNodeComponents:
+                /*@ngInject*/
+                    function($stateParams, ruleChainService) {
+                        return ruleChainService.getRuleNodeComponents();
                     }
             },
             data: {

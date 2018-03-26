@@ -1177,6 +1177,8 @@ export default angular.module('thingsboard.locale', [])
                     "type": "Type",
                     "description": "Description",
                     "delete": "Delete rule node",
+                    "select-all": "Select all nodes and connections",
+                    "deselect-all": "Deselect all nodes and connections",
                     "delete-selected-objects": "Delete selected nodes and connections",
                     "rulenode-details": "Rule node details",
                     "debug-mode": "Debug mode",
