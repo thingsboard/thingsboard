@@ -16,8 +16,10 @@
 
 -->
 
-<md-content flex tb-expand-fullscreen
-            expand-tooltip-direction="bottom" layout="column" class="tb-rulechain">
+<md-content flex tb-expand-fullscreen tb-confirm-on-exit is-dirty="vm.isDirty"
+            expand-tooltip-direction="bottom" layout="column" class="tb-rulechain"
+            ng-keydown="vm.keyDown($event)"
+            ng-keyup="vm.keyUp($event)">
     <section class="tb-rulechain-container" flex layout="column">
         <div class="tb-rulechain-layout" flex layout="row">
             <div class="tb-rulechain-library">
@@ -50,8 +52,6 @@
             </div>
             <div flex class="tb-rulechain-graph">
                 <fc-canvas id="tb-rulchain-canvas"
-                           ng-keydown="vm.keyDown($event)"
-                           ng-keyup="vm.keyUp($event)"
                            model="vm.ruleChainModel"
                            selected-objects="vm.selectedObjects"
                            edge-style="curved"
@@ -112,6 +112,13 @@
         </tb-details-sidenav>
     </section>
     <section layout="row" layout-wrap class="tb-footer-buttons md-fab" layout-align="start end">
+        <md-button ng-disabled="$root.loading" ng-show="vm.objectsSelected()" class="tb-btn-footer md-accent md-hue-2 md-fab"
+                   ng-click="vm.deleteSelected()" aria-label="{{ 'action.delete' | translate }}">
+            <md-tooltip md-direction="top">
+                {{ 'rulenode.delete-selected-objects' | translate }}
+            </md-tooltip>
+            <ng-md-icon icon="delete"></ng-md-icon>
+        </md-button>
         <md-button ng-disabled="$root.loading || !vm.isDirty"
                    class="tb-btn-footer md-accent md-hue-2 md-fab"
                    aria-label="{{ 'action.apply' | translate }}"
