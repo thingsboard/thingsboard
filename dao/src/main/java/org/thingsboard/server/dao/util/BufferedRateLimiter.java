@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.dao.exception.BufferLimitException;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,6 +42,9 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
 
     private final AtomicInteger maxQueueSize = new AtomicInteger();
     private final AtomicInteger maxGrantedPermissions = new AtomicInteger();
+    private final AtomicInteger totalGranted = new AtomicInteger();
+    private final AtomicInteger totalReleased = new AtomicInteger();
+    private final AtomicInteger totalRequested = new AtomicInteger();
 
     public BufferedRateLimiter(@Value("${cassandra.query.buffer_size}") int queueLimit,
                                @Value("${cassandra.query.concurrent_limit}") int permitsLimit,
@@ -53,11 +57,13 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
 
     @Override
     public ListenableFuture<Void> acquireAsync() {
+        totalRequested.incrementAndGet();
         if (queue.isEmpty()) {
             if (permits.incrementAndGet() <= permitsLimit) {
                 if (permits.get() > maxGrantedPermissions.get()) {
                     maxGrantedPermissions.set(permits.get());
                 }
+                totalGranted.incrementAndGet();
                 return Futures.immediateFuture(null);
             }
             permits.decrementAndGet();
@@ -69,6 +75,7 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
     @Override
     public void release() {
         permits.decrementAndGet();
+        totalReleased.incrementAndGet();
         reprocessQueue();
     }
 
@@ -80,6 +87,7 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
                 }
                 LockedFuture lockedFuture = queue.poll();
                 if (lockedFuture != null) {
+                    totalGranted.incrementAndGet();
                     lockedFuture.latch.countDown();
                 } else {
                     permits.decrementAndGet();
@@ -112,17 +120,17 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
                 LockedFuture lockedFuture = createLockedFuture();
                 if (!queue.offer(lockedFuture, 1, TimeUnit.SECONDS)) {
                     lockedFuture.cancelFuture();
-                    return Futures.immediateFailedFuture(new IllegalStateException("Rate Limit Buffer is full. Reject"));
+                    return Futures.immediateFailedFuture(new BufferLimitException());
                 }
                 if(permits.get() < permitsLimit) {
                     reprocessQueue();
                 }
                 return lockedFuture.future;
             } catch (InterruptedException e) {
-                return Futures.immediateFailedFuture(new IllegalStateException("Rate Limit Task interrupted. Reject"));
+                return Futures.immediateFailedFuture(new BufferLimitException());
             }
         }
-        return Futures.immediateFailedFuture(new IllegalStateException("Rate Limit Buffer is full. Reject"));
+        return Futures.immediateFailedFuture(new BufferLimitException());
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
@@ -134,8 +142,11 @@ public class BufferedRateLimiter implements AsyncRateLimiter {
                 expiredCount++;
             }
         }
-        log.info("Permits maxBuffer is [{}] max concurrent [{}] expired [{}] current granted [{}]", maxQueueSize.getAndSet(0),
-                maxGrantedPermissions.getAndSet(0), expiredCount, permits.get());
+        log.info("Permits maxBuffer [{}] maxPermits [{}] expired [{}] currPermits [{}] currBuffer [{}] " +
+                        "totalPermits [{}] totalRequests [{}] totalReleased [{}]",
+                maxQueueSize.getAndSet(0), maxGrantedPermissions.getAndSet(0), expiredCount,
+                permits.get(), queue.size(),
+                totalGranted.getAndSet(0), totalRequested.getAndSet(0), totalReleased.getAndSet(0));
     }
 
     private class LockedFuture {

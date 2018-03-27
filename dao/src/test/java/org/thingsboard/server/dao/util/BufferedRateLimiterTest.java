@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.util;
 
 import com.google.common.util.concurrent.*;
 import org.junit.Test;
+import org.thingsboard.server.dao.exception.BufferLimitException;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.ExecutionException;
@@ -61,8 +62,8 @@ public class BufferedRateLimiterTest {
         } catch (Exception e) {
             assertTrue(e instanceof ExecutionException);
             Throwable actualCause = e.getCause();
-            assertTrue(actualCause instanceof IllegalStateException);
-            assertEquals("Rate Limit Buffer is full. Reject", actualCause.getMessage());
+            assertTrue(actualCause instanceof BufferLimitException);
+            assertEquals("Rate Limit Buffer is full", actualCause.getMessage());
         }
     }
 
