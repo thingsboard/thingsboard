@@ -45,6 +45,10 @@ public @interface RuleNode {
 
     String[] relationTypes() default {"Success", "Failure"};
 
+    String[] uiResources() default {};
+
+    String configDirective() default "";
+
     boolean customRelations() default false;
 
 }

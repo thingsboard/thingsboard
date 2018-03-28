@@ -192,6 +192,8 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         NodeConfiguration config = configClazz.newInstance();
         NodeConfiguration defaultConfiguration = config.defaultConfiguration();
         nodeDefinition.setDefaultConfiguration(mapper.valueToTree(defaultConfiguration));
+        nodeDefinition.setUiResources(nodeAnnotation.uiResources());
+        nodeDefinition.setConfigDirective(nodeAnnotation.configDirective());
         return nodeDefinition;
     }
 

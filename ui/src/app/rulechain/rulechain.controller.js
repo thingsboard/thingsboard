@@ -137,10 +137,13 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     };
 
     vm.saveRuleNode = function(theForm) {
-        theForm.$setPristine();
-        vm.isEditingRuleNode = false;
-        vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
-        vm.editingRuleNode = angular.copy(vm.editingRuleNode);
+        $scope.$broadcast('form-submit');
+        if (theForm.$valid) {
+            theForm.$setPristine();
+            vm.isEditingRuleNode = false;
+            vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
+            vm.editingRuleNode = angular.copy(vm.editingRuleNode);
+        }
     };
 
     vm.saveRuleNodeLink = function(theForm) {
@@ -309,7 +312,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             var componentType = ruleNodeComponent.type;
             var model = vm.ruleNodeTypesModel[componentType].model;
             var node = {
-                id: model.nodes.length,
+                id: 'node-lib-' + componentType + '-' + model.nodes.length,
                 component: ruleNodeComponent,
                 name: '',
                 nodeClass: vm.types.ruleNodeType[componentType].nodeClass,
@@ -358,7 +361,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
         vm.ruleChainModel.nodes.push(
             {
-                id: vm.nextNodeID++,
+                id: 'rule-chain-node-' + vm.nextNodeID++,
                 component: types.inputNodeComponent,
                 name: "",
                 nodeClass: types.ruleNodeType.INPUT.nodeClass,
@@ -389,7 +392,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
             if (component) {
                 var node = {
-                    id: vm.nextNodeID++,
+                    id: 'rule-chain-node-' + vm.nextNodeID++,
                     ruleNodeId: ruleNode.id,
                     additionalInfo: ruleNode.additionalInfo,
                     configuration: ruleNode.configuration,
@@ -466,7 +469,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     var ruleChainNode = ruleChainNodesMap[ruleChainConnection.additionalInfo.ruleChainNodeId];
                     if (!ruleChainNode) {
                         ruleChainNode = {
-                            id: vm.nextNodeID++,
+                            id: 'rule-chain-node-' + vm.nextNodeID++,
                             additionalInfo: ruleChainConnection.additionalInfo,
                             targetRuleChainId: ruleChainConnection.targetRuleChainId.id,
                             x: ruleChainConnection.additionalInfo.layoutX,
@@ -611,7 +614,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             fullscreen: true,
             targetEvent: $event
         }).then(function (ruleNode) {
-            ruleNode.id = vm.nextNodeID++;
+            ruleNode.id = 'rule-chain-node-' + vm.nextNodeID++;
             ruleNode.connectors = [];
             if (ruleNode.component.configurationDescriptor.nodeDefinition.inEnabled) {
                 ruleNode.connectors.push(

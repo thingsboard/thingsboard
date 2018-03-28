@@ -29,5 +29,7 @@ public class NodeDefinition {
     String[] relationTypes;
     boolean customRelations;
     JsonNode defaultConfiguration;
+    String[] uiResources;
+    String configDirective;
 
 }
