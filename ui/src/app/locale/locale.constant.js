@@ -1171,6 +1171,7 @@ export default angular.module('thingsboard.locale', [])
                     "debug-mode": "Debug mode"
                 },
                 "rulenode": {
+                    "details": "Details",
                     "add": "Add rule node",
                     "name": "Name",
                     "name-required": "Name is required.",

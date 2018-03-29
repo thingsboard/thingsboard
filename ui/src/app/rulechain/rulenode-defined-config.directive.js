@@ -36,10 +36,14 @@ export default function RuleNodeDefinedConfigDirective($compile) {
         };
 
         function loadTemplate() {
+            if (scope.ruleNodeConfigScope) {
+                scope.ruleNodeConfigScope.$destroy();
+            }
             var directive = snake_case(attrs.ruleNodeDirective, '-');
             var template = `<${directive} ng-model="configuration" ng-required="required" ng-readonly="readonly"></${directive}>`;
             element.html(template);
-            $compile(element.contents())(scope);
+            scope.ruleNodeConfigScope = scope.$new();
+            $compile(element.contents())(scope.ruleNodeConfigScope);
         }
 
         function snake_case(name, separator) {

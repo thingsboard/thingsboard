@@ -256,6 +256,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                 vm.isEditingRuleNodeLink = true;
                 vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
                 vm.editingRuleNodeLink = angular.copy(edge);
+                $mdUtil.nextTick(() => {
+                    vm.ruleNodeLinkForm.$setPristine();
+                });
             }
         },
         nodeCallbacks: {
@@ -266,6 +269,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     vm.isEditingRuleNode = true;
                     vm.editingRuleNodeIndex = vm.ruleChainModel.nodes.indexOf(node);
                     vm.editingRuleNode = angular.copy(node);
+                    $mdUtil.nextTick(() => {
+                        vm.ruleNodeForm.$setPristine();
+                    });
                 }
             }
         },

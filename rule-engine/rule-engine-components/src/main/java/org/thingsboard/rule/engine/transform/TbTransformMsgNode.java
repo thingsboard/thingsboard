@@ -30,7 +30,7 @@ import javax.script.Bindings;
         configClazz = TbTransformMsgNodeConfiguration.class,
         nodeDescription = "Change Message payload and Metadata using JavaScript",
         nodeDetails = "JavaScript function recieve 2 input parameters that can be changed inside.<br/> " +
-                "<code>meta</code> - is a Message metadata.<br/>" +
+                "<code>metadata</code> - is a Message metadata.<br/>" +
                 "<code>msg</code> - is a Message payload.<br/>Any properties can be changed/removed/added in those objects.")
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
@@ -40,7 +40,7 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
     @Override
     public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
-        this.jsEngine = new NashornJsEngine(config.getJsScript());
+        this.jsEngine = new NashornJsEngine(config.getJsScript(), "Transform");
         setConfig(config);
     }
 

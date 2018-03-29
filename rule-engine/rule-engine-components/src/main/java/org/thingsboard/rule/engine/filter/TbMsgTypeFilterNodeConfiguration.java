@@ -33,7 +33,7 @@ public class TbMsgTypeFilterNodeConfiguration implements NodeConfiguration {
     @Override
     public TbMsgTypeFilterNodeConfiguration defaultConfiguration() {
         TbMsgTypeFilterNodeConfiguration configuration = new TbMsgTypeFilterNodeConfiguration();
-        configuration.setMessageTypes(Arrays.asList("GET_ATTRIBUTES","POST_ATTRIBUTES","POST_TELEMETRY","RPC_REQUEST"));
+        configuration.setMessageTypes(Arrays.asList("POST_ATTRIBUTES","POST_TELEMETRY","RPC_REQUEST"));
         return configuration;
     }
 }

@@ -35,7 +35,7 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
                 "If <b>True</b> - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used." +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code>" +
-                "Message metadata can be accessed via <code>meta</code> property. For example <code>meta.customerName === 'John';</code>",
+                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeScriptConfig")
 
@@ -47,7 +47,7 @@ public class TbJsFilterNode implements TbNode {
     @Override
     public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsFilterNodeConfiguration.class);
-        this.jsEngine = new NashornJsEngine(config.getJsScript());
+        this.jsEngine = new NashornJsEngine(config.getJsScript(), "Filter");
     }
 
     @Override

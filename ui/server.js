@@ -32,7 +32,6 @@ const forwardPort = 8080;
 
 const ruleNodeUiforwardHost = 'localhost';
 const ruleNodeUiforwardPort = 8080;
-//const ruleNodeUiforwardPort = 5000;
 
 const app = express();
 const server = http.createServer(app);

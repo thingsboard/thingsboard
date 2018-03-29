@@ -65,7 +65,8 @@
         </div>
         <tb-details-sidenav class="tb-rulenode-details-sidenav"
                             header-title="{{vm.editingRuleNode.name}}"
-                            header-subtitle="{{'rulenode.rulenode-details' | translate}}"
+                            header-subtitle="{{(vm.types.ruleNodeType[vm.editingRuleNode.component.type].name | translate)
+                            + ' - ' + vm.editingRuleNode.component.name}}"
                             is-read-only="false"
                             is-open="vm.isEditingRuleNode"
                             is-always-edit="true"
@@ -76,16 +77,20 @@
             <details-buttons tb-help="vm.helpLinkIdForRuleNodeType()" help-container-id="help-container">
                 <div id="help-container"></div>
             </details-buttons>
-            <form name="vm.ruleNodeForm" ng-if="vm.isEditingRuleNode">
-                <tb-rule-node
-                        rule-node="vm.editingRuleNode"
-                        rule-chain-id="vm.ruleChain.id.id"
-                        is-edit="true"
-                        is-read-only="false"
-                        on-delete-rule-node="vm.deleteRuleNode(event, vm.editingRuleNode)"
-                        the-form="vm.ruleNodeForm">
-                </tb-rule-node>
-            </form>
+            <md-tabs id="ruleNodeTabs" md-border-bottom flex class="tb-absolute-fill">
+                <md-tab label="{{ 'rulenode.details' | translate }}">
+                    <form name="vm.ruleNodeForm" ng-if="vm.isEditingRuleNode">
+                        <tb-rule-node
+                                rule-node="vm.editingRuleNode"
+                                rule-chain-id="vm.ruleChain.id.id"
+                                is-edit="true"
+                                is-read-only="false"
+                                on-delete-rule-node="vm.deleteRuleNode(event, vm.editingRuleNode)"
+                                the-form="vm.ruleNodeForm">
+                        </tb-rule-node>
+                    </form>
+                </md-tab>
+            </md-tabs>
         </tb-details-sidenav>
         <tb-details-sidenav class="tb-rulenode-link-details-sidenav"
                             header-title="{{vm.editingRuleNodeLink.label}}"

@@ -38,10 +38,15 @@ export default function RuleNodeConfigDirective($compile, $templateCache, $injec
         };
 
         scope.useDefinedDirective = function() {
-            return scope.nodeDefinition.configDirective && !scope.definedDirectiveError;
+            return scope.nodeDefinition &&
+                scope.nodeDefinition.configDirective && !scope.definedDirectiveError;
         };
 
-        validateDefinedDirective();
+        scope.$watch('nodeDefinition', () => {
+            if (scope.nodeDefinition) {
+                validateDefinedDirective();
+            }
+        });
 
         function validateDefinedDirective() {
             if (scope.nodeDefinition.uiResourceLoadError && scope.nodeDefinition.uiResourceLoadError.length) {

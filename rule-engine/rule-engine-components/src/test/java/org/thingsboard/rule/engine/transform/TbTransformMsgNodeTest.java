@@ -51,7 +51,7 @@ public class TbTransformMsgNodeTest {
 
     @Test
     public void metadataCanBeUpdated() throws TbNodeException {
-        initWithScript("meta.temp = meta.temp * 10;");
+        initWithScript("return metadata.temp = metadata.temp * 10;");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -70,7 +70,7 @@ public class TbTransformMsgNodeTest {
 
     @Test
     public void metadataCanBeAdded() throws TbNodeException {
-        initWithScript("meta.newAttr = meta.humidity - msg.passed;");
+        initWithScript("return metadata.newAttr = metadata.humidity - msg.passed;");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -89,7 +89,7 @@ public class TbTransformMsgNodeTest {
 
     @Test
     public void payloadCanBeUpdated() throws TbNodeException {
-        initWithScript("msg.passed = msg.passed * meta.temp; msg.bigObj.newProp = 'Ukraine' ");
+        initWithScript("return msg.passed = msg.passed * metadata.temp; msg.bigObj.newProp = 'Ukraine' ");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");

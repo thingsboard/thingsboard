@@ -34,14 +34,20 @@ import java.util.Set;
 @Slf4j
 public class NashornJsEngine {
 
-    public static final String METADATA = "meta";
+    public static final String METADATA = "metadata";
     public static final String DATA = "msg";
+
+    private static final String JS_WRAPPER_PREFIX_TEMPLATE = "function %s(msg, metadata) { ";
+    private static final String JS_WRAPPER_SUFFIX_TEMPLATE = "}\n %s(msg, metadata);";
+
     private static NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
 
     private CompiledScript engine;
 
-    public NashornJsEngine(String script) {
-        engine = compileScript(script);
+    public NashornJsEngine(String script, String functionName) {
+        String jsWrapperPrefix = String.format(JS_WRAPPER_PREFIX_TEMPLATE, functionName);
+        String jsWrapperSuffix = String.format(JS_WRAPPER_SUFFIX_TEMPLATE, functionName);
+        engine = compileScript(jsWrapperPrefix + script + jsWrapperSuffix);
     }
 
     private static CompiledScript compileScript(String script) {
@@ -58,15 +64,15 @@ public class NashornJsEngine {
     public static Bindings bindMsg(TbMsg msg) {
         try {
             Bindings bindings = new SimpleBindings();
-            bindings.put(METADATA, msg.getMetaData().getData());
-
             if (ArrayUtils.isNotEmpty(msg.getData())) {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode jsonNode = mapper.readTree(msg.getData());
                 Map map = mapper.treeToValue(jsonNode, Map.class);
                 bindings.put(DATA, map);
+            } else {
+                bindings.put(DATA, Collections.emptyMap());
             }
-
+            bindings.put(METADATA, msg.getMetaData().getData());
             return bindings;
         } catch (Throwable th) {
             throw new IllegalArgumentException("Cannot bind js args", th);
