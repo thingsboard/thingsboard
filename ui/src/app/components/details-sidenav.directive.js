@@ -26,7 +26,7 @@ export default angular.module('thingsboard.directives.detailsSidenav', [])
     .name;
 
 /*@ngInject*/
-function DetailsSidenav($timeout) {
+function DetailsSidenav($timeout, $window) {
 
     var linker = function (scope, element, attrs) {
 
@@ -41,6 +41,23 @@ function DetailsSidenav($timeout) {
         if (angular.isDefined(attrs.isAlwaysEdit) && attrs.isAlwaysEdit) {
             scope.isEdit = true;
         }
+
+        if (angular.isDefined(attrs.closeOnClickOutside && attrs.closeOnClickOutside)) {
+            scope.closeOnClickOutside = true;
+            var clickOutsideHandler = function() {
+                scope.closeDetails();
+            };
+            angular.element($window).click(clickOutsideHandler);
+            scope.$on("$destroy", function () {
+                angular.element($window).unbind('click', clickOutsideHandler);
+            });
+        }
+
+        scope.onClick = function($event) {
+            if (scope.closeOnClickOutside) {
+                $event.stopPropagation();
+            }
+        };
 
         scope.toggleDetailsEditMode = function () {
             if (!scope.isAlwaysEdit) {

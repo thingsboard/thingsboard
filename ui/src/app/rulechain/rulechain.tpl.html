@@ -67,8 +67,9 @@
                             header-title="{{vm.editingRuleNode.name}}"
                             header-subtitle="{{(vm.types.ruleNodeType[vm.editingRuleNode.component.type].name | translate)
                             + ' - ' + vm.editingRuleNode.component.name}}"
-                            is-read-only="false"
+                            is-read-only="vm.selectedRuleNodeTabIndex > 0"
                             is-open="vm.isEditingRuleNode"
+                            close-on-click-outside="true"
                             is-always-edit="true"
                             on-close-details="vm.onEditRuleNodeClosed()"
                             on-toggle-details-edit-mode="vm.onRevertRuleNodeEdit(vm.ruleNodeForm)"
@@ -77,9 +78,10 @@
             <details-buttons tb-help="vm.helpLinkIdForRuleNodeType()" help-container-id="help-container">
                 <div id="help-container"></div>
             </details-buttons>
-            <md-tabs id="ruleNodeTabs" md-border-bottom flex class="tb-absolute-fill">
+            <md-tabs md-selected="vm.selectedRuleNodeTabIndex"
+                     id="ruleNodeTabs" md-border-bottom flex class="tb-absolute-fill" ng-if="vm.isEditingRuleNode">
                 <md-tab label="{{ 'rulenode.details' | translate }}">
-                    <form name="vm.ruleNodeForm" ng-if="vm.isEditingRuleNode">
+                    <form name="vm.ruleNodeForm">
                         <tb-rule-node
                                 rule-node="vm.editingRuleNode"
                                 rule-chain-id="vm.ruleChain.id.id"
@@ -90,6 +92,15 @@
                         </tb-rule-node>
                     </form>
                 </md-tab>
+                <md-tab ng-if="vm.isEditingRuleNode && vm.editingRuleNode.ruleNodeId"
+                        md-on-select="vm.triggerResize()" label="{{ 'rulenode.events' | translate }}">
+                    <tb-event-table flex entity-type="vm.types.entityType.rulenode"
+                                    entity-id="vm.editingRuleNode.ruleNodeId.id"
+                                    tenant-id="vm.ruleChain.tenantId.id"
+                                    debug-event-types="{{vm.types.debugEventType.debugRuleNode.value}}"
+                                    default-event-type="{{vm.types.debugEventType.debugRuleNode.value}}">
+                    </tb-event-table>
+                </md-tab>
             </md-tabs>
         </tb-details-sidenav>
         <tb-details-sidenav class="tb-rulenode-link-details-sidenav"
@@ -97,6 +108,7 @@
                             header-subtitle="{{'rulenode.link-details' | translate}}"
                             is-read-only="false"
                             is-open="vm.isEditingRuleNodeLink"
+                            close-on-click-outside="true"
                             is-always-edit="true"
                             on-close-details="vm.onEditRuleNodeLinkClosed()"
                             on-toggle-details-edit-mode="vm.onRevertRuleNodeLinkEdit(vm.ruleNodeLinkForm)"

@@ -28,7 +28,7 @@ import addRuleNodeLinkTemplate from './add-link.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $document, $mdDialog,
+export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $window, $document, $mdDialog,
                                     $filter, $translate, hotkeys, types, ruleChainService, Modelfactory, flowchartConstants,
                                     ruleChain, ruleChainMetaData, ruleNodeComponents) {
 
@@ -76,6 +76,8 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     vm.objectsSelected = objectsSelected;
     vm.deleteSelected = deleteSelected;
+
+    vm.triggerResize = triggerResize;
 
     initHotKeys();
 
@@ -129,18 +131,17 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     }
 
     vm.onEditRuleNodeClosed = function() {
-        vm.editingRuleNode = null;
+        //vm.editingRuleNode = null;
     };
 
     vm.onEditRuleNodeLinkClosed = function() {
-        vm.editingRuleNodeLink = null;
+        //vm.editingRuleNodeLink = null;
     };
 
     vm.saveRuleNode = function(theForm) {
         $scope.$broadcast('form-submit');
         if (theForm.$valid) {
             theForm.$setPristine();
-            vm.isEditingRuleNode = false;
             vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
             vm.editingRuleNode = angular.copy(vm.editingRuleNode);
         }
@@ -148,7 +149,6 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     vm.saveRuleNodeLink = function(theForm) {
         theForm.$setPristine();
-        vm.isEditingRuleNodeLink = false;
         vm.ruleChainModel.edges[vm.editingRuleNodeLinkIndex] = vm.editingRuleNodeLink;
         vm.editingRuleNodeLink = angular.copy(vm.editingRuleNodeLink);
     };
@@ -662,6 +662,11 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     function deleteSelected() {
         vm.modelservice.deleteSelected();
+    }
+
+    function triggerResize() {
+        var w = angular.element($window);
+        w.triggerHandler('resize');
     }
 }
 

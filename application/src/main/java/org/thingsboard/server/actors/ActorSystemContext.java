@@ -25,6 +25,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
@@ -60,11 +62,13 @@ import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public class ActorSystemContext {
     private static final String AKKA_CONF_FILE_NAME = "actor-system.conf";
@@ -292,38 +296,49 @@ public class ActorSystemContext {
     }
 
     private void persistDebug(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, Throwable error) {
-        Event event = new Event();
-        event.setTenantId(tenantId);
-        event.setEntityId(entityId);
-        event.setType(DataConstants.DEBUG);
+        try {
+            Event event = new Event();
+            event.setTenantId(tenantId);
+            event.setEntityId(entityId);
+            event.setType(DataConstants.DEBUG_RULE_NODE);
 
-        ObjectNode node = mapper.createObjectNode()
-                .put("type", type)
-                .put("server", getServerAddress())
-                .put("entityId", tbMsg.getOriginator().getId().toString())
-                .put("entityName", tbMsg.getOriginator().getEntityType().name())
-                .put("msgId", tbMsg.getId().toString())
-                .put("msgType", tbMsg.getType())
-                .put("dataType", tbMsg.getDataType().name());
+            String metadata = mapper.writeValueAsString(tbMsg.getMetaData().getData());
 
-        ObjectNode mdNode = node.putObject("metadata");
-        tbMsg.getMetaData().getData().forEach(mdNode::put);
+            ObjectNode node = mapper.createObjectNode()
+                    .put("type", type)
+                    .put("server", getServerAddress())
+                    .put("entityId", tbMsg.getOriginator().getId().toString())
+                    .put("entityName", tbMsg.getOriginator().getEntityType().name())
+                    .put("msgId", tbMsg.getId().toString())
+                    .put("msgType", tbMsg.getType())
+                    .put("dataType", tbMsg.getDataType().name())
+                    .put("data", convertToString(tbMsg.getDataType(), tbMsg.getData()))
+                    .put("metadata", metadata);
 
-        switch (tbMsg.getDataType()) {
+            if (error != null) {
+                node = node.put("error", toString(error));
+            }
+
+            event.setBody(node);
+            eventService.save(event);
+        } catch (IOException ex) {
+            log.warn("Failed to persist rule node debug message", ex);
+        }
+    }
+
+    private String convertToString(TbMsgDataType messageType, byte[] data) {
+        if (data == null) {
+            return null;
+        }
+        switch (messageType) {
+            case JSON:
+            case TEXT:
+                return new String(data, StandardCharsets.UTF_8);
             case BINARY:
-                node.put("data", Base64Utils.encodeUrlSafe(tbMsg.getData()));
-                break;
+                return Base64Utils.encodeToString(data);
             default:
-                node.put("data", new String(tbMsg.getData(), StandardCharsets.UTF_8));
-                break;
+                throw new RuntimeException("Message type: " + messageType + " is not supported!");
         }
-
-        if (error != null) {
-            node = node.put("error", toString(error));
-        }
-
-        event.setBody(node);
-        eventService.save(event);
     }
 
     public static Exception toException(Throwable error) {
