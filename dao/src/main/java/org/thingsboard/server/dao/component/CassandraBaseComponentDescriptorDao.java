@@ -130,7 +130,7 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
     public boolean removeById(UUID key) {
         Statement delete = QueryBuilder.delete().all().from(ModelConstants.COMPONENT_DESCRIPTOR_BY_ID).where(eq(ModelConstants.ID_PROPERTY, key));
         log.debug("Remove request: {}", delete.toString());
-        return getSession().execute(delete).wasApplied();
+        return executeWrite(delete).wasApplied();
     }
 
     @Override
@@ -145,7 +145,7 @@ public class CassandraBaseComponentDescriptorDao extends CassandraAbstractSearch
         log.debug("Delete plugin meta-data entity by id [{}]", clazz);
         Statement delete = QueryBuilder.delete().all().from(getColumnFamilyName()).where(eq(ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY, clazz));
         log.debug("Remove request: {}", delete.toString());
-        ResultSet resultSet = getSession().execute(delete);
+        ResultSet resultSet = executeWrite(delete);
         log.debug("Delete result: [{}]", resultSet.wasApplied());
     }
 

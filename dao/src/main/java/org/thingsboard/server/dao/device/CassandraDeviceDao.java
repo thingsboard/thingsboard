@@ -148,7 +148,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
         query.and(eq(ENTITY_SUBTYPE_TENANT_ID_PROPERTY, tenantId));
         query.and(eq(ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY, EntityType.DEVICE));
         query.setConsistencyLevel(cluster.getDefaultReadConsistencyLevel());
-        ResultSetFuture resultSetFuture = getSession().executeAsync(query);
+        ResultSetFuture resultSetFuture = executeAsyncRead(query);
         return Futures.transform(resultSetFuture, new Function<ResultSet, List<EntitySubtype>>() {
             @Nullable
             @Override
