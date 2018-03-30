@@ -22,8 +22,8 @@
         ng-mousedown="callbacks.mouseDown($event, node)"
         ng-mouseenter="callbacks.mouseEnter($event, node)"
         ng-mouseleave="callbacks.mouseLeave($event, node)">
-    <div class="{{flowchartConstants.nodeOverlayClass}}"></div>
-    <div class="tb-rule-node {{node.nodeClass}}">
+    <div class="{{flowchartConstants.nodeOverlayClass}}" ng-class="{'tb-rule-node-highlighted' : node.highlighted}"></div>
+    <div class="tb-rule-node {{node.nodeClass}}" ng-class="{'tb-rule-node-highlighted' : node.highlighted}">
         <md-icon aria-label="node-type-icon" flex="15"
                  class="material-icons">{{node.icon}}</md-icon>
         <div layout="column" flex="85" layout-align="center">

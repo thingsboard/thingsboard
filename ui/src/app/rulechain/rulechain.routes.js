@@ -76,7 +76,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
                     }
             },
             data: {
-                searchEnabled: false,
+                searchEnabled: true,
                 pageTitle: 'rulechain.rulechain'
             },
             ncyBreadcrumb: {

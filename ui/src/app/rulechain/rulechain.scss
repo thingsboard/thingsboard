@@ -125,6 +125,13 @@
   color: #333;
   border: solid 1px #777;
   font-size: 12px;
+  &.tb-rule-node-highlighted {
+    box-shadow: 0 0 10px 6px #51cbee;
+    .tb-node-title {
+      text-decoration: underline;
+      font-weight: bold;
+    }
+  }
   &.tb-input-type {
     background-color: #a3eaa9;
     user-select: none;
@@ -156,7 +163,7 @@
 
   }
   .tb-node-title {
-    font-weight: 600;
+    font-weight: 500;
   }
   .tb-node-type, .tb-node-title {
     overflow: hidden;
@@ -184,6 +191,10 @@
     bottom: 0;
     background-color: #000;
     opacity: 0;
+/*    &.tb-rule-node-highlighted {
+      background-color: green;
+      opacity: 0.15;
+    }*/
   }
   &.fc-hover {
     .fc-node-overlay {

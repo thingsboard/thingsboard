@@ -15,14 +15,14 @@
     limitations under the License.
 
 -->
-<div hide-xs hide-sm class="tb-cell" flex="30">{{event.createdTime | date :  'yyyy-MM-dd HH:mm:ss'}}</div>
+<div hide-xs hide-sm class="tb-cell" flex="25">{{event.createdTime | date :  'yyyy-MM-dd HH:mm:ss'}}</div>
 <div class="tb-cell" flex="20">{{event.body.server}}</div>
-<div class="tb-cell" flex="20">{{event.body.type}}</div>
-<div class="tb-cell" flex="20">{{event.body.entityName}}</div>
-<div class="tb-cell" flex="20">{{event.body.msgId}}</div>
-<div class="tb-cell" flex="20">{{event.body.msgType}}</div>
-<div class="tb-cell" flex="20">{{event.body.dataType}}</div>
-<div class="tb-cell" flex="20">
+<div class="tb-cell" flex="10">{{event.body.type}}</div>
+<div class="tb-cell" flex="15">{{event.body.entityName}}</div>
+<div class="tb-cell tb-nowrap" flex="20" ng-mouseenter="checkTooltip($event)">{{event.body.msgId}}</div>
+<div class="tb-cell" flex="20" ng-mouseenter="checkTooltip($event)">{{event.body.msgType}}</div>
+<div class="tb-cell" flex="15">{{event.body.dataType}}</div>
+<div class="tb-cell" flex="10">
     <md-button ng-if="event.body.data" class="md-icon-button md-primary"
                ng-click="showContent($event, event.body.data, 'event.data', event.body.dataType)"
                aria-label="{{ 'action.view' | translate }}">
@@ -35,7 +35,7 @@
         </md-icon>
     </md-button>
 </div>
-<div class="tb-cell" flex="20">
+<div class="tb-cell" flex="10">
     <md-button ng-if="event.body.metadata" class="md-icon-button md-primary"
                ng-click="showContent($event, event.body.metadata, 'event.metadata', 'JSON')"
                aria-label="{{ 'action.view' | translate }}">
@@ -48,7 +48,7 @@
         </md-icon>
     </md-button>
 </div>
-<div class="tb-cell" flex="20">
+<div class="tb-cell" flex="10">
     <md-button ng-if="event.body.error" class="md-icon-button md-primary"
                ng-click="showContent($event, event.body.error, 'event.error')"
                aria-label="{{ 'action.view' | translate }}">

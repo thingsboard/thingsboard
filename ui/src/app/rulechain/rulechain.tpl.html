@@ -19,17 +19,17 @@
 <md-content flex tb-expand-fullscreen tb-confirm-on-exit is-dirty="vm.isDirty"
             expand-tooltip-direction="bottom" layout="column" class="tb-rulechain"
             ng-keydown="vm.keyDown($event)"
-            ng-keyup="vm.keyUp($event)">
+            ng-keyup="vm.keyUp($event)" on-fullscreen-changed="vm.isFullscreen = expanded">
     <section class="tb-rulechain-container" flex layout="column">
         <div class="tb-rulechain-layout" flex layout="row">
             <section layout="row" layout-wrap
                      class="tb-header-buttons md-fab tb-library-open">
                 <md-button ng-show="!vm.isLibraryOpen"
                            class="tb-btn-header tb-btn-open-library md-primary md-fab md-fab-top-left"
-                           aria-label="{{ 'action.apply' | translate }}"
+                           aria-label="{{ 'rulenode.open-node-library' | translate }}"
                            ng-click="vm.isLibraryOpen = true">
-                    <md-tooltip md-direction="top">
-                        {{ 'action.apply-changes' | translate }}
+                    <md-tooltip md-direction="{{vm.isFullscreen ? 'bottom' : 'top'}}">
+                        {{ 'rulenode.open-node-library' | translate }}
                     </md-tooltip>
                     <ng-md-icon icon="menu"></ng-md-icon>
                 </md-button>
@@ -43,7 +43,7 @@
                     <div class="md-toolbar-tools">
                         <md-button class="md-icon-button tb-small" aria-label="{{ 'action.search' | translate }}">
                             <md-icon aria-label="{{ 'action.search' | translate }}" class="material-icons">search</md-icon>
-                            <md-tooltip md-direction="top">
+                            <md-tooltip md-direction="{{vm.isFullscreen ? 'bottom' : 'top'}}">
                                 {{'rulenode.search' | translate}}
                             </md-tooltip>
                         </md-button>
@@ -53,15 +53,17 @@
                                 <input ng-model="vm.ruleNodeSearch" placeholder="{{'rulenode.search' | translate}}"/>
                             </md-input-container>
                         </div>
-                        <md-button class="md-icon-button tb-small" aria-label="Close" ng-click="vm.ruleNodeSearch = ''">
+                        <md-button class="md-icon-button tb-small" aria-label="Close"
+                                   ng-show="vm.ruleNodeSearch"
+                                   ng-click="vm.ruleNodeSearch = ''">
                             <md-icon aria-label="Close" class="material-icons">close</md-icon>
-                            <md-tooltip md-direction="top">
-                                {{ 'action.close' | translate }}
+                            <md-tooltip md-direction="{{vm.isFullscreen ? 'bottom' : 'top'}}">
+                                {{ 'action.clear-search' | translate }}
                             </md-tooltip>
                         </md-button>
                         <md-button class="md-icon-button tb-small" aria-label="Close" ng-click="vm.isLibraryOpen = false">
                             <md-icon aria-label="Close" class="material-icons">chevron_left</md-icon>
-                            <md-tooltip md-direction="top">
+                            <md-tooltip md-direction="{{vm.isFullscreen ? 'bottom' : 'top'}}">
                                 {{ 'action.close' | translate }}
                             </md-tooltip>
                         </md-button>
@@ -90,6 +92,7 @@
                                            callbacks="vm.nodeLibCallbacks"
                                            node-width="170"
                                            node-height="50"
+                                           control="vm.ruleNodeTypesCanvasControl[typeId]"
                                            drop-target-id="'tb-rulchain-canvas'"></fc-canvas>
                             </md-expansion-panel-content>
                         </md-expansion-panel-expanded>
