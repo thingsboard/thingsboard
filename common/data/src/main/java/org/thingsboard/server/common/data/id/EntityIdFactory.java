@@ -33,6 +33,10 @@ public class EntityIdFactory {
         return getByTypeAndUuid(EntityType.valueOf(type), uuid);
     }
 
+    public static EntityId getByTypeAndUuid(EntityType type, String uuid) {
+        return getByTypeAndUuid(type, UUID.fromString(uuid));
+    }
+
     public static EntityId getByTypeAndUuid(EntityType type, UUID uuid) {
         switch (type) {
             case TENANT:

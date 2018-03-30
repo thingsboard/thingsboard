@@ -243,27 +243,19 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         switch (attr.getDataType()) {
             case BOOLEAN:
                 Optional<Boolean> booleanValue = attr.getBooleanValue();
-                if (booleanValue.isPresent()) {
-                    dataBuilder.setBoolValue(booleanValue.get());
-                }
+                booleanValue.ifPresent(dataBuilder::setBoolValue);
                 break;
             case LONG:
                 Optional<Long> longValue = attr.getLongValue();
-                if (longValue.isPresent()) {
-                    dataBuilder.setLongValue(longValue.get());
-                }
+                longValue.ifPresent(dataBuilder::setLongValue);
                 break;
             case DOUBLE:
                 Optional<Double> doubleValue = attr.getDoubleValue();
-                if (doubleValue.isPresent()) {
-                    dataBuilder.setDoubleValue(doubleValue.get());
-                }
+                doubleValue.ifPresent(dataBuilder::setDoubleValue);
                 break;
             case STRING:
                 Optional<String> stringValue = attr.getStrValue();
-                if (stringValue.isPresent()) {
-                    dataBuilder.setStrValue(stringValue.get());
-                }
+                stringValue.ifPresent(dataBuilder::setStrValue);
                 break;
         }
         return dataBuilder;

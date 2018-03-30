@@ -344,9 +344,7 @@ public class SubscriptionManager {
     }
 
     private void checkSubsciptionsPrevAddress(Set<Subscription> subscriptions) {
-        Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
-        while (subscriptionIterator.hasNext()) {
-            Subscription s = subscriptionIterator.next();
+        for (Subscription s : subscriptions) {
             if (s.isLocal()) {
                 if (s.getServer() != null) {
                     log.trace("[{}] Local subscription is no longer handled on remote server address [{}]", s.getWsSessionId(), s.getServer());
