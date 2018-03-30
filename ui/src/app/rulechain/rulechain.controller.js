@@ -43,6 +43,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     vm.editingRuleNodeLink = null;
     vm.isEditingRuleNodeLink = false;
 
+    vm.isLibraryOpen = true;
+    vm.ruleNodeSearch = '';
+
     vm.ruleChain = ruleChain;
     vm.ruleChainMetaData = ruleChainMetaData;
 
@@ -131,11 +134,11 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     }
 
     vm.onEditRuleNodeClosed = function() {
-        //vm.editingRuleNode = null;
+        vm.editingRuleNode = null;
     };
 
     vm.onEditRuleNodeLinkClosed = function() {
-        //vm.editingRuleNodeLink = null;
+        vm.editingRuleNodeLink = null;
     };
 
     vm.saveRuleNode = function(theForm) {

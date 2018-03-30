@@ -1187,6 +1187,7 @@ export default angular.module('thingsboard.locale', [])
                 "rulenode": {
                     "details": "Details",
                     "events": "Events",
+                    "search": "Search nodes",
                     "add": "Add rule node",
                     "name": "Name",
                     "name-required": "Name is required.",
