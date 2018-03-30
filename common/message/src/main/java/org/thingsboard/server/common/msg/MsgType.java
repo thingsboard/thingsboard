@@ -54,4 +54,9 @@ public enum MsgType {
      */
     RULE_TO_SELF_ERROR_MSG,
 
+    /**
+     * Message that is sent by RuleActor implementation to RuleActor itself to process the message.
+     */
+    RULE_TO_SELF_MSG,
+
 }

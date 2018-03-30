@@ -47,10 +47,23 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
             case RULE_TO_SELF_ERROR_MSG:
                 onRuleNodeToSelfErrorMsg((RuleNodeToSelfErrorMsg) msg);
                 break;
+            case RULE_TO_SELF_MSG:
+                onRuleNodeToSelfMsg((RuleNodeToSelfMsg) msg);
+                break;
             default:
                 return false;
         }
         return true;
+    }
+
+    private void onRuleNodeToSelfMsg(RuleNodeToSelfMsg msg) {
+        logger.debug("[{}] Going to process rule msg: {}", id, msg.getMsg());
+        try {
+            processor.onRuleToSelfMsg(msg);
+            increaseMessagesProcessedCount();
+        } catch (Exception e) {
+            logAndPersist("onRuleMsg", e);
+        }
     }
 
     private void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) {

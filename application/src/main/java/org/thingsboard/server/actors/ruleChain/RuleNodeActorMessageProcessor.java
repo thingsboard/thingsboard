@@ -18,9 +18,10 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
+import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeState;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -30,6 +31,8 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Andrew Shvayka
@@ -41,6 +44,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private final RuleChainService service;
     private RuleNode ruleNode;
     private TbNode tbNode;
+    private TbContext defaultCtx;
 
     RuleNodeActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, ActorSystemContext systemContext
             , LoggingAdapter logger, ActorRef parent, ActorRef self) {
@@ -49,6 +53,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         this.self = self;
         this.service = systemContext.getRuleChainService();
         this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(entityId);
+        this.defaultCtx = new DefaultTbContext(systemContext, new RuleNodeCtx(tenantId, parent, self, ruleNode));
     }
 
     @Override
@@ -80,6 +85,14 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     }
 
+    public void onRuleToSelfMsg(RuleNodeToSelfMsg msg) throws Exception {
+        checkActive();
+        if (ruleNode.isDebugMode()) {
+            systemContext.persistDebugInput(tenantId, entityId, msg.getMsg());
+        }
+        tbNode.onMsg(defaultCtx, msg.getMsg());
+    }
+
     void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) throws Exception {
         checkActive();
         if (ruleNode.isDebugMode()) {
@@ -91,9 +104,8 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     private TbNode initComponent(RuleNode ruleNode) throws Exception {
         Class<?> componentClazz = Class.forName(ruleNode.getType());
         TbNode tbNode = (TbNode) (componentClazz.newInstance());
-        tbNode.init(new TbNodeConfiguration(ruleNode.getConfiguration()), new TbNodeState());
+        tbNode.init(defaultCtx, new TbNodeConfiguration(ruleNode.getConfiguration()));
         return tbNode;
     }
-
 
 }

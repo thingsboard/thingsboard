@@ -15,8 +15,8 @@
  */
 package org.thingsboard.rule.engine.api;
 
-public interface NodeConfiguration {
+public interface NodeConfiguration<T extends NodeConfiguration> {
 
-    NodeConfiguration defaultConfiguration();
+    T defaultConfiguration();
 
 }

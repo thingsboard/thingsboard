@@ -37,7 +37,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
     private TbGetEntityAttrNodeConfiguration config;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetEntityAttrNodeConfiguration.class);
     }
 

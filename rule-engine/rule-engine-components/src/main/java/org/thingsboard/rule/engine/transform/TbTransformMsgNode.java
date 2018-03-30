@@ -38,7 +38,7 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
     private NashornJsEngine jsEngine;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
         this.jsEngine = new NashornJsEngine(config.getJsScript(), "Transform");
         setConfig(config);

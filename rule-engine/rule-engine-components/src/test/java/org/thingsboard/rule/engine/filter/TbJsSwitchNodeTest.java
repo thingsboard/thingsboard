@@ -107,7 +107,7 @@ public class TbJsSwitchNodeTest {
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbJsSwitchNode();
-        node.init(nodeConfiguration, null);
+        node.init(null, nodeConfiguration);
     }
 
     private void mockJsExecutor() {

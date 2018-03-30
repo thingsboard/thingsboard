@@ -49,7 +49,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     private TbChangeOriginatorNodeConfiguration config;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbChangeOriginatorNodeConfiguration.class);
         validateConfig(config);
         setConfig(config);

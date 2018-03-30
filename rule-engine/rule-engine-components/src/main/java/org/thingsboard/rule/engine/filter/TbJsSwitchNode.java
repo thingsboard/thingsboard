@@ -45,7 +45,7 @@ public class TbJsSwitchNode implements TbNode {
     private NashornJsEngine jsEngine;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsSwitchNodeConfiguration.class);
         this.jsEngine = new NashornJsEngine(config.getJsScript(), "Switch");
     }

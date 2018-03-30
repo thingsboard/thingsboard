@@ -19,7 +19,7 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbJsFilterNodeConfiguration implements NodeConfiguration {
+public class TbJsFilterNodeConfiguration implements NodeConfiguration<TbJsFilterNodeConfiguration> {
 
     private String jsScript;
 

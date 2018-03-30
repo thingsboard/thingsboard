@@ -13,21 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.actors.ruleChain;
 
+import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.concurrent.ExecutionException;
-
 /**
- * Created by ashvayka on 19.01.18.
+ * Created by ashvayka on 19.03.18.
  */
-public interface TbNode {
+@Data
+final class RuleNodeToSelfMsg implements TbActorMsg {
 
-    void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException;
+    private final TbMsg msg;
 
-    void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException;
-
-    void destroy();
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.RULE_TO_SELF_MSG;
+    }
 
 }

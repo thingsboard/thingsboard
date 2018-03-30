@@ -26,7 +26,7 @@ import java.util.List;
  * Created by ashvayka on 19.01.18.
  */
 @Data
-public class TbMsgTypeFilterNodeConfiguration implements NodeConfiguration {
+public class TbMsgTypeFilterNodeConfiguration implements NodeConfiguration<TbMsgTypeFilterNodeConfiguration> {
 
     private List<String> messageTypes;
 

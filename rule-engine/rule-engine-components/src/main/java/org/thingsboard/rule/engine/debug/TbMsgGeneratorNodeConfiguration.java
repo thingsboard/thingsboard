@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.metadata;
+package org.thingsboard.rule.engine.debug;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Data
-public class TbGetEntityAttrNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {
+public class TbMsgGeneratorNodeConfiguration implements NodeConfiguration<TbMsgGeneratorNodeConfiguration> {
 
-    private Map<String, String> attrMapping;
-    private boolean isTelemetry = false;
+    private int msgCount;
+    private int periodInSeconds;
+    private String msgType;
+    private String msgBody;
+    private Map<String, String> msgMetaData;
 
     @Override
-    public TbGetEntityAttrNodeConfiguration defaultConfiguration() {
-        TbGetEntityAttrNodeConfiguration configuration = new TbGetEntityAttrNodeConfiguration();
-        Map<String, String> attrMapping = new HashMap<>();
-        attrMapping.putIfAbsent("temperature", "tempo");
-        configuration.setAttrMapping(attrMapping);
-        configuration.setTelemetry(true);
+    public TbMsgGeneratorNodeConfiguration defaultConfiguration() {
+        TbMsgGeneratorNodeConfiguration configuration = new TbMsgGeneratorNodeConfiguration();
+        configuration.setMsgCount(0);
+        configuration.setPeriodInSeconds(1);
+        configuration.setMsgType("DebugMsg");
+        configuration.setMsgBody("{}");
         return configuration;
     }
 }

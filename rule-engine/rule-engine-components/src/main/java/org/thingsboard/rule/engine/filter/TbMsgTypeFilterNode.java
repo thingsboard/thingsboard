@@ -29,6 +29,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.FILTER,
         name = "message type",
         configClazz = TbMsgTypeFilterNodeConfiguration.class,
+        relationTypes = {"True", "False"},
         nodeDescription = "Filter incoming messages by Message Type",
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
                 "If incoming MessageType is expected - send Message via <b>Success</b> chain, otherwise <b>Failure</b> chain is used.",
@@ -39,7 +40,7 @@ public class TbMsgTypeFilterNode implements TbNode {
     TbMsgTypeFilterNodeConfiguration config;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgTypeFilterNodeConfiguration.class);
     }
 

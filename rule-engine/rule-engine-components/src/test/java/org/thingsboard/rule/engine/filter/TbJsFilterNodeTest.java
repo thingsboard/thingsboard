@@ -144,7 +144,7 @@ public class TbJsFilterNodeTest {
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbJsFilterNode();
-        node.init(nodeConfiguration, null);
+        node.init(null, nodeConfiguration);
     }
 
     private void mockJsExecutor() {

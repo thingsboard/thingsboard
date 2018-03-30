@@ -38,7 +38,7 @@ public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
     private TbGetRelatedAttrNodeConfiguration config;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext context, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetRelatedAttrNodeConfiguration.class);
         setConfig(config);
     }

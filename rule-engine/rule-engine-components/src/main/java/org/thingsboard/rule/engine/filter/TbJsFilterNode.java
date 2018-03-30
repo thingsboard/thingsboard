@@ -29,7 +29,7 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 @Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
-        name = "script", relationTypes = {"True", "False", "Failure"},
+        name = "script", relationTypes = {"True", "False"},
         configClazz = TbJsFilterNodeConfiguration.class,
         nodeDescription = "Filter incoming messages using JS script",
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
@@ -45,7 +45,7 @@ public class TbJsFilterNode implements TbNode {
     private NashornJsEngine jsEngine;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsFilterNodeConfiguration.class);
         this.jsEngine = new NashornJsEngine(config.getJsScript(), "Filter");
     }

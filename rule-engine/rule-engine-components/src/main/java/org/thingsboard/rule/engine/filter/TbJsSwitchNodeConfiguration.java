@@ -22,7 +22,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import java.util.Set;
 
 @Data
-public class TbJsSwitchNodeConfiguration implements NodeConfiguration {
+public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitchNodeConfiguration> {
 
     private String jsScript;
 
