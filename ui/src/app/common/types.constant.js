@@ -279,6 +279,23 @@ export default angular.module('thingsboard.types', [])
                 function: "function",
                 alarm: "alarm"
             },
+            contentType: {
+                "JSON": {
+                    value: "JSON",
+                    name: "content-type.json",
+                    code: "json"
+                },
+                "TEXT": {
+                    value: "TEXT",
+                    name: "content-type.text",
+                    code: "text"
+                },
+                "BINARY": {
+                    value: "BINARY",
+                    name: "content-type.binary",
+                    code: "text"
+                }
+            },
             componentType: {
                 filter: "FILTER",
                 processor: "PROCESSOR",
@@ -295,7 +312,8 @@ export default angular.module('thingsboard.types', [])
                 user: "USER",
                 dashboard: "DASHBOARD",
                 alarm: "ALARM",
-                rulechain: "RULE_CHAIN"
+                rulechain: "RULE_CHAIN",
+                rulenode: "RULE_NODE"
             },
             aliasEntityType: {
                 current_customer: "CURRENT_CUSTOMER"
@@ -386,6 +404,16 @@ export default angular.module('thingsboard.types', [])
                 stats: {
                     value: "STATS",
                     name: "event.type-stats"
+                }
+            },
+            debugEventType: {
+                debugRuleNode: {
+                    value: "DEBUG_RULE_NODE",
+                    name: "event.type-debug-rule-node"
+                },
+                debugRuleChain: {
+                    value: "DEBUG_RULE_CHAIN",
+                    name: "event.type-debug-rule-chain"
                 }
             },
             extensionType: {

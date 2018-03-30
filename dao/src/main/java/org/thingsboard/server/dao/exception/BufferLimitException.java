@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.dao.exception;
 
-.tb-rulenode {
-  tb-json-object-edit.tb-rule-node-configuration-json {
-    height: 300px;
-    display: block;
-  }
-}
+public class BufferLimitException extends RuntimeException {
 
-.tb-rulenode-directive-error {
-  color: rgb(221,44,0);
-  font-size: 13px;
-  font-weight: 400;
+    private static final long serialVersionUID = 4513762009041887588L;
+
+    public BufferLimitException() {
+        super("Rate Limit Buffer is full");
+    }
 }

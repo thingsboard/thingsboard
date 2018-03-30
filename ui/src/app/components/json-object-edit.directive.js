@@ -84,17 +84,32 @@ function JsonObjectEdit($compile, $templateCache, $document, toast, utils) {
         scope.$watch('contentBody', function (newVal, prevVal) {
             if (!angular.equals(newVal, prevVal)) {
                 var object = scope.validate();
-                ngModelCtrl.$setViewValue(object);
+                if (scope.objectValid) {
+                    if (object == null) {
+                        scope.object = null;
+                    } else {
+                        if (scope.object == null) {
+                            scope.object = {};
+                        }
+                        Object.keys(scope.object).forEach(function (key) {
+                            delete scope.object[key];
+                        });
+                        Object.keys(object).forEach(function (key) {
+                            scope.object[key] = object[key];
+                        });
+                    }
+                    ngModelCtrl.$setViewValue(scope.object);
+                }
                 scope.updateValidity();
             }
         });
 
         ngModelCtrl.$render = function () {
-            var object = ngModelCtrl.$viewValue;
+            scope.object = ngModelCtrl.$viewValue;
             var content = '';
             try {
-                if (object) {
-                    content = angular.toJson(object, true);
+                if (scope.object) {
+                    content = angular.toJson(scope.object, true);
                 }
             } catch (e) {
                 //

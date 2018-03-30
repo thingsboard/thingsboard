@@ -28,7 +28,7 @@ import addRuleNodeLinkTemplate from './add-link.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $document, $mdDialog,
+export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $window, $document, $mdDialog,
                                     $filter, $translate, hotkeys, types, ruleChainService, Modelfactory, flowchartConstants,
                                     ruleChain, ruleChainMetaData, ruleNodeComponents) {
 
@@ -76,6 +76,8 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     vm.objectsSelected = objectsSelected;
     vm.deleteSelected = deleteSelected;
+
+    vm.triggerResize = triggerResize;
 
     initHotKeys();
 
@@ -129,23 +131,24 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     }
 
     vm.onEditRuleNodeClosed = function() {
-        vm.editingRuleNode = null;
+        //vm.editingRuleNode = null;
     };
 
     vm.onEditRuleNodeLinkClosed = function() {
-        vm.editingRuleNodeLink = null;
+        //vm.editingRuleNodeLink = null;
     };
 
     vm.saveRuleNode = function(theForm) {
-        theForm.$setPristine();
-        vm.isEditingRuleNode = false;
-        vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
-        vm.editingRuleNode = angular.copy(vm.editingRuleNode);
+        $scope.$broadcast('form-submit');
+        if (theForm.$valid) {
+            theForm.$setPristine();
+            vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
+            vm.editingRuleNode = angular.copy(vm.editingRuleNode);
+        }
     };
 
     vm.saveRuleNodeLink = function(theForm) {
         theForm.$setPristine();
-        vm.isEditingRuleNodeLink = false;
         vm.ruleChainModel.edges[vm.editingRuleNodeLinkIndex] = vm.editingRuleNodeLink;
         vm.editingRuleNodeLink = angular.copy(vm.editingRuleNodeLink);
     };
@@ -253,6 +256,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                 vm.isEditingRuleNodeLink = true;
                 vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
                 vm.editingRuleNodeLink = angular.copy(edge);
+                $mdUtil.nextTick(() => {
+                    vm.ruleNodeLinkForm.$setPristine();
+                });
             }
         },
         nodeCallbacks: {
@@ -263,6 +269,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     vm.isEditingRuleNode = true;
                     vm.editingRuleNodeIndex = vm.ruleChainModel.nodes.indexOf(node);
                     vm.editingRuleNode = angular.copy(node);
+                    $mdUtil.nextTick(() => {
+                        vm.ruleNodeForm.$setPristine();
+                    });
                 }
             }
         },
@@ -309,7 +318,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             var componentType = ruleNodeComponent.type;
             var model = vm.ruleNodeTypesModel[componentType].model;
             var node = {
-                id: model.nodes.length,
+                id: 'node-lib-' + componentType + '-' + model.nodes.length,
                 component: ruleNodeComponent,
                 name: '',
                 nodeClass: vm.types.ruleNodeType[componentType].nodeClass,
@@ -358,7 +367,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
         vm.ruleChainModel.nodes.push(
             {
-                id: vm.nextNodeID++,
+                id: 'rule-chain-node-' + vm.nextNodeID++,
                 component: types.inputNodeComponent,
                 name: "",
                 nodeClass: types.ruleNodeType.INPUT.nodeClass,
@@ -389,7 +398,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
             if (component) {
                 var node = {
-                    id: vm.nextNodeID++,
+                    id: 'rule-chain-node-' + vm.nextNodeID++,
                     ruleNodeId: ruleNode.id,
                     additionalInfo: ruleNode.additionalInfo,
                     configuration: ruleNode.configuration,
@@ -466,7 +475,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     var ruleChainNode = ruleChainNodesMap[ruleChainConnection.additionalInfo.ruleChainNodeId];
                     if (!ruleChainNode) {
                         ruleChainNode = {
-                            id: vm.nextNodeID++,
+                            id: 'rule-chain-node-' + vm.nextNodeID++,
                             additionalInfo: ruleChainConnection.additionalInfo,
                             targetRuleChainId: ruleChainConnection.targetRuleChainId.id,
                             x: ruleChainConnection.additionalInfo.layoutX,
@@ -611,7 +620,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             fullscreen: true,
             targetEvent: $event
         }).then(function (ruleNode) {
-            ruleNode.id = vm.nextNodeID++;
+            ruleNode.id = 'rule-chain-node-' + vm.nextNodeID++;
             ruleNode.connectors = [];
             if (ruleNode.component.configurationDescriptor.nodeDefinition.inEnabled) {
                 ruleNode.connectors.push(
@@ -653,6 +662,11 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     function deleteSelected() {
         vm.modelservice.deleteSelected();
+    }
+
+    function triggerResize() {
+        var w = angular.element($window);
+        w.triggerHandler('resize');
     }
 }
 

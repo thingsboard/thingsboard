@@ -18,6 +18,8 @@ import RuleChainRoutes from './rulechain.routes';
 import RuleChainsController from './rulechains.controller';
 import {RuleChainController, AddRuleNodeController, AddRuleNodeLinkController} from './rulechain.controller';
 import RuleChainDirective from './rulechain.directive';
+import RuleNodeDefinedConfigDirective from './rulenode-defined-config.directive';
+import RuleNodeConfigDirective from './rulenode-config.directive';
 import RuleNodeDirective from './rulenode.directive';
 import LinkDirective from './link.directive';
 
@@ -28,6 +30,8 @@ export default angular.module('thingsboard.ruleChain', [])
     .controller('AddRuleNodeController', AddRuleNodeController)
     .controller('AddRuleNodeLinkController', AddRuleNodeLinkController)
     .directive('tbRuleChain', RuleChainDirective)
+    .directive('tbRuleNodeDefinedConfig', RuleNodeDefinedConfigDirective)
+    .directive('tbRuleNodeConfig', RuleNodeConfigDirective)
     .directive('tbRuleNode', RuleNodeDirective)
     .directive('tbRuleNodeLink', LinkDirective)
     .name;

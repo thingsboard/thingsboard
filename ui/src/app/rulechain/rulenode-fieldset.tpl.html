@@ -21,28 +21,26 @@
 
 <md-content class="md-padding tb-rulenode" layout="column">
     <fieldset ng-disabled="$root.loading || !isEdit || isReadOnly">
-        <md-input-container class="md-block">
-            <label translate>rulenode.type</label>
-            <input readonly name="type" ng-model="ruleNode.component.name">
-        </md-input-container>
         <section ng-if="ruleNode.component.type != types.ruleNodeType.RULE_CHAIN.value">
-            <md-input-container class="md-block">
-                <label translate>rulenode.name</label>
-                <input required name="name" ng-model="ruleNode.name">
-                <div ng-messages="theForm.name.$error">
-                    <div translate ng-message="required">rulenode.name-required</div>
-                </div>
-            </md-input-container>
-            <md-input-container class="md-block">
-                <md-checkbox ng-disabled="$root.loading || !isEdit" aria-label="{{ 'rulenode.debug-mode' | translate }}"
-                             ng-model="ruleNode.debugMode">{{ 'rulenode.debug-mode' | translate }}
-                </md-checkbox>
-            </md-input-container>
-            <tb-json-object-edit class="tb-rule-node-configuration-json" ng-model="ruleNode.configuration"
-                                 label="{{ 'rulenode.configuration' | translate }}"
+            <section layout="column" layout-gt-sm="row">
+                <md-input-container flex class="md-block">
+                    <label translate>rulenode.name</label>
+                    <input required name="name" ng-model="ruleNode.name">
+                    <div ng-messages="theForm.name.$error">
+                        <div translate ng-message="required">rulenode.name-required</div>
+                    </div>
+                </md-input-container>
+                <md-input-container class="md-block">
+                    <md-checkbox ng-disabled="$root.loading || !isEdit" aria-label="{{ 'rulenode.debug-mode' | translate }}"
+                                 ng-model="ruleNode.debugMode">{{ 'rulenode.debug-mode' | translate }}
+                    </md-checkbox>
+                </md-input-container>
+            </section>
+            <tb-rule-node-config ng-model="ruleNode.configuration"
                                  ng-required="true"
-                                 fill-height="true">
-            </tb-json-object-edit>
+                                 node-definition="ruleNode.component.configurationDescriptor.nodeDefinition"
+                                 ng-readonly="$root.loading || !isEdit || isReadOnly">
+            </tb-rule-node-config>
             <md-input-container class="md-block">
                 <label translate>rulenode.description</label>
                 <textarea ng-model="ruleNode.additionalInfo.description" rows="2"></textarea>

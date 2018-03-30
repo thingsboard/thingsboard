@@ -341,6 +341,11 @@ export default angular.module('thingsboard.locale', [])
                     "enter-password": "Enter password",
                     "enter-search": "Enter search"
                 },
+                "content-type": {
+                    "json": "Json",
+                    "text": "Text",
+                    "binary": "Binary (Base64)"
+                },
                 "customer": {
                     "customer": "Customer",
                     "customers": "Customers",
@@ -762,6 +767,8 @@ export default angular.module('thingsboard.locale', [])
                     "type-error": "Error",
                     "type-lc-event": "Lifecycle event",
                     "type-stats": "Statistics",
+                    "type-debug-rule-node": "Debug",
+                    "type-debug-rule-chain": "Debug",
                     "no-events-prompt": "No events found",
                     "error": "Error",
                     "alarm": "Alarm",
@@ -769,6 +776,13 @@ export default angular.module('thingsboard.locale', [])
                     "server": "Server",
                     "body": "Body",
                     "method": "Method",
+                    "type": "Type",
+                    "entity": "Entity",
+                    "message-id": "Message Id",
+                    "message-type": "Message Type",
+                    "data-type": "Data Type",
+                    "metadata": "Metadata",
+                    "data": "Data",
                     "event": "Event",
                     "status": "Status",
                     "success": "Success",
@@ -1171,6 +1185,8 @@ export default angular.module('thingsboard.locale', [])
                     "debug-mode": "Debug mode"
                 },
                 "rulenode": {
+                    "details": "Details",
+                    "events": "Events",
                     "add": "Add rule node",
                     "name": "Name",
                     "name-required": "Name is required.",
@@ -1198,7 +1214,9 @@ export default angular.module('thingsboard.locale', [])
                     "type-action": "Action",
                     "type-action-details": "Perform special action",
                     "type-rule-chain": "Rule Chain",
-                    "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain"
+                    "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
+                    "directive-is-not-loaded": "Defined configuration directive '{{directiveName}}' is not available.",
+                    "ui-resources-load-error": "Failed to load configuration ui resources."
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"

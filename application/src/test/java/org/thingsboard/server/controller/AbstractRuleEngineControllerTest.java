@@ -51,6 +51,6 @@ public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
         TimePageLink pageLink = new TimePageLink(limit);
         return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
                 new TypeReference<TimePageData<Event>>() {
-                }, pageLink, entityId.getEntityType(), entityId.getId(), DataConstants.DEBUG, tenantId.getId());
+                }, pageLink, entityId.getEntityType(), entityId.getId(), DataConstants.DEBUG_RULE_NODE, tenantId.getId());
     }
 }

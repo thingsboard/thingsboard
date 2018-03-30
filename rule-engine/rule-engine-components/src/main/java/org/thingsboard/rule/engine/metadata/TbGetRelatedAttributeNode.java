@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
                 "If multiple Related Entities are found, only first Entity is used for attributes enrichment, other entities are discarded. " +
                 "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
                 "To access those attributes in other nodes this template can be used " +
-                "<code>meta.temperature</code>. If Latest Telemetry enrichment configured, latest telemetry added into metadata")
+                "<code>metadata.temperature</code>. If Latest Telemetry enrichment configured, latest telemetry added into metadata")
 public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
 
     private TbGetRelatedAttrNodeConfiguration config;

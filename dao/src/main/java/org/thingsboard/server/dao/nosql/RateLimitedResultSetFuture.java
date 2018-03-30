@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.thingsboard.server.dao.exception.BufferLimitException;
 import org.thingsboard.server.dao.util.AsyncRateLimiter;
 
 import javax.annotation.Nullable;
@@ -35,9 +36,15 @@ public class RateLimitedResultSetFuture implements ResultSetFuture {
     private final ListenableFuture<Void> rateLimitFuture;
 
     public RateLimitedResultSetFuture(Session session, AsyncRateLimiter rateLimiter, Statement statement) {
-        this.rateLimitFuture = rateLimiter.acquireAsync();
+        this.rateLimitFuture = Futures.withFallback(rateLimiter.acquireAsync(), t -> {
+            if (!(t instanceof BufferLimitException)) {
+                rateLimiter.release();
+            }
+            return Futures.immediateFailedFuture(t);
+        });
         this.originalFuture = Futures.transform(rateLimitFuture,
                 (Function<Void, ResultSetFuture>) i -> executeAsyncWithRelease(rateLimiter, session, statement));
+
     }
 
     @Override
@@ -108,10 +115,7 @@ public class RateLimitedResultSetFuture implements ResultSetFuture {
             try {
                 ResultSetFuture resultSetFuture = Uninterruptibles.getUninterruptibly(originalFuture);
                 resultSetFuture.addListener(listener, executor);
-            } catch (CancellationException e) {
-                cancel(false);
-                return;
-            } catch (ExecutionException e) {
+            } catch (CancellationException | ExecutionException e) {
                 Futures.immediateFailedFuture(e).addListener(listener, executor);
             }
         }, executor);
