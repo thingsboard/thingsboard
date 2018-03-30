@@ -69,7 +69,7 @@
                             + ' - ' + vm.editingRuleNode.component.name}}"
                             is-read-only="vm.selectedRuleNodeTabIndex > 0"
                             is-open="vm.isEditingRuleNode"
-                            close-on-click-outside="true"
+                            tb-enable-backdrop
                             is-always-edit="true"
                             on-close-details="vm.onEditRuleNodeClosed()"
                             on-toggle-details-edit-mode="vm.onRevertRuleNodeEdit(vm.ruleNodeForm)"
@@ -108,7 +108,7 @@
                             header-subtitle="{{'rulenode.link-details' | translate}}"
                             is-read-only="false"
                             is-open="vm.isEditingRuleNodeLink"
-                            close-on-click-outside="true"
+                            tb-enable-backdrop
                             is-always-edit="true"
                             on-close-details="vm.onEditRuleNodeLinkClosed()"
                             on-toggle-details-edit-mode="vm.onRevertRuleNodeLinkEdit(vm.ruleNodeLinkForm)"

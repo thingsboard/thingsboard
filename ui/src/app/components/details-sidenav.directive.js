@@ -26,7 +26,7 @@ export default angular.module('thingsboard.directives.detailsSidenav', [])
     .name;
 
 /*@ngInject*/
-function DetailsSidenav($timeout, $window) {
+function DetailsSidenav($timeout, $mdUtil, $q, $animate) {
 
     var linker = function (scope, element, attrs) {
 
@@ -42,22 +42,62 @@ function DetailsSidenav($timeout, $window) {
             scope.isEdit = true;
         }
 
-        if (angular.isDefined(attrs.closeOnClickOutside && attrs.closeOnClickOutside)) {
-            scope.closeOnClickOutside = true;
-            var clickOutsideHandler = function() {
-                scope.closeDetails();
-            };
-            angular.element($window).click(clickOutsideHandler);
-            scope.$on("$destroy", function () {
-                angular.element($window).unbind('click', clickOutsideHandler);
+        var backdrop;
+        var previousContainerStyles;
+
+        if (attrs.hasOwnProperty('tbEnableBackdrop')) {
+            backdrop = $mdUtil.createBackdrop(scope, "md-sidenav-backdrop md-opaque ng-enter");
+            element.on('$destroy', function() {
+                backdrop && backdrop.remove();
+            });
+            scope.$on('$destroy', function(){
+                backdrop && backdrop.remove();
+            });
+            scope.$watch('isOpen', updateIsOpen);
+        }
+
+        function updateIsOpen(isOpen) {
+            backdrop[isOpen ? 'on' : 'off']('click', (ev)=>{
+                ev.preventDefault();
+                scope.isOpen = false;
+                scope.$apply();
+            });
+            var parent = element.parent();
+            var restorePositioning = updateContainerPositions(parent, isOpen);
+
+            return $q.all([
+                isOpen && backdrop ? $animate.enter(backdrop, parent) : backdrop ?
+                    $animate.leave(backdrop) : $q.when(true)
+            ]).then(function() {
+                restorePositioning && restorePositioning();
             });
         }
 
-        scope.onClick = function($event) {
-            if (scope.closeOnClickOutside) {
-                $event.stopPropagation();
+        function updateContainerPositions(parent, willOpen) {
+            var drawerEl = element[0];
+            var scrollTop = parent[0].scrollTop;
+            if (willOpen && scrollTop) {
+                previousContainerStyles = {
+                    top: drawerEl.style.top,
+                    bottom: drawerEl.style.bottom,
+                    height: drawerEl.style.height
+                };
+                var positionStyle = {
+                    top: scrollTop + 'px',
+                    bottom: 'auto',
+                    height: parent[0].clientHeight + 'px'
+                };
+                backdrop.css(positionStyle);
             }
-        };
+            if (!willOpen && previousContainerStyles) {
+                return function() {
+                    backdrop[0].style.top = null;
+                    backdrop[0].style.bottom = null;
+                    backdrop[0].style.height = null;
+                    previousContainerStyles = null;
+                };
+            }
+        }
 
         scope.toggleDetailsEditMode = function () {
             if (!scope.isAlwaysEdit) {
