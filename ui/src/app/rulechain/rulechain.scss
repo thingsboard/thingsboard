@@ -18,13 +18,58 @@
   .tb-fullscreen-button-style {
     z-index: 1;
   }
+  section.tb-header-buttons.tb-library-open {
+    pointer-events: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 1;
+    .md-button.tb-btn-open-library {
+      left: 0px;
+      top: 0px;
+      line-height: 36px;
+      width: 36px;
+      height: 36px;
+      margin: 4px 0 0 4px;
+      opacity: 0.5;
+    }
+  }
   .tb-rulechain-library {
     width: 250px;
     min-width: 250px;
-    overflow-y: auto;
-    overflow-x: hidden;
-
+    z-index: 1;
+    md-toolbar {
+      min-height: 48px;
+      height: 48px;
+      .md-toolbar-tools>.md-button:last-child {
+        margin-right: 0px;
+      }
+      .md-toolbar-tools {
+        font-size: 14px;
+        padding: 0px 6px;
+        .md-button.md-icon-button {
+          margin: 0px;
+          &.tb-small {
+            height: 32px;
+            min-height: 32px;
+            line-height: 20px;
+            padding: 6px;
+            width: 32px;
+            md-icon {
+              line-height: 20px;
+              font-size: 20px;
+              height: 20px;
+              width: 20px;
+              min-height: 20px;
+              min-width: 20px;
+            }
+          }
+        }
+      }
+    }
     .tb-rulechain-library-panel-group {
+      overflow-y: auto;
+      overflow-x: hidden;
       .tb-panel-title {
         -webkit-user-select: none;
         -moz-user-select: none;
@@ -33,7 +78,7 @@
         min-width: 180px;
       }
       .fc-canvas {
-        background: none;
+        background: #f9f9f9;
       }
       md-icon.md-expansion-panel-icon {
         margin-right: 0px;
@@ -55,6 +100,7 @@
     }
   }
   .tb-rulechain-graph {
+    z-index: 0;
     overflow: auto;
   }
 }
