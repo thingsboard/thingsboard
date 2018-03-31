@@ -22,22 +22,18 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import java.util.Set;
 
 @Data
-public class TbJsSwitchNodeConfiguration implements NodeConfiguration {
+public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitchNodeConfiguration> {
 
     private String jsScript;
-    private Set<String> allowedRelations;
-    private boolean routeToAllWithNoCheck;
 
     @Override
     public TbJsSwitchNodeConfiguration defaultConfiguration() {
         TbJsSwitchNodeConfiguration configuration = new TbJsSwitchNodeConfiguration();
-        configuration.setJsScript("function nextRelation(meta, msg) {\n" +
+        configuration.setJsScript("function nextRelation(metadata, msg) {\n" +
                 "    return ['one','nine'];" +
                 "};\n" +
                 "\n" +
-                "nextRelation(meta, msg);");
-        configuration.setAllowedRelations(Sets.newHashSet("one", "two"));
-        configuration.setRouteToAllWithNoCheck(false);
+                "return nextRelation(metadata, msg);");
         return configuration;
     }
 }

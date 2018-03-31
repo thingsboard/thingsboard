@@ -36,31 +36,22 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         nodeDetails = "Node executes configured JS script. Script should return array of next Chain names where Message should be routed. " +
                 "If Array is empty - message not routed to next Node. " +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code> " +
-                "Message metadata can be accessed via <code>meta</code> property. For example <code>meta.customerName === 'John';</code>")
+                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code>",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbFilterNodeSwitchConfig")
 public class TbJsSwitchNode implements TbNode {
 
     private TbJsSwitchNodeConfiguration config;
     private NashornJsEngine jsEngine;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsSwitchNodeConfiguration.class);
-        if (config.getAllowedRelations().size() < 1) {
-            String message = "Switch node should have at least 1 relation";
-            log.error(message);
-            throw new IllegalStateException(message);
-        }
-        if (!config.isRouteToAllWithNoCheck()) {
-            this.jsEngine = new NashornJsEngine(config.getJsScript());
-        }
+        this.jsEngine = new NashornJsEngine(config.getJsScript(), "Switch");
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (config.isRouteToAllWithNoCheck()) {
-            ctx.tellNext(msg, config.getAllowedRelations());
-            return;
-        }
         ListeningExecutor jsExecutor = ctx.getJsExecutor();
         withCallback(jsExecutor.executeAsync(() -> jsEngine.executeSwitch(toBindings(msg))),
                 result -> processSwitch(ctx, msg, result),
@@ -68,15 +59,7 @@ public class TbJsSwitchNode implements TbNode {
     }
 
     private void processSwitch(TbContext ctx, TbMsg msg, Set<String> nextRelations) {
-        if (validateRelations(nextRelations)) {
-            ctx.tellNext(msg, nextRelations);
-        } else {
-            ctx.tellError(msg, new IllegalStateException("Unsupported relation for switch " + nextRelations));
-        }
-    }
-
-    private boolean validateRelations(Set<String> nextRelations) {
-        return config.getAllowedRelations().containsAll(nextRelations);
+        ctx.tellNext(msg, nextRelations);
     }
 
     private Bindings toBindings(TbMsg msg) {

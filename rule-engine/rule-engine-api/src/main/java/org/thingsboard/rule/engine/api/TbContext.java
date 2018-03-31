@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -54,6 +55,8 @@ public interface TbContext {
     void ack(TbMsg msg);
 
     void tellError(TbMsg msg, Throwable th);
+
+    RuleNodeId getSelfId();
 
     AttributesService getAttributesService();
 

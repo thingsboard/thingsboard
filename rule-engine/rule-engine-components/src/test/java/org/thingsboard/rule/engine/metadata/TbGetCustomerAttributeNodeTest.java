@@ -88,7 +88,7 @@ public class TbGetCustomerAttributeNodeTest {
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();
-        node.init(nodeConfiguration, null);
+        node.init(null, nodeConfiguration);
     }
 
     @Test
@@ -226,7 +226,7 @@ public class TbGetCustomerAttributeNodeTest {
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();
-        node.init(nodeConfiguration, null);
+        node.init(null, nodeConfiguration);
 
 
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());

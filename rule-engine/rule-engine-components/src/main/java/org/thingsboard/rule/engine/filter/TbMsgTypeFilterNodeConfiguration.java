@@ -26,14 +26,14 @@ import java.util.List;
  * Created by ashvayka on 19.01.18.
  */
 @Data
-public class TbMsgTypeFilterNodeConfiguration implements NodeConfiguration {
+public class TbMsgTypeFilterNodeConfiguration implements NodeConfiguration<TbMsgTypeFilterNodeConfiguration> {
 
     private List<String> messageTypes;
 
     @Override
     public TbMsgTypeFilterNodeConfiguration defaultConfiguration() {
         TbMsgTypeFilterNodeConfiguration configuration = new TbMsgTypeFilterNodeConfiguration();
-        configuration.setMessageTypes(Arrays.asList("GET_ATTRIBUTES","POST_ATTRIBUTES","POST_TELEMETRY","RPC_REQUEST"));
+        configuration.setMessageTypes(Arrays.asList("POST_ATTRIBUTES","POST_TELEMETRY","RPC_REQUEST"));
         return configuration;
     }
 }

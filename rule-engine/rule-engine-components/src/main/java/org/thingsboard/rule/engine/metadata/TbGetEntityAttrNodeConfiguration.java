@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Data
-public class TbGetEntityAttrNodeConfiguration implements NodeConfiguration {
+public class TbGetEntityAttrNodeConfiguration implements NodeConfiguration<TbGetEntityAttrNodeConfiguration> {
 
     private Map<String, String> attrMapping;
     private boolean isTelemetry = false;

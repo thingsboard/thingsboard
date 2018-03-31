@@ -51,7 +51,7 @@ public class TbJsFilterNodeTest {
 
     @Test
     public void falseEvaluationDoNotSendMsg() throws TbNodeException {
-        initWithScript("10 > 15;");
+        initWithScript("return 10 > 15;");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}".getBytes());
 
         mockJsExecutor();
@@ -64,7 +64,7 @@ public class TbJsFilterNodeTest {
 
     @Test
     public void notValidMsgDataThrowsException() throws TbNodeException {
-        initWithScript("10 > 15;");
+        initWithScript("return 10 > 15;");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), new byte[4]);
 
         when(ctx.getJsExecutor()).thenReturn(executor);
@@ -77,7 +77,7 @@ public class TbJsFilterNodeTest {
 
     @Test
     public void exceptionInJsThrowsException() throws TbNodeException {
-        initWithScript("meta.temp.curr < 15;");
+        initWithScript("return metadata.temp.curr < 15;");
         TbMsgMetaData metaData = new TbMsgMetaData();
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}".getBytes());
         mockJsExecutor();
@@ -89,12 +89,12 @@ public class TbJsFilterNodeTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void notValidScriptThrowsException() throws TbNodeException {
-        initWithScript("10 > 15 asdq out");
+        initWithScript("return 10 > 15 asdq out");
     }
 
     @Test
     public void metadataConditionCanBeFalse() throws TbNodeException {
-        initWithScript("meta.humidity < 15;");
+        initWithScript("return metadata.humidity < 15;");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -109,7 +109,7 @@ public class TbJsFilterNodeTest {
 
     @Test
     public void metadataConditionCanBeTrue() throws TbNodeException {
-        initWithScript("meta.temp < 15;");
+        initWithScript("return metadata.temp < 15;");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -123,7 +123,7 @@ public class TbJsFilterNodeTest {
 
     @Test
     public void msgJsonParsedAndBinded() throws TbNodeException {
-        initWithScript("msg.passed < 15 && msg.name === 'Vit' && meta.temp == 10 && msg.bigObj.prop == 42;");
+        initWithScript("return msg.passed < 15 && msg.name === 'Vit' && metadata.temp == 10 && msg.bigObj.prop == 42;");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -144,7 +144,7 @@ public class TbJsFilterNodeTest {
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbJsFilterNode();
-        node.init(nodeConfiguration, null);
+        node.init(null, nodeConfiguration);
     }
 
     private void mockJsExecutor() {

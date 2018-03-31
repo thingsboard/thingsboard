@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.actors.ruleChain;
 
+import akka.actor.ActorContext;
+import akka.actor.ActorRef;
 import org.thingsboard.rule.engine.api.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -30,8 +33,10 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
+import scala.concurrent.duration.Duration;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by ashvayka on 19.03.18.
@@ -61,7 +66,12 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellSelf(TbMsg msg, long delayMs) {
-        throw new RuntimeException("Not Implemented!");
+        //TODO: add persistence layer
+        scheduleMsgWithDelay(new RuleNodeToSelfMsg(msg), delayMs, nodeCtx.getSelfActor());
+    }
+
+    private void scheduleMsgWithDelay(Object msg, long delayInMs, ActorRef target) {
+        mainCtx.getScheduler().scheduleOnce(Duration.create(delayInMs, TimeUnit.MILLISECONDS), target, msg, mainCtx.getActorSystem().dispatcher(), nodeCtx.getSelfActor());
     }
 
     @Override
@@ -90,6 +100,11 @@ class DefaultTbContext implements TbContext {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, th);
         }
         nodeCtx.getSelfActor().tell(new RuleNodeToSelfErrorMsg(msg, th), nodeCtx.getSelfActor());
+    }
+
+    @Override
+    public RuleNodeId getSelfId() {
+        return nodeCtx.getSelf().getId();
     }
 
     @Override

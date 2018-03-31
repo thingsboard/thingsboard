@@ -17,7 +17,7 @@ export default angular.module('thingsboard.api.ruleChain', [])
     .factory('ruleChainService', RuleChainService).name;
 
 /*@ngInject*/
-function RuleChainService($http, $q, $filter, types, componentDescriptorService) {
+function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, componentDescriptorService) {
 
     var ruleNodeComponents = null;
 
@@ -177,16 +177,65 @@ function RuleChainService($http, $q, $filter, types, componentDescriptorService)
         } else {
             loadRuleNodeComponents().then(
                 (components) => {
-                    ruleNodeComponents = components;
-                    ruleNodeComponents.push(
-                        types.ruleChainNodeComponent
+                    resolveRuleNodeComponentsUiResources(components).then(
+                        (components) => {
+                            ruleNodeComponents = components;
+                            ruleNodeComponents.push(
+                                types.ruleChainNodeComponent
+                            );
+                            deferred.resolve(ruleNodeComponents);
+                        },
+                        () => {
+                            deferred.reject();
+                        }
                     );
-                    deferred.resolve(ruleNodeComponents);
                 },
                 () => {
                     deferred.reject();
                 }
             );
+        }
+        return deferred.promise;
+    }
+
+    function resolveRuleNodeComponentsUiResources(components) {
+        var deferred = $q.defer();
+        var tasks = [];
+        for (var i=0;i<components.length;i++) {
+            var component = components[i];
+            tasks.push(resolveRuleNodeComponentUiResources(component));
+        }
+        $q.all(tasks).then(
+            (components) => {
+                deferred.resolve(components);
+            },
+            () => {
+                deferred.resolve(components);
+            }
+        );
+        return deferred.promise;
+    }
+
+    function resolveRuleNodeComponentUiResources(component) {
+        var deferred = $q.defer();
+        var uiResources = component.configurationDescriptor.nodeDefinition.uiResources;
+        if (uiResources && uiResources.length) {
+            var tasks = [];
+            for (var i=0;i<uiResources.length;i++) {
+                var uiResource = uiResources[i];
+                tasks.push($ocLazyLoad.load(uiResource));
+            }
+            $q.all(tasks).then(
+                () => {
+                    deferred.resolve(component);
+                },
+                () => {
+                    component.configurationDescriptor.nodeDefinition.uiResourceLoadError = $translate.instant('rulenode.ui-resources-load-error');
+                    deferred.resolve(component);
+                }
+            )
+        } else {
+            deferred.resolve(component);
         }
         return deferred.promise;
     }

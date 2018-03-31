@@ -55,7 +55,8 @@
             <tb-event-table flex entity-type="vm.types.entityType.rulechain"
                             entity-id="vm.grid.operatingItem().id.id"
                             tenant-id="vm.grid.operatingItem().tenantId.id"
-                            default-event-type="{{vm.types.eventType.lcEvent.value}}">
+                            debug-event-types="{{vm.types.debugEventType.debugRuleChain.value}}"
+                            default-event-type="{{vm.types.debugEventType.debugRuleChain.value}}">
             </tb-event-table>
         </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem())" md-on-select="vm.grid.triggerResize()" label="{{ 'relation.relations' | translate }}">

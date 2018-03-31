@@ -32,7 +32,7 @@ public abstract class TbAbstractTransformNode implements TbNode {
     private TbTransformNodeConfiguration config;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext context, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbTransformNodeConfiguration.class);
     }
 

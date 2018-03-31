@@ -284,6 +284,7 @@
                             <exclude>src/sh/**</exclude>
                             <exclude>src/main/scripts/control/**</exclude>
                             <exclude>src/main/scripts/windows/**</exclude>
+                            <exclude>src/main/resources/public/static/rulenode/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>

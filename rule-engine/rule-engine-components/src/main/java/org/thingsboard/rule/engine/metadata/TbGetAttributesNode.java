@@ -42,14 +42,14 @@ import static org.thingsboard.server.common.data.DataConstants.*;
           nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
           nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
                 "with specific prefix: <i>cs/shared/ss</i>. To access those attributes in other nodes this template can be used " +
-                "<code>meta.cs.temperature</code> or <code>meta.shared.limit</code> " +
+                "<code>metadata.cs.temperature</code> or <code>metadata.shared.limit</code> " +
                 "If Latest Telemetry enrichment configured, latest telemetry added into metadata without prefix.")
 public class TbGetAttributesNode implements TbNode {
 
     private TbGetAttributesNodeConfiguration config;
 
     @Override
-    public void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetAttributesNodeConfiguration.class);
     }
 

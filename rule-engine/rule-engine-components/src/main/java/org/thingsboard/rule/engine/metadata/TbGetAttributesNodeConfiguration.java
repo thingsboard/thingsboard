@@ -25,7 +25,7 @@ import java.util.List;
  * Created by ashvayka on 19.01.18.
  */
 @Data
-public class TbGetAttributesNodeConfiguration implements NodeConfiguration {
+public class TbGetAttributesNodeConfiguration implements NodeConfiguration<TbGetAttributesNodeConfiguration> {
 
     private List<String> clientAttributeNames;
     private List<String> sharedAttributeNames;

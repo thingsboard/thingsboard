@@ -53,27 +53,16 @@ public class TbJsSwitchNodeTest {
     private ListeningExecutor executor;
 
     @Test
-    public void routeToAllDoNotEvaluatesJs() throws TbNodeException {
-        HashSet<String> relations = Sets.newHashSet("one", "two");
-        initWithScript("test qwerty", relations, true);
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}".getBytes());
-
-        node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg, relations);
-        verifyNoMoreInteractions(ctx, executor);
-    }
-
-    @Test
     public void multipleRoutesAreAllowed() throws TbNodeException {
-        String jsCode = "function nextRelation(meta, msg) {\n" +
-                "    if(msg.passed == 5 && meta.temp == 10)\n" +
+        String jsCode = "function nextRelation(metadata, msg) {\n" +
+                "    if(msg.passed == 5 && metadata.temp == 10)\n" +
                 "        return ['three', 'one']\n" +
                 "    else\n" +
                 "        return 'two';\n" +
                 "};\n" +
                 "\n" +
-                "nextRelation(meta, msg);";
-        initWithScript(jsCode, Sets.newHashSet("one", "two", "three"), false);
+                "return nextRelation(metadata, msg);";
+        initWithScript(jsCode);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -89,15 +78,15 @@ public class TbJsSwitchNodeTest {
 
     @Test
     public void allowedRelationPassed() throws TbNodeException {
-        String jsCode = "function nextRelation(meta, msg) {\n" +
-                "    if(msg.passed == 5 && meta.temp == 10)\n" +
+        String jsCode = "function nextRelation(metadata, msg) {\n" +
+                "    if(msg.passed == 5 && metadata.temp == 10)\n" +
                 "        return 'one'\n" +
                 "    else\n" +
                 "        return 'two';\n" +
                 "};\n" +
                 "\n" +
-                "nextRelation(meta, msg);";
-        initWithScript(jsCode, Sets.newHashSet("one", "two"), false);
+                "return nextRelation(metadata, msg);";
+        initWithScript(jsCode);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -111,37 +100,14 @@ public class TbJsSwitchNodeTest {
         verify(ctx).tellNext(msg, Sets.newHashSet("one"));
     }
 
-    @Test
-    public void unknownRelationThrowsException() throws TbNodeException {
-        String jsCode = "function nextRelation(meta, msg) {\n" +
-                "    return ['one','nine'];" +
-                "};\n" +
-                "\n" +
-                "nextRelation(meta, msg);";
-        initWithScript(jsCode, Sets.newHashSet("one", "two"), false);
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("temp", "10");
-        metaData.putValue("humidity", "99");
-        String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
-
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
-        mockJsExecutor();
-
-        node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
-        verifyError(msg, "Unsupported relation for switch [nine, one]", IllegalStateException.class);
-    }
-
-    private void initWithScript(String script, Set<String> relations, boolean routeToAll) throws TbNodeException {
+    private void initWithScript(String script) throws TbNodeException {
         TbJsSwitchNodeConfiguration config = new TbJsSwitchNodeConfiguration();
         config.setJsScript(script);
-        config.setAllowedRelations(relations);
-        config.setRouteToAllWithNoCheck(routeToAll);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbJsSwitchNode();
-        node.init(nodeConfiguration, null);
+        node.init(null, nodeConfiguration);
     }
 
     private void mockJsExecutor() {

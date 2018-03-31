@@ -19,14 +19,14 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbJsFilterNodeConfiguration implements NodeConfiguration {
+public class TbJsFilterNodeConfiguration implements NodeConfiguration<TbJsFilterNodeConfiguration> {
 
     private String jsScript;
 
     @Override
     public TbJsFilterNodeConfiguration defaultConfiguration() {
         TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
-        configuration.setJsScript("msg.passed < 15 && msg.name === 'Vit' && meta.temp == 10 && msg.bigObj.prop == 42;");
+        configuration.setJsScript("return msg.passed < 15 && msg.name === 'Vit' && metadata.temp == 10 && msg.bigObj.prop == 42;");
         return configuration;
     }
 }

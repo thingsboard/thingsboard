@@ -27,15 +27,10 @@ import addRuleNodeLinkTemplate from './add-link.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
-
-const deleteKeyCode = 46;
-const ctrlKeyCode = 17;
-const aKeyCode = 65;
-const escKeyCode = 27;
-
 /*@ngInject*/
-export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $document, $mdDialog,
-                                    $filter, $translate, types, ruleChainService, Modelfactory, flowchartConstants, ruleChain, ruleChainMetaData) {
+export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $window, $document, $mdDialog,
+                                    $filter, $translate, hotkeys, types, ruleChainService, Modelfactory, flowchartConstants,
+                                    ruleChain, ruleChainMetaData, ruleNodeComponents) {
 
     var vm = this;
 
@@ -47,6 +42,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     vm.editingRuleNodeLink = null;
     vm.isEditingRuleNodeLink = false;
+
+    vm.isLibraryOpen = true;
+    vm.ruleNodeSearch = '';
 
     vm.ruleChain = ruleChain;
     vm.ruleChainMetaData = ruleChainMetaData;
@@ -76,39 +74,64 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     vm.modelservice = Modelfactory(vm.ruleChainModel, vm.selectedObjects);
 
-    vm.ctrlDown = false;
-
     vm.saveRuleChain = saveRuleChain;
     vm.revertRuleChain = revertRuleChain;
 
-    vm.keyDown = function (evt) {
-        if (evt.keyCode === ctrlKeyCode) {
-            vm.ctrlDown = true;
-            evt.stopPropagation();
-            evt.preventDefault();
-        }
-    };
+    vm.objectsSelected = objectsSelected;
+    vm.deleteSelected = deleteSelected;
 
-    vm.keyUp = function (evt) {
+    vm.triggerResize = triggerResize;
 
-        if (evt.keyCode === deleteKeyCode) {
-            vm.modelservice.deleteSelected();
-        }
+    initHotKeys();
 
-        if (evt.keyCode == aKeyCode && vm.ctrlDown) {
-            vm.modelservice.selectAll();
-        }
-
-        if (evt.keyCode == escKeyCode) {
-            vm.modelservice.deselectAll();
-        }
-
-        if (evt.keyCode === ctrlKeyCode) {
-            vm.ctrlDown = false;
-            evt.stopPropagation();
-            evt.preventDefault();
-        }
-    };
+    function initHotKeys() {
+        hotkeys.bindTo($scope)
+            .add({
+                combo: 'ctrl+a',
+                description: $translate.instant('rulenode.select-all'),
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
+                    event.preventDefault();
+                    vm.modelservice.selectAll();
+                }
+            })
+            .add({
+                combo: 'esc',
+                description: $translate.instant('rulenode.deselect-all'),
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
+                    event.preventDefault();
+                    vm.modelservice.deselectAll();
+                }
+            })
+            .add({
+                combo: 'ctrl+s',
+                description: $translate.instant('action.apply'),
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
+                    event.preventDefault();
+                    vm.saveRuleChain();
+                }
+            })
+            .add({
+                combo: 'ctrl+z',
+                description: $translate.instant('action.decline-changes'),
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
+                    event.preventDefault();
+                    vm.revertRuleChain();
+                }
+            })
+            .add({
+                combo: 'del',
+                description: $translate.instant('rulenode.delete-selected-objects'),
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
+                    event.preventDefault();
+                    vm.modelservice.deleteSelected();
+                }
+            })
+    }
 
     vm.onEditRuleNodeClosed = function() {
         vm.editingRuleNode = null;
@@ -119,15 +142,16 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     };
 
     vm.saveRuleNode = function(theForm) {
-        theForm.$setPristine();
-        vm.isEditingRuleNode = false;
-        vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
-        vm.editingRuleNode = angular.copy(vm.editingRuleNode);
+        $scope.$broadcast('form-submit');
+        if (theForm.$valid) {
+            theForm.$setPristine();
+            vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
+            vm.editingRuleNode = angular.copy(vm.editingRuleNode);
+        }
     };
 
     vm.saveRuleNodeLink = function(theForm) {
         theForm.$setPristine();
-        vm.isEditingRuleNodeLink = false;
         vm.ruleChainModel.edges[vm.editingRuleNodeLinkIndex] = vm.editingRuleNodeLink;
         vm.editingRuleNodeLink = angular.copy(vm.editingRuleNodeLink);
     };
@@ -235,6 +259,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                 vm.isEditingRuleNodeLink = true;
                 vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
                 vm.editingRuleNodeLink = angular.copy(edge);
+                $mdUtil.nextTick(() => {
+                    vm.ruleNodeLinkForm.$setPristine();
+                });
             }
         },
         nodeCallbacks: {
@@ -245,6 +272,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     vm.isEditingRuleNode = true;
                     vm.editingRuleNodeIndex = vm.ruleChainModel.nodes.indexOf(node);
                     vm.editingRuleNode = angular.copy(node);
+                    $mdUtil.nextTick(() => {
+                        vm.ruleNodeForm.$setPristine();
+                    });
                 }
             }
         },
@@ -286,44 +316,40 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     loadRuleChainLibrary();
 
     function loadRuleChainLibrary() {
-        ruleChainService.getRuleNodeComponents().then(
-            (ruleNodeComponents) => {
-                for (var i=0;i<ruleNodeComponents.length;i++) {
-                    var ruleNodeComponent = ruleNodeComponents[i];
-                    var componentType = ruleNodeComponent.type;
-                    var model = vm.ruleNodeTypesModel[componentType].model;
-                    var node = {
-                        id: model.nodes.length,
-                        component: ruleNodeComponent,
-                        name: '',
-                        nodeClass: vm.types.ruleNodeType[componentType].nodeClass,
-                        icon: vm.types.ruleNodeType[componentType].icon,
-                        x: 30,
-                        y: 10+50*model.nodes.length,
-                        connectors: []
-                    };
-                    if (ruleNodeComponent.configurationDescriptor.nodeDefinition.inEnabled) {
-                        node.connectors.push(
-                            {
-                                type: flowchartConstants.leftConnectorType,
-                                id: model.nodes.length * 2
-                            }
-                        );
+        for (var i=0;i<ruleNodeComponents.length;i++) {
+            var ruleNodeComponent = ruleNodeComponents[i];
+            var componentType = ruleNodeComponent.type;
+            var model = vm.ruleNodeTypesModel[componentType].model;
+            var node = {
+                id: 'node-lib-' + componentType + '-' + model.nodes.length,
+                component: ruleNodeComponent,
+                name: '',
+                nodeClass: vm.types.ruleNodeType[componentType].nodeClass,
+                icon: vm.types.ruleNodeType[componentType].icon,
+                x: 30,
+                y: 10+50*model.nodes.length,
+                connectors: []
+            };
+            if (ruleNodeComponent.configurationDescriptor.nodeDefinition.inEnabled) {
+                node.connectors.push(
+                    {
+                        type: flowchartConstants.leftConnectorType,
+                        id: model.nodes.length * 2
                     }
-                    if (ruleNodeComponent.configurationDescriptor.nodeDefinition.outEnabled) {
-                        node.connectors.push(
-                            {
-                                type: flowchartConstants.rightConnectorType,
-                                id: model.nodes.length * 2 + 1
-                            }
-                        );
-                    }
-                    model.nodes.push(node);
-                }
-                vm.ruleChainLibraryLoaded = true;
-                prepareRuleChain();
+                );
             }
-        );
+            if (ruleNodeComponent.configurationDescriptor.nodeDefinition.outEnabled) {
+                node.connectors.push(
+                    {
+                        type: flowchartConstants.rightConnectorType,
+                        id: model.nodes.length * 2 + 1
+                    }
+                );
+            }
+            model.nodes.push(node);
+        }
+        vm.ruleChainLibraryLoaded = true;
+        prepareRuleChain();
     }
 
     function prepareRuleChain() {
@@ -344,7 +370,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
         vm.ruleChainModel.nodes.push(
             {
-                id: vm.nextNodeID++,
+                id: 'rule-chain-node-' + vm.nextNodeID++,
                 component: types.inputNodeComponent,
                 name: "",
                 nodeClass: types.ruleNodeType.INPUT.nodeClass,
@@ -375,7 +401,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
             if (component) {
                 var node = {
-                    id: vm.nextNodeID++,
+                    id: 'rule-chain-node-' + vm.nextNodeID++,
                     ruleNodeId: ruleNode.id,
                     additionalInfo: ruleNode.additionalInfo,
                     configuration: ruleNode.configuration,
@@ -452,7 +478,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                     var ruleChainNode = ruleChainNodesMap[ruleChainConnection.additionalInfo.ruleChainNodeId];
                     if (!ruleChainNode) {
                         ruleChainNode = {
-                            id: vm.nextNodeID++,
+                            id: 'rule-chain-node-' + vm.nextNodeID++,
                             additionalInfo: ruleChainConnection.additionalInfo,
                             targetRuleChainId: ruleChainConnection.targetRuleChainId.id,
                             x: ruleChainConnection.additionalInfo.layoutX,
@@ -597,7 +623,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             fullscreen: true,
             targetEvent: $event
         }).then(function (ruleNode) {
-            ruleNode.id = vm.nextNodeID++;
+            ruleNode.id = 'rule-chain-node-' + vm.nextNodeID++;
             ruleNode.connectors = [];
             if (ruleNode.component.configurationDescriptor.nodeDefinition.inEnabled) {
                 ruleNode.connectors.push(
@@ -632,6 +658,19 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
         });
     }
 
+    function objectsSelected() {
+        return vm.modelservice.nodes.getSelectedNodes().length > 0 ||
+            vm.modelservice.edges.getSelectedEdges().length > 0
+    }
+
+    function deleteSelected() {
+        vm.modelservice.deleteSelected();
+    }
+
+    function triggerResize() {
+        var w = angular.element($window);
+        w.triggerHandler('resize');
+    }
 }
 
 /*@ngInject*/

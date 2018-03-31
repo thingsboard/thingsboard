@@ -18,17 +18,17 @@ export default angular.module('thingsboard.directives.confirmOnExit', [])
     .name;
 
 /*@ngInject*/
-function ConfirmOnExit($state, $mdDialog, $window, $filter, userService) {
+function ConfirmOnExit($state, $mdDialog, $window, $filter, $parse, userService) {
     return {
-        link: function ($scope) {
-
+        link: function ($scope, $element, $attributes) {
+            $scope.confirmForm = $scope.$eval($attributes.confirmForm);
             $window.onbeforeunload = function () {
-                if (userService.isAuthenticated() && (($scope.confirmForm && $scope.confirmForm.$dirty) || $scope.isDirty)) {
+                if (userService.isAuthenticated() && (($scope.confirmForm && $scope.confirmForm.$dirty) || $scope.$eval($attributes.isDirty))) {
                     return $filter('translate')('confirm-on-exit.message');
                 }
             }
             $scope.$on('$stateChangeStart', function (event, next, current, params) {
-                if (userService.isAuthenticated() && (($scope.confirmForm && $scope.confirmForm.$dirty) || $scope.isDirty)) {
+                if (userService.isAuthenticated() && (($scope.confirmForm && $scope.confirmForm.$dirty) || $scope.$eval($attributes.isDirty))) {
                     event.preventDefault();
                     var confirm = $mdDialog.confirm()
                         .title($filter('translate')('confirm-on-exit.title'))
@@ -40,7 +40,9 @@ function ConfirmOnExit($state, $mdDialog, $window, $filter, userService) {
                         if ($scope.confirmForm) {
                             $scope.confirmForm.$setPristine();
                         } else {
-                            $scope.isDirty = false;
+                            var remoteSetter = $parse($attributes.isDirty).assign;
+                            remoteSetter($scope, false);
+                            //$scope.isDirty = false;
                         }
                         $state.go(next.name, params);
                     }, function () {
@@ -48,9 +50,6 @@ function ConfirmOnExit($state, $mdDialog, $window, $filter, userService) {
                 }
             });
         },
-        scope: {
-            confirmForm: '=',
-            isDirty: '='
-        }
+        scope: false
     };
 }

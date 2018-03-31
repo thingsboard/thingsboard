@@ -18,13 +18,58 @@
   .tb-fullscreen-button-style {
     z-index: 1;
   }
+  section.tb-header-buttons.tb-library-open {
+    pointer-events: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 1;
+    .md-button.tb-btn-open-library {
+      left: 0px;
+      top: 0px;
+      line-height: 36px;
+      width: 36px;
+      height: 36px;
+      margin: 4px 0 0 4px;
+      opacity: 0.5;
+    }
+  }
   .tb-rulechain-library {
     width: 250px;
     min-width: 250px;
-    overflow-y: auto;
-    overflow-x: hidden;
-
+    z-index: 1;
+    md-toolbar {
+      min-height: 48px;
+      height: 48px;
+      .md-toolbar-tools>.md-button:last-child {
+        margin-right: 0px;
+      }
+      .md-toolbar-tools {
+        font-size: 14px;
+        padding: 0px 6px;
+        .md-button.md-icon-button {
+          margin: 0px;
+          &.tb-small {
+            height: 32px;
+            min-height: 32px;
+            line-height: 20px;
+            padding: 6px;
+            width: 32px;
+            md-icon {
+              line-height: 20px;
+              font-size: 20px;
+              height: 20px;
+              width: 20px;
+              min-height: 20px;
+              min-width: 20px;
+            }
+          }
+        }
+      }
+    }
     .tb-rulechain-library-panel-group {
+      overflow-y: auto;
+      overflow-x: hidden;
       .tb-panel-title {
         -webkit-user-select: none;
         -moz-user-select: none;
@@ -33,7 +78,7 @@
         min-width: 180px;
       }
       .fc-canvas {
-        background: none;
+        background: #f9f9f9;
       }
       md-icon.md-expansion-panel-icon {
         margin-right: 0px;
@@ -55,6 +100,7 @@
     }
   }
   .tb-rulechain-graph {
+    z-index: 0;
     overflow: auto;
   }
 }
@@ -75,6 +121,7 @@
   padding: 5px 10px;
   border-radius: 5px;
   background-color: #F15B26;
+  pointer-events: none;
   color: #333;
   border: solid 1px #777;
   font-size: 12px;
@@ -121,16 +168,32 @@
 .fc-node {
   z-index: 1;
   outline: none;
-  &.fc-hover, &.fc-selected {
-    -webkit-filter: brightness(70%);
-    filter: brightness(70%);
-  }
   &.fc-dragging {
     z-index: 10;
   }
   p {
     padding: 0 15px;
     text-align: center;
+  }
+  .fc-node-overlay {
+    position: absolute;
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000;
+    opacity: 0;
+  }
+  &.fc-hover {
+    .fc-node-overlay {
+      opacity: 0.25;
+    }
+  }
+  &.fc-selected {
+    .fc-node-overlay {
+      opacity: 0.25;
+    }
   }
 }
 
@@ -170,10 +233,25 @@
   margin: 10px;
   border-radius: 5px;
   background-color: #ccc;
+  pointer-events: all;
 }
 
 .fc-connector.fc-hover {
   background-color: #000;
+}
+
+.fc-arrow-marker {
+  polygon {
+    stroke: gray;
+    fill: gray;
+  }
+}
+
+.fc-arrow-marker-selected {
+  polygon {
+    stroke: red;
+    fill: red;
+  }
 }
 
 .fc-edge {
@@ -181,6 +259,7 @@
   stroke: gray;
   stroke-width: 4;
   fill: transparent;
+  transition: stroke-width .2s;
   &.fc-selected {
     stroke: red;
     stroke-width: 4;
@@ -229,30 +308,66 @@
   cursor: pointer;
 }
 
+.fc-noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
 .fc-edge-label {
   position: absolute;
-  user-select: none;
-  pointer-events: none;
+  transition: transform .2s;
   opacity: 0.8;
+  &.ng-leave {
+    transition: 0s none;
+  }
+  &.fc-hover {
+    transform: scale(1.25);
+  }
+  &.fc-selected {
+    .fc-edge-label-text {
+      span {
+        border: solid red;
+        color: red;
+      }
+    }
+  }
+  .fc-nodedelete {
+    right: -13px;
+    top: -30px;
+  }
+  &:focus {
+    outline: 0;
+  }
 }
 
 .fc-edge-label-text {
   position: absolute;
-  left: 50%;
-  -webkit-transform: translateX(-50%);
-  transform: translateX(-50%);
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
   white-space: nowrap;
   text-align: center;
   font-size: 14px;
   font-weight: 600;
-  top: 5px;
   span {
+    cursor: default;
     border: solid 2px #003a79;
     border-radius: 10px;
     color: #003a79;
     background-color: #fff;
     padding: 3px 5px;
   }
+}
+
+.fc-select-rectangle {
+  border: 2px dashed #5262ff;
+  position: absolute;
+  background: rgba(20,125,255,0.1);
+  z-index: 2;
 }
 
 @keyframes dash {
