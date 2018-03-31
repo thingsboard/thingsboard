@@ -69,6 +69,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,6 +102,7 @@ public class TelemetryController extends BaseController {
 
     private ExecutorService executor;
 
+    @PostConstruct
     public void initExecutor() {
         executor = Executors.newSingleThreadExecutor();
     }

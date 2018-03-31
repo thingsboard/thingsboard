@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.controller.ValidationCallback;
+import org.thingsboard.server.controller.HttpValidationCallback;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -91,7 +91,7 @@ public class AccessValidator {
 
         final DeferredResult<ResponseEntity> response = new DeferredResult<>();
 
-        validate(currentUser, entityId, new ValidationCallback(response,
+        validate(currentUser, entityId, new HttpValidationCallback(response,
                 new FutureCallback<DeferredResult<ResponseEntity>>() {
                     @Override
                     public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
@@ -107,7 +107,7 @@ public class AccessValidator {
         return response;
     }
 
-    public void validate(SecurityUser currentUser, EntityId entityId, ValidationCallback callback) {
+    public <T> void validate(SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         switch (entityId.getEntityType()) {
             case DEVICE:
                 validateDevice(currentUser, entityId, callback);
@@ -130,7 +130,7 @@ public class AccessValidator {
         }
     }
 
-    private void validateDevice(final SecurityUser currentUser, EntityId entityId, ValidationCallback callback) {
+    private void validateDevice(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
@@ -151,7 +151,7 @@ public class AccessValidator {
         }
     }
 
-    private void validateAsset(final SecurityUser currentUser, EntityId entityId, ValidationCallback callback) {
+    private <T> void validateAsset(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
@@ -173,7 +173,7 @@ public class AccessValidator {
     }
 
 
-    private void validateRuleChain(final SecurityUser currentUser, EntityId entityId, ValidationCallback callback) {
+    private <T> void validateRuleChain(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isCustomerUser()) {
             callback.onSuccess(ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
@@ -194,7 +194,7 @@ public class AccessValidator {
         }
     }
 
-    private void validateCustomer(final SecurityUser currentUser, EntityId entityId, ValidationCallback callback) {
+    private <T> void validateCustomer(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
@@ -215,7 +215,7 @@ public class AccessValidator {
         }
     }
 
-    private void validateTenant(final SecurityUser currentUser, EntityId entityId, ValidationCallback callback) {
+    private <T> void validateTenant(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isCustomerUser()) {
             callback.onSuccess(ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else if (currentUser.isSystemAdmin()) {
@@ -234,7 +234,7 @@ public class AccessValidator {
         }
     }
 
-    private <T> FutureCallback<T> getCallback(ValidationCallback callback, Function<T, ValidationResult> transformer) {
+    private <T> FutureCallback<T> getCallback(FutureCallback<ValidationResult> callback, Function<T, ValidationResult> transformer) {
         return new FutureCallback<T>() {
             @Override
             public void onSuccess(@Nullable T result) {

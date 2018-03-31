@@ -61,12 +61,17 @@ import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
@@ -158,6 +163,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private TelemetrySubscriptionService tsSubService;
+
+    @Autowired
+    @Getter
     @Setter
     private PluginWebSocketMsgEndpoint wsMsgEndpoint;
 
@@ -223,6 +232,21 @@ public class ActorSystemContext {
 
     @Getter
     private final Config config;
+
+    @Getter
+    private ExecutorService tsCallBackExecutor;
+
+    @PostConstruct
+    public void initExecutor() {
+        tsCallBackExecutor = Executors.newSingleThreadExecutor();
+    }
+
+    @PreDestroy
+    public void shutdownExecutor() {
+        if (tsCallBackExecutor != null) {
+            tsCallBackExecutor.shutdownNow();
+        }
+    }
 
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());
@@ -345,7 +369,7 @@ public class ActorSystemContext {
         return Exception.class.isInstance(error) ? (Exception) error : new Exception(error);
     }
 
-    public ListeningExecutor getExecutor() {
+    public ListeningExecutor getJsExecutor() {
         //TODO: take thread count from yml.
         return new JsExecutorService(1);
     }
