@@ -18,7 +18,7 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
+import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryFeature;
 
 /**
  * @author Andrew Shvayka
@@ -35,7 +35,7 @@ public class TimeseriesSubscriptionCmd extends SubscriptionCmd {
     private String agg;
 
     @Override
-    public SubscriptionType getType() {
-        return SubscriptionType.TIMESERIES;
+    public TelemetryFeature getType() {
+        return TelemetryFeature.TIMESERIES;
     }
 }

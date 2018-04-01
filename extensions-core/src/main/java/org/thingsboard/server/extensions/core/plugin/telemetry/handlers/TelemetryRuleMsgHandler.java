@@ -24,7 +24,11 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.msg.core.*;
+import org.thingsboard.server.common.msg.core.BasicGetAttributesResponse;
+import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
+import org.thingsboard.server.common.msg.core.GetAttributesRequest;
+import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
+import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
 import org.thingsboard.server.common.msg.kv.BasicAttributeKVMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
@@ -35,9 +39,13 @@ import org.thingsboard.server.extensions.api.plugins.msg.TelemetryUploadRequestR
 import org.thingsboard.server.extensions.api.plugins.msg.UpdateAttributesRequestRuleToPluginMsg;
 import org.thingsboard.server.extensions.core.plugin.telemetry.SubscriptionManager;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.Subscription;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -97,7 +105,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
             @Override
             public void onSuccess(PluginContext ctx, Void data) {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
-                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), SubscriptionType.TIMESERIES, s ->
+                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), TelemetryFeature.TIMESERIES, s ->
                     prepareSubscriptionUpdate(request, s)
                 );
             }
@@ -131,7 +139,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
                     public void onSuccess(PluginContext ctx, Void value) {
                         ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
 
-                        subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), SubscriptionType.ATTRIBUTES, s -> {
+                        subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), TelemetryFeature.ATTRIBUTES, s -> {
                             List<TsKvEntry> subscriptionUpdate = new ArrayList<>();
                             for (AttributeKvEntry kv : request.getAttributes()) {
                                 if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {

@@ -18,7 +18,7 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.cmd;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
+import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryFeature;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,7 +32,7 @@ public abstract class SubscriptionCmd implements TelemetryPluginCmd {
     private String scope;
     private boolean unsubscribe;
 
-    public abstract SubscriptionType getType();
+    public abstract TelemetryFeature getType();
 
     @Override
     public String toString() {

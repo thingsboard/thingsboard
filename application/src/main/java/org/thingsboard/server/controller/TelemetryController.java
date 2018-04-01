@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,13 +89,13 @@ import java.util.stream.Collectors;
 public class TelemetryController extends BaseController {
 
     @Autowired
-    private TelemetrySubscriptionService subscriptionService;
-
-    @Autowired
     private AttributesService attributesService;
 
     @Autowired
     private TimeseriesService tsService;
+
+    @Autowired
+    private TelemetrySubscriptionService tsSubService;
 
     @Autowired
     private AccessValidator accessValidator;
@@ -312,13 +312,11 @@ public class TelemetryController extends BaseController {
             }
             SecurityUser user = getCurrentUser();
             return accessValidator.validateEntityAndCallback(getCurrentUser(), entityIdSrc, (result, entityId) -> {
-                ListenableFuture<List<Void>> future = attributesService.save(entityId, scope, attributes);
-                Futures.addCallback(future, new FutureCallback<List<Void>>() {
+                tsSubService.saveAndNotify(entityId, scope, attributes, new FutureCallback<Void>() {
                     @Override
-                    public void onSuccess(@Nullable List<Void> tmp) {
+                    public void onSuccess(@Nullable Void tmp) {
                         logAttributesUpdated(user, entityId, scope, attributes, null);
                         result.setResult(new ResponseEntity(HttpStatus.OK));
-                        subscriptionService.onAttributesUpdateFromServer(entityId, scope, attributes);
                     }
 
                     @Override
@@ -327,7 +325,6 @@ public class TelemetryController extends BaseController {
                         AccessValidator.handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR);
                     }
                 });
-                result.setResult(new ResponseEntity(HttpStatus.OK));
             });
         } else {
             return getImmediateDeferredResult("Request is not a JSON object", HttpStatus.BAD_REQUEST);
@@ -358,12 +355,10 @@ public class TelemetryController extends BaseController {
         }
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), entityIdSrc, (result, entityId) -> {
-            ListenableFuture<List<Void>> future = tsService.save(entityId, entries, ttl);
-            Futures.addCallback(future, new FutureCallback<List<Void>>() {
+            tsSubService.saveAndNotify(entityId, entries, ttl, new FutureCallback<Void>() {
                 @Override
-                public void onSuccess(@Nullable List<Void> tmp) {
+                public void onSuccess(@Nullable Void tmp) {
                     result.setResult(new ResponseEntity(HttpStatus.OK));
-                    subscriptionService.onTimeseriesUpdateFromServer(entityId, entries);
                 }
 
                 @Override
@@ -371,7 +366,6 @@ public class TelemetryController extends BaseController {
                     AccessValidator.handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             });
-            result.setResult(new ResponseEntity(HttpStatus.OK));
         });
     }
 

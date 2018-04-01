@@ -233,21 +233,6 @@ public class ActorSystemContext {
     @Getter
     private final Config config;
 
-    @Getter
-    private ExecutorService tsCallBackExecutor;
-
-    @PostConstruct
-    public void initExecutor() {
-        tsCallBackExecutor = Executors.newSingleThreadExecutor();
-    }
-
-    @PreDestroy
-    public void shutdownExecutor() {
-        if (tsCallBackExecutor != null) {
-            tsCallBackExecutor.shutdownNow();
-        }
-    }
-
     public ActorSystemContext() {
         config = ConfigFactory.parseResources(AKKA_CONF_FILE_NAME).withFallback(ConfigFactory.load());
     }

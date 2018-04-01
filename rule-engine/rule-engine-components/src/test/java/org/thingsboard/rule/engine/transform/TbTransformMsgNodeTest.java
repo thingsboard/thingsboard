@@ -89,7 +89,7 @@ public class TbTransformMsgNodeTest {
 
     @Test
     public void payloadCanBeUpdated() throws TbNodeException {
-        initWithScript("return msg.passed = msg.passed * metadata.temp; msg.bigObj.newProp = 'Ukraine' ");
+        initWithScript("msg.passed = msg.passed * metadata.temp; return msg.bigObj.newProp = 'Ukraine' ");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
