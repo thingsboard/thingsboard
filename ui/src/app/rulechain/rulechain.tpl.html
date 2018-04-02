@@ -16,7 +16,7 @@
 
 -->
 
-<md-content flex tb-expand-fullscreen tb-confirm-on-exit is-dirty="vm.isDirty"
+<md-content flex tb-expand-fullscreen tb-confirm-on-exit is-dirty="vm.isConfirmOnExit"
             expand-tooltip-direction="bottom" layout="column" class="tb-rulechain"
             ng-keydown="vm.keyDown($event)"
             ng-keyup="vm.keyUp($event)" on-fullscreen-changed="vm.isFullscreen = expanded">
@@ -185,7 +185,7 @@
             </md-tooltip>
             <ng-md-icon icon="delete"></ng-md-icon>
         </md-button>
-        <md-button ng-disabled="$root.loading || !vm.isDirty"
+        <md-button ng-disabled="$root.loading  || vm.isInvalid || (!vm.isDirty && !vm.isImport)"
                    class="tb-btn-footer md-accent md-hue-2 md-fab"
                    aria-label="{{ 'action.apply' | translate }}"
                    ng-click="vm.saveRuleChain()">
