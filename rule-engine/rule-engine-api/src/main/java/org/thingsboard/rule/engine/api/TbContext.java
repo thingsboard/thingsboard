@@ -81,6 +81,8 @@ public interface TbContext {
 
     RuleChainService getRuleChainService();
 
+    RuleEngineTelemetryService getTelemetryService();
+
     TimeseriesService getTimeseriesService();
 
     RelationService getRelationService();

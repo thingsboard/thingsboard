@@ -155,7 +155,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements PluginWe
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
             if (sessionMd != null) {
-                sessionMd.session.sendMessage(new TextMessage(msg));
+                synchronized (sessionMd) {
+                    sessionMd.session.sendMessage(new TextMessage(msg));
+                }
             } else {
                 log.warn("[{}][{}] Failed to find session by internal id", externalId, internalId);
             }

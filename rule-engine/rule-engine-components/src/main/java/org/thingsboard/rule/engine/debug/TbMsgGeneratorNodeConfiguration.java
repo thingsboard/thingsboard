@@ -17,6 +17,8 @@ package org.thingsboard.rule.engine.debug;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.EntityType;
+
 import java.util.Map;
 
 @Data
@@ -24,6 +26,8 @@ public class TbMsgGeneratorNodeConfiguration implements NodeConfiguration<TbMsgG
 
     private int msgCount;
     private int periodInSeconds;
+    private String originatorId;
+    private EntityType originatorType;
     private String msgType;
     private String msgBody;
     private Map<String, String> msgMetaData;
