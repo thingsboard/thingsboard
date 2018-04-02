@@ -20,32 +20,41 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.List;
 
-import static org.thingsboard.server.common.data.relation.RelationTypeGroup.COMMON;
-
 public class EntitiesRelatedEntityIdAsyncLoader {
 
     public static ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator,
-                                                             EntitySearchDirection direction, String relationType) {
+                                                             RelationsQuery relationsQuery) {
         RelationService relationService = ctx.getRelationService();
-        if (direction == EntitySearchDirection.FROM) {
-            ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByFromAndTypeAsync(originator, relationType, COMMON);
+        EntityRelationsQuery query = buildQuery(originator, relationsQuery);
+        ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByQuery(query);
+        if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
             return Futures.transform(asyncRelation, (AsyncFunction<? super List<EntityRelation>, EntityId>)
                     r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getTo())
                             : Futures.immediateFailedFuture(new IllegalStateException("Relation not found")));
-        } else if (direction == EntitySearchDirection.TO) {
-            ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByToAndTypeAsync(originator, relationType, COMMON);
+        } else if (relationsQuery.getDirection() == EntitySearchDirection.TO) {
             return Futures.transform(asyncRelation, (AsyncFunction<? super List<EntityRelation>, EntityId>)
                     r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getFrom())
                             : Futures.immediateFailedFuture(new IllegalStateException("Relation not found")));
         }
-
         return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
+    }
+
+    private static EntityRelationsQuery buildQuery(EntityId originator, RelationsQuery relationsQuery) {
+        EntityRelationsQuery query = new EntityRelationsQuery();
+        RelationsSearchParameters parameters = new RelationsSearchParameters(originator,
+                relationsQuery.getDirection(), relationsQuery.getMaxLevel());
+        query.setParameters(parameters);
+        query.setFilters(relationsQuery.getFilters());
+        return query;
     }
 }
