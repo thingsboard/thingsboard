@@ -31,7 +31,9 @@ import javax.script.Bindings;
         nodeDescription = "Change Message payload and Metadata using JavaScript",
         nodeDetails = "JavaScript function recieve 2 input parameters that can be changed inside.<br/> " +
                 "<code>metadata</code> - is a Message metadata.<br/>" +
-                "<code>msg</code> - is a Message payload.<br/>Any properties can be changed/removed/added in those objects.")
+                "<code>msg</code> - is a Message payload.<br/>Any properties can be changed/removed/added in those objects.",
+        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        configDirective = "tbTransformationNodeScriptConfig")
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;
