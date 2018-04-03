@@ -36,7 +36,7 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.*;
 
-@Table(name = AUDIT_LOG_COLUMN_FAMILY_NAME)
+@Table(name = AUDIT_LOG_BY_ENTITY_ID_CF)
 @Data
 @NoArgsConstructor
 public class AuditLogEntity implements BaseEntity<AuditLog> {
