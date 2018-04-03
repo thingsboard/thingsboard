@@ -50,6 +50,10 @@ import org.thingsboard.server.extensions.api.exception.ToErrorResponseEntity;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
 /**
@@ -82,6 +86,20 @@ public class AccessValidator {
 
     @Autowired
     protected RuleChainService ruleChainService;
+
+    private ExecutorService executor;
+
+    @PostConstruct
+    public void initExecutor() {
+        executor = Executors.newSingleThreadExecutor();
+    }
+
+    @PreDestroy
+    public void shutdownExecutor() {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
 
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, String entityType, String entityIdStr,
                                                                     BiConsumer<DeferredResult<ResponseEntity>, EntityId> onSuccess) throws ThingsboardException {
@@ -162,7 +180,7 @@ public class AccessValidator {
                         return ValidationResult.ok();
                     }
                 }
-            }));
+            }), executor);
         }
     }
 
@@ -183,7 +201,7 @@ public class AccessValidator {
                         return ValidationResult.ok();
                     }
                 }
-            }));
+            }), executor);
         }
     }
 
@@ -205,7 +223,7 @@ public class AccessValidator {
                         return ValidationResult.ok();
                     }
                 }
-            }));
+            }), executor);
         }
     }
 
@@ -226,7 +244,7 @@ public class AccessValidator {
                         return ValidationResult.ok();
                     }
                 }
-            }));
+            }), executor);
         }
     }
 
@@ -245,7 +263,7 @@ public class AccessValidator {
                 } else {
                     return ValidationResult.ok();
                 }
-            }));
+            }), executor);
         }
     }
 
