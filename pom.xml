@@ -41,7 +41,7 @@
         <logback.version>1.2.3</logback.version>
         <mockito.version>1.9.5</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>3.0.0</cassandra.version>
+        <cassandra.version>3.0.7</cassandra.version>
         <cassandra-unit.version>3.0.0.1</cassandra-unit.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
         <guava.version>18.0</guava.version>
