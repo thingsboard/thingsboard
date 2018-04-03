@@ -86,6 +86,14 @@ export default function EventRowDirective($compile, $templateCache, $mdDialog, $
             });
         }
 
+        scope.checkTooltip = function($event) {
+            var el = $event.target;
+            var $el = angular.element(el);
+            if(el.offsetWidth < el.scrollWidth && !$el.attr('title')){
+                $el.attr('title', $el.text());
+            }
+        }
+
         $compile(element.contents())(scope);
     }
 

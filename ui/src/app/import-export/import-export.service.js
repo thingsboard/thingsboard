@@ -281,39 +281,63 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
 
     function exportRuleChain(ruleChainId) {
         ruleChainService.getRuleChain(ruleChainId).then(
-            function success(ruleChain) {
-                var name = ruleChain.name;
-                name = name.toLowerCase().replace(/\W/g,"_");
-                exportToPc(prepareExport(ruleChain), name + '.json');
-                //TODO: metadata
+            (ruleChain) => {
+                ruleChainService.getRuleChainMetaData(ruleChainId).then(
+                    (ruleChainMetaData) => {
+                        var ruleChainExport = {
+                            ruleChain: prepareRuleChain(ruleChain),
+                            metadata: prepareRuleChainMetaData(ruleChainMetaData)
+                        };
+                        var name = ruleChain.name;
+                        name = name.toLowerCase().replace(/\W/g,"_");
+                        exportToPc(ruleChainExport, name + '.json');
+                    },
+                    (rejection) => {
+                        processExportRuleChainRejection(rejection);
+                    }
+                );
             },
-            function fail(rejection) {
-                var message = rejection;
-                if (!message) {
-                    message = $translate.instant('error.unknown-error');
-                }
-                toast.showError($translate.instant('rulechain.export-failed-error', {error: message}));
+            (rejection) => {
+                processExportRuleChainRejection(rejection);
             }
         );
+    }
+
+    function prepareRuleChain(ruleChain) {
+        ruleChain = prepareExport(ruleChain);
+        if (ruleChain.firstRuleNodeId) {
+            ruleChain.firstRuleNodeId = null;
+        }
+        ruleChain.root = false;
+        return ruleChain;
+    }
+
+    function prepareRuleChainMetaData(ruleChainMetaData) {
+        delete ruleChainMetaData.ruleChainId;
+        for (var i=0;i<ruleChainMetaData.nodes.length;i++) {
+            var node = ruleChainMetaData.nodes[i];
+            ruleChainMetaData.nodes[i] = prepareExport(node);
+        }
+        return ruleChainMetaData;
+    }
+
+    function processExportRuleChainRejection(rejection) {
+        var message = rejection;
+        if (!message) {
+            message = $translate.instant('error.unknown-error');
+        }
+        toast.showError($translate.instant('rulechain.export-failed-error', {error: message}));
     }
 
     function importRuleChain($event) {
         var deferred = $q.defer();
         openImportDialog($event, 'rulechain.import', 'rulechain.rulechain-file').then(
-            function success(ruleChain) {
-                if (!validateImportedRuleChain(ruleChain)) {
+            function success(ruleChainImport) {
+                if (!validateImportedRuleChain(ruleChainImport)) {
                     toast.showError($translate.instant('rulechain.invalid-rulechain-file-error'));
                     deferred.reject();
                 } else {
-                    //TODO: rulechain metadata
-                    ruleChainService.saveRuleChain(ruleChain).then(
-                        function success() {
-                            deferred.resolve();
-                        },
-                        function fail() {
-                            deferred.reject();
-                        }
-                    );
+                    deferred.resolve(ruleChainImport);
                 }
             },
             function fail() {
@@ -323,10 +347,14 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         return deferred.promise;
     }
 
-    function validateImportedRuleChain(ruleChain) {
-        //TODO: rulechain metadata
-        if (angular.isUndefined(ruleChain.name))
-        {
+    function validateImportedRuleChain(ruleChainImport) {
+        if (angular.isUndefined(ruleChainImport.ruleChain)) {
+            return false;
+        }
+        if (angular.isUndefined(ruleChainImport.metadata)) {
+            return false;
+        }
+        if (angular.isUndefined(ruleChainImport.ruleChain.name)) {
             return false;
         }
         return true;

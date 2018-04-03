@@ -28,7 +28,7 @@ import addRuleNodeLinkTemplate from './add-link.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $window, $document, $mdDialog,
+export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $window, $document, $mdDialog,
                                     $filter, $translate, hotkeys, types, ruleChainService, Modelfactory, flowchartConstants,
                                     ruleChain, ruleChainMetaData, ruleNodeComponents) {
 
@@ -36,6 +36,24 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
     vm.$mdExpansionPanel = $mdExpansionPanel;
     vm.types = types;
+
+    if ($state.current.data.import && !ruleChain) {
+        $state.go('home.ruleChains');
+        return;
+    }
+
+    vm.isImport = $state.current.data.import;
+    vm.isConfirmOnExit = false;
+
+    $scope.$watch(function() {
+        return vm.isDirty || vm.isImport;
+    }, (val) => {
+        vm.isConfirmOnExit = val;
+    });
+
+    vm.errorTooltips = {};
+
+    vm.isFullscreen = false;
 
     vm.editingRuleNode = null;
     vm.isEditingRuleNode = false;
@@ -57,6 +75,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
     };
 
     vm.ruleNodeTypesModel = {};
+    vm.ruleNodeTypesCanvasControl = {};
     vm.ruleChainLibraryLoaded = false;
     for (var type in types.ruleNodeType) {
         if (!types.ruleNodeType[type].special) {
@@ -67,8 +86,11 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                 },
                 selectedObjects: []
             };
+            vm.ruleNodeTypesCanvasControl[type] = {};
         }
     }
+
+
 
     vm.selectedObjects = [];
 
@@ -145,8 +167,12 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
         $scope.$broadcast('form-submit');
         if (theForm.$valid) {
             theForm.$setPristine();
+            if (vm.editingRuleNode.error) {
+                delete vm.editingRuleNode.error;
+            }
             vm.ruleChainModel.nodes[vm.editingRuleNodeIndex] = vm.editingRuleNode;
             vm.editingRuleNode = angular.copy(vm.editingRuleNode);
+            updateRuleNodesHighlight();
         }
     };
 
@@ -203,7 +229,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
         }
         var instances = angular.element.tooltipster.instances();
         instances.forEach((instance) => {
-            instance.destroy();
+            if (!instance.isErrorTooltip) {
+                instance.destroy();
+            }
         });
     }
 
@@ -248,6 +276,71 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             tooltip.open();
         }, 500);
     }
+
+    function updateNodeErrorTooltip(node) {
+        if (node.error) {
+            var element = angular.element('#' + node.id);
+            var tooltip = vm.errorTooltips[node.id];
+            if (!tooltip || !element.hasClass("tooltipstered")) {
+                element.tooltipster(
+                    {
+                        theme: 'tooltipster-shadow',
+                        delay: 0,
+                        animationDuration: 0,
+                        trigger: 'custom',
+                        triggerOpen: {
+                            click: false,
+                            tap: false
+                        },
+                        triggerClose: {
+                            click: false,
+                            tap: false,
+                            scroll: false
+                        },
+                        side: 'top',
+                        trackOrigin: true
+                    }
+                );
+                var content = '<div class="tb-rule-node-error-tooltip">' +
+                    '<div id="tooltip-content" layout="column">' +
+                    '<div class="tb-node-details">' + node.error + '</div>' +
+                    '</div>' +
+                    '</div>';
+                var contentElement = angular.element(content);
+                $compile(contentElement)($scope);
+                tooltip = element.tooltipster('instance');
+                tooltip.isErrorTooltip = true;
+                tooltip.content(contentElement);
+                vm.errorTooltips[node.id] = tooltip;
+            }
+            $mdUtil.nextTick(() => {
+                tooltip.open();
+            });
+        } else {
+            if (vm.errorTooltips[node.id]) {
+                tooltip = vm.errorTooltips[node.id];
+                tooltip.destroy();
+                delete vm.errorTooltips[node.id];
+            }
+        }
+    }
+
+    function updateErrorTooltips(hide) {
+        for (var nodeId in vm.errorTooltips) {
+            var tooltip = vm.errorTooltips[nodeId];
+            if (hide) {
+                tooltip.close();
+            } else {
+                tooltip.open();
+            }
+        }
+    }
+
+    $scope.$watch(function() {
+        return vm.isEditingRuleNode || vm.isEditingRuleNodeLink;
+    }, (val) => {
+        updateErrorTooltips(val);
+    });
 
     vm.editCallbacks = {
         edgeDoubleClick: function (event, edge) {
@@ -313,12 +406,28 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
         }
     };
 
-    loadRuleChainLibrary();
+    loadRuleChainLibrary(ruleNodeComponents, true);
 
-    function loadRuleChainLibrary() {
+    $scope.$watch('vm.ruleNodeSearch',
+        function (newVal, oldVal) {
+            if (!angular.equals(newVal, oldVal)) {
+                var res = $filter('filter')(ruleNodeComponents, {name: vm.ruleNodeSearch});
+                loadRuleChainLibrary(res);
+            }
+        }
+    );
+
+    $scope.$on('searchTextUpdated', function () {
+        updateRuleNodesHighlight();
+    });
+
+    function loadRuleChainLibrary(ruleNodeComponents, loadRuleChain) {
+        for (var componentType in vm.ruleNodeTypesModel) {
+            vm.ruleNodeTypesModel[componentType].model.nodes.length = 0;
+        }
         for (var i=0;i<ruleNodeComponents.length;i++) {
             var ruleNodeComponent = ruleNodeComponents[i];
-            var componentType = ruleNodeComponent.type;
+            componentType = ruleNodeComponent.type;
             var model = vm.ruleNodeTypesModel[componentType].model;
             var node = {
                 id: 'node-lib-' + componentType + '-' + model.nodes.length,
@@ -349,7 +458,26 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
             model.nodes.push(node);
         }
         vm.ruleChainLibraryLoaded = true;
-        prepareRuleChain();
+        if (loadRuleChain) {
+            prepareRuleChain();
+        }
+        $mdUtil.nextTick(() => {
+            for (componentType in vm.ruleNodeTypesCanvasControl) {
+                if (vm.ruleNodeTypesCanvasControl[componentType].adjustCanvasSize) {
+                    vm.ruleNodeTypesCanvasControl[componentType].adjustCanvasSize(true);
+                }
+            }
+            for (componentType in vm.ruleNodeTypesModel) {
+                var panel = vm.$mdExpansionPanel(componentType);
+                if (panel) {
+                    if (!vm.ruleNodeTypesModel[componentType].model.nodes.length) {
+                        panel.collapse();
+                    } else {
+                        panel.expand();
+                    }
+                }
+            }
+        });
     }
 
     function prepareRuleChain() {
@@ -480,11 +608,9 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                         ruleChainNode = {
                             id: 'rule-chain-node-' + vm.nextNodeID++,
                             additionalInfo: ruleChainConnection.additionalInfo,
-                            targetRuleChainId: ruleChainConnection.targetRuleChainId.id,
                             x: ruleChainConnection.additionalInfo.layoutX,
                             y: ruleChainConnection.additionalInfo.layoutY,
                             component: types.ruleChainNodeComponent,
-                            name: ruleChain.name,
                             nodeClass: vm.types.ruleNodeType.RULE_CHAIN.nodeClass,
                             icon: vm.types.ruleNodeType.RULE_CHAIN.icon,
                             connectors: [
@@ -494,6 +620,14 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                                 }
                             ]
                         };
+                        if (ruleChain.name) {
+                            ruleChainNode.name = ruleChain.name;
+                            ruleChainNode.targetRuleChainId = ruleChainConnection.targetRuleChainId.id;
+                        } else {
+                            ruleChainNode.name = "Unresolved";
+                            ruleChainNode.targetRuleChainId = null;
+                            ruleChainNode.error = $translate.instant('rulenode.invalid-target-rulechain');
+                        }
                         ruleChainNodesMap[ruleChainConnection.additionalInfo.ruleChainNodeId] = ruleChainNode;
                         vm.ruleChainModel.nodes.push(ruleChainNode);
                     }
@@ -519,89 +653,141 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
         vm.isDirty = false;
 
+        updateRuleNodesHighlight();
+
+        validate();
+
         $mdUtil.nextTick(() => {
             vm.ruleChainWatch = $scope.$watch('vm.ruleChainModel',
                 function (newVal, oldVal) {
-                    if (!vm.isDirty && !angular.equals(newVal, oldVal)) {
-                        vm.isDirty = true;
+                    if (!angular.equals(newVal, oldVal)) {
+                        validate();
+                        if (!vm.isDirty) {
+                            vm.isDirty = true;
+                        }
                     }
                 }, true
             );
         });
     }
 
+    function updateRuleNodesHighlight() {
+        for (var i = 0; i < vm.ruleChainModel.nodes.length; i++) {
+            vm.ruleChainModel.nodes[i].highlighted = false;
+        }
+        if ($scope.searchConfig.searchText) {
+            var res = $filter('filter')(vm.ruleChainModel.nodes, {name: $scope.searchConfig.searchText});
+            if (res) {
+                for (i = 0; i < res.length; i++) {
+                    res[i].highlighted = true;
+                }
+            }
+        }
+    }
+
+    function validate() {
+        $mdUtil.nextTick(() => {
+            vm.isInvalid = false;
+            for (var i = 0; i < vm.ruleChainModel.nodes.length; i++) {
+                if (vm.ruleChainModel.nodes[i].error) {
+                    vm.isInvalid = true;
+                }
+                updateNodeErrorTooltip(vm.ruleChainModel.nodes[i]);
+            }
+        });
+    }
+
     function saveRuleChain() {
-        var ruleChainMetaData = {
-            ruleChainId: vm.ruleChain.id,
-            nodes: [],
-            connections: [],
-            ruleChainConnections: []
-        };
-
-        var nodes = [];
-
-        for (var i=0;i<vm.ruleChainModel.nodes.length;i++) {
-            var node = vm.ruleChainModel.nodes[i];
-            if (node.component.type != types.ruleNodeType.INPUT.value && node.component.type != types.ruleNodeType.RULE_CHAIN.value) {
-                var ruleNode = {};
-                if (node.ruleNodeId) {
-                    ruleNode.id = node.ruleNodeId;
-                }
-                ruleNode.type = node.component.clazz;
-                ruleNode.name = node.name;
-                ruleNode.configuration = node.configuration;
-                ruleNode.additionalInfo = node.additionalInfo;
-                ruleNode.debugMode = node.debugMode;
-                if (!ruleNode.additionalInfo) {
-                    ruleNode.additionalInfo = {};
-                }
-                ruleNode.additionalInfo.layoutX = node.x;
-                ruleNode.additionalInfo.layoutY = node.y;
-                ruleChainMetaData.nodes.push(ruleNode);
-                nodes.push(node);
-            }
+        var saveRuleChainPromise;
+        if (vm.isImport) {
+            saveRuleChainPromise = ruleChainService.saveRuleChain(vm.ruleChain);
+        } else {
+            saveRuleChainPromise = $q.when(vm.ruleChain);
         }
-        var res = $filter('filter')(vm.ruleChainModel.edges, {source: vm.inputConnectorId});
-        if (res && res.length) {
-            var firstNodeEdge = res[0];
-            var firstNode = vm.modelservice.nodes.getNodeByConnectorId(firstNodeEdge.destination);
-            ruleChainMetaData.firstNodeIndex = nodes.indexOf(firstNode);
-        }
-        for (i=0;i<vm.ruleChainModel.edges.length;i++) {
-            var edge = vm.ruleChainModel.edges[i];
-            var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
-            var destNode = vm.modelservice.nodes.getNodeByConnectorId(edge.destination);
-            if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
-                var fromIndex = nodes.indexOf(sourceNode);
-                if (destNode.component.type == types.ruleNodeType.RULE_CHAIN.value) {
-                    var ruleChainConnection = {
-                        fromIndex: fromIndex,
-                        targetRuleChainId: {entityType: vm.types.entityType.rulechain, id: destNode.targetRuleChainId},
-                        additionalInfo: destNode.additionalInfo,
-                        type: edge.label
-                    };
-                    if (!ruleChainConnection.additionalInfo) {
-                        ruleChainConnection.additionalInfo = {};
+        saveRuleChainPromise.then(
+            (ruleChain) => {
+                vm.ruleChain = ruleChain;
+                var ruleChainMetaData = {
+                    ruleChainId: vm.ruleChain.id,
+                    nodes: [],
+                    connections: [],
+                    ruleChainConnections: []
+                };
+
+                var nodes = [];
+
+                for (var i=0;i<vm.ruleChainModel.nodes.length;i++) {
+                    var node = vm.ruleChainModel.nodes[i];
+                    if (node.component.type != types.ruleNodeType.INPUT.value && node.component.type != types.ruleNodeType.RULE_CHAIN.value) {
+                        var ruleNode = {};
+                        if (node.ruleNodeId) {
+                            ruleNode.id = node.ruleNodeId;
+                        }
+                        ruleNode.type = node.component.clazz;
+                        ruleNode.name = node.name;
+                        ruleNode.configuration = node.configuration;
+                        ruleNode.additionalInfo = node.additionalInfo;
+                        ruleNode.debugMode = node.debugMode;
+                        if (!ruleNode.additionalInfo) {
+                            ruleNode.additionalInfo = {};
+                        }
+                        ruleNode.additionalInfo.layoutX = node.x;
+                        ruleNode.additionalInfo.layoutY = node.y;
+                        ruleChainMetaData.nodes.push(ruleNode);
+                        nodes.push(node);
                     }
-                    ruleChainConnection.additionalInfo.layoutX = destNode.x;
-                    ruleChainConnection.additionalInfo.layoutY = destNode.y;
-                    ruleChainConnection.additionalInfo.ruleChainNodeId = destNode.id;
-                    ruleChainMetaData.ruleChainConnections.push(ruleChainConnection);
-                } else {
-                    var toIndex = nodes.indexOf(destNode);
-                    var nodeConnection = {
-                        fromIndex: fromIndex,
-                        toIndex: toIndex,
-                        type: edge.label
-                    };
-                    ruleChainMetaData.connections.push(nodeConnection);
                 }
-            }
-        }
-        ruleChainService.saveRuleChainMetaData(ruleChainMetaData).then(
-            (ruleChainMetaData) => {
-                vm.ruleChainMetaData = ruleChainMetaData;
-                prepareRuleChain();
+                var res = $filter('filter')(vm.ruleChainModel.edges, {source: vm.inputConnectorId});
+                if (res && res.length) {
+                    var firstNodeEdge = res[0];
+                    var firstNode = vm.modelservice.nodes.getNodeByConnectorId(firstNodeEdge.destination);
+                    ruleChainMetaData.firstNodeIndex = nodes.indexOf(firstNode);
+                }
+                for (i=0;i<vm.ruleChainModel.edges.length;i++) {
+                    var edge = vm.ruleChainModel.edges[i];
+                    var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
+                    var destNode = vm.modelservice.nodes.getNodeByConnectorId(edge.destination);
+                    if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
+                        var fromIndex = nodes.indexOf(sourceNode);
+                        if (destNode.component.type == types.ruleNodeType.RULE_CHAIN.value) {
+                            var ruleChainConnection = {
+                                fromIndex: fromIndex,
+                                targetRuleChainId: {entityType: vm.types.entityType.rulechain, id: destNode.targetRuleChainId},
+                                additionalInfo: destNode.additionalInfo,
+                                type: edge.label
+                            };
+                            if (!ruleChainConnection.additionalInfo) {
+                                ruleChainConnection.additionalInfo = {};
+                            }
+                            ruleChainConnection.additionalInfo.layoutX = destNode.x;
+                            ruleChainConnection.additionalInfo.layoutY = destNode.y;
+                            ruleChainConnection.additionalInfo.ruleChainNodeId = destNode.id;
+                            ruleChainMetaData.ruleChainConnections.push(ruleChainConnection);
+                        } else {
+                            var toIndex = nodes.indexOf(destNode);
+                            var nodeConnection = {
+                                fromIndex: fromIndex,
+                                toIndex: toIndex,
+                                type: edge.label
+                            };
+                            ruleChainMetaData.connections.push(nodeConnection);
+                        }
+                    }
+                }
+                ruleChainService.saveRuleChainMetaData(ruleChainMetaData).then(
+                    (ruleChainMetaData) => {
+                        vm.ruleChainMetaData = ruleChainMetaData;
+                        if (vm.isImport) {
+                            vm.isDirty = false;
+                            vm.isImport = false;
+                            $mdUtil.nextTick(() => {
+                                $state.go('home.ruleChains.ruleChain', {ruleChainId: vm.ruleChain.id.id});
+                            });
+                        } else {
+                            prepareRuleChain();
+                        }
+                    }
+                );
             }
         );
     }
@@ -614,12 +800,14 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
 
         ruleNode.configuration = angular.copy(ruleNode.component.configurationDescriptor.nodeDefinition.defaultConfiguration);
 
+        var ruleChainId = vm.ruleChain.id ? vm.ruleChain.id.id : null;
+
         $mdDialog.show({
             controller: 'AddRuleNodeController',
             controllerAs: 'vm',
             templateUrl: addRuleNodeTemplate,
             parent: angular.element($document[0].body),
-            locals: {ruleNode: ruleNode, ruleChainId: vm.ruleChain.id.id},
+            locals: {ruleNode: ruleNode, ruleChainId: ruleChainId},
             fullscreen: true,
             targetEvent: $event
         }).then(function (ruleNode) {
@@ -642,6 +830,7 @@ export function RuleChainController($stateParams, $scope, $compile, $q, $mdUtil,
                 );
             }
             vm.ruleChainModel.nodes.push(ruleNode);
+            updateRuleNodesHighlight();
         }, function () {
         });
     }

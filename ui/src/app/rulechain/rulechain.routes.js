@@ -76,11 +76,52 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
                     }
             },
             data: {
-                searchEnabled: false,
+                import: false,
+                searchEnabled: true,
                 pageTitle: 'rulechain.rulechain'
             },
             ncyBreadcrumb: {
                 label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
             }
+    }).state('home.ruleChains.importRuleChain', {
+        url: '/ruleChain/import',
+        reloadOnSearch: false,
+        module: 'private',
+        auth: ['SYS_ADMIN', 'TENANT_ADMIN'],
+        views: {
+            "content@home": {
+                templateUrl: ruleChainTemplate,
+                controller: 'RuleChainController',
+                controllerAs: 'vm'
+            }
+        },
+        params: {
+            ruleChainImport: {}
+        },
+        resolve: {
+            ruleChain:
+            /*@ngInject*/
+                function($stateParams) {
+                    return $stateParams.ruleChainImport.ruleChain;
+                },
+            ruleChainMetaData:
+            /*@ngInject*/
+                function($stateParams) {
+                    return $stateParams.ruleChainImport.metadata;
+                },
+            ruleNodeComponents:
+            /*@ngInject*/
+                function($stateParams, ruleChainService) {
+                    return ruleChainService.getRuleNodeComponents();
+                }
+        },
+        data: {
+            import: true,
+            searchEnabled: true,
+            pageTitle: 'rulechain.rulechain'
+        },
+        ncyBreadcrumb: {
+            label: '{"icon": "settings_ethernet", "label": "{{ (\'rulechain.import\' | translate) + \': \'+ vm.ruleChain.name }}", "translate": "false"}'
+        }
     });
 }

@@ -43,6 +43,7 @@ export default angular.module('thingsboard.locale', [])
                     "update": "Update",
                     "remove": "Remove",
                     "search": "Search",
+                    "clear-search": "Clear search",
                     "assign": "Assign",
                     "unassign": "Unassign",
                     "share": "Share",
@@ -1174,7 +1175,7 @@ export default angular.module('thingsboard.locale', [])
                     "export": "Export rule chain",
                     "export-failed-error": "Unable to export rule chain: {{error}}",
                     "create-new-rulechain": "Create new rule chain",
-                    "rule-file": "Rule chain file",
+                    "rulechain-file": "Rule chain file",
                     "invalid-rulechain-file-error": "Unable to import rule chain: Invalid rule chain data structure.",
                     "copyId": "Copy rule chain Id",
                     "idCopiedMessage": "Rule chain Id has been copied to clipboard",
@@ -1188,6 +1189,7 @@ export default angular.module('thingsboard.locale', [])
                     "details": "Details",
                     "events": "Events",
                     "search": "Search nodes",
+                    "open-node-library": "Open node library",
                     "add": "Add rule node",
                     "name": "Name",
                     "name-required": "Name is required.",
@@ -1217,7 +1219,8 @@ export default angular.module('thingsboard.locale', [])
                     "type-rule-chain": "Rule Chain",
                     "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
                     "directive-is-not-loaded": "Defined configuration directive '{{directiveName}}' is not available.",
-                    "ui-resources-load-error": "Failed to load configuration ui resources."
+                    "ui-resources-load-error": "Failed to load configuration ui resources.",
+                    "invalid-target-rulechain": "Unable to resolve target rule chain!"
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"

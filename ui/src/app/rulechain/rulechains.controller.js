@@ -63,8 +63,8 @@ export default function RuleChainsController(ruleChainService, userService, impo
         {
             onAction: function ($event) {
                 importExport.importRuleChain($event).then(
-                    function() {
-                        vm.grid.refreshList();
+                    function(ruleChainImport) {
+                        $state.go('home.ruleChains.importRuleChain', {ruleChainImport:ruleChainImport});
                     }
                 );
             },

@@ -32,7 +32,10 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
                 "If multiple Related Entities are found, only first Entity is used for attributes enrichment, other entities are discarded. " +
                 "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
                 "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.temperature</code>. If Latest Telemetry enrichment configured, latest telemetry added into metadata")
+                "<code>metadata.temperature</code>. If Latest Telemetry enrichment configured, latest telemetry added into metadata",
+        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
+
 public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
 
     private TbGetRelatedAttrNodeConfiguration config;
@@ -45,6 +48,6 @@ public class TbGetRelatedAttributeNode extends TbEntityGetAttrNode<EntityId> {
 
     @Override
     protected ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, config.getDirection(), config.getRelationType());
+        return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, originator, config.getRelationsQuery());
     }
 }

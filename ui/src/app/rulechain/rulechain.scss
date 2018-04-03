@@ -125,6 +125,16 @@
   color: #333;
   border: solid 1px #777;
   font-size: 12px;
+  &.tb-rule-node-highlighted:not(.tb-rule-node-invalid) {
+    box-shadow: 0 0 10px 6px #51cbee;
+    .tb-node-title {
+      text-decoration: underline;
+      font-weight: bold;
+    }
+  }
+  &.tb-rule-node-invalid {
+    box-shadow: 0 0 10px 6px #ff5c50;
+  }
   &.tb-input-type {
     background-color: #a3eaa9;
     user-select: none;
@@ -156,7 +166,7 @@
 
   }
   .tb-node-title {
-    font-weight: 600;
+    font-weight: 500;
   }
   .tb-node-type, .tb-node-title {
     overflow: hidden;
@@ -380,6 +390,14 @@
   font-size: 14px;
   width: 300px;
   color: #333;
+}
+
+.tb-rule-node-error-tooltip {
+  font-size: 16px;
+  color: #ea0d0d;
+}
+
+.tb-rule-node-tooltip, .tb-rule-node-error-tooltip {
   #tooltip-content {
     .tb-node-title {
       font-weight: 600;

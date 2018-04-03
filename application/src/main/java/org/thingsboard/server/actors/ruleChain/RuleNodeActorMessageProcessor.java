@@ -69,14 +69,18 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
         this.ruleNode = newRuleNode;
         if (restartRequired) {
-            tbNode.destroy();
+            if (tbNode != null) {
+                tbNode.destroy();
+            }
             start(context);
         }
     }
 
     @Override
     public void stop(ActorContext context) throws Exception {
-        tbNode.destroy();
+        if (tbNode != null) {
+            tbNode.destroy();
+        }
         context.stop(self);
     }
 

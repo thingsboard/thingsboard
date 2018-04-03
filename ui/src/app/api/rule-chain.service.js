@@ -253,7 +253,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         if (ruleChainConnections && ruleChainConnections.length) {
             var tasks = [];
             for (var i = 0; i < ruleChainConnections.length; i++) {
-                tasks.push(getRuleChain(ruleChainConnections[i].targetRuleChainId.id));
+                tasks.push(resolveRuleChain(ruleChainConnections[i].targetRuleChainId.id));
             }
             $q.all(tasks).then(
                 (ruleChains) => {
@@ -270,6 +270,21 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         } else {
             deferred.resolve({});
         }
+        return deferred.promise;
+    }
+
+    function resolveRuleChain(ruleChainId) {
+        var deferred = $q.defer();
+        getRuleChain(ruleChainId, {ignoreErrors: true}).then(
+            (ruleChain) => {
+                deferred.resolve(ruleChain);
+            },
+            () => {
+                deferred.resolve({
+                    id: {id: ruleChainId, entityType: types.entityType.rulechain}
+                });
+            }
+        );
         return deferred.promise;
     }
 

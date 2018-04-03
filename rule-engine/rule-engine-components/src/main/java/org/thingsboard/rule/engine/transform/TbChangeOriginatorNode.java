@@ -39,7 +39,9 @@ import java.util.HashSet;
         configClazz = TbChangeOriginatorNodeConfiguration.class,
         nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ")
+                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ",
+        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        configDirective = "tbTransformationNodeChangeOriginatorConfig")
 public class TbChangeOriginatorNode extends TbAbstractTransformNode {
 
     protected static final String CUSTOMER_SOURCE = "CUSTOMER";
@@ -68,7 +70,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
             case TENANT_SOURCE:
                 return EntitiesTenantIdAsyncLoader.findEntityIdAsync(ctx, original);
             case RELATED_SOURCE:
-                return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, original, config.getDirection(), config.getRelationType());
+                return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, original, config.getRelationsQuery());
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));
         }
@@ -82,9 +84,9 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
         }
 
         if (conf.getOriginatorSource().equals(RELATED_SOURCE)) {
-            if (conf.getDirection() == null || StringUtils.isBlank(conf.getRelationType())) {
-                log.error("Related source for TbChangeOriginatorNode should have direction and relationType. Actual [{}] [{}]",
-                        conf.getDirection(), conf.getRelationType());
+            if (conf.getRelationsQuery() == null) {
+                log.error("Related source for TbChangeOriginatorNode should have relations query. Actual [{}]",
+                        conf.getRelationsQuery());
                 throw new IllegalArgumentException("Wrong config for RElated Source in TbChangeOriginatorNode" + conf.getOriginatorSource());
             }
         }
