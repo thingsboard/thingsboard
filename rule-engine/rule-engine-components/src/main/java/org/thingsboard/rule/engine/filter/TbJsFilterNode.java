@@ -34,8 +34,8 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         nodeDescription = "Filter incoming messages using JS script",
         nodeDetails = "Evaluate incoming Message with configured JS condition. " +
                 "If <b>True</b> - send Message via <b>True</b> chain, otherwise <b>False</b> chain is used." +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code>" +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code>" +
+                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code><br/>" +
+                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
                 "Message type can be accessed via <code>msgType</code> property.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeScriptConfig")

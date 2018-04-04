@@ -15,12 +15,8 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import com.google.common.util.concurrent.FutureCallback;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -31,14 +27,10 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Created by ashvayka on 13.01.18.
@@ -62,6 +54,8 @@ public interface TbContext {
     void ack(TbMsg msg);
 
     void tellError(TbMsg msg, Throwable th);
+
+    void updateSelf(RuleNode self);
 
     RuleNodeId getSelfId();
 

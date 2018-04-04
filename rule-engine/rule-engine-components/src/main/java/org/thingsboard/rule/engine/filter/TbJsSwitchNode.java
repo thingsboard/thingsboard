@@ -35,8 +35,8 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         nodeDescription = "Route incoming Message to one or multiple output chains",
         nodeDetails = "Node executes configured JS script. Script should return array of next Chain names where Message should be routed. " +
                 "If Array is empty - message not routed to next Node. " +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code> " +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code>" +
+                "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code><br/>" +
+                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code><br/>" +
                 "Message type can be accessed via <code>msgType</code> property.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeSwitchConfig")

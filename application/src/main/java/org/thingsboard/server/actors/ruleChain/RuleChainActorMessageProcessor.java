@@ -92,6 +92,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             } else {
+                existing.setSelf(ruleNode);
                 existing.getSelfActor().tell(new ComponentLifecycleMsg(tenantId, existing.getSelf().getId(), ComponentLifecycleEvent.UPDATED), self);
             }
         }
@@ -153,7 +154,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         checkActive();
         TbMsg tbMsg = envelope.getTbMsg();
         //TODO: push to queue and act on ack in async way
-        pushMstToNode(firstNode, tbMsg);
+        pushMsgToNode(firstNode, tbMsg);
     }
 
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
@@ -175,7 +176,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                     case RULE_NODE:
                         RuleNodeId targetRuleNodeId = new RuleNodeId(relation.getOut().getId());
                         RuleNodeCtx targetRuleNode = nodeActors.get(targetRuleNodeId);
-                        pushMstToNode(targetRuleNode, msg);
+                        pushMsgToNode(targetRuleNode, msg);
                         break;
                     case RULE_CHAIN:
 //                        TODO: implement
@@ -185,7 +186,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         }
     }
 
-    private void pushMstToNode(RuleNodeCtx nodeCtx, TbMsg msg) {
+    private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg) {
         if (nodeCtx != null) {
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg), self);
         }

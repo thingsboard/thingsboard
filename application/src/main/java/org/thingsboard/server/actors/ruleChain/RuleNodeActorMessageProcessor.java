@@ -68,6 +68,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         boolean restartRequired = !(ruleNode.getType().equals(newRuleNode.getType())
                 && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
         this.ruleNode = newRuleNode;
+        this.defaultCtx.updateSelf(newRuleNode);
         if (restartRequired) {
             if (tbNode != null) {
                 tbNode.destroy();
