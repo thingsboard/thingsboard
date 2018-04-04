@@ -126,7 +126,7 @@ public class QueueBenchmark implements CommandLineRunner {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("key", "value");
         String dataStr = "someContent";
-        return new TbMsg(UUIDs.timeBased(), "type", null, metaData, TbMsgDataType.JSON, dataStr.getBytes());
+        return new TbMsg(UUIDs.timeBased(), "type", null, metaData, TbMsgDataType.JSON, dataStr);
     }
 
     @Bean

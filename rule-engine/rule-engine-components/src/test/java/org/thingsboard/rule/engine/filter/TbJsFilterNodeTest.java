@@ -52,7 +52,7 @@ public class TbJsFilterNodeTest {
     @Test
     public void falseEvaluationDoNotSendMsg() throws TbNodeException {
         initWithScript("return 10 > 15;");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}".getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}");
 
         mockJsExecutor();
 
@@ -65,7 +65,7 @@ public class TbJsFilterNodeTest {
     @Test
     public void notValidMsgDataThrowsException() throws TbNodeException {
         initWithScript("return 10 > 15;");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), new byte[4]);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, null, "{}");
 
         when(ctx.getJsExecutor()).thenReturn(executor);
 
@@ -79,11 +79,11 @@ public class TbJsFilterNodeTest {
     public void exceptionInJsThrowsException() throws TbNodeException {
         initWithScript("return metadata.temp.curr < 15;");
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}".getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
         mockJsExecutor();
 
         node.onMsg(ctx, msg);
-        String expectedMessage = "TypeError: Cannot get property \"curr\" of null in <eval> at line number 1";
+        String expectedMessage = "TypeError: Cannot read property \"curr\" from undefined in <eval> at line number 1";
         verifyError(msg, expectedMessage, ScriptException.class);
     }
 
@@ -98,7 +98,7 @@ public class TbJsFilterNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}".getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
         mockJsExecutor();
 
         node.onMsg(ctx, msg);
@@ -113,7 +113,7 @@ public class TbJsFilterNodeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}".getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
         mockJsExecutor();
 
         node.onMsg(ctx, msg);
@@ -129,7 +129,7 @@ public class TbJsFilterNodeTest {
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5, \"bigObj\": {\"prop\":42}}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
 
         node.onMsg(ctx, msg);

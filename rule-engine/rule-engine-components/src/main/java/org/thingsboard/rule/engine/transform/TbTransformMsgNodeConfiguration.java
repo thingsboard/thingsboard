@@ -27,7 +27,7 @@ public class TbTransformMsgNodeConfiguration extends TbTransformNodeConfiguratio
     public TbTransformMsgNodeConfiguration defaultConfiguration() {
         TbTransformMsgNodeConfiguration configuration = new TbTransformMsgNodeConfiguration();
         configuration.setStartNewChain(false);
-        configuration.setJsScript("return msg.passed = msg.passed * metadata.temp; msg.bigObj.newProp = 'Ukraine' ");
+        configuration.setJsScript("return {msg: msg, metadata: metadata, msgType: msgType};");
         return configuration;
     }
 }

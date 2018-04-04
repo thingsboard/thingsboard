@@ -28,10 +28,14 @@ import javax.script.Bindings;
         type = ComponentType.TRANSFORMATION,
         name = "script",
         configClazz = TbTransformMsgNodeConfiguration.class,
-        nodeDescription = "Change Message payload and Metadata using JavaScript",
-        nodeDetails = "JavaScript function recieve 2 input parameters that can be changed inside.<br/> " +
+        nodeDescription = "Change Message payload, Metadata or Message type using JavaScript",
+        nodeDetails = "JavaScript function receive 3 input parameters.<br/> " +
                 "<code>metadata</code> - is a Message metadata.<br/>" +
-                "<code>msg</code> - is a Message payload.<br/>Any properties can be changed/removed/added in those objects.",
+                "<code>msg</code> - is a Message payload.<br/>" +
+                "<code>msgType</code> - is a Message type.<br/>" +
+                "Should return the following structure:<br/>" +
+                "<code>{ msg: <new payload>, metadata: <new metadata>, msgType: <new msgType> }</code>" +
+                "All fields in resulting object are optional and will be taken from original message if not specified.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbTransformationNodeScriptConfig")
 public class TbTransformMsgNode extends TbAbstractTransformNode {
@@ -48,11 +52,7 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     @Override
     protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
-        return ctx.getJsExecutor().executeAsync(() -> jsEngine.executeUpdate(toBindings(msg), msg));
-    }
-
-    private Bindings toBindings(TbMsg msg) {
-        return NashornJsEngine.bindMsg(msg);
+        return ctx.getJsExecutor().executeAsync(() -> jsEngine.executeUpdate(msg));
     }
 
     @Override

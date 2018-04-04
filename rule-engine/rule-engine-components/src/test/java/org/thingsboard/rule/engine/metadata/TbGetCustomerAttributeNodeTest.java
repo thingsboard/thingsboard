@@ -98,7 +98,7 @@ public class TbGetCustomerAttributeNodeTest {
         User user = new User();
         user.setCustomerId(customerId);
 
-        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), "{}");
 
         when(ctx.getUserService()).thenReturn(userService);
         when(userService.findUserByIdAsync(userId)).thenReturn(Futures.immediateFuture(user));
@@ -123,7 +123,7 @@ public class TbGetCustomerAttributeNodeTest {
         User user = new User();
         user.setCustomerId(customerId);
 
-        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), "{}");
 
         when(ctx.getUserService()).thenReturn(userService);
         when(userService.findUserByIdAsync(userId)).thenReturn(Futures.immediateFuture(user));
@@ -148,7 +148,7 @@ public class TbGetCustomerAttributeNodeTest {
         User user = new User();
         user.setCustomerId(customerId);
 
-        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), "{}");
 
         when(ctx.getUserService()).thenReturn(userService);
         when(userService.findUserByIdAsync(userId)).thenReturn(Futures.immediateFuture(null));
@@ -166,7 +166,7 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void customerAttributeAddedInMetadata() {
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
-        msg = new TbMsg(UUIDs.timeBased(), "CUSTOMER", customerId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "CUSTOMER", customerId, new TbMsgMetaData(), "{}");
         entityAttributeFetched(customerId);
     }
 
@@ -177,7 +177,7 @@ public class TbGetCustomerAttributeNodeTest {
         User user = new User();
         user.setCustomerId(customerId);
 
-        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), "{}");
 
         when(ctx.getUserService()).thenReturn(userService);
         when(userService.findUserByIdAsync(userId)).thenReturn(Futures.immediateFuture(user));
@@ -192,7 +192,7 @@ public class TbGetCustomerAttributeNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        msg = new TbMsg(UUIDs.timeBased(), "USER", assetId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "USER", assetId, new TbMsgMetaData(), "{}");
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
@@ -207,7 +207,7 @@ public class TbGetCustomerAttributeNodeTest {
         Device device = new Device();
         device.setCustomerId(customerId);
 
-        msg = new TbMsg(UUIDs.timeBased(), "USER", deviceId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "USER", deviceId, new TbMsgMetaData(), "{}");
 
         when(ctx.getDeviceService()).thenReturn(deviceService);
         when(deviceService.findDeviceByIdAsync(deviceId)).thenReturn(Futures.immediateFuture(device));
@@ -234,7 +234,7 @@ public class TbGetCustomerAttributeNodeTest {
         Device device = new Device();
         device.setCustomerId(customerId);
 
-        msg = new TbMsg(UUIDs.timeBased(), "USER", deviceId, new TbMsgMetaData(), new byte[4]);
+        msg = new TbMsg(UUIDs.timeBased(), "USER", deviceId, new TbMsgMetaData(), "{}");
 
         when(ctx.getDeviceService()).thenReturn(deviceService);
         when(deviceService.findDeviceByIdAsync(deviceId)).thenReturn(Futures.immediateFuture(device));

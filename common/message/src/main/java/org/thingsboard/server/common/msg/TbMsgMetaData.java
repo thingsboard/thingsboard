@@ -33,7 +33,7 @@ public final class TbMsgMetaData implements Serializable {
 
     private Map<String, String> data = new ConcurrentHashMap<>();
 
-    TbMsgMetaData(Map<String, String> data) {
+    public TbMsgMetaData(Map<String, String> data) {
         this.data = data;
     }
 

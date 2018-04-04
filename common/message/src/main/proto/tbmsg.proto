@@ -32,5 +32,5 @@ message TbMsgProto {
     TbMsgMetaDataProto metaData = 5;
 
     int32 dataType = 6;
-    bytes data = 7;
+    string data = 7;
 }

@@ -51,13 +51,13 @@ public class TbTransformMsgNodeTest {
 
     @Test
     public void metadataCanBeUpdated() throws TbNodeException {
-        initWithScript("return metadata.temp = metadata.temp * 10;");
+        initWithScript("metadata.temp = metadata.temp * 10; return {metadata: metadata};");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5, \"bigObj\": {\"prop\":42}}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
 
         node.onMsg(ctx, msg);
@@ -65,18 +65,18 @@ public class TbTransformMsgNodeTest {
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx).tellNext(captor.capture());
         TbMsg actualMsg = captor.getValue();
-        assertEquals("70.0", actualMsg.getMetaData().getValue("temp"));
+        assertEquals("70", actualMsg.getMetaData().getValue("temp"));
     }
 
     @Test
     public void metadataCanBeAdded() throws TbNodeException {
-        initWithScript("return metadata.newAttr = metadata.humidity - msg.passed;");
+        initWithScript("metadata.newAttr = metadata.humidity - msg.passed; return {metadata: metadata};");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5, \"bigObj\": {\"prop\":42}}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
 
         node.onMsg(ctx, msg);
@@ -84,18 +84,18 @@ public class TbTransformMsgNodeTest {
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx).tellNext(captor.capture());
         TbMsg actualMsg = captor.getValue();
-        assertEquals("94.0", actualMsg.getMetaData().getValue("newAttr"));
+        assertEquals("94", actualMsg.getMetaData().getValue("newAttr"));
     }
 
     @Test
     public void payloadCanBeUpdated() throws TbNodeException {
-        initWithScript("msg.passed = msg.passed * metadata.temp; return msg.bigObj.newProp = 'Ukraine' ");
+        initWithScript("msg.passed = msg.passed * metadata.temp; msg.bigObj.newProp = 'Ukraine'; return {msg: msg};");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\":\"Vit\",\"passed\": 5,\"bigObj\":{\"prop\":42}}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
 
         node.onMsg(ctx, msg);
@@ -103,7 +103,7 @@ public class TbTransformMsgNodeTest {
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx).tellNext(captor.capture());
         TbMsg actualMsg = captor.getValue();
-        String expectedJson = "{\"name\":\"Vit\",\"passed\":35.0,\"bigObj\":{\"prop\":42,\"newProp\":\"Ukraine\"}}";
+        String expectedJson = "{\"name\":\"Vit\",\"passed\":35,\"bigObj\":{\"prop\":42,\"newProp\":\"Ukraine\"}}";
         assertEquals(expectedJson, new String(actualMsg.getData()));
     }
 

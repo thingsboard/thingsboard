@@ -321,7 +321,7 @@ public class ActorSystemContext {
                     .put("msgId", tbMsg.getId().toString())
                     .put("msgType", tbMsg.getType())
                     .put("dataType", tbMsg.getDataType().name())
-                    .put("data", convertToString(tbMsg.getDataType(), tbMsg.getData()))
+                    .put("data", tbMsg.getData())
                     .put("metadata", metadata);
 
             if (error != null) {
@@ -332,21 +332,6 @@ public class ActorSystemContext {
             eventService.save(event);
         } catch (IOException ex) {
             log.warn("Failed to persist rule node debug message", ex);
-        }
-    }
-
-    private String convertToString(TbMsgDataType messageType, byte[] data) {
-        if (data == null) {
-            return null;
-        }
-        switch (messageType) {
-            case JSON:
-            case TEXT:
-                return new String(data, StandardCharsets.UTF_8);
-            case BINARY:
-                return Base64Utils.encodeToString(data);
-            default:
-                throw new RuntimeException("Message type: " + messageType + " is not supported!");
         }
     }
 

@@ -28,17 +28,17 @@ public class TbMsgGeneratorNodeConfiguration implements NodeConfiguration<TbMsgG
     private int periodInSeconds;
     private String originatorId;
     private EntityType originatorType;
-    private String msgType;
-    private String msgBody;
-    private Map<String, String> msgMetaData;
+    private String jsScript;
 
     @Override
     public TbMsgGeneratorNodeConfiguration defaultConfiguration() {
         TbMsgGeneratorNodeConfiguration configuration = new TbMsgGeneratorNodeConfiguration();
         configuration.setMsgCount(0);
         configuration.setPeriodInSeconds(1);
-        configuration.setMsgType("DebugMsg");
-        configuration.setMsgBody("{}");
+        configuration.setJsScript("var msg = { temp: 42, humidity: 77 };\n" +
+                "var metadata = { data: 40 };\n" +
+                "var msgType = \"DebugMsg\";\n\n" +
+                "return { msg: msg, metadata: metadata, msgType: msgType };");
         return configuration;
     }
 }

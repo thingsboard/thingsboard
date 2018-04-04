@@ -68,7 +68,7 @@ public class TbJsSwitchNodeTest {
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
 
         node.onMsg(ctx, msg);
@@ -92,7 +92,7 @@ public class TbJsSwitchNodeTest {
         metaData.putValue("humidity", "99");
         String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson.getBytes());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
 
         node.onMsg(ctx, msg);

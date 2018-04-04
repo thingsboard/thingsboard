@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.js;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
@@ -23,9 +24,13 @@ import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.*;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -34,112 +39,158 @@ import java.util.Set;
 @Slf4j
 public class NashornJsEngine {
 
+
+    public static final String MSG = "msg";
     public static final String METADATA = "metadata";
-    public static final String DATA = "msg";
+    public static final String MSG_TYPE = "msgType";
 
-    private static final String JS_WRAPPER_PREFIX_TEMPLATE = "function %s(msg, metadata) { ";
-    private static final String JS_WRAPPER_SUFFIX_TEMPLATE = "}\n %s(msg, metadata);";
+    private static final String JS_WRAPPER_PREFIX_TEMPLATE = "function %s(msgStr, metadataStr, msgType) { " +
+            "    var msg = JSON.parse(msgStr); " +
+            "    var metadata = JSON.parse(metadataStr); " +
+            "    return JSON.stringify(%s(msg, metadata, msgType));" +
+            "    function %s(%s, %s, %s) {";
+    private static final String JS_WRAPPER_SUFFIX = "}" +
+            "\n}";
 
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
+    private static ScriptEngine engine = factory.getScriptEngine(new String[]{"--no-java"});
 
-    private CompiledScript engine;
+    private final String invokeFunctionName;
 
-    public NashornJsEngine(String script, String functionName) {
-        String jsWrapperPrefix = String.format(JS_WRAPPER_PREFIX_TEMPLATE, functionName);
-        String jsWrapperSuffix = String.format(JS_WRAPPER_SUFFIX_TEMPLATE, functionName);
-        engine = compileScript(jsWrapperPrefix + script + jsWrapperSuffix);
+    public NashornJsEngine(String script, String functionName, String... argNames) {
+        this.invokeFunctionName = "invokeInternal" + this.hashCode();
+        String msgArg;
+        String metadataArg;
+        String msgTypeArg;
+        if (argNames != null && argNames.length == 3) {
+            msgArg = argNames[0];
+            metadataArg = argNames[1];
+            msgTypeArg = argNames[2];
+        } else {
+            msgArg = MSG;
+            metadataArg = METADATA;
+            msgTypeArg = MSG_TYPE;
+        }
+        String jsWrapperPrefix = String.format(JS_WRAPPER_PREFIX_TEMPLATE, this.invokeFunctionName,
+                functionName, functionName, msgArg, metadataArg, msgTypeArg);
+        compileScript(jsWrapperPrefix + script + JS_WRAPPER_SUFFIX);
     }
 
-    private static CompiledScript compileScript(String script) {
-        ScriptEngine engine = factory.getScriptEngine(new String[]{"--no-java"});
-        Compilable compEngine = (Compilable) engine;
+    private static void compileScript(String script) {
         try {
-            return compEngine.compile(script);
+            engine.eval(script);
         } catch (ScriptException e) {
             log.warn("Failed to compile JS script: {}", e.getMessage(), e);
             throw new IllegalArgumentException("Can't compile script: " + e.getMessage());
         }
     }
 
-    public static Bindings bindMsg(TbMsg msg) {
+    private static String[] prepareArgs(TbMsg msg) {
         try {
-            Bindings bindings = new SimpleBindings();
-            if (ArrayUtils.isNotEmpty(msg.getData())) {
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode jsonNode = mapper.readTree(msg.getData());
-                Map map = mapper.treeToValue(jsonNode, Map.class);
-                bindings.put(DATA, map);
+            String[] args = new String[3];
+            if (msg.getData() != null) {
+                args[0] = msg.getData();
             } else {
-                bindings.put(DATA, Collections.emptyMap());
+                args[0] = "";
             }
-            bindings.put(METADATA, msg.getMetaData().getData());
-            return bindings;
+            args[1] = mapper.writeValueAsString(msg.getMetaData().getData());
+            args[2] = msg.getType();
+            return args;
         } catch (Throwable th) {
             throw new IllegalArgumentException("Cannot bind js args", th);
         }
     }
 
-    private static TbMsg unbindMsg(Bindings bindings, TbMsg msg) throws JsonProcessingException {
-        for (Map.Entry<String, String> entry : msg.getMetaData().getData().entrySet()) {
-            Object obj = entry.getValue();
-            entry.setValue(obj.toString());
-        }
-
-        Object payload = bindings.get(DATA);
-        if (payload != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            byte[] bytes = mapper.writeValueAsBytes(payload);
-            return new TbMsg(msg.getId(), msg.getType(), msg.getOriginator(), msg.getMetaData(), bytes);
-        }
-
-        return msg;
-    }
-
-    public TbMsg executeUpdate(Bindings bindings, TbMsg msg) throws ScriptException {
+    private static TbMsg unbindMsg(JsonNode msgData, TbMsg msg) {
         try {
-            engine.eval(bindings);
-            return unbindMsg(bindings, msg);
+            String data = null;
+            Map<String, String> metadata = null;
+            String messageType = null;
+            if (msgData.has(MSG)) {
+                JsonNode msgPayload = msgData.get(MSG);
+                data = mapper.writeValueAsString(msgPayload);
+            }
+            if (msgData.has(METADATA)) {
+                JsonNode msgMetadata = msgData.get(METADATA);
+                metadata = mapper.convertValue(msgMetadata, new TypeReference<Map<String, String>>() {
+                });
+            }
+            if (msgData.has(MSG_TYPE)) {
+                messageType = msgData.get(MSG_TYPE).asText();
+            }
+            String newData = data != null ? data : msg.getData();
+            TbMsgMetaData newMetadata = metadata != null ? new TbMsgMetaData(metadata) : msg.getMetaData();
+            String newMessageType = !StringUtils.isEmpty(messageType) ? messageType : msg.getType();
+            return new TbMsg(msg.getId(), newMessageType, msg.getOriginator(), newMetadata, newData);
         } catch (Throwable th) {
             th.printStackTrace();
-            throw new IllegalArgumentException("Cannot unbind js args", th);
+            throw new RuntimeException("Failed to unbind message data from javascript result", th);
         }
     }
 
-    public boolean executeFilter(Bindings bindings) throws ScriptException {
-        Object eval = engine.eval(bindings);
-        if (eval instanceof Boolean) {
-            return (boolean) eval;
-        } else {
-            log.warn("Wrong result type: {}", eval);
-            throw new ScriptException("Wrong result type: " + eval);
+    public TbMsg executeUpdate(TbMsg msg) throws ScriptException {
+        JsonNode result = executeScript(msg);
+        if (!result.isObject()) {
+            log.warn("Wrong result type: {}", result.getNodeType());
+            throw new ScriptException("Wrong result type: " + result.getNodeType());
         }
+        return unbindMsg(result, msg);
     }
 
-    public Set<String> executeSwitch(Bindings bindings) throws ScriptException, NoSuchMethodException {
-        Object eval = this.engine.eval(bindings);
-        if (eval instanceof String) {
-            return Collections.singleton((String) eval);
-        } else if (eval instanceof ScriptObjectMirror) {
-            ScriptObjectMirror mir = (ScriptObjectMirror) eval;
-            if (mir.isArray()) {
-                Set<String> nextStates = Sets.newHashSet();
-                for (Map.Entry<String, Object> entry : mir.entrySet()) {
-                    if (entry.getValue() instanceof String) {
-                        nextStates.add((String) entry.getValue());
-                    } else {
-                        log.warn("Wrong result type: {}", eval);
-                        throw new ScriptException("Wrong result type: " + eval);
-                    }
+    public TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException {
+        JsonNode result = executeScript(prevMsg);
+        if (!result.isObject()) {
+            log.warn("Wrong result type: {}", result.getNodeType());
+            throw new ScriptException("Wrong result type: " + result.getNodeType());
+        }
+        return unbindMsg(result, prevMsg);
+    }
+
+    public boolean executeFilter(TbMsg msg) throws ScriptException {
+        JsonNode result = executeScript(msg);
+        if (!result.isBoolean()) {
+            log.warn("Wrong result type: {}", result.getNodeType());
+            throw new ScriptException("Wrong result type: " + result.getNodeType());
+        }
+        return result.asBoolean();
+    }
+
+    public Set<String> executeSwitch(TbMsg msg) throws ScriptException, NoSuchMethodException {
+        JsonNode result = executeScript(msg);
+        if (result.isTextual()) {
+            return Collections.singleton(result.asText());
+        } else if (result.isArray()) {
+            Set<String> nextStates = Sets.newHashSet();
+            for (JsonNode val : result) {
+                if (!val.isTextual()) {
+                    log.warn("Wrong result type: {}", val.getNodeType());
+                    throw new ScriptException("Wrong result type: " + val.getNodeType());
+                } else {
+                    nextStates.add(val.asText());
                 }
-                return nextStates;
             }
+            return nextStates;
+        } else {
+            log.warn("Wrong result type: {}", result.getNodeType());
+            throw new ScriptException("Wrong result type: " + result.getNodeType());
         }
+    }
 
-        log.warn("Wrong result type: {}", eval);
-        throw new ScriptException("Wrong result type: " + eval);
+    private JsonNode executeScript(TbMsg msg) throws ScriptException {
+        try {
+            String[] inArgs = prepareArgs(msg);
+            String eval = ((Invocable)engine).invokeFunction(this.invokeFunctionName, inArgs[0], inArgs[1], inArgs[2]).toString();
+            return mapper.readTree(eval);
+        } catch (ScriptException | IllegalArgumentException th) {
+            throw th;
+        } catch (Throwable th) {
+            th.printStackTrace();
+            throw new RuntimeException("Failed to execute js script", th);
+        }
     }
 
     public void destroy() {
-        engine = null;
+        //engine = null;
     }
 }

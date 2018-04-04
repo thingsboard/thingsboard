@@ -36,7 +36,8 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         nodeDetails = "Node executes configured JS script. Script should return array of next Chain names where Message should be routed. " +
                 "If Array is empty - message not routed to next Node. " +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>msg.temperature < 10;</code> " +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code>",
+                "Message metadata can be accessed via <code>metadata</code> property. For example <code>metadata.customerName === 'John';</code>" +
+                "Message type can be accessed via <code>msgType</code> property.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeSwitchConfig")
 public class TbJsSwitchNode implements TbNode {
@@ -53,7 +54,7 @@ public class TbJsSwitchNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         ListeningExecutor jsExecutor = ctx.getJsExecutor();
-        withCallback(jsExecutor.executeAsync(() -> jsEngine.executeSwitch(toBindings(msg))),
+        withCallback(jsExecutor.executeAsync(() -> jsEngine.executeSwitch(msg)),
                 result -> processSwitch(ctx, msg, result),
                 t -> ctx.tellError(msg, t));
     }
@@ -62,11 +63,7 @@ public class TbJsSwitchNode implements TbNode {
         ctx.tellNext(msg, nextRelations);
     }
 
-    private Bindings toBindings(TbMsg msg) {
-        return NashornJsEngine.bindMsg(msg);
-    }
-
-    @Override
+   @Override
     public void destroy() {
         if (jsEngine != null) {
             jsEngine.destroy();

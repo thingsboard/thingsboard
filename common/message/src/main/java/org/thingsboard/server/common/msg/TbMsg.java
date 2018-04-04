@@ -39,9 +39,9 @@ public final class TbMsg implements Serializable {
     private final EntityId originator;
     private final TbMsgMetaData metaData;
     private final TbMsgDataType dataType;
-    private final byte[] data;
+    private final String data;
 
-    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, byte[] data) {
+    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, String data) {
         this.id = id;
         this.type = type;
         this.originator = originator;
@@ -64,7 +64,7 @@ public final class TbMsg implements Serializable {
         }
 
         builder.setDataType(msg.getDataType().ordinal());
-        builder.setData(ByteString.copyFrom(msg.getData()));
+        builder.setData(msg.getData());
         byte[] bytes = builder.build().toByteArray();
         return ByteBuffer.wrap(bytes);
     }
@@ -75,16 +75,13 @@ public final class TbMsg implements Serializable {
             TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
             EntityId entityId = EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId());
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
-            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData().toByteArray());
+            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData());
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
     }
 
     public TbMsg copy() {
-        int dataSize = data.length;
-        byte[] dataCopy = new byte[dataSize];
-        System.arraycopy( data, 0, dataCopy, 0, data.length );
-        return new TbMsg(id, type, originator, metaData.copy(), dataType, dataCopy);
+        return new TbMsg(id, type, originator, metaData.copy(), dataType, data);
     }
 }

@@ -57,7 +57,7 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), new byte[4]);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
@@ -78,7 +78,7 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), new byte[4]);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
@@ -99,7 +99,7 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), new byte[4]);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("wrong")));

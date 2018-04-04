@@ -64,7 +64,7 @@ public class TbMsgTelemetryNode implements TbNode {
             return;
         }
 
-        String src = new String(msg.getData(), StandardCharsets.UTF_8);
+        String src = msg.getData();
         TelemetryUploadRequest telemetryUploadRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(src));
         Map<Long, List<KvEntry>> tsKvMap = telemetryUploadRequest.getData();
         if (tsKvMap == null) {

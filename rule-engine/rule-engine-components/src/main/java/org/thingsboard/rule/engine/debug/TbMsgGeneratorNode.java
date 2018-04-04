@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.debug;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
@@ -58,9 +59,11 @@ public class TbMsgGeneratorNode implements TbNode {
     public static final String TB_MSG_GENERATOR_NODE_MSG = "TbMsgGeneratorNodeMsg";
 
     private TbMsgGeneratorNodeConfiguration config;
+    private NashornJsEngine jsEngine;
     private long delay;
     private EntityId originatorId;
     private UUID nextTickId;
+    private TbMsg prevMsg;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -71,29 +74,41 @@ public class TbMsgGeneratorNode implements TbNode {
         } else {
             originatorId = ctx.getSelfId();
         }
+        this.jsEngine = new NashornJsEngine(config.getJsScript(), "Generate", "prevMsg", "prevMetadata", "prevMsgType");
         sentTickMsg(ctx);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
-            TbMsgMetaData metaData = new TbMsgMetaData();
-            if (config.getMsgMetaData() != null) {
-                config.getMsgMetaData().forEach(metaData::putValue);
-            }
-            ctx.tellNext(new TbMsg(UUIDs.timeBased(), config.getMsgType(), originatorId, metaData, config.getMsgBody().getBytes(StandardCharsets.UTF_8)));
-            sentTickMsg(ctx);
+            withCallback(generate(ctx),
+                    m -> {ctx.tellNext(m); sentTickMsg(ctx);},
+                    t -> {ctx.tellError(msg, t); sentTickMsg(ctx);});
         }
     }
 
     private void sentTickMsg(TbContext ctx) {
-        TbMsg tickMsg = new TbMsg(UUIDs.timeBased(), TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), new byte[]{});
+        TbMsg tickMsg = new TbMsg(UUIDs.timeBased(), TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, delay);
     }
 
+    protected ListenableFuture<TbMsg> generate(TbContext ctx) {
+        return ctx.getJsExecutor().executeAsync(() -> {
+            if (prevMsg == null) {
+                prevMsg = new TbMsg(UUIDs.timeBased(), "", originatorId, new TbMsgMetaData(), "{}");
+            }
+            TbMsg generated = jsEngine.executeGenerate(prevMsg);
+            prevMsg = new TbMsg(UUIDs.timeBased(), generated.getType(), originatorId, generated.getMetaData(), generated.getData());
+            return prevMsg;
+        });
+    }
 
     @Override
     public void destroy() {
+        prevMsg = null;
+        if (jsEngine != null) {
+            jsEngine.destroy();
+        }
     }
 }
