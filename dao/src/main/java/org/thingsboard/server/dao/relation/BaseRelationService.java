@@ -211,9 +211,9 @@ public class BaseRelationService implements RelationService {
     private void checkFromDeleteSync(Cache cache, List<Boolean> results, EntityRelation relation, boolean isRemove) {
         if (isRemove) {
             results.add(relationDao.deleteRelation(relation));
-            cacheEviction(relation, relation.getTo(), cache);
+            cacheEviction(relation, false, cache);
         } else {
-            cacheEviction(relation, relation.getFrom(), cache);
+            cacheEviction(relation, true, cache);
         }
     }
 
@@ -262,25 +262,43 @@ public class BaseRelationService implements RelationService {
     private void checkFromDeleteAsync(Cache cache, List<ListenableFuture<Boolean>> results, EntityRelation relation, boolean isRemove) {
         if (isRemove) {
             results.add(relationDao.deleteRelationAsync(relation));
-            cacheEviction(relation, relation.getTo(), cache);
+            cacheEviction(relation, false, cache);
         } else {
-            cacheEviction(relation, relation.getFrom(), cache);
+            cacheEviction(relation, true, cache);
         }
     }
 
-    private void cacheEviction(EntityRelation relation, EntityId entityId, Cache cache) {
-        cache.evict(entityId);
+    private void cacheEviction(EntityRelation relation, boolean outboundOnly, Cache cache) {
+        List<Object> fromToTypeAndTypeGroup = new ArrayList<>();
+        fromToTypeAndTypeGroup.add(relation.getFrom());
+        fromToTypeAndTypeGroup.add(relation.getTo());
+        fromToTypeAndTypeGroup.add(relation.getType());
+        fromToTypeAndTypeGroup.add(relation.getTypeGroup());
+        cache.evict(fromToTypeAndTypeGroup);
 
-        List<Object> toAndType = new ArrayList<>();
-        toAndType.add(entityId);
-        toAndType.add(relation.getType());
-        cache.evict(toAndType);
+        List<Object> fromTypeAndTypeGroup = new ArrayList<>();
+        fromTypeAndTypeGroup.add(relation.getFrom());
+        fromTypeAndTypeGroup.add(relation.getType());
+        fromTypeAndTypeGroup.add(relation.getTypeGroup());
+        cache.evict(fromTypeAndTypeGroup);
 
-        List<Object> fromToAndType = new ArrayList<>();
-        fromToAndType.add(relation.getFrom());
-        fromToAndType.add(relation.getTo());
-        fromToAndType.add(relation.getType());
-        cache.evict(fromToAndType);
+        List<Object> fromAndTypeGroup = new ArrayList<>();
+        fromAndTypeGroup.add(relation.getFrom());
+        fromAndTypeGroup.add(relation.getTypeGroup());
+        cache.evict(fromAndTypeGroup);
+
+        if (!outboundOnly) {
+            List<Object> toAndTypeGroup = new ArrayList<>();
+            toAndTypeGroup.add(relation.getTo());
+            toAndTypeGroup.add(relation.getTypeGroup());
+            cache.evict(toAndTypeGroup);
+
+            List<Object> toTypeAndTypeGroup = new ArrayList<>();
+            fromTypeAndTypeGroup.add(relation.getTo());
+            fromTypeAndTypeGroup.add(relation.getType());
+            fromTypeAndTypeGroup.add(relation.getTypeGroup());
+            cache.evict(toTypeAndTypeGroup);
+        }
     }
 
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup}")
