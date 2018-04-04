@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.core;
+package org.thingsboard.server.dao.exception;
 
-import lombok.Data;
-import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+public class BufferLimitException extends RuntimeException {
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public class ToServerRpcRequestMsg implements FromDeviceRequestMsg {
+    private static final long serialVersionUID = 4513762009041887588L;
 
-    private final Integer requestId;
-    private final String method;
-    private final String params;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.TO_SERVER_RPC_REQUEST;
+    public BufferLimitException() {
+        super("Rate Limit Buffer is full");
     }
 }
