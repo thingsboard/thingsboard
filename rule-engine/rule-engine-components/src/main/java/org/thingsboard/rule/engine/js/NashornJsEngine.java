@@ -54,7 +54,7 @@ public class NashornJsEngine {
 
     private static final ObjectMapper mapper = new ObjectMapper();
     private static NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
-    private static ScriptEngine engine = factory.getScriptEngine(new String[]{"--no-java"});
+    private ScriptEngine engine = factory.getScriptEngine(new String[]{"--no-java"});
 
     private final String invokeFunctionName;
 
@@ -77,7 +77,7 @@ public class NashornJsEngine {
         compileScript(jsWrapperPrefix + script + JS_WRAPPER_SUFFIX);
     }
 
-    private static void compileScript(String script) {
+    private void compileScript(String script) {
         try {
             engine.eval(script);
         } catch (ScriptException e) {
