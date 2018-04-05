@@ -18,11 +18,8 @@ package org.thingsboard.rule.engine.filter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
-import org.thingsboard.rule.engine.js.NashornJsEngine;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-
-import javax.script.Bindings;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
@@ -43,12 +40,12 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 public class TbJsFilterNode implements TbNode {
 
     private TbJsFilterNodeConfiguration config;
-    private NashornJsEngine jsEngine;
+    private ScriptEngine jsEngine;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsFilterNodeConfiguration.class);
-        this.jsEngine = new NashornJsEngine(config.getJsScript(), "Filter");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "Filter");
     }
 
     @Override

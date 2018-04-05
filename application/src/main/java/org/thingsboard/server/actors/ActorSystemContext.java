@@ -29,9 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Base64Utils;
 import org.thingsboard.rule.engine.api.ListeningExecutor;
-import org.thingsboard.rule.engine.js.JsExecutorService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
@@ -39,7 +37,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
@@ -63,15 +60,10 @@ import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
@@ -169,6 +161,10 @@ public class ActorSystemContext {
     @Getter
     @Setter
     private PluginWebSocketMsgEndpoint wsMsgEndpoint;
+
+    @Autowired
+    @Getter
+    private ListeningExecutor jsExecutor;
 
     @Value("${actors.session.sync.timeout}")
     @Getter
@@ -337,11 +333,6 @@ public class ActorSystemContext {
 
     public static Exception toException(Throwable error) {
         return Exception.class.isInstance(error) ? (Exception) error : new Exception(error);
-    }
-
-    public ListeningExecutor getJsExecutor() {
-        //TODO: take thread count from yml.
-        return new JsExecutorService(1);
     }
 
 }

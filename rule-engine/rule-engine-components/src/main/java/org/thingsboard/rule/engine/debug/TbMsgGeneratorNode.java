@@ -20,23 +20,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
-import org.thingsboard.rule.engine.api.RuleNode;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.filter.TbJsFilterNodeConfiguration;
-import org.thingsboard.rule.engine.js.NashornJsEngine;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import javax.script.Bindings;
-
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +49,7 @@ public class TbMsgGeneratorNode implements TbNode {
     public static final String TB_MSG_GENERATOR_NODE_MSG = "TbMsgGeneratorNodeMsg";
 
     private TbMsgGeneratorNodeConfiguration config;
-    private NashornJsEngine jsEngine;
+    private ScriptEngine jsEngine;
     private long delay;
     private EntityId originatorId;
     private UUID nextTickId;
@@ -74,7 +64,7 @@ public class TbMsgGeneratorNode implements TbNode {
         } else {
             originatorId = ctx.getSelfId();
         }
-        this.jsEngine = new NashornJsEngine(config.getJsScript(), "Generate", "prevMsg", "prevMetadata", "prevMsgType");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "Generate", "prevMsg", "prevMetadata", "prevMsgType");
         sentTickMsg(ctx);
     }
 

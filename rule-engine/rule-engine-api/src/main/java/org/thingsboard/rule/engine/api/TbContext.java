@@ -83,4 +83,6 @@ public interface TbContext {
 
     ListeningExecutor getJsExecutor();
 
+    ScriptEngine createJsScriptEngine(String script, String functionName, String... argNames);
+
 }

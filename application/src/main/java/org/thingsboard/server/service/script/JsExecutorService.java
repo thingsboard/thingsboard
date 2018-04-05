@@ -13,23 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.js;
+package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.ListeningExecutor;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
+@Component
 public class JsExecutorService implements ListeningExecutor{
 
-    private final ListeningExecutorService service;
+    @Value("${actors.rule.js_thread_pool_size}")
+    private int jsExecutorThreadPoolSize;
 
-    public JsExecutorService(int threadCount) {
-        this.service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(threadCount));
+    private ListeningExecutorService service;
+
+    @PostConstruct
+    public void init() {
+        this.service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(jsExecutorThreadPoolSize));
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (this.service != null) {
+            this.service.shutdown();
+        }
     }
 
     @Override
@@ -37,9 +52,4 @@ public class JsExecutorService implements ListeningExecutor{
         return service.submit(task);
     }
 
-    @PreDestroy
-    @Override
-    public void onDestroy() {
-        service.shutdown();
-    }
 }

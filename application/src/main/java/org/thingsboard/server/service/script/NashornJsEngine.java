@@ -13,32 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.js;
+package org.thingsboard.server.service.script;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import javax.script.*;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 
 @Slf4j
-public class NashornJsEngine {
-
+public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
     public static final String MSG = "msg";
     public static final String METADATA = "metadata";
@@ -129,6 +125,7 @@ public class NashornJsEngine {
         }
     }
 
+    @Override
     public TbMsg executeUpdate(TbMsg msg) throws ScriptException {
         JsonNode result = executeScript(msg);
         if (!result.isObject()) {
@@ -138,6 +135,7 @@ public class NashornJsEngine {
         return unbindMsg(result, msg);
     }
 
+    @Override
     public TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException {
         JsonNode result = executeScript(prevMsg);
         if (!result.isObject()) {
@@ -147,6 +145,7 @@ public class NashornJsEngine {
         return unbindMsg(result, prevMsg);
     }
 
+    @Override
     public boolean executeFilter(TbMsg msg) throws ScriptException {
         JsonNode result = executeScript(msg);
         if (!result.isBoolean()) {
@@ -156,7 +155,8 @@ public class NashornJsEngine {
         return result.asBoolean();
     }
 
-    public Set<String> executeSwitch(TbMsg msg) throws ScriptException, NoSuchMethodException {
+    @Override
+    public Set<String> executeSwitch(TbMsg msg) throws ScriptException {
         JsonNode result = executeScript(msg);
         if (result.isTextual()) {
             return Collections.singleton(result.asText());
@@ -191,6 +191,6 @@ public class NashornJsEngine {
     }
 
     public void destroy() {
-        //engine = null;
+        engine = null;
     }
 }

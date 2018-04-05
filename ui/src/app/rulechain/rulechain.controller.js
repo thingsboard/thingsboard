@@ -353,7 +353,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
                 vm.editingRuleNodeLink = angular.copy(edge);
                 $mdUtil.nextTick(() => {
-                    vm.ruleNodeLinkForm.$setPristine();
+                    if (vm.ruleNodeLinkForm) {
+                        vm.ruleNodeLinkForm.$setPristine();
+                    }
                 });
             }
         },
@@ -366,7 +368,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     vm.editingRuleNodeIndex = vm.ruleChainModel.nodes.indexOf(node);
                     vm.editingRuleNode = angular.copy(node);
                     $mdUtil.nextTick(() => {
-                        vm.ruleNodeForm.$setPristine();
+                        if (vm.ruleNodeForm) {
+                            vm.ruleNodeForm.$setPristine();
+                        }
                     });
                 }
             }
@@ -737,7 +741,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                         nodes.push(node);
                     }
                 }
-                var res = $filter('filter')(vm.ruleChainModel.edges, {source: vm.inputConnectorId});
+                var res = $filter('filter')(vm.ruleChainModel.edges, {source: vm.inputConnectorId}, true);
                 if (res && res.length) {
                     var firstNodeEdge = res[0];
                     var firstNode = vm.modelservice.nodes.getNodeByConnectorId(firstNodeEdge.destination);

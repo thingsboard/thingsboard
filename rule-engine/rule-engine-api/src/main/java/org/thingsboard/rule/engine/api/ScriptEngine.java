@@ -15,12 +15,21 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.concurrent.Callable;
+import javax.script.ScriptException;
+import java.util.Set;
 
-public interface ListeningExecutor {
+public interface ScriptEngine {
 
-    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+    TbMsg executeUpdate(TbMsg msg) throws ScriptException;
+
+    TbMsg executeGenerate(TbMsg prevMsg) throws ScriptException;
+
+    boolean executeFilter(TbMsg msg) throws ScriptException;
+
+    Set<String> executeSwitch(TbMsg msg) throws ScriptException;
+
+    void destroy();
 
 }

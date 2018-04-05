@@ -18,11 +18,8 @@ package org.thingsboard.rule.engine.transform;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
-import org.thingsboard.rule.engine.js.NashornJsEngine;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-
-import javax.script.Bindings;
 
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
@@ -41,12 +38,12 @@ import javax.script.Bindings;
 public class TbTransformMsgNode extends TbAbstractTransformNode {
 
     private TbTransformMsgNodeConfiguration config;
-    private NashornJsEngine jsEngine;
+    private ScriptEngine jsEngine;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
-        this.jsEngine = new NashornJsEngine(config.getJsScript(), "Transform");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "Transform");
         setConfig(config);
     }
 
