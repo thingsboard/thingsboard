@@ -15,9 +15,17 @@
  */
 package org.thingsboard.server.controller;
 
+import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.PluginId;
@@ -30,16 +38,24 @@ import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.service.script.NashornJsEngine;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class RuleChainController extends BaseController {
 
     public static final String RULE_CHAIN_ID = "ruleChainId";
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.GET)
@@ -201,6 +217,73 @@ public class RuleChainController extends BaseController {
                     ActionType.DELETED, e, strRuleChainId);
             throw handleException(e);
         }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/testScript", method = RequestMethod.POST)
+    @ResponseBody
+    public JsonNode testScript(@RequestBody JsonNode inputParams) throws ThingsboardException {
+        try {
+            String script = inputParams.get("script").asText();
+            String scriptType = inputParams.get("scriptType").asText();
+            String functionName = inputParams.get("functionName").asText();
+            JsonNode argNamesJson = inputParams.get("argNames");
+            String[] argNames = objectMapper.treeToValue(argNamesJson, String[].class);
+
+            String data = inputParams.get("msg").asText();
+            JsonNode metadataJson = inputParams.get("metadata");
+            Map<String, String> metadata = objectMapper.convertValue(metadataJson, new TypeReference<Map<String, String>>() {});
+            String msgType = inputParams.get("msgType").asText();
+            String output = "";
+            String errorText = "";
+            ScriptEngine engine = null;
+            try {
+                engine = new NashornJsEngine(script, functionName, argNames);
+                TbMsg inMsg = new TbMsg(UUIDs.timeBased(), msgType, null, new TbMsgMetaData(metadata), data);
+                switch (scriptType) {
+                    case "update":
+                        output = msgToOutput(engine.executeUpdate(inMsg));
+                        break;
+                    case "generate":
+                        output = msgToOutput(engine.executeGenerate(inMsg));
+                        break;
+                    case "filter":
+                        boolean result = engine.executeFilter(inMsg);
+                        output = Boolean.toString(result);
+                        break;
+                    case "switch":
+                        Set<String> states = engine.executeSwitch(inMsg);
+                        output = objectMapper.writeValueAsString(states);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported script type: " + scriptType);
+                }
+            } catch (Exception e) {
+                log.error("Error evaluating JS function", e);
+                errorText = e.getMessage();
+            } finally {
+                if (engine != null) {
+                    engine.destroy();
+                }
+            }
+            ObjectNode result = objectMapper.createObjectNode();
+            result.put("output", output);
+            result.put("error", errorText);
+            return result;
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    private String msgToOutput(TbMsg msg) throws Exception {
+        ObjectNode msgData = objectMapper.createObjectNode();
+        if (!StringUtils.isEmpty(msg.getData())) {
+            msgData.set("msg", objectMapper.readTree(msg.getData()));
+        }
+        Map<String, String> metadata = msg.getMetaData().getData();
+        msgData.set("metadata", objectMapper.valueToTree(metadata));
+        msgData.put("msgType", msg.getType());
+        return objectMapper.writeValueAsString(msgData);
     }
 
 }

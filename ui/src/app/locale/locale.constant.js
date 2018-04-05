@@ -962,6 +962,13 @@ export default angular.module('thingsboard.locale', [])
                     "no-return-error": "Function must return value!",
                     "return-type-mismatch": "Function must return value of '{{type}}' type!"
                 },
+                "key-val": {
+                    "key": "Key",
+                    "value": "Value",
+                    "remove-entry": "Remove entry",
+                    "add-entry": "Add entry",
+                    "no-data": "No entries"
+                },
                 "layout": {
                     "layout": "Layout",
                     "manage": "Manage layouts",
@@ -1220,7 +1227,15 @@ export default angular.module('thingsboard.locale', [])
                     "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
                     "directive-is-not-loaded": "Defined configuration directive '{{directiveName}}' is not available.",
                     "ui-resources-load-error": "Failed to load configuration ui resources.",
-                    "invalid-target-rulechain": "Unable to resolve target rule chain!"
+                    "invalid-target-rulechain": "Unable to resolve target rule chain!",
+                    "test-script-function": "Test script function",
+                    "message": "Message",
+                    "message-type": "Message type",
+                    "message-type-required": "Message type is required",
+                    "metadata": "Metadata",
+                    "metadata-required": "Metadata entries can't be empty.",
+                    "output": "Output",
+                    "test": "Test"
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"

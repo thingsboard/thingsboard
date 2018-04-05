@@ -33,7 +33,8 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         getRuleNodeComponents: getRuleNodeComponents,
         getRuleNodeComponentByClazz: getRuleNodeComponentByClazz,
         getRuleNodeSupportedLinks: getRuleNodeSupportedLinks,
-        resolveTargetRuleChains: resolveTargetRuleChains
+        resolveTargetRuleChains: resolveTargetRuleChains,
+        testScript: testScript
     };
 
     return service;
@@ -292,5 +293,15 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         return componentDescriptorService.getComponentDescriptorsByTypes(types.ruleNodeTypeComponentTypes);
     }
 
+    function testScript(inputParams) {
+        var deferred = $q.defer();
+        var url = '/api/ruleChain/testScript';
+        $http.post(url, inputParams).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
 
 }
