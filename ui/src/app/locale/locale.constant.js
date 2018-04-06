@@ -1209,6 +1209,7 @@ export default angular.module('thingsboard.locale', [])
                     "rulenode-details": "Rule node details",
                     "debug-mode": "Debug mode",
                     "configuration": "Configuration",
+                    "link": "Link",
                     "link-details": "Rule node link details",
                     "add-link": "Add link",
                     "link-label": "Link label",

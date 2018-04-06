@@ -99,18 +99,37 @@
                     </md-expansion-panel>
                 </md-expansion-panel-group>
             </md-sidenav>
-            <div flex class="tb-rulechain-graph">
-                <fc-canvas id="tb-rulchain-canvas"
-                           model="vm.ruleChainModel"
-                           selected-objects="vm.selectedObjects"
-                           edge-style="curved"
-                           node-width="170"
-                           node-height="50"
-                           automatic-resize="true"
-                           control="vm.canvasControl"
-                           callbacks="vm.editCallbacks">
-                </fc-canvas>
-            </div>
+            <md-menu flex style="position: relative;" md-position-mode="target target" tb-mousepoint-menu>
+                <div class="tb-absolute-fill tb-rulechain-graph" ng-click="" tb-contextmenu="vm.openRuleChainContextMenu($event, $mdOpenMousepointMenu)">
+                    <fc-canvas id="tb-rulchain-canvas"
+                               model="vm.ruleChainModel"
+                               selected-objects="vm.selectedObjects"
+                               edge-style="curved"
+                               node-width="170"
+                               node-height="50"
+                               automatic-resize="true"
+                               control="vm.canvasControl"
+                               callbacks="vm.editCallbacks">
+                    </fc-canvas>
+                </div>
+                <md-menu-content id="tb-rule-chain-context-menu" width="4" ng-mouseleave="$mdCloseMousepointMenu()">
+                    <div class="tb-context-menu-header {{vm.contextInfo.headerClass}}">
+                        <md-icon aria-label="node-type-icon"
+                                 class="material-icons">{{vm.contextInfo.icon}}</md-icon>
+                        <div flex>
+                            <div class="tb-context-menu-title">{{vm.contextInfo.title}}</div>
+                            <div class="tb-context-menu-subtitle">{{vm.contextInfo.subtitle}}</div>
+                        </div>
+                    </div>
+                    <md-menu-item ng-repeat="item in vm.contextInfo.items">
+                        <md-button ng-disabled="!item.enabled" ng-click="item.action(vm.contextMenuEvent)">
+                            <md-icon ng-if="item.icon" md-menu-align-target aria-label="{{ item.value | translate }}" class="material-icons">{{item.icon}}</md-icon>
+                            <span translate>{{item.value}}</span>
+                            <span ng-if="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
+                        </md-button>
+                    </md-menu-item>
+                </md-menu-content>
+            </md-menu>
         </div>
         <tb-details-sidenav class="tb-rulenode-details-sidenav"
                             header-title="{{vm.editingRuleNode.name}}"

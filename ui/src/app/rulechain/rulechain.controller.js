@@ -104,7 +104,88 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
     vm.triggerResize = triggerResize;
 
+    vm.openRuleChainContextMenu = openRuleChainContextMenu;
+
     initHotKeys();
+
+    function openRuleChainContextMenu($event, $mdOpenMousepointMenu) {
+        if (vm.canvasControl.modelservice && !$event.ctrlKey && !$event.metaKey) {
+            var x = $event.clientX;
+            var y = $event.clientY;
+            var item = vm.canvasControl.modelservice.getItemInfoAtPoint(x, y);
+            vm.contextInfo = prepareContextMenu(item);
+            if (vm.contextInfo.items && vm.contextInfo.items.length > 0) {
+                vm.contextMenuEvent = $event;
+                $mdOpenMousepointMenu($event);
+                return false;
+            }
+        }
+    }
+
+    function prepareContextMenu(item) {
+        if (objectsSelected() || (!item.node && !item.edge)) {
+            return prepareRuleChainContextMenu();
+        } else if (item.node) {
+            return prepareRuleNodeContextMenu(item.node);
+        } else if (item.edge) {
+            return prepareEdgeContextMenu(item.edge);
+        }
+    }
+
+    function prepareRuleChainContextMenu() {
+        var contextInfo = {
+            title: vm.ruleChain.name,
+            subtitle: $translate.instant('rulechain.rulechain')
+        };
+        contextInfo.items = [];
+        return contextInfo;
+    }
+
+    function prepareRuleNodeContextMenu(node) {
+        var contextInfo = {
+            headerClass: node.nodeClass,
+            icon: node.icon,
+            title: node.name,
+            subtitle: node.component.name
+        };
+        contextInfo.items = [];
+        if (!node.readonly) {
+            contextInfo.items.push(
+                {
+                    action: function () {
+                        vm.canvasControl.modelservice.nodes.delete(node);
+                    },
+                    enabled: true,
+                    value: "action.delete",
+                    icon: "clear",
+                    shortcut: "M-X"
+                }
+            );
+        }
+        return contextInfo;
+    }
+
+    function prepareEdgeContextMenu(edge) {
+        var contextInfo = {
+            headerClass: 'tb-link',
+            icon: 'trending_flat',
+            title: edge.label,
+            subtitle: $translate.instant('rulenode.link')
+        };
+        contextInfo.items = [];
+        contextInfo.items.push(
+            {
+                action: function () {
+                    vm.canvasControl.modelservice.edges.delete(edge);
+                },
+                enabled: true,
+                value: "action.delete",
+                icon: "clear",
+                shortcut: "M-X"
+            }
+        );
+        return contextInfo;
+    }
 
     function initHotKeys() {
         hotkeys.bindTo($scope)
@@ -652,7 +733,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         }
 
         if (vm.canvasControl.adjustCanvasSize) {
-            vm.canvasControl.adjustCanvasSize();
+            vm.canvasControl.adjustCanvasSize(true);
         }
 
         vm.isDirty = false;
