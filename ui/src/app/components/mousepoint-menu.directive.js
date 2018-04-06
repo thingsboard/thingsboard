@@ -27,7 +27,12 @@ function MousepointMenu() {
                 var offset = $element.offset();
                 var x = $event.pageX - offset.left;
                 var y = $event.pageY - offset.top;
-
+                if ($attrs.tbOffsetX) {
+                    x += Number($attrs.tbOffsetX);
+                }
+                if ($attrs.tbOffsetY) {
+                    y += Number($attrs.tbOffsetY);
+                }
                 var offsets = {
                     left: x,
                     top: y

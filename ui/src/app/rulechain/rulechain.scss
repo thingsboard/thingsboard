@@ -113,6 +113,9 @@
     font-size: 14px;
     display: flex;
     flex-direction: row;
+    &.tb-rulechain {
+      background-color: #aac7e4;
+    }
     &.tb-link {
       background-color: #aac7e4;
     }
@@ -124,6 +127,7 @@
       font-weight: 500;
     }
     .tb-context-menu-subtitle {
+      font-size: 12px;
     }
   }
 }

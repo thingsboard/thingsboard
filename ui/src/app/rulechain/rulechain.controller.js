@@ -134,10 +134,70 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
     function prepareRuleChainContextMenu() {
         var contextInfo = {
+            headerClass: 'tb-rulechain',
+            icon: 'settings_ethernet',
             title: vm.ruleChain.name,
             subtitle: $translate.instant('rulechain.rulechain')
         };
         contextInfo.items = [];
+        if (objectsSelected()) {
+            contextInfo.items.push(
+                {
+                    action: function () {
+                        vm.modelservice.deselectAll();
+                    },
+                    enabled: true,
+                    value: "rulenode.deselect-all",
+                    icon: "tab_unselected",
+                    shortcut: "Esc"
+                }
+            );
+            contextInfo.items.push(
+                {
+                    action: function () {
+                        vm.modelservice.deleteSelected();
+                    },
+                    enabled: true,
+                    value: "rulenode.delete-selected",
+                    icon: "clear",
+                    shortcut: "Del"
+                }
+            );
+        } else {
+            contextInfo.items.push(
+                {
+                    action: function () {
+                        vm.modelservice.selectAll();
+                    },
+                    enabled: true,
+                    value: "rulenode.select-all",
+                    icon: "select_all",
+                    shortcut: "M-A"
+                }
+            );
+        }
+        contextInfo.items.push(
+            {
+                action: function () {
+                    vm.saveRuleChain();
+                },
+                enabled: !(vm.isInvalid || (!vm.isDirty && !vm.isImport)),
+                value: "action.apply-changes",
+                icon: "done",
+                shortcut: "M-S"
+            }
+        );
+        contextInfo.items.push(
+            {
+                action: function () {
+                    vm.revertRuleChain();
+                },
+                enabled: vm.isDirty,
+                value: "action.decline-changes",
+                icon: "close",
+                shortcut: "M-Z"
+            }
+        );
         return contextInfo;
     }
 
@@ -150,6 +210,16 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         };
         contextInfo.items = [];
         if (!node.readonly) {
+            contextInfo.items.push(
+                {
+                    action: function () {
+                        openNodeDetails(node);
+                    },
+                    enabled: true,
+                    value: "rulenode.details",
+                    icon: "menu"
+                }
+            );
             contextInfo.items.push(
                 {
                     action: function () {
@@ -173,6 +243,19 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             subtitle: $translate.instant('rulenode.link')
         };
         contextInfo.items = [];
+        var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
+        if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
+            contextInfo.items.push(
+                {
+                    action: function () {
+                        openLinkDetails(edge);
+                    },
+                    enabled: true,
+                    value: "rulenode.details",
+                    icon: "menu"
+                }
+            );
+        }
         contextInfo.items.push(
             {
                 action: function () {
@@ -191,7 +274,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         hotkeys.bindTo($scope)
             .add({
                 combo: 'ctrl+a',
-                description: $translate.instant('rulenode.select-all'),
+                description: $translate.instant('rulenode.select-all-objects'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
                     event.preventDefault();
@@ -200,7 +283,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             })
             .add({
                 combo: 'esc',
-                description: $translate.instant('rulenode.deselect-all'),
+                description: $translate.instant('rulenode.deselect-all-objects'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
                     event.preventDefault();
@@ -425,35 +508,11 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
     vm.editCallbacks = {
         edgeDoubleClick: function (event, edge) {
-            var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
-            if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
-                vm.isEditingRuleNode = false;
-                vm.editingRuleNode = null;
-                vm.editingRuleNodeLinkLabels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
-                vm.isEditingRuleNodeLink = true;
-                vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
-                vm.editingRuleNodeLink = angular.copy(edge);
-                $mdUtil.nextTick(() => {
-                    if (vm.ruleNodeLinkForm) {
-                        vm.ruleNodeLinkForm.$setPristine();
-                    }
-                });
-            }
+            openLinkDetails(edge);
         },
         nodeCallbacks: {
             'doubleClick': function (event, node) {
-                if (node.component.type != types.ruleNodeType.INPUT.value) {
-                    vm.isEditingRuleNodeLink = false;
-                    vm.editingRuleNodeLink = null;
-                    vm.isEditingRuleNode = true;
-                    vm.editingRuleNodeIndex = vm.ruleChainModel.nodes.indexOf(node);
-                    vm.editingRuleNode = angular.copy(node);
-                    $mdUtil.nextTick(() => {
-                        if (vm.ruleNodeForm) {
-                            vm.ruleNodeForm.$setPristine();
-                        }
-                    });
-                }
+                openNodeDetails(node);
             }
         },
         isValidEdge: function (source, destination) {
@@ -490,6 +549,38 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             addRuleNode(event, node);
         }
     };
+
+    function openNodeDetails(node) {
+        if (node.component.type != types.ruleNodeType.INPUT.value) {
+            vm.isEditingRuleNodeLink = false;
+            vm.editingRuleNodeLink = null;
+            vm.isEditingRuleNode = true;
+            vm.editingRuleNodeIndex = vm.ruleChainModel.nodes.indexOf(node);
+            vm.editingRuleNode = angular.copy(node);
+            $mdUtil.nextTick(() => {
+                if (vm.ruleNodeForm) {
+                    vm.ruleNodeForm.$setPristine();
+                }
+            });
+        }
+    }
+
+    function openLinkDetails(edge) {
+        var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
+        if (sourceNode.component.type != types.ruleNodeType.INPUT.value) {
+            vm.isEditingRuleNode = false;
+            vm.editingRuleNode = null;
+            vm.editingRuleNodeLinkLabels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+            vm.isEditingRuleNodeLink = true;
+            vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
+            vm.editingRuleNodeLink = angular.copy(edge);
+            $mdUtil.nextTick(() => {
+                if (vm.ruleNodeLinkForm) {
+                    vm.ruleNodeLinkForm.$setPristine();
+                }
+            });
+        }
+    }
 
     loadRuleChainLibrary(ruleNodeComponents, true);
 
