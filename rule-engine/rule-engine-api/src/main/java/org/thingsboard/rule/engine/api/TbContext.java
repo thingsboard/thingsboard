@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
@@ -58,6 +59,8 @@ public interface TbContext {
     void updateSelf(RuleNode self);
 
     RuleNodeId getSelfId();
+
+    TenantId getTenantId();
 
     AttributesService getAttributesService();
 

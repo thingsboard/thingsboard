@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
@@ -117,6 +118,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public RuleNodeId getSelfId() {
         return nodeCtx.getSelf().getId();
+    }
+
+    @Override
+    public TenantId getTenantId() {
+        return nodeCtx.getTenantId();
     }
 
     @Override

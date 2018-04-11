@@ -146,6 +146,17 @@ public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEn
     }
 
     @Override
+    public JsonNode executeJson(TbMsg msg) throws ScriptException {
+        return executeScript(msg);
+    }
+
+    @Override
+    public String executeToString(TbMsg msg) throws ScriptException {
+        JsonNode result = executeScript(msg);
+        return result.asText();
+    }
+
+    @Override
     public boolean executeFilter(TbMsg msg) throws ScriptException {
         JsonNode result = executeScript(msg);
         if (!result.isBoolean()) {

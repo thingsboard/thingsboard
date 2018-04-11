@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import javax.script.ScriptException;
@@ -29,6 +30,10 @@ public interface ScriptEngine {
     boolean executeFilter(TbMsg msg) throws ScriptException;
 
     Set<String> executeSwitch(TbMsg msg) throws ScriptException;
+
+    JsonNode executeJson(TbMsg msg) throws ScriptException;
+
+    String executeToString(TbMsg msg) throws ScriptException;
 
     void destroy();
 
