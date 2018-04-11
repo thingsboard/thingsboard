@@ -29,7 +29,7 @@ import addRuleNodeLinkTemplate from './add-link.tpl.html';
 
 /*@ngInject*/
 export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $window, $document, $mdDialog,
-                                    $filter, $translate, hotkeys, types, ruleChainService, Modelfactory, flowchartConstants,
+                                    $filter, $translate, hotkeys, types, ruleChainService, itembuffer, Modelfactory, flowchartConstants,
                                     ruleChain, ruleChainMetaData, ruleNodeComponents) {
 
     var vm = this;
@@ -140,6 +140,22 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             subtitle: $translate.instant('rulechain.rulechain')
         };
         contextInfo.items = [];
+        contextInfo.items.push(
+            {
+                action: function ($event) {
+                    pasteRuleNodes($event);
+                },
+                enabled: itembuffer.hasRuleNodes(),
+                value: "action.paste",
+                icon: "content_paste",
+                shortcut: "M-V"
+            }
+        );
+        contextInfo.items.push(
+            {
+                divider: true
+            }
+        );
         if (objectsSelected()) {
             contextInfo.items.push(
                 {
@@ -150,6 +166,17 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     value: "rulenode.deselect-all",
                     icon: "tab_unselected",
                     shortcut: "Esc"
+                }
+            );
+            contextInfo.items.push(
+                {
+                    action: function (event) {
+                        copyRuleNodes(event);
+                    },
+                    enabled: true,
+                    value: "rulenode.copy-selected",
+                    icon: "content_copy",
+                    shortcut: "M-C"
                 }
             );
             contextInfo.items.push(
@@ -176,6 +203,11 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 }
             );
         }
+        contextInfo.items.push(
+            {
+                divider: true
+            }
+        );
         contextInfo.items.push(
             {
                 action: function () {
@@ -218,6 +250,16 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     enabled: true,
                     value: "rulenode.details",
                     icon: "menu"
+                }
+            );
+            contextInfo.items.push(
+                {
+                    action: function (event) {
+                        copyNode(event, node);
+                    },
+                    enabled: true,
+                    value: "action.copy",
+                    icon: "content_copy"
                 }
             );
             contextInfo.items.push(
@@ -526,7 +568,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 if (destNode.component.type == types.ruleNodeType.RULE_CHAIN.value) {
                     deferred.reject();
                 } else {
-                    var res = $filter('filter')(vm.ruleChainModel.edges, {source: vm.inputConnectorId});
+                    var res = $filter('filter')(vm.ruleChainModel.edges, {source: vm.inputConnectorId}, true);
                     if (res && res.length) {
                         vm.modelservice.edges.delete(res[0]);
                     }
@@ -579,6 +621,112 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     vm.ruleNodeLinkForm.$setPristine();
                 }
             });
+        }
+    }
+
+    function copyNode(event, node) {
+        var offset = angular.element(vm.canvasControl.modelservice.getCanvasHtmlElement()).offset();
+        var x = Math.round(event.clientX - offset.left);
+        var y = Math.round(event.clientY - offset.top);
+        itembuffer.copyRuleNodes(x, y, [node], []);
+    }
+
+    function copyRuleNodes(event) {
+        var offset = angular.element(vm.canvasControl.modelservice.getCanvasHtmlElement()).offset();
+        var x = Math.round(event.clientX - offset.left);
+        var y = Math.round(event.clientY - offset.top);
+        var nodes = vm.modelservice.nodes.getSelectedNodes();
+        var edges = vm.modelservice.edges.getSelectedEdges();
+        var connections = [];
+        for (var i=0;i<edges.length;i++) {
+            var edge = edges[i];
+            var sourceNode = vm.modelservice.nodes.getNodeByConnectorId(edge.source);
+            var destNode = vm.modelservice.nodes.getNodeByConnectorId(edge.destination);
+            var isInputSource = sourceNode.component.type == types.ruleNodeType.INPUT.value;
+            var fromIndex = nodes.indexOf(sourceNode);
+            var toIndex = nodes.indexOf(destNode);
+            if ( (isInputSource || fromIndex > -1) && toIndex > -1 ) {
+                var connection = {
+                    isInputSource: isInputSource,
+                    fromIndex: fromIndex,
+                    toIndex: toIndex,
+                    label: edge.label
+                };
+                connections.push(connection);
+            }
+        }
+        itembuffer.copyRuleNodes(x, y, nodes, connections);
+    }
+
+    function pasteRuleNodes(event) {
+        var offset = angular.element(vm.canvasControl.modelservice.getCanvasHtmlElement()).offset();
+        var x = Math.round(event.clientX - offset.left);
+        var y = Math.round(event.clientY - offset.top);
+        var ruleNodes = itembuffer.pasteRuleNodes(x, y, event);
+        if (ruleNodes) {
+            vm.modelservice.deselectAll();
+            var nodes = [];
+            for (var i=0;i<ruleNodes.nodes.length;i++) {
+                var node = ruleNodes.nodes[i];
+                node.id = 'rule-chain-node-' + vm.nextNodeID++;
+                var component = node.component;
+                if (component.configurationDescriptor.nodeDefinition.inEnabled) {
+                    node.connectors.push(
+                        {
+                            type: flowchartConstants.leftConnectorType,
+                            id: vm.nextConnectorID++
+                        }
+                    );
+                }
+                if (component.configurationDescriptor.nodeDefinition.outEnabled) {
+                    node.connectors.push(
+                        {
+                            type: flowchartConstants.rightConnectorType,
+                            id: vm.nextConnectorID++
+                        }
+                    );
+                }
+                nodes.push(node);
+                vm.ruleChainModel.nodes.push(node);
+                vm.modelservice.nodes.select(node);
+            }
+            for (i=0;i<ruleNodes.connections.length;i++) {
+                var connection = ruleNodes.connections[i];
+                var sourceNode = nodes[connection.fromIndex];
+                var destNode = nodes[connection.toIndex];
+                if ( (connection.isInputSource || sourceNode) &&  destNode ) {
+                    var source, destination;
+                    if (connection.isInputSource) {
+                        source = vm.inputConnectorId;
+                    } else {
+                        var sourceConnectors = vm.modelservice.nodes.getConnectorsByType(sourceNode, flowchartConstants.rightConnectorType);
+                        if (sourceConnectors && sourceConnectors.length) {
+                            source = sourceConnectors[0].id;
+                        }
+                    }
+                    var destConnectors = vm.modelservice.nodes.getConnectorsByType(destNode, flowchartConstants.leftConnectorType);
+                    if (destConnectors && destConnectors.length) {
+                        destination = destConnectors[0].id;
+                    }
+                    if (source && destination) {
+                        var edge = {
+                            source: source,
+                            destination: destination,
+                            label: connection.label
+                        };
+                        vm.ruleChainModel.edges.push(edge);
+                        vm.modelservice.edges.select(edge);
+                    }
+                }
+            }
+
+            if (vm.canvasControl.adjustCanvasSize) {
+                vm.canvasControl.adjustCanvasSize();
+            }
+
+            updateRuleNodesHighlight();
+
+            validate();
         }
     }
 

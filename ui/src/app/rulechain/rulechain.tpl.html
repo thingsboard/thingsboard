@@ -122,7 +122,8 @@
                         </div>
                     </div>
                     <div ng-repeat="item in vm.contextInfo.items">
-                        <md-menu-item>
+                        <md-divider ng-if="item.divider"></md-divider>
+                        <md-menu-item ng-if="!item.divider">
                             <md-button ng-disabled="!item.enabled" ng-click="item.action(vm.contextMenuEvent)">
                                 <md-icon ng-if="item.icon" md-menu-align-target aria-label="{{ item.value | translate }}" class="material-icons">{{item.icon}}</md-icon>
                                 <span translate>{{item.value}}</span>

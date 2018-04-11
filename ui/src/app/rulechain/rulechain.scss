@@ -108,11 +108,14 @@
 #tb-rule-chain-context-menu {
   padding-top: 0px;
   border-radius: 8px;
+  max-height: 404px;
   .tb-context-menu-header {
     padding: 8px 5px 5px;
     font-size: 14px;
     display: flex;
     flex-direction: row;
+    height: 30px;
+    min-height: 30px;
     &.tb-rulechain {
       background-color: #aac7e4;
     }
