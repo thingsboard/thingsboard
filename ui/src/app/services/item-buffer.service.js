@@ -155,13 +155,12 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils, ruleChainServ
         };
     }
 
-    function copyRuleNodes(x, y, nodes, connections) {
+    function copyRuleNodes(nodes, connections) {
         var ruleNodes = {
             nodes: [],
-            connections: [],
-            originX: x,
-            originY: y
+            connections: []
         };
+        var top = -1, left = -1, bottom = -1, right = -1;
         for (var i=0;i<nodes.length;i++) {
             var origNode = nodes[i];
             var node = {
@@ -180,7 +179,20 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils, ruleChainServ
                 node.error = origNode.error;
             }
             ruleNodes.nodes.push(node);
+            if (i==0) {
+                top = node.y;
+                left = node.x;
+                bottom = node.y + 50;
+                right = node.x + 170;
+            } else {
+                top = Math.min(top, node.y);
+                left = Math.min(left, node.x);
+                bottom = Math.max(bottom, node.y + 50);
+                right = Math.max(right, node.x + 170);
+            }
         }
+        ruleNodes.originX = left + (right-left)/2;
+        ruleNodes.originY = top + (bottom-top)/2;
         for (i=0;i<connections.length;i++) {
             var connection = connections[i];
             ruleNodes.connections.push(connection);
