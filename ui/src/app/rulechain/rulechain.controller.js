@@ -62,6 +62,12 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     vm.isEditingRuleNodeLink = false;
 
     vm.isLibraryOpen = true;
+
+    Object.defineProperty(vm, 'isLibraryOpenReadonly', {
+        get: function() { return vm.isLibraryOpen },
+        set: function() {}
+    });
+
     vm.ruleNodeSearch = '';
 
     vm.ruleChain = ruleChain;
@@ -140,6 +146,19 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             subtitle: $translate.instant('rulechain.rulechain')
         };
         contextInfo.items = [];
+        if (vm.modelservice.nodes.getSelectedNodes().length) {
+            contextInfo.items.push(
+                {
+                    action: function () {
+                        copyRuleNodes();
+                    },
+                    enabled: true,
+                    value: "rulenode.copy-selected",
+                    icon: "content_copy",
+                    shortcut: "M-C"
+                }
+            );
+        }
         contextInfo.items.push(
             {
                 action: function ($event) {
@@ -166,17 +185,6 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     value: "rulenode.deselect-all",
                     icon: "tab_unselected",
                     shortcut: "Esc"
-                }
-            );
-            contextInfo.items.push(
-                {
-                    action: function (event) {
-                        copyRuleNodes(event);
-                    },
-                    enabled: true,
-                    value: "rulenode.copy-selected",
-                    icon: "content_copy",
-                    shortcut: "M-C"
                 }
             );
             contextInfo.items.push(
@@ -254,8 +262,8 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             );
             contextInfo.items.push(
                 {
-                    action: function (event) {
-                        copyNode(event, node);
+                    action: function () {
+                        copyNode(node);
                     },
                     enabled: true,
                     value: "action.copy",
@@ -324,11 +332,32 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 }
             })
             .add({
+                combo: 'ctrl+c',
+                description: $translate.instant('rulenode.copy-selected'),
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
+                    event.preventDefault();
+                    copyRuleNodes();
+                }
+            })
+            .add({
+                combo: 'ctrl+v',
+                description: $translate.instant('action.paste'),
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
+                    event.preventDefault();
+                    if (itembuffer.hasRuleNodes()) {
+                        pasteRuleNodes();
+                    }
+                }
+            })
+            .add({
                 combo: 'esc',
                 description: $translate.instant('rulenode.deselect-all-objects'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
                     event.preventDefault();
+                    event.stopPropagation();
                     vm.modelservice.deselectAll();
                 }
             })
@@ -624,17 +653,11 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         }
     }
 
-    function copyNode(event, node) {
-        var offset = angular.element(vm.canvasControl.modelservice.getCanvasHtmlElement()).offset();
-        var x = Math.round(event.clientX - offset.left);
-        var y = Math.round(event.clientY - offset.top);
-        itembuffer.copyRuleNodes(x, y, [node], []);
+    function copyNode(node) {
+        itembuffer.copyRuleNodes([node], []);
     }
 
-    function copyRuleNodes(event) {
-        var offset = angular.element(vm.canvasControl.modelservice.getCanvasHtmlElement()).offset();
-        var x = Math.round(event.clientX - offset.left);
-        var y = Math.round(event.clientY - offset.top);
+    function copyRuleNodes() {
         var nodes = vm.modelservice.nodes.getSelectedNodes();
         var edges = vm.modelservice.edges.getSelectedEdges();
         var connections = [];
@@ -655,13 +678,23 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 connections.push(connection);
             }
         }
-        itembuffer.copyRuleNodes(x, y, nodes, connections);
+        itembuffer.copyRuleNodes(nodes, connections);
     }
 
     function pasteRuleNodes(event) {
-        var offset = angular.element(vm.canvasControl.modelservice.getCanvasHtmlElement()).offset();
-        var x = Math.round(event.clientX - offset.left);
-        var y = Math.round(event.clientY - offset.top);
+        var canvas = angular.element(vm.canvasControl.modelservice.getCanvasHtmlElement());
+        var x,y;
+        if (event) {
+            var offset = canvas.offset();
+            x = Math.round(event.clientX - offset.left);
+            y = Math.round(event.clientY - offset.top);
+        } else {
+            var scrollParent = canvas.parent();
+            var scrollTop = scrollParent.scrollTop();
+            var scrollLeft = scrollParent.scrollLeft();
+            x = scrollLeft + scrollParent.width()/2;
+            y = scrollTop + scrollParent.height()/2;
+        }
         var ruleNodes = itembuffer.pasteRuleNodes(x, y, event);
         if (ruleNodes) {
             vm.modelservice.deselectAll();
