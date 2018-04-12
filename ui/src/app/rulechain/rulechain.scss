@@ -47,6 +47,7 @@
       .md-toolbar-tools {
         font-size: 14px;
         padding: 0px 6px;
+        height: 48px;
         .md-button.md-icon-button {
           margin: 0px;
           &.tb-small {
@@ -114,8 +115,8 @@
     font-size: 14px;
     display: flex;
     flex-direction: row;
-    height: 30px;
-    min-height: 30px;
+    height: 36px;
+    min-height: 36px;
     &.tb-rulechain {
       background-color: #aac7e4;
     }
@@ -139,6 +140,12 @@
   min-width: 100%;
   min-height: 100%;
   outline: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .tb-rule-node, #tb-rule-chain-context-menu .tb-context-menu-header {
@@ -164,8 +171,8 @@
   flex-direction: row;
   min-width: 150px;
   max-width: 150px;
-  min-height: 28px;
-  max-height: 28px;
+  min-height: 32px;
+  max-height: 32px;
   padding: 5px 10px;
   border-radius: 5px;
   background-color: #F15B26;
@@ -173,6 +180,7 @@
   color: #333;
   border: solid 1px #777;
   font-size: 12px;
+  line-height: 16px;
   &.tb-rule-node-highlighted:not(.tb-rule-node-invalid) {
     box-shadow: 0 0 10px 6px #51cbee;
     .tb-node-title {

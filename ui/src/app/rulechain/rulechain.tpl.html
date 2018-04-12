@@ -125,9 +125,9 @@
                         <md-divider ng-if="item.divider"></md-divider>
                         <md-menu-item ng-if="!item.divider">
                             <md-button ng-disabled="!item.enabled" ng-click="item.action(vm.contextMenuEvent)">
+                                <span ng-if="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
                                 <md-icon ng-if="item.icon" md-menu-align-target aria-label="{{ item.value | translate }}" class="material-icons">{{item.icon}}</md-icon>
                                 <span translate>{{item.value}}</span>
-                                <span ng-if="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
                             </md-button>
                         </md-menu-item>
                     </div>
