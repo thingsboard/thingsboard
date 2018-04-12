@@ -45,6 +45,10 @@ public final class TbMsgMetaData implements Serializable {
         data.put(key, value);
     }
 
+    public Map<String, String> values() {
+        return new HashMap<>(data);
+    }
+
     public TbMsgMetaData copy() {
         return new TbMsgMetaData(new ConcurrentHashMap<>(data));
     }

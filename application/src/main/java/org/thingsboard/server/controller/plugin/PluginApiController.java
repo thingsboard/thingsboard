@@ -17,31 +17,10 @@ package org.thingsboard.server.controller.plugin;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.controller.BaseController;
-import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.plugin.PluginService;
-import org.thingsboard.server.exception.ThingsboardException;
-import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
 import org.thingsboard.server.extensions.api.plugins.PluginConstants;
-import org.thingsboard.server.extensions.api.plugins.rest.BasicPluginRestMsg;
-import org.thingsboard.server.extensions.api.plugins.rest.RestRequest;
-
-import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(PluginConstants.PLUGIN_URL_PREFIX)

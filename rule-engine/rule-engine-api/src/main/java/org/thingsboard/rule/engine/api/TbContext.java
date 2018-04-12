@@ -86,6 +86,10 @@ public interface TbContext {
 
     ListeningExecutor getJsExecutor();
 
+    ListeningExecutor getMailExecutor();
+
+    MailService getMailService();
+
     ScriptEngine createJsScriptEngine(String script, String functionName, String... argNames);
 
 }

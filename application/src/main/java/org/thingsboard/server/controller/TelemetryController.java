@@ -58,7 +58,7 @@ import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.extensions.api.exception.InvalidParametersException;
 import org.thingsboard.server.extensions.api.exception.UncheckedApiException;
 import org.thingsboard.server.extensions.api.plugins.PluginConstants;

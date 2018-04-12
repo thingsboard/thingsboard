@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.exception;
+package org.thingsboard.server.common.data.exception;
 
 public class ThingsboardException extends Exception {
 

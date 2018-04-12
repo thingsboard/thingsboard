@@ -26,13 +26,11 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import javax.script.ScriptException;
 import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
@@ -48,73 +46,76 @@ public class TbTransformMsgNodeTest {
     private TbContext ctx;
     @Mock
     private ListeningExecutor executor;
+    @Mock
+    private ScriptEngine scriptEngine;
 
     @Test
-    public void metadataCanBeUpdated() throws TbNodeException {
-        initWithScript("metadata.temp = metadata.temp * 10; return {metadata: metadata};");
+    public void metadataCanBeUpdated() throws TbNodeException, ScriptException {
+        initWithScript(false);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
-        metaData.putValue("humidity", "99");
-        String rawJson = "{\"name\": \"Vit\", \"passed\": 5, \"bigObj\": {\"prop\":42}}";
+        String rawJson = "{\"passed\": 5}";
 
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
+        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}");
         mockJsExecutor();
+        when(scriptEngine.executeUpdate(msg)).thenReturn(transformedMsg);
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx).tellNext(captor.capture());
         TbMsg actualMsg = captor.getValue();
-        assertEquals("70", actualMsg.getMetaData().getValue("temp"));
+        assertEquals(transformedMsg, actualMsg);
     }
 
+
     @Test
-    public void metadataCanBeAdded() throws TbNodeException {
-        initWithScript("metadata.newAttr = metadata.humidity - msg.passed; return {metadata: metadata};");
+    public void newChainCanBeStarted() throws TbNodeException, ScriptException {
+        initWithScript(true);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
-        metaData.putValue("humidity", "99");
-        String rawJson = "{\"name\": \"Vit\", \"passed\": 5, \"bigObj\": {\"prop\":42}}";
+        String rawJson = "{\"passed\": 5";
 
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
+        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}");
         mockJsExecutor();
+        when(scriptEngine.executeUpdate(msg)).thenReturn(transformedMsg);
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture());
+        verify(ctx).spawn(captor.capture());
         TbMsg actualMsg = captor.getValue();
-        assertEquals("94", actualMsg.getMetaData().getValue("newAttr"));
+        assertEquals(transformedMsg, actualMsg);
     }
 
     @Test
-    public void payloadCanBeUpdated() throws TbNodeException {
-        initWithScript("msg.passed = msg.passed * metadata.temp; msg.bigObj.newProp = 'Ukraine'; return {msg: msg};");
+    public void exceptionHandledCorrectly() throws TbNodeException, ScriptException {
+        initWithScript(false);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
-        metaData.putValue("humidity", "99");
-        String rawJson = "{\"name\":\"Vit\",\"passed\": 5,\"bigObj\":{\"prop\":42}}";
+        String rawJson = "{\"passed\": 5";
 
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
+        when(scriptEngine.executeUpdate(msg)).thenThrow(new IllegalStateException("error"));
 
         node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture());
-        TbMsg actualMsg = captor.getValue();
-        String expectedJson = "{\"name\":\"Vit\",\"passed\":35,\"bigObj\":{\"prop\":42,\"newProp\":\"Ukraine\"}}";
-        assertEquals(expectedJson, new String(actualMsg.getData()));
+        verifyError(msg, "error", IllegalStateException.class);
     }
 
-    private void initWithScript(String script) throws TbNodeException {
+    private void initWithScript(boolean startChain) throws TbNodeException {
         TbTransformMsgNodeConfiguration config = new TbTransformMsgNodeConfiguration();
-        config.setJsScript(script);
+        config.setJsScript("scr");
+        config.setStartNewChain(startChain);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
+        when(ctx.createJsScriptEngine("scr", "Transform")).thenReturn(scriptEngine);
+
         node = new TbTransformMsgNode();
-        node.init(null, nodeConfiguration);
+        node.init(ctx, nodeConfiguration);
     }
 
     private void mockJsExecutor() {

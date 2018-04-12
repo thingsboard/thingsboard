@@ -221,6 +221,7 @@ actors:
     error_persist_frequency: "${ACTORS_RULE_ERROR_FREQUENCY:3000}"
     # Specify thread pool size for javascript executor service
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:10}"
+    mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:10}"
     chain:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"

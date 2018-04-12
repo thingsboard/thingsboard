@@ -18,10 +18,7 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorRef;
 import akka.actor.Cancellable;
 import com.google.common.base.Function;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
-import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
-import org.thingsboard.rule.engine.api.ScriptEngine;
-import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -136,6 +133,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public ListeningExecutor getMailExecutor() {
+        return mainCtx.getMailExecutor();
+    }
+
+    @Override
     public ScriptEngine createJsScriptEngine(String script, String functionName, String... argNames) {
         return new NashornJsEngine(script, functionName, argNames);
     }
@@ -193,5 +195,10 @@ class DefaultTbContext implements TbContext {
     @Override
     public RelationService getRelationService() {
         return mainCtx.getRelationService();
+    }
+
+    @Override
+    public MailService getMailService() {
+        return mainCtx.getMailService();
     }
 }
