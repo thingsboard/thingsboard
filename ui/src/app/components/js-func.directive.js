@@ -61,7 +61,7 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
 
 
         scope.functionArgsString = '';
-        for (var i in scope.functionArgs) {
+        for (var i = 0; i < scope.functionArgs.length; i++) {
             if (scope.functionArgsString.length > 0) {
                 scope.functionArgsString += ', ';
             }

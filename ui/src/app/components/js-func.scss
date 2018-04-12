@@ -26,7 +26,7 @@ tb-js-func {
 .tb-js-func-panel {
   margin-left: 15px;
   border: 1px solid #C0C0C0;
-  height: 100%;
+  height: calc(100% - 80px);
   #tb-javascript-input {
     min-width: 200px;
     width: 100%;

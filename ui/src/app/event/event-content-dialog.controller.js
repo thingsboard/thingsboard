@@ -68,7 +68,7 @@ export default function EventContentDialogController($mdDialog, types, content, 
             var lines = vm.content.split('\n');
             newHeight = 16 * lines.length + 16;
             var maxLineLength = 0;
-            for (var i in lines) {
+            for (var i = 0; i < lines.length; i++) {
                 var line = lines[i].replace(/\t/g, '    ').replace(/\n/g, '');
                 var lineLength = line.length;
                 maxLineLength = Math.max(maxLineLength, lineLength);
