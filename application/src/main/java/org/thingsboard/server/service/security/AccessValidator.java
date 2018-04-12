@@ -45,7 +45,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.extensions.api.exception.ToErrorResponseEntity;
 import org.thingsboard.server.service.security.model.SecurityUser;
 

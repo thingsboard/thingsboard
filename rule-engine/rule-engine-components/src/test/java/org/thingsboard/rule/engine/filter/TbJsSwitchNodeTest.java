@@ -27,14 +27,11 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.HashSet;
+import javax.script.ScriptException;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -51,18 +48,12 @@ public class TbJsSwitchNodeTest {
     private TbContext ctx;
     @Mock
     private ListeningExecutor executor;
+    @Mock
+    private ScriptEngine scriptEngine;
 
     @Test
-    public void multipleRoutesAreAllowed() throws TbNodeException {
-        String jsCode = "function nextRelation(metadata, msg) {\n" +
-                "    if(msg.passed == 5 && metadata.temp == 10)\n" +
-                "        return ['three', 'one']\n" +
-                "    else\n" +
-                "        return 'two';\n" +
-                "};\n" +
-                "\n" +
-                "return nextRelation(metadata, msg);";
-        initWithScript(jsCode);
+    public void multipleRoutesAreAllowed() throws TbNodeException, ScriptException {
+        initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -70,44 +61,23 @@ public class TbJsSwitchNodeTest {
 
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
         mockJsExecutor();
+        when(scriptEngine.executeSwitch(msg)).thenReturn(Sets.newHashSet("one", "three"));
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
         verify(ctx).tellNext(msg, Sets.newHashSet("one", "three"));
     }
 
-    @Test
-    public void allowedRelationPassed() throws TbNodeException {
-        String jsCode = "function nextRelation(metadata, msg) {\n" +
-                "    if(msg.passed == 5 && metadata.temp == 10)\n" +
-                "        return 'one'\n" +
-                "    else\n" +
-                "        return 'two';\n" +
-                "};\n" +
-                "\n" +
-                "return nextRelation(metadata, msg);";
-        initWithScript(jsCode);
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("temp", "10");
-        metaData.putValue("humidity", "99");
-        String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
-
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
-        mockJsExecutor();
-
-        node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
-        verify(ctx).tellNext(msg, Sets.newHashSet("one"));
-    }
-
-    private void initWithScript(String script) throws TbNodeException {
+    private void initWithScript() throws TbNodeException {
         TbJsSwitchNodeConfiguration config = new TbJsSwitchNodeConfiguration();
-        config.setJsScript(script);
+        config.setJsScript("scr");
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
+        when(ctx.createJsScriptEngine("scr", "Switch")).thenReturn(scriptEngine);
+
         node = new TbJsSwitchNode();
-        node.init(null, nodeConfiguration);
+        node.init(ctx, nodeConfiguration);
     }
 
     private void mockJsExecutor() {

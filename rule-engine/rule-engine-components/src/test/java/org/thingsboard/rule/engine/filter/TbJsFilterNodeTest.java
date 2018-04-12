@@ -26,10 +26,7 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -48,103 +45,57 @@ public class TbJsFilterNodeTest {
     private TbContext ctx;
     @Mock
     private ListeningExecutor executor;
+    @Mock
+    private ScriptEngine scriptEngine;
 
     @Test
-    public void falseEvaluationDoNotSendMsg() throws TbNodeException {
-        initWithScript("return 10 > 15;");
+    public void falseEvaluationDoNotSendMsg() throws TbNodeException, ScriptException {
+        initWithScript();
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}");
-
         mockJsExecutor();
+        when(scriptEngine.executeFilter(msg)).thenReturn(false);
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
         verify(ctx).tellNext(msg, "false");
-        verifyNoMoreInteractions(ctx);
     }
 
     @Test
-    public void notValidMsgDataThrowsException() throws TbNodeException {
-        initWithScript("return 10 > 15;");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, null, "{}");
-
-        when(ctx.getJsExecutor()).thenReturn(executor);
-
-        mockJsExecutor();
-
-        node.onMsg(ctx, msg);
-        verifyError(msg, "Cannot bind js args", IllegalArgumentException.class);
-    }
-
-    @Test
-    public void exceptionInJsThrowsException() throws TbNodeException {
-        initWithScript("return metadata.temp.curr < 15;");
+    public void exceptionInJsThrowsException() throws TbNodeException, ScriptException {
+        initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
         mockJsExecutor();
+        when(scriptEngine.executeFilter(msg)).thenThrow(new ScriptException("error"));
+
 
         node.onMsg(ctx, msg);
-        String expectedMessage = "TypeError: Cannot read property \"curr\" from undefined in <eval> at line number 1";
-        verifyError(msg, expectedMessage, ScriptException.class);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void notValidScriptThrowsException() throws TbNodeException {
-        initWithScript("return 10 > 15 asdq out");
+        verifyError(msg, "error", ScriptException.class);
     }
 
     @Test
-    public void metadataConditionCanBeFalse() throws TbNodeException {
-        initWithScript("return metadata.humidity < 15;");
+    public void metadataConditionCanBeTrue() throws TbNodeException, ScriptException {
+        initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("temp", "10");
-        metaData.putValue("humidity", "99");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
         mockJsExecutor();
-
-        node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
-        verify(ctx).tellNext(msg, "false");
-        verifyNoMoreInteractions(ctx);
-    }
-
-    @Test
-    public void metadataConditionCanBeTrue() throws TbNodeException {
-        initWithScript("return metadata.temp < 15;");
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("temp", "10");
-        metaData.putValue("humidity", "99");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
-        mockJsExecutor();
+        when(scriptEngine.executeFilter(msg)).thenReturn(true);
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
         verify(ctx).tellNext(msg, "true");
     }
 
-    @Test
-    public void msgJsonParsedAndBinded() throws TbNodeException {
-        initWithScript("return msg.passed < 15 && msg.name === 'Vit' && metadata.temp == 10 && msg.bigObj.prop == 42;");
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("temp", "10");
-        metaData.putValue("humidity", "99");
-        String rawJson = "{\"name\": \"Vit\", \"passed\": 5, \"bigObj\": {\"prop\":42}}";
-
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
-        mockJsExecutor();
-
-        node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
-        verify(ctx).tellNext(msg, "true");
-    }
-
-    private void initWithScript(String script) throws TbNodeException {
+    private void initWithScript() throws TbNodeException {
         TbJsFilterNodeConfiguration config = new TbJsFilterNodeConfiguration();
-        config.setJsScript(script);
+        config.setJsScript("scr");
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
+        when(ctx.createJsScriptEngine("scr", "Filter")).thenReturn(scriptEngine);
+
         node = new TbJsFilterNode();
-        node.init(null, nodeConfiguration);
+        node.init(ctx, nodeConfiguration);
     }
 
     private void mockJsExecutor() {

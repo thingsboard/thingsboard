@@ -17,8 +17,8 @@ package org.thingsboard.server.config;
 
 import java.util.Map;
 
-import org.thingsboard.server.exception.ThingsboardErrorCode;
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.controller.plugin.TbWebSocketHandler;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.springframework.context.annotation.Bean;

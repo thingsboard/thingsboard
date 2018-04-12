@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.exception;
+package org.thingsboard.rule.engine.mail;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Builder;
+import lombok.Data;
 
-public enum ThingsboardErrorCode {
+@Data
+@Builder
+class EmailPojo {
 
-    GENERAL(2),
-    AUTHENTICATION(10),
-    JWT_TOKEN_EXPIRED(11),
-    PERMISSION_DENIED(20),
-    INVALID_ARGUMENTS(30),
-    BAD_REQUEST_PARAMS(31),
-    ITEM_NOT_FOUND(32);
-
-    private int errorCode;
-
-    ThingsboardErrorCode(int errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    @JsonValue
-    public int getErrorCode() {
-        return errorCode;
-    }
+    private final String from;
+    private final String to;
+    private final String cc;
+    private final String bcc;
+    private final String subject;
+    private final String body;
 
 }

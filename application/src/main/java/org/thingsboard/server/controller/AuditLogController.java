@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 import java.util.UUID;
 

@@ -22,7 +22,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 @Profile("test")
 @Configuration

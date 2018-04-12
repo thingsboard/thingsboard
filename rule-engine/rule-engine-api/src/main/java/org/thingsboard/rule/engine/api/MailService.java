@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.mail;
+package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 
 public interface MailService {
 
@@ -34,5 +37,6 @@ public interface MailService {
     void sendResetPasswordEmail(String passwordResetLink, String email) throws ThingsboardException;
     
     void sendPasswordWasResetEmail(String loginLink, String email) throws ThingsboardException;
-    
+
+    void send(String from, String to, String cc, String bcc, String subject, String body) throws MessagingException;
 }

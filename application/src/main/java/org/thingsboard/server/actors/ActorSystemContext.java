@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.rule.engine.api.ListeningExecutor;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
@@ -58,6 +59,8 @@ import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
@@ -164,7 +167,15 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private ListeningExecutor jsExecutor;
+    private JsExecutorService jsExecutor;
+
+    @Autowired
+    @Getter
+    private MailExecutorService mailExecutor;
+
+    @Autowired
+    @Getter
+    private MailService mailService;
 
     @Value("${actors.session.sync.timeout}")
     @Getter

@@ -42,7 +42,7 @@ import static org.thingsboard.server.common.data.DataConstants.*;
           nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
           nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
                 "with specific prefix: <i>cs/shared/ss</i>. To access those attributes in other nodes this template can be used " +
-                "<code>metadata.cs.temperature</code> or <code>metadata.shared.limit</code> " +
+                "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> " +
                 "If Latest Telemetry enrichment configured, latest telemetry added into metadata without prefix.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
@@ -63,9 +63,9 @@ public class TbGetAttributesNode implements TbNode {
                     t -> ctx.tellError(msg, t));
         } else {
             ListenableFuture<List<Void>> future = Futures.allAsList(
-                    putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs."),
-                    putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared."),
-                    putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss."));
+                    putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs_"),
+                    putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared_"),
+                    putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss_"));
 
             withCallback(future, i -> ctx.tellNext(msg), t -> ctx.tellError(msg, t));
         }
