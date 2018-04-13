@@ -219,8 +219,11 @@ actors:
     termination.delay: "${ACTORS_RULE_TERMINATION_DELAY:30000}"
     # Errors for particular actor are persisted once per specified amount of milliseconds
     error_persist_frequency: "${ACTORS_RULE_ERROR_FREQUENCY:3000}"
+    # Specify thread pool size for database request callbacks executor service
+    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:1}"
     # Specify thread pool size for javascript executor service
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:10}"
+    # Specify thread pool size for mail sender executor service
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:10}"
     chain:
       # Errors for particular actor are persisted once per specified amount of milliseconds

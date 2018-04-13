@@ -153,6 +153,10 @@ public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEn
     @Override
     public String executeToString(TbMsg msg) throws ScriptException {
         JsonNode result = executeScript(msg);
+        if (!result.isTextual()) {
+            log.warn("Wrong result type: {}", result.getNodeType());
+            throw new ScriptException("Wrong result type: " + result.getNodeType());
+        }
         return result.asText();
     }
 

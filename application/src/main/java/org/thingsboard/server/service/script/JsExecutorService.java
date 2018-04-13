@@ -15,41 +15,19 @@
  */
 package org.thingsboard.server.service.script;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
+import org.thingsboard.server.service.executors.AbstractListeningExecutor;
 
 @Component
-public class JsExecutorService implements ListeningExecutor{
+public class JsExecutorService extends AbstractListeningExecutor {
 
     @Value("${actors.rule.js_thread_pool_size}")
     private int jsExecutorThreadPoolSize;
 
-    private ListeningExecutorService service;
-
-    @PostConstruct
-    public void init() {
-        this.service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(jsExecutorThreadPoolSize));
-    }
-
-    @PreDestroy
-    public void destroy() {
-        if (this.service != null) {
-            this.service.shutdown();
-        }
-    }
-
     @Override
-    public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-        return service.submit(task);
+    protected int getThreadPollSize() {
+        return jsExecutorThreadPoolSize;
     }
 
 }

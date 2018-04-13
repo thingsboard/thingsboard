@@ -40,7 +40,9 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
         configClazz = TbMsgToEmailNodeConfiguration.class,
         nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ")
+                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbTransformationNodeToEmailConfig")
 public class TbMsgToEmailNode implements TbNode {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();

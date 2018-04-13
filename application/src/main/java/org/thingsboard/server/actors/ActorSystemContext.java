@@ -59,6 +59,7 @@ import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
@@ -172,6 +173,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private MailExecutorService mailExecutor;
+
+    @Autowired
+    @Getter
+    private DbCallbackExecutorService dbCallbackExecutor;
 
     @Autowired
     @Getter

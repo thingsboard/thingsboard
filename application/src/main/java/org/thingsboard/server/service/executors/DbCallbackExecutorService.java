@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api;
+package org.thingsboard.server.service.executors;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
+@Component
+public class DbCallbackExecutorService extends AbstractListeningExecutor {
 
-public interface ListeningExecutor extends Executor {
+    @Value("${actors.rule.db_callback_thread_pool_size}")
+    private int dbCallbackExecutorThreadPoolSize;
 
-    <T> ListenableFuture<T> executeAsync(Callable<T> task);
+    @Override
+    protected int getThreadPollSize() {
+        return dbCallbackExecutorThreadPoolSize;
+    }
 
 }
