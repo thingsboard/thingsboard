@@ -27,7 +27,7 @@ import java.util.Optional;
 /**
  * Created by ashvayka on 16.04.18.
  */
-public interface RpcService {
+public interface DeviceRpcService {
 
     void process(ToDeviceRpcRequest request, LocalRequestMetaData metaData);
 

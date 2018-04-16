@@ -41,7 +41,7 @@ import org.thingsboard.server.extensions.api.exception.ToErrorResponseEntity;
 import org.thingsboard.server.extensions.api.plugins.PluginConstants;
 import org.thingsboard.server.common.data.rpc.RpcRequest;
 import org.thingsboard.server.service.rpc.LocalRequestMetaData;
-import org.thingsboard.server.service.rpc.RpcService;
+import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -66,7 +66,7 @@ public class RpcController extends BaseController {
     protected final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Autowired
-    private RpcService rpcService;
+    private DeviceRpcService deviceRpcService;
 
     @Autowired
     private AccessValidator accessValidator;
@@ -124,7 +124,7 @@ public class RpcController extends BaseController {
                             timeout,
                             body
                     );
-                    rpcService.process(rpcRequest, new LocalRequestMetaData(rpcRequest, currentUser, response));
+                    deviceRpcService.process(rpcRequest, new LocalRequestMetaData(rpcRequest, currentUser, response));
                 }
 
                 @Override
@@ -135,7 +135,7 @@ public class RpcController extends BaseController {
                     } else {
                         entity = new ResponseEntity(HttpStatus.UNAUTHORIZED);
                     }
-                    rpcService.logRpcCall(currentUser, deviceId, body, oneWay, Optional.empty(), e);
+                    deviceRpcService.logRpcCall(currentUser, deviceId, body, oneWay, Optional.empty(), e);
                     response.setResult(entity);
                 }
             });

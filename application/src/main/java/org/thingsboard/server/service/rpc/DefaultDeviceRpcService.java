@@ -18,7 +18,6 @@ package org.thingsboard.server.service.rpc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -34,7 +33,6 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.audit.AuditLogService;
-import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
@@ -58,7 +56,7 @@ import java.util.function.BiConsumer;
  */
 @Service
 @Slf4j
-public class DefaultRpcService implements RpcService {
+public class DefaultDeviceRpcService implements DeviceRpcService {
 
     private static final ObjectMapper jsonMapper = new ObjectMapper();
 
