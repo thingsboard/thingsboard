@@ -253,6 +253,13 @@ public class RuleChainController extends BaseController {
                         Set<String> states = engine.executeSwitch(inMsg);
                         output = objectMapper.writeValueAsString(states);
                         break;
+                    case "json":
+                        JsonNode json = engine.executeJson(inMsg);
+                        output = objectMapper.writeValueAsString(json);
+                        break;
+                    case "string":
+                        output = engine.executeToString(inMsg);
+                        break;
                     default:
                         throw new IllegalArgumentException("Unsupported script type: " + scriptType);
                 }

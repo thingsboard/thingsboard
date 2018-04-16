@@ -138,6 +138,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public ListeningExecutor getDbCallbackExecutor() {
+        return mainCtx.getDbCallbackExecutor();
+    }
+
+    @Override
     public ScriptEngine createJsScriptEngine(String script, String functionName, String... argNames) {
         return new NashornJsEngine(script, functionName, argNames);
     }

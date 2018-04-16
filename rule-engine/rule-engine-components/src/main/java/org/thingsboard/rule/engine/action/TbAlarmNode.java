@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.concurrent.ExecutorService;
+
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
 @Slf4j
@@ -47,7 +49,8 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
                 "If alarm was not created, original message is returned. Otherwise new Message returned with type 'ALARM', Alarm object in 'msg' property and 'matadata' will contains one of those properties 'isNewAlarm/isExistingAlarm/isClearedAlarm' " +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>" +
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"})
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbActionNodeAlarmConfig")
 
 public class TbAlarmNode implements TbNode {
 
@@ -81,7 +84,7 @@ public class TbAlarmNode implements TbNode {
             } else {
                 return checkForClearIfExist(ctx, msg);
             }
-        });
+        }, ctx.getDbCallbackExecutor());
 
         withCallback(transform,
                 alarmResult -> {
@@ -107,7 +110,7 @@ public class TbAlarmNode implements TbNode {
             } else {
                 return updateAlarm(ctx, msg, a);
             }
-        });
+        }, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<AlarmResult> checkForClearIfExist(TbContext ctx, TbMsg msg) {
@@ -117,12 +120,14 @@ public class TbAlarmNode implements TbNode {
                 return clearAlarm(ctx, msg, a);
             }
             return Futures.immediateFuture(new AlarmResult(false, false, false, null));
-        });
+        }, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<AlarmResult> createNewAlarm(TbContext ctx, TbMsg msg) {
-        ListenableFuture<Alarm> asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg), (Function<JsonNode, Alarm>) details -> buildAlarm(msg, details, ctx.getTenantId()));
-        ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm, (Function<Alarm, Alarm>) alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm));
+        ListenableFuture<Alarm> asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg),
+                (Function<JsonNode, Alarm>) details -> buildAlarm(msg, details, ctx.getTenantId()));
+        ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm,
+                (Function<Alarm, Alarm>) alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
         return Futures.transform(asyncCreated, (Function<Alarm, AlarmResult>) alarm -> new AlarmResult(true, false, false, alarm));
     }
 
@@ -133,7 +138,7 @@ public class TbAlarmNode implements TbNode {
             alarm.setDetails(details);
             alarm.setEndTs(System.currentTimeMillis());
             return ctx.getAlarmService().createOrUpdateAlarm(alarm);
-        });
+        }, ctx.getDbCallbackExecutor());
 
         return Futures.transform(asyncUpdated, (Function<Alarm, AlarmResult>) a -> new AlarmResult(false, true, false, a));
     }

@@ -15,40 +15,19 @@
  */
 package org.thingsboard.server.service.mail;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
+import org.thingsboard.server.service.executors.AbstractListeningExecutor;
 
 @Component
-public class MailExecutorService implements ListeningExecutor {
+public class MailExecutorService extends AbstractListeningExecutor {
 
     @Value("${actors.rule.mail_thread_pool_size}")
     private int mailExecutorThreadPoolSize;
 
-    private ListeningExecutorService service;
-
-    @PostConstruct
-    public void init() {
-        this.service = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(mailExecutorThreadPoolSize));
-    }
-
-    @PreDestroy
-    public void destroy() {
-        if (this.service != null) {
-            this.service.shutdown();
-        }
-    }
-
     @Override
-    public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
-        return service.submit(task);
+    protected int getThreadPollSize() {
+        return mailExecutorThreadPoolSize;
     }
+
 }

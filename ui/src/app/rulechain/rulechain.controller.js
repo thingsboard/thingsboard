@@ -62,6 +62,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     vm.isEditingRuleNodeLink = false;
 
     vm.isLibraryOpen = true;
+    vm.enableHotKeys = true;
 
     Object.defineProperty(vm, 'isLibraryOpenReadonly', {
         get: function() { return vm.isLibraryOpen },
@@ -327,8 +328,10 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 description: $translate.instant('rulenode.select-all-objects'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
-                    event.preventDefault();
-                    vm.modelservice.selectAll();
+                    if (vm.enableHotKeys) {
+                        event.preventDefault();
+                        vm.modelservice.selectAll();
+                    }
                 }
             })
             .add({
@@ -336,8 +339,10 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 description: $translate.instant('rulenode.copy-selected'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
-                    event.preventDefault();
-                    copyRuleNodes();
+                    if (vm.enableHotKeys) {
+                        event.preventDefault();
+                        copyRuleNodes();
+                    }
                 }
             })
             .add({
@@ -345,9 +350,11 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 description: $translate.instant('action.paste'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
-                    event.preventDefault();
-                    if (itembuffer.hasRuleNodes()) {
-                        pasteRuleNodes();
+                    if (vm.enableHotKeys) {
+                        event.preventDefault();
+                        if (itembuffer.hasRuleNodes()) {
+                            pasteRuleNodes();
+                        }
                     }
                 }
             })
@@ -356,9 +363,11 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 description: $translate.instant('rulenode.deselect-all-objects'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    vm.modelservice.deselectAll();
+                    if (vm.enableHotKeys) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        vm.modelservice.deselectAll();
+                    }
                 }
             })
             .add({
@@ -366,8 +375,10 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 description: $translate.instant('action.apply'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
-                    event.preventDefault();
-                    vm.saveRuleChain();
+                    if (vm.enableHotKeys) {
+                        event.preventDefault();
+                        vm.saveRuleChain();
+                    }
                 }
             })
             .add({
@@ -375,8 +386,10 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 description: $translate.instant('action.decline-changes'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
-                    event.preventDefault();
-                    vm.revertRuleChain();
+                    if (vm.enableHotKeys) {
+                        event.preventDefault();
+                        vm.revertRuleChain();
+                    }
                 }
             })
             .add({
@@ -384,8 +397,10 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 description: $translate.instant('rulenode.delete-selected-objects'),
                 allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
                 callback: function (event) {
-                    event.preventDefault();
-                    vm.modelservice.deleteSelected();
+                    if (vm.enableHotKeys) {
+                        event.preventDefault();
+                        vm.modelservice.deleteSelected();
+                    }
                 }
             })
     }
@@ -574,6 +589,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     $scope.$watch(function() {
         return vm.isEditingRuleNode || vm.isEditingRuleNodeLink;
     }, (val) => {
+        vm.enableHotKeys = !val;
         updateErrorTooltips(val);
     });
 
@@ -605,12 +621,15 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 }
             } else {
                 var labels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+                vm.enableHotKeys = false;
                 addRuleNodeLink(event, edge, labels).then(
                     (link) => {
                         deferred.resolve(link);
+                        vm.enableHotKeys = true;
                     },
                     () => {
                         deferred.reject();
+                        vm.enableHotKeys = true;
                     }
                 );
             }
@@ -1159,6 +1178,8 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
         var ruleChainId = vm.ruleChain.id ? vm.ruleChain.id.id : null;
 
+        vm.enableHotKeys = false;
+
         $mdDialog.show({
             controller: 'AddRuleNodeController',
             controllerAs: 'vm',
@@ -1188,7 +1209,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             }
             vm.ruleChainModel.nodes.push(ruleNode);
             updateRuleNodesHighlight();
+            vm.enableHotKeys = true;
         }, function () {
+            vm.enableHotKeys = true;
         });
     }
 
