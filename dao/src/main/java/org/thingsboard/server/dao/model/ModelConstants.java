@@ -350,6 +350,7 @@ public class ModelConstants {
      * Cassandra rule node constants.
      */
     public static final String RULE_NODE_COLUMN_FAMILY_NAME = "rule_node";
+    public static final String RULE_NODE_CHAIN_ID_PROPERTY = "rule_chain_id";
     public static final String RULE_NODE_TYPE_PROPERTY = "type";
     public static final String RULE_NODE_NAME_PROPERTY = "name";
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";

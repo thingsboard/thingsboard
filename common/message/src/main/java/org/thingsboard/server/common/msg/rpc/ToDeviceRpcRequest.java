@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.plugins.msg;
+package org.thingsboard.server.common.msg.rpc;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * @author Andrew Shvayka
  */
 @Data
-public class ToDeviceRpcRequestBody implements Serializable {
-    private final String method;
-    private final String params;
+public class ToDeviceRpcRequest implements Serializable {
+    private final UUID id;
+    private final TenantId tenantId;
+    private final DeviceId deviceId;
+    private final boolean oneway;
+    private final long expirationTime;
+    private final ToDeviceRpcRequestBody body;
 }
+

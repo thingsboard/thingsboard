@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.core.plugin.rpc.cmd;
+package org.thingsboard.server.service.rpc;
 
 import lombok.Data;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 /**
- * @author Andrew Shvayka
+ * Created by ashvayka on 16.04.18.
  */
 @Data
-public class RpcRequest {
-    private final String methodName;
-    private final String requestData;
-    private Long timeout;
+public class LocalRequestMetaData {
+    private final ToDeviceRpcRequest request;
+    private final SecurityUser user;
+    private final DeferredResult<ResponseEntity> responseWriter;
 }

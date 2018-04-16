@@ -20,11 +20,13 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequestPluginMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginRpcResponseDeviceMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestMsg;
 
 import java.util.UUID;
 
@@ -41,7 +43,7 @@ public interface ClusterRpcService {
 
     void tell(ServerAddress serverAddress, ToDeviceActorNotificationMsg toForward);
 
-    void tell(ServerAddress serverAddress, ToDeviceRpcRequestPluginMsg toForward);
+    void tell(ServerAddress serverAddress, ToDeviceRpcRequestMsg toForward);
 
     void tell(ServerAddress serverAddress, ToPluginRpcResponseDeviceMsg toForward);
 
@@ -50,4 +52,5 @@ public interface ClusterRpcService {
     void broadcast(ToAllNodesMsg msg);
 
     void onSessionCreated(UUID msgUid, StreamObserver<ClusterAPIProtos.ToRpcServerMessage> inputStream);
+
 }

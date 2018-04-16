@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.thingsboard.server.dao.rule;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -124,6 +123,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
         for (RuleNode node : toAddOrUpdate) {
+            node.setRuleChainId(ruleChain.getId());
             RuleNode savedNode = ruleNodeDao.save(node);
             try {
                 createRelation(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
@@ -137,7 +137,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             nodes.set(index, savedNode);
             ruleNodeIndexMap.put(savedNode.getId(), index);
         }
-        for (RuleNode node: toDelete) {
+        for (RuleNode node : toDelete) {
             deleteRuleNode(node.getId());
         }
         RuleNodeId firstRuleNodeId = null;
@@ -231,6 +231,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public ListenableFuture<RuleChain> findRuleChainByIdAsync(RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
         return ruleChainDao.findByIdAsync(ruleChainId.getId());
+    }
+
+    @Override
+    public ListenableFuture<RuleNode> findRuleNodeByIdAsync(RuleNodeId ruleNodeId) {
+        Validator.validateId(ruleNodeId, "Incorrect rule node id for search request.");
+        return ruleNodeDao.findByIdAsync(ruleNodeId.getId());
     }
 
     @Override

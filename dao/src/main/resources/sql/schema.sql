@@ -270,6 +270,7 @@ CREATE TABLE IF NOT EXISTS rule_chain (
 
 CREATE TABLE IF NOT EXISTS rule_node (
     id varchar(31) NOT NULL CONSTRAINT rule_node_pkey PRIMARY KEY,
+    rule_chain_id varchar(31),
     additional_info varchar,
     configuration varchar(10000000),
     type varchar(255),

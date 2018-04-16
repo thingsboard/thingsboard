@@ -36,9 +36,11 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginApiCallSecurityContext;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
@@ -348,7 +350,7 @@ public final class PluginProcessingContext implements PluginContext {
                     throw new IllegalStateException("Not Implemented!");
             }
         } else {
-            callback.onSuccess(this, ValidationResult.ok());
+            callback.onSuccess(this, ValidationResult.ok(null));
         }
     }
 
@@ -366,7 +368,7 @@ public final class PluginProcessingContext implements PluginContext {
                     } else if (ctx.isCustomerUser() && !device.getCustomerId().equals(ctx.getCustomerId())) {
                         return ValidationResult.accessDenied("Device doesn't belong to the current Customer!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(null);
                     }
                 }
             }));
@@ -387,7 +389,7 @@ public final class PluginProcessingContext implements PluginContext {
                     } else if (ctx.isCustomerUser() && !asset.getCustomerId().equals(ctx.getCustomerId())) {
                         return ValidationResult.accessDenied("Asset doesn't belong to the current Customer!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(null);
                     }
                 }
             }));
@@ -408,7 +410,7 @@ public final class PluginProcessingContext implements PluginContext {
                     } else if (ctx.isSystemAdmin() && !rule.getTenantId().isNullUid()) {
                         return ValidationResult.accessDenied("Rule is not in system scope!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(null);
                     }
                 }
             }));
@@ -429,7 +431,7 @@ public final class PluginProcessingContext implements PluginContext {
                     } else if (ctx.isSystemAdmin() && !ruleChain.getTenantId().isNullUid()) {
                         return ValidationResult.accessDenied("Rule chain is not in system scope!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(null);
                     }
                 }
             }));
@@ -451,7 +453,7 @@ public final class PluginProcessingContext implements PluginContext {
                     } else if (ctx.isSystemAdmin() && !plugin.getTenantId().isNullUid()) {
                         return ValidationResult.accessDenied("Plugin is not in system scope!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(null);
                     }
                 }
             }));
@@ -472,7 +474,7 @@ public final class PluginProcessingContext implements PluginContext {
                     } else if (ctx.isCustomerUser() && !customer.getId().equals(ctx.getCustomerId())) {
                         return ValidationResult.accessDenied("Customer doesn't relate to the currently authorized customer user!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(null);
                     }
                 }
             }));
@@ -483,7 +485,7 @@ public final class PluginProcessingContext implements PluginContext {
         if (ctx.isCustomerUser()) {
             callback.onSuccess(this, ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else if (ctx.isSystemAdmin()) {
-            callback.onSuccess(this, ValidationResult.ok());
+            callback.onSuccess(this, ValidationResult.ok(null));
         } else {
             ListenableFuture<Tenant> tenantFuture = pluginCtx.tenantService.findTenantByIdAsync(new TenantId(entityId.getId()));
             Futures.addCallback(tenantFuture, getCallback(callback, tenant -> {
@@ -492,7 +494,7 @@ public final class PluginProcessingContext implements PluginContext {
                 } else if (!tenant.getId().equals(ctx.getTenantId())) {
                     return ValidationResult.accessDenied("Tenant doesn't relate to the currently authorized user!");
                 } else {
-                    return ValidationResult.ok();
+                    return ValidationResult.ok(null);
                 }
             }));
         }

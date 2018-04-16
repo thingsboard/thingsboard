@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.plugins.msg;
+package org.thingsboard.server.service.rpc;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
@@ -28,22 +27,18 @@ import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg
 import java.util.Optional;
 
 /**
- * @author Andrew Shvayka
+ * Created by ashvayka on 16.04.18.
  */
 @ToString
 @RequiredArgsConstructor
-public class ToDeviceRpcRequestPluginMsg implements ToDeviceActorNotificationMsg {
+public class ToDeviceRpcRequestMsg implements ToDeviceActorNotificationMsg {
 
     private final ServerAddress serverAddress;
     @Getter
-    private final PluginId pluginId;
-    @Getter
-    private final TenantId pluginTenantId;
-    @Getter
     private final ToDeviceRpcRequest msg;
 
-    public ToDeviceRpcRequestPluginMsg(PluginId pluginId, TenantId pluginTenantId, ToDeviceRpcRequest msg) {
-        this(null, pluginId, pluginTenantId, msg);
+    public ToDeviceRpcRequestMsg(ToDeviceRpcRequest msg) {
+        this(null, msg);
     }
 
     public Optional<ServerAddress> getServerAddress() {
@@ -60,4 +55,3 @@ public class ToDeviceRpcRequestPluginMsg implements ToDeviceActorNotificationMsg
         return msg.getTenantId();
     }
 }
-

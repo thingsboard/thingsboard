@@ -684,6 +684,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.rule_chain_by_tenant_and_sear
 
 CREATE TABLE IF NOT EXISTS  thingsboard.rule_node (
     id uuid,
+    rule_chain_id uuid,
     type text,
     name text,
     debug_mode boolean,

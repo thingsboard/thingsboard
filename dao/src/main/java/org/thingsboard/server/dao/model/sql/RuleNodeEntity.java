@@ -21,8 +21,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -38,6 +40,9 @@ import javax.persistence.Table;
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.RULE_NODE_COLUMN_FAMILY_NAME)
 public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTextEntity<RuleNode> {
+
+    @Column(name = ModelConstants.RULE_NODE_CHAIN_ID_PROPERTY)
+    private String ruleChainId;
 
     @Column(name = ModelConstants.RULE_NODE_TYPE_PROPERTY)
     private String type;
@@ -66,6 +71,9 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
         if (ruleNode.getId() != null) {
             this.setId(ruleNode.getUuidId());
         }
+        if (ruleNode.getRuleChainId() != null) {
+            this.ruleChainId = toString(DaoUtil.getId(ruleNode.getRuleChainId()));
+        }
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
         this.debugMode = ruleNode.isDebugMode();
@@ -88,6 +96,9 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> implements SearchTex
     public RuleNode toData() {
         RuleNode ruleNode = new RuleNode(new RuleNodeId(getId()));
         ruleNode.setCreatedTime(UUIDs.unixTimestamp(getId()));
+        if (ruleChainId != null) {
+            ruleNode.setRuleChainId(new RuleChainId(toUUID(ruleChainId)));
+        }
         ruleNode.setType(type);
         ruleNode.setName(name);
         ruleNode.setDebugMode(debugMode);

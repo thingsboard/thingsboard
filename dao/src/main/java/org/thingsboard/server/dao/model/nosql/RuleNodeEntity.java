@@ -24,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -41,6 +42,8 @@ public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
     @PartitionKey
     @Column(name = ID_PROPERTY)
     private UUID id;
+    @Column(name = RULE_NODE_CHAIN_ID_PROPERTY)
+    private UUID ruleChainId;
     @Column(name = RULE_NODE_TYPE_PROPERTY)
     private String type;
     @Column(name = RULE_NODE_NAME_PROPERTY)
@@ -56,13 +59,15 @@ public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
     @Column(name = DEBUG_MODE)
     private boolean debugMode;
 
-
     public RuleNodeEntity() {
     }
 
     public RuleNodeEntity(RuleNode ruleNode) {
         if (ruleNode.getId() != null) {
             this.id = ruleNode.getUuidId();
+        }
+        if (ruleNode.getRuleChainId() != null) {
+            this.ruleChainId = ruleNode.getRuleChainId().getId();
         }
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
@@ -90,6 +95,14 @@ public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
     @Override
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UUID getRuleChainId() {
+        return ruleChainId;
+    }
+
+    public void setRuleChainId(UUID ruleChainId) {
+        this.ruleChainId = ruleChainId;
     }
 
     public String getType() {
@@ -132,6 +145,9 @@ public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
     public RuleNode toData() {
         RuleNode ruleNode = new RuleNode(new RuleNodeId(id));
         ruleNode.setCreatedTime(UUIDs.unixTimestamp(id));
+        if (this.ruleChainId != null) {
+            ruleNode.setRuleChainId(new RuleChainId(this.ruleChainId));
+        }
         ruleNode.setType(this.type);
         ruleNode.setName(this.name);
         ruleNode.setDebugMode(this.debugMode);
