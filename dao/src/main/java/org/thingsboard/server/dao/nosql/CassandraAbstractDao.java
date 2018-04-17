@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.model.type.*;
+import org.thingsboard.server.dao.util.BufferedRateLimiter;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,16 +34,15 @@ public abstract class CassandraAbstractDao {
 
     private ConcurrentMap<String, PreparedStatement> preparedStatementMap = new ConcurrentHashMap<>();
 
-    protected PreparedStatement prepare(String query) {
-        return preparedStatementMap.computeIfAbsent(query, i -> getSession().prepare(i));
-    }
+    @Autowired
+    private BufferedRateLimiter rateLimiter;
 
     private Session session;
 
     private ConsistencyLevel defaultReadLevel;
     private ConsistencyLevel defaultWriteLevel;
 
-    protected Session getSession() {
+    private Session getSession() {
         if (session == null) {
             session = cluster.getSession();
             defaultReadLevel = cluster.getDefaultReadConsistencyLevel();
@@ -57,6 +57,10 @@ public abstract class CassandraAbstractDao {
             registerCodecIfNotFound(registry, new EntityTypeCodec());
         }
         return session;
+    }
+
+    protected PreparedStatement prepare(String query) {
+        return preparedStatementMap.computeIfAbsent(query, i -> getSession().prepare(i));
     }
 
     private void registerCodecIfNotFound(CodecRegistry registry, TypeCodec<?> codec) {
@@ -85,10 +89,7 @@ public abstract class CassandraAbstractDao {
 
     private ResultSet execute(Statement statement, ConsistencyLevel level) {
         log.debug("Execute cassandra statement {}", statement);
-        if (statement.getConsistencyLevel() == null) {
-            statement.setConsistencyLevel(level);
-        }
-        return getSession().execute(statement);
+        return executeAsync(statement, level).getUninterruptibly();
     }
 
     private ResultSetFuture executeAsync(Statement statement, ConsistencyLevel level) {
@@ -96,6 +97,6 @@ public abstract class CassandraAbstractDao {
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
-        return getSession().executeAsync(statement);
+        return new RateLimitedResultSetFuture(getSession(), rateLimiter, statement);
     }
 }

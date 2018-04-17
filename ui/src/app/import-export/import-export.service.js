@@ -26,7 +26,7 @@ import entityAliasesTemplate from '../entity/alias/entity-aliases.tpl.html';
 /*@ngInject*/
 export default function ImportExport($log, $translate, $q, $mdDialog, $document, $http, itembuffer, utils, types,
                                      dashboardUtils, entityService, dashboardService, pluginService, ruleService,
-                                     widgetService, toast, attributeService) {
+                                     ruleChainService, widgetService, toast, attributeService) {
 
 
     var service = {
@@ -38,6 +38,8 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         importPlugin: importPlugin,
         exportRule: exportRule,
         importRule: importRule,
+        exportRuleChain: exportRuleChain,
+        importRuleChain: importRuleChain,
         exportWidgetType: exportWidgetType,
         importWidgetType: importWidgetType,
         exportWidgetsBundle: exportWidgetsBundle,
@@ -270,6 +272,89 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
             || angular.isUndefined(rule.filters)
             || angular.isUndefined(rule.action))
         {
+            return false;
+        }
+        return true;
+    }
+
+    // Rule chain functions
+
+    function exportRuleChain(ruleChainId) {
+        ruleChainService.getRuleChain(ruleChainId).then(
+            (ruleChain) => {
+                ruleChainService.getRuleChainMetaData(ruleChainId).then(
+                    (ruleChainMetaData) => {
+                        var ruleChainExport = {
+                            ruleChain: prepareRuleChain(ruleChain),
+                            metadata: prepareRuleChainMetaData(ruleChainMetaData)
+                        };
+                        var name = ruleChain.name;
+                        name = name.toLowerCase().replace(/\W/g,"_");
+                        exportToPc(ruleChainExport, name + '.json');
+                    },
+                    (rejection) => {
+                        processExportRuleChainRejection(rejection);
+                    }
+                );
+            },
+            (rejection) => {
+                processExportRuleChainRejection(rejection);
+            }
+        );
+    }
+
+    function prepareRuleChain(ruleChain) {
+        ruleChain = prepareExport(ruleChain);
+        if (ruleChain.firstRuleNodeId) {
+            ruleChain.firstRuleNodeId = null;
+        }
+        ruleChain.root = false;
+        return ruleChain;
+    }
+
+    function prepareRuleChainMetaData(ruleChainMetaData) {
+        delete ruleChainMetaData.ruleChainId;
+        for (var i=0;i<ruleChainMetaData.nodes.length;i++) {
+            var node = ruleChainMetaData.nodes[i];
+            ruleChainMetaData.nodes[i] = prepareExport(node);
+        }
+        return ruleChainMetaData;
+    }
+
+    function processExportRuleChainRejection(rejection) {
+        var message = rejection;
+        if (!message) {
+            message = $translate.instant('error.unknown-error');
+        }
+        toast.showError($translate.instant('rulechain.export-failed-error', {error: message}));
+    }
+
+    function importRuleChain($event) {
+        var deferred = $q.defer();
+        openImportDialog($event, 'rulechain.import', 'rulechain.rulechain-file').then(
+            function success(ruleChainImport) {
+                if (!validateImportedRuleChain(ruleChainImport)) {
+                    toast.showError($translate.instant('rulechain.invalid-rulechain-file-error'));
+                    deferred.reject();
+                } else {
+                    deferred.resolve(ruleChainImport);
+                }
+            },
+            function fail() {
+                deferred.reject();
+            }
+        );
+        return deferred.promise;
+    }
+
+    function validateImportedRuleChain(ruleChainImport) {
+        if (angular.isUndefined(ruleChainImport.ruleChain)) {
+            return false;
+        }
+        if (angular.isUndefined(ruleChainImport.metadata)) {
+            return false;
+        }
+        if (angular.isUndefined(ruleChainImport.ruleChain.name)) {
             return false;
         }
         return true;

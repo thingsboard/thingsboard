@@ -19,20 +19,30 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
+import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryFeature;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryRpcMsgHandler;
 import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryWebsocketMsgHandler;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.Subscription;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionState;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionType;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionUpdate;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -70,7 +80,7 @@ public class SubscriptionManager {
         EntityId entityId = subscription.getEntityId();
         log.trace("[{}] Registering remote subscription [{}] for device [{}] to [{}]", sessionId, subscription.getSubscriptionId(), entityId, address);
         registerSubscription(sessionId, entityId, subscription);
-        if (subscription.getType() == SubscriptionType.ATTRIBUTES) {
+        if (subscription.getType() == TelemetryFeature.ATTRIBUTES) {
             final Map<String, Long> keyStates = subscription.getKeyStates();
             ctx.loadAttributes(entityId, DataConstants.CLIENT_SCOPE, keyStates.keySet(), new PluginCallback<List<AttributeKvEntry>>() {
                 @Override
@@ -91,7 +101,7 @@ public class SubscriptionManager {
                     log.error("Failed to fetch missed updates.", e);
                 }
             });
-        } else if (subscription.getType() == SubscriptionType.TIMESERIES) {
+        } else if (subscription.getType() == TelemetryFeature.TIMESERIES) {
             long curTs = System.currentTimeMillis();
             List<TsKvQuery> queries = new ArrayList<>();
             subscription.getKeyStates().entrySet().forEach(e -> {
@@ -175,7 +185,7 @@ public class SubscriptionManager {
         }
     }
 
-    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f) {
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, TelemetryFeature type, Function<Subscription, List<TsKvEntry>> f) {
         onLocalSubscriptionUpdate(ctx, entityId, s -> type == s.getType(), f);
     }
 
@@ -212,7 +222,7 @@ public class SubscriptionManager {
     public void onAttributesUpdateFromServer(PluginContext ctx, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         Optional<ServerAddress> serverAddress = ctx.resolve(entityId);
         if (!serverAddress.isPresent()) {
-            onLocalSubscriptionUpdate(ctx, entityId, s -> SubscriptionType.ATTRIBUTES == s.getType() && (StringUtils.isEmpty(s.getScope()) || scope.equals(s.getScope())), s -> {
+            onLocalSubscriptionUpdate(ctx, entityId, s -> TelemetryFeature.ATTRIBUTES == s.getType() && (StringUtils.isEmpty(s.getScope()) || scope.equals(s.getScope())), s -> {
                 List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
                 for (AttributeKvEntry kv : attributes) {
                     if (s.isAllKeys() || s.getKeyStates().containsKey(kv.getKey())) {
@@ -229,7 +239,7 @@ public class SubscriptionManager {
     public void onTimeseriesUpdateFromServer(PluginContext ctx, EntityId entityId, List<TsKvEntry> entries) {
         Optional<ServerAddress> serverAddress = ctx.resolve(entityId);
         if (!serverAddress.isPresent()) {
-            onLocalSubscriptionUpdate(ctx, entityId, SubscriptionType.TIMESERIES, s -> {
+            onLocalSubscriptionUpdate(ctx, entityId, TelemetryFeature.TIMESERIES, s -> {
                 List<TsKvEntry> subscriptionUpdate = new ArrayList<TsKvEntry>();
                 for (TsKvEntry kv : entries) {
                     if (s.isAllKeys() || s.getKeyStates().containsKey((kv.getKey()))) {
@@ -344,9 +354,7 @@ public class SubscriptionManager {
     }
 
     private void checkSubsciptionsPrevAddress(Set<Subscription> subscriptions) {
-        Iterator<Subscription> subscriptionIterator = subscriptions.iterator();
-        while (subscriptionIterator.hasNext()) {
-            Subscription s = subscriptionIterator.next();
+        for (Subscription s : subscriptions) {
             if (s.isLocal()) {
                 if (s.getServer() != null) {
                     log.trace("[{}] Local subscription is no longer handled on remote server address [{}]", s.getWsSessionId(), s.getServer());

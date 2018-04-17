@@ -16,6 +16,7 @@
 
 package org.thingsboard.server.dao.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,9 @@ import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -147,7 +150,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ruleChainDao.save(ruleChain);
         }
         if (ruleChainMetaData.getConnections() != null) {
-            for (RuleChainMetaData.NodeConnectionInfo nodeConnection : ruleChainMetaData.getConnections()) {
+            for (NodeConnectionInfo nodeConnection : ruleChainMetaData.getConnections()) {
                 EntityId from = nodes.get(nodeConnection.getFromIndex()).getId();
                 EntityId to = nodes.get(nodeConnection.getToIndex()).getId();
                 String type = nodeConnection.getType();
@@ -160,12 +163,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
         if (ruleChainMetaData.getRuleChainConnections() != null) {
-            for (RuleChainMetaData.RuleChainConnectionInfo nodeToRuleChainConnection : ruleChainMetaData.getRuleChainConnections()) {
+            for (RuleChainConnectionInfo nodeToRuleChainConnection : ruleChainMetaData.getRuleChainConnections()) {
                 EntityId from = nodes.get(nodeToRuleChainConnection.getFromIndex()).getId();
                 EntityId to = nodeToRuleChainConnection.getTargetRuleChainId();
                 String type = nodeToRuleChainConnection.getType();
                 try {
-                    createRelation(new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE));
+                    createRelation(new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE, nodeToRuleChainConnection.getAdditionalInfo()));
                 } catch (ExecutionException | InterruptedException e) {
                     log.warn("[{}] Failed to create rule node to rule chain relation. from: [{}], to: [{}]", from, to);
                     throw new RuntimeException(e);
@@ -205,7 +208,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     ruleChainMetaData.addConnectionInfo(fromIndex, toIndex, type);
                 } else if (nodeRelation.getTo().getEntityType() == EntityType.RULE_CHAIN) {
                     RuleChainId targetRuleChainId = new RuleChainId(nodeRelation.getTo().getId());
-                    ruleChainMetaData.addRuleChainConnectionInfo(fromIndex, targetRuleChainId, type);
+                    ruleChainMetaData.addRuleChainConnectionInfo(fromIndex, targetRuleChainId, type, nodeRelation.getAdditionalInfo());
                 }
             }
         }
@@ -216,6 +219,18 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public RuleChain findRuleChainById(RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
         return ruleChainDao.findById(ruleChainId.getId());
+    }
+
+    @Override
+    public RuleNode findRuleNodeById(RuleNodeId ruleNodeId) {
+        Validator.validateId(ruleNodeId, "Incorrect rule node id for search request.");
+        return ruleNodeDao.findById(ruleNodeId.getId());
+    }
+
+    @Override
+    public ListenableFuture<RuleChain> findRuleChainByIdAsync(RuleChainId ruleChainId) {
+        Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
+        return ruleChainDao.findByIdAsync(ruleChainId.getId());
     }
 
     @Override
@@ -301,7 +316,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     private void createRelation(EntityRelation relation) throws ExecutionException, InterruptedException {
         log.debug("Creating relation: {}", relation);
-        relationService.saveRelationAsync(relation).get();
+        relationService.saveRelation(relation);
     }
 
     private DataValidator<RuleChain> ruleChainValidator =
@@ -318,7 +333,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         }
                         if (ruleChain.isRoot()) {
                             RuleChain rootRuleChain = getRootTenantRuleChain(ruleChain.getTenantId());
-                            if (ruleChain.getId() == null || !ruleChain.getId().equals(rootRuleChain.getId())) {
+                            if (rootRuleChain != null && !rootRuleChain.getId().equals(ruleChain.getId())) {
                                 throw new DataValidationException("Another root rule chain is present in scope of current tenant!");
                             }
                         }

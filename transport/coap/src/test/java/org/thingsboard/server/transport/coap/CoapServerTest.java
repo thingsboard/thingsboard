@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.coap;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
@@ -31,6 +32,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.device.DeviceStatusQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -51,6 +53,7 @@ import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthResult;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.QuotaService;
+import org.thingsboard.server.dao.device.DeviceOfflineService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +139,31 @@ public class CoapServerTest {
         @Bean
         public static QuotaService quotaService() {
             return key -> false;
+        }
+
+        @Bean
+        public static DeviceOfflineService offlineService() {
+            return new DeviceOfflineService() {
+                @Override
+                public void online(Device device, boolean isUpdate) {
+
+                }
+
+                @Override
+                public void offline(Device device) {
+
+                }
+
+                @Override
+                public ListenableFuture<List<Device>> findOfflineDevices(UUID tenantId, DeviceStatusQuery.ContactType contactType, long offlineThreshold) {
+                    return null;
+                }
+
+                @Override
+                public ListenableFuture<List<Device>> findOnlineDevices(UUID tenantId, DeviceStatusQuery.ContactType contactType, long offlineThreshold) {
+                    return null;
+                }
+            };
         }
     }
 

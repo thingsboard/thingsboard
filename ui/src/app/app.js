@@ -49,6 +49,7 @@ import 'material-ui';
 import 'react-schema-form';
 import react from 'ngreact';
 import '@flowjs/ng-flow/dist/ng-flow-standalone.min';
+import 'ngFlowchart/dist/ngFlowchart';
 
 import thingsboardLocales from './locale/locale.constant';
 import thingsboardLogin from './login';
@@ -73,6 +74,7 @@ import thingsboardApiAttribute from './api/attribute.service';
 import thingsboardApiEntity from './api/entity.service';
 import thingsboardApiAlarm from './api/alarm.service';
 import thingsboardApiAuditLog from './api/audit-log.service';
+import thingsboardApiRuleChain from './api/rule-chain.service';
 
 import 'typeface-roboto';
 import 'font-awesome/css/font-awesome.min.css';
@@ -85,6 +87,7 @@ import 'mdPickers/dist/mdPickers.min.css';
 import 'angular-hotkeys/build/hotkeys.min.css';
 import 'angular-carousel/dist/angular-carousel.min.css';
 import 'angular-material-expansion-panel/dist/md-expansion-panel.min.css';
+import 'ngFlowchart/dist/flowchart.css';
 import '../scss/main.scss';
 
 import AppConfig from './app.config';
@@ -112,6 +115,7 @@ angular.module('thingsboard', [
     'ngclipboard',
     react.name,
     'flow',
+    'flowchart',
     thingsboardLocales,
     thingsboardLogin,
     thingsboardDialogs,
@@ -135,6 +139,7 @@ angular.module('thingsboard', [
     thingsboardApiEntity,
     thingsboardApiAlarm,
     thingsboardApiAuditLog,
+    thingsboardApiRuleChain,
     uiRouter])
     .config(AppConfig)
     .factory('globalInterceptor', GlobalInterceptor)

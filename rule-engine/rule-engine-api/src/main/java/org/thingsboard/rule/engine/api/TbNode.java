@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutionException;
  */
 public interface TbNode {
 
-    void init(TbNodeConfiguration configuration, TbNodeState state) throws TbNodeException;
+    void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException;
 
     void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException;
 

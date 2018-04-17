@@ -143,6 +143,12 @@ export default function EntityAutocomplete($compile, $templateCache, $q, $filter
                     scope.noEntitiesMatchingText = 'plugin.no-plugins-matching';
                     scope.entityRequiredText = 'plugin.plugin-required';
                     break;
+                case types.entityType.rulechain:
+                    scope.selectEntityText = 'rulechain.select-rulechain';
+                    scope.entityText = 'rulechain.rulechain';
+                    scope.noEntitiesMatchingText = 'rulechain.no-rulechains-matching';
+                    scope.entityRequiredText = 'rulechain.rulechain-required';
+                    break;
                 case types.entityType.tenant:
                     scope.selectEntityText = 'tenant.select-tenant';
                     scope.entityText = 'tenant.tenant';

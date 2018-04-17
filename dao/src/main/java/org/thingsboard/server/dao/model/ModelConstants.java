@@ -133,6 +133,8 @@ public class ModelConstants {
     public static final String DEVICE_NAME_PROPERTY = "name";
     public static final String DEVICE_TYPE_PROPERTY = "type";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String DEVICE_LAST_CONNECT_PROPERTY = "last_connect";
+    public static final String DEVICE_LAST_UPDATE_PROPERTY = "last_update";
 
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
@@ -331,6 +333,8 @@ public class ModelConstants {
 
     public static final String EVENT_BY_TYPE_AND_ID_VIEW_NAME = "event_by_type_and_id";
     public static final String EVENT_BY_ID_VIEW_NAME = "event_by_id";
+
+    public static final String DEBUG_MODE = "debug_mode";
 
     /**
      * Cassandra rule chain constants.

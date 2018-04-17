@@ -20,6 +20,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryFeature;
 
 import java.util.Map;
 
@@ -47,7 +48,7 @@ public class Subscription {
         return getSub().getEntityId();
     }
 
-    public SubscriptionType getType() {
+    public TelemetryFeature getType() {
         return getSub().getType();
     }
 

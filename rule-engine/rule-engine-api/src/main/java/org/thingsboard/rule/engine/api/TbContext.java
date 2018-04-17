@@ -15,11 +15,23 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.plugin.PluginService;
+import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.user.UserService;
 
-import java.util.UUID;
+import java.util.Set;
 
 /**
  * Created by ashvayka on 13.01.18.
@@ -30,6 +42,8 @@ public interface TbContext {
 
     void tellNext(TbMsg msg, String relationType);
 
+    void tellNext(TbMsg msg, Set<String> relationTypes);
+
     void tellSelf(TbMsg msg, long delayMs);
 
     void tellOthers(TbMsg msg);
@@ -38,8 +52,46 @@ public interface TbContext {
 
     void spawn(TbMsg msg);
 
-    void ack(UUID msg);
+    void ack(TbMsg msg);
+
+    void tellError(TbMsg msg, Throwable th);
+
+    void updateSelf(RuleNode self);
+
+    RuleNodeId getSelfId();
+
+    TenantId getTenantId();
 
     AttributesService getAttributesService();
+
+    CustomerService getCustomerService();
+
+    UserService getUserService();
+
+    PluginService getPluginService();
+
+    AssetService getAssetService();
+
+    DeviceService getDeviceService();
+
+    AlarmService getAlarmService();
+
+    RuleChainService getRuleChainService();
+
+    RuleEngineTelemetryService getTelemetryService();
+
+    TimeseriesService getTimeseriesService();
+
+    RelationService getRelationService();
+
+    ListeningExecutor getJsExecutor();
+
+    ListeningExecutor getMailExecutor();
+
+    ListeningExecutor getDbCallbackExecutor();
+
+    MailService getMailService();
+
+    ScriptEngine createJsScriptEngine(String script, String functionName, String... argNames);
 
 }

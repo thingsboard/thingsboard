@@ -203,6 +203,12 @@ md-sidenav {
  * THINGSBOARD SPECIFIC
  ***********************/
 
+$swift-ease-out-duration: 0.4s !default;
+$swift-ease-out-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
+
+$input-label-float-offset: 6px !default;
+$input-label-float-scale: 0.75 !default;
+
 label {
   &.tb-title {
     pointer-events: none;
@@ -212,6 +218,18 @@ label {
     padding-bottom: 15px;
     &.no-padding {
       padding-bottom: 0px;
+    }
+    &.tb-required:after {
+      content: ' *';
+      font-size: 13px;
+      vertical-align: top;
+      color: rgba(0,0,0,0.54);
+    }
+    &.tb-error {
+      color: rgb(221,44,0);
+      &.tb-required:after {
+        color: rgb(221,44,0);
+      }
     }
   }
 }

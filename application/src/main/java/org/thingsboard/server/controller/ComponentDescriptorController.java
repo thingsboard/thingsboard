@@ -19,9 +19,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api")
@@ -46,6 +48,22 @@ public class ComponentDescriptorController extends BaseController {
         checkParameter("componentType", strComponentType);
         try {
             return checkComponentDescriptorsByType(ComponentType.valueOf(strComponentType));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
+    @RequestMapping(value = "/components", params = {"componentTypes"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<ComponentDescriptor> getComponentDescriptorsByTypes(@RequestParam("componentTypes") String[] strComponentTypes) throws ThingsboardException {
+        checkArrayParameter("componentTypes", strComponentTypes);
+        try {
+            Set<ComponentType> componentTypes = new HashSet<>();
+            for (String strComponentType : strComponentTypes) {
+                componentTypes.add(ComponentType.valueOf(strComponentType));
+            }
+            return checkComponentDescriptorsByTypes(componentTypes);
         } catch (Exception e) {
             throw handleException(e);
         }

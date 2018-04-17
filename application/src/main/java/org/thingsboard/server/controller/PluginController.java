@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.exception.ThingsboardException;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 
 import java.util.List;
 
@@ -71,7 +71,7 @@ public class PluginController extends BaseController {
             boolean created = source.getId() == null;
             source.setTenantId(getCurrentUser().getTenantId());
             PluginMetaData plugin = checkNotNull(pluginService.savePlugin(source));
-            actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(),
+            actorService.onEntityStateChange(plugin.getTenantId(), plugin.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(plugin.getId(), plugin,
@@ -97,7 +97,7 @@ public class PluginController extends BaseController {
             PluginId pluginId = new PluginId(toUUID(strPluginId));
             PluginMetaData plugin = checkPlugin(pluginService.findPluginById(pluginId));
             pluginService.activatePluginById(pluginId);
-            actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.ACTIVATED);
+            actorService.onEntityStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.ACTIVATED);
 
             logEntityAction(plugin.getId(), plugin,
                     null,
@@ -123,7 +123,7 @@ public class PluginController extends BaseController {
             PluginId pluginId = new PluginId(toUUID(strPluginId));
             PluginMetaData plugin = checkPlugin(pluginService.findPluginById(pluginId));
             pluginService.suspendPluginById(pluginId);
-            actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.SUSPENDED);
+            actorService.onEntityStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.SUSPENDED);
 
             logEntityAction(plugin.getId(), plugin,
                     null,
@@ -221,7 +221,7 @@ public class PluginController extends BaseController {
             PluginId pluginId = new PluginId(toUUID(strPluginId));
             PluginMetaData plugin = checkPlugin(pluginService.findPluginById(pluginId));
             pluginService.deletePluginById(pluginId);
-            actorService.onPluginStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.DELETED);
+            actorService.onEntityStateChange(plugin.getTenantId(), plugin.getId(), ComponentLifecycleEvent.DELETED);
 
             logEntityAction(pluginId, plugin,
                     null,

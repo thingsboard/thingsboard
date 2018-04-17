@@ -16,6 +16,7 @@
 
 package org.thingsboard.server.dao.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,6 +41,10 @@ public interface RuleChainService {
     RuleChainMetaData loadRuleChainMetaData(RuleChainId ruleChainId);
 
     RuleChain findRuleChainById(RuleChainId ruleChainId);
+
+    RuleNode findRuleNodeById(RuleNodeId ruleNodeId);
+
+    ListenableFuture<RuleChain> findRuleChainByIdAsync(RuleChainId ruleChainId);
 
     RuleChain getRootTenantRuleChain(TenantId tenantId);
 

@@ -34,6 +34,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_LAST_CONNECT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_LAST_UPDATE_PROPERTY;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -60,6 +63,12 @@ public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchT
     @Column(name = ModelConstants.DEVICE_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
+    @Column(name = DEVICE_LAST_CONNECT_PROPERTY)
+    private Long lastConnectTs;
+
+    @Column(name = DEVICE_LAST_UPDATE_PROPERTY)
+    private Long lastUpdateTs;
+
     public DeviceEntity() {
         super();
     }
@@ -77,6 +86,8 @@ public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchT
         this.name = device.getName();
         this.type = device.getType();
         this.additionalInfo = device.getAdditionalInfo();
+        this.lastConnectTs = device.getLastConnectTs();
+        this.lastUpdateTs = device.getLastUpdateTs();
     }
 
     @Override
@@ -102,6 +113,8 @@ public final class DeviceEntity extends BaseSqlEntity<Device> implements SearchT
         device.setName(name);
         device.setType(type);
         device.setAdditionalInfo(additionalInfo);
+        device.setLastConnectTs(lastConnectTs);
+        device.setLastUpdateTs(lastUpdateTs);
         return device;
     }
 }

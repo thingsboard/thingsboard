@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@flowjs/ng-flow": "^2.7.1",
-    "ace-builds": "^1.2.5",
+    "ace-builds": "1.3.1",
     "angular": "1.5.8",
     "angular-animate": "1.5.8",
     "angular-aria": "1.5.8",
@@ -69,6 +69,7 @@
     "moment": "^2.15.0",
     "ngclipboard": "^1.1.1",
     "ngreact": "^0.3.0",
+    "ngFlowchart": "git://github.com/thingsboard/ngFlowchart.git#master",
     "objectpath": "^1.2.1",
     "oclazyload": "^1.0.9",
     "raphael": "^2.2.7",

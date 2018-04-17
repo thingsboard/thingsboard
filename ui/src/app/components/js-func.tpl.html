@@ -15,19 +15,20 @@
     limitations under the License.
 
 -->
-<div style="background: #fff;" tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button" on-fullscreen-changed="onFullscreenChanged()" layout="column">
+<div style="background: #fff;" ng-class="{'tb-disabled': disabled, 'fill-height': fillHeight}" tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button" on-fullscreen-changed="onFullscreenChanged()">
 	<div layout="row" layout-align="start center" style="height: 40px;">
-		<span style="font-style: italic;">function({{ functionArgsString }}) {</span>
+		<label class="tb-title no-padding">function {{ functionName }}({{ functionArgsString }}) {</label>
 		<span flex></span>
 		<div id="expand-button" layout="column" aria-label="Fullscreen" class="md-button md-icon-button tb-md-32 tb-fullscreen-button-style"></div>
 	</div>
-	<div flex id="tb-javascript-panel" class="tb-js-func-panel" layout="column">
-		<div flex id="tb-javascript-input"
-			 ui-ace="jsEditorOptions" 
+	<div id="tb-javascript-panel" class="tb-js-func-panel">
+		<div id="tb-javascript-input" ng-class="{'fill-height': fillHeight}"
+			 ui-ace="jsEditorOptions"
+			 ng-readonly="disabled"
 			 ng-model="functionBody">
 		</div>
 	</div>
 	<div layout="row" layout-align="start center"  style="height: 40px;">
-		<span style="font-style: italic;">}</span>
-	</div>	   
+		<label class="tb-title no-padding">}</label>
+	</div>
 </div>

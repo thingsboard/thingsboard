@@ -122,9 +122,9 @@
 							<md-menu-content id="menu" width="4" ng-mouseleave="$mdCloseMousepointMenu()">
 								<md-menu-item ng-repeat ="item in vm.widgetContextMenuItems">
 									<md-button ng-disabled="!item.enabled" ng-click="item.action(vm.widgetContextMenuEvent, widget)">
+										<span ng-if="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
 										<md-icon ng-if="item.icon" md-menu-align-target aria-label="{{ item.value | translate }}" class="material-icons">{{item.icon}}</md-icon>
 										<span translate>{{item.value}}</span>
-										<span ng-if="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
 									</md-button>
 								</md-menu-item>
 							</md-menu-content>
@@ -137,9 +137,9 @@
 	<md-menu-content id="menu" width="4" ng-mouseleave="$mdCloseMousepointMenu()">
 		<md-menu-item ng-repeat ="item in vm.contextMenuItems">
 			<md-button ng-disabled="!item.enabled" ng-click="item.action(vm.contextMenuEvent)">
+				<span ng-if="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
 				<md-icon ng-if="item.icon" md-menu-align-target aria-label="{{ item.value | translate }}" class="material-icons">{{item.icon}}</md-icon>
 				<span translate>{{item.value}}</span>
-				<span ng-if="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
 			</md-button>
 		</md-menu-item>
 	</md-menu-content>

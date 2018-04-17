@@ -18,6 +18,7 @@ package org.thingsboard.server.extensions.core.plugin.telemetry.sub;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.extensions.core.plugin.telemetry.handlers.TelemetryFeature;
 
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public class SubscriptionState {
     @Getter private final String wsSessionId;
     @Getter private final int subscriptionId;
     @Getter private final EntityId entityId;
-    @Getter private final SubscriptionType type;
+    @Getter private final TelemetryFeature type;
     @Getter private final boolean allKeys;
     @Getter private final Map<String, Long> keyStates;
     @Getter private final String scope;

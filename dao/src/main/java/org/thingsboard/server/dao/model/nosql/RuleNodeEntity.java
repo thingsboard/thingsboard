@@ -21,6 +21,8 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -49,6 +51,11 @@ public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
     private JsonNode configuration;
     @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
+    @Getter
+    @Setter
+    @Column(name = DEBUG_MODE)
+    private boolean debugMode;
+
 
     public RuleNodeEntity() {
     }
@@ -59,6 +66,7 @@ public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
         }
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
+        this.debugMode = ruleNode.isDebugMode();
         this.searchText = ruleNode.getName();
         this.configuration = ruleNode.getConfiguration();
         this.additionalInfo = ruleNode.getAdditionalInfo();
@@ -126,6 +134,7 @@ public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
         ruleNode.setCreatedTime(UUIDs.unixTimestamp(id));
         ruleNode.setType(this.type);
         ruleNode.setName(this.name);
+        ruleNode.setDebugMode(this.debugMode);
         ruleNode.setConfiguration(this.configuration);
         ruleNode.setAdditionalInfo(this.additionalInfo);
         return ruleNode;

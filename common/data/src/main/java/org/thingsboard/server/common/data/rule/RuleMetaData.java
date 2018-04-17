@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,7 +32,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class RuleMetaData extends SearchTextBasedWithAdditionalInfo<RuleId> implements HasName {
+public class RuleMetaData extends SearchTextBasedWithAdditionalInfo<RuleId> implements HasName, HasTenantId {
 
     private static final long serialVersionUID = -5656679015122935465L;
 

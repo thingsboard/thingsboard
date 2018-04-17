@@ -23,6 +23,7 @@ import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
@@ -38,6 +39,12 @@ public class PluginActor extends ComponentActor<PluginId, PluginActorMessageProc
         super(systemContext, tenantId, pluginId);
         setProcessor(new PluginActorMessageProcessor(tenantId, pluginId, systemContext,
                 logger, context().parent(), context().self()));
+    }
+
+    @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg
+        return false;
     }
 
     @Override

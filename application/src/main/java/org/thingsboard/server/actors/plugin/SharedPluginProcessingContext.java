@@ -32,6 +32,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -56,6 +57,7 @@ public final class SharedPluginProcessingContext {
     final AssetService assetService;
     final DeviceService deviceService;
     final RuleService ruleService;
+    final RuleChainService ruleChainService;
     final PluginService pluginService;
     final CustomerService customerService;
     final TenantService tenantService;
@@ -84,6 +86,7 @@ public final class SharedPluginProcessingContext {
         this.rpcService = sysContext.getRpcService();
         this.routingService = sysContext.getRoutingService();
         this.ruleService = sysContext.getRuleService();
+        this.ruleChainService = sysContext.getRuleChainService();
         this.pluginService = sysContext.getPluginService();
         this.customerService = sysContext.getCustomerService();
         this.tenantService = sysContext.getTenantService();

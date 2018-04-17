@@ -62,7 +62,7 @@ cluster:
 # Plugins configuration parameters
 plugins:
   # Comma seperated package list used during classpath scanning for plugins
-  scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions}"
+  scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions,org.thingsboard.rule.engine}"
 
 # JWT Token parameters
 security.jwt:
@@ -181,6 +181,10 @@ cassandra:
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
     # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    buffer_size: "${CASSANDRA_QUERY_BUFFER_SIZE:200000}"
+    concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
+    permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"
+    rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:30000}"
 
   queue:
     msg.ttl: 604800 # 7 days
@@ -215,6 +219,18 @@ actors:
     termination.delay: "${ACTORS_RULE_TERMINATION_DELAY:30000}"
     # Errors for particular actor are persisted once per specified amount of milliseconds
     error_persist_frequency: "${ACTORS_RULE_ERROR_FREQUENCY:3000}"
+    # Specify thread pool size for database request callbacks executor service
+    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:1}"
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:10}"
+    # Specify thread pool size for mail sender executor service
+    mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:10}"
+    chain:
+      # Errors for particular actor are persisted once per specified amount of milliseconds
+      error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
+    node:
+      # Errors for particular actor are persisted once per specified amount of milliseconds
+      error_persist_frequency: "${ACTORS_RULE_NODE_ERROR_FREQUENCY:3000}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"

@@ -19,6 +19,9 @@ package msgqueue;
 option java_package = "org.thingsboard.server.common.msg.gen";
 option java_outer_classname = "MsgProtos";
 
+message TbMsgMetaDataProto {
+    map<string, string> data = 1;
+}
 
 message TbMsgProto {
     string id = 1;
@@ -26,11 +29,8 @@ message TbMsgProto {
     string entityType = 3;
     string entityId = 4;
 
-    message TbMsgMetaDataProto {
-        map<string, string> data = 1;
-    }
+    TbMsgMetaDataProto metaData = 5;
 
-    repeated TbMsgMetaDataProto metaData = 5;
-
-    bytes data = 6;
+    int32 dataType = 6;
+    string data = 7;
 }

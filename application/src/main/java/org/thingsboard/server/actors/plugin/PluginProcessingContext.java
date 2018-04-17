@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
@@ -330,6 +331,9 @@ public final class PluginProcessingContext implements PluginContext {
                 case RULE:
                     validateRule(ctx, entityId, callback);
                     return;
+                case RULE_CHAIN:
+                    validateRuleChain(ctx, entityId, callback);
+                    return;
                 case PLUGIN:
                     validatePlugin(ctx, entityId, callback);
                     return;
@@ -410,6 +414,28 @@ public final class PluginProcessingContext implements PluginContext {
             }));
         }
     }
+
+    private void validateRuleChain(final PluginApiCallSecurityContext ctx, EntityId entityId, ValidationCallback callback) {
+        if (ctx.isCustomerUser()) {
+            callback.onSuccess(this, ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            ListenableFuture<RuleChain> ruleChainFuture = pluginCtx.ruleChainService.findRuleChainByIdAsync(new RuleChainId(entityId.getId()));
+            Futures.addCallback(ruleChainFuture, getCallback(callback, ruleChain -> {
+                if (ruleChain == null) {
+                    return ValidationResult.entityNotFound("Rule chain with requested id wasn't found!");
+                } else {
+                    if (ctx.isTenantAdmin() && !ruleChain.getTenantId().equals(ctx.getTenantId())) {
+                        return ValidationResult.accessDenied("Rule chain doesn't belong to the current Tenant!");
+                    } else if (ctx.isSystemAdmin() && !ruleChain.getTenantId().isNullUid()) {
+                        return ValidationResult.accessDenied("Rule chain is not in system scope!");
+                    } else {
+                        return ValidationResult.ok();
+                    }
+                }
+            }));
+        }
+    }
+
 
     private void validatePlugin(final PluginApiCallSecurityContext ctx, EntityId entityId, ValidationCallback callback) {
         if (ctx.isCustomerUser()) {

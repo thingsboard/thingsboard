@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @EqualsAndHashCode(callSuper = true)
-public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName {
+public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -31,6 +31,8 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private CustomerId customerId;
     private String name;
     private String type;
+    private Long lastConnectTs;
+    private Long lastUpdateTs;
 
     public Device() {
         super();
@@ -81,6 +83,22 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.type = type;
     }
 
+    public Long getLastConnectTs() {
+        return lastConnectTs;
+    }
+
+    public void setLastConnectTs(Long lastConnectTs) {
+        this.lastConnectTs = lastConnectTs;
+    }
+
+    public Long getLastUpdateTs() {
+        return lastUpdateTs;
+    }
+
+    public void setLastUpdateTs(Long lastUpdateTs) {
+        this.lastUpdateTs = lastUpdateTs;
+    }
+
     @Override
     public String getSearchText() {
         return getName();
@@ -101,6 +119,10 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         builder.append(getAdditionalInfo());
         builder.append(", createdTime=");
         builder.append(createdTime);
+        builder.append(", lastUpdateTs=");
+        builder.append(lastUpdateTs);
+        builder.append(", lastConnectTs=");
+        builder.append(lastConnectTs);
         builder.append(", id=");
         builder.append(id);
         builder.append("]");

@@ -20,8 +20,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
-import org.thingsboard.server.exception.ThingsboardException;
-import org.thingsboard.server.service.mail.MailService;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.service.update.UpdateService;
 import org.thingsboard.server.service.update.model.UpdateMessage;
 

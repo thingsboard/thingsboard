@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.CrudRepository;
@@ -24,6 +26,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.device.DeviceStatusQuery;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -43,6 +46,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
  */
 @Component
 @SqlDao
+@Slf4j
 public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device> implements DeviceDao {
 
     @Autowired
@@ -122,6 +126,73 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     @Override
     public ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId) {
         return service.submit(() -> convertTenantDeviceTypesToDto(tenantId, deviceRepository.findTenantDeviceTypes(fromTimeUUID(tenantId))));
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByTenantIdAndStatus(UUID tenantId, DeviceStatusQuery statusQuery) {
+        String strTenantId = fromTimeUUID(tenantId);
+        long minTime = System.currentTimeMillis() - statusQuery.getThreshold();
+        switch (statusQuery.getStatus()) {
+            case OFFLINE: {
+                switch (statusQuery.getContactType()) {
+                    case UPLOAD:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findUpdateOfflineByTenantId(strTenantId, minTime)));
+                    case CONNECT:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findConnectOfflineByTenantId(strTenantId, minTime)));
+                }
+                break;
+            }
+            case ONLINE: {
+                switch (statusQuery.getContactType()) {
+                    case UPLOAD:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findUpdateOnlineByTenantId(strTenantId, minTime)));
+                    case CONNECT:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findConnectOnlineByTenantId(strTenantId, minTime)));
+                }
+                break;
+            }
+        }
+
+        log.error("Could not build status query from [{}]", statusQuery);
+        throw new IllegalStateException("Could not build status query for device []");
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByTenantIdTypeAndStatus(UUID tenantId, String type, DeviceStatusQuery statusQuery) {
+        String strTenantId = fromTimeUUID(tenantId);
+        long minTime = System.currentTimeMillis() - statusQuery.getThreshold();
+        switch (statusQuery.getStatus()) {
+            case OFFLINE: {
+                switch (statusQuery.getContactType()) {
+                    case UPLOAD:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findUpdateOfflineByTenantIdAndType(strTenantId, minTime, type)));
+                    case CONNECT:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findConnectOfflineByTenantIdAndType(strTenantId, minTime, type)));
+                }
+                break;
+            }
+            case ONLINE: {
+                switch (statusQuery.getContactType()) {
+                    case UPLOAD:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findUpdateOnlineByTenantIdAndType(strTenantId, minTime, type)));
+                    case CONNECT:
+                        return service.submit(() -> DaoUtil.convertDataList(deviceRepository.findConnectOnlineByTenantIdAndType(strTenantId, minTime, type)));
+                }
+                break;
+            }
+        }
+
+        log.error("Could not build status query from [{}]", statusQuery);
+        throw new IllegalStateException("Could not build status query for device []");
+    }
+
+    @Override
+    public void saveDeviceStatus(Device device) {
+        ListenableFuture<Device> future = service.submit(() -> save(device));
+        Futures.withFallback(future, t -> {
+            log.error("Can't update device status for [{}]", device, t);
+            throw new IllegalArgumentException("Can't update device status for {" + device + "}", t);
+        });
     }
 
     private List<EntitySubtype> convertTenantDeviceTypesToDto(UUID tenantId, List<String> types) {

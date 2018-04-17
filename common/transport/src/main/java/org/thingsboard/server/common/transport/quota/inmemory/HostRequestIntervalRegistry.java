@@ -61,13 +61,14 @@ public class HostRequestIntervalRegistry {
     }
 
     public long tick(String clientHostId) {
+        IntervalCount intervalCount = hostCounts.computeIfAbsent(clientHostId, s -> new IntervalCount(intervalDurationMs));
+        long currentCount = intervalCount.resetIfExpiredAndTick();
         if (whiteList.contains(clientHostId)) {
             return 0;
         } else if (blackList.contains(clientHostId)) {
             return Long.MAX_VALUE;
         }
-        IntervalCount intervalCount = hostCounts.computeIfAbsent(clientHostId, s -> new IntervalCount(intervalDurationMs));
-        return intervalCount.resetIfExpiredAndTick();
+        return currentCount;
     }
 
     public void clean() {

@@ -114,7 +114,7 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         }
         Map<String, Long> statesMap = proto.getKeyStatesList().stream().collect(Collectors.toMap(SubscriptionKetStateProto::getKey, SubscriptionKetStateProto::getTs));
         Subscription subscription = new Subscription(
-                new SubscriptionState(proto.getSessionId(), proto.getSubscriptionId(), EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()), SubscriptionType.valueOf(proto.getType()), proto.getAllKeys(), statesMap, proto.getScope()),
+                new SubscriptionState(proto.getSessionId(), proto.getSubscriptionId(), EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()), TelemetryFeature.valueOf(proto.getType()), proto.getAllKeys(), statesMap, proto.getScope()),
                 false, msg.getServerAddress());
         subscriptionManager.addRemoteWsSubscription(ctx, msg.getServerAddress(), proto.getSessionId(), subscription);
     }
@@ -243,27 +243,19 @@ public class TelemetryRpcMsgHandler implements RpcMsgHandler {
         switch (attr.getDataType()) {
             case BOOLEAN:
                 Optional<Boolean> booleanValue = attr.getBooleanValue();
-                if (booleanValue.isPresent()) {
-                    dataBuilder.setBoolValue(booleanValue.get());
-                }
+                booleanValue.ifPresent(dataBuilder::setBoolValue);
                 break;
             case LONG:
                 Optional<Long> longValue = attr.getLongValue();
-                if (longValue.isPresent()) {
-                    dataBuilder.setLongValue(longValue.get());
-                }
+                longValue.ifPresent(dataBuilder::setLongValue);
                 break;
             case DOUBLE:
                 Optional<Double> doubleValue = attr.getDoubleValue();
-                if (doubleValue.isPresent()) {
-                    dataBuilder.setDoubleValue(doubleValue.get());
-                }
+                doubleValue.ifPresent(dataBuilder::setDoubleValue);
                 break;
             case STRING:
                 Optional<String> stringValue = attr.getStrValue();
-                if (stringValue.isPresent()) {
-                    dataBuilder.setStrValue(stringValue.get());
-                }
+                stringValue.ifPresent(dataBuilder::setStrValue);
                 break;
         }
         return dataBuilder;

@@ -29,6 +29,9 @@ import thingsboardNoAnimate from '../components/no-animate.directive';
 import thingsboardOnFinishRender from '../components/finish-render.directive';
 import thingsboardSideMenu from '../components/side-menu.directive';
 import thingsboardDashboardAutocomplete from '../components/dashboard-autocomplete.directive';
+import thingsboardKvMap from '../components/kv-map.directive';
+import thingsboardJsonObjectEdit from '../components/json-object-edit.directive';
+import thingsboardJsonContent from '../components/json-content.directive';
 
 import thingsboardUserMenu from './user-menu.directive';
 
@@ -49,6 +52,7 @@ import thingsboardWidgetLibrary from '../widget';
 import thingsboardDashboard from '../dashboard';
 import thingsboardPlugin from '../plugin';
 import thingsboardRule from '../rule';
+import thingsboardRuleChain from '../rulechain';
 
 import thingsboardJsonForm from '../jsonform';
 
@@ -81,6 +85,7 @@ export default angular.module('thingsboard.home', [
     thingsboardDashboard,
     thingsboardPlugin,
     thingsboardRule,
+    thingsboardRuleChain,
     thingsboardJsonForm,
     thingsboardApiDevice,
     thingsboardApiLogin,
@@ -88,7 +93,10 @@ export default angular.module('thingsboard.home', [
     thingsboardNoAnimate,
     thingsboardOnFinishRender,
     thingsboardSideMenu,
-    thingsboardDashboardAutocomplete
+    thingsboardDashboardAutocomplete,
+    thingsboardKvMap,
+    thingsboardJsonObjectEdit,
+    thingsboardJsonContent
 ])
     .config(HomeRoutes)
     .controller('HomeController', HomeController)
