@@ -39,7 +39,7 @@
         <dependency>
             <groupId>org.thingsboard.common</groupId>
             <artifactId>data</artifactId>
-        </dependency>    
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
