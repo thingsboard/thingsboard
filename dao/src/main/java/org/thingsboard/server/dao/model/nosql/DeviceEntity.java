@@ -63,6 +63,12 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     @Column(name = DEVICE_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
+    @Column(name = DEVICE_LAST_CONNECT_PROPERTY)
+    private Long lastConnectTs;
+
+    @Column(name = DEVICE_LAST_UPDATE_PROPERTY)
+    private Long lastUpdateTs;
+
     public DeviceEntity() {
         super();
     }
@@ -80,6 +86,8 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         this.name = device.getName();
         this.type = device.getType();
         this.additionalInfo = device.getAdditionalInfo();
+        this.lastConnectTs = device.getLastConnectTs();
+        this.lastUpdateTs = device.getLastUpdateTs();
     }
     
     public UUID getId() {
@@ -129,7 +137,23 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     public void setAdditionalInfo(JsonNode additionalInfo) {
         this.additionalInfo = additionalInfo;
     }
-    
+
+    public Long getLastConnectTs() {
+        return lastConnectTs;
+    }
+
+    public void setLastConnectTs(Long lastConnectTs) {
+        this.lastConnectTs = lastConnectTs;
+    }
+
+    public Long getLastUpdateTs() {
+        return lastUpdateTs;
+    }
+
+    public void setLastUpdateTs(Long lastUpdateTs) {
+        this.lastUpdateTs = lastUpdateTs;
+    }
+
     @Override
     public String getSearchTextSource() {
         return getName();
@@ -157,6 +181,8 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
         device.setName(name);
         device.setType(type);
         device.setAdditionalInfo(additionalInfo);
+        device.setLastConnectTs(lastConnectTs);
+        device.setLastUpdateTs(lastUpdateTs);
         return device;
     }
 

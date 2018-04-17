@@ -79,4 +79,28 @@ public interface DeviceRepository extends CrudRepository<DeviceEntity, String> {
     List<DeviceEntity> findDevicesByTenantIdAndCustomerIdAndIdIn(String tenantId, String customerId, List<String> deviceIds);
 
     List<DeviceEntity> findDevicesByTenantIdAndIdIn(String tenantId, List<String> deviceIds);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastConnectTs > :time")
+    List<DeviceEntity> findConnectOnlineByTenantId(@Param("tenantId") String tenantId, @Param("time") long time);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastConnectTs < :time")
+    List<DeviceEntity> findConnectOfflineByTenantId(@Param("tenantId") String tenantId, @Param("time") long time);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastUpdateTs > :time")
+    List<DeviceEntity> findUpdateOnlineByTenantId(@Param("tenantId") String tenantId, @Param("time") long time);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastUpdateTs < :time")
+    List<DeviceEntity> findUpdateOfflineByTenantId(@Param("tenantId") String tenantId, @Param("time") long time);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastConnectTs > :time AND d.type = :type")
+    List<DeviceEntity> findConnectOnlineByTenantIdAndType(@Param("tenantId") String tenantId, @Param("time") long time, @Param("type") String type);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastConnectTs < :time AND d.type = :type")
+    List<DeviceEntity> findConnectOfflineByTenantIdAndType(@Param("tenantId") String tenantId, @Param("time") long time, @Param("type") String type);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastUpdateTs > :time AND d.type = :type")
+    List<DeviceEntity> findUpdateOnlineByTenantIdAndType(@Param("tenantId") String tenantId, @Param("time") long time, @Param("type") String type);
+
+    @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId AND d.lastUpdateTs < :time AND d.type = :type")
+    List<DeviceEntity> findUpdateOfflineByTenantIdAndType(@Param("tenantId") String tenantId, @Param("time") long time, @Param("type") String type);
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.system;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.web.servlet.ResultActions;
@@ -28,6 +29,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,6 +52,9 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
         device = new Device();
         device.setName("My device");
         device.setType("default");
+        long currentTime = System.currentTimeMillis();
+        device.setLastConnectTs(currentTime);
+        device.setLastUpdateTs(currentTime);
         device = doPost("/api/device", device, Device.class);
 
         deviceCredentials =
@@ -65,6 +72,34 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 asyncDispatch(doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes", attrMap, new String[]{}).andReturn()))
                 .andExpect(status().isOk());
         doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
+    }
+
+    @Test
+    public void deviceLastContactAndUpdateFieldsAreUpdated() throws Exception {
+        Device actualDevice = doGet("/api/device/" + this.device.getId(), Device.class);
+        Long initConnectTs = actualDevice.getLastConnectTs();
+        Long initUpdateTs = actualDevice.getLastUpdateTs();
+        assertNotNull(initConnectTs);
+        assertNotNull(initUpdateTs);
+        Thread.sleep(50);
+
+        doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes", ImmutableMap.of("keyA", "valueA"), new String[]{});
+        actualDevice = doGet("/api/device/" + this.device.getId(), Device.class);
+        Long postConnectTs = actualDevice.getLastConnectTs();
+        Long postUpdateTs = actualDevice.getLastUpdateTs();
+        System.out.println(postConnectTs + "  -   " + postUpdateTs + " -> " + (postConnectTs - initConnectTs) + " : " + (postUpdateTs - initUpdateTs));
+        assertTrue(postConnectTs > initConnectTs);
+        assertEquals(postConnectTs, postUpdateTs);
+        Thread.sleep(50);
+
+        doGet("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC");
+        Thread.sleep(50);
+        actualDevice = doGet("/api/device/" + this.device.getId(), Device.class);
+        Long getConnectTs = actualDevice.getLastConnectTs();
+        Long getUpdateTs = actualDevice.getLastUpdateTs();
+        assertTrue(getConnectTs > postConnectTs);
+        assertEquals(getUpdateTs, postUpdateTs);
+
     }
 
     protected ResultActions doGetAsync(String urlTemplate, Object... urlVariables) throws Exception {

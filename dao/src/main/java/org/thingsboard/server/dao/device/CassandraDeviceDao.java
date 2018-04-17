@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.dao.device;
 
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.querybuilder.Clause;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.mapping.Result;
 import com.google.common.base.Function;
@@ -28,9 +28,11 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.device.DeviceStatusQuery;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.EntitySubtypeEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.nosql.DeviceEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
@@ -157,7 +159,7 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
                 if (result != null) {
                     List<EntitySubtype> entitySubtypes = new ArrayList<>();
                     result.all().forEach((entitySubtypeEntity) ->
-                        entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
+                            entitySubtypes.add(entitySubtypeEntity.toEntitySubtype())
                     );
                     return entitySubtypes;
                 } else {
@@ -165,6 +167,70 @@ public class CassandraDeviceDao extends CassandraAbstractSearchTextDao<DeviceEnt
                 }
             }
         });
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByTenantIdAndStatus(UUID tenantId, DeviceStatusQuery statusQuery) {
+        log.debug("Try to find [{}] devices by tenantId [{}]", statusQuery.getStatus(), tenantId);
+
+        Select select = select().from(DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME).allowFiltering();
+        Select.Where query = select.where();
+        query.and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId));
+        Clause clause = statusClause(statusQuery);
+        query.and(clause);
+        return findListByStatementAsync(query);
+    }
+
+    @Override
+    public ListenableFuture<List<Device>> findDevicesByTenantIdTypeAndStatus(UUID tenantId, String type, DeviceStatusQuery statusQuery) {
+        log.debug("Try to find [{}] devices by tenantId [{}] and type [{}]", statusQuery.getStatus(), tenantId, type);
+
+        Select select = select().from(DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME).allowFiltering();
+        Select.Where query = select.where()
+                .and(eq(DEVICE_TENANT_ID_PROPERTY, tenantId))
+                .and(eq(DEVICE_TYPE_PROPERTY, type));
+
+        query.and(statusClause(statusQuery));
+        return findListByStatementAsync(query);
+    }
+
+
+    @Override
+    public void saveDeviceStatus(Device device) {
+        PreparedStatement statement = prepare("insert into " +
+                "device (id, tenant_id, customer_id, type, last_connect, last_update) values (?, ?, ?, ?, ?, ?)");
+        BoundStatement boundStatement = statement.bind(device.getUuidId(), device.getTenantId().getId(), device.getCustomerId().getId(),
+                device.getType(), device.getLastConnectTs(), device.getLastUpdateTs());
+        ResultSetFuture resultSetFuture = executeAsyncWrite(boundStatement);
+        Futures.withFallback(resultSetFuture, t -> {
+            log.error("Can't update device status for [{}]", device, t);
+            throw new IllegalArgumentException("Can't update device status for {" + device + "}", t);
+        });
+    }
+
+    private String getStatusProperty(DeviceStatusQuery statusQuery) {
+        switch (statusQuery.getContactType()) {
+            case UPLOAD:
+                return DEVICE_LAST_UPDATE_PROPERTY;
+            case CONNECT:
+                return DEVICE_LAST_CONNECT_PROPERTY;
+        }
+        return null;
+    }
+
+    private Clause statusClause(DeviceStatusQuery statusQuery) {
+        long minTime = System.currentTimeMillis() - statusQuery.getThreshold();
+        String statusProperty = getStatusProperty(statusQuery);
+        if (statusProperty != null) {
+            switch (statusQuery.getStatus()) {
+                case ONLINE:
+                    return gt(statusProperty, minTime);
+                case OFFLINE:
+                    return lt(statusProperty, minTime);
+            }
+        }
+        log.error("Could not build status query from [{}]", statusQuery);
+        throw new IllegalStateException("Could not build status query for device []");
     }
 
 }
