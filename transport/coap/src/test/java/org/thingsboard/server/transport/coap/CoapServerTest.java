@@ -113,9 +113,9 @@ public class CoapServerTest {
                         try {
                             FromDeviceMsg deviceMsg = sessionMsg.getMsg();
                             ToDeviceMsg toDeviceMsg = null;
-                            if (deviceMsg.getMsgType() == MsgType.POST_TELEMETRY_REQUEST) {
+                            if (deviceMsg.getMsgType() == SessionMsgType.POST_TELEMETRY_REQUEST) {
                                 toDeviceMsg = BasicStatusCodeResponse.onSuccess(deviceMsg.getMsgType(), BasicRequest.DEFAULT_REQUEST_ID);
-                            } else if (deviceMsg.getMsgType() == MsgType.GET_ATTRIBUTES_REQUEST) {
+                            } else if (deviceMsg.getMsgType() == SessionMsgType.GET_ATTRIBUTES_REQUEST) {
                                 List<AttributeKvEntry> data = new ArrayList<>();
                                 data.add(new BaseAttributeKvEntry(new StringDataEntry("key1", "value1"), System.currentTimeMillis()));
                                 data.add(new BaseAttributeKvEntry(new LongDataEntry("key2", 42L), System.currentTimeMillis()));

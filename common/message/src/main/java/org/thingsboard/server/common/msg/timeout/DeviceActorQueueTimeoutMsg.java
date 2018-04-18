@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.plugins.msg;
+package org.thingsboard.server.common.msg.timeout;
 
-import lombok.Data;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.timeout.TimeoutMsg;
+
+import java.util.UUID;
 
 /**
  * @author Andrew Shvayka
  */
-@Data
-public class TimeoutMsg<T> {
-    private final T id;
-    private final long timeout;
+public final class DeviceActorQueueTimeoutMsg extends TimeoutMsg<UUID> {
+
+    public DeviceActorQueueTimeoutMsg(UUID id, long timeout) {
+        super(id, timeout);
+    }
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.DEVICE_ACTOR_QUEUE_TIMEOUT_MSG;
+    }
 }

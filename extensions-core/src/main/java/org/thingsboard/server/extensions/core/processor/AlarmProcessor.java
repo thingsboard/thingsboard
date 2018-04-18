@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Processor;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
@@ -102,7 +102,7 @@ public class AlarmProcessor implements RuleProcessor<AlarmProcessorConfiguration
     }
 
     @Override
-    public RuleProcessingMetaData process(RuleContext ctx, ToDeviceActorMsg wrapper) throws RuleException {
+    public RuleProcessingMetaData process(RuleContext ctx, DeviceToDeviceActorMsg wrapper) throws RuleException {
         RuleProcessingMetaData md = new RuleProcessingMetaData();
 
         FromDeviceMsg msg = wrapper.getPayload();

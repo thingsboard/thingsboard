@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.extensions.rabbitmq.action;
 
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
 import org.thingsboard.server.extensions.api.component.Action;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
@@ -32,7 +32,7 @@ import java.util.Optional;
 public class RabbitMqPluginAction extends AbstractTemplatePluginAction<RabbitMqPluginActionConfiguration> {
 
     @Override
-    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
+    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         RabbitMqActionPayload.RabbitMqActionPayloadBuilder builder = RabbitMqActionPayload.builder();
         builder.sync(configuration.isSync());
         builder.exchange(configuration.getExchange());

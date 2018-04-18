@@ -131,8 +131,8 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createSysAdmin();
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.loadSystemWidgets();
-                systemDataLoaderService.loadSystemPlugins();
-                systemDataLoaderService.loadSystemRules();
+//                systemDataLoaderService.loadSystemPlugins();
+//                systemDataLoaderService.loadSystemRules();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");

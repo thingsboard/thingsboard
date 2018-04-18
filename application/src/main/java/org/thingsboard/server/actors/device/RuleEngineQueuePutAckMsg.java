@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.plugins.msg;
+package org.thingsboard.server.actors.device;
+
+import lombok.Data;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.util.UUID;
 
 /**
- * @author Andrew Shvayka
+ * Created by ashvayka on 15.03.18.
  */
-public final class TimeoutUUIDMsg extends TimeoutMsg<UUID> {
+@Data
+public final class RuleEngineQueuePutAckMsg implements TbActorMsg {
 
-    public TimeoutUUIDMsg(UUID id, long timeout) {
-        super(id, timeout);
+    private final UUID id;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.RULE_ENGINE_QUEUE_PUT_ACK_MSG;
     }
-
 }

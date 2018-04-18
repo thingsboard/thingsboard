@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
+import org.thingsboard.server.actors.device.RuleEngineQueuePutAckMsg;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.EntityType;
@@ -157,6 +159,14 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         pushMsgToNode(firstNode, tbMsg);
     }
 
+    public void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
+        checkActive();
+        TbMsg tbMsg = envelope.getTbMsg();
+        //TODO: push to queue and act on ack in async way
+        pushMsgToNode(firstNode, tbMsg);
+        envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(tbMsg.getId()), self);
+    }
+
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
         checkActive();
         RuleNodeId originator = envelope.getOriginator();
@@ -191,5 +201,4 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg), self);
         }
     }
-
 }

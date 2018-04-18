@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.extensions.api.device;
+package org.thingsboard.server.common.msg.timeout;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
+/**
+ * @author Andrew Shvayka
+ */
 @Data
-@AllArgsConstructor
-public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final String deviceName;
-    private final String deviceType;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG;
-    }
+public abstract class TimeoutMsg<T> implements TbActorMsg {
+    private final T id;
+    private final long timeout;
 }

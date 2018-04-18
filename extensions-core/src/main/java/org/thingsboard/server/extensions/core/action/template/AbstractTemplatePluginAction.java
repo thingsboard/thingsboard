@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.parser.ParseException;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginAction;
@@ -52,7 +52,7 @@ public abstract class AbstractTemplatePluginAction<T extends TemplateActionConfi
     }
 
     @Override
-    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg msg, RuleProcessingMetaData deviceMsgMd) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, DeviceToDeviceActorMsg msg, RuleProcessingMetaData deviceMsgMd) {
         FromDeviceRequestMsg payload;
         if (msg.getPayload() instanceof FromDeviceRequestMsg) {
             payload = (FromDeviceRequestMsg) msg.getPayload();
@@ -70,14 +70,14 @@ public abstract class AbstractTemplatePluginAction<T extends TemplateActionConfi
         return Optional.empty();
     }
 
-    protected String getMsgBody(RuleContext ctx, ToDeviceActorMsg msg) {
+    protected String getMsgBody(RuleContext ctx, DeviceToDeviceActorMsg msg) {
         log.trace("Creating context for: {} and payload {}", ctx.getDeviceMetaData(), msg.getPayload());
         VelocityContext context = VelocityUtils.createContext(ctx.getDeviceMetaData(), msg.getPayload());
         return VelocityUtils.merge(template, context);
     }
 
     abstract protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx,
-                                                                         ToDeviceActorMsg msg,
+                                                                         DeviceToDeviceActorMsg msg,
                                                                          FromDeviceRequestMsg payload);
 
     @Override

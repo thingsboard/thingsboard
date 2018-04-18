@@ -17,10 +17,9 @@ package org.thingsboard.server.actors.tenant;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActor;
+import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.plugin.PluginTerminationMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -30,7 +29,8 @@ import org.thingsboard.server.actors.shared.rulechain.TenantRuleChainManager;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
@@ -64,11 +64,24 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
+            case CLUSTER_EVENT_MSG:
+                broadcast(msg);
+                break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
                 break;
             case SERVICE_TO_RULE_ENGINE_MSG:
                 onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+                break;
+            case DEVICE_ACTOR_TO_RULE_ENGINE_MSG:
+                onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);
+                break;
+            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
+                onToDeviceActorMsg((DeviceToDeviceActorMsg) msg);
                 break;
             default:
                 return false;
@@ -76,51 +89,22 @@ public class TenantActor extends RuleChainManagerActor {
         return true;
     }
 
+    @Override
+    protected void broadcast(Object msg) {
+        super.broadcast(msg);
+        deviceActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+    }
+
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
         ruleChainManager.getRootChainActor().tell(msg, self());
     }
 
-
-//    @Override
-//    public void onReceive(Object msg) throws Exception {
-//        logger.debug("[{}] Received message: {}", tenantId, msg);
-//        if (msg instanceof ToDeviceActorMsg) {
-//            onToDeviceActorMsg((ToDeviceActorMsg) msg);
-//        } else if (msg instanceof ToPluginActorMsg) {
-//            onToPluginMsg((ToPluginActorMsg) msg);
-//        } else if (msg instanceof ToDeviceActorNotificationMsg) {
-//            onToDeviceActorMsg((ToDeviceActorNotificationMsg) msg);
-//        } else if (msg instanceof ClusterEventMsg) {
-//            broadcast(msg);
-//        } else if (msg instanceof ComponentLifecycleMsg) {
-//            onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
-//        } else if (msg instanceof PluginTerminationMsg) {
-//            onPluginTerminated((PluginTerminationMsg) msg);
-//        } else {
-//            logger.warning("[{}] Unknown message: {}!", tenantId, msg);
-//        }
-//    }
-
-    private void broadcast(Object msg) {
-        pluginManager.broadcast(msg);
-        deviceActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
+    private void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg msg) {
+        ruleChainManager.getRootChainActor().tell(msg, self());
     }
 
-    private void onToDeviceActorMsg(ToDeviceActorMsg msg) {
+    private void onToDeviceActorMsg(DeviceAwareMsg msg) {
         getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());
-    }
-
-    private void onToDeviceActorMsg(ToDeviceActorNotificationMsg msg) {
-        getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());
-    }
-
-    private void onToPluginMsg(ToPluginActorMsg msg) {
-        if (msg.getPluginTenantId().equals(tenantId)) {
-            ActorRef pluginActor = pluginManager.getOrCreateActor(this.context(), msg.getPluginId());
-            pluginActor.tell(msg, ActorRef.noSender());
-        } else {
-            context().parent().tell(msg, ActorRef.noSender());
-        }
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
@@ -131,11 +115,6 @@ public class TenantActor extends RuleChainManagerActor {
             logger.debug("Invalid component lifecycle msg: {}", msg);
         }
     }
-
-    private void onPluginTerminated(PluginTerminationMsg msg) {
-        pluginManager.remove(msg.getId());
-    }
-
 
     private ActorRef getOrCreateDeviceActor(DeviceId deviceId) {
         return deviceActors.computeIfAbsent(deviceId, k -> context().actorOf(Props.create(new DeviceActor.ActorCreator(systemContext, tenantId, deviceId))

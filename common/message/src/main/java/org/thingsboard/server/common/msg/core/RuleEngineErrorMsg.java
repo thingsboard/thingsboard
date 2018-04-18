@@ -16,7 +16,8 @@
 package org.thingsboard.server.common.msg.core;
 
 import lombok.Data;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 
 /**
@@ -25,7 +26,7 @@ import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 @Data
 public class RuleEngineErrorMsg implements ToDeviceMsg {
 
-    private final MsgType inMsgType;
+    private final SessionMsgType inSessionMsgType;
     private final RuleEngineError error;
 
     @Override
@@ -33,9 +34,8 @@ public class RuleEngineErrorMsg implements ToDeviceMsg {
         return false;
     }
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.RULE_ENGINE_ERROR;
+    public SessionMsgType getSessionMsgType() {
+        return SessionMsgType.RULE_ENGINE_ERROR;
     }
 
     public String getErrorMsg() {
@@ -52,7 +52,7 @@ public class RuleEngineErrorMsg implements ToDeviceMsg {
                 return "Rule filters match, but no rule with two-way action configured!";
             case NO_RESPONSE_FROM_ACTIONS:
                 return "Rule filters match, message processed by plugin, but no response produced by rule action!";
-            case PLUGIN_TIMEOUT:
+            case QUEUE_PUT_TIMEOUT:
                 return "Timeout during processing of message by plugin!";
             default:
                 throw new RuntimeException("Error " + error + " is not supported!");

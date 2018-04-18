@@ -39,7 +39,7 @@ import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
@@ -156,7 +156,7 @@ public class DefaultActorService implements ActorService {
     }
 
     @Override
-    public void onMsg(ToDeviceActorMsg msg) {
+    public void onMsg(DeviceToDeviceActorMsg msg) {
         log.trace("Processing device rpc msg: {}", msg);
         appActor.tell(msg, ActorRef.noSender());
     }

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.rpc;
 
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
@@ -30,6 +31,8 @@ import java.util.Optional;
 public interface DeviceRpcService {
 
     void process(ToDeviceRpcRequest request, LocalRequestMetaData metaData);
+
+    void process(ToDeviceRpcRequest request, ServerAddress originator);
 
     void process(FromDeviceRpcResponse response);
 

@@ -17,7 +17,8 @@ package org.thingsboard.server.extensions.sqs.action.standard;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.io.Serializable;
 
@@ -33,7 +34,7 @@ public class SqsStandardQueueActionPayload implements Serializable {
     private final int delaySeconds;
 
     private final Integer requestId;
-    private final MsgType msgType;
+    private final SessionMsgType sessionMsgType;
     private final boolean sync;
 
 }

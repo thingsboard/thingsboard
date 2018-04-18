@@ -16,8 +16,9 @@
 package org.thingsboard.server.extensions.core.filter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.extensions.api.component.Filter;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
 import org.thingsboard.server.extensions.api.rules.RuleFilter;
@@ -35,30 +36,30 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MsgTypeFilter extends SimpleRuleLifecycleComponent implements RuleFilter<MsgTypeFilterConfiguration> {
 
-    private List<MsgType> msgTypes;
+    private List<SessionMsgType> sessionMsgTypes;
 
     @Override
     public void init(MsgTypeFilterConfiguration configuration) {
-        msgTypes = Arrays.stream(configuration.getMessageTypes()).map(type -> {
+        sessionMsgTypes = Arrays.stream(configuration.getMessageTypes()).map(type -> {
             switch (type) {
                 case "GET_ATTRIBUTES":
-                    return MsgType.GET_ATTRIBUTES_REQUEST;
+                    return SessionMsgType.GET_ATTRIBUTES_REQUEST;
                 case "POST_ATTRIBUTES":
-                    return MsgType.POST_ATTRIBUTES_REQUEST;
+                    return SessionMsgType.POST_ATTRIBUTES_REQUEST;
                 case "POST_TELEMETRY":
-                    return MsgType.POST_TELEMETRY_REQUEST;
+                    return SessionMsgType.POST_TELEMETRY_REQUEST;
                 case "RPC_REQUEST":
-                    return MsgType.TO_SERVER_RPC_REQUEST;
+                    return SessionMsgType.TO_SERVER_RPC_REQUEST;
                 default:
-                    throw new InvalidParameterException("Can't map " + type + " to " + MsgType.class.getName() + "!");
+                    throw new InvalidParameterException("Can't map " + type + " to " + SessionMsgType.class.getName() + "!");
             }
         }).collect(Collectors.toList());
     }
 
     @Override
-    public boolean filter(RuleContext ctx, ToDeviceActorMsg msg) {
-        for (MsgType msgType : msgTypes) {
-            if (msgType == msg.getPayload().getMsgType()) {
+    public boolean filter(RuleContext ctx, DeviceToDeviceActorMsg msg) {
+        for (SessionMsgType sessionMsgType : sessionMsgTypes) {
+            if (sessionMsgType == msg.getPayload().getMsgType()) {
                 return true;
             }
         }

@@ -16,8 +16,7 @@
 package org.thingsboard.server.extensions.core.filter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
 import org.thingsboard.server.extensions.api.rules.RuleFilter;
 
@@ -39,7 +38,7 @@ public abstract class BasicJsFilter implements RuleFilter<JsFilterConfiguration>
     }
 
     @Override
-    public boolean filter(RuleContext ctx, ToDeviceActorMsg msg) {
+    public boolean filter(RuleContext ctx, DeviceToDeviceActorMsg msg) {
         try {
             return doFilter(ctx, msg);
         } catch (ScriptException e) {
@@ -48,7 +47,7 @@ public abstract class BasicJsFilter implements RuleFilter<JsFilterConfiguration>
         }
     }
 
-    protected abstract boolean doFilter(RuleContext ctx, ToDeviceActorMsg msg) throws ScriptException;
+    protected abstract boolean doFilter(RuleContext ctx, DeviceToDeviceActorMsg msg) throws ScriptException;
 
     @Override
     public void resume() {

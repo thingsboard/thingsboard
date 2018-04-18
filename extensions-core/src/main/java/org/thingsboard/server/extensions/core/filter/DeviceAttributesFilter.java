@@ -17,7 +17,7 @@ package org.thingsboard.server.extensions.core.filter;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Filter;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
@@ -34,7 +34,7 @@ import javax.script.ScriptException;
 public class DeviceAttributesFilter extends BasicJsFilter {
 
     @Override
-    protected boolean doFilter(RuleContext ctx, ToDeviceActorMsg msg) throws ScriptException {
+    protected boolean doFilter(RuleContext ctx, DeviceToDeviceActorMsg msg) throws ScriptException {
         return evaluator.execute(toBindings(ctx.getDeviceMetaData().getDeviceAttributes(), msg != null ? msg.getPayload() : null));
     }
 

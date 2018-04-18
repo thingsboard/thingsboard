@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
@@ -53,5 +54,10 @@ public class ToDeviceRpcRequestMsg implements ToDeviceActorNotificationMsg {
     @Override
     public TenantId getTenantId() {
         return msg.getTenantId();
+    }
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG;
     }
 }

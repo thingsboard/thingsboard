@@ -16,14 +16,15 @@
 package org.thingsboard.server.common.msg.core;
 
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 /**
  * @author Andrew Shvayka
  */
 public class RpcSubscribeMsg implements FromDeviceMsg {
     @Override
-    public MsgType getMsgType() {
-        return MsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
+    public SessionMsgType getMsgType() {
+        return SessionMsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
     }
 }

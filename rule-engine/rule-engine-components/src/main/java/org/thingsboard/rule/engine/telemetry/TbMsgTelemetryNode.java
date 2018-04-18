@@ -28,8 +28,10 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.nio.charset.StandardCharsets;
@@ -59,7 +61,7 @@ public class TbMsgTelemetryNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.getType().equals("POST_TELEMETRY")) {
+        if (!msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
             ctx.tellError(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }

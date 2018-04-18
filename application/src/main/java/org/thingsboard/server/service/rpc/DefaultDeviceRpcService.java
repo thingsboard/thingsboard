@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.rpc;
 
+import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +106,19 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     }
 
     @Override
+    public void process(ToDeviceRpcRequest request, ServerAddress originator) {
+//        if (pluginServerAddress.isPresent()) {
+//            systemContext.getRpcService().tell(pluginServerAddress.get(), responsePluginMsg);
+//            logger.debug("[{}] Rpc command response sent to remote plugin actor [{}]!", deviceId, requestMd.getMsg().getMsg().getId());
+//        } else {
+//            context.parent().tell(responsePluginMsg, ActorRef.noSender());
+//            logger.debug("[{}] Rpc command response sent to local plugin actor [{}]!", deviceId, requestMd.getMsg().getMsg().getId());
+//        }
+    }
+
+    @Override
     public void process(FromDeviceRpcResponse response) {
+        //TODO: send to another server if needed.
         UUID requestId = response.getId();
         LocalRequestMetaData md = localRpcRequests.remove(requestId);
         if (md != null) {

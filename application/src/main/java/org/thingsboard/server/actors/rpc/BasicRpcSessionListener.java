@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.*;
@@ -86,7 +86,7 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
     @Override
     public void onToDeviceActorRpcMsg(GrpcSession session, ClusterAPIProtos.ToDeviceActorRpcMessage msg) {
         log.trace("{} session [{}] received device actor msg {}", getType(session), session.getRemoteServer(), msg);
-        service.onMsg((ToDeviceActorMsg) deserialize(msg.getData().toByteArray()));
+        service.onMsg((DeviceToDeviceActorMsg) deserialize(msg.getData().toByteArray()));
     }
 
     @Override

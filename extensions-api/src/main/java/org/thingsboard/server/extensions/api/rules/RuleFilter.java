@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.extensions.api.rules;
 
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.component.ConfigurableComponent;
 
 /**
@@ -23,6 +23,6 @@ import org.thingsboard.server.extensions.api.component.ConfigurableComponent;
  */
 public interface RuleFilter<T> extends ConfigurableComponent<T>, RuleLifecycleComponent {
 
-    boolean filter(RuleContext ctx, ToDeviceActorMsg msg);
+    boolean filter(RuleContext ctx, DeviceToDeviceActorMsg msg);
     
 }

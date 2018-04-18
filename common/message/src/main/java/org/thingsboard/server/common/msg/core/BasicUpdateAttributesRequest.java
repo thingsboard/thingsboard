@@ -20,7 +20,8 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 public class BasicUpdateAttributesRequest extends BasicRequest implements UpdateAttributesRequest {
 
@@ -46,8 +47,8 @@ public class BasicUpdateAttributesRequest extends BasicRequest implements Update
     }
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.POST_ATTRIBUTES_REQUEST;
+    public SessionMsgType getMsgType() {
+        return SessionMsgType.POST_ATTRIBUTES_REQUEST;
     }
 
     @Override

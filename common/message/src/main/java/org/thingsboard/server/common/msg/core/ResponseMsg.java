@@ -18,12 +18,12 @@ package org.thingsboard.server.common.msg.core;
 import java.io.Serializable;
 import java.util.Optional;
 
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 
 public interface ResponseMsg<T extends Serializable> extends ToDeviceMsg {
 
-    MsgType getRequestMsgType();
+    SessionMsgType getRequestMsgType();
 
     Integer getRequestId();
 

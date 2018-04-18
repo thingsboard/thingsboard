@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.msg.MsgType;
 
 import java.util.List;
 import java.util.Set;
@@ -54,4 +55,8 @@ public class DeviceAttributesEventNotificationMsg implements ToDeviceActorNotifi
         return new DeviceAttributesEventNotificationMsg(tenantId, deviceId, keys, null, null, true);
     }
 
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG;
+    }
 }

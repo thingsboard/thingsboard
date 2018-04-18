@@ -22,8 +22,8 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.device.BasicToDeviceActorMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.BasicDeviceToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.*;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
 
@@ -37,7 +37,7 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
 
     protected final SessionId sessionId;
     protected SessionContext sessionCtx;
-    protected ToDeviceActorMsg toDeviceActorMsgPrototype;
+    protected DeviceToDeviceActorMsg deviceToDeviceActorMsgPrototype;
 
     protected AbstractSessionActorMsgProcessor(ActorSystemContext ctx, LoggingAdapter logger, SessionId sessionId) {
         super(ctx, logger);
@@ -64,29 +64,29 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
 
     protected void updateSessionCtx(ToDeviceActorSessionMsg msg, SessionType type) {
         sessionCtx = msg.getSessionMsg().getSessionContext();
-        toDeviceActorMsgPrototype = new BasicToDeviceActorMsg(msg, type);
+        deviceToDeviceActorMsgPrototype = new BasicDeviceToDeviceActorMsg(msg, type);
     }
 
-    protected ToDeviceActorMsg toDeviceMsg(ToDeviceActorSessionMsg msg) {
+    protected DeviceToDeviceActorMsg toDeviceMsg(ToDeviceActorSessionMsg msg) {
         AdaptorToSessionActorMsg adaptorMsg = msg.getSessionMsg();
-        return new BasicToDeviceActorMsg(toDeviceActorMsgPrototype, adaptorMsg.getMsg());
+        return new BasicDeviceToDeviceActorMsg(deviceToDeviceActorMsgPrototype, adaptorMsg.getMsg());
     }
 
-    protected Optional<ToDeviceActorMsg> toDeviceMsg(FromDeviceMsg msg) {
-        if (toDeviceActorMsgPrototype != null) {
-            return Optional.of(new BasicToDeviceActorMsg(toDeviceActorMsgPrototype, msg));
+    protected Optional<DeviceToDeviceActorMsg> toDeviceMsg(FromDeviceMsg msg) {
+        if (deviceToDeviceActorMsgPrototype != null) {
+            return Optional.of(new BasicDeviceToDeviceActorMsg(deviceToDeviceActorMsgPrototype, msg));
         } else {
             return Optional.empty();
         }
     }
 
-    protected Optional<ServerAddress> forwardToAppActor(ActorContext ctx, ToDeviceActorMsg toForward) {
+    protected Optional<ServerAddress> forwardToAppActor(ActorContext ctx, DeviceToDeviceActorMsg toForward) {
         Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(toForward.getDeviceId());
         forwardToAppActor(ctx, toForward, address);
         return address;
     }
 
-    protected Optional<ServerAddress> forwardToAppActorIfAdressChanged(ActorContext ctx, ToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
+    protected Optional<ServerAddress> forwardToAppActorIfAdressChanged(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
         Optional<ServerAddress> newAddress = systemContext.getRoutingService().resolveById(toForward.getDeviceId());
         if (!newAddress.equals(oldAddress)) {
             if (newAddress.isPresent()) {
@@ -99,7 +99,7 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
         return newAddress;
     }
 
-    protected void forwardToAppActor(ActorContext ctx, ToDeviceActorMsg toForward, Optional<ServerAddress> address) {
+    protected void forwardToAppActor(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> address) {
         if (address.isPresent()) {
             systemContext.getRpcService().tell(address.get(),
                     toForward.toOtherAddress(systemContext.getRoutingService().getCurrentServer()));
@@ -114,6 +114,6 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
     }
 
     public DeviceId getDeviceId() {
-        return toDeviceActorMsgPrototype.getDeviceId();
+        return deviceToDeviceActorMsgPrototype.getDeviceId();
     }
 }

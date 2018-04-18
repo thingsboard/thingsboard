@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.msg.session;
 
-public enum MsgType {
+public enum SessionMsgType {
     GET_ATTRIBUTES_REQUEST(true), POST_ATTRIBUTES_REQUEST(true), GET_ATTRIBUTES_RESPONSE,
     SUBSCRIBE_ATTRIBUTES_REQUEST, UNSUBSCRIBE_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATE_NOTIFICATION,
 
@@ -32,11 +32,11 @@ public enum MsgType {
 
     private final boolean requiresRulesProcessing;
 
-    MsgType() {
+    SessionMsgType() {
         this(false);
     }
 
-    MsgType(boolean requiresRulesProcessing) {
+    SessionMsgType(boolean requiresRulesProcessing) {
         this.requiresRulesProcessing = requiresRulesProcessing;
     }
 
