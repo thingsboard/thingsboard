@@ -35,3 +35,6 @@ CREATE TABLE IF NOT EXISTS rule_node (
     debug_mode boolean,
     search_text varchar(255)
 );
+
+ALTER TABLE device ADD COLUMN IF NOT EXISTS last_connect BIGINT;
+ALTER TABLE device ADD COLUMN IF NOT EXISTS last_update BIGINT;

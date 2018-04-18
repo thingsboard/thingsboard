@@ -118,7 +118,9 @@ CREATE TABLE IF NOT EXISTS device (
     type varchar(255),
     name varchar(255),
     search_text varchar(255),
-    tenant_id varchar(31)
+    tenant_id varchar(31),
+    last_connect bigint,
+    last_update bigint
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (

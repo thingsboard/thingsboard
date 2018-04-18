@@ -25,6 +25,9 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.device.DeviceStatusQuery;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,8 +37,6 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class DeviceController extends BaseController {
             device.setTenantId(getCurrentUser().getTenantId());
             if (getCurrentUser().getAuthority() == Authority.CUSTOMER_USER) {
                 if (device.getId() == null || device.getId().isNullUid() ||
-                    device.getCustomerId() == null || device.getCustomerId().isNullUid()) {
+                        device.getCustomerId() == null || device.getCustomerId().isNullUid()) {
                     throw new ThingsboardException("You don't have permission to perform this operation!",
                             ThingsboardErrorCode.PERMISSION_DENIED);
                 } else {
@@ -363,6 +364,34 @@ public class DeviceController extends BaseController {
             TenantId tenantId = user.getTenantId();
             ListenableFuture<List<EntitySubtype>> deviceTypes = deviceService.findDeviceTypesByTenantId(tenantId);
             return checkNotNull(deviceTypes.get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/device/offline", method = RequestMethod.GET)
+    @ResponseBody
+    public List<Device> getOfflineDevices(@RequestParam("contactType") DeviceStatusQuery.ContactType contactType,
+                                          @RequestParam("threshold") long threshold) throws ThingsboardException {
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            ListenableFuture<List<Device>> offlineDevices = offlineService.findOfflineDevices(tenantId.getId(), contactType, threshold);
+            return checkNotNull(offlineDevices.get());
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/device/online", method = RequestMethod.GET)
+    @ResponseBody
+    public List<Device> getOnlineDevices(@RequestParam("contactType") DeviceStatusQuery.ContactType contactType,
+                                          @RequestParam("threshold") long threshold) throws ThingsboardException {
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            ListenableFuture<List<Device>> offlineDevices = offlineService.findOnlineDevices(tenantId.getId(), contactType, threshold);
+            return checkNotNull(offlineDevices.get());
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.device;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.device.DeviceStatusQuery;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -27,7 +28,6 @@ import java.util.UUID;
 
 /**
  * The Interface DeviceDao.
- *
  */
 public interface DeviceDao extends Dao<Device> {
 
@@ -52,7 +52,7 @@ public interface DeviceDao extends Dao<Device> {
      * Find devices by tenantId, type and page link.
      *
      * @param tenantId the tenantId
-     * @param type the type
+     * @param type     the type
      * @param pageLink the page link
      * @return the list of device objects
      */
@@ -61,7 +61,7 @@ public interface DeviceDao extends Dao<Device> {
     /**
      * Find devices by tenantId and devices Ids.
      *
-     * @param tenantId the tenantId
+     * @param tenantId  the tenantId
      * @param deviceIds the device Ids
      * @return the list of device objects
      */
@@ -70,9 +70,9 @@ public interface DeviceDao extends Dao<Device> {
     /**
      * Find devices by tenantId, customerId and page link.
      *
-     * @param tenantId the tenantId
+     * @param tenantId   the tenantId
      * @param customerId the customerId
-     * @param pageLink the page link
+     * @param pageLink   the page link
      * @return the list of device objects
      */
     List<Device> findDevicesByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
@@ -80,10 +80,10 @@ public interface DeviceDao extends Dao<Device> {
     /**
      * Find devices by tenantId, customerId, type and page link.
      *
-     * @param tenantId the tenantId
+     * @param tenantId   the tenantId
      * @param customerId the customerId
-     * @param type the type
-     * @param pageLink the page link
+     * @param type       the type
+     * @param pageLink   the page link
      * @return the list of device objects
      */
     List<Device> findDevicesByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type, TextPageLink pageLink);
@@ -92,9 +92,9 @@ public interface DeviceDao extends Dao<Device> {
     /**
      * Find devices by tenantId, customerId and devices Ids.
      *
-     * @param tenantId the tenantId
+     * @param tenantId   the tenantId
      * @param customerId the customerId
-     * @param deviceIds the device Ids
+     * @param deviceIds  the device Ids
      * @return the list of device objects
      */
     ListenableFuture<List<Device>> findDevicesByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds);
@@ -103,7 +103,7 @@ public interface DeviceDao extends Dao<Device> {
      * Find devices by tenantId and device name.
      *
      * @param tenantId the tenantId
-     * @param name the device name
+     * @param name     the device name
      * @return the optional device object
      */
     Optional<Device> findDeviceByTenantIdAndName(UUID tenantId, String name);
@@ -114,4 +114,31 @@ public interface DeviceDao extends Dao<Device> {
      * @return the list of tenant device type objects
      */
     ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId);
+
+    /**
+     * Find devices by tenantId, statusQuery and page link.
+     *
+     * @param tenantId    the tenantId
+     * @param statusQuery the page link
+     * @return the list of device objects
+     */
+    ListenableFuture<List<Device>> findDevicesByTenantIdAndStatus(UUID tenantId, DeviceStatusQuery statusQuery);
+
+    /**
+     * Find devices by tenantId, type, statusQuery and page link.
+     *
+     * @param tenantId    the tenantId
+     * @param type        the type
+     * @param statusQuery the page link
+     * @return the list of device objects
+     */
+    ListenableFuture<List<Device>> findDevicesByTenantIdTypeAndStatus(UUID tenantId, String type, DeviceStatusQuery statusQuery);
+
+
+    /**
+     * Update device last contact and update timestamp async
+     *
+     * @param device the device object
+     */
+    void saveDeviceStatus(Device device);
 }
