@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.timeout;
+package org.thingsboard.rule.engine.rpc;
 
-import org.thingsboard.server.common.msg.MsgType;
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-/**
- * @author Andrew Shvayka
- */
-public final class DeviceActorRpcTimeoutMsg extends TimeoutMsg<Integer> {
+@Data
+public class TbSendRpcRequestNodeConfiguration implements NodeConfiguration<TbSendRpcRequestNodeConfiguration> {
 
-    public DeviceActorRpcTimeoutMsg(Integer id, long timeout) {
-        super(id, timeout);
-    }
+    private int timeoutInSeconds;
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.DEVICE_ACTOR_RPC_TIMEOUT_MSG;
+    public TbSendRpcRequestNodeConfiguration defaultConfiguration() {
+        TbSendRpcRequestNodeConfiguration configuration = new TbSendRpcRequestNodeConfiguration();
+        configuration.setTimeoutInSeconds(60);
+        return configuration;
     }
 }

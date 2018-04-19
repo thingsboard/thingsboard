@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,18 +31,22 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.actors.plugin.ValidationResult;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.rpc.RpcRequest;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.extensions.api.exception.ToErrorResponseEntity;
 import org.thingsboard.server.extensions.api.plugins.PluginConstants;
-import org.thingsboard.server.common.data.rpc.RpcRequest;
-import org.thingsboard.server.service.rpc.LocalRequestMetaData;
+import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
+import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
+import org.thingsboard.server.service.rpc.LocalRequestMetaData;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -53,6 +58,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * Created by ashvayka on 22.03.18.
@@ -117,7 +123,6 @@ public class RpcController extends BaseController {
             accessValidator.validate(currentUser, deviceId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
-
                     ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(UUID.randomUUID(),
                             tenantId,
                             deviceId,
@@ -125,7 +130,13 @@ public class RpcController extends BaseController {
                             timeout,
                             body
                     );
-                    deviceRpcService.process(rpcRequest, new LocalRequestMetaData(rpcRequest, currentUser, result));
+                    deviceRpcService.process(rpcRequest, new Consumer<FromDeviceRpcResponse>(){
+
+                        @Override
+                        public void accept(FromDeviceRpcResponse fromDeviceRpcResponse) {
+                            reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse);
+                        }
+                    });
                 }
 
                 @Override
@@ -136,7 +147,7 @@ public class RpcController extends BaseController {
                     } else {
                         entity = new ResponseEntity(HttpStatus.UNAUTHORIZED);
                     }
-                    deviceRpcService.logRpcCall(currentUser, deviceId, body, oneWay, Optional.empty(), e);
+                    logRpcCall(currentUser, deviceId, body, oneWay, Optional.empty(), e);
                     response.setResult(entity);
                 }
             }));
@@ -145,5 +156,70 @@ public class RpcController extends BaseController {
             throw new ThingsboardException("Invalid request body", ioe, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
+
+    public void reply(LocalRequestMetaData rpcRequest, FromDeviceRpcResponse response) {
+        Optional<RpcError> rpcError = response.getError();
+        DeferredResult<ResponseEntity> responseWriter = rpcRequest.getResponseWriter();
+        if (rpcError.isPresent()) {
+            logRpcCall(rpcRequest, rpcError, null);
+            RpcError error = rpcError.get();
+            switch (error) {
+                case TIMEOUT:
+                    responseWriter.setResult(new ResponseEntity<>(HttpStatus.REQUEST_TIMEOUT));
+                    break;
+                case NO_ACTIVE_CONNECTION:
+                    responseWriter.setResult(new ResponseEntity<>(HttpStatus.CONFLICT));
+                    break;
+                default:
+                    responseWriter.setResult(new ResponseEntity<>(HttpStatus.REQUEST_TIMEOUT));
+                    break;
+            }
+        } else {
+            Optional<String> responseData = response.getResponse();
+            if (responseData.isPresent() && !StringUtils.isEmpty(responseData.get())) {
+                String data = responseData.get();
+                try {
+                    logRpcCall(rpcRequest, rpcError, null);
+                    responseWriter.setResult(new ResponseEntity<>(jsonMapper.readTree(data), HttpStatus.OK));
+                } catch (IOException e) {
+                    log.debug("Failed to decode device response: {}", data, e);
+                    logRpcCall(rpcRequest, rpcError, e);
+                    responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE));
+                }
+            } else {
+                logRpcCall(rpcRequest, rpcError, null);
+                responseWriter.setResult(new ResponseEntity<>(HttpStatus.OK));
+            }
+        }
+    }
+
+    private void logRpcCall(LocalRequestMetaData rpcRequest, Optional<RpcError> rpcError, Throwable e) {
+        logRpcCall(rpcRequest.getUser(), rpcRequest.getRequest().getDeviceId(), rpcRequest.getRequest().getBody(), rpcRequest.getRequest().isOneway(), rpcError, null);
+    }
+
+
+    private void logRpcCall(SecurityUser user, EntityId entityId, ToDeviceRpcRequestBody body, boolean oneWay, Optional<RpcError> rpcError, Throwable e) {
+        String rpcErrorStr = "";
+        if (rpcError.isPresent()) {
+            rpcErrorStr = "RPC Error: " + rpcError.get().name();
+        }
+        String method = body.getMethod();
+        String params = body.getParams();
+
+        auditLogService.logEntityAction(
+                user.getTenantId(),
+                user.getCustomerId(),
+                user.getId(),
+                user.getName(),
+                (UUIDBased & EntityId) entityId,
+                null,
+                ActionType.RPC_CALL,
+                BaseController.toException(e),
+                rpcErrorStr,
+                oneWay,
+                method,
+                params);
+    }
+
 
 }

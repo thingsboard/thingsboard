@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.common.msg.timeout;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.SessionId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-
-import java.util.Optional;
+import org.thingsboard.server.common.msg.MsgType;
 
 /**
- * Created by ashvayka on 17.04.18.
+ * @author Andrew Shvayka
  */
-@Data
-public final class PendingSessionMsgData {
+public final class DeviceActorClientSideRpcTimeoutMsg extends TimeoutMsg<Integer> {
 
-    private final SessionId sessionId;
-    private final Optional<ServerAddress> serverAddress;
-    private final SessionMsgType sessionMsgType;
-    private final int requestId;
-    private final boolean replyOnQueueAck;
+    public DeviceActorClientSideRpcTimeoutMsg(Integer id, long timeout) {
+        super(id, timeout);
+    }
 
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG;
+    }
 }

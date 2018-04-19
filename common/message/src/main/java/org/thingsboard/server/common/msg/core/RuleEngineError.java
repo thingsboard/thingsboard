@@ -21,7 +21,7 @@ package org.thingsboard.server.common.msg.core;
 
 public enum RuleEngineError {
 
-    QUEUE_PUT_TIMEOUT(true), SERVER_ERROR(true);
+    QUEUE_PUT_TIMEOUT(true), SERVER_ERROR(true), TIMEOUT;
 
     private final boolean critical;
 

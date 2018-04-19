@@ -44,6 +44,8 @@ public class RuleEngineErrorMsg implements ToDeviceMsg {
                 return "Timeout during persistence of the message to the queue!";
             case SERVER_ERROR:
                 return "Error during processing of message by the server!";
+            case TIMEOUT:
+                return "Timeout during processing of message by the server!";
             default:
                 throw new RuntimeException("Error " + error + " is not supported!");
         }

@@ -37,7 +37,7 @@ import org.thingsboard.server.extensions.api.plugins.rpc.RpcMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.rpc.GrpcSession;
 import org.thingsboard.server.service.cluster.rpc.GrpcSessionListener;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -142,14 +142,14 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
         return new UUID(uid.getPluginUuidMsb(), uid.getPluginUuidLsb());
     }
 
-    private static ToDeviceRpcRequestMsg deserialize(ServerAddress serverAddress, ClusterAPIProtos.ToDeviceRpcRequestRpcMessage msg) {
+    private static ToDeviceRpcRequestActorMsg deserialize(ServerAddress serverAddress, ClusterAPIProtos.ToDeviceRpcRequestRpcMessage msg) {
         TenantId deviceTenantId = new TenantId(toUUID(msg.getDeviceTenantId()));
         DeviceId deviceId = new DeviceId(toUUID(msg.getDeviceId()));
 
         ToDeviceRpcRequestBody requestBody = new ToDeviceRpcRequestBody(msg.getMethod(), msg.getParams());
         ToDeviceRpcRequest request = new ToDeviceRpcRequest(toUUID(msg.getMsgId()), deviceTenantId, deviceId, msg.getOneway(), msg.getExpTime(), requestBody);
 
-        return new ToDeviceRpcRequestMsg(serverAddress, request);
+        return new ToDeviceRpcRequestActorMsg(serverAddress, request);
     }
 
     private static ToPluginRpcResponseDeviceMsg deserialize(ServerAddress serverAddress, ClusterAPIProtos.ToPluginRpcResponseRpcMessage msg) {

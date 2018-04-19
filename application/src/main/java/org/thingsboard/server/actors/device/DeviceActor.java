@@ -25,12 +25,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
+import org.thingsboard.server.common.msg.timeout.DeviceActorClientSideRpcTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorQueueTimeoutMsg;
-import org.thingsboard.server.common.msg.timeout.DeviceActorRpcTimeoutMsg;
+import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
-import org.thingsboard.server.common.msg.timeout.TimeoutMsg;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
+import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 
 public class DeviceActor extends ContextAwareActor {
 
@@ -62,10 +63,16 @@ public class DeviceActor extends ContextAwareActor {
                 processor.processNameOrTypeUpdate((DeviceNameOrTypeUpdateMsg) msg);
                 break;
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
-                processor.processRpcRequest(context(), (ToDeviceRpcRequestMsg) msg);
+                processor.processRpcRequest(context(), (ToDeviceRpcRequestActorMsg) msg);
                 break;
-            case DEVICE_ACTOR_RPC_TIMEOUT_MSG:
-                processor.processRpcTimeout(context(), (DeviceActorRpcTimeoutMsg) msg);
+            case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+                processor.processToServerRPCResponse(context(), (ToServerRpcResponseActorMsg) msg);
+                break;
+            case DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG:
+                processor.processServerSideRpcTimeout(context(), (DeviceActorServerSideRpcTimeoutMsg) msg);
+                break;
+            case DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG:
+                processor.processClientSideRpcTimeout(context(), (DeviceActorClientSideRpcTimeoutMsg) msg);
                 break;
             case DEVICE_ACTOR_QUEUE_TIMEOUT_MSG:
                 processor.processQueueTimeout(context(), (DeviceActorQueueTimeoutMsg) msg);

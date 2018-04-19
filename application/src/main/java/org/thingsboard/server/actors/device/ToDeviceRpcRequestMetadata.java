@@ -16,13 +16,13 @@
 package org.thingsboard.server.actors.device;
 
 import lombok.Data;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 
 /**
  * @author Andrew Shvayka
  */
 @Data
 public class ToDeviceRpcRequestMetadata {
-    private final ToDeviceRpcRequestMsg msg;
+    private final ToDeviceRpcRequestActorMsg msg;
     private final boolean sent;
 }

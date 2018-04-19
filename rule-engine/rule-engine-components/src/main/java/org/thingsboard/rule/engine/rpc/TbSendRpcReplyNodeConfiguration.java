@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.rule.engine.rpc;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.SessionId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 
-import java.util.Optional;
-
-/**
- * Created by ashvayka on 17.04.18.
- */
 @Data
-public final class PendingSessionMsgData {
+public class TbSendRpcReplyNodeConfiguration implements NodeConfiguration<TbSendRpcReplyNodeConfiguration> {
 
-    private final SessionId sessionId;
-    private final Optional<ServerAddress> serverAddress;
-    private final SessionMsgType sessionMsgType;
-    private final int requestId;
-    private final boolean replyOnQueueAck;
+    private String requestIdMetaDataAttribute;
 
+    @Override
+    public TbSendRpcReplyNodeConfiguration defaultConfiguration() {
+        TbSendRpcReplyNodeConfiguration configuration = new TbSendRpcReplyNodeConfiguration();
+        configuration.setRequestIdMetaDataAttribute("requestId");
+        return configuration;
+    }
 }

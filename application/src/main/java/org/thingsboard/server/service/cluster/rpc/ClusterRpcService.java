@@ -24,7 +24,7 @@ import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginRpcResponseDeviceMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestMsg;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 
 import java.util.UUID;
 
@@ -41,7 +41,7 @@ public interface ClusterRpcService {
 
     void tell(ServerAddress serverAddress, ToDeviceActorNotificationMsg toForward);
 
-    void tell(ServerAddress serverAddress, ToDeviceRpcRequestMsg toForward);
+    void tell(ServerAddress serverAddress, ToDeviceRpcRequestActorMsg toForward);
 
     void tell(ServerAddress serverAddress, ToPluginRpcResponseDeviceMsg toForward);
 
