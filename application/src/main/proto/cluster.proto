@@ -61,7 +61,6 @@ message ConnectRpcMessage {
 }
 
 message ToDeviceRpcRequestRpcMessage {
-  PluginAddress address = 1;
   Uid deviceTenantId = 2;
   Uid deviceId = 3;
 
@@ -73,8 +72,6 @@ message ToDeviceRpcRequestRpcMessage {
 }
 
 message ToPluginRpcResponseRpcMessage {
-  PluginAddress address = 1;
-
   Uid msgId = 2;
   string response = 3;
   string error = 4;

@@ -22,7 +22,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.component.Processor;
 import org.thingsboard.server.extensions.api.rules.*;
 import org.thingsboard.server.extensions.core.utils.VelocityUtils;
@@ -57,7 +57,7 @@ public class AlarmDeduplicationProcessor extends SimpleRuleLifecycleComponent
     }
 
     @Override
-    public RuleProcessingMetaData process(RuleContext ctx, ToDeviceActorMsg msg) throws RuleException {
+    public RuleProcessingMetaData process(RuleContext ctx, DeviceToDeviceActorMsg msg) throws RuleException {
         RuleProcessingMetaData md = new RuleProcessingMetaData();
         VelocityContext context = VelocityUtils.createContext(ctx.getDeviceMetaData(), msg.getPayload());
         String alarmId = VelocityUtils.merge(alarmIdTemplate, context);

@@ -61,6 +61,7 @@ import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
@@ -163,6 +164,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private DeviceRpcService deviceRpcService;
+
+    @Autowired
+    @Getter
     @Setter
     private PluginWebSocketMsgEndpoint wsMsgEndpoint;
 
@@ -186,17 +191,13 @@ public class ActorSystemContext {
     @Getter
     private long syncSessionTimeout;
 
-    @Value("${actors.plugin.termination.delay}")
+    @Value("${actors.queue.enabled}")
     @Getter
-    private long pluginActorTerminationDelay;
+    private boolean queuePersistenceEnabled;
 
-    @Value("${actors.plugin.processing.timeout}")
+    @Value("${actors.queue.timeout}")
     @Getter
-    private long pluginProcessingTimeout;
-
-    @Value("${actors.plugin.error_persist_frequency}")
-    @Getter
-    private long pluginErrorPersistFrequency;
+    private long queuePersistenceTimeout;
 
     @Value("${actors.rule.chain.error_persist_frequency}")
     @Getter
@@ -205,14 +206,6 @@ public class ActorSystemContext {
     @Value("${actors.rule.node.error_persist_frequency}")
     @Getter
     private long ruleNodeErrorPersistFrequency;
-
-    @Value("${actors.rule.termination.delay}")
-    @Getter
-    private long ruleActorTerminationDelay;
-
-    @Value("${actors.rule.error_persist_frequency}")
-    @Getter
-    private long ruleErrorPersistFrequency;
 
     @Value("${actors.statistics.enabled}")
     @Getter

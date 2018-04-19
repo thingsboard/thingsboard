@@ -20,6 +20,8 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
+import org.thingsboard.server.actors.device.RuleEngineQueuePutAckMsg;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.EntityType;
@@ -58,6 +60,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private RuleNodeId firstId;
     private RuleNodeCtx firstNode;
+    private boolean started;
 
     RuleChainActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, ActorSystemContext systemContext
             , LoggingAdapter logger, ActorRef parent, ActorRef self) {
@@ -71,14 +74,19 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     @Override
     public void start(ActorContext context) throws Exception {
-        RuleChain ruleChain = service.findRuleChainById(entityId);
-        List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
-        // Creating and starting the actors;
-        for (RuleNode ruleNode : ruleNodeList) {
-            ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
-            nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+        if (!started) {
+            RuleChain ruleChain = service.findRuleChainById(entityId);
+            List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
+            // Creating and starting the actors;
+            for (RuleNode ruleNode : ruleNodeList) {
+                ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
+                nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+            }
+            initRoutes(ruleChain, ruleNodeList);
+            started = true;
+        } else {
+            onUpdate(context);
         }
-        initRoutes(ruleChain, ruleNodeList);
     }
 
     @Override
@@ -113,6 +121,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         nodeActors.clear();
         nodeRoutes.clear();
         context.stop(self);
+        started = false;
     }
 
     @Override
@@ -157,6 +166,14 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         pushMsgToNode(firstNode, tbMsg);
     }
 
+    public void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
+        checkActive();
+        TbMsg tbMsg = envelope.getTbMsg();
+        //TODO: push to queue and act on ack in async way
+        pushMsgToNode(firstNode, tbMsg);
+        envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(tbMsg.getId()), self);
+    }
+
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
         checkActive();
         RuleNodeId originator = envelope.getOriginator();
@@ -191,5 +208,4 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg), self);
         }
     }
-
 }

@@ -18,6 +18,7 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.OneForOneStrategy;
 import akka.actor.SupervisorStrategy;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.service.ComponentActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -43,6 +44,9 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
                 break;
             case SERVICE_TO_RULE_ENGINE_MSG:
                 processor.onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+                break;
+            case DEVICE_ACTOR_TO_RULE_ENGINE_MSG:
+                processor.onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);
                 break;
             case RULE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 processor.onTellNext((RuleNodeToRuleChainTellNextMsg) msg);

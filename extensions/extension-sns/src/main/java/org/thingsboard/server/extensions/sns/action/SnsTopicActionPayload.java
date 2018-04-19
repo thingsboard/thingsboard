@@ -17,7 +17,7 @@ package org.thingsboard.server.extensions.sns.action;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.io.Serializable;
 
@@ -32,6 +32,6 @@ public class SnsTopicActionPayload implements Serializable {
     private final String msgBody;
 
     private final Integer requestId;
-    private final MsgType msgType;
+    private final SessionMsgType sessionMsgType;
     private final boolean sync;
 }

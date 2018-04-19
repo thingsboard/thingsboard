@@ -15,26 +15,27 @@
  */
 package org.thingsboard.server.common.msg.core;
 
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 public class BasicCommandAckResponse extends BasicResponseMsg<Integer> implements StatusCodeResponse {
 
     private static final long serialVersionUID = 1L;
 
-    public static BasicCommandAckResponse onSuccess(MsgType requestMsgType, Integer requestId) {
+    public static BasicCommandAckResponse onSuccess(SessionMsgType requestMsgType, Integer requestId) {
         return BasicCommandAckResponse.onSuccess(requestMsgType, requestId, 200);
     }
 
-    public static BasicCommandAckResponse onSuccess(MsgType requestMsgType, Integer requestId, Integer code) {
+    public static BasicCommandAckResponse onSuccess(SessionMsgType requestMsgType, Integer requestId, Integer code) {
         return new BasicCommandAckResponse(requestMsgType, requestId, true, null, code);
     }
 
-    public static BasicCommandAckResponse onError(MsgType requestMsgType, Integer requestId, Exception error) {
+    public static BasicCommandAckResponse onError(SessionMsgType requestMsgType, Integer requestId, Exception error) {
         return new BasicCommandAckResponse(requestMsgType, requestId, false, error, null);
     }
 
-    private BasicCommandAckResponse(MsgType requestMsgType, Integer requestId, boolean success, Exception error, Integer code) {
-        super(requestMsgType, requestId, MsgType.TO_DEVICE_RPC_RESPONSE_ACK, success, error, code);
+    private BasicCommandAckResponse(SessionMsgType requestMsgType, Integer requestId, boolean success, Exception error, Integer code) {
+        super(requestMsgType, requestId, SessionMsgType.TO_DEVICE_RPC_RESPONSE_ACK, success, error, code);
     }
 
     @Override

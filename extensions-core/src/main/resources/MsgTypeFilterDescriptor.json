@@ -9,19 +9,19 @@
         "minItems" : 1,
         "items": [
           {
-            "value": "GET_ATTRIBUTES",
+            "value": "GET_ATTRIBUTES_REQUEST",
             "label": "Get attributes"
           },
           {
-            "value": "POST_ATTRIBUTES",
+            "value": "POST_ATTRIBUTES_REQUEST",
             "label": "Post attributes"
           },
           {
-            "value": "POST_TELEMETRY",
+            "value": "POST_TELEMETRY_REQUEST",
             "label": "Post telemetry"
           },
           {
-            "value": "RPC_REQUEST",
+            "value": "RPC_REQUEST_REQUEST",
             "label": "RPC Request"
           }
         ],

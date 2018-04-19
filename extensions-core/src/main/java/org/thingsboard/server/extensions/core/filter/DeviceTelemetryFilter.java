@@ -18,7 +18,7 @@ package org.thingsboard.server.extensions.core.filter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Filter;
 import org.thingsboard.server.extensions.api.rules.RuleContext;
@@ -34,7 +34,7 @@ import java.util.List;
 public class DeviceTelemetryFilter extends BasicJsFilter {
 
     @Override
-    protected boolean doFilter(RuleContext ctx, ToDeviceActorMsg msg) throws ScriptException {
+    protected boolean doFilter(RuleContext ctx, DeviceToDeviceActorMsg msg) throws ScriptException {
         FromDeviceMsg deviceMsg = msg.getPayload();
         if (deviceMsg instanceof TelemetryUploadRequest) {
             TelemetryUploadRequest telemetryMsg = (TelemetryUploadRequest) deviceMsg;

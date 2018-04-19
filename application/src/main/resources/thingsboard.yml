@@ -207,18 +207,7 @@ actors:
     sync:
       # Default timeout for processing request using synchronous session (HTTP, CoAP) in milliseconds
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
-  plugin:
-    # Default timeout for termination of the plugin actor after it is stopped
-    termination.delay: "${ACTORS_PLUGIN_TERMINATION_DELAY:60000}"
-    # Default timeout for processing of particular message by particular plugin
-    processing.timeout: "${ACTORS_PLUGIN_TIMEOUT:60000}"
-    # Errors for particular actor are persisted once per specified amount of milliseconds
-    error_persist_frequency: "${ACTORS_PLUGIN_ERROR_FREQUENCY:3000}"
   rule:
-    # Default timeout for termination of the rule actor after it is stopped
-    termination.delay: "${ACTORS_RULE_TERMINATION_DELAY:30000}"
-    # Errors for particular actor are persisted once per specified amount of milliseconds
-    error_persist_frequency: "${ACTORS_RULE_ERROR_FREQUENCY:3000}"
     # Specify thread pool size for database request callbacks executor service
     db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:1}"
     # Specify thread pool size for javascript executor service
@@ -235,6 +224,11 @@ actors:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
+  queue:
+    # Enable/disable persistence of un-processed messages to the queue
+    enabled: "${ACTORS_QUEUE_ENABLED:true}"
+    # Maximum allowed timeout for persistence into the queue
+    timeout: "${ACTORS_QUEUE_PERSISTENCE_TIMEOUT:30000}"
 
 cache:
   # caffeine or redis

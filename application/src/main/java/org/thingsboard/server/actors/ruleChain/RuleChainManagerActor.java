@@ -31,31 +31,29 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 public abstract class RuleChainManagerActor extends ContextAwareActor {
 
     protected final RuleChainManager ruleChainManager;
-    protected final PluginManager pluginManager;
     protected final RuleChainService ruleChainService;
 
     public RuleChainManagerActor(ActorSystemContext systemContext, RuleChainManager ruleChainManager, PluginManager pluginManager) {
         super(systemContext);
         this.ruleChainManager = ruleChainManager;
-        this.pluginManager = pluginManager;
         this.ruleChainService = systemContext.getRuleChainService();
     }
 
     protected void initRuleChains() {
-        pluginManager.init(this.context());
         ruleChainManager.init(this.context());
     }
 
     protected ActorRef getEntityActorRef(EntityId entityId) {
         ActorRef target = null;
         switch (entityId.getEntityType()) {
-            case PLUGIN:
-                target = pluginManager.getOrCreateActor(this.context(), (PluginId) entityId);
-                break;
             case RULE_CHAIN:
                 target = ruleChainManager.getOrCreateActor(this.context(), (RuleChainId) entityId);
                 break;
         }
         return target;
+    }
+
+    protected void broadcast(Object msg) {
+        ruleChainManager.broadcast(msg);
     }
 }

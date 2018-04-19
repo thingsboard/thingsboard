@@ -31,10 +31,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @NoArgsConstructor
 public final class TbMsgMetaData implements Serializable {
 
-    private Map<String, String> data = new ConcurrentHashMap<>();
+    private final Map<String, String> data = new ConcurrentHashMap<>();
 
     public TbMsgMetaData(Map<String, String> data) {
-        this.data = data;
+        this.data.putAll(data);
     }
 
     public String getValue(String key) {
