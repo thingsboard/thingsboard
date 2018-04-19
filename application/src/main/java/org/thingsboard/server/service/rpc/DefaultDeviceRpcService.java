@@ -96,8 +96,10 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         sendRpcRequest(request);
         UUID requestId = request.getId();
         localRpcRequests.put(requestId, metaData);
-        long timeout = Math.max(0, System.currentTimeMillis() - request.getExpirationTime());
+        long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis());
+        log.error("[{}] processing the request: [{}]", this.hashCode(), requestId);
         rpcCallBackExecutor.schedule(() -> {
+            log.error("[{}] timeout the request: [{}]", this.hashCode(), requestId);
             LocalRequestMetaData localMetaData = localRpcRequests.remove(requestId);
             if (localMetaData != null) {
                 reply(localMetaData, new FromDeviceRpcResponse(requestId, null, RpcError.TIMEOUT));
@@ -118,6 +120,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Override
     public void process(FromDeviceRpcResponse response) {
+        log.error("[{}] response the request: [{}]", this.hashCode(), response.getId());
         //TODO: send to another server if needed.
         UUID requestId = response.getId();
         LocalRequestMetaData md = localRpcRequests.remove(requestId);

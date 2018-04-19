@@ -17,9 +17,14 @@ package org.thingsboard.rule.engine.action;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.AbstractListeningExecutorService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang3.NotImplementedException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -38,6 +43,8 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -66,10 +73,31 @@ public class TbAlarmNodeTest {
     @Mock
     private ScriptEngine detailsJs;
 
+    private ListeningExecutor dbExecutor;
+
     private EntityId originator = new DeviceId(UUIDs.timeBased());
     private TenantId tenantId = new TenantId(UUIDs.timeBased());
     private TbMsgMetaData metaData = new TbMsgMetaData();
     private String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
+
+    @Before
+    public void before() {
+        dbExecutor = new ListeningExecutor() {
+            @Override
+            public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
+                try {
+                    return Futures.immediateFuture(task.call());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        };
+    }
 
     @Test
     public void newAlarmCanBeCreated() throws ScriptException, IOException {
@@ -128,6 +156,7 @@ public class TbAlarmNodeTest {
         verify(ctx).createJsScriptEngine("CLEAR", "isCleared");
         verify(ctx).createJsScriptEngine("DETAILS", "Details");
         verify(ctx).getJsExecutor();
+        verify(ctx).getDbCallbackExecutor();
 
         verifyNoMoreInteractions(ctx, alarmService, clearJs, detailsJs);
     }
@@ -151,6 +180,7 @@ public class TbAlarmNodeTest {
         verify(ctx).createJsScriptEngine("DETAILS", "Details");
         verify(ctx, times(2)).getJsExecutor();
         verify(ctx).getAlarmService();
+        verify(ctx, times(3)).getDbCallbackExecutor();
         verify(ctx).getTenantId();
         verify(alarmService).findLatestByOriginatorAndType(tenantId, originator, "SomeType");
 
@@ -307,6 +337,7 @@ public class TbAlarmNodeTest {
             when(ctx.getTenantId()).thenReturn(tenantId);
             when(ctx.getJsExecutor()).thenReturn(executor);
             when(ctx.getAlarmService()).thenReturn(alarmService);
+            when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
             mockJsExecutor();
 

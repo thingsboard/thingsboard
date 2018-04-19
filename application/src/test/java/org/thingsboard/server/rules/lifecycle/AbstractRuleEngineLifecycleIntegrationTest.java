@@ -16,6 +16,7 @@
 package org.thingsboard.server.rules.lifecycle;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
 
+import java.io.IOException;
 import java.util.Collections;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -69,6 +71,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         tenant.setTitle("My tenant");
         savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
+        ruleChainService.deleteRuleChainsByTenantId(savedTenant.getId());
 
         tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
@@ -152,7 +155,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         Assert.assertEquals(ruleChain.getFirstRuleNodeId(), outEvent.getEntityId());
         Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
 
-        Assert.assertEquals("serverAttributeValue", outEvent.getBody().get("metadata").get("ss.serverAttributeKey").asText());
+        Assert.assertEquals("serverAttributeValue", getMetadata(outEvent).get("ss_serverAttributeKey").asText());
     }
 
 }

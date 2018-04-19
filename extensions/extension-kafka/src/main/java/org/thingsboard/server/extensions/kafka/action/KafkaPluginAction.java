@@ -32,7 +32,7 @@ public class KafkaPluginAction extends AbstractTemplatePluginAction<KafkaPluginA
     @Override
     protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         KafkaActionPayload.KafkaActionPayloadBuilder builder = KafkaActionPayload.builder();
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.sync(configuration.isSync());
         builder.topic(configuration.getTopic());

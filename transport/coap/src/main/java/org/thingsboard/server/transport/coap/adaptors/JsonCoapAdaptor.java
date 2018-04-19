@@ -31,7 +31,6 @@ import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
 import org.thingsboard.server.common.msg.session.SessionContext;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.common.msg.session.ex.ProcessingTimeoutException;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -157,7 +156,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         return response;
     }
 
-    private UpdateAttributesRequest convertToUpdateAttributesRequest(SessionContext ctx, Request inbound) throws AdaptorException {
+    private AttributesUpdateRequest convertToUpdateAttributesRequest(SessionContext ctx, Request inbound) throws AdaptorException {
         String payload = validatePayload(ctx, inbound);
         try {
             return JsonConverter.convertToAttributes(new JsonParser().parse(payload));

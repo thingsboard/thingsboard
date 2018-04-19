@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,6 +60,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private RuleNodeId firstId;
     private RuleNodeCtx firstNode;
+    private boolean started;
 
     RuleChainActorMessageProcessor(TenantId tenantId, RuleChainId ruleChainId, ActorSystemContext systemContext
             , LoggingAdapter logger, ActorRef parent, ActorRef self) {
@@ -73,14 +74,19 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     @Override
     public void start(ActorContext context) throws Exception {
-        RuleChain ruleChain = service.findRuleChainById(entityId);
-        List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
-        // Creating and starting the actors;
-        for (RuleNode ruleNode : ruleNodeList) {
-            ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
-            nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+        if (!started) {
+            RuleChain ruleChain = service.findRuleChainById(entityId);
+            List<RuleNode> ruleNodeList = service.getRuleChainNodes(entityId);
+            // Creating and starting the actors;
+            for (RuleNode ruleNode : ruleNodeList) {
+                ActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
+                nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+            }
+            initRoutes(ruleChain, ruleNodeList);
+            started = true;
+        } else {
+            onUpdate(context);
         }
-        initRoutes(ruleChain, ruleNodeList);
     }
 
     @Override
@@ -115,6 +121,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         nodeActors.clear();
         nodeRoutes.clear();
         context.stop(self);
+        started = false;
     }
 
     @Override

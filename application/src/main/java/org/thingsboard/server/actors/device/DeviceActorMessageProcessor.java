@@ -19,6 +19,9 @@ import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import com.datastax.driver.core.utils.UUIDs;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -39,14 +42,18 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.AttributesUpdateNotification;
+import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
 import org.thingsboard.server.common.msg.core.BasicCommandAckResponse;
+import org.thingsboard.server.common.msg.core.BasicGetAttributesResponse;
 import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
 import org.thingsboard.server.common.msg.core.BasicToDeviceSessionActorMsg;
+import org.thingsboard.server.common.msg.core.GetAttributesRequest;
 import org.thingsboard.server.common.msg.core.RuleEngineError;
 import org.thingsboard.server.common.msg.core.RuleEngineErrorMsg;
 import org.thingsboard.server.common.msg.core.SessionCloseMsg;
 import org.thingsboard.server.common.msg.core.SessionCloseNotification;
 import org.thingsboard.server.common.msg.core.SessionOpenMsg;
+import org.thingsboard.server.common.msg.core.StatusCodeResponse;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.core.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceRpcResponseMsg;
@@ -64,10 +71,15 @@ import org.thingsboard.server.common.msg.timeout.DeviceActorQueueTimeoutMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorRpcTimeoutMsg;
 import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.extensions.api.plugins.PluginCallback;
+import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -114,7 +126,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private void initAttributes() {
-        //TODO: add invalidation of deviceType cache.
         Device device = systemContext.getDeviceService().findDeviceById(deviceId);
         this.deviceName = device.getName();
         this.deviceType = device.getType();
@@ -238,6 +249,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         processSubscriptionCommands(context, msg);
         processRpcResponses(context, msg);
         processSessionStateMsgs(msg);
+
         SessionMsgType sessionMsgType = msg.getPayload().getMsgType();
         if (sessionMsgType.requiresRulesProcessing()) {
             switch (sessionMsgType) {
@@ -245,6 +257,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                     handleGetAttributesRequest(msg);
                     break;
                 case POST_ATTRIBUTES_REQUEST:
+                    handlePostAttributesRequest(context, msg);
                     break;
                 case POST_TELEMETRY_REQUEST:
                     handlePostTelemetryRequest(context, msg);
@@ -256,14 +269,62 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private void handleGetAttributesRequest(DeviceToDeviceActorMsg msg) {
+    private void handleGetAttributesRequest(DeviceToDeviceActorMsg src) {
+        GetAttributesRequest request = (GetAttributesRequest) src.getPayload();
+        ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.CLIENT_SCOPE, request.getClientAttributeNames());
+        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.SHARED_SCOPE, request.getClientAttributeNames());
 
+        Futures.addCallback(Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture)), new FutureCallback<List<List<AttributeKvEntry>>>() {
+            @Override
+            public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
+                BasicGetAttributesResponse response = BasicGetAttributesResponse.onSuccess(request.getMsgType(),
+                        request.getRequestId(), BasicAttributeKVMsg.from(result.get(0), result.get(1)));
+                sendMsgToSessionActor(new BasicToDeviceSessionActorMsg(response, src.getSessionId()), src.getServerAddress());
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                if (t instanceof Exception) {
+                    ToDeviceMsg toDeviceMsg = BasicStatusCodeResponse.onError(SessionMsgType.GET_ATTRIBUTES_REQUEST, request.getRequestId(), (Exception) t);
+                    sendMsgToSessionActor(new BasicToDeviceSessionActorMsg(toDeviceMsg, src.getSessionId()), src.getServerAddress());
+                } else {
+                    logger.error("[{}] Failed to process attributes request", deviceId, t);
+                }
+            }
+        });
+    }
+
+    private ListenableFuture<List<AttributeKvEntry>> getAttributeKvEntries(DeviceId deviceId, String scope, Optional<Set<String>> names) {
+        if (names.isPresent()) {
+            if (!names.get().isEmpty()) {
+                return systemContext.getAttributesService().find(deviceId, scope, names.get());
+            } else {
+                return systemContext.getAttributesService().findAll(deviceId, scope);
+            }
+        } else {
+            return Futures.immediateFuture(Collections.emptyList());
+        }
+    }
+
+    private void handlePostAttributesRequest(ActorContext context, DeviceToDeviceActorMsg src) {
+        AttributesUpdateRequest request = (AttributesUpdateRequest) src.getPayload();
+
+        JsonObject json = new JsonObject();
+        for (AttributeKvEntry kv : request.getAttributes()) {
+            kv.getBooleanValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
+            kv.getLongValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
+            kv.getDoubleValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
+            kv.getStrValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
+        }
+
+        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json));
+        pushToRuleEngineWithTimeout(context, tbMsg, src, request);
     }
 
     private void handlePostTelemetryRequest(ActorContext context, DeviceToDeviceActorMsg src) {
-        TelemetryUploadRequest telemetry = (TelemetryUploadRequest) src.getPayload();
+        TelemetryUploadRequest request = (TelemetryUploadRequest) src.getPayload();
 
-        Map<Long, List<KvEntry>> tsData = telemetry.getData();
+        Map<Long, List<KvEntry>> tsData = request.getData();
 
         JsonArray json = new JsonArray();
         for (Map.Entry<Long, List<KvEntry>> entry : tsData.entrySet()) {
@@ -281,7 +342,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
 
         TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json));
-        pushToRuleEngineWithTimeout(context, tbMsg, src, telemetry);
+        pushToRuleEngineWithTimeout(context, tbMsg, src, request);
     }
 
     private void pushToRuleEngineWithTimeout(ActorContext context, TbMsg tbMsg, DeviceToDeviceActorMsg src, FromDeviceRequestMsg fromDeviceRequestMsg) {
@@ -400,16 +461,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             systemContext.getRpcService().tell(sessionAddress.get(), response);
         } else {
             systemContext.getSessionManagerActor().tell(response, ActorRef.noSender());
-        }
-    }
-
-    private List<AttributeKvEntry> fetchAttributes(String scope) {
-        try {
-            //TODO: replace this with async operation. Happens only during actor creation, but is still criticla for performance,
-            return systemContext.getAttributesService().findAll(this.deviceId, scope).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.warning("[{}] Failed to fetch attributes for scope: {}", deviceId, scope);
-            throw new RuntimeException(e);
         }
     }
 

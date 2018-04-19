@@ -16,6 +16,7 @@
 package org.thingsboard.server.rules.flow;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -28,6 +29,7 @@ import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -40,6 +42,7 @@ import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -60,9 +63,6 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
     @Autowired
     protected AttributesService attributesService;
 
-    @Autowired
-    protected RuleChainService ruleChainService;
-
     @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
@@ -71,6 +71,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         tenant.setTitle("My tenant");
         savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         Assert.assertNotNull(savedTenant);
+        ruleChainService.deleteRuleChainsByTenantId(savedTenant.getId());
 
         tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
@@ -166,7 +167,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Assert.assertEquals(ruleChain.getFirstRuleNodeId(), outEvent.getEntityId());
         Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
 
-        Assert.assertEquals("serverAttributeValue1", outEvent.getBody().get("metadata").get("ss.serverAttributeKey1").asText());
+        Assert.assertEquals("serverAttributeValue1", getMetadata(outEvent).get("ss_serverAttributeKey1").asText());
 
         RuleChain finalRuleChain = ruleChain;
         RuleNode lastRuleNode = metaData.getNodes().stream().filter(node -> !node.getId().equals(finalRuleChain.getFirstRuleNodeId())).findFirst().get();
@@ -183,8 +184,8 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Assert.assertEquals(lastRuleNode.getId(), outEvent.getEntityId());
         Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
 
-        Assert.assertEquals("serverAttributeValue1", outEvent.getBody().get("metadata").get("ss.serverAttributeKey1").asText());
-        Assert.assertEquals("serverAttributeValue2", outEvent.getBody().get("metadata").get("ss.serverAttributeKey2").asText());
+        Assert.assertEquals("serverAttributeValue1", getMetadata(outEvent).get("ss_serverAttributeKey1").asText());
+        Assert.assertEquals("serverAttributeValue2", getMetadata(outEvent).get("ss_serverAttributeKey2").asText());
     }
 
 }

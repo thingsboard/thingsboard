@@ -21,19 +21,18 @@ import java.util.Set;
 
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
-public class BasicUpdateAttributesRequest extends BasicRequest implements UpdateAttributesRequest {
+public class BasicAttributesUpdateRequest extends BasicRequest implements AttributesUpdateRequest {
 
     private static final long serialVersionUID = 1L;
 
     private final Set<AttributeKvEntry> data;
 
-    public BasicUpdateAttributesRequest() {
+    public BasicAttributesUpdateRequest() {
         this(DEFAULT_REQUEST_ID);
     }
 
-    public BasicUpdateAttributesRequest(Integer requestId) {
+    public BasicAttributesUpdateRequest(Integer requestId) {
         super(requestId);
         this.data = new LinkedHashSet<>();
     }
@@ -58,7 +57,7 @@ public class BasicUpdateAttributesRequest extends BasicRequest implements Update
 
     @Override
     public String toString() {
-        return "BasicUpdateAttributesRequest [data=" + data + "]";
+        return "BasicAttributesUpdateRequest [data=" + data + "]";
     }
 
 }

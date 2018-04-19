@@ -52,7 +52,7 @@ public class RestApiCallMsgHandler implements RuleMsgHandler {
                     String.class);
             if (exchangeResponse.getStatusCode().equals(payload.getExpectedResultCode()) && payload.isSync()) {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId,
-                        BasicStatusCodeResponse.onSuccess(payload.getMsgType(), payload.getRequestId())));
+                        BasicStatusCodeResponse.onSuccess(payload.getSessionMsgType(), payload.getRequestId())));
             } else if(!exchangeResponse.getStatusCode().equals(payload.getExpectedResultCode())) {
                 throw new RuntimeException("Response Status Code '"
                         + exchangeResponse.getStatusCode()

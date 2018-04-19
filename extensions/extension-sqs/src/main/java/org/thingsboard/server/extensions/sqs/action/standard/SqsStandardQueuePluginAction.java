@@ -33,7 +33,7 @@ public class SqsStandardQueuePluginAction extends AbstractTemplatePluginAction<S
     @Override
     protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         SqsStandardQueueActionPayload.SqsStandardQueueActionPayloadBuilder builder = SqsStandardQueueActionPayload.builder();
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.queue(configuration.getQueue());
         builder.delaySeconds(configuration.getDelaySeconds());

@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.telemetry;
+package org.thingsboard.server.common.msg.core;
 
-import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import java.util.Set;
 
-import java.util.Map;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.msg.session.FromDeviceMsg;
+import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
 
-@Data
-public class TbMsgTelemetryNodeConfiguration implements NodeConfiguration<TbMsgTelemetryNodeConfiguration> {
+public interface AttributesUpdateRequest extends FromDeviceRequestMsg {
 
-    private long defaultTTL;
+    Set<AttributeKvEntry> getAttributes();
 
-    @Override
-    public TbMsgTelemetryNodeConfiguration defaultConfiguration() {
-        TbMsgTelemetryNodeConfiguration configuration = new TbMsgTelemetryNodeConfiguration();
-        configuration.setDefaultTTL(0L);
-        return configuration;
-    }
 }

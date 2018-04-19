@@ -40,20 +40,10 @@ public class RuleEngineErrorMsg implements ToDeviceMsg {
 
     public String getErrorMsg() {
         switch (error) {
-            case NO_RULES:
-                return "No rules configured!";
-            case NO_ACTIVE_RULES:
-                return "No active rules!";
-            case NO_FILTERS_MATCHED:
-                return "No rules that match current message!";
-            case NO_REQUEST_FROM_ACTIONS:
-                return "Rule filters match, but no plugin message produced by rule action!";
-            case NO_TWO_WAY_ACTIONS:
-                return "Rule filters match, but no rule with two-way action configured!";
-            case NO_RESPONSE_FROM_ACTIONS:
-                return "Rule filters match, message processed by plugin, but no response produced by rule action!";
             case QUEUE_PUT_TIMEOUT:
-                return "Timeout during processing of message by plugin!";
+                return "Timeout during persistence of the message to the queue!";
+            case SERVER_ERROR:
+                return "Error during processing of message by the server!";
             default:
                 throw new RuntimeException("Error " + error + " is not supported!");
         }

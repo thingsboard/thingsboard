@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.core.BasicGetAttributesResponse;
 import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
 import org.thingsboard.server.common.msg.core.GetAttributesRequest;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
+import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
 import org.thingsboard.server.common.msg.kv.BasicAttributeKVMsg;
 import org.thingsboard.server.extensions.api.plugins.PluginCallback;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
@@ -132,7 +132,7 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
 
     @Override
     public void handleUpdateAttributesRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, UpdateAttributesRequestRuleToPluginMsg msg) {
-        UpdateAttributesRequest request = msg.getPayload();
+        AttributesUpdateRequest request = msg.getPayload();
         ctx.saveAttributes(msg.getTenantId(), msg.getDeviceId(), DataConstants.CLIENT_SCOPE, request.getAttributes().stream().collect(Collectors.toList()),
                 new PluginCallback<Void>() {
                     @Override

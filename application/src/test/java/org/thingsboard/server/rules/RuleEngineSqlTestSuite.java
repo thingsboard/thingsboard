@@ -24,7 +24,8 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.rules.flow.*Test"})
+        "org.thingsboard.server.rules.flow.*Test",
+        "org.thingsboard.server.rules.lifecycle.*Test"})
 public class RuleEngineSqlTestSuite {
 
     @ClassRule

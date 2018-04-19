@@ -219,7 +219,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
-    private UpdateAttributesRequest convertToUpdateAttributesRequest(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+    private AttributesUpdateRequest convertToUpdateAttributesRequest(SessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload());
         try {
             return JsonConverter.convertToAttributes(new JsonParser().parse(payload), inbound.variableHeader().messageId());

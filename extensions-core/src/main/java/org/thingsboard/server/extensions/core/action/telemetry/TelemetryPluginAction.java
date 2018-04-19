@@ -18,10 +18,9 @@ package org.thingsboard.server.extensions.core.action.telemetry;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.msg.core.GetAttributesRequest;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
+import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Action;
@@ -58,7 +57,7 @@ public class TelemetryPluginAction extends SimpleRuleLifecycleComponent implemen
             return Optional.of(new TelemetryUploadRequestRuleToPluginMsg(deviceToDeviceActorMsg.getTenantId(), deviceToDeviceActorMsg.getCustomerId(),
                     deviceToDeviceActorMsg.getDeviceId(), payload, ttl));
         } else if (msg.getMsgType() == SessionMsgType.POST_ATTRIBUTES_REQUEST) {
-            UpdateAttributesRequest payload = (UpdateAttributesRequest) msg;
+            AttributesUpdateRequest payload = (AttributesUpdateRequest) msg;
             return Optional.of(new UpdateAttributesRequestRuleToPluginMsg(deviceToDeviceActorMsg.getTenantId(), deviceToDeviceActorMsg.getCustomerId(),
                     deviceToDeviceActorMsg.getDeviceId(), payload));
         } else if (msg.getMsgType() == SessionMsgType.GET_ATTRIBUTES_REQUEST) {

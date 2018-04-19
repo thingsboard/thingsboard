@@ -31,7 +31,7 @@ public class MqttPluginAction extends AbstractTemplatePluginAction<MqttPluginAct
     protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         MqttActionPayload.MqttActionPayloadBuilder builder = MqttActionPayload.builder();
         builder.sync(configuration.isSync());
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.topic(configuration.getTopic());
         builder.msgBody(getMsgBody(ctx, msg));

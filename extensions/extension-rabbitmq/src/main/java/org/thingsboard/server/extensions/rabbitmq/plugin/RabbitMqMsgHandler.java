@@ -57,7 +57,7 @@ public class RabbitMqMsgHandler implements RuleMsgHandler {
                     payload.getPayload().getBytes(UTF8));
             if (payload.isSync()) {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId,
-                        BasicStatusCodeResponse.onSuccess(payload.getMsgType(), payload.getRequestId())));
+                        BasicStatusCodeResponse.onSuccess(payload.getSessionMsgType(), payload.getRequestId())));
             }
         } catch (IOException e) {
             throw new RuleException(e.getMessage(), e);

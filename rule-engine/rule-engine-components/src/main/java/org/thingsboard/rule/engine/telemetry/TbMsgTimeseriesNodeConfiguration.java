@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.controller.nosql;
+package org.thingsboard.rule.engine.telemetry;
 
-import org.thingsboard.server.controller.BasePluginControllerTest;
-import org.thingsboard.server.dao.service.DaoNoSqlTest;
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-/**
- * Created by Valerii Sosliuk on 6/28/2017.
- */
-@DaoNoSqlTest
-public class PluginControllerNoSqlTest extends BasePluginControllerTest {
+@Data
+public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsgTimeseriesNodeConfiguration> {
+
+    private long defaultTTL;
+
+    @Override
+    public TbMsgTimeseriesNodeConfiguration defaultConfiguration() {
+        TbMsgTimeseriesNodeConfiguration configuration = new TbMsgTimeseriesNodeConfiguration();
+        configuration.setDefaultTTL(0L);
+        return configuration;
+    }
 }

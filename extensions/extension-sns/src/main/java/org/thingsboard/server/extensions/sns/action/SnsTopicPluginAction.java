@@ -33,7 +33,7 @@ public class SnsTopicPluginAction extends AbstractTemplatePluginAction<SnsTopicP
     @Override
     protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         SnsTopicActionPayload.SnsTopicActionPayloadBuilder builder = SnsTopicActionPayload.builder();
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.topicArn(configuration.getTopicArn());
         builder.msgBody(getMsgBody(ctx, msg));

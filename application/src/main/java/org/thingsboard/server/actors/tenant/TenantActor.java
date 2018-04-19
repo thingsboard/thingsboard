@@ -81,7 +81,7 @@ public class TenantActor extends RuleChainManagerActor {
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
-                onToDeviceActorMsg((DeviceToDeviceActorMsg) msg);
+                onToDeviceActorMsg((DeviceAwareMsg) msg);
                 break;
             default:
                 return false;

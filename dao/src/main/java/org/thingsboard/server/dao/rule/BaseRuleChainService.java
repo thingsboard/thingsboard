@@ -75,8 +75,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.trace("Save system rule chain with predefined id {}", SYSTEM_TENANT);
             ruleChain.setTenantId(SYSTEM_TENANT);
         }
-        //TODO: Temporary Hack to continue tests;
-        ruleChain.setRoot(true);
         RuleChain savedRuleChain = ruleChainDao.save(ruleChain);
         if (ruleChain.isRoot() && ruleChain.getTenantId() != null && ruleChain.getId() == null) {
             try {

@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.controller.nosql;
+package org.thingsboard.rule.engine.telemetry;
 
-import org.thingsboard.server.controller.BaseRuleControllerTest;
-import org.thingsboard.server.dao.service.DaoNoSqlTest;
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 
-/**
- * Created by Valerii Sosliuk on 6/28/2017.
- */
-@DaoNoSqlTest
-public class RuleControllerNoSqlTest extends BaseRuleControllerTest {
+@Data
+public class TbMsgAttributesNodeConfiguration implements NodeConfiguration<TbMsgAttributesNodeConfiguration> {
+
+    private String scope;
+
+    @Override
+    public TbMsgAttributesNodeConfiguration defaultConfiguration() {
+        TbMsgAttributesNodeConfiguration configuration = new TbMsgAttributesNodeConfiguration();
+        configuration.setScope(DataConstants.SERVER_SCOPE);
+        return configuration;
+    }
 }

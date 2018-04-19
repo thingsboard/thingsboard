@@ -24,64 +24,49 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "save timeseries data",
-        configClazz = TbMsgTelemetryNodeConfiguration.class,
-        nodeDescription = "Saves timeseries data",
-        nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY' message type",
-        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
-        configDirective = "tbActionNodeTelemetryConfig"
+        name = "save attributes",
+        configClazz = TbMsgAttributesNodeConfiguration.class,
+        nodeDescription = "Saves attributes data",
+        nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type"
 )
+public class TbMsgAttributesNode implements TbNode {
 
-public class TbMsgTelemetryNode implements TbNode {
-
-    private TbMsgTelemetryNodeConfiguration config;
+    private TbMsgAttributesNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgTelemetryNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbMsgAttributesNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+        if (!msg.getType().equals(SessionMsgType.POST_ATTRIBUTES_REQUEST.name())) {
             ctx.tellError(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
 
         String src = msg.getData();
-        TelemetryUploadRequest telemetryUploadRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(src));
-        Map<Long, List<KvEntry>> tsKvMap = telemetryUploadRequest.getData();
-        if (tsKvMap == null) {
-            ctx.tellError(msg, new IllegalArgumentException("Msg body us empty: " + src));
-            return;
-        }
-        List<TsKvEntry> tsKvEntryList = new ArrayList<>();
-        for (Map.Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
-            for (KvEntry kvEntry : tsKvEntry.getValue()) {
-                tsKvEntryList.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
-            }
-        }
-        String ttlValue = msg.getMetaData().getValue("TTL");
-        long ttl = !StringUtils.isEmpty(ttlValue) ? Long.valueOf(ttlValue) : config.getDefaultTTL();
-        ctx.getTelemetryService().saveAndNotify(msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(new JsonParser().parse(src)).getAttributes();
+        ctx.getTelemetryService().saveAndNotify(msg.getOriginator(), config.getScope(), new ArrayList<>(attributes), new TelemetryNodeCallback(ctx, msg));
     }
 
     @Override

@@ -35,7 +35,7 @@ public class RestApiCallPluginAction extends AbstractTemplatePluginAction<RestAp
     @Override
     protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         RestApiCallActionPayload.RestApiCallActionPayloadBuilder builder = RestApiCallActionPayload.builder();
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.sync(configuration.isSync());
         builder.actionPath(configuration.getActionPath());

@@ -33,7 +33,7 @@ public class SqsFifoQueuePluginAction extends AbstractTemplatePluginAction<SqsFi
     @Override
     protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         SqsFifoQueueActionPayload.SqsFifoQueueActionPayloadBuilder builder = SqsFifoQueueActionPayload.builder();
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.queue(configuration.getQueue());
         builder.deviceId(msg.getDeviceId().toString());

@@ -16,7 +16,7 @@
 package org.thingsboard.server.extensions.core.filter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
+import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Filter;
@@ -44,7 +44,7 @@ public class DeviceAttributesFilter extends BasicJsFilter {
         if (msg != null) {
             switch (msg.getMsgType()) {
                 case POST_ATTRIBUTES_REQUEST:
-                    bindings = NashornJsEvaluator.updateBindings(bindings, (UpdateAttributesRequest) msg);
+                    bindings = NashornJsEvaluator.updateBindings(bindings, (AttributesUpdateRequest) msg);
                     break;
                 default:
                     break;

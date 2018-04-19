@@ -114,9 +114,10 @@ public class RpcController extends BaseController {
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
             long timeout = System.currentTimeMillis() + (cmd.getTimeout() != null ? cmd.getTimeout() : DEFAULT_TIMEOUT);
             ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(cmd.getMethodName(), cmd.getRequestData());
-            accessValidator.validate(currentUser, deviceId, new FutureCallback<ValidationResult>() {
+            accessValidator.validate(currentUser, deviceId, new HttpValidationCallback(response, new FutureCallback<DeferredResult<ResponseEntity>>() {
                 @Override
-                public void onSuccess(@Nullable ValidationResult result) {
+                public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
+
                     ToDeviceRpcRequest rpcRequest = new ToDeviceRpcRequest(UUID.randomUUID(),
                             tenantId,
                             deviceId,
@@ -124,7 +125,7 @@ public class RpcController extends BaseController {
                             timeout,
                             body
                     );
-                    deviceRpcService.process(rpcRequest, new LocalRequestMetaData(rpcRequest, currentUser, response));
+                    deviceRpcService.process(rpcRequest, new LocalRequestMetaData(rpcRequest, currentUser, result));
                 }
 
                 @Override
@@ -138,7 +139,7 @@ public class RpcController extends BaseController {
                     deviceRpcService.logRpcCall(currentUser, deviceId, body, oneWay, Optional.empty(), e);
                     response.setResult(entity);
                 }
-            });
+            }));
             return response;
         } catch (IOException ioe) {
             throw new ThingsboardException("Invalid request body", ioe, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
