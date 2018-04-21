@@ -15,10 +15,12 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -58,6 +60,8 @@ public interface TbContext {
 
     void updateSelf(RuleNode self);
 
+    TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data);
+
     RuleNodeId getSelfId();
 
     TenantId getTenantId();
@@ -77,6 +81,8 @@ public interface TbContext {
     AlarmService getAlarmService();
 
     RuleChainService getRuleChainService();
+
+    RuleEngineRpcService getRpcService();
 
     RuleEngineTelemetryService getTelemetryService();
 

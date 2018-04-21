@@ -199,6 +199,10 @@ public class ActorSystemContext {
     @Getter
     private long queuePersistenceTimeout;
 
+    @Value("${actors.client_side_rpc.timeout}")
+    @Getter
+    private long clientSideRpcTimeout;
+
     @Value("${actors.rule.chain.error_persist_frequency}")
     @Getter
     private long ruleChainErrorPersistFrequency;

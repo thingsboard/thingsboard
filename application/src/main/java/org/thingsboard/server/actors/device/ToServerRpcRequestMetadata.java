@@ -18,20 +18,16 @@ package org.thingsboard.server.actors.device;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionType;
 
 import java.util.Optional;
 
 /**
- * Created by ashvayka on 17.04.18.
+ * @author Andrew Shvayka
  */
 @Data
-public final class PendingSessionMsgData {
-
+public class ToServerRpcRequestMetadata {
     private final SessionId sessionId;
-    private final Optional<ServerAddress> serverAddress;
-    private final SessionMsgType sessionMsgType;
-    private final int requestId;
-    private final boolean replyOnQueueAck;
-
+    private final SessionType type;
+    private final Optional<ServerAddress> server;
 }

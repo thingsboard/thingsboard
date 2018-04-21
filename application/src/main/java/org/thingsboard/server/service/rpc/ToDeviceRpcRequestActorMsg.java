@@ -32,13 +32,13 @@ import java.util.Optional;
  */
 @ToString
 @RequiredArgsConstructor
-public class ToDeviceRpcRequestMsg implements ToDeviceActorNotificationMsg {
+public class ToDeviceRpcRequestActorMsg implements ToDeviceActorNotificationMsg {
 
     private final ServerAddress serverAddress;
     @Getter
     private final ToDeviceRpcRequest msg;
 
-    public ToDeviceRpcRequestMsg(ToDeviceRpcRequest msg) {
+    public ToDeviceRpcRequestActorMsg(ToDeviceRpcRequest msg) {
         this(null, msg);
     }
 

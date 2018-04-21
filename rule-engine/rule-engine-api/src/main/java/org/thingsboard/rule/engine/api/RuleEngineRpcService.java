@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.rule.engine.api;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.SessionId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-
-import java.util.Optional;
+import org.thingsboard.server.common.data.id.DeviceId;
+import java.util.function.Consumer;
 
 /**
- * Created by ashvayka on 17.04.18.
+ * Created by ashvayka on 02.04.18.
  */
-@Data
-public final class PendingSessionMsgData {
+public interface RuleEngineRpcService {
 
-    private final SessionId sessionId;
-    private final Optional<ServerAddress> serverAddress;
-    private final SessionMsgType sessionMsgType;
-    private final int requestId;
-    private final boolean replyOnQueueAck;
+    void sendRpcReply(DeviceId deviceId, int requestId, String body);
+
+    void sendRpcRequest(RuleEngineDeviceRpcRequest request, Consumer<RuleEngineDeviceRpcResponse> consumer);
 
 }

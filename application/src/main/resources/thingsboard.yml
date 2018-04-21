@@ -229,6 +229,8 @@ actors:
     enabled: "${ACTORS_QUEUE_ENABLED:true}"
     # Maximum allowed timeout for persistence into the queue
     timeout: "${ACTORS_QUEUE_PERSISTENCE_TIMEOUT:30000}"
+  client_side_rpc:
+    timeout:  "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
 
 cache:
   # caffeine or redis
