@@ -302,10 +302,10 @@
             </plugins>
         </pluginManagement>
         <plugins>
-            <plugin>
+           <!--  <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-            </plugin>
+            </plugin> -->
         </plugins>
     </build>
 
