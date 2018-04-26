@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.device;
+package org.thingsboard.server.actors.ruleChain;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.SessionId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-
-import java.util.Optional;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbMsg;
 
 /**
- * Created by ashvayka on 17.04.18.
+ * Created by ashvayka on 19.03.18.
  */
 @Data
-@AllArgsConstructor
-public final class PendingSessionMsgData {
+final class RuleChainToRuleChainMsg implements TbActorMsg {
 
-    private final SessionId sessionId;
-    private final Optional<ServerAddress> serverAddress;
-    private final SessionMsgType sessionMsgType;
-    private final int requestId;
-    private final boolean replyOnQueueAck;
-    private int ackMsgCount;
+    private final RuleChainId target;
+    private final RuleChainId source;
+    private final TbMsg msg;
+    private final boolean enqueue;
 
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.RULE_CHAIN_TO_RULE_CHAIN_MSG;
+    }
 }

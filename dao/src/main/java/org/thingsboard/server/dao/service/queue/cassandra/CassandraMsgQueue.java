@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.queue.MsqQueue;
+import org.thingsboard.server.dao.queue.MsgQueue;
 import org.thingsboard.server.dao.service.queue.cassandra.repository.AckRepository;
 import org.thingsboard.server.dao.service.queue.cassandra.repository.MsgRepository;
 import org.thingsboard.server.dao.util.NoSqlDao;
@@ -33,7 +33,7 @@ import java.util.UUID;
 @Component
 @Slf4j
 @NoSqlDao
-public class CassandraMsqQueue implements MsqQueue {
+public class CassandraMsgQueue implements MsgQueue {
 
     @Autowired
     private MsgRepository msgRepository;

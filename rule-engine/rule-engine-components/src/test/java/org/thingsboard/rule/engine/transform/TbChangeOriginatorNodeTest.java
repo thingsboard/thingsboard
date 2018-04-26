@@ -29,6 +29,8 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -57,7 +59,10 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
@@ -78,7 +83,10 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
@@ -99,7 +107,10 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("wrong")));

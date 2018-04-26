@@ -63,8 +63,6 @@ public class TbSendEmailNode implements TbNode {
         } catch (Exception ex) {
             ctx.tellError(msg, ex);
         }
-
-
     }
 
     private EmailPojo getEmail(TbMsg msg) throws IOException {
@@ -84,6 +82,5 @@ public class TbSendEmailNode implements TbNode {
 
     @Override
     public void destroy() {
-
     }
 }

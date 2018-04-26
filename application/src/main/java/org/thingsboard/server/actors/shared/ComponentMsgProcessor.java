@@ -17,22 +17,32 @@ package org.thingsboard.server.actors.shared;
 
 import akka.actor.ActorContext;
 import akka.event.LoggingAdapter;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.dao.queue.MsgQueue;
 
-public abstract class ComponentMsgProcessor<T> extends AbstractContextAwareMsgProcessor {
+import javax.annotation.Nullable;
+import java.util.function.Consumer;
+
+public abstract class ComponentMsgProcessor<T extends EntityId> extends AbstractContextAwareMsgProcessor {
 
     protected final TenantId tenantId;
     protected final T entityId;
+    protected final MsgQueue queue;
     protected ComponentLifecycleState state;
 
     protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
         super(systemContext, logger);
         this.tenantId = tenantId;
         this.entityId = id;
+        this.queue = systemContext.getMsgQueue();
     }
 
     public abstract void start(ActorContext context) throws Exception;
@@ -74,5 +84,19 @@ public abstract class ComponentMsgProcessor<T> extends AbstractContextAwareMsgPr
         if (state != ComponentLifecycleState.ACTIVE) {
             throw new IllegalStateException("Rule chain is not active!");
         }
+    }
+
+    protected void putToQueue(final TbMsg tbMsg, final Consumer<TbMsg> onSuccess) {
+        Futures.addCallback(queue.put(tbMsg, entityId.getId(), 0), new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+                onSuccess.accept(tbMsg);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                logger.debug("Failed to push message [{}] to queue due to [{}]", tbMsg, t);
+            }
+        });
     }
 }

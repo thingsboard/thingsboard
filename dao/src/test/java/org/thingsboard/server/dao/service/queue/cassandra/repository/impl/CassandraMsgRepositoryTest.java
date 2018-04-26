@@ -23,6 +23,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -45,7 +47,8 @@ public class CassandraMsgRepositoryTest extends AbstractServiceTest {
 
     @Test
     public void msgCanBeSavedAndRead() throws ExecutionException, InterruptedException {
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, TbMsgDataType.JSON, "0000");
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, TbMsgDataType.JSON, "0000",
+                new RuleChainId(UUIDs.timeBased()), new RuleNodeId(UUIDs.timeBased()), 0L);
         UUID nodeId = UUIDs.timeBased();
         ListenableFuture<Void> future = msgRepository.save(msg, nodeId, 1L, 1L, 1L);
         future.get();
@@ -55,7 +58,8 @@ public class CassandraMsgRepositoryTest extends AbstractServiceTest {
 
     @Test
     public void expiredMsgsAreNotReturned() throws ExecutionException, InterruptedException {
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, TbMsgDataType.JSON, "0000");
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, TbMsgDataType.JSON, "0000",
+                new RuleChainId(UUIDs.timeBased()), new RuleNodeId(UUIDs.timeBased()), 0L);
         UUID nodeId = UUIDs.timeBased();
         ListenableFuture<Void> future = msgRepository.save(msg, nodeId, 2L, 2L, 2L);
         future.get();
@@ -68,7 +72,8 @@ public class CassandraMsgRepositoryTest extends AbstractServiceTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("key", "value");
         String dataStr = "someContent";
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), metaData, TbMsgDataType.JSON, dataStr);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), metaData, TbMsgDataType.JSON, dataStr,
+                new RuleChainId(UUIDs.timeBased()), new RuleNodeId(UUIDs.timeBased()), 0L);
         UUID nodeId = UUIDs.timeBased();
         ListenableFuture<Void> future = msgRepository.save(msg, nodeId, 1L, 1L, 1L);
         future.get();

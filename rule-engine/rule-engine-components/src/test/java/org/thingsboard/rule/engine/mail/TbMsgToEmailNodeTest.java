@@ -27,6 +27,8 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -48,12 +50,15 @@ public class TbMsgToEmailNodeTest {
     private TbMsgMetaData metaData = new TbMsgMetaData();
     private String rawJson = "{\"name\": \"temp\", \"passed\": 5 , \"complex\": {\"val\":12, \"count\":100}}";
 
+    private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+    private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
     @Test
     public void msgCanBeConverted() throws IOException {
         initWithScript();
         metaData.putValue("username", "oreo");
         metaData.putValue("userEmail", "user@email.io");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson);
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
 
         emailNode.onMsg(ctx, msg);
 

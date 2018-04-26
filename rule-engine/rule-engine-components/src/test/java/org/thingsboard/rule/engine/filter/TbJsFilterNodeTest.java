@@ -27,6 +27,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -48,10 +50,13 @@ public class TbJsFilterNodeTest {
     @Mock
     private ScriptEngine scriptEngine;
 
+    private RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+    private RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
     @Test
     public void falseEvaluationDoNotSendMsg() throws TbNodeException, ScriptException {
         initWithScript();
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}");
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
         when(scriptEngine.executeFilter(msg)).thenReturn(false);
 
@@ -64,7 +69,7 @@ public class TbJsFilterNodeTest {
     public void exceptionInJsThrowsException() throws TbNodeException, ScriptException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}", ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
         when(scriptEngine.executeFilter(msg)).thenThrow(new ScriptException("error"));
 
@@ -77,7 +82,7 @@ public class TbJsFilterNodeTest {
     public void metadataConditionCanBeTrue() throws TbNodeException, ScriptException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}");
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{}", ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
         when(scriptEngine.executeFilter(msg)).thenReturn(true);
 
