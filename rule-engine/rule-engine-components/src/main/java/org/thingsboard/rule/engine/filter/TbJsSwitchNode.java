@@ -61,7 +61,7 @@ public class TbJsSwitchNode implements TbNode {
         ctx.tellNext(msg, nextRelations);
     }
 
-   @Override
+    @Override
     public void destroy() {
         if (jsEngine != null) {
             jsEngine.destroy();

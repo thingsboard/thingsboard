@@ -53,7 +53,6 @@ import java.util.function.Consumer;
  */
 class DefaultTbContext implements TbContext {
 
-    private static final Function<? super List<Void>, ? extends Void> LIST_VOID_FUNCTION = v -> null;
     private final ActorSystemContext mainCtx;
     private final RuleNodeCtx nodeCtx;
 
@@ -120,7 +119,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(UUIDs.timeBased(), type, originator, metaData, data);
+        return new TbMsg(UUIDs.timeBased(), type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
     }
 
     @Override

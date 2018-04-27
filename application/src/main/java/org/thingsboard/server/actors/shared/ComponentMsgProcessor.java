@@ -87,6 +87,7 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
     }
 
     protected void putToQueue(final TbMsg tbMsg, final Consumer<TbMsg> onSuccess) {
+        EntityId entityId = tbMsg.getRuleNodeId() != null ? tbMsg.getRuleNodeId() : tbMsg.getRuleChainId();
         Futures.addCallback(queue.put(tbMsg, entityId.getId(), 0), new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {

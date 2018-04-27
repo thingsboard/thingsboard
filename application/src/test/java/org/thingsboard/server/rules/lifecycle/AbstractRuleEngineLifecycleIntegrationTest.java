@@ -138,7 +138,8 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 "CUSTOM",
                 device.getId(),
                 new TbMsgMetaData(),
-                "{}");
+                "{}",
+                null, null, 0L);
         actorService.onMsg(new ServiceToRuleEngineMsg(savedTenant.getId(), tbMsg));
 
         Thread.sleep(3000);

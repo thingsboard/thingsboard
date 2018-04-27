@@ -36,7 +36,9 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbMsgToEmailNodeTest {
@@ -62,17 +64,19 @@ public class TbMsgToEmailNodeTest {
 
         emailNode.onMsg(ctx, msg);
 
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture());
-        TbMsg actualMsg = captor.getValue();
-
-        assertEquals("SEND_EMAIL", actualMsg.getType());
-        assertEquals(originator, actualMsg.getOriginator());
-        assertEquals("oreo", actualMsg.getMetaData().getValue("username"));
-        assertNotSame(metaData, actualMsg.getMetaData());
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
 
-        EmailPojo actual = new ObjectMapper().readValue(actualMsg.getData().getBytes(), EmailPojo.class);
+        assertEquals("SEND_EMAIL", typeCaptor.getValue());
+        assertEquals(originator, originatorCaptor.getValue());
+        assertEquals("oreo", metadataCaptor.getValue().getValue("username"));
+        assertNotSame(metaData, metadataCaptor.getValue());
+
+        EmailPojo actual = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), EmailPojo.class);
 
         EmailPojo expected = new EmailPojo.EmailPojoBuilder()
                 .from("test@mail.org")

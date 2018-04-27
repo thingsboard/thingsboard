@@ -169,12 +169,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
         checkActive();
-        putToQueue(envelope.getTbMsg(), msg -> pushMsgToNode(firstNode, msg));
+        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg));
     }
 
     void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
         checkActive();
-        putToQueue(envelope.getTbMsg(), msg -> {
+        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
             pushMsgToNode(firstNode, msg);
             envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
         });
@@ -185,7 +185,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         RuleNodeId originator = envelope.getOriginator();
         String targetRelationType = envelope.getRelationType();
         List<RuleNodeRelation> relations = nodeRoutes.get(originator).stream()
-                .filter(r -> targetRelationType == null || targetRelationType.equals(r.getType()))
+                .filter(r -> targetRelationType == null || targetRelationType.equalsIgnoreCase(r.getType()))
                 .collect(Collectors.toList());
 
         TbMsg msg = envelope.getMsg();
@@ -212,7 +212,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 }
             }
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
-            queue.ack(msg, msg.getRuleNodeId().getId(), msg.getClusterPartition());
+            EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
+            queue.ack(msg, ackId.getId(), msg.getClusterPartition());
         }
     }
 
@@ -231,5 +232,10 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (nodeCtx != null) {
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg), self);
         }
+    }
+
+    private TbMsg enrichWithRuleChainId(TbMsg tbMsg) {
+        // We don't put firstNodeId because it may change over time;
+        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData(), tbMsg.getData(), entityId, null, 0L);
     }
 }

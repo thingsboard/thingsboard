@@ -118,17 +118,21 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture(), eq("Created"));
-        TbMsg actualMsg = captor.getValue();
+        verify(ctx).tellNext(any(), eq("Created"));
 
-        assertEquals("ALARM", actualMsg.getType());
-        assertEquals(originator, actualMsg.getOriginator());
-        assertEquals("value", actualMsg.getMetaData().getValue("key"));
-        assertEquals(Boolean.TRUE.toString(), actualMsg.getMetaData().getValue(IS_NEW_ALARM));
-        assertNotSame(metaData, actualMsg.getMetaData());
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
-        Alarm actualAlarm = new ObjectMapper().readValue(actualMsg.getData().getBytes(), Alarm.class);
+        assertEquals("ALARM", typeCaptor.getValue());
+        assertEquals(originator, originatorCaptor.getValue());
+        assertEquals("value", metadataCaptor.getValue().getValue("key"));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
+        assertNotSame(metaData, metadataCaptor.getValue());
+
+        Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(originator)
@@ -208,17 +212,22 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture(), eq("Created"));
-        TbMsg actualMsg = captor.getValue();
+        verify(ctx).tellNext(any(), eq("Created"));
 
-        assertEquals("ALARM", actualMsg.getType());
-        assertEquals(originator, actualMsg.getOriginator());
-        assertEquals("value", actualMsg.getMetaData().getValue("key"));
-        assertEquals(Boolean.TRUE.toString(), actualMsg.getMetaData().getValue(IS_NEW_ALARM));
-        assertNotSame(metaData, actualMsg.getMetaData());
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
-        Alarm actualAlarm = new ObjectMapper().readValue(actualMsg.getData().getBytes(), Alarm.class);
+        assertEquals("ALARM", typeCaptor.getValue());
+        assertEquals(originator, originatorCaptor.getValue());
+        assertEquals("value", metadataCaptor.getValue().getValue("key"));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
+        assertNotSame(metaData, metadataCaptor.getValue());
+
+
+        Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(originator)
@@ -252,17 +261,21 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture(), eq("Updated"));
-        TbMsg actualMsg = captor.getValue();
+        verify(ctx).tellNext(any(), eq("Updated"));
 
-        assertEquals("ALARM", actualMsg.getType());
-        assertEquals(originator, actualMsg.getOriginator());
-        assertEquals("value", actualMsg.getMetaData().getValue("key"));
-        assertEquals(Boolean.TRUE.toString(), actualMsg.getMetaData().getValue(IS_EXISTING_ALARM));
-        assertNotSame(metaData, actualMsg.getMetaData());
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
-        Alarm actualAlarm = new ObjectMapper().readValue(actualMsg.getData().getBytes(), Alarm.class);
+        assertEquals("ALARM", typeCaptor.getValue());
+        assertEquals(originator, originatorCaptor.getValue());
+        assertEquals("value", metadataCaptor.getValue().getValue("key"));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_EXISTING_ALARM));
+        assertNotSame(metaData, metadataCaptor.getValue());
+
+        Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
         assertTrue(activeAlarm.getEndTs() > oldEndDate);
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
@@ -298,17 +311,21 @@ public class TbAlarmNodeTest {
 
         node.onMsg(ctx, msg);
 
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture(), eq("Cleared"));
-        TbMsg actualMsg = captor.getValue();
+        verify(ctx).tellNext(any(), eq("Cleared"));
 
-        assertEquals("ALARM", actualMsg.getType());
-        assertEquals(originator, actualMsg.getOriginator());
-        assertEquals("value", actualMsg.getMetaData().getValue("key"));
-        assertEquals(Boolean.TRUE.toString(), actualMsg.getMetaData().getValue(IS_CLEARED_ALARM));
-        assertNotSame(metaData, actualMsg.getMetaData());
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
-        Alarm actualAlarm = new ObjectMapper().readValue(actualMsg.getData().getBytes(), Alarm.class);
+        assertEquals("ALARM", typeCaptor.getValue());
+        assertEquals(originator, originatorCaptor.getValue());
+        assertEquals("value", metadataCaptor.getValue().getValue("key"));
+        assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_CLEARED_ALARM));
+        assertNotSame(metaData, metadataCaptor.getValue());
+
+        Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(originator)

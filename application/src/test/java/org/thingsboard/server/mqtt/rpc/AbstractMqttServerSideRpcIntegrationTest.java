@@ -80,7 +80,6 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
         }
     }
 
-    @Ignore
     @Test
     public void testServerMqttOneWayRpc() throws Exception {
         Device device = new Device();
@@ -107,7 +106,6 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
         Assert.assertTrue(StringUtils.isEmpty(result));
     }
 
-    @Ignore
     @Test
     public void testServerMqttOneWayRpcDeviceOffline() throws Exception {
         Device device = new Device();
