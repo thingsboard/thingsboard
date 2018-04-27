@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.action;
+package org.thingsboard.rule.engine.api;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-@Data
-public class TbLogNodeConfiguration implements NodeConfiguration {
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-    private String jsScript;
+@Data
+public class EmptyNodeConfiguration implements NodeConfiguration<EmptyNodeConfiguration> {
+
+    private int version;
 
     @Override
-    public TbLogNodeConfiguration defaultConfiguration() {
-        TbLogNodeConfiguration configuration = new TbLogNodeConfiguration();
-        configuration.setJsScript("return 'Incoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);");
+    public EmptyNodeConfiguration defaultConfiguration() {
+        EmptyNodeConfiguration configuration = new EmptyNodeConfiguration();
         return configuration;
     }
 }

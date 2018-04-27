@@ -37,17 +37,16 @@ public class CassandraDatabaseSchemaService implements DatabaseSchemaService {
     private static final String CASSANDRA_DIR = "cassandra";
     private static final String SCHEMA_CQL = "schema.cql";
 
-    @Value("${install.data_dir}")
-    private String dataDir;
-
     @Autowired
     private CassandraInstallCluster cluster;
+
+    @Autowired
+    private InstallScripts installScripts;
 
     @Override
     public void createDatabaseSchema() throws Exception {
         log.info("Installing Cassandra DataBase schema...");
-
-        Path schemaFile = Paths.get(this.dataDir, CASSANDRA_DIR, SCHEMA_CQL);
+        Path schemaFile = Paths.get(installScripts.getDataDir(), CASSANDRA_DIR, SCHEMA_CQL);
         loadCql(schemaFile);
 
     }

@@ -316,6 +316,7 @@ export default function ImportExport($log, $translate, $q, $mdDialog, $document,
         delete ruleChainMetaData.ruleChainId;
         for (var i=0;i<ruleChainMetaData.nodes.length;i++) {
             var node = ruleChainMetaData.nodes[i];
+            delete node.ruleChainId;
             ruleChainMetaData.nodes[i] = prepareExport(node);
         }
         return ruleChainMetaData;

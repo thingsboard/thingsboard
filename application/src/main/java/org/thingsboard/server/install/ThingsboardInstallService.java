@@ -23,9 +23,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.install.DatabaseSchemaService;
-import org.thingsboard.server.service.install.DatabaseUpgradeService;
-import org.thingsboard.server.service.install.SystemDataLoaderService;
+import org.thingsboard.server.service.install.*;
 
 import java.nio.file.Paths;
 
@@ -39,9 +37,6 @@ public class ThingsboardInstallService {
 
     @Value("${install.upgrade.from_version:1.2.3}")
     private String upgradeFromVersion;
-
-    @Value("${install.data_dir}")
-    private String dataDir;
 
     @Value("${install.load_demo:false}")
     private Boolean loadDemo;
@@ -60,6 +55,9 @@ public class ThingsboardInstallService {
 
     @Autowired
     private SystemDataLoaderService systemDataLoaderService;
+
+    @Autowired
+    private DataUpdateService dataUpdateService;
 
     public void performInstall() {
         try {
@@ -87,6 +85,8 @@ public class ThingsboardInstallService {
 
                         databaseUpgradeService.upgradeDatabase("1.4.0");
 
+                        dataUpdateService.updateData("1.4.0");
+
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");
@@ -112,13 +112,6 @@ public class ThingsboardInstallService {
             } else {
 
                 log.info("Starting ThingsBoard Installation...");
-
-                if (this.dataDir == null) {
-                    throw new RuntimeException("'install.data_dir' property should specified!");
-                }
-                if (!Paths.get(this.dataDir).toFile().isDirectory()) {
-                    throw new RuntimeException("'install.data_dir' property value is not a valid directory!");
-                }
 
                 log.info("Installing DataBase schema...");
 

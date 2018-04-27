@@ -46,7 +46,9 @@ import java.util.Set;
         name = "save attributes",
         configClazz = TbMsgAttributesNodeConfiguration.class,
         nodeDescription = "Saves attributes data",
-        nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type"
+        nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type",
+        uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
+        configDirective = "tbActionNodeAttributesConfig"
 )
 public class TbMsgAttributesNode implements TbNode {
 

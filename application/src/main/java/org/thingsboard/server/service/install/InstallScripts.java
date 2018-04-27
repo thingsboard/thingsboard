@@ -84,6 +84,9 @@ public class InstallScripts {
 
     public String getDataDir() {
         if (!StringUtils.isEmpty(dataDir)) {
+            if (!Paths.get(this.dataDir).toFile().isDirectory()) {
+                throw new RuntimeException("'install.data_dir' property value is not a valid directory!");
+            }
             return dataDir;
         } else {
             String workDir = System.getProperty("user.dir");
