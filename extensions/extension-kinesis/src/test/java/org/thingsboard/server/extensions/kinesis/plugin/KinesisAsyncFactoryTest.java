@@ -17,6 +17,7 @@ package org.thingsboard.server.extensions.kinesis.plugin;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.kinesis.AmazonKinesisAsync;
+import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
@@ -27,6 +28,7 @@ public class KinesisAsyncFactoryTest {
 	public void shouldCreateWithBasicAWSCredentialsWhenProvided() {
 		//given
 		KinesisPluginConfiguration config = configWithBasicCredentials();
+		System.setProperty("aws.region", config.getRegion());
 
 		//when
 		AmazonKinesisAsync actual = KinesisAsyncFactory.INSTANCE.create(config);
@@ -62,14 +64,19 @@ public class KinesisAsyncFactoryTest {
 	private KinesisPluginConfiguration configWithBasicCredentials() {
 		KinesisPluginConfiguration config = new KinesisPluginConfiguration();
 		config.setAccessKeyId("testAccessKeyId");
-		config.setRegion("testRegion");
+		config.setRegion("eu-west-1");
 		config.setSecretAccessKey("testSecretAccessKey");
 		return config;
-	}
+}
 
 	private KinesisPluginConfiguration configWithProfileCredentials() {
 		KinesisPluginConfiguration config = new KinesisPluginConfiguration();
 		config.setProfile("testProfile");
 		return config;
+	}
+
+	@After
+	public void cleanUp() {
+		System.clearProperty("aws.region");
 	}
 }
