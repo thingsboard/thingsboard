@@ -12,48 +12,8 @@
     "nodes": [
       {
         "additionalInfo": {
-          "layoutX": 639,
-          "layoutY": 113
-        },
-        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode",
-        "name": "PostAttributes",
-        "debugMode": true,
-        "configuration": {
-          "messageTypes": [
-            "POST_ATTRIBUTES_REQUEST"
-          ]
-        }
-      },
-      {
-        "additionalInfo": {
-          "layoutX": 638,
-          "layoutY": 206
-        },
-        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode",
-        "name": "PostTelemetry",
-        "debugMode": true,
-        "configuration": {
-          "messageTypes": [
-            "POST_TELEMETRY_REQUEST"
-          ]
-        }
-      },
-      {
-        "additionalInfo": {
-          "layoutX": 297,
-          "layoutY": 148
-        },
-        "type": "org.thingsboard.rule.engine.action.TbLogNode",
-        "name": "Log",
-        "debugMode": false,
-        "configuration": {
-          "jsScript": "return 'incoming message = ' + msg;"
-        }
-      },
-      {
-        "additionalInfo": {
-          "layoutX": 905,
-          "layoutY": 203
+          "layoutX": 824,
+          "layoutY": 156
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "SaveTS",
@@ -64,8 +24,8 @@
       },
       {
         "additionalInfo": {
-          "layoutX": 904,
-          "layoutY": 110
+          "layoutX": 825,
+          "layoutY": 52
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "save client attributes",
@@ -73,28 +33,64 @@
         "configuration": {
           "scope": "CLIENT_SCOPE"
         }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 347,
+          "layoutY": 149
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message Type Switch",
+        "debugMode": false,
+        "configuration": {
+          "version": 0
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 825,
+          "layoutY": 266
+        },
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log RPC",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 825,
+          "layoutY": 379
+        },
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log Other",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        }
       }
     ],
     "connections": [
       {
-        "fromIndex": 0,
-        "toIndex": 4,
-        "type": "True"
-      },
-      {
-        "fromIndex": 1,
-        "toIndex": 3,
-        "type": "True"
-      },
-      {
         "fromIndex": 2,
-        "toIndex": 0,
-        "type": "Success"
+        "toIndex": 4,
+        "type": "Other"
       },
       {
         "fromIndex": 2,
         "toIndex": 1,
-        "type": "Success"
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 0,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 3,
+        "type": "RPC Request"
       }
     ],
     "ruleChainConnections": null

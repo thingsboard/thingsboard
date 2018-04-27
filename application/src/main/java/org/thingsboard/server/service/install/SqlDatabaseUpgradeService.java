@@ -44,9 +44,6 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
 
-    @Value("${install.data_dir}")
-    private String dataDir;
-
     @Value("${spring.datasource.url}")
     private String dbUrl;
 
@@ -59,12 +56,15 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
     @Autowired
     private DashboardService dashboardService;
 
+    @Autowired
+    private InstallScripts installScripts;
+
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
         switch (fromVersion) {
             case "1.3.0":
                 log.info("Updating schema ...");
-                Path schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.3.1", SCHEMA_UPDATE_SQL);
+                Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.3.1", SCHEMA_UPDATE_SQL);
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     String sql = new String(Files.readAllBytes(schemaUpdateFile), Charset.forName("UTF-8"));
                     conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
@@ -82,7 +82,7 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
                     log.info("Dashboards dumped.");
 
                     log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.4.0", SCHEMA_UPDATE_SQL);
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.4.0", SCHEMA_UPDATE_SQL);
                     String sql = new String(Files.readAllBytes(schemaUpdateFile), Charset.forName("UTF-8"));
                     conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                     log.info("Schema updated.");
@@ -100,7 +100,7 @@ public class SqlDatabaseUpgradeService implements DatabaseUpgradeService {
             case "1.4.0":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
                     log.info("Updating schema ...");
-                    schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.5.0", SCHEMA_UPDATE_SQL);
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.5.0", SCHEMA_UPDATE_SQL);
                     String sql = new String(Files.readAllBytes(schemaUpdateFile), Charset.forName("UTF-8"));
                     conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
                     log.info("Schema updated.");
