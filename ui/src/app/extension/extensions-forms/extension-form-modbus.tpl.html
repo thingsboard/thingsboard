@@ -58,6 +58,7 @@
                                                 <md-select required
                                                            name="transportType_{{serverIndex}}"
                                                            ng-model="server.transport.type"
+                                                           ng-change="onTransportChanged(server)"
                                                 >
                                                     <md-option ng-value="transportType"
                                                                ng-repeat="(transportType, transportValue) in types.extensionModbusTransports"
@@ -71,53 +72,8 @@
                                             </md-input-container>
                                             
                                         </div>
-
-                                        <div layout="row" ng-if="server.transport.type == 'tcp'">
-                                            <md-input-container flex="33" class="md-block">
-                                                <label translate>extension.host</label>
-                                                <input required name="transportHost_{{serverIndex}}" ng-model="server.transport.host">
-                                                <div ng-messages="theForm['transportHost_' + serverIndex].$error">
-                                                    <div translate ng-message="required">extension.field-required</div>
-                                                </div>
-                                            </md-input-container>
-
-                                            <md-input-container flex="33" class="md-block">
-                                                <label translate>extension.port</label>
-                                                <input type="number"
-                                                       required
-                                                       name="transportPort_{{serverIndex}}"
-                                                       ng-model="server.transport.port"
-                                                       min="1"
-                                                       max="65535"
-                                                >
-                                                <div ng-messages="theForm['transportPort_' + serverIndex].$error">
-                                                    <div translate
-                                                         ng-message="required"
-                                                    >extension.field-required</div>
-                                                    <div translate
-                                                         ng-message="min"
-                                                    >extension.port-range</div>
-                                                    <div translate
-                                                         ng-message="max"
-                                                    >extension.port-range</div>
-                                                </div>
-                                            </md-input-container>
-                                            
-                                            <md-input-container flex="33" class="md-block">
-                                                <label translate>extension.timeout</label>
-                                                <input type="number"
-                                                       required name="transportTimeout_{{serverIndex}}"
-                                                       ng-model="server.transport.timeout"
-                                                >
-                                                <div ng-messages="theForm['transportTimeout_' + serverIndex].$error">
-                                                    <div translate
-                                                         ng-message="required"
-                                                    >extension.field-required</div>
-                                                </div>
-                                            </md-input-container>
-                                        </div>
                                         
-                                        <div layout="row" ng-if="server.transport.type == 'udp'">
+                                        <div layout="row" ng-if="server.transport.type == 'tcp' || server.transport.type == 'udp'">
                                             <md-input-container flex="33" class="md-block">
                                                 <label translate>extension.host</label>
                                                 <input required name="transportHost_{{serverIndex}}" ng-model="server.transport.host">

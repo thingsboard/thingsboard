@@ -102,7 +102,16 @@ export default function ExtensionFormModbusDirective($compile, $templateCache, $
             scope.theForm.$setDirty();
         };
 
+        scope.onTransportChanged = function(server) {
+            var type = server.transport.type;
 
+            server.transport = {};
+            server.transport.type = type;
+            server.transport.timeout = 3000;
+
+            scope.theForm.$setDirty();
+        };
+        
         $compile(element.contents())(scope);
 
 
