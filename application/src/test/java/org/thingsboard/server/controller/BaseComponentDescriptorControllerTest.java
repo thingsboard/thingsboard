@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public abstract class BaseComponentDescriptorControllerTest extends AbstractControllerTest {
 
-    private static final int AMOUNT_OF_DEFAULT_FILTER_NODES = 3;
+    private static final int AMOUNT_OF_DEFAULT_FILTER_NODES = 4;
     private Tenant savedTenant;
     private User tenantAdmin;
 
@@ -87,7 +87,7 @@ public abstract class BaseComponentDescriptorControllerTest extends AbstractCont
                 });
 
         Assert.assertNotNull(descriptors);
-        Assert.assertEquals(AMOUNT_OF_DEFAULT_FILTER_NODES, descriptors.size());
+        Assert.assertTrue(descriptors.size() >= AMOUNT_OF_DEFAULT_FILTER_NODES);
 
         for (ComponentType type : ComponentType.values()) {
             doGet("/api/components/" + type).andExpect(status().isOk());

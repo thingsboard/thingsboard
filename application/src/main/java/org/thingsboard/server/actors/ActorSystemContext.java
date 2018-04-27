@@ -49,6 +49,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.plugin.PluginService;
+import org.thingsboard.server.dao.queue.MsgQueue;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleService;
@@ -186,6 +187,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private MailService mailService;
+
+    @Autowired
+    @Getter
+    private MsgQueue msgQueue;
 
     @Value("${actors.session.sync.timeout}")
     @Getter

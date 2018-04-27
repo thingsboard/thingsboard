@@ -20,7 +20,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
-public interface MsqQueue {
+public interface MsgQueue {
 
     ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusterPartition);
 

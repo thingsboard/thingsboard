@@ -60,7 +60,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     @Override
     protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
         ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator());
-        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> new TbMsg(msg.getId(), msg.getType(), n, msg.getMetaData(), msg.getData()));
+        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> ctx.newMsg(msg.getType(), n, msg.getMetaData(), msg.getData()));
     }
 
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, EntityId original) {

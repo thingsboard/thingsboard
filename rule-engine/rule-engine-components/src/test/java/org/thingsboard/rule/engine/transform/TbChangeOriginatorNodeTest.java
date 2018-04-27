@@ -29,6 +29,9 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -57,17 +60,23 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
 
         node.onMsg(ctx, msg);
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture());
-        TbMsg actualMsg = captor.getValue();
-        assertEquals(customerId, actualMsg.getOriginator());
-        assertEquals(msg.getId(), actualMsg.getId());
+
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+
+        assertEquals(customerId, originatorCaptor.getValue());
     }
 
     @Test
@@ -78,17 +87,22 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
 
         node.onMsg(ctx, msg);
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).spawn(captor.capture());
-        TbMsg actualMsg = captor.getValue();
-        assertEquals(customerId, actualMsg.getOriginator());
-        assertEquals(msg.getId(), actualMsg.getId());
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+
+        assertEquals(customerId, originatorCaptor.getValue());
     }
 
     @Test
@@ -99,7 +113,10 @@ public class TbChangeOriginatorNodeTest {
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("wrong")));

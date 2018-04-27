@@ -27,6 +27,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -56,8 +58,10 @@ public class TbTransformMsgNodeTest {
         metaData.putValue("temp", "7");
         String rawJson = "{\"passed\": 5}";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
-        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}", ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
         when(scriptEngine.executeUpdate(msg)).thenReturn(transformedMsg);
 
@@ -77,8 +81,10 @@ public class TbTransformMsgNodeTest {
         metaData.putValue("temp", "7");
         String rawJson = "{\"passed\": 5";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
-        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}");
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
+        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}", ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
         when(scriptEngine.executeUpdate(msg)).thenReturn(transformedMsg);
 
@@ -97,7 +103,9 @@ public class TbTransformMsgNodeTest {
         metaData.putValue("temp", "7");
         String rawJson = "{\"passed\": 5";
 
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson);
+        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
+        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
         mockJsExecutor();
         when(scriptEngine.executeUpdate(msg)).thenThrow(new IllegalStateException("error"));
 

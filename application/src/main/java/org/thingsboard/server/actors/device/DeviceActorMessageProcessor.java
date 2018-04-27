@@ -204,9 +204,13 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     void processQueueAck(ActorContext context, RuleEngineQueuePutAckMsg msg) {
         PendingSessionMsgData data = pendingMsgs.remove(msg.getId());
         if (data != null && data.isReplyOnQueueAck()) {
-            logger.debug("[{}] Queue put [{}] ack detected!", deviceId, msg.getId());
-            ToDeviceMsg toDeviceMsg = BasicStatusCodeResponse.onSuccess(data.getSessionMsgType(), data.getRequestId());
-            sendMsgToSessionActor(new BasicToDeviceSessionActorMsg(toDeviceMsg, data.getSessionId()), data.getServerAddress());
+            int remainingAcks = data.getAckMsgCount() - 1;
+            data.setAckMsgCount(remainingAcks);
+            logger.debug("[{}] Queue put [{}] ack detected. Remaining acks: {}!", deviceId, msg.getId(), remainingAcks);
+            if (remainingAcks == 0) {
+                ToDeviceMsg toDeviceMsg = BasicStatusCodeResponse.onSuccess(data.getSessionMsgType(), data.getRequestId());
+                sendMsgToSessionActor(new BasicToDeviceSessionActorMsg(toDeviceMsg, data.getSessionId()), data.getServerAddress());
+            }
         }
     }
 
@@ -320,8 +324,10 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             kv.getStrValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
         }
 
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json));
-        pushToRuleEngineWithTimeout(context, tbMsg, src, request);
+        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+        PendingSessionMsgData msgData = new PendingSessionMsgData(src.getSessionId(), src.getServerAddress(),
+                SessionMsgType.POST_ATTRIBUTES_REQUEST, request.getRequestId(), true, 1);
+        pushToRuleEngineWithTimeout(context, tbMsg, msgData);
     }
 
     private void handlePostTelemetryRequest(ActorContext context, DeviceToDeviceActorMsg src) {
@@ -329,10 +335,12 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         Map<Long, List<KvEntry>> tsData = request.getData();
 
-        JsonArray json = new JsonArray();
+        PendingSessionMsgData msgData = new PendingSessionMsgData(src.getSessionId(), src.getServerAddress(),
+                SessionMsgType.POST_TELEMETRY_REQUEST, request.getRequestId(), true, tsData.size());
+
         for (Map.Entry<Long, List<KvEntry>> entry : tsData.entrySet()) {
-            JsonObject ts = new JsonObject();
-            ts.addProperty("ts", entry.getKey());
+            JsonObject json = new JsonObject();
+            json.addProperty("ts", entry.getKey());
             JsonObject values = new JsonObject();
             for (KvEntry kv : entry.getValue()) {
                 kv.getBooleanValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
@@ -340,12 +348,10 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 kv.getDoubleValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
                 kv.getStrValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
             }
-            ts.add("values", values);
-            json.add(ts);
+            json.add("values", values);
+            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+            pushToRuleEngineWithTimeout(context, tbMsg, msgData);
         }
-
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json));
-        pushToRuleEngineWithTimeout(context, tbMsg, src, request);
     }
 
     private void handleClientSideRPCRequest(ActorContext context, DeviceToDeviceActorMsg src) {
@@ -357,8 +363,9 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         TbMsgMetaData requestMetaData = defaultMetaData.copy();
         requestMetaData.putValue("requestId", Integer.toString(request.getRequestId()));
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, requestMetaData, TbMsgDataType.JSON, gson.toJson(json));
-        pushToRuleEngineWithTimeout(context, tbMsg, src, request);
+        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.TO_SERVER_RPC_REQUEST.name(), deviceId, requestMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+        PendingSessionMsgData msgData = new PendingSessionMsgData(src.getSessionId(), src.getServerAddress(), SessionMsgType.TO_SERVER_RPC_REQUEST, request.getRequestId(), false, 1);
+        pushToRuleEngineWithTimeout(context, tbMsg, msgData);
 
         scheduleMsgWithDelay(context, new DeviceActorClientSideRpcTimeoutMsg(request.getRequestId(), systemContext.getClientSideRpcTimeout()), systemContext.getClientSideRpcTimeout());
         toServerRpcPendingMap.put(request.getRequestId(), new ToServerRpcRequestMetadata(src.getSessionId(), src.getSessionType(), src.getServerAddress()));
@@ -380,19 +387,15 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private void pushToRuleEngineWithTimeout(ActorContext context, TbMsg tbMsg, DeviceToDeviceActorMsg src, FromDeviceRequestMsg fromDeviceRequestMsg) {
-        pushToRuleEngineWithTimeout(context, tbMsg, src, fromDeviceRequestMsg, true);
-    }
-
-    private void pushToRuleEngineWithTimeout(ActorContext context, TbMsg tbMsg, DeviceToDeviceActorMsg src, FromDeviceRequestMsg fromDeviceRequestMsg, boolean replyOnAck) {
-        SessionMsgType sessionMsgType = fromDeviceRequestMsg.getMsgType();
-        int requestId = fromDeviceRequestMsg.getRequestId();
+    private void pushToRuleEngineWithTimeout(ActorContext context, TbMsg tbMsg, PendingSessionMsgData pendingMsgData) {
+        SessionMsgType sessionMsgType = pendingMsgData.getSessionMsgType();
+        int requestId = pendingMsgData.getRequestId();
         if (systemContext.isQueuePersistenceEnabled()) {
-            pendingMsgs.put(tbMsg.getId(), new PendingSessionMsgData(src.getSessionId(), src.getServerAddress(), sessionMsgType, requestId, replyOnAck));
+            pendingMsgs.put(tbMsg.getId(), pendingMsgData);
             scheduleMsgWithDelay(context, new DeviceActorQueueTimeoutMsg(tbMsg.getId(), systemContext.getQueuePersistenceTimeout()), systemContext.getQueuePersistenceTimeout());
         } else {
-            ToDeviceSessionActorMsg response = new BasicToDeviceSessionActorMsg(BasicStatusCodeResponse.onSuccess(sessionMsgType, requestId), src.getSessionId());
-            sendMsgToSessionActor(response, src.getServerAddress());
+            ToDeviceSessionActorMsg response = new BasicToDeviceSessionActorMsg(BasicStatusCodeResponse.onSuccess(sessionMsgType, requestId), pendingMsgData.getSessionId());
+            sendMsgToSessionActor(response, pendingMsgData.getServerAddress());
         }
         context.parent().tell(new DeviceActorToRuleEngineMsg(context.self(), tbMsg), context.self());
     }

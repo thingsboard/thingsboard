@@ -48,6 +48,11 @@ public enum MsgType {
     RULE_CHAIN_TO_RULE_MSG,
 
     /**
+     * Message that is sent by RuleChainActor to other RuleChainActor with command to process TbMsg.
+     */
+    RULE_CHAIN_TO_RULE_CHAIN_MSG,
+
+    /**
      * Message that is sent by RuleActor to RuleChainActor with command to process TbMsg by next nodes in chain.
      */
     RULE_TO_RULE_CHAIN_TELL_NEXT_MSG,

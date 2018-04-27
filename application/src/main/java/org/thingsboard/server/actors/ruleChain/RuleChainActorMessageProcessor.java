@@ -19,6 +19,7 @@ import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.LoggingAdapter;
+import com.datastax.driver.core.utils.UUIDs;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.device.RuleEngineQueuePutAckMsg;
@@ -41,6 +42,7 @@ import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +54,7 @@ import java.util.stream.Collectors;
  */
 public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleChainId> {
 
+    private static final long DEFAULT_CLUSTER_PARTITION = 0L;
     private final ActorRef parent;
     private final ActorRef self;
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
@@ -83,6 +86,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             }
             initRoutes(ruleChain, ruleNodeList);
+            //TODO: read all messages from queues of the actors and push then to the corresponding node actors;
             started = true;
         } else {
             onUpdate(context);
@@ -142,15 +146,19 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         // Populating the routes map;
         for (RuleNode ruleNode : ruleNodeList) {
             List<EntityRelation> relations = service.getRuleNodeRelations(ruleNode.getId());
-            for (EntityRelation relation : relations) {
-                if (relation.getTo().getEntityType() == EntityType.RULE_NODE) {
-                    RuleNodeCtx ruleNodeCtx = nodeActors.get(new RuleNodeId(relation.getTo().getId()));
-                    if (ruleNodeCtx == null) {
-                        throw new IllegalArgumentException("Rule Node [" + relation.getFrom() + "] has invalid relation to Rule node [" + relation.getTo() + "]");
+            if (relations.size() == 0) {
+                nodeRoutes.put(ruleNode.getId(), Collections.emptyList());
+            } else {
+                for (EntityRelation relation : relations) {
+                    if (relation.getTo().getEntityType() == EntityType.RULE_NODE) {
+                        RuleNodeCtx ruleNodeCtx = nodeActors.get(new RuleNodeId(relation.getTo().getId()));
+                        if (ruleNodeCtx == null) {
+                            throw new IllegalArgumentException("Rule Node [" + relation.getFrom() + "] has invalid relation to Rule node [" + relation.getTo() + "]");
+                        }
                     }
+                    nodeRoutes.computeIfAbsent(ruleNode.getId(), k -> new ArrayList<>())
+                            .add(new RuleNodeRelation(ruleNode.getId(), relation.getTo(), relation.getType()));
                 }
-                nodeRoutes.computeIfAbsent(ruleNode.getId(), k -> new ArrayList<>())
-                        .add(new RuleNodeRelation(ruleNode.getId(), relation.getTo(), relation.getType()));
             }
         }
 
@@ -161,45 +169,62 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
         checkActive();
-        TbMsg tbMsg = envelope.getTbMsg();
-        //TODO: push to queue and act on ack in async way
-        pushMsgToNode(firstNode, tbMsg);
+        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg));
     }
 
-    public void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
+    void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
         checkActive();
-        TbMsg tbMsg = envelope.getTbMsg();
-        //TODO: push to queue and act on ack in async way
-        pushMsgToNode(firstNode, tbMsg);
-        envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(tbMsg.getId()), self);
+        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
+            pushMsgToNode(firstNode, msg);
+            envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
+        });
     }
 
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
         checkActive();
         RuleNodeId originator = envelope.getOriginator();
         String targetRelationType = envelope.getRelationType();
-        List<RuleNodeRelation> relations = nodeRoutes.get(originator);
-        if (relations == null) {
-            return;
-        }
-        boolean copy = relations.size() > 1;
-        for (RuleNodeRelation relation : relations) {
-            TbMsg msg = envelope.getMsg();
-            if (copy) {
-                msg = msg.copy();
+        List<RuleNodeRelation> relations = nodeRoutes.get(originator).stream()
+                .filter(r -> targetRelationType == null || targetRelationType.equalsIgnoreCase(r.getType()))
+                .collect(Collectors.toList());
+
+        TbMsg msg = envelope.getMsg();
+        int relationsCount = relations.size();
+        if (relationsCount == 0) {
+            queue.ack(msg, msg.getRuleNodeId().getId(), msg.getClusterPartition());
+        } else if (relationsCount == 1) {
+            for (RuleNodeRelation relation : relations) {
+                pushToTarget(msg, relation.getOut());
             }
-            if (targetRelationType == null || targetRelationType.equalsIgnoreCase(relation.getType())) {
-                switch (relation.getOut().getEntityType()) {
+        } else {
+            for (RuleNodeRelation relation : relations) {
+                EntityId target = relation.getOut();
+                switch (target.getEntityType()) {
                     case RULE_NODE:
-                        RuleNodeId targetRuleNodeId = new RuleNodeId(relation.getOut().getId());
-                        RuleNodeCtx targetRuleNode = nodeActors.get(targetRuleNodeId);
-                        pushMsgToNode(targetRuleNode, msg);
+                        RuleNodeId targetId = new RuleNodeId(target.getId());
+                        RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
+                        TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
+                        putToQueue(copy, queuedMsg -> pushMsgToNode(targetNodeCtx, queuedMsg));
                         break;
                     case RULE_CHAIN:
-//                        TODO: implement
+                        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, true), self);
                         break;
                 }
             }
+            //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
+            EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
+            queue.ack(msg, ackId.getId(), msg.getClusterPartition());
+        }
+    }
+
+    private void pushToTarget(TbMsg msg, EntityId target) {
+        switch (target.getEntityType()) {
+            case RULE_NODE:
+                pushMsgToNode(nodeActors.get(new RuleNodeId(target.getId())), msg);
+                break;
+            case RULE_CHAIN:
+                parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, false), self);
+                break;
         }
     }
 
@@ -207,5 +232,10 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (nodeCtx != null) {
             nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg), self);
         }
+    }
+
+    private TbMsg enrichWithRuleChainId(TbMsg tbMsg) {
+        // We don't put firstNodeId because it may change over time;
+        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData(), tbMsg.getData(), entityId, null, 0L);
     }
 }
