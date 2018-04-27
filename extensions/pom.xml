@@ -41,6 +41,7 @@
         <module>extension-mqtt</module>
         <module>extension-sqs</module>
         <module>extension-sns</module>
+        <module>extension-kinesis</module>
     </modules>
 
 </project>

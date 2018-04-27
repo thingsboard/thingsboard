@@ -1,0 +1,31 @@
+{
+  "schema": {
+    "title": "Kinesis Plugin Configuration",
+    "type": "object",
+    "properties": {
+      "accessKeyId": {
+        "title": "Access Key ID",
+        "type": "string"
+      },
+      "secretAccessKey": {
+        "title": "Secret Access Key",
+        "type": "string"
+      },
+      "region": {
+        "title": "Region",
+        "type": "string"
+      },
+      "profile": {
+        "title": "or use Profile:",
+        "type": "string",
+        "default": "default"
+      }
+    }
+  },
+  "form": [
+    "accessKeyId",
+    "secretAccessKey",
+    "region",
+    "profile"
+  ]
+}
