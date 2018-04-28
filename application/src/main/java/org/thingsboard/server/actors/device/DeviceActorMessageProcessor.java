@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.*;
+import org.thingsboard.server.common.msg.device.BasicToDeviceActorMsg;
 import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
 import org.thingsboard.server.common.msg.kv.BasicAttributeKVMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
@@ -305,6 +306,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     void onRulesProcessedMsg(ActorContext context, RulesProcessedMsg msg) {
         ChainProcessingContext ctx = msg.getCtx();
         ToDeviceActorMsg inMsg = ctx.getInMsg();
+        MsgType inMsgType = inMsg.getPayload().getMsgType();
+
+        if (inMsgType == MsgType.DEVICE_GO_ONLINE || inMsgType == MsgType.DEVICE_GO_OFFLINE)
+            return;
+
         SessionId sid = inMsg.getSessionId();
         ToDeviceSessionActorMsg response;
         if (ctx.getResponse() != null) {
@@ -341,9 +347,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (inMsg instanceof SessionOpenMsg) {
             logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
             sessions.put(sessionId, new SessionInfo(SessionType.ASYNC, msg.getServerAddress()));
+            if (sessions.size()==1) {
+                logger.debug("Device [{}] goes online", deviceId);
+                systemContext.getAppActor().tell(new BasicToDeviceActorMsg(msg, new DeviceOnlineMsg()), ActorRef.noSender());
+            }
+
         } else if (inMsg instanceof SessionCloseMsg) {
             logger.debug("[{}] Canceling subscriptions for closed session [{}]", deviceId, sessionId);
             sessions.remove(sessionId);
+            if (sessions.size()==0) {
+                logger.debug("Device [{}] goes offline", deviceId);
+                systemContext.getAppActor().tell(new BasicToDeviceActorMsg(msg, new DeviceOfflineMsg()), ActorRef.noSender());
+            }
             attributeSubscriptions.remove(sessionId);
             rpcSubscriptions.remove(sessionId);
         }
