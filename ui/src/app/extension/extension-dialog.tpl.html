@@ -62,6 +62,7 @@
                         <div tb-extension-form-http config="vm.extension.configuration" is-add="vm.isAdd" ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.http"></div>
                         <div tb-extension-form-mqtt config="vm.extension.configuration" is-add="vm.isAdd" ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.mqtt"></div>
                         <div tb-extension-form-opc  configuration="vm.extension.configuration"  ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.opc"></div>
+                        <div tb-extension-form-modbus  configuration="vm.extension.configuration"  ng-if="vm.extension.type && vm.extension.type == vm.types.extensionType.modbus"></div>
                     </fieldset>
                 </md-content>
             </div>
