@@ -49,7 +49,7 @@ export default function ExtensionDialogController($scope, $mdDialog, $translate,
                 "brokers": []
             };
         }
-        if (vm.extension.type === "OPC UA") {
+        if (vm.extension.type === "OPC UA" || vm.extension.type === "MODBUS") {
             vm.extension.configuration = {
                 "servers": []
             };

@@ -194,7 +194,7 @@
                                             </md-input-container>
                                         </div>
 
-                                        <v-accordion id="opc-keystore-accordion" class="vAccordion--default" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
+                                        <v-accordion id="opc-keystore-accordion" class="vAccordion--default" ng-if="server.security != 'None'" onexpand="expandValidation(index, id)" oncollapse="collapseValidation(index, id)">
                                             <v-pane id="opc-keystore-pane__{{serverIndex}}" expanded="true">
                                                 <v-pane-header>
                                                     {{ 'extension.opc-keystore' | translate }}
