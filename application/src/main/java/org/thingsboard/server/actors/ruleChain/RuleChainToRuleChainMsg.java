@@ -26,7 +26,7 @@ import org.thingsboard.server.common.msg.TbMsg;
  * Created by ashvayka on 19.03.18.
  */
 @Data
-final class RuleChainToRuleChainMsg implements TbActorMsg {
+public final class RuleChainToRuleChainMsg implements TbActorMsg {
 
     private final RuleChainId target;
     private final RuleChainId source;

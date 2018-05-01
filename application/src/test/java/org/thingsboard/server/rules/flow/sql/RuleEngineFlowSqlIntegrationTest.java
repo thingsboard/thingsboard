@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rules.flow;
+package org.thingsboard.server.rules.flow.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.mqtt.rpc.AbstractMqttServerSideRpcIntegrationTest;
+import org.thingsboard.server.rules.flow.AbstractRuleEngineFlowIntegrationTest;
 
 /**
  * Created by Valerii Sosliuk on 8/22/2017.

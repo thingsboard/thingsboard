@@ -22,6 +22,7 @@ import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
 import org.thingsboard.server.actors.plugin.PluginTerminationMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
+import org.thingsboard.server.actors.ruleChain.RuleChainToRuleChainMsg;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.plugin.TenantPluginManager;
@@ -83,6 +84,9 @@ public class TenantActor extends RuleChainManagerActor {
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((DeviceAwareMsg) msg);
                 break;
+            case RULE_CHAIN_TO_RULE_CHAIN_MSG:
+                onRuleChainMsg((RuleChainToRuleChainMsg) msg);
+                break;
             default:
                 return false;
         }
@@ -102,6 +106,11 @@ public class TenantActor extends RuleChainManagerActor {
     private void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg msg) {
         ruleChainManager.getRootChainActor().tell(msg, self());
     }
+
+    private void onRuleChainMsg(RuleChainToRuleChainMsg msg) {
+        ruleChainManager.getOrCreateActor(context(), msg.getTarget()).tell(msg, self());
+    }
+
 
     private void onToDeviceActorMsg(DeviceAwareMsg msg) {
         getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());

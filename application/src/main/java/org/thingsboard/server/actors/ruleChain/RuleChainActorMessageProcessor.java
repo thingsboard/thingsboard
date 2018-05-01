@@ -180,6 +180,15 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         });
     }
 
+    void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
+        checkActive();
+        if(envelope.isEnqueue()) {
+            putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg));
+        } else {
+            pushMsgToNode(firstNode, envelope.getMsg());
+        }
+    }
+
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
         checkActive();
         RuleNodeId originator = envelope.getOriginator();
@@ -190,8 +199,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
         TbMsg msg = envelope.getMsg();
         int relationsCount = relations.size();
+        EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
         if (relationsCount == 0) {
-            queue.ack(msg, msg.getRuleNodeId().getId(), msg.getClusterPartition());
+            queue.ack(msg, ackId.getId(), msg.getClusterPartition());
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {
                 pushToTarget(msg, relation.getOut());
@@ -201,20 +211,29 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 EntityId target = relation.getOut();
                 switch (target.getEntityType()) {
                     case RULE_NODE:
-                        RuleNodeId targetId = new RuleNodeId(target.getId());
-                        RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
-                        TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
-                        putToQueue(copy, queuedMsg -> pushMsgToNode(targetNodeCtx, queuedMsg));
+                        enqueueAndForwardMsgCopyToNode(msg, target);
                         break;
                     case RULE_CHAIN:
-                        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, true), self);
+                        enqueueAndForwardMsgCopyToChain(msg, target);
                         break;
                 }
             }
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
-            EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
             queue.ack(msg, ackId.getId(), msg.getClusterPartition());
         }
+    }
+
+    private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target) {
+        RuleChainId targetRCId = new RuleChainId(target.getId());
+        TbMsg copyMsg = msg.copy(UUIDs.timeBased(), targetRCId, null, DEFAULT_CLUSTER_PARTITION);
+        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, true), self);
+    }
+
+    private void enqueueAndForwardMsgCopyToNode(TbMsg msg, EntityId target) {
+        RuleNodeId targetId = new RuleNodeId(target.getId());
+        RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
+        TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
+        putToQueue(copy, queuedMsg -> pushMsgToNode(targetNodeCtx, queuedMsg));
     }
 
     private void pushToTarget(TbMsg msg, EntityId target) {

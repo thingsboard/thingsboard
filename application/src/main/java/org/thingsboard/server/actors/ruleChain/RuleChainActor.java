@@ -51,6 +51,9 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
             case RULE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 processor.onTellNext((RuleNodeToRuleChainTellNextMsg) msg);
                 break;
+            case RULE_CHAIN_TO_RULE_CHAIN_MSG:
+                processor.onRuleChainToRuleChainMsg((RuleChainToRuleChainMsg) msg);
+                break;
             default:
                 return false;
         }

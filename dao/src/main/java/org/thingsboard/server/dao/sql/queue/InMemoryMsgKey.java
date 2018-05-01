@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.rules.lifecycle;
+package org.thingsboard.server.dao.sql.queue;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.rules.flow.AbstractRuleEngineFlowIntegrationTest;
+import lombok.Data;
+
+import java.util.UUID;
 
 /**
- * Created by Valerii Sosliuk on 8/22/2017.
+ * Created by ashvayka on 30.04.18.
  */
-@DaoSqlTest
-public class RuleEngineLifecycleSqlIntegrationTest extends AbstractRuleEngineLifecycleIntegrationTest {
+@Data
+public final class InMemoryMsgKey {
+    final UUID nodeId;
+    final long clusterPartition;
 }
