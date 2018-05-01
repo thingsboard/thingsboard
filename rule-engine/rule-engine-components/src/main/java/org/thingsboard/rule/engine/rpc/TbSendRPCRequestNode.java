@@ -39,9 +39,11 @@ import java.util.concurrent.TimeUnit;
 @RuleNode(
         type = ComponentType.ACTION,
         name = "rpc call request",
-        configClazz = TbSendRpcReplyNodeConfiguration.class,
+        configClazz = TbSendRpcRequestNodeConfiguration.class,
         nodeDescription = "Sends one-way RPC call to device",
-        nodeDetails = "Expects messages with \"method\" and \"params\". Will forward response from device to next nodes."
+        nodeDetails = "Expects messages with \"method\" and \"params\". Will forward response from device to next nodes.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbActionNodeRpcRequestConfig"
 )
 public class TbSendRPCRequestNode implements TbNode {
 
