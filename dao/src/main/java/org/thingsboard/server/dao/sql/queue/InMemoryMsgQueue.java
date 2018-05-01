@@ -15,10 +15,14 @@
  */
 package org.thingsboard.server.dao.sql.queue;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.queue.MsgQueue;
@@ -40,13 +44,17 @@ import java.util.concurrent.atomic.AtomicLong;
  * Created by ashvayka on 27.04.18.
  */
 @Component
+//@ConditionalOnProperty(prefix = "rule.queue", value = "type", havingValue = "memory", matchIfMissing = true)
 @Slf4j
 @SqlDao
 public class InMemoryMsgQueue implements MsgQueue {
 
+    @Value("${rule.queue.max_size}")
+    @Getter
+    private long maxSize;
+
     private ListeningExecutorService queueExecutor;
-    //TODO:
-    private AtomicLong pendingMsgCount;
+    private AtomicLong pendingMsgCount = new AtomicLong();
     private Map<InMemoryMsgKey, Map<UUID, TbMsg>> data = new HashMap<>();
 
     @PostConstruct
@@ -64,10 +72,15 @@ public class InMemoryMsgQueue implements MsgQueue {
 
     @Override
     public ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusterPartition) {
-        return queueExecutor.submit(() -> {
-            data.computeIfAbsent(new InMemoryMsgKey(nodeId, clusterPartition), key -> new HashMap<>()).put(msg.getId(), msg);
-            return null;
-        });
+        if (pendingMsgCount.get() < maxSize) {
+            return queueExecutor.submit(() -> {
+                data.computeIfAbsent(new InMemoryMsgKey(nodeId, clusterPartition), key -> new HashMap<>()).put(msg.getId(), msg);
+                pendingMsgCount.incrementAndGet();
+                return null;
+            });
+        } else {
+            return Futures.immediateFailedFuture(new RuntimeException("Message queue is full!"));
+        }
     }
 
     @Override
@@ -76,14 +89,15 @@ public class InMemoryMsgQueue implements MsgQueue {
             InMemoryMsgKey key = new InMemoryMsgKey(nodeId, clusterPartition);
             Map<UUID, TbMsg> map = data.get(key);
             if (map != null) {
-                map.remove(msg.getId());
+                if (map.remove(msg.getId()) != null) {
+                    pendingMsgCount.decrementAndGet();
+                }
                 if (map.isEmpty()) {
                     data.remove(key);
                 }
             }
             return null;
         });
-
     }
 
     @Override

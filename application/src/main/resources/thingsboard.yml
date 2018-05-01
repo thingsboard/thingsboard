@@ -302,7 +302,9 @@ spring:
 
 rule:
   queue:
-    msg_partitioning: "${QUEUE_MSG_PARTITIONING:HOURS}"
+    type: "memory"
+    max_size: 10000
+
 
 # PostgreSQL DAO Configuration
 #spring:

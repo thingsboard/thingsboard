@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -58,6 +59,7 @@ public class CassandraMsgRepositoryTest extends AbstractServiceTest {
 
     @Test
     public void expiredMsgsAreNotReturned() throws ExecutionException, InterruptedException {
+        ReflectionTestUtils.setField(msgRepository, "msqQueueTtl", 1);
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "type", new DeviceId(UUIDs.timeBased()), null, TbMsgDataType.JSON, "0000",
                 new RuleChainId(UUIDs.timeBased()), new RuleNodeId(UUIDs.timeBased()), 0L);
         UUID nodeId = UUIDs.timeBased();

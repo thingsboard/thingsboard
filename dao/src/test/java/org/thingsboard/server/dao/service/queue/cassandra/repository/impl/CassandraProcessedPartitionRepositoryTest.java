@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
 
@@ -61,6 +62,7 @@ public class CassandraProcessedPartitionRepositoryTest extends AbstractServiceTe
 
     @Test
     public void expiredPartitionsAreNotReturned() throws ExecutionException, InterruptedException {
+        ReflectionTestUtils.setField(partitionRepository, "partitionsTtl", 1);
         UUID nodeId = UUIDs.timeBased();
         ListenableFuture<Void> future = partitionRepository.partitionProcessed(nodeId, 404L, 10L);
         future.get();

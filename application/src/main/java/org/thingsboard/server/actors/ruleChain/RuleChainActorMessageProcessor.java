@@ -86,10 +86,23 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
             }
             initRoutes(ruleChain, ruleNodeList);
-            //TODO: read all messages from queues of the actors and push then to the corresponding node actors;
+            reprocess(ruleNodeList);
             started = true;
         } else {
             onUpdate(context);
+        }
+    }
+
+    private void reprocess(List<RuleNode> ruleNodeList) {
+        for (RuleNode ruleNode : ruleNodeList) {
+            for (TbMsg tbMsg : queue.findUnprocessed(ruleNode.getId().getId(), 0L)) {
+                pushMsgToNode(nodeActors.get(ruleNode.getId()), tbMsg);
+            }
+        }
+        if (firstNode != null) {
+            for (TbMsg tbMsg : queue.findUnprocessed(entityId.getId(), 0L)) {
+                pushMsgToNode(firstNode, tbMsg);
+            }
         }
     }
 
@@ -117,6 +130,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         });
 
         initRoutes(ruleChain, ruleNodeList);
+        reprocess(ruleNodeList);
     }
 
     @Override
@@ -182,7 +196,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
         checkActive();
-        if(envelope.isEnqueue()) {
+        if (envelope.isEnqueue()) {
             putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg));
         } else {
             pushMsgToNode(firstNode, envelope.getMsg());

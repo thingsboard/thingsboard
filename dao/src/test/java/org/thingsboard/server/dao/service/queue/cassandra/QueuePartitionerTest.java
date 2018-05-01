@@ -75,7 +75,7 @@ public class QueuePartitionerTest {
         long clusteredHash = 101L;
         when(partitionRepo.findLastProcessedPartition(nodeId, clusteredHash)).thenReturn(Optional.empty());
         List<Long> actual = queuePartitioner.findUnprocessedPartitions(nodeId, clusteredHash);
-        assertEquals(1011, actual.size());
+        assertEquals(10083, actual.size());
     }
 
 }
