@@ -281,7 +281,7 @@ export default function addLocaleChinese(locales) {
             "selected-telemetry": "{ count, select, 1 {1 遥测} other {# 遥测} } 被选中"
         },
         "audit-log": {
-            "audit": "Audit",
+            "audit": "审计",
             "audit-logs": "审计日志",
             "timestamp": "日期/时间",
             "entity-type": "实体类型",
