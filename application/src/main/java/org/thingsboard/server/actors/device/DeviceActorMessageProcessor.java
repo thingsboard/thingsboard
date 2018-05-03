@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -265,15 +265,30 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                     break;
                 case POST_ATTRIBUTES_REQUEST:
                     handlePostAttributesRequest(context, msg);
+                    reportActivity();
                     break;
                 case POST_TELEMETRY_REQUEST:
                     handlePostTelemetryRequest(context, msg);
+                    reportActivity();
                     break;
                 case TO_SERVER_RPC_REQUEST:
                     handleClientSideRPCRequest(context, msg);
+                    reportActivity();
                     break;
             }
         }
+    }
+
+    private void reportActivity() {
+        systemContext.getDeviceStateService().onDeviceActivity(deviceId);
+    }
+
+    private void reportSessionOpen() {
+        systemContext.getDeviceStateService().onDeviceConnect(deviceId);
+    }
+
+    private void reportSessionClose() {
+        systemContext.getDeviceStateService().onDeviceDisconnect(deviceId);
     }
 
     private void handleGetAttributesRequest(DeviceToDeviceActorMsg src) {
@@ -488,11 +503,17 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (inMsg instanceof SessionOpenMsg) {
             logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
             sessions.put(sessionId, new SessionInfo(SessionType.ASYNC, msg.getServerAddress()));
+            if (sessions.size() == 1) {
+                reportSessionOpen();
+            }
         } else if (inMsg instanceof SessionCloseMsg) {
             logger.debug("[{}] Canceling subscriptions for closed session [{}]", deviceId, sessionId);
             sessions.remove(sessionId);
             attributeSubscriptions.remove(sessionId);
             rpcSubscriptions.remove(sessionId);
+            if (sessions.isEmpty()) {
+                reportSessionClose();
+            }
         }
     }
 
