@@ -29,4 +29,5 @@ public interface TsKvQuery {
 
     Aggregation getAggregation();
 
+    String getOrderBy();
 }

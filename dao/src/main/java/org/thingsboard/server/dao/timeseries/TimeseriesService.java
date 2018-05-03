@@ -37,4 +37,6 @@ public interface TimeseriesService {
     ListenableFuture<List<Void>> save(EntityId entityId, TsKvEntry tsKvEntry);
 
     ListenableFuture<List<Void>> save(EntityId entityId, List<TsKvEntry> tsKvEntry, long ttl);
+
+    ListenableFuture<List<Void>> remove(EntityId entityId, List<TsKvQuery> queries);
 }

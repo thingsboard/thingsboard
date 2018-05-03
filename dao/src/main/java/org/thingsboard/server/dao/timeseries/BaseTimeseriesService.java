@@ -40,6 +40,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class BaseTimeseriesService implements TimeseriesService {
 
     public static final int INSERTS_PER_ENTRY = 3;
+    public static final int DELETES_PER_ENTRY = 2;
 
     @Autowired
     private TimeseriesDao timeseriesDao;
@@ -93,6 +94,22 @@ public class BaseTimeseriesService implements TimeseriesService {
         futures.add(timeseriesDao.savePartition(entityId, tsKvEntry.getTs(), tsKvEntry.getKey(), ttl));
         futures.add(timeseriesDao.saveLatest(entityId, tsKvEntry));
         futures.add(timeseriesDao.save(entityId, tsKvEntry, ttl));
+    }
+
+    @Override
+    public ListenableFuture<List<Void>> remove(EntityId entityId, List<TsKvQuery> tsKvQueries) {
+        validate(entityId);
+        tsKvQueries.forEach(BaseTimeseriesService::validate);
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvQueries.size() * DELETES_PER_ENTRY);
+        for (TsKvQuery tsKvQuery : tsKvQueries) {
+            deleteAndRegisterFutures(futures, entityId, tsKvQuery);
+        }
+        return Futures.allAsList(futures);
+    }
+
+    private void deleteAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvQuery query) {
+        futures.add(timeseriesDao.remove(entityId, query));
+        futures.add(timeseriesDao.removeLatest(entityId, query));
     }
 
     private static void validate(EntityId entityId) {
