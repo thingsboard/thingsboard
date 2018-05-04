@@ -252,7 +252,7 @@ export default class TbFlot {
                 if (this.tickUnits) {
                      formatted += ' ' + this.tickUnits;
                 }
-             
+
                 return formatted;
             };
 
@@ -1098,7 +1098,7 @@ export default class TbFlot {
                     "axisTickDecimals": {
                         "title": "Axis tick number of digits after floating point",
                         "type": "number",
-                        "default": 0
+                        "default": null
                     },
                     "axisTickSize": {
                         "title": "Axis step size between ticks",
