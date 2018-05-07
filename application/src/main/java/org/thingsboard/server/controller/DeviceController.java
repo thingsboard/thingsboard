@@ -90,6 +90,11 @@ public class DeviceController extends BaseController {
                     savedDevice.getCustomerId(),
                     device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
+            if (device.getId() == null) {
+                deviceStateService.onDeviceAdded(savedDevice);
+            } else {
+                deviceStateService.onDeviceUpdated(savedDevice);
+            }
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
@@ -112,6 +117,7 @@ public class DeviceController extends BaseController {
                     device.getCustomerId(),
                     ActionType.DELETED, null, strDeviceId);
 
+            deviceStateService.onDeviceDeleted(device);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE),
                     null,
@@ -387,7 +393,7 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/device/online", method = RequestMethod.GET)
     @ResponseBody
     public List<Device> getOnlineDevices(@RequestParam("contactType") DeviceStatusQuery.ContactType contactType,
-                                          @RequestParam("threshold") long threshold) throws ThingsboardException {
+                                         @RequestParam("threshold") long threshold) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             ListenableFuture<List<Device>> offlineDevices = offlineService.findOnlineDevices(tenantId.getId(), contactType, threshold);

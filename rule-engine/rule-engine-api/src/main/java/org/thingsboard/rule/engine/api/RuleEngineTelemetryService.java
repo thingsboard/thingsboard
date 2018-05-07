@@ -33,4 +33,12 @@ public interface RuleEngineTelemetryService {
 
     void saveAndNotify(EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback);
 
+    void saveAttrAndNotify(EntityId entityId, String scope, String key, long value, FutureCallback<Void> callback);
+
+    void saveAttrAndNotify(EntityId entityId, String scope, String key, String value, FutureCallback<Void> callback);
+
+    void saveAttrAndNotify(EntityId entityId, String scope, String key, double value, FutureCallback<Void> callback);
+
+    void saveAttrAndNotify(EntityId entityId, String scope, String key, boolean value, FutureCallback<Void> callback);
+
 }

@@ -65,6 +65,7 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
+import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
@@ -196,6 +197,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private MsgQueue msgQueue;
+
+    @Autowired
+    @Getter
+    private DeviceStateService deviceStateService;
 
     @Value("${actors.session.sync.timeout}")
     @Getter

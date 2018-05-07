@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.filter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -27,7 +28,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         type = ComponentType.FILTER,
         name = "message type switch",
         configClazz = EmptyNodeConfiguration.class,
-        relationTypes = {"Post attributes", "Post telemetry", "RPC Request", "Other"},
+        relationTypes = {"Post attributes", "Post telemetry", "RPC Request", "Activity Event", "Inactivity Event", "Connect Event", "Disconnect Event", "Other"},
         nodeDescription = "Route incoming messages by Message Type",
         nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b> via corresponding chain, otherwise <b>Other</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -50,7 +51,15 @@ public class TbMsgTypeSwitchNode implements TbNode {
             relationType = "Post telemetry";
         } else if (msg.getType().equals(SessionMsgType.TO_SERVER_RPC_REQUEST.name())) {
             relationType = "RPC Request";
-        }  else {
+        } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT)) {
+            relationType = "Activity Event";
+        } else if (msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
+            relationType = "Inactivity Event";
+        } else if (msg.getType().equals(DataConstants.CONNECT_EVENT)) {
+            relationType = "Connect Event";
+        } else if (msg.getType().equals(DataConstants.DISCONNECT_EVENT)) {
+            relationType = "Disconnect Event";
+        } else {
             relationType = "Other";
         }
         ctx.tellNext(msg, relationType);

@@ -63,6 +63,7 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.state.DeviceStateService;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
@@ -136,6 +137,9 @@ public abstract class BaseController {
 
     @Autowired
     protected DeviceOfflineService offlineService;
+
+    @Autowired
+    protected DeviceStateService deviceStateService;
 
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
