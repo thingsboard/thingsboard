@@ -20,7 +20,6 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
@@ -60,7 +59,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     @Override
     protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
         ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator());
-        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> ctx.newMsg(msg.getType(), n, msg.getMetaData(), msg.getData()));
+        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData()));
     }
 
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, EntityId original) {

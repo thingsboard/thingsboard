@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
@@ -31,8 +30,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-
-import java.util.concurrent.ExecutorService;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
@@ -187,7 +184,7 @@ public class TbAlarmNode implements TbNode {
         } else if (alarmResult.isCleared) {
             metaData.putValue(IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
-        return ctx.newMsg("ALARM", originalMsg.getOriginator(), metaData, data);
+        return ctx.transformMsg(originalMsg, "ALARM", originalMsg.getOriginator(), metaData, data);
     }
 
 

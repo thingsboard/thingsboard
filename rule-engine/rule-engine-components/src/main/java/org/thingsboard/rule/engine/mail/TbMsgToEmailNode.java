@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.mail;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +85,7 @@ public class TbMsgToEmailNode implements TbNode {
 
     private TbMsg buildEmailMsg(TbContext ctx, TbMsg msg, EmailPojo email) throws JsonProcessingException {
         String emailJson = MAPPER.writeValueAsString(email);
-        return ctx.newMsg(SEND_EMAIL_TYPE, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
+        return ctx.transformMsg(msg, SEND_EMAIL_TYPE, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
     }
 
     private EmailPojo convert(TbMsg msg) throws IOException {

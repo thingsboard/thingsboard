@@ -16,7 +16,10 @@
 package org.thingsboard.server.actors.tenant;
 
 import akka.actor.ActorRef;
+import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
+import akka.actor.SupervisorStrategy;
+import akka.japi.Function;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
@@ -36,6 +39,7 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
+import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +53,12 @@ public class TenantActor extends RuleChainManagerActor {
         super(systemContext, new TenantRuleChainManager(systemContext, tenantId), new TenantPluginManager(systemContext, tenantId));
         this.tenantId = tenantId;
         this.deviceActors = new HashMap<>();
+    }
+
+
+    @Override
+    public SupervisorStrategy supervisorStrategy() {
+        return strategy;
     }
 
     @Override
@@ -146,5 +156,13 @@ public class TenantActor extends RuleChainManagerActor {
             return new TenantActor(context, tenantId);
         }
     }
+
+    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), new Function<Throwable, SupervisorStrategy.Directive>() {
+        @Override
+        public SupervisorStrategy.Directive apply(Throwable t) {
+            logger.error(t, "Unknown failure");
+            return SupervisorStrategy.resume();
+        }
+    });
 
 }

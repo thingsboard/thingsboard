@@ -70,11 +70,12 @@ public class TbChangeOriginatorNodeTest {
 
         node.onMsg(ctx, msg);
 
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertEquals(customerId, originatorCaptor.getValue());
     }
@@ -96,11 +97,12 @@ public class TbChangeOriginatorNodeTest {
         when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(asset));
 
         node.onMsg(ctx, msg);
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertEquals(customerId, originatorCaptor.getValue());
     }

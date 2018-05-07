@@ -214,6 +214,8 @@ actors:
     js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:10}"
     # Specify thread pool size for mail sender executor service
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:10}"
+    # Specify thread pool size for external call service
+    external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:10}"
     chain:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"

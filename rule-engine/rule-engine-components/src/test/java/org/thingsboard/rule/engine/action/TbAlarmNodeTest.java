@@ -17,13 +17,9 @@ package org.thingsboard.rule.engine.action;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.AbstractListeningExecutorService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang3.NotImplementedException;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,8 +41,6 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
@@ -120,11 +114,12 @@ public class TbAlarmNodeTest {
 
         verify(ctx).tellNext(any(), eq("Created"));
 
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertEquals("ALARM", typeCaptor.getValue());
         assertEquals(originator, originatorCaptor.getValue());
@@ -214,11 +209,12 @@ public class TbAlarmNodeTest {
 
         verify(ctx).tellNext(any(), eq("Created"));
 
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertEquals("ALARM", typeCaptor.getValue());
         assertEquals(originator, originatorCaptor.getValue());
@@ -263,11 +259,12 @@ public class TbAlarmNodeTest {
 
         verify(ctx).tellNext(any(), eq("Updated"));
 
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertEquals("ALARM", typeCaptor.getValue());
         assertEquals(originator, originatorCaptor.getValue());
@@ -313,11 +310,12 @@ public class TbAlarmNodeTest {
 
         verify(ctx).tellNext(any(), eq("Cleared"));
 
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ctx).newMsg(typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
 
         assertEquals("ALARM", typeCaptor.getValue());
         assertEquals(originator, originatorCaptor.getValue());

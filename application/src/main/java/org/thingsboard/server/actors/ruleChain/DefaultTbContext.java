@@ -123,6 +123,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return new TbMsg(origMsg.getId(), type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
+    }
+
+    @Override
     public RuleNodeId getSelfId() {
         return nodeCtx.getSelf().getId();
     }
@@ -150,6 +155,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public ListeningExecutor getDbCallbackExecutor() {
         return mainCtx.getDbCallbackExecutor();
+    }
+
+    @Override
+    public ListeningExecutor getExternalCallExecutor() {
+        return mainCtx.getExternalCallExecutorService();
     }
 
     @Override

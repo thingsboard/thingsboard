@@ -62,6 +62,8 @@ public interface TbContext {
 
     TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data);
 
+    TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
+
     RuleNodeId getSelfId();
 
     TenantId getTenantId();
@@ -95,6 +97,8 @@ public interface TbContext {
     ListeningExecutor getMailExecutor();
 
     ListeningExecutor getDbCallbackExecutor();
+
+    ListeningExecutor getExternalCallExecutor();
 
     MailService getMailService();
 

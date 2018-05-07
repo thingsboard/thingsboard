@@ -94,7 +94,10 @@ public final class TbMsg implements Serializable {
             TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
             RuleChainId ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
-            RuleNodeId ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleChainIdLSB()));
+            RuleNodeId ruleNodeId = null;
+            if(proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
+                 ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
+            }
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
             return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, proto.getClusterPartition());
         } catch (InvalidProtocolBufferException e) {

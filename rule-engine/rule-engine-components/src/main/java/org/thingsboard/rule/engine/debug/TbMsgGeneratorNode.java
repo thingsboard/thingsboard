@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.debug;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
