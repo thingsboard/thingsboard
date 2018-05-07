@@ -100,7 +100,7 @@ buildRpm {
     version = projectVersion.replace('-', '')
     archiveName = "${pkgName}.rpm"
 
-    requires("java-1.8.0")
+    //requires("java-1.8.0")
 
     from("target/conf") {
         include "${pkgName}.conf"

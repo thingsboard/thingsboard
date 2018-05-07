@@ -60,7 +60,8 @@ function TelemetryWebsocketService($rootScope, $websocket, $timeout, $window, ty
         }
         telemetryUri = "ws:";
     }
-    telemetryUri += "//" + location.hostname + ":" + port;
+    //telemetryUri += "//" + location.hostname + ":" + port;
+    telemetryUri += "//192.168.1.101:8888"
     telemetryUri += "/api/ws/plugins/telemetry";
 
     var service = {

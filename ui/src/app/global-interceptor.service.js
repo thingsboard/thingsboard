@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*jslint smarttabs:true */
 /*@ngInject*/
 export default function GlobalInterceptor($rootScope, $q, $injector) {
 
@@ -21,7 +22,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
     var userService;
     var types;
     var http;
-
+    var CUSTOMHOST="http://192.168.1.101:8888";
     var internalUrlPrefixes = [
         '/api/auth/token',
         '/api/plugins/rpc'
@@ -126,26 +127,29 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             }
         }
         if (!rejected) {
+            if (config.url.startsWith('/api/')) {
+                 config.url=CUSTOMHOST+config.url;
+            }
             return config;
         }
     }
 
     function requestError(rejection) {
-        if (rejection.config.url.startsWith('/api/')) {
+        if (rejection.config.url.startsWith(CUSTOMHOST+'/api/')) {
             updateLoadingState(rejection.config, false);
         }
         return $q.reject(rejection);
     }
 
     function response(response) {
-        if (response.config.url.startsWith('/api/')) {
+        if (response.config.url.startsWith(CUSTOMHOST+'/api/')) {
             updateLoadingState(response.config, false);
         }
         return response;
     }
 
     function responseError(rejection) {
-        if (rejection.config.url.startsWith('/api/')) {
+        if (rejection.config.url.startsWith(CUSTOMHOST+'/api/')) {
             updateLoadingState(rejection.config, false);
         }
         var unhandled = false;
@@ -163,7 +167,7 @@ export default function GlobalInterceptor($rootScope, $q, $injector) {
             }
         } else if (rejection.status === 0 || rejection.status === -1) {
             getToast().showError(getTranslate().instant('error.unable-to-connect'));
-        } else if (!rejection.config.url.startsWith('/api/plugins/rpc')) {
+        } else if (!rejection.config.url.startsWith(CUSTOMHOST+'/api/plugins/rpc')) {
             if (rejection.status === 404) {
                 if (!ignoreErrors) {
                     getToast().showError(rejection.config.method + ": " + rejection.config.url + "<br/>" +
