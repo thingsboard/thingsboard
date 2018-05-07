@@ -50,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 )
 public class TbRestApiCallNode implements TbNode {
 
-    private static final String VARIABLE_TEMPLATE = "${%s}";
     private static final String STATUS = "status";
     private static final String STATUS_CODE = "statusCode";
     private static final String STATUS_REASON = "statusReason";
@@ -77,19 +76,19 @@ public class TbRestApiCallNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        String endpointUrl = processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
+        String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg.getMetaData());
         HttpHeaders headers = prepareHeaders(msg.getMetaData());
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
         HttpEntity<String> entity = new HttpEntity<>(msg.getData(), headers);
 
-        ListenableFuture<ResponseEntity<String>> future =httpClient.exchange(
+        ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
                 endpointUrl, method, entity, String.class);
 
         future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
             @Override
             public void onFailure(Throwable throwable) {
                 TbMsg next = processException(ctx, msg, throwable);
-                ctx.tellNext(next, TbRelationTypes.FAILURE);
+                ctx.tellNext(next, TbRelationTypes.FAILURE, throwable);
             }
 
             @Override
@@ -145,21 +144,9 @@ public class TbRestApiCallNode implements TbNode {
     private HttpHeaders prepareHeaders(TbMsgMetaData metaData) {
         HttpHeaders headers = new HttpHeaders();
         config.getHeaders().forEach((k,v) -> {
-            headers.add(processPattern(k, metaData), processPattern(v, metaData));
+            headers.add(TbNodeUtils.processPattern(k, metaData), TbNodeUtils.processPattern(v, metaData));
         });
         return headers;
     }
 
-    private String processPattern(String pattern, TbMsgMetaData metaData) {
-        String result = new String(pattern);
-        for (Map.Entry<String,String> keyVal  : metaData.values().entrySet()) {
-            result = processVar(result, keyVal.getKey(), keyVal.getValue());
-        }
-        return result;
-    }
-
-    private String processVar(String pattern, String key, String val) {
-        String varPattern = String.format(VARIABLE_TEMPLATE, key);
-        return pattern.replace(varPattern, val);
-    }
 }

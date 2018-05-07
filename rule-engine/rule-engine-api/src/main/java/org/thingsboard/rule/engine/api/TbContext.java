@@ -44,6 +44,8 @@ public interface TbContext {
 
     void tellNext(TbMsg msg, String relationType);
 
+    void tellNext(TbMsg msg, String relationType, Throwable th);
+
     void tellNext(TbMsg msg, Set<String> relationTypes);
 
     void tellSelf(TbMsg msg, long delayMs);
