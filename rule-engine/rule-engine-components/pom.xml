@@ -101,6 +101,14 @@
             <artifactId>amqp-client</artifactId>
         </dependency>
         <dependency>
+            <groupId>nl.jk5.netty-mqtt</groupId>
+            <artifactId>netty-mqtt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
