@@ -23,5 +23,5 @@ import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
  */
 @Data
 public final class RpcBroadcastMsg {
-    private final ClusterAPIProtos.ToRpcServerMessage msg;
+    private final ClusterAPIProtos.ClusterMessage msg;
 }

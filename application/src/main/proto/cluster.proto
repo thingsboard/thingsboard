@@ -19,79 +19,73 @@ package cluster;
 option java_package = "org.thingsboard.server.gen.cluster";
 option java_outer_classname = "ClusterAPIProtos";
 
-message ServerAddress {
-  string host = 1;
-  int32 port = 2;
-}
-
-message Uid {
-  sint64 pluginUuidMsb = 1;
-  sint64 pluginUuidLsb = 2;
-}
-
-message PluginAddress {
-  Uid pluginId = 1;
-  Uid tenantId = 2;
-}
-
-message ToPluginRpcMessage {
-  PluginAddress address = 1;
-  int32 clazz = 2;
-  bytes data = 3;
-}
-
-message ToDeviceActorRpcMessage {
-  bytes data = 1;
-}
-
-message ToDeviceSessionActorRpcMessage {
-  bytes data = 1;
-}
-
-message ToDeviceActorNotificationRpcMessage {
-  bytes data = 1;
-}
-
-message ToAllNodesRpcMessage {
-  bytes data = 1;
-}
-
-message ConnectRpcMessage {
-  ServerAddress serverAddress = 1;
-}
-
-message ToDeviceRpcRequestRpcMessage {
-  Uid deviceTenantId = 2;
-  Uid deviceId = 3;
-
-  Uid msgId = 4;
-  bool oneway = 5;
-  int64 expTime = 6;
-  string method = 7;
-  string params = 8;
-}
-
-message ToPluginRpcResponseRpcMessage {
-  Uid msgId = 2;
-  string response = 3;
-  string error = 4;
-}
-
-message ToRpcServerMessage {
-  ConnectRpcMessage connectMsg = 1;
-  ToPluginRpcMessage toPluginRpcMsg = 2;
-  ToDeviceActorRpcMessage toDeviceActorRpcMsg = 3;
-  ToDeviceSessionActorRpcMessage toDeviceSessionActorRpcMsg = 4;
-  ToDeviceActorNotificationRpcMessage toDeviceActorNotificationRpcMsg = 5;
-  ToAllNodesRpcMessage toAllNodesRpcMsg = 6;
-  ToDeviceRpcRequestRpcMessage toDeviceRpcRequestRpcMsg = 7;
-  ToPluginRpcResponseRpcMessage toPluginRpcResponseRpcMsg = 8;
-}
+//message Uid {
+//  sint64 pluginUuidMsb = 1;
+//  sint64 pluginUuidLsb = 2;
+//}
+//
+//message PluginAddress {
+//  Uid pluginId = 1;
+//  Uid tenantId = 2;
+//}
+//
+//message ToPluginRpcMessage {
+//  PluginAddress address = 1;
+//  int32 clazz = 2;
+//  bytes data = 3;
+//}
+//
+//message ToDeviceActorRpcMessage {
+//  bytes data = 1;
+//}
+//
+//message ToDeviceSessionActorRpcMessage {
+//  bytes data = 1;
+//}
+//
+//message ToDeviceActorNotificationRpcMessage {
+//  bytes data = 1;
+//}
+//
+//message ToAllNodesRpcMessage {
+//  bytes data = 1;
+//}
+//
+//message ConnectRpcMessage {
+//  ServerAddress serverAddress = 1;
+//}
+//
+//message ToDeviceRpcRequestRpcMessage {
+//  Uid deviceTenantId = 2;
+//  Uid deviceId = 3;
+//
+//  Uid msgId = 4;
+//  bool oneway = 5;
+//  int64 expTime = 6;
+//  string method = 7;
+//  string params = 8;
+//}
+//
+//message ToPluginRpcResponseRpcMessage {
+//  Uid msgId = 2;
+//  string response = 3;
+//  string error = 4;
+//}
+//
+//message ToRpcServerMessage {
+//  ConnectRpcMessage connectMsg = 1;
+//  ToPluginRpcMessage toPluginRpcMsg = 2;
+//  ToDeviceActorRpcMessage toDeviceActorRpcMsg = 3;
+//  ToDeviceSessionActorRpcMessage toDeviceSessionActorRpcMsg = 4;
+//  ToDeviceActorNotificationRpcMessage toDeviceActorNotificationRpcMsg = 5;
+//  ToAllNodesRpcMessage toAllNodesRpcMsg = 6;
+//  ToDeviceRpcRequestRpcMessage toDeviceRpcRequestRpcMsg = 7;
+//  ToPluginRpcResponseRpcMessage toPluginRpcResponseRpcMsg = 8;
+//}
 
 service ClusterRpcService {
-  rpc handlePluginMsgs(stream ToRpcServerMessage) returns (stream ToRpcServerMessage) {}
+  rpc handleMsgs(stream ClusterMessage) returns (stream ClusterMessage) {}
 }
-
 message ClusterMessage {
   MessageType messageType = 1;
   MessageMataInfo messageMetaInfo = 2;

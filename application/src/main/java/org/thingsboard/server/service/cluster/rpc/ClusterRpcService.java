@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.cluster.rpc;
 
 import io.grpc.stub.StreamObserver;
+import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
@@ -35,20 +36,10 @@ public interface ClusterRpcService {
 
     void init(RpcMsgListener listener);
 
-    void tell(ServerAddress serverAddress, DeviceToDeviceActorMsg toForward);
+    void broadcast(RpcBroadcastMsg msg);
 
-    void tell(ServerAddress serverAddress, ToDeviceSessionActorMsg toForward);
+    void onSessionCreated(UUID msgUid, StreamObserver<ClusterAPIProtos.ClusterMessage> inputStream);
 
-    void tell(ServerAddress serverAddress, ToDeviceActorNotificationMsg toForward);
-
-    void tell(ServerAddress serverAddress, ToDeviceRpcRequestActorMsg toForward);
-
-    void tell(ServerAddress serverAddress, ToPluginRpcResponseDeviceMsg toForward);
-
-    void tell(PluginRpcMsg toForward);
-
-    void broadcast(ToAllNodesMsg msg);
-
-    void onSessionCreated(UUID msgUid, StreamObserver<ClusterAPIProtos.ToRpcServerMessage> inputStream);
+    void tell(ClusterAPIProtos.ClusterMessage message);
 
 }

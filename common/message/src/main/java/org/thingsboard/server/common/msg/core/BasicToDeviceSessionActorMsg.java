@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.msg.core;
 
 import org.thingsboard.server.common.data.id.SessionId;
+import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 
 public class BasicToDeviceSessionActorMsg implements ToDeviceSessionActorMsg {
@@ -44,4 +45,8 @@ public class BasicToDeviceSessionActorMsg implements ToDeviceSessionActorMsg {
         return "BasicToSessionResponseMsg [msg=" + msg + ", sessionId=" + sessionId + "]";
     }
 
+    @Override
+    public MsgType getMsgType() {
+        return null;
+    }
 }
