@@ -94,5 +94,3 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_node (
     PRIMARY KEY (id)
 );
 
-ALTER TABLE thingsboard.device ADD last_connect bigint;
-ALTER TABLE thingsboard.device ADD last_update bigint;
