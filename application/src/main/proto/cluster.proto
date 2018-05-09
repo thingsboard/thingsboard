@@ -95,3 +95,33 @@ service ClusterRpcService {
   rpc handlePluginMsgs(stream ToRpcServerMessage) returns (stream ToRpcServerMessage) {}
 }
 
+message ClusterMessage {
+  MessageType messageType = 1;
+  MessageMataInfo messageMetaInfo = 2;
+  ServerAddress serverAdresss = 3;
+  bytes payload = 4;
+}
+
+message ServerAddress {
+  string host = 1;
+  int32 port = 2;
+}
+
+message MessageMataInfo {
+  string payloadMetaInfo = 1;
+  repeated string tags = 2;
+}
+
+
+enum MessageType {
+
+  //Cluster control messages
+  RPC_SESSION_CREATE_REQUEST_MSG = 0;
+  TO_ALL_NODES_MSG = 1;
+  RPC_SESSION_TELL_MSG = 2;
+  RPC_BROADCAST_MSG = 3;
+  CONNECT_RPC_MESSAGE =4;
+
+  //CLUSTER_DATA_MESSAGE
+  CLUSTER_NETWORK_SERVER_DATA_MESSAGE = 5;
+}
