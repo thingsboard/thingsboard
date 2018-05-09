@@ -15,12 +15,13 @@
  */
 package org.thingsboard.server.common.msg;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
 
 import java.io.Serializable;
@@ -41,22 +42,40 @@ public final class TbMsg implements Serializable {
     private final TbMsgDataType dataType;
     private final String data;
 
-    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, String data) {
+    //The following fields are not persisted to DB, because they can always be recovered from the context;
+    private final RuleChainId ruleChainId;
+    private final RuleNodeId ruleNodeId;
+    private final long clusterPartition;
+
+    public TbMsg(UUID id, String type, EntityId originator, TbMsgMetaData metaData, String data,
+                 RuleChainId ruleChainId, RuleNodeId ruleNodeId, long clusterPartition) {
         this.id = id;
         this.type = type;
         this.originator = originator;
         this.metaData = metaData;
-        this.dataType = TbMsgDataType.JSON;
         this.data = data;
+        this.dataType = TbMsgDataType.JSON;
+        this.ruleChainId = ruleChainId;
+        this.ruleNodeId = ruleNodeId;
+        this.clusterPartition = clusterPartition;
     }
 
     public static ByteBuffer toBytes(TbMsg msg) {
         MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
         builder.setId(msg.getId().toString());
         builder.setType(msg.getType());
-        if (msg.getOriginator() != null) {
-            builder.setEntityType(msg.getOriginator().getEntityType().name());
-            builder.setEntityId(msg.getOriginator().getId().toString());
+        builder.setEntityType(msg.getOriginator().getEntityType().name());
+        builder.setEntityIdMSB(msg.getOriginator().getId().getMostSignificantBits());
+        builder.setEntityIdLSB(msg.getOriginator().getId().getLeastSignificantBits());
+
+        if (msg.getRuleChainId() != null) {
+            builder.setRuleChainIdMSB(msg.getRuleChainId().getId().getMostSignificantBits());
+            builder.setRuleChainIdLSB(msg.getRuleChainId().getId().getLeastSignificantBits());
+        }
+
+        if (msg.getRuleNodeId() != null) {
+            builder.setRuleNodeIdMSB(msg.getRuleNodeId().getId().getMostSignificantBits());
+            builder.setRuleNodeIdLSB(msg.getRuleNodeId().getId().getLeastSignificantBits());
         }
 
         if (msg.getMetaData() != null) {
@@ -73,15 +92,21 @@ public final class TbMsg implements Serializable {
         try {
             MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(buffer.array());
             TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
-            EntityId entityId = EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId());
+            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+            RuleChainId ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
+            RuleNodeId ruleNodeId = null;
+            if(proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
+                 ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
+            }
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
-            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData());
+            return new TbMsg(UUID.fromString(proto.getId()), proto.getType(), entityId, metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, proto.getClusterPartition());
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
     }
 
-    public TbMsg copy() {
-        return new TbMsg(id, type, originator, metaData.copy(), dataType, data);
+    public TbMsg copy(UUID newId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, long clusterPartition) {
+        return new TbMsg(newId, type, originator, metaData, dataType, data, ruleChainId, ruleNodeId, clusterPartition);
     }
+
 }

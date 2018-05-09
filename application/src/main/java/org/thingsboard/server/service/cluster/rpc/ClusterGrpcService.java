@@ -19,7 +19,6 @@ import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,29 +26,24 @@ import org.springframework.util.SerializationUtils;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
 import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
 import org.thingsboard.server.actors.rpc.RpcSessionTellMsg;
-import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
-import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequest;
-import org.thingsboard.server.extensions.api.plugins.msg.ToDeviceRpcRequestPluginMsg;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginRpcResponseDeviceMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.gen.cluster.ClusterRpcServiceGrpc;
-import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.service.cluster.discovery.ServerInstanceService;
-import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
+import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -124,7 +118,7 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
     }
 
     @Override
-    public void tell(ServerAddress serverAddress, ToDeviceActorMsg toForward) {
+    public void tell(ServerAddress serverAddress, DeviceToDeviceActorMsg toForward) {
         ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
                 .setToDeviceActorRpcMsg(toProtoMsg(toForward)).build();
         tell(serverAddress, msg);
@@ -138,7 +132,7 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
     }
 
     @Override
-    public void tell(ServerAddress serverAddress, ToDeviceRpcRequestPluginMsg toForward) {
+    public void tell(ServerAddress serverAddress, ToDeviceRpcRequestActorMsg toForward) {
         ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
                 .setToDeviceRpcRequestRpcMsg(toProtoMsg(toForward)).build();
         tell(serverAddress, msg);
@@ -190,7 +184,7 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
         }
     }
 
-    private static ClusterAPIProtos.ToDeviceActorRpcMessage toProtoMsg(ToDeviceActorMsg msg) {
+    private static ClusterAPIProtos.ToDeviceActorRpcMessage toProtoMsg(DeviceToDeviceActorMsg msg) {
         return ClusterAPIProtos.ToDeviceActorRpcMessage.newBuilder().setData(
                 ByteString.copyFrom(SerializationUtils.serialize(msg))
         ).build();
@@ -202,14 +196,9 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
         ).build();
     }
 
-    private static ClusterAPIProtos.ToDeviceRpcRequestRpcMessage toProtoMsg(ToDeviceRpcRequestPluginMsg msg) {
+    private static ClusterAPIProtos.ToDeviceRpcRequestRpcMessage toProtoMsg(ToDeviceRpcRequestActorMsg msg) {
         ClusterAPIProtos.ToDeviceRpcRequestRpcMessage.Builder builder = ClusterAPIProtos.ToDeviceRpcRequestRpcMessage.newBuilder();
         ToDeviceRpcRequest request = msg.getMsg();
-
-        builder.setAddress(ClusterAPIProtos.PluginAddress.newBuilder()
-                .setTenantId(toUid(msg.getPluginTenantId().getId()))
-                .setPluginId(toUid(msg.getPluginId().getId()))
-                .build());
 
         builder.setDeviceTenantId(toUid(msg.getTenantId()));
         builder.setDeviceId(toUid(msg.getDeviceId()));
@@ -226,11 +215,6 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
     private static ClusterAPIProtos.ToPluginRpcResponseRpcMessage toProtoMsg(ToPluginRpcResponseDeviceMsg msg) {
         ClusterAPIProtos.ToPluginRpcResponseRpcMessage.Builder builder = ClusterAPIProtos.ToPluginRpcResponseRpcMessage.newBuilder();
         FromDeviceRpcResponse request = msg.getResponse();
-
-        builder.setAddress(ClusterAPIProtos.PluginAddress.newBuilder()
-                .setTenantId(toUid(msg.getPluginTenantId().getId()))
-                .setPluginId(toUid(msg.getPluginId().getId()))
-                .build());
 
         builder.setMsgId(toUid(request.getId()));
         request.getResponse().ifPresent(builder::setResponse);

@@ -118,13 +118,13 @@ public class JsonConverter {
         }
     }
 
-    public static UpdateAttributesRequest convertToAttributes(JsonElement element) {
+    public static AttributesUpdateRequest convertToAttributes(JsonElement element) {
         return convertToAttributes(element, BasicRequest.DEFAULT_REQUEST_ID);
     }
 
-    public static UpdateAttributesRequest convertToAttributes(JsonElement element, int requestId) {
+    public static AttributesUpdateRequest convertToAttributes(JsonElement element, int requestId) {
         if (element.isJsonObject()) {
-            BasicUpdateAttributesRequest request = new BasicUpdateAttributesRequest(requestId);
+            BasicAttributesUpdateRequest request = new BasicAttributesUpdateRequest(requestId);
             long ts = System.currentTimeMillis();
             request.add(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
             return request;

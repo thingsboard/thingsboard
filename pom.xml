@@ -79,6 +79,7 @@
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
         <postgresql.driver.version>9.4.1211</postgresql.driver.version>
+        <netty-mqtt-client.version>2.0.0TB</netty-mqtt-client.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
@@ -817,6 +818,11 @@
                 <classifier>bin</classifier>
                 <type>exe</type>
                 <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>nl.jk5.netty-mqtt</groupId>
+                <artifactId>netty-mqtt</artifactId>
+                <version>${netty-mqtt-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.elasticsearch.client</groupId>

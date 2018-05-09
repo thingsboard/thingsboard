@@ -20,7 +20,7 @@ import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.*;
 import org.thingsboard.server.common.msg.session.ToDeviceActorSessionMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
@@ -32,7 +32,7 @@ import akka.event.LoggingAdapter;
 import java.util.Optional;
 
 class SyncMsgProcessor extends AbstractSessionActorMsgProcessor {
-    private ToDeviceActorMsg pendingMsg;
+    private DeviceToDeviceActorMsg pendingMsg;
     private Optional<ServerAddress> currentTargetServer;
     private boolean pendingResponse;
 

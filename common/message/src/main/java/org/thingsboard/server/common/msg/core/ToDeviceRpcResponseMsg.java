@@ -17,7 +17,8 @@ package org.thingsboard.server.common.msg.core;
 
 import lombok.Data;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 /**
  * @author Andrew Shvayka
@@ -29,7 +30,7 @@ public class ToDeviceRpcResponseMsg implements FromDeviceMsg {
     private final String data;
 
     @Override
-    public MsgType getMsgType() {
-        return MsgType.TO_DEVICE_RPC_RESPONSE;
+    public SessionMsgType getMsgType() {
+        return SessionMsgType.TO_DEVICE_RPC_RESPONSE;
     }
 }

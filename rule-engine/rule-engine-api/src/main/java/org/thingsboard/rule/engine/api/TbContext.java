@@ -15,10 +15,12 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -42,6 +44,8 @@ public interface TbContext {
 
     void tellNext(TbMsg msg, String relationType);
 
+    void tellNext(TbMsg msg, String relationType, Throwable th);
+
     void tellNext(TbMsg msg, Set<String> relationTypes);
 
     void tellSelf(TbMsg msg, long delayMs);
@@ -57,6 +61,10 @@ public interface TbContext {
     void tellError(TbMsg msg, Throwable th);
 
     void updateSelf(RuleNode self);
+
+    TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data);
+
+    TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
     RuleNodeId getSelfId();
 
@@ -78,6 +86,8 @@ public interface TbContext {
 
     RuleChainService getRuleChainService();
 
+    RuleEngineRpcService getRpcService();
+
     RuleEngineTelemetryService getTelemetryService();
 
     TimeseriesService getTimeseriesService();
@@ -89,6 +99,8 @@ public interface TbContext {
     ListeningExecutor getMailExecutor();
 
     ListeningExecutor getDbCallbackExecutor();
+
+    ListeningExecutor getExternalCallExecutor();
 
     MailService getMailService();
 

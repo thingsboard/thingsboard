@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.actors.plugin.ValidationResult;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
@@ -35,8 +36,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.controller.HttpValidationCallback;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -140,7 +143,7 @@ public class AccessValidator {
         return response;
     }
 
-    public <T> void validate(SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
+    public void validate(SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         switch (entityId.getEntityType()) {
             case DEVICE:
                 validateDevice(currentUser, entityId, callback);
@@ -177,14 +180,14 @@ public class AccessValidator {
                     } else if (currentUser.isCustomerUser() && !device.getCustomerId().equals(currentUser.getCustomerId())) {
                         return ValidationResult.accessDenied("Device doesn't belong to the current Customer!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(device);
                     }
                 }
             }), executor);
         }
     }
 
-    private <T> void validateAsset(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
+    private void validateAsset(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
@@ -198,15 +201,14 @@ public class AccessValidator {
                     } else if (currentUser.isCustomerUser() && !asset.getCustomerId().equals(currentUser.getCustomerId())) {
                         return ValidationResult.accessDenied("Asset doesn't belong to the current Customer!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(asset);
                     }
                 }
             }), executor);
         }
     }
 
-
-    private <T> void validateRuleChain(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
+    private void validateRuleChain(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isCustomerUser()) {
             callback.onSuccess(ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
@@ -220,14 +222,40 @@ public class AccessValidator {
                     } else if (currentUser.isSystemAdmin() && !ruleChain.getTenantId().isNullUid()) {
                         return ValidationResult.accessDenied("Rule chain is not in system scope!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(ruleChain);
                     }
                 }
             }), executor);
         }
     }
 
-    private <T> void validateCustomer(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
+    private void validateRule(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        if (currentUser.isCustomerUser()) {
+            callback.onSuccess(ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
+        } else {
+            ListenableFuture<RuleNode> ruleNodeFuture = ruleChainService.findRuleNodeByIdAsync(new RuleNodeId(entityId.getId()));
+            Futures.addCallback(ruleNodeFuture, getCallback(callback, ruleNodeTmp -> {
+                RuleNode ruleNode = ruleNodeTmp;
+                if (ruleNode == null) {
+                    return ValidationResult.entityNotFound("Rule node with requested id wasn't found!");
+                } else if (ruleNode.getRuleChainId() == null) {
+                    return ValidationResult.entityNotFound("Rule chain with requested node id wasn't found!");
+                } else {
+                    //TODO: make async
+                    RuleChain ruleChain = ruleChainService.findRuleChainById(ruleNode.getRuleChainId());
+                    if (currentUser.isTenantAdmin() && !ruleChain.getTenantId().equals(currentUser.getTenantId())) {
+                        return ValidationResult.accessDenied("Rule chain doesn't belong to the current Tenant!");
+                    } else if (currentUser.isSystemAdmin() && !ruleChain.getTenantId().isNullUid()) {
+                        return ValidationResult.accessDenied("Rule chain is not in system scope!");
+                    } else {
+                        return ValidationResult.ok(ruleNode);
+                    }
+                }
+            }), executor);
+        }
+    }
+
+    private void validateCustomer(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.accessDenied(SYSTEM_ADMINISTRATOR_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else {
@@ -241,18 +269,18 @@ public class AccessValidator {
                     } else if (currentUser.isCustomerUser() && !customer.getId().equals(currentUser.getCustomerId())) {
                         return ValidationResult.accessDenied("Customer doesn't relate to the currently authorized customer user!");
                     } else {
-                        return ValidationResult.ok();
+                        return ValidationResult.ok(customer);
                     }
                 }
             }), executor);
         }
     }
 
-    private <T> void validateTenant(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
+    private void validateTenant(final SecurityUser currentUser, EntityId entityId, FutureCallback<ValidationResult> callback) {
         if (currentUser.isCustomerUser()) {
             callback.onSuccess(ValidationResult.accessDenied(CUSTOMER_USER_IS_NOT_ALLOWED_TO_PERFORM_THIS_OPERATION));
         } else if (currentUser.isSystemAdmin()) {
-            callback.onSuccess(ValidationResult.ok());
+            callback.onSuccess(ValidationResult.ok(null));
         } else {
             ListenableFuture<Tenant> tenantFuture = tenantService.findTenantByIdAsync(new TenantId(entityId.getId()));
             Futures.addCallback(tenantFuture, getCallback(callback, tenant -> {
@@ -261,13 +289,13 @@ public class AccessValidator {
                 } else if (!tenant.getId().equals(currentUser.getTenantId())) {
                     return ValidationResult.accessDenied("Tenant doesn't relate to the currently authorized user!");
                 } else {
-                    return ValidationResult.ok();
+                    return ValidationResult.ok(tenant);
                 }
             }), executor);
         }
     }
 
-    private <T> FutureCallback<T> getCallback(FutureCallback<ValidationResult> callback, Function<T, ValidationResult> transformer) {
+    private <T, V> FutureCallback<T> getCallback(FutureCallback<ValidationResult> callback, Function<T, ValidationResult<V>> transformer) {
         return new FutureCallback<T>() {
             @Override
             public void onSuccess(@Nullable T result) {

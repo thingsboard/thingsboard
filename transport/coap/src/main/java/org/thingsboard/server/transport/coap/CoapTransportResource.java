@@ -93,7 +93,7 @@ public class CoapTransportResource extends CoapResource {
         } else if (exchange.getRequestOptions().hasObserve()) {
             processExchangeGetRequest(exchange, featureType.get());
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
-            processRequest(exchange, MsgType.GET_ATTRIBUTES_REQUEST);
+            processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(ResponseCode.BAD_REQUEST);
@@ -102,13 +102,13 @@ public class CoapTransportResource extends CoapResource {
 
     private void processExchangeGetRequest(CoapExchange exchange, FeatureType featureType) {
         boolean unsubscribe = exchange.getRequestOptions().getObserve() == 1;
-        MsgType msgType;
+        SessionMsgType sessionMsgType;
         if (featureType == FeatureType.RPC) {
-            msgType = unsubscribe ? MsgType.UNSUBSCRIBE_RPC_COMMANDS_REQUEST : MsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
+            sessionMsgType = unsubscribe ? SessionMsgType.UNSUBSCRIBE_RPC_COMMANDS_REQUEST : SessionMsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
         } else {
-            msgType = unsubscribe ? MsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST : MsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
+            sessionMsgType = unsubscribe ? SessionMsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST : SessionMsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
         }
-        Optional<SessionId> sessionId = processRequest(exchange, msgType);
+        Optional<SessionId> sessionId = processRequest(exchange, sessionMsgType);
         if (sessionId.isPresent()) {
             if (exchange.getRequestOptions().getObserve() == 1) {
                 exchange.respond(ResponseCode.VALID);
@@ -125,24 +125,24 @@ public class CoapTransportResource extends CoapResource {
         } else {
             switch (featureType.get()) {
                 case ATTRIBUTES:
-                    processRequest(exchange, MsgType.POST_ATTRIBUTES_REQUEST);
+                    processRequest(exchange, SessionMsgType.POST_ATTRIBUTES_REQUEST);
                     break;
                 case TELEMETRY:
-                    processRequest(exchange, MsgType.POST_TELEMETRY_REQUEST);
+                    processRequest(exchange, SessionMsgType.POST_TELEMETRY_REQUEST);
                     break;
                 case RPC:
                     Optional<Integer> requestId = getRequestId(exchange.advanced().getRequest());
                     if (requestId.isPresent()) {
-                        processRequest(exchange, MsgType.TO_DEVICE_RPC_RESPONSE);
+                        processRequest(exchange, SessionMsgType.TO_DEVICE_RPC_RESPONSE);
                     } else {
-                        processRequest(exchange, MsgType.TO_SERVER_RPC_REQUEST);
+                        processRequest(exchange, SessionMsgType.TO_SERVER_RPC_REQUEST);
                     }
                     break;
             }
         }
     }
 
-    private Optional<SessionId> processRequest(CoapExchange exchange, MsgType type) {
+    private Optional<SessionId> processRequest(CoapExchange exchange, SessionMsgType type) {
         log.trace("Processing {}", exchange.advanced().getRequest());
         exchange.accept();
         Exchange advanced = exchange.advanced();

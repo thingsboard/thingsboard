@@ -51,7 +51,7 @@ public class MqttMsgHandler implements RuleMsgHandler {
                     log.debug("Message [{}] was successfully delivered to topic [{}]!", msg.toString(), payload.getTopic());
                     if (payload.isSync()) {
                         ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId,
-                                BasicStatusCodeResponse.onSuccess(payload.getMsgType(), payload.getRequestId())));
+                                BasicStatusCodeResponse.onSuccess(payload.getSessionMsgType(), payload.getRequestId())));
                     }
                 }
                 @Override
@@ -59,7 +59,7 @@ public class MqttMsgHandler implements RuleMsgHandler {
                     log.warn("Failed to deliver message [{}] to topic [{}]!", msg.toString(), payload.getTopic());
                     if (payload.isSync()) {
                         ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId,
-                                BasicStatusCodeResponse.onError(payload.getMsgType(), payload.getRequestId(), new Exception(e))));
+                                BasicStatusCodeResponse.onError(payload.getSessionMsgType(), payload.getRequestId(), new Exception(e))));
                     }
                 }
             });

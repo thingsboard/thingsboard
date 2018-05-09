@@ -23,10 +23,6 @@ public interface SystemDataLoaderService {
 
     void loadSystemWidgets() throws Exception;
 
-    void loadSystemPlugins() throws Exception;
-
-    void loadSystemRules() throws Exception;
-
     void loadDemoData() throws Exception;
 
     void deleteSystemWidgetBundle(String bundleAlias) throws Exception;

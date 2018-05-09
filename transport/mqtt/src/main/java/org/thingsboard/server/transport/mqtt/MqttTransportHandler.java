@@ -54,7 +54,7 @@ import java.util.List;
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
 import static io.netty.handler.codec.mqtt.MqttMessageType.*;
 import static io.netty.handler.codec.mqtt.MqttQoS.*;
-import static org.thingsboard.server.common.msg.session.MsgType.*;
+import static org.thingsboard.server.common.msg.session.SessionMsgType.*;
 import static org.thingsboard.server.transport.mqtt.MqttTopics.*;
 
 /**

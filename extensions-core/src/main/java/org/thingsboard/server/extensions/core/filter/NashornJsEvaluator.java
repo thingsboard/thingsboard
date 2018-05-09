@@ -19,7 +19,7 @@ import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.msg.core.UpdateAttributesRequest;
+import org.thingsboard.server.common.msg.core.AttributesUpdateRequest;
 import org.thingsboard.server.extensions.api.device.DeviceAttributes;
 
 import javax.script.*;
@@ -69,7 +69,7 @@ public class NashornJsEvaluator {
         return bindings;
     }
 
-    public static Bindings updateBindings(Bindings bindings, UpdateAttributesRequest msg) {
+    public static Bindings updateBindings(Bindings bindings, AttributesUpdateRequest msg) {
         Map<String, Object> attrMap = (Map<String, Object>) bindings.get(CLIENT_SIDE);
         for (AttributeKvEntry attr : msg.getAttributes()) {
             if (!CLIENT_SIDE.equalsIgnoreCase(attr.getKey()) && !SERVER_SIDE.equalsIgnoreCase(attr.getKey())

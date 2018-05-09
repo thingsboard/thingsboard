@@ -18,7 +18,8 @@ package org.thingsboard.server.extensions.api.plugins.handlers;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.RuleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.extensions.api.plugins.PluginContext;
 import org.thingsboard.server.extensions.api.plugins.msg.GetAttributesRequestRuleToPluginMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
@@ -56,8 +57,8 @@ public class DefaultRuleMsgHandler implements RuleMsgHandler {
         msgTypeNotSupported(msg.getPayload().getMsgType());
     }
 
-    private void msgTypeNotSupported(MsgType msgType) {
-        throw new RuntimeException("Not supported msg type: " + msgType + "!");
+    private void msgTypeNotSupported(SessionMsgType sessionMsgType) {
+        throw new RuntimeException("Not supported msg type: " + sessionMsgType + "!");
     }
 
 }

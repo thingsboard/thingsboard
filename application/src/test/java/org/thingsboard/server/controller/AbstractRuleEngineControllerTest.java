@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -25,11 +27,21 @@ import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.dao.queue.MsgQueue;
+import org.thingsboard.server.dao.rule.RuleChainService;
+
+import java.io.IOException;
 
 /**
  * Created by ashvayka on 20.03.18.
  */
 public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
+
+    @Autowired
+    protected RuleChainService ruleChainService;
+
+    @Autowired
+    protected MsgQueue msgQueue;
 
     protected RuleChain saveRuleChain(RuleChain ruleChain) throws Exception {
         return doPost("/api/ruleChain", ruleChain, RuleChain.class);
@@ -52,5 +64,14 @@ public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
         return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
                 new TypeReference<TimePageData<Event>>() {
                 }, pageLink, entityId.getEntityType(), entityId.getId(), DataConstants.DEBUG_RULE_NODE, tenantId.getId());
+    }
+
+    protected JsonNode getMetadata(Event outEvent) {
+        String metaDataStr = outEvent.getBody().get("metadata").asText();
+        try {
+            return mapper.readTree(metaDataStr);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

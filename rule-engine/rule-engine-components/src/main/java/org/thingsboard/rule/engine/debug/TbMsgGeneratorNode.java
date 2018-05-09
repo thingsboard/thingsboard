@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.debug;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -78,18 +77,18 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     private void sentTickMsg(TbContext ctx) {
-        TbMsg tickMsg = new TbMsg(UUIDs.timeBased(), TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
+        TbMsg tickMsg = ctx.newMsg(TB_MSG_GENERATOR_NODE_MSG, ctx.getSelfId(), new TbMsgMetaData(), "");
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, delay);
     }
 
-    protected ListenableFuture<TbMsg> generate(TbContext ctx) {
+    private ListenableFuture<TbMsg> generate(TbContext ctx) {
         return ctx.getJsExecutor().executeAsync(() -> {
             if (prevMsg == null) {
-                prevMsg = new TbMsg(UUIDs.timeBased(), "", originatorId, new TbMsgMetaData(), "{}");
+                prevMsg = ctx.newMsg( "", originatorId, new TbMsgMetaData(), "{}");
             }
             TbMsg generated = jsEngine.executeGenerate(prevMsg);
-            prevMsg = new TbMsg(UUIDs.timeBased(), generated.getType(), originatorId, generated.getMetaData(), generated.getData());
+            prevMsg = ctx.newMsg(generated.getType(), originatorId, generated.getMetaData(), generated.getData());
             return prevMsg;
         });
     }

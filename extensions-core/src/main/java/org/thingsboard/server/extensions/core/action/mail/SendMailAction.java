@@ -20,7 +20,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Action;
 import org.thingsboard.server.extensions.api.plugins.PluginAction;
@@ -74,7 +74,7 @@ public class SendMailAction extends SimpleRuleLifecycleComponent implements Plug
     }
 
     @Override
-    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData metadata) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, DeviceToDeviceActorMsg deviceToDeviceActorMsg, RuleProcessingMetaData metadata) {
         String sendFlag = configuration.getSendFlag();
         if (StringUtils.isEmpty(sendFlag) || (Boolean) metadata.get(sendFlag).orElse(Boolean.FALSE)) {
             VelocityContext context = VelocityUtils.createContext(metadata);
@@ -86,7 +86,7 @@ public class SendMailAction extends SimpleRuleLifecycleComponent implements Plug
             bccTemplate.ifPresent(t -> builder.bcc(VelocityUtils.merge(t, context)));
             subjectTemplate.ifPresent(t -> builder.subject(VelocityUtils.merge(t, context)));
             bodyTemplate.ifPresent(t -> builder.body(VelocityUtils.merge(t, context)));
-            return Optional.of(new SendMailRuleToPluginActionMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(), toDeviceActorMsg.getDeviceId(),
+            return Optional.of(new SendMailRuleToPluginActionMsg(deviceToDeviceActorMsg.getTenantId(), deviceToDeviceActorMsg.getCustomerId(), deviceToDeviceActorMsg.getDeviceId(),
                     builder.build()));
         } else {
             return Optional.empty();

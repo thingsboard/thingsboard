@@ -21,7 +21,7 @@ import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.extensions.api.component.ConfigurableComponent;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
+import org.thingsboard.server.common.msg.timeout.TimeoutMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.RpcMsg;
 import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;

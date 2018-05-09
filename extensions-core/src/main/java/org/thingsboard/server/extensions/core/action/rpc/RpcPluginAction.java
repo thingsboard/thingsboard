@@ -16,9 +16,10 @@
 package org.thingsboard.server.extensions.core.action.rpc;
 
 import org.thingsboard.server.common.msg.core.ToServerRpcRequestMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Action;
 import org.thingsboard.server.extensions.api.component.EmptyComponentConfiguration;
@@ -41,12 +42,12 @@ public class RpcPluginAction extends SimpleRuleLifecycleComponent implements Plu
     }
 
     @Override
-    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData deviceMsgMd) {
-        FromDeviceMsg msg = toDeviceActorMsg.getPayload();
-        if (msg.getMsgType() == MsgType.TO_SERVER_RPC_REQUEST) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, DeviceToDeviceActorMsg deviceToDeviceActorMsg, RuleProcessingMetaData deviceMsgMd) {
+        FromDeviceMsg msg = deviceToDeviceActorMsg.getPayload();
+        if (msg.getMsgType() == SessionMsgType.TO_SERVER_RPC_REQUEST) {
             ToServerRpcRequestMsg payload = (ToServerRpcRequestMsg) msg;
-            return Optional.of(new RpcRequestRuleToPluginMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(),
-                    toDeviceActorMsg.getDeviceId(), payload));
+            return Optional.of(new RpcRequestRuleToPluginMsg(deviceToDeviceActorMsg.getTenantId(), deviceToDeviceActorMsg.getCustomerId(),
+                    deviceToDeviceActorMsg.getDeviceId(), payload));
         } else {
             return Optional.empty();
         }

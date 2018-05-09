@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -32,6 +33,7 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
 
     private static final long serialVersionUID = -5656679015121235465L;
 
+    private RuleChainId ruleChainId;
     private String type;
     private String name;
     private boolean debugMode;
@@ -49,8 +51,10 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
 
     public RuleNode(RuleNode ruleNode) {
         super(ruleNode);
+        this.ruleChainId = ruleNode.getRuleChainId();
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
+        this.debugMode = ruleNode.isDebugMode();
         this.setConfiguration(ruleNode.getConfiguration());
     }
 

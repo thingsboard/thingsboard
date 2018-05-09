@@ -30,13 +30,14 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.BasicStatusCodeResponse;
 import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.extensions.api.plugins.Plugin;
 import org.thingsboard.server.extensions.api.plugins.PluginInitializationException;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.ResponsePluginToRuleMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.TimeoutMsg;
+import org.thingsboard.server.common.msg.timeout.TimeoutMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
 import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
@@ -108,7 +109,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
             } catch (Exception ex) {
                 logger.debug("[{}] Failed to process RuleToPlugin msg: [{}] [{}]", tenantId, msg.getMsg(), ex);
                 RuleToPluginMsg ruleMsg = msg.getMsg();
-                MsgType responceMsgType = MsgType.RULE_ENGINE_ERROR;
+                SessionMsgType responceMsgType = SessionMsgType.RULE_ENGINE_ERROR;
                 Integer requestId = 0;
                 if (ruleMsg.getPayload() instanceof FromDeviceRequestMsg) {
                     requestId = ((FromDeviceRequestMsg) ruleMsg.getPayload()).getRequestId();
@@ -216,7 +217,7 @@ public class PluginActorMessageProcessor extends ComponentMsgProcessor<PluginId>
     @Override
     public void onStop(ActorContext context) {
         onStop();
-        scheduleMsgWithDelay(context, new PluginTerminationMsg(entityId), systemContext.getPluginActorTerminationDelay());
+//        scheduleMsgWithDelay(context, new PluginTerminationMsg(entityId), systemContext.getPluginActorTerminationDelay());
     }
 
     private void onStop() {

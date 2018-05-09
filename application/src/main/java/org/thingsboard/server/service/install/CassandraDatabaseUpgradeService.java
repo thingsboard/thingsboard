@@ -43,9 +43,6 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
     private static final String SCHEMA_UPDATE_CQL = "schema_update.cql";
 
-    @Value("${install.data_dir}")
-    private String dataDir;
-
     @Autowired
     private CassandraCluster cluster;
 
@@ -54,6 +51,9 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private InstallScripts installScripts;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -91,7 +91,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
                 log.info("Relations dumped.");
 
                 log.info("Updating schema ...");
-                Path schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.3.0", SCHEMA_UPDATE_CQL);
+                Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.3.0", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
                 log.info("Schema updated.");
 
@@ -173,7 +173,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
 
                 log.info("Updating schema ...");
-                schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.4.0", SCHEMA_UPDATE_CQL);
+                schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.4.0", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
                 log.info("Schema updated.");
 
@@ -189,7 +189,7 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
             case "1.4.0":
 
                 log.info("Updating schema ...");
-                schemaUpdateFile = Paths.get(this.dataDir, "upgrade", "1.5.0", SCHEMA_UPDATE_CQL);
+                schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "1.5.0", SCHEMA_UPDATE_CQL);
                 loadCql(schemaUpdateFile);
                 log.info("Schema updated.");
 

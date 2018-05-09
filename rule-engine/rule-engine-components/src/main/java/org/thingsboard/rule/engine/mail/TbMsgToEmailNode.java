@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.mail;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +75,7 @@ public class TbMsgToEmailNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
             EmailPojo email = convert(msg);
-            TbMsg emailMsg = buildEmailMsg(msg, email);
+            TbMsg emailMsg = buildEmailMsg(ctx, msg, email);
             ctx.tellNext(emailMsg);
         } catch (Exception ex) {
             log.warn("Can not convert message to email " + ex.getMessage());
@@ -84,9 +83,9 @@ public class TbMsgToEmailNode implements TbNode {
         }
     }
 
-    private TbMsg buildEmailMsg(TbMsg msg, EmailPojo email) throws JsonProcessingException {
+    private TbMsg buildEmailMsg(TbContext ctx, TbMsg msg, EmailPojo email) throws JsonProcessingException {
         String emailJson = MAPPER.writeValueAsString(email);
-        return new TbMsg(UUIDs.timeBased(), SEND_EMAIL_TYPE, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
+        return ctx.transformMsg(msg, SEND_EMAIL_TYPE, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
     }
 
     private EmailPojo convert(TbMsg msg) throws IOException {

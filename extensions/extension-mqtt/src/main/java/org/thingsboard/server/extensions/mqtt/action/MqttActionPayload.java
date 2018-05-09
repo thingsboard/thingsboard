@@ -17,7 +17,7 @@ package org.thingsboard.server.extensions.mqtt.action;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.io.Serializable;
 
@@ -30,5 +30,5 @@ public class MqttActionPayload implements Serializable {
     private final String msgBody;
 
     private final Integer requestId;
-    private final MsgType msgType;
+    private final SessionMsgType sessionMsgType;
 }

@@ -18,31 +18,39 @@ package org.thingsboard.server.common.msg;
 /**
  * Created by ashvayka on 15.03.18.
  */
+//TODO: add all "See" references
 public enum MsgType {
+
+    /**
+     * ADDED/UPDATED/DELETED events for server nodes.
+     *
+     * See {@link org.thingsboard.server.common.msg.cluster.ClusterEventMsg}
+     */
+    CLUSTER_EVENT_MSG,
 
     /**
      * ADDED/UPDATED/DELETED events for main entities.
      *
-     * @See {@link org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg}
+     * See {@link org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg}
      */
     COMPONENT_LIFE_CYCLE_MSG,
 
     /**
      * Misc messages from the REST API/SERVICE layer to the new rule engine.
      *
-     * @See {@link org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg}
+     * See {@link org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg}
      */
     SERVICE_TO_RULE_ENGINE_MSG,
-
-
-    SESSION_TO_DEVICE_ACTOR_MSG,
-    DEVICE_ACTOR_TO_SESSION_MSG,
-
 
     /**
      * Message that is sent by RuleChainActor to RuleActor with command to process TbMsg.
      */
     RULE_CHAIN_TO_RULE_MSG,
+
+    /**
+     * Message that is sent by RuleChainActor to other RuleChainActor with command to process TbMsg.
+     */
+    RULE_CHAIN_TO_RULE_CHAIN_MSG,
 
     /**
      * Message that is sent by RuleActor to RuleChainActor with command to process TbMsg by next nodes in chain.
@@ -58,5 +66,36 @@ public enum MsgType {
      * Message that is sent by RuleActor implementation to RuleActor itself to process the message.
      */
     RULE_TO_SELF_MSG,
+
+    /**
+     * Message that is sent by Session Actor to Device Actor. Represents messages from the device itself.
+     */
+    DEVICE_SESSION_TO_DEVICE_ACTOR_MSG,
+
+    DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG,
+
+    DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG,
+
+    DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG,
+
+    DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG,
+
+    SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG,
+
+    DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG,
+
+    DEVICE_ACTOR_CLIENT_SIDE_RPC_TIMEOUT_MSG,
+
+    DEVICE_ACTOR_QUEUE_TIMEOUT_MSG,
+
+    /**
+     * Message that is sent from the Device Actor to Rule Engine. Requires acknowledgement
+     */
+    DEVICE_ACTOR_TO_RULE_ENGINE_MSG,
+
+    /**
+     * Message that is sent from Rule Engine to the Device Actor when message is successfully pushed to queue.
+     */
+    RULE_ENGINE_QUEUE_PUT_ACK_MSG;
 
 }

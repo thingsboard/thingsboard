@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
 
 @Data
 @AllArgsConstructor
@@ -27,4 +28,9 @@ public class DeviceNameOrTypeUpdateMsg implements ToDeviceActorNotificationMsg {
     private final DeviceId deviceId;
     private final String deviceName;
     private final String deviceType;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG;
+    }
 }

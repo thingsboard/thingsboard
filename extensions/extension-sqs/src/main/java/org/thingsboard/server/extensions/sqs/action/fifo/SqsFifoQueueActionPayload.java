@@ -17,7 +17,7 @@ package org.thingsboard.server.extensions.sqs.action.fifo;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.io.Serializable;
 
@@ -33,7 +33,7 @@ public class SqsFifoQueueActionPayload implements Serializable {
     private final String deviceId;
 
     private final Integer requestId;
-    private final MsgType msgType;
+    private final SessionMsgType sessionMsgType;
     private final boolean sync;
 
 }

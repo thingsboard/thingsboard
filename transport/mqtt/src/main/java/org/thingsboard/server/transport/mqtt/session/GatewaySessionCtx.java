@@ -179,7 +179,7 @@ public class GatewaySessionCtx {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
                 }
                 long ts = System.currentTimeMillis();
-                BasicUpdateAttributesRequest request = new BasicUpdateAttributesRequest(requestId);
+                BasicAttributesUpdateRequest request = new BasicAttributesUpdateRequest(requestId);
                 JsonObject deviceData = deviceEntry.getValue().getAsJsonObject();
                 request.add(JsonConverter.parseValues(deviceData).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
                 GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);

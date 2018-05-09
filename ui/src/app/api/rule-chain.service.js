@@ -184,6 +184,15 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
                             ruleNodeComponents.push(
                                 types.ruleChainNodeComponent
                             );
+                            ruleNodeComponents.sort(
+                                (comp1, comp2) => {
+                                    var result = comp1.type.localeCompare(comp2.type);
+                                    if (result == 0) {
+                                        result = comp1.name.localeCompare(comp2.name);
+                                    }
+                                    return result;
+                                }
+                            );
                             deferred.resolve(ruleNodeComponents);
                         },
                         () => {

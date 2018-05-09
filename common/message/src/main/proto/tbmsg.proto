@@ -27,10 +27,19 @@ message TbMsgProto {
     string id = 1;
     string type = 2;
     string entityType = 3;
-    string entityId = 4;
+    int64 entityIdMSB = 4;
+    int64 entityIdLSB = 5;
 
-    TbMsgMetaDataProto metaData = 5;
+    int64 ruleChainIdMSB = 6;
+    int64 ruleChainIdLSB = 7;
 
-    int32 dataType = 6;
-    string data = 7;
+    int64 ruleNodeIdMSB = 8;
+    int64 ruleNodeIdLSB = 9;
+    int64 clusterPartition = 10;
+
+    TbMsgMetaDataProto metaData = 11;
+
+    int32 dataType = 12;
+    string data = 13;
+
 }

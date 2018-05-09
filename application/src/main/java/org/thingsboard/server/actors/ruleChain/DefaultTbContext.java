@@ -16,15 +16,20 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorRef;
-import akka.actor.Cancellable;
+import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.base.Function;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -41,13 +46,13 @@ import scala.concurrent.duration.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Created by ashvayka on 19.03.18.
  */
 class DefaultTbContext implements TbContext {
 
-    private static final Function<? super List<Void>, ? extends Void> LIST_VOID_FUNCTION = v -> null;
     private final ActorSystemContext mainCtx;
     private final RuleNodeCtx nodeCtx;
 
@@ -63,8 +68,13 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellNext(TbMsg msg, String relationType) {
+        tellNext(msg, relationType, null);
+    }
+
+    @Override
+    public void tellNext(TbMsg msg, String relationType, Throwable th) {
         if (nodeCtx.getSelf().isDebugMode()) {
-            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg);
+            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, th);
         }
         nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), relationType, msg), nodeCtx.getSelfActor());
     }
@@ -113,6 +123,16 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return new TbMsg(UUIDs.timeBased(), type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
+    }
+
+    @Override
+    public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
+        return new TbMsg(origMsg.getId(), type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
+    }
+
+    @Override
     public RuleNodeId getSelfId() {
         return nodeCtx.getSelf().getId();
     }
@@ -140,6 +160,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public ListeningExecutor getDbCallbackExecutor() {
         return mainCtx.getDbCallbackExecutor();
+    }
+
+    @Override
+    public ListeningExecutor getExternalCallExecutor() {
+        return mainCtx.getExternalCallExecutorService();
     }
 
     @Override
@@ -205,5 +230,29 @@ class DefaultTbContext implements TbContext {
     @Override
     public MailService getMailService() {
         return mainCtx.getMailService();
+    }
+
+    @Override
+    public RuleEngineRpcService getRpcService() {
+        return new RuleEngineRpcService() {
+            @Override
+            public void sendRpcReply(DeviceId deviceId, int requestId, String body) {
+                mainCtx.getDeviceRpcService().sendRpcReplyToDevice(nodeCtx.getTenantId(), deviceId, requestId, body);
+            }
+
+            @Override
+            public void sendRpcRequest(RuleEngineDeviceRpcRequest src, Consumer<RuleEngineDeviceRpcResponse> consumer) {
+                ToDeviceRpcRequest request = new ToDeviceRpcRequest(UUIDs.timeBased(), nodeCtx.getTenantId(), src.getDeviceId(),
+                        src.isOneway(), System.currentTimeMillis() + src.getTimeout(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
+                mainCtx.getDeviceRpcService().process(request, response -> {
+                    consumer.accept(RuleEngineDeviceRpcResponse.builder()
+                            .deviceId(src.getDeviceId())
+                            .requestId(src.getRequestId())
+                            .error(response.getError())
+                            .response(response.getResponse())
+                            .build());
+                });
+            }
+        };
     }
 }

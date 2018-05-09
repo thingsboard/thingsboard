@@ -16,7 +16,7 @@
 package org.thingsboard.server.extensions.kafka.action;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
 import org.thingsboard.server.extensions.api.component.Action;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
@@ -30,9 +30,9 @@ import java.util.Optional;
 public class KafkaPluginAction extends AbstractTemplatePluginAction<KafkaPluginActionConfiguration> {
 
     @Override
-    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
+    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         KafkaActionPayload.KafkaActionPayloadBuilder builder = KafkaActionPayload.builder();
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.sync(configuration.isSync());
         builder.topic(configuration.getTopic());

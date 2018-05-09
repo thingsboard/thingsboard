@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.extensions.mqtt.action;
 
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
 import org.thingsboard.server.extensions.api.component.Action;
 import org.thingsboard.server.extensions.api.plugins.msg.RuleToPluginMsg;
@@ -28,10 +28,10 @@ import java.util.Optional;
 public class MqttPluginAction extends AbstractTemplatePluginAction<MqttPluginActionConfiguration> {
 
     @Override
-    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, ToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
+    protected Optional<RuleToPluginMsg> buildRuleToPluginMsg(RuleContext ctx, DeviceToDeviceActorMsg msg, FromDeviceRequestMsg payload) {
         MqttActionPayload.MqttActionPayloadBuilder builder = MqttActionPayload.builder();
         builder.sync(configuration.isSync());
-        builder.msgType(payload.getMsgType());
+        builder.sessionMsgType(payload.getMsgType());
         builder.requestId(payload.getRequestId());
         builder.topic(configuration.getTopic());
         builder.msgBody(getMsgBody(ctx, msg));

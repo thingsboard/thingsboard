@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
 import org.thingsboard.server.dao.service.queue.cassandra.MsgAck;
@@ -66,6 +67,7 @@ public class CassandraAckRepositoryTest extends AbstractServiceTest {
 
     @Test
     public void expiredAcksAreNotReturned() throws ExecutionException, InterruptedException {
+        ReflectionTestUtils.setField(ackRepository, "ackQueueTtl", 1);
         UUID msgId = UUIDs.timeBased();
         UUID nodeId = UUIDs.timeBased();
         MsgAck ack = new MsgAck(msgId, nodeId, 30L, 40L);

@@ -27,10 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -61,11 +60,11 @@ public class QueueBenchmark implements CommandLineRunner {
     }
 
     @Autowired
-    private MsqQueue msqQueue;
+    private MsgQueue msgQueue;
 
     @Override
     public void run(String... strings) throws Exception {
-        System.out.println("It works + " + msqQueue);
+        System.out.println("It works + " + msgQueue);
 
 
         long start = System.currentTimeMillis();
@@ -81,8 +80,8 @@ public class QueueBenchmark implements CommandLineRunner {
                     try {
                         TbMsg msg = randomMsg();
                         UUID nodeId = UUIDs.timeBased();
-                        ListenableFuture<Void> put = msqQueue.put(msg, nodeId, 100L);
-//                    ListenableFuture<Void> put = msqQueue.ack(msg, nodeId, 100L);
+                        ListenableFuture<Void> put = msgQueue.put(msg, nodeId, 100L);
+//                    ListenableFuture<Void> put = msgQueue.ack(msg, nodeId, 100L);
                         Futures.addCallback(put, new FutureCallback<Void>() {
                             @Override
                             public void onSuccess(@Nullable Void result) {
@@ -126,7 +125,7 @@ public class QueueBenchmark implements CommandLineRunner {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("key", "value");
         String dataStr = "someContent";
-        return new TbMsg(UUIDs.timeBased(), "type", null, metaData, TbMsgDataType.JSON, dataStr);
+        return new TbMsg(UUIDs.timeBased(), "type", null, metaData, TbMsgDataType.JSON, dataStr, new RuleChainId(UUIDs.timeBased()), new RuleNodeId(UUIDs.timeBased()), 0L);
     }
 
     @Bean

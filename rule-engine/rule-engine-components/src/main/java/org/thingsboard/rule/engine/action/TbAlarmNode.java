@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
@@ -31,8 +30,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-
-import java.util.concurrent.ExecutorService;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 
@@ -91,11 +88,11 @@ public class TbAlarmNode implements TbNode {
                     if (alarmResult.alarm == null) {
                         ctx.tellNext(msg, "False");
                     } else if (alarmResult.isCreated) {
-                        ctx.tellNext(toAlarmMsg(alarmResult, msg), "Created");
+                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Created");
                     } else if (alarmResult.isUpdated) {
-                        ctx.tellNext(toAlarmMsg(alarmResult, msg), "Updated");
+                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Updated");
                     } else if (alarmResult.isCleared) {
-                        ctx.tellNext(toAlarmMsg(alarmResult, msg), "Cleared");
+                        ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
                     }
                 },
                 t -> ctx.tellError(msg, t));
@@ -176,7 +173,7 @@ public class TbAlarmNode implements TbNode {
         return ctx.getJsExecutor().executeAsync(() -> buildDetailsJsEngine.executeJson(msg));
     }
 
-    private TbMsg toAlarmMsg(AlarmResult alarmResult, TbMsg originalMsg) {
+    private TbMsg toAlarmMsg(TbContext ctx, AlarmResult alarmResult, TbMsg originalMsg) {
         JsonNode jsonNodes = mapper.valueToTree(alarmResult.alarm);
         String data = jsonNodes.toString();
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
@@ -187,7 +184,7 @@ public class TbAlarmNode implements TbNode {
         } else if (alarmResult.isCleared) {
             metaData.putValue(IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
-        return new TbMsg(UUIDs.timeBased(), "ALARM", originalMsg.getOriginator(), metaData, data);
+        return ctx.transformMsg(originalMsg, "ALARM", originalMsg.getOriginator(), metaData, data);
     }
 
 

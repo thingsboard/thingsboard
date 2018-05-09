@@ -52,7 +52,7 @@ public class SnsMessageHandler implements RuleMsgHandler {
             sns.publish(publishRequest);
             if (payload.isSync()) {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId,
-                        BasicStatusCodeResponse.onSuccess(payload.getMsgType(), payload.getRequestId())));
+                        BasicStatusCodeResponse.onSuccess(payload.getSessionMsgType(), payload.getRequestId())));
             }
            return;
         }

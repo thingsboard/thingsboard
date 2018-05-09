@@ -33,8 +33,8 @@ public class UnprocessedMsgFilterTest {
     public void acknowledgedMsgsAreFilteredOut() {
         UUID id1 = UUID.randomUUID();
         UUID id2 = UUID.randomUUID();
-        TbMsg msg1 = new TbMsg(id1, "T", null, null, null, null);
-        TbMsg msg2 = new TbMsg(id2, "T", null, null, null, null);
+        TbMsg msg1 = new TbMsg(id1, "T", null, null, null, null, null, null, 0L);
+        TbMsg msg2 = new TbMsg(id2, "T", null, null, null, null, null, null, 0L);
         List<TbMsg> msgs = Lists.newArrayList(msg1, msg2);
         List<MsgAck> acks = Lists.newArrayList(new MsgAck(id2, UUID.randomUUID(), 1L, 1L));
         Collection<TbMsg> actual = msgFilter.filter(msgs, acks);

@@ -20,7 +20,7 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.springframework.util.StringUtils;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 import org.thingsboard.server.extensions.api.component.Action;
 import org.thingsboard.server.extensions.api.plugins.PluginAction;
@@ -64,7 +64,7 @@ public class ServerSideRpcCallAction extends SimpleRuleLifecycleComponent implem
     }
 
     @Override
-    public Optional<RuleToPluginMsg> convert(RuleContext ctx, ToDeviceActorMsg toDeviceActorMsg, RuleProcessingMetaData metadata) {
+    public Optional<RuleToPluginMsg> convert(RuleContext ctx, DeviceToDeviceActorMsg deviceToDeviceActorMsg, RuleProcessingMetaData metadata) {
         String sendFlag = configuration.getSendFlag();
         if (StringUtils.isEmpty(sendFlag) || (Boolean) metadata.get(sendFlag).orElse(Boolean.FALSE)) {
             VelocityContext context = VelocityUtils.createContext(metadata);
@@ -77,7 +77,7 @@ public class ServerSideRpcCallAction extends SimpleRuleLifecycleComponent implem
             rpcCallMethodTemplate.ifPresent(t -> builder.rpcCallMethod(VelocityUtils.merge(t, context)));
             rpcCallBodyTemplate.ifPresent(t -> builder.rpcCallBody(VelocityUtils.merge(t, context)));
             builder.rpcCallTimeoutInSec(configuration.getRpcCallTimeoutInSec());
-            return Optional.of(new ServerSideRpcCallRuleToPluginActionMsg(toDeviceActorMsg.getTenantId(), toDeviceActorMsg.getCustomerId(), toDeviceActorMsg.getDeviceId(),
+            return Optional.of(new ServerSideRpcCallRuleToPluginActionMsg(deviceToDeviceActorMsg.getTenantId(), deviceToDeviceActorMsg.getCustomerId(), deviceToDeviceActorMsg.getDeviceId(),
                     builder.build()));
         } else {
             return Optional.empty();

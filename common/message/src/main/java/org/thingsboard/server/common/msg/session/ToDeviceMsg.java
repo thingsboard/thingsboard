@@ -21,6 +21,6 @@ public interface ToDeviceMsg extends Serializable {
 
     boolean isSuccess();
 
-    MsgType getMsgType();
+    SessionMsgType getSessionMsgType();
 
 }
