@@ -26,7 +26,6 @@ public class TbTransformMsgNodeConfiguration extends TbTransformNodeConfiguratio
     @Override
     public TbTransformMsgNodeConfiguration defaultConfiguration() {
         TbTransformMsgNodeConfiguration configuration = new TbTransformMsgNodeConfiguration();
-        configuration.setStartNewChain(false);
         configuration.setJsScript("return {msg: msg, metadata: metadata, msgType: msgType};");
         return configuration;
     }

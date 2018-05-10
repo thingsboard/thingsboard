@@ -133,7 +133,6 @@ public class TbChangeOriginatorNodeTest {
     public void init(boolean startNewChain) throws TbNodeException {
         TbChangeOriginatorNodeConfiguration config = new TbChangeOriginatorNodeConfiguration();
         config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
-        config.setStartNewChain(startNewChain);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
