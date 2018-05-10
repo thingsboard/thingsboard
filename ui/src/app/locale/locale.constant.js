@@ -1228,6 +1228,8 @@ export default angular.module('thingsboard.locale', [])
                     "type-transformation-details": "Change Message payload and Metadata",
                     "type-action": "Action",
                     "type-action-details": "Perform special action",
+                    "type-external": "External",
+                    "type-external-details": "Interacts with external system",
                     "type-rule-chain": "Rule Chain",
                     "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
                     "directive-is-not-loaded": "Defined configuration directive '{{directiveName}}' is not available.",

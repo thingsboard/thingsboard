@@ -59,6 +59,9 @@ public class TbMsgToEmailNodeTest {
         initWithScript();
         metaData.putValue("username", "oreo");
         metaData.putValue("userEmail", "user@email.io");
+        metaData.putValue("name", "temp");
+        metaData.putValue("passed", "5");
+        metaData.putValue("count", "100");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
 
         emailNode.onMsg(ctx, msg);
@@ -91,9 +94,9 @@ public class TbMsgToEmailNodeTest {
         try {
             TbMsgToEmailNodeConfiguration config = new TbMsgToEmailNodeConfiguration();
             config.setFromTemplate("test@mail.org");
-            config.setToTemplate("$metadata.userEmail");
-            config.setSubjectTemplate("Hi $metadata.username there");
-            config.setBodyTemplate("$msg.name is to high. Current $msg.passed and $msg.complex.count");
+            config.setToTemplate("${userEmail}");
+            config.setSubjectTemplate("Hi ${username} there");
+            config.setBodyTemplate("${name} is to high. Current ${passed} and ${count}");
             ObjectMapper mapper = new ObjectMapper();
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 

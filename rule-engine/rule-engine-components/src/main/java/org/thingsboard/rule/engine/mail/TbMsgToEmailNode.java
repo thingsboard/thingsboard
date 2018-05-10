@@ -18,17 +18,14 @@ package org.thingsboard.rule.engine.mail;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.runtime.parser.ParseException;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
@@ -42,34 +39,18 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
                 "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbTransformationNodeToEmailConfig")
+        configDirective = "tbTransformationNodeToEmailConfig",
+        icon = "email"
+)
 public class TbMsgToEmailNode implements TbNode {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private TbMsgToEmailNodeConfiguration config;
 
-    private Optional<Template> fromTemplate;
-    private Optional<Template> toTemplate;
-    private Optional<Template> ccTemplate;
-    private Optional<Template> bccTemplate;
-    private Optional<Template> subjectTemplate;
-    private Optional<Template> bodyTemplate;
-
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgToEmailNodeConfiguration.class);
-        try {
-            fromTemplate = toTemplate(config.getFromTemplate(), "From Template");
-            toTemplate = toTemplate(config.getToTemplate(), "To Template");
-            ccTemplate = toTemplate(config.getCcTemplate(), "Cc Template");
-            bccTemplate = toTemplate(config.getBccTemplate(), "Bcc Template");
-            subjectTemplate = toTemplate(config.getSubjectTemplate(), "Subject Template");
-            bodyTemplate = toTemplate(config.getBodyTemplate(), "Body Template");
-        } catch (ParseException e) {
-            log.error("Failed to create templates based on provided configuration!", e);
-            throw new TbNodeException(e);
-        }
     }
 
     @Override
@@ -91,21 +72,20 @@ public class TbMsgToEmailNode implements TbNode {
 
     private EmailPojo convert(TbMsg msg) throws IOException {
         EmailPojo.EmailPojoBuilder builder = EmailPojo.builder();
-        VelocityContext context = RuleVelocityUtils.createContext(msg);
-        fromTemplate.ifPresent(t -> builder.from(RuleVelocityUtils.merge(t, context)));
-        toTemplate.ifPresent(t -> builder.to(RuleVelocityUtils.merge(t, context)));
-        ccTemplate.ifPresent(t -> builder.cc(RuleVelocityUtils.merge(t, context)));
-        bccTemplate.ifPresent(t -> builder.bcc(RuleVelocityUtils.merge(t, context)));
-        subjectTemplate.ifPresent(t -> builder.subject(RuleVelocityUtils.merge(t, context)));
-        bodyTemplate.ifPresent(t -> builder.body(RuleVelocityUtils.merge(t, context)));
+        builder.from(fromTemplate(this.config.getFromTemplate(), msg.getMetaData()));
+        builder.to(fromTemplate(this.config.getToTemplate(), msg.getMetaData()));
+        builder.cc(fromTemplate(this.config.getCcTemplate(), msg.getMetaData()));
+        builder.bcc(fromTemplate(this.config.getBccTemplate(), msg.getMetaData()));
+        builder.subject(fromTemplate(this.config.getSubjectTemplate(), msg.getMetaData()));
+        builder.body(fromTemplate(this.config.getBodyTemplate(), msg.getMetaData()));
         return builder.build();
     }
 
-    private Optional<Template> toTemplate(String source, String name) throws ParseException {
-        if (!StringUtils.isEmpty(source)) {
-            return Optional.of(RuleVelocityUtils.create(source, name));
+    private String fromTemplate(String template, TbMsgMetaData metaData) {
+        if (!StringUtils.isEmpty(template)) {
+            return TbNodeUtils.processPattern(template, metaData);
         } else {
-            return Optional.empty();
+            return null;
         }
     }
 

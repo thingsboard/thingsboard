@@ -159,8 +159,6 @@ CREATE TABLE IF NOT EXISTS thingsboard.device (
     type text,
     search_text text,
     additional_info text,
-    last_connect bigint,
-    last_update bigint,
     PRIMARY KEY (id, tenant_id, customer_id, type)
 );
 

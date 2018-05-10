@@ -32,10 +32,9 @@ public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
     public TbMsgToEmailNodeConfiguration defaultConfiguration() {
         TbMsgToEmailNodeConfiguration configuration = new TbMsgToEmailNodeConfiguration();
         configuration.fromTemplate = "info@testmail.org";
-        configuration.toTemplate = "$metadata.userEmail";
-        configuration.subjectTemplate = "Device $deviceType temperature high";
-        configuration.bodyTemplate = "Device $metadata.deviceName has high temperature $msg.temp";
-
+        configuration.toTemplate = "${userEmail}";
+        configuration.subjectTemplate = "Device ${deviceType} temperature high";
+        configuration.bodyTemplate = "Device ${deviceName} has high temperature ${temp}";
         return configuration;
     }
 }

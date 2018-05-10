@@ -262,7 +262,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             state.setInactivityTimeout(inactivityTimeout);
             boolean oldActive = state.isActive();
             state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
-            if (!oldActive && state.isActive()) {
+            if (!oldActive && state.isActive() || oldActive && !state.isActive()) {
                 saveAttribute(deviceId, ACTIVITY_STATE, state.isActive());
             }
         }
@@ -331,10 +331,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
                         .state(deviceState).build();
             }
         });
-    }
-
-    private long getLastPersistTime(List<AttributeKvEntry> attributes) {
-        return attributes.stream().map(AttributeKvEntry::getLastUpdateTs).max(Long::compare).orElse(0L);
     }
 
     private long getAttributeValue(List<AttributeKvEntry> attributes, String attributeName, long defaultValue) {

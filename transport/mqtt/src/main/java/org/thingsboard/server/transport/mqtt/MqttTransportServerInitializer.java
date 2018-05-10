@@ -24,7 +24,6 @@ import io.netty.handler.ssl.SslHandler;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.QuotaService;
-import org.thingsboard.server.dao.device.DeviceOfflineService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
@@ -43,11 +42,10 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
     private final MqttTransportAdaptor adaptor;
     private final MqttSslHandlerProvider sslHandlerProvider;
     private final QuotaService quotaService;
-    private final DeviceOfflineService offlineService;
 
     public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService,
                                           MqttTransportAdaptor adaptor, MqttSslHandlerProvider sslHandlerProvider,
-                                          QuotaService quotaService, DeviceOfflineService offlineService) {
+                                          QuotaService quotaService) {
         this.processor = processor;
         this.deviceService = deviceService;
         this.authService = authService;
@@ -55,7 +53,6 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
         this.adaptor = adaptor;
         this.sslHandlerProvider = sslHandlerProvider;
         this.quotaService = quotaService;
-        this.offlineService = offlineService;
     }
 
     @Override
@@ -70,7 +67,7 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
         MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, relationService,
-                adaptor, sslHandler, quotaService, offlineService);
+                adaptor, sslHandler, quotaService);
 
         pipeline.addLast(handler);
         ch.closeFuture().addListener(handler);

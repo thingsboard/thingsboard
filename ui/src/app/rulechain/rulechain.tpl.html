@@ -75,6 +75,8 @@
                     <md-expansion-panel md-component-id="{{typeId}}" id="{{typeId}}" ng-repeat="(typeId, typeModel) in vm.ruleNodeTypesModel">
                         <md-expansion-panel-collapsed ng-mouseenter="vm.typeHeaderMouseEnter($event, typeId)"
                                                       ng-mouseleave="vm.destroyTooltips()">
+                            <md-icon aria-label="node-type-icon"
+                                     class="material-icons" style="margin-right: 8px;">{{vm.types.ruleNodeType[typeId].icon}}</md-icon>
                             <div class="tb-panel-title" translate>{{vm.types.ruleNodeType[typeId].name}}</div>
                             <md-expansion-panel-icon></md-expansion-panel-icon>
                         </md-expansion-panel-collapsed>
@@ -82,6 +84,8 @@
                             <md-expansion-panel-header ng-mouseenter="vm.typeHeaderMouseEnter($event, typeId)"
                                                        ng-mouseleave="vm.destroyTooltips()"
                                                        ng-click="vm.$mdExpansionPanel(typeId).collapse()">
+                                <md-icon aria-label="node-type-icon"
+                                         class="material-icons" style="margin-right: 8px;">{{vm.types.ruleNodeType[typeId].icon}}</md-icon>
                                 <div class="tb-panel-title" translate>{{vm.types.ruleNodeType[typeId].name}}</div>
                                 <md-expansion-panel-icon></md-expansion-panel-icon>
                             </md-expansion-panel-header>
@@ -114,8 +118,10 @@
                 </div>
                 <md-menu-content id="tb-rule-chain-context-menu" width="4" ng-mouseleave="$mdCloseMousepointMenu()">
                     <div class="tb-context-menu-header {{vm.contextInfo.headerClass}}">
-                        <md-icon aria-label="node-type-icon"
+                        <md-icon ng-if="!vm.contextInfo.iconUrl" aria-label="node-type-icon"
                                  class="material-icons">{{vm.contextInfo.icon}}</md-icon>
+                        <md-icon ng-if="vm.contextInfo.iconUrl" aria-label="node-type-icon"
+                                 md-svg-icon="{{vm.contextInfo.iconUrl}}"></md-icon>
                         <div flex>
                             <div class="tb-context-menu-title">{{vm.contextInfo.title}}</div>
                             <div class="tb-context-menu-subtitle">{{vm.contextInfo.subtitle}}</div>
