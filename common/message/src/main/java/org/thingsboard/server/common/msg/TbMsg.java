@@ -106,7 +106,7 @@ public final class TbMsg implements Serializable {
     }
 
     public TbMsg copy(UUID newId, RuleChainId ruleChainId, RuleNodeId ruleNodeId, long clusterPartition) {
-        return new TbMsg(newId, type, originator, metaData, dataType, data, ruleChainId, ruleNodeId, clusterPartition);
+        return new TbMsg(newId, type, originator, metaData.copy(), dataType, data, ruleChainId, ruleNodeId, clusterPartition);
     }
 
 }

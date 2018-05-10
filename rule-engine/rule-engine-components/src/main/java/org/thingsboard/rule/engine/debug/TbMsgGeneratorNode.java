@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -71,7 +72,7 @@ public class TbMsgGeneratorNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
             withCallback(generate(ctx),
-                    m -> {ctx.tellNext(m); sentTickMsg(ctx);},
+                    m -> {ctx.tellNext(m, SUCCESS); sentTickMsg(ctx);},
                     t -> {ctx.tellError(msg, t); sentTickMsg(ctx);});
         }
     }

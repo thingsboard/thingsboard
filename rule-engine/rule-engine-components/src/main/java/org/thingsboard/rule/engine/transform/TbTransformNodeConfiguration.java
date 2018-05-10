@@ -20,5 +20,4 @@ import lombok.Data;
 @Data
 public class TbTransformNodeConfiguration {
 
-    private boolean startNewChain = false;
 }

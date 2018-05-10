@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -52,7 +53,7 @@ public class TbLogNode implements TbNode {
         withCallback(jsExecutor.executeAsync(() -> jsEngine.executeToString(msg)),
                 toString -> {
                     log.info(toString);
-                    ctx.tellNext(msg);
+                    ctx.tellNext(msg, SUCCESS);
                 },
                 t -> ctx.tellError(msg, t));
     }

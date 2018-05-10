@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode {
@@ -75,7 +76,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
             String attrName = config.getAttrMapping().get(r.getKey());
             msg.getMetaData().putValue(attrName, r.getValueAsString());
         });
-        ctx.tellNext(msg);
+        ctx.tellNext(msg, SUCCESS);
     }
 
     @Override

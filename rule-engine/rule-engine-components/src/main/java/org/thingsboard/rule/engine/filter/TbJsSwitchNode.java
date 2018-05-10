@@ -29,6 +29,7 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 @RuleNode(
         type = ComponentType.FILTER,
         name = "switch", customRelations = true,
+        relationTypes = {},
         configClazz = TbJsSwitchNodeConfiguration.class,
         nodeDescription = "Route incoming Message to one or multiple output chains",
         nodeDetails = "Node executes configured JS script. Script should return array of next Chain names where Message should be routed. " +

@@ -40,8 +40,6 @@ import java.util.Set;
  */
 public interface TbContext {
 
-    void tellNext(TbMsg msg);
-
     void tellNext(TbMsg msg, String relationType);
 
     void tellNext(TbMsg msg, String relationType, Throwable th);
@@ -53,8 +51,6 @@ public interface TbContext {
     void tellOthers(TbMsg msg);
 
     void tellSibling(TbMsg msg, ServerAddress address);
-
-    void spawn(TbMsg msg);
 
     void ack(TbMsg msg);
 
