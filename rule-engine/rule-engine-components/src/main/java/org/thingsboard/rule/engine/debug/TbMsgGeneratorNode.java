@@ -40,7 +40,8 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         nodeDetails = "Generates messages with configurable period. ",
         inEnabled = false,
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
-        configDirective = "tbActionNodeGeneratorConfig"
+        configDirective = "tbActionNodeGeneratorConfig",
+        icon = "repeat"
 )
 
 public class TbMsgGeneratorNode implements TbNode {

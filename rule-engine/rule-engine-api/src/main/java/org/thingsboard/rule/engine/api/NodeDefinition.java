@@ -31,5 +31,7 @@ public class NodeDefinition {
     JsonNode defaultConfiguration;
     String[] uiResources;
     String configDirective;
+    String icon;
+    String iconUrl;
 
 }

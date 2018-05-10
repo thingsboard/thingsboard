@@ -246,6 +246,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         var contextInfo = {
             headerClass: node.nodeClass,
             icon: node.icon,
+            iconUrl: node.iconUrl,
             title: node.name,
             subtitle: node.component.name
         };
@@ -805,12 +806,21 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             var ruleNodeComponent = ruleNodeComponents[i];
             componentType = ruleNodeComponent.type;
             var model = vm.ruleNodeTypesModel[componentType].model;
+            var icon = vm.types.ruleNodeType[componentType].icon;
+            var iconUrl = null;
+            if (ruleNodeComponent.configurationDescriptor.nodeDefinition.icon) {
+                icon = ruleNodeComponent.configurationDescriptor.nodeDefinition.icon;
+            }
+            if (ruleNodeComponent.configurationDescriptor.nodeDefinition.iconUrl) {
+                iconUrl = ruleNodeComponent.configurationDescriptor.nodeDefinition.iconUrl;
+            }
             var node = {
                 id: 'node-lib-' + componentType + '-' + model.nodes.length,
                 component: ruleNodeComponent,
                 name: '',
                 nodeClass: vm.types.ruleNodeType[componentType].nodeClass,
-                icon: vm.types.ruleNodeType[componentType].icon,
+                icon: icon,
+                iconUrl: iconUrl,
                 x: 30,
                 y: 10+50*model.nodes.length,
                 connectors: []
@@ -904,6 +914,14 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             var ruleNode = vm.ruleChainMetaData.nodes[i];
             var component = ruleChainService.getRuleNodeComponentByClazz(ruleNode.type);
             if (component) {
+                var icon = vm.types.ruleNodeType[component.type].icon;
+                var iconUrl = null;
+                if (component.configurationDescriptor.nodeDefinition.icon) {
+                    icon = component.configurationDescriptor.nodeDefinition.icon;
+                }
+                if (component.configurationDescriptor.nodeDefinition.iconUrl) {
+                    iconUrl = component.configurationDescriptor.nodeDefinition.iconUrl;
+                }
                 var node = {
                     id: 'rule-chain-node-' + vm.nextNodeID++,
                     ruleNodeId: ruleNode.id,
@@ -915,7 +933,8 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     component: component,
                     name: ruleNode.name,
                     nodeClass: vm.types.ruleNodeType[component.type].nodeClass,
-                    icon: vm.types.ruleNodeType[component.type].icon,
+                    icon: icon,
+                    iconUrl: iconUrl,
                     connectors: []
                 };
                 if (component.configurationDescriptor.nodeDefinition.inEnabled) {

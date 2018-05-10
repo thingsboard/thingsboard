@@ -36,7 +36,8 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Sends reply to the RPC call from device",
         nodeDetails = "Expects messages with any message type. Will forward message body to the device.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeRpcReplyConfig"
+        configDirective = "tbActionNodeRpcReplyConfig",
+        icon = "call_merge"
 )
 public class TbSendRPCReplyNode implements TbNode {
 

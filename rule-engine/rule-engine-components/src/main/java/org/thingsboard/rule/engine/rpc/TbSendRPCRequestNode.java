@@ -43,7 +43,8 @@ import java.util.concurrent.TimeUnit;
         nodeDescription = "Sends one-way RPC call to device",
         nodeDetails = "Expects messages with \"method\" and \"params\". Will forward response from device to next nodes.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeRpcRequestConfig"
+        configDirective = "tbActionNodeRpcRequestConfig",
+        icon = "call_made"
 )
 public class TbSendRPCRequestNode implements TbNode {
 

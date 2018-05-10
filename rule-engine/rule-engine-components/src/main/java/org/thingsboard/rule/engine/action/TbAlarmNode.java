@@ -47,7 +47,9 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
                 "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>" +
                 "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeAlarmConfig")
+        configDirective = "tbActionNodeAlarmConfig",
+        icon = "notifications_active"
+)
 
 public class TbAlarmNode implements TbNode {
 
