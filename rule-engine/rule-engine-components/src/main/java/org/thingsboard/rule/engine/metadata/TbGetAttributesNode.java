@@ -30,6 +30,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.*;
 
 /**
@@ -41,9 +42,9 @@ import static org.thingsboard.server.common.data.DataConstants.*;
           configClazz = TbGetAttributesNodeConfiguration.class,
           nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
           nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
-                "with specific prefix: <i>cs/shared/ss</i>. To access those attributes in other nodes this template can be used " +
-                "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> " +
-                "If Latest Telemetry enrichment configured, latest telemetry added into metadata without prefix.",
+                "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into metadata without prefix. " +
+                  "To access those attributes in other nodes this template can be used " +
+                "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
 public class TbGetAttributesNode implements TbNode {
@@ -57,22 +58,17 @@ public class TbGetAttributesNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        if (CollectionUtils.isNotEmpty(config.getLatestTsKeyNames())) {
-            withCallback(getLatestTelemetry(ctx, msg, config.getLatestTsKeyNames()),
-                    i -> ctx.tellNext(msg),
-                    t -> ctx.tellError(msg, t));
-        } else {
-            ListenableFuture<List<Void>> future = Futures.allAsList(
-                    putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs_"),
-                    putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared_"),
-                    putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss_"));
-
-            withCallback(future, i -> ctx.tellNext(msg), t -> ctx.tellError(msg, t));
-        }
+        ListenableFuture<List<Void>> allFutures = Futures.allAsList(
+                putLatestTelemetry(ctx, msg, config.getLatestTsKeyNames()),
+                putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs_"),
+                putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared_"),
+                putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss_")
+        );
+        withCallback(allFutures, i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellError(msg, t));
     }
 
     private ListenableFuture<Void> putAttrAsync(TbContext ctx, TbMsg msg, String scope, List<String> keys, String prefix) {
-        if (keys == null) {
+        if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(msg.getOriginator(), scope, keys);
@@ -82,8 +78,8 @@ public class TbGetAttributesNode implements TbNode {
         });
     }
 
-    private ListenableFuture<Void> getLatestTelemetry(TbContext ctx, TbMsg msg, List<String> keys) {
-        if (keys == null) {
+    private ListenableFuture<Void> putLatestTelemetry(TbContext ctx, TbMsg msg, List<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(msg.getOriginator(), keys);

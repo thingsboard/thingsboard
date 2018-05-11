@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.queue.MsgQueue;
@@ -30,12 +29,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -72,13 +66,13 @@ public class InMemoryMsgQueue implements MsgQueue {
 
     @Override
     public ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusterPartition) {
-        if (pendingMsgCount.get() < maxSize) {
+        if (pendingMsgCount.incrementAndGet() < maxSize) {
             return queueExecutor.submit(() -> {
                 data.computeIfAbsent(new InMemoryMsgKey(nodeId, clusterPartition), key -> new HashMap<>()).put(msg.getId(), msg);
-                pendingMsgCount.incrementAndGet();
                 return null;
             });
         } else {
+            pendingMsgCount.decrementAndGet();
             return Futures.immediateFailedFuture(new RuntimeException("Message queue is full!"));
         }
     }

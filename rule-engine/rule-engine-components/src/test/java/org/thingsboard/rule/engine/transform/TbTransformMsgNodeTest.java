@@ -38,6 +38,7 @@ import java.util.concurrent.Callable;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.*;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbTransformMsgNodeTest {
@@ -53,7 +54,7 @@ public class TbTransformMsgNodeTest {
 
     @Test
     public void metadataCanBeUpdated() throws TbNodeException, ScriptException {
-        initWithScript(false);
+        initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         String rawJson = "{\"passed\": 5}";
@@ -68,37 +69,14 @@ public class TbTransformMsgNodeTest {
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture());
-        TbMsg actualMsg = captor.getValue();
-        assertEquals(transformedMsg, actualMsg);
-    }
-
-
-    @Test
-    public void newChainCanBeStarted() throws TbNodeException, ScriptException {
-        initWithScript(true);
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("temp", "7");
-        String rawJson = "{\"passed\": 5";
-
-        RuleChainId ruleChainId = new RuleChainId(UUIDs.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
-        TbMsg transformedMsg = new TbMsg(UUIDs.timeBased(), "USER", null, metaData, "{new}", ruleChainId, ruleNodeId, 0L);
-        mockJsExecutor();
-        when(scriptEngine.executeUpdate(msg)).thenReturn(transformedMsg);
-
-        node.onMsg(ctx, msg);
-        verify(ctx).getJsExecutor();
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).spawn(captor.capture());
+        verify(ctx).tellNext(captor.capture(), SUCCESS);
         TbMsg actualMsg = captor.getValue();
         assertEquals(transformedMsg, actualMsg);
     }
 
     @Test
     public void exceptionHandledCorrectly() throws TbNodeException, ScriptException {
-        initWithScript(false);
+        initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         String rawJson = "{\"passed\": 5";
@@ -113,10 +91,9 @@ public class TbTransformMsgNodeTest {
         verifyError(msg, "error", IllegalStateException.class);
     }
 
-    private void initWithScript(boolean startChain) throws TbNodeException {
+    private void initWithScript() throws TbNodeException {
         TbTransformMsgNodeConfiguration config = new TbTransformMsgNodeConfiguration();
         config.setJsScript("scr");
-        config.setStartNewChain(startChain);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 

@@ -27,6 +27,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.io.IOException;
 
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 
 @Slf4j
@@ -57,7 +58,7 @@ public class TbMsgToEmailNode implements TbNode {
         try {
             EmailPojo email = convert(msg);
             TbMsg emailMsg = buildEmailMsg(ctx, msg, email);
-            ctx.tellNext(emailMsg);
+            ctx.tellNext(emailMsg, SUCCESS);
         } catch (Exception ex) {
             log.warn("Can not convert message to email " + ex.getMessage());
             ctx.tellError(msg, ex);

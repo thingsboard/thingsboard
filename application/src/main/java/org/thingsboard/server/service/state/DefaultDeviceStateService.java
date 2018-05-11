@@ -345,7 +345,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void pushRuleEngineMessage(DeviceStateData stateData, String msgType) {
         DeviceState state = stateData.getState();
         try {
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData(), TbMsgDataType.JSON
+            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
                     , json.writeValueAsString(state)
                     , null, null, 0L);
             actorService.onMsg(new ServiceToRuleEngineMsg(stateData.getTenantId(), tbMsg));

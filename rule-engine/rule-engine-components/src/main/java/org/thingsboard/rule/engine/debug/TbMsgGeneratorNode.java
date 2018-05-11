@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -37,7 +38,7 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         name = "generator",
         configClazz = TbMsgGeneratorNodeConfiguration.class,
         nodeDescription = "Periodically generates messages",
-        nodeDetails = "Generates messages with configurable period. ",
+        nodeDetails = "Generates messages with configurable period. Javascript function used fore message generation.",
         inEnabled = false,
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeGeneratorConfig",
@@ -72,7 +73,7 @@ public class TbMsgGeneratorNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
             withCallback(generate(ctx),
-                    m -> {ctx.tellNext(m); sentTickMsg(ctx);},
+                    m -> {ctx.tellNext(m, SUCCESS); sentTickMsg(ctx);},
                     t -> {ctx.tellError(msg, t); sentTickMsg(ctx);});
         }
     }
