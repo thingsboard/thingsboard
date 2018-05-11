@@ -695,9 +695,3 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_node (
     additional_info text,
     PRIMARY KEY (id)
 );
-
-CREATE TABLE IF NOT EXISTS  thingsboard.rule_chain_executors (
-rule_chain_id uuid,
-server_list set,
-rule_chain_id KEY (id)
-);
