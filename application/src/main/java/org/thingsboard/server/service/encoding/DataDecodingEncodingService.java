@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.rpc;
+package org.thingsboard.server.service.encoding;
 
-import io.grpc.stub.StreamObserver;
-import lombok.Data;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
-import java.util.UUID;
+import java.util.Optional;
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public final class RpcSessionCreateRequestMsg {
+public interface DataDecodingEncodingService {
 
-    private final UUID msgUid;
-    private final ServerAddress remoteAddress;
-    private final StreamObserver<ClusterAPIProtos.ClusterMessage> responseObserver;
+    Optional<TbActorMsg> decode(byte[] byteArray);
+
+    byte[] encode(TbActorMsg msq);
+
+    ClusterAPIProtos.ClusterMessage convertToProtoDataMessage(ServerAddress serverAddress,
+                                                              TbActorMsg msg);
 
 }
+

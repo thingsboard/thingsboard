@@ -82,7 +82,8 @@ public final class PluginProcessingContext implements PluginContext {
 
     @Override
     public void sendPluginRpcMsg(RpcMsg msg) {
-        this.pluginCtx.rpcService.tell(new PluginRpcMsg(pluginCtx.tenantId, pluginCtx.pluginId, msg));
+        //ToDO is this a cluster messsage?
+//        this.pluginCtx.rpcService.tell(new PluginRpcMsg(pluginCtx.tenantId, pluginCtx.pluginId, msg));
     }
 
     @Override

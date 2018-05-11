@@ -74,6 +74,7 @@ import org.thingsboard.server.extensions.api.device.DeviceAttributesEventNotific
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
+import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.rpc.ToServerRpcResponseActorMsg;
 
@@ -521,7 +522,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (sessionAddress.isPresent()) {
             ServerAddress address = sessionAddress.get();
             logger.debug("{} Forwarding msg: {}", address, response);
-            systemContext.getRpcService().tell(sessionAddress.get(), response);
+            systemContext.getRpcService().tell(systemContext.getEncodingService()
+                    .convertToProtoDataMessage(sessionAddress.get(), response));
         } else {
             systemContext.getSessionManagerActor().tell(response, ActorRef.noSender());
         }

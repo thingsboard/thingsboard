@@ -25,26 +25,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.SerializationUtils;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
 import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
-import org.thingsboard.server.actors.rpc.RpcSessionTellMsg;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
-import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.extensions.api.plugins.msg.ToPluginRpcResponseDeviceMsg;
-import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
+
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
+
 import org.thingsboard.server.gen.cluster.ClusterRpcServiceGrpc;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.service.cluster.discovery.ServerInstanceService;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -64,7 +58,8 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
 
     private ServerInstance instance;
 
-    private ConcurrentMap<UUID, RpcSessionCreationFuture> pendingSessionMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<UUID, BlockingQueue<StreamObserver<ClusterAPIProtos.ClusterMessage>>> pendingSessionMap =
+            new ConcurrentHashMap<>();
 
     public void init(RpcMsgListener listener) {
         this.listener = listener;
@@ -82,11 +77,11 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
     }
 
     @Override
-    public void onSessionCreated(UUID msgUid, StreamObserver<ClusterAPIProtos.ToRpcServerMessage> msg) {
-        RpcSessionCreationFuture future = pendingSessionMap.remove(msgUid);
-        if (future != null) {
+    public void onSessionCreated(UUID msgUid,  StreamObserver<ClusterAPIProtos.ClusterMessage> inputStream) {
+        BlockingQueue<StreamObserver<ClusterAPIProtos.ClusterMessage>> queue  = pendingSessionMap.remove(msgUid);
+        if (queue != null) {
             try {
-                future.onMsg(msg);
+                queue.put(inputStream);
             } catch (InterruptedException e) {
                 log.warn("Failed to report created session!");
                 Thread.currentThread().interrupt();
@@ -97,10 +92,12 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
     }
 
     @Override
-    public StreamObserver<ClusterAPIProtos.ToRpcServerMessage> handlePluginMsgs(StreamObserver<ClusterAPIProtos.ToRpcServerMessage> responseObserver) {
+    public StreamObserver<ClusterAPIProtos.ClusterMessage> handleMsgs(
+            StreamObserver<ClusterAPIProtos.ClusterMessage> responseObserver) {
         log.info("Processing new session.");
         return createSession(new RpcSessionCreateRequestMsg(UUID.randomUUID(), null, responseObserver));
     }
+
 
     @PreDestroy
     public void stop() {
@@ -117,65 +114,18 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
         }
     }
 
-    @Override
-    public void tell(ServerAddress serverAddress, DeviceToDeviceActorMsg toForward) {
-        ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
-                .setToDeviceActorRpcMsg(toProtoMsg(toForward)).build();
-        tell(serverAddress, msg);
-    }
 
     @Override
-    public void tell(ServerAddress serverAddress, ToDeviceActorNotificationMsg toForward) {
-        ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
-                .setToDeviceActorNotificationRpcMsg(toProtoMsg(toForward)).build();
-        tell(serverAddress, msg);
+    public void broadcast(RpcBroadcastMsg msg) {
+        listener.onBroadcastMsg(msg);
     }
 
-    @Override
-    public void tell(ServerAddress serverAddress, ToDeviceRpcRequestActorMsg toForward) {
-        ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
-                .setToDeviceRpcRequestRpcMsg(toProtoMsg(toForward)).build();
-        tell(serverAddress, msg);
-    }
-
-    @Override
-    public void tell(ServerAddress serverAddress, ToPluginRpcResponseDeviceMsg toForward) {
-        ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
-                .setToPluginRpcResponseRpcMsg(toProtoMsg(toForward)).build();
-        tell(serverAddress, msg);
-    }
-
-    @Override
-    public void tell(ServerAddress serverAddress, ToDeviceSessionActorMsg toForward) {
-        ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
-                .setToDeviceSessionActorRpcMsg(toProtoMsg(toForward)).build();
-        tell(serverAddress, msg);
-    }
-
-    @Override
-    public void tell(PluginRpcMsg toForward) {
-        ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
-                .setToPluginRpcMsg(toProtoMsg(toForward)).build();
-        tell(toForward.getRpcMsg().getServerAddress(), msg);
-    }
-
-    @Override
-    public void broadcast(ToAllNodesMsg toForward) {
-        ClusterAPIProtos.ToRpcServerMessage msg = ClusterAPIProtos.ToRpcServerMessage.newBuilder()
-                .setToAllNodesRpcMsg(toProtoMsg(toForward)).build();
-        listener.onMsg(new RpcBroadcastMsg(msg));
-    }
-
-    private void tell(ServerAddress serverAddress, ClusterAPIProtos.ToRpcServerMessage msg) {
-        listener.onMsg(new RpcSessionTellMsg(serverAddress, msg));
-    }
-
-    private StreamObserver<ClusterAPIProtos.ToRpcServerMessage> createSession(RpcSessionCreateRequestMsg msg) {
-        RpcSessionCreationFuture future = new RpcSessionCreationFuture();
-        pendingSessionMap.put(msg.getMsgUid(), future);
-        listener.onMsg(msg);
+    private  StreamObserver<ClusterAPIProtos.ClusterMessage> createSession(RpcSessionCreateRequestMsg msg) {
+        BlockingQueue<StreamObserver<ClusterAPIProtos.ClusterMessage>> queue = new ArrayBlockingQueue<>(1);
+        pendingSessionMap.put(msg.getMsgUid(), queue);
+        listener.onRpcSessionCreateRequestMsg(msg);
         try {
-            StreamObserver<ClusterAPIProtos.ToRpcServerMessage> observer = future.get();
+            StreamObserver<ClusterAPIProtos.ClusterMessage> observer = queue.take();
             log.info("Processed new session.");
             return observer;
         } catch (Exception e) {
@@ -184,76 +134,10 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
         }
     }
 
-    private static ClusterAPIProtos.ToDeviceActorRpcMessage toProtoMsg(DeviceToDeviceActorMsg msg) {
-        return ClusterAPIProtos.ToDeviceActorRpcMessage.newBuilder().setData(
-                ByteString.copyFrom(SerializationUtils.serialize(msg))
-        ).build();
+    @Override
+    public void tell(ClusterAPIProtos.ClusterMessage message) {
+        listener.onSendMsg(message);
     }
 
-    private static ClusterAPIProtos.ToDeviceActorNotificationRpcMessage toProtoMsg(ToDeviceActorNotificationMsg msg) {
-        return ClusterAPIProtos.ToDeviceActorNotificationRpcMessage.newBuilder().setData(
-                ByteString.copyFrom(SerializationUtils.serialize(msg))
-        ).build();
-    }
-
-    private static ClusterAPIProtos.ToDeviceRpcRequestRpcMessage toProtoMsg(ToDeviceRpcRequestActorMsg msg) {
-        ClusterAPIProtos.ToDeviceRpcRequestRpcMessage.Builder builder = ClusterAPIProtos.ToDeviceRpcRequestRpcMessage.newBuilder();
-        ToDeviceRpcRequest request = msg.getMsg();
-
-        builder.setDeviceTenantId(toUid(msg.getTenantId()));
-        builder.setDeviceId(toUid(msg.getDeviceId()));
-
-        builder.setMsgId(toUid(request.getId()));
-        builder.setOneway(request.isOneway());
-        builder.setExpTime(request.getExpirationTime());
-        builder.setMethod(request.getBody().getMethod());
-        builder.setParams(request.getBody().getParams());
-
-        return builder.build();
-    }
-
-    private static ClusterAPIProtos.ToPluginRpcResponseRpcMessage toProtoMsg(ToPluginRpcResponseDeviceMsg msg) {
-        ClusterAPIProtos.ToPluginRpcResponseRpcMessage.Builder builder = ClusterAPIProtos.ToPluginRpcResponseRpcMessage.newBuilder();
-        FromDeviceRpcResponse request = msg.getResponse();
-
-        builder.setMsgId(toUid(request.getId()));
-        request.getResponse().ifPresent(builder::setResponse);
-        request.getError().ifPresent(e -> builder.setError(e.name()));
-
-        return builder.build();
-    }
-
-    private ClusterAPIProtos.ToAllNodesRpcMessage toProtoMsg(ToAllNodesMsg msg) {
-        return ClusterAPIProtos.ToAllNodesRpcMessage.newBuilder().setData(
-                ByteString.copyFrom(SerializationUtils.serialize(msg))
-        ).build();
-    }
-
-
-    private ClusterAPIProtos.ToPluginRpcMessage toProtoMsg(PluginRpcMsg msg) {
-        return ClusterAPIProtos.ToPluginRpcMessage.newBuilder()
-                .setClazz(msg.getRpcMsg().getMsgClazz())
-                .setData(ByteString.copyFrom(msg.getRpcMsg().getMsgData()))
-                .setAddress(ClusterAPIProtos.PluginAddress.newBuilder()
-                        .setTenantId(toUid(msg.getPluginTenantId().getId()))
-                        .setPluginId(toUid(msg.getPluginId().getId()))
-                        .build()
-                ).build();
-    }
-
-    private static ClusterAPIProtos.Uid toUid(EntityId uuid) {
-        return toUid(uuid.getId());
-    }
-
-    private static ClusterAPIProtos.Uid toUid(UUID uuid) {
-        return ClusterAPIProtos.Uid.newBuilder().setPluginUuidMsb(uuid.getMostSignificantBits()).setPluginUuidLsb(
-                uuid.getLeastSignificantBits()).build();
-    }
-
-    private static ClusterAPIProtos.ToDeviceSessionActorRpcMessage toProtoMsg(ToDeviceSessionActorMsg msg) {
-        return ClusterAPIProtos.ToDeviceSessionActorRpcMessage.newBuilder().setData(
-                ByteString.copyFrom(SerializationUtils.serialize(msg))
-        ).build();
-    }
 
 }

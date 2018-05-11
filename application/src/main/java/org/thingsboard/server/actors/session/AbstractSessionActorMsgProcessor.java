@@ -21,6 +21,7 @@ import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.device.BasicDeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
@@ -87,22 +88,19 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
     }
 
     protected Optional<ServerAddress> forwardToAppActorIfAdressChanged(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
+
         Optional<ServerAddress> newAddress = systemContext.getRoutingService().resolveById(toForward.getDeviceId());
         if (!newAddress.equals(oldAddress)) {
-            if (newAddress.isPresent()) {
-                systemContext.getRpcService().tell(newAddress.get(),
-                        toForward.toOtherAddress(systemContext.getRoutingService().getCurrentServer()));
-            } else {
-                getAppActor().tell(toForward, ctx.self());
-            }
+            getAppActor().tell(new SendToClusterMsg(toForward.getDeviceId(), toForward
+                    .toOtherAddress(systemContext.getRoutingService().getCurrentServer())), ctx.self());
         }
         return newAddress;
     }
 
     protected void forwardToAppActor(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> address) {
         if (address.isPresent()) {
-            systemContext.getRpcService().tell(address.get(),
-                    toForward.toOtherAddress(systemContext.getRoutingService().getCurrentServer()));
+            systemContext.getRpcService().tell(systemContext.getEncodingService().convertToProtoDataMessage(address.get(),
+                    toForward.toOtherAddress(systemContext.getRoutingService().getCurrentServer())));
         } else {
             getAppActor().tell(toForward, ctx.self());
         }

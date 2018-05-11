@@ -34,6 +34,8 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
@@ -45,6 +47,7 @@ import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class AppActor extends RuleChainManagerActor {
 
@@ -89,6 +92,9 @@ public class AppActor extends RuleChainManagerActor {
     @Override
     protected boolean process(TbActorMsg msg) {
         switch (msg.getMsgType()) {
+            case SEND_TO_CLUSTER_MSG:
+                onPossibleClusterMsg((SendToClusterMsg) msg);
+                break;
             case CLUSTER_EVENT_MSG:
                 broadcast(msg);
                 break;
@@ -111,6 +117,16 @@ public class AppActor extends RuleChainManagerActor {
         }
         return true;
     }
+
+    private void onPossibleClusterMsg(SendToClusterMsg msg) {
+        Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(msg.getEntityId());
+            if (address.isPresent()) {
+                systemContext.getRpcService().tell(
+                        systemContext.getEncodingService().convertToProtoDataMessage(address.get(), msg.getMsg()));
+            } else {
+                self().tell(msg.getMsg(), ActorRef.noSender());
+            }
+        }
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {

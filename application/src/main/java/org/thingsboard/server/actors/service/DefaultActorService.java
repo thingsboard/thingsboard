@@ -19,6 +19,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.Terminated;
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,8 +33,10 @@ import org.thingsboard.server.actors.session.SessionManagerActor;
 import org.thingsboard.server.actors.stats.StatsActor;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
@@ -46,6 +49,7 @@ import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
 import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
+import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
@@ -56,6 +60,9 @@ import scala.concurrent.duration.Duration;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Optional;
+
+import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_NETWORK_SERVER_DATA_MESSAGE;
+import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.RPC_BROADCAST_MSG;
 
 @Service
 @Slf4j
@@ -127,7 +134,7 @@ public class DefaultActorService implements ActorService {
     }
 
     @Override
-    public void onMsg(ServiceToRuleEngineMsg msg) {
+    public void onMsg(SendToClusterMsg msg) {
         appActor.tell(msg, ActorRef.noSender());
     }
 
@@ -149,53 +156,7 @@ public class DefaultActorService implements ActorService {
         appActor.tell(msg, ActorRef.noSender());
     }
 
-    @Override
-    public void onMsg(ToPluginActorMsg msg) {
-        log.trace("Processing plugin rpc msg: {}", msg);
-        appActor.tell(msg, ActorRef.noSender());
-    }
 
-    @Override
-    public void onMsg(DeviceToDeviceActorMsg msg) {
-        log.trace("Processing device rpc msg: {}", msg);
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onMsg(ToDeviceActorNotificationMsg msg) {
-        log.trace("Processing notification rpc msg: {}", msg);
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onMsg(ToDeviceSessionActorMsg msg) {
-        log.trace("Processing session rpc msg: {}", msg);
-        sessionManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onMsg(ToAllNodesMsg msg) {
-        log.trace("Processing broadcast rpc msg: {}", msg);
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onMsg(RpcSessionCreateRequestMsg msg) {
-        log.trace("Processing session create msg: {}", msg);
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onMsg(RpcSessionTellMsg msg) {
-        log.trace("Processing session rpc msg: {}", msg);
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void onMsg(RpcBroadcastMsg msg) {
-        log.trace("Processing broadcast rpc msg: {}", msg);
-        rpcManagerActor.tell(msg, ActorRef.noSender());
-    }
 
     @Override
     public void onServerAdded(ServerInstance server) {
@@ -223,28 +184,29 @@ public class DefaultActorService implements ActorService {
     @Override
     public void onCredentialsUpdate(TenantId tenantId, DeviceId deviceId) {
         DeviceCredentialsUpdateNotificationMsg msg = new DeviceCredentialsUpdateNotificationMsg(tenantId, deviceId);
-        Optional<ServerAddress> address = actorContext.getRoutingService().resolveById(deviceId);
-        if (address.isPresent()) {
-            rpcService.tell(address.get(), msg);
-        } else {
-            onMsg(msg);
-        }
+        appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
     }
 
     @Override
     public void onDeviceNameOrTypeUpdate(TenantId tenantId, DeviceId deviceId, String deviceName, String deviceType) {
         log.trace("[{}] Processing onDeviceNameOrTypeUpdate event, deviceName: {}, deviceType: {}", deviceId, deviceName, deviceType);
         DeviceNameOrTypeUpdateMsg msg = new DeviceNameOrTypeUpdateMsg(tenantId, deviceId, deviceName, deviceType);
-        Optional<ServerAddress> address = actorContext.getRoutingService().resolveById(deviceId);
-        if (address.isPresent()) {
-            rpcService.tell(address.get(), msg);
-        } else {
-            onMsg(msg);
-        }
+        appActor.tell(new SendToClusterMsg(deviceId, msg), ActorRef.noSender());
+    }
+
+    @Override
+    public void onMsg(ServiceToRuleEngineMsg msg) {
+        appActor.tell(msg, ActorRef.noSender());
     }
 
     public void broadcast(ToAllNodesMsg msg) {
-        rpcService.broadcast(msg);
+        actorContext.getEncodingService().encode(msg);
+        rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
+                .newBuilder()
+                .setPayload(ByteString
+                .copyFrom(actorContext.getEncodingService().encode(msg)))
+                .setMessageType(CLUSTER_NETWORK_SERVER_DATA_MESSAGE)
+                .build()));
         appActor.tell(msg, ActorRef.noSender());
     }
 
@@ -252,5 +214,38 @@ public class DefaultActorService implements ActorService {
         this.appActor.tell(msg, ActorRef.noSender());
         this.sessionManagerActor.tell(msg, ActorRef.noSender());
         this.rpcManagerActor.tell(msg, ActorRef.noSender());
+    }
+
+    @Override
+    public void onRecievedMsg(ClusterAPIProtos.ClusterMessage msg) {
+        switch(msg.getMessageType()) {
+            case CLUSTER_NETWORK_SERVER_DATA_MESSAGE:
+                java.util.Optional<TbActorMsg> decodedMsg = actorContext.getEncodingService()
+                        .decode(msg.getPayload().toByteArray());
+                if (decodedMsg.isPresent()) {
+                    appActor.tell(decodedMsg.get(), ActorRef.noSender());
+                } else {
+                    log.error("Error during decoding cluster proto message");
+                }
+                break;
+            case TO_ALL_NODES_MSG:
+                //ToDo
+                break;
+        }
+    }
+
+    @Override
+    public void onSendMsg(ClusterAPIProtos.ClusterMessage msg) {
+        rpcManagerActor.tell(msg, ActorRef.noSender());
+    }
+
+    @Override
+    public void onRpcSessionCreateRequestMsg(RpcSessionCreateRequestMsg msg) {
+        rpcManagerActor.tell(msg, ActorRef.noSender());
+    }
+
+    @Override
+    public void onBroadcastMsg(RpcBroadcastMsg msg) {
+        rpcManagerActor.tell(msg, ActorRef.noSender());
     }
 }
