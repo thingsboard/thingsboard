@@ -1242,7 +1242,8 @@ export default angular.module('thingsboard.locale', [])
                     "metadata": "Metadata",
                     "metadata-required": "Metadata entries can't be empty.",
                     "output": "Output",
-                    "test": "Test"
+                    "test": "Test",
+                    "help": "Help"
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"

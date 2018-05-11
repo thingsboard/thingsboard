@@ -178,6 +178,17 @@
                                     default-event-type="{{vm.types.debugEventType.debugRuleNode.value}}">
                     </tb-event-table>
                 </md-tab>
+                <md-tab label="{{ 'rulenode.help' | translate }}">
+                    <div class="tb-rule-node-help">
+                        <div id="tb-node-content" class="md-padding" layout="column">
+                            <div class="tb-node-title">{{vm.editingRuleNode.component.name}}</div>
+                            <div>&nbsp;</div>
+                            <div class="tb-node-description">{{vm.editingRuleNode.component.configurationDescriptor.nodeDefinition.description}}</div>
+                            <div>&nbsp;</div>
+                            <div class="tb-node-details" ng-bind-html="vm.editingRuleNode.component.configurationDescriptor.nodeDefinition.details"></div>
+                        </div>
+                    </div>
+                </md-tab>
             </md-tabs>
         </tb-details-sidenav>
         <tb-details-sidenav class="tb-rulenode-link-details-sidenav"

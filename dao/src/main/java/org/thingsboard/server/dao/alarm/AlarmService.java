@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.alarm;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.alarm.*;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -30,7 +31,7 @@ public interface AlarmService {
 
     ListenableFuture<Boolean> ackAlarm(AlarmId alarmId, long ackTs);
 
-    ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long ackTs);
+    ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, JsonNode details, long ackTs);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(AlarmId alarmId);
 

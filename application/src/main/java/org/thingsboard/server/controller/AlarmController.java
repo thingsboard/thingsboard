@@ -93,7 +93,7 @@ public class AlarmController extends BaseController {
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
             checkAlarmId(alarmId);
-            alarmService.clearAlarm(alarmId, System.currentTimeMillis()).get();
+            alarmService.clearAlarm(alarmId, null, System.currentTimeMillis()).get();
         } catch (Exception e) {
             throw handleException(e);
         }

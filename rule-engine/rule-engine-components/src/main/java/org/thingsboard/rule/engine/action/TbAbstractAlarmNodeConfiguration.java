@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.filter;
+package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbJsFilterNodeConfiguration implements NodeConfiguration<TbJsFilterNodeConfiguration> {
+public abstract class TbAbstractAlarmNodeConfiguration {
 
-    private String jsScript;
+    private String alarmType;
+    private String alarmDetailsBuildJs;
 
-    @Override
-    public TbJsFilterNodeConfiguration defaultConfiguration() {
-        TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
-        configuration.setJsScript("return msg.temperature > 20;");
-        return configuration;
-    }
 }

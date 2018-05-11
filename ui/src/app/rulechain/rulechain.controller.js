@@ -489,7 +489,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     function displayNodeDescriptionTooltip(event, node) {
         displayTooltip(event,
             '<div class="tb-rule-node-tooltip">' +
-            '<div id="tooltip-content" layout="column">' +
+            '<div id="tb-node-content" layout="column">' +
             '<div class="tb-node-title">' + node.component.name + '</div>' +
             '<div class="tb-node-description">' + node.component.configurationDescriptor.nodeDefinition.description + '</div>' +
             '<div class="tb-node-details">' + node.component.configurationDescriptor.nodeDefinition.details + '</div>' +
