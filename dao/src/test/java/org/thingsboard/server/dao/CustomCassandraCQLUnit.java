@@ -26,7 +26,7 @@ import com.datastax.driver.core.Session;
 import java.util.List;
 
 public class CustomCassandraCQLUnit extends BaseCassandraUnit {
-    private List<CQLDataSet> dataSets;
+    protected List<CQLDataSet> dataSets;
 
     public Session session;
     public Cluster cluster;

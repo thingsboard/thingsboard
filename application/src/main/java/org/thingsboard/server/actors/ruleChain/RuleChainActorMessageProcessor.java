@@ -95,12 +95,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void reprocess(List<RuleNode> ruleNodeList) {
         for (RuleNode ruleNode : ruleNodeList) {
-            for (TbMsg tbMsg : queue.findUnprocessed(ruleNode.getId().getId(), 0L)) {
+            for (TbMsg tbMsg : queue.findUnprocessed(ruleNode.getId().getId(), systemContext.getQueuePartitionId())) {
                 pushMsgToNode(nodeActors.get(ruleNode.getId()), tbMsg);
             }
         }
         if (firstNode != null) {
-            for (TbMsg tbMsg : queue.findUnprocessed(entityId.getId(), 0L)) {
+            for (TbMsg tbMsg : queue.findUnprocessed(entityId.getId(), systemContext.getQueuePartitionId())) {
                 pushMsgToNode(firstNode, tbMsg);
             }
         }
@@ -269,6 +269,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private TbMsg enrichWithRuleChainId(TbMsg tbMsg) {
         // We don't put firstNodeId because it may change over time;
-        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(), tbMsg.getData(), entityId, null, 0L);
+        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(), tbMsg.getData(), entityId, null, systemContext.getQueuePartitionId());
     }
 }

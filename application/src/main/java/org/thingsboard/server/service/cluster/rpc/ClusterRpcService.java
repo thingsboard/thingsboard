@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cluster.rpc;
 
 import io.grpc.stub.StreamObserver;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
@@ -41,5 +42,7 @@ public interface ClusterRpcService {
     void onSessionCreated(UUID msgUid, StreamObserver<ClusterAPIProtos.ClusterMessage> inputStream);
 
     void tell(ClusterAPIProtos.ClusterMessage message);
+
+    void tell(ServerAddress serverAddress, TbActorMsg actorMsg);
 
 }

@@ -43,6 +43,7 @@ import org.thingsboard.server.extensions.core.plugin.telemetry.sub.Subscription;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionState;
 import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionUpdate;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
+import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -83,6 +84,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private ClusterRoutingService routingService;
 
     @Autowired
+    private ClusterRpcService rpcService;
+
+    @Autowired
     @Lazy
     private DeviceStateService stateService;
 
@@ -106,7 +110,6 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     private final Map<EntityId, Set<Subscription>> subscriptionsByEntityId = new HashMap<>();
-
     private final Map<String, Map<Integer, Subscription>> subscriptionsByWsSessionId = new HashMap<>();
 
     @Override
@@ -117,6 +120,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             ServerAddress address = server.get();
             log.trace("[{}] Forwarding subscription [{}] for device [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId, address);
             subscription = new Subscription(sub, true, address);
+//            rpcService.tell();
 //            rpcHandler.onNewSubscription(ctx, address, sessionId, subscription);
         } else {
             log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), entityId);

@@ -207,6 +207,10 @@ public class ActorSystemContext {
     @Getter
     private DeviceStateService deviceStateService;
 
+    @Value("${cluster.partition_id}")
+    @Getter
+    private long queuePartitionId;
+
     @Value("${actors.session.sync.timeout}")
     @Getter
     private long syncSessionTimeout;

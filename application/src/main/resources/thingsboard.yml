@@ -58,6 +58,8 @@ cluster:
   hash_function_name: "${CLUSTER_HASH_FUNCTION_NAME:murmur3_128}"
   # Amount of virtual nodes in consistent hash ring.
   vitrual_nodes_size: "${CLUSTER_VIRTUAL_NODES_SIZE:16}"
+  # Queue partition id for current node
+  partition_id: "${QUEUE_PARTITION_ID:0}"
 
 # Plugins configuration parameters
 plugins:
@@ -306,6 +308,7 @@ rule:
   queue:
     type: "memory"
     max_size: 10000
+
 
 
 # PostgreSQL DAO Configuration
