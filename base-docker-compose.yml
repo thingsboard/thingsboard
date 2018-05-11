@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    networks:
+      - core
+    ports:
+      - "2181:2181"
+
+  postgres-tb:
+    image: postgres
+    command: postgres  -c 'max_connections=500'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=thingsboard
+    networks:
+      - core
+    ports:
+      - "5432:5432"
+
+  cassandra-tb:
+    image: cassandra
+    networks:
+      - core
+    ports:
+      - "7199:7199"
+      - "9160:9160"
+      - "9042:9042"
+
+  redis:
+    image: redis:4.0
+    networks:
+      - core
+    command: redis-server --maxclients 2000
+    ports:
+      - "6379:6379"
+
+
+networks:
+  core:
+
