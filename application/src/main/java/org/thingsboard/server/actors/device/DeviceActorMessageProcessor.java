@@ -355,16 +355,15 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         for (Map.Entry<Long, List<KvEntry>> entry : tsData.entrySet()) {
             JsonObject json = new JsonObject();
-            json.addProperty("ts", entry.getKey());
-            JsonObject values = new JsonObject();
             for (KvEntry kv : entry.getValue()) {
-                kv.getBooleanValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
-                kv.getLongValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
-                kv.getDoubleValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
-                kv.getStrValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
+                kv.getBooleanValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
+                kv.getLongValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
+                kv.getDoubleValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
+                kv.getStrValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
             }
-            json.add("values", values);
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, defaultMetaData.copy(), TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+            TbMsgMetaData metaData = defaultMetaData.copy();
+            metaData.putValue("ts", entry.getKey()+"");
+            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, metaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
             pushToRuleEngineWithTimeout(context, tbMsg, msgData);
         }
     }

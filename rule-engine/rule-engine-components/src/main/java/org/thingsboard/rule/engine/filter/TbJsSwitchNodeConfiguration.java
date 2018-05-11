@@ -31,7 +31,7 @@ public class TbJsSwitchNodeConfiguration implements NodeConfiguration<TbJsSwitch
         TbJsSwitchNodeConfiguration configuration = new TbJsSwitchNodeConfiguration();
         configuration.setJsScript("function nextRelation(metadata, msg) {\n" +
                 "    return ['one','nine'];\n" +
-                "};\n" +
+                "}\n" +
                 "if(msgType === 'POST_TELEMETRY') {\n" +
                 "    return ['two'];\n" +
                 "}\n" +

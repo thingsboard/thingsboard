@@ -782,6 +782,7 @@ export default angular.module('thingsboard.locale', [])
                     "message-id": "Message Id",
                     "message-type": "Message Type",
                     "data-type": "Data Type",
+                    "relation-type": "Relation Type",
                     "metadata": "Metadata",
                     "data": "Data",
                     "event": "Event",

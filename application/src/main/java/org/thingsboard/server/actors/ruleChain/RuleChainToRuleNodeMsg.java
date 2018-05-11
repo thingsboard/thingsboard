@@ -29,6 +29,7 @@ final class RuleChainToRuleNodeMsg implements TbActorMsg {
 
     private final TbContext ctx;
     private final TbMsg msg;
+    private final String fromRelationType;
 
     @Override
     public MsgType getMsgType() {

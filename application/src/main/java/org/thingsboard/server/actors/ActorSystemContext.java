@@ -312,23 +312,23 @@ public class ActorSystemContext {
         return discoveryService.getCurrentServer().getServerAddress().toString();
     }
 
-    public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
-        persistDebug(tenantId, entityId, "IN", tbMsg, null);
+    public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {
+        persistDebug(tenantId, entityId, "IN", tbMsg, relationType, null);
     }
 
-    public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, Throwable error) {
-        persistDebug(tenantId, entityId, "IN", tbMsg, error);
+    public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType, Throwable error) {
+        persistDebug(tenantId, entityId, "IN", tbMsg, relationType, error);
     }
 
-    public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, Throwable error) {
-        persistDebug(tenantId, entityId, "OUT", tbMsg, error);
+    public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType, Throwable error) {
+        persistDebug(tenantId, entityId, "OUT", tbMsg, relationType, error);
     }
 
-    public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
-        persistDebug(tenantId, entityId, "OUT", tbMsg, null);
+    public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {
+        persistDebug(tenantId, entityId, "OUT", tbMsg, relationType, null);
     }
 
-    private void persistDebug(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, Throwable error) {
+    private void persistDebug(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error) {
         try {
             Event event = new Event();
             event.setTenantId(tenantId);
@@ -345,6 +345,7 @@ public class ActorSystemContext {
                     .put("msgId", tbMsg.getId().toString())
                     .put("msgType", tbMsg.getType())
                     .put("dataType", tbMsg.getDataType().name())
+                    .put("relationType", relationType)
                     .put("data", tbMsg.getData())
                     .put("metadata", metadata);
 

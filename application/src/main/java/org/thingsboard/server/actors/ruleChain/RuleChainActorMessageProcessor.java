@@ -96,12 +96,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private void reprocess(List<RuleNode> ruleNodeList) {
         for (RuleNode ruleNode : ruleNodeList) {
             for (TbMsg tbMsg : queue.findUnprocessed(ruleNode.getId().getId(), 0L)) {
-                pushMsgToNode(nodeActors.get(ruleNode.getId()), tbMsg);
+                pushMsgToNode(nodeActors.get(ruleNode.getId()), tbMsg, "");
             }
         }
         if (firstNode != null) {
             for (TbMsg tbMsg : queue.findUnprocessed(entityId.getId(), 0L)) {
-                pushMsgToNode(firstNode, tbMsg);
+                pushMsgToNode(firstNode, tbMsg, "");
             }
         }
     }
@@ -183,13 +183,13 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
         checkActive();
-        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg));
+        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg, ""));
     }
 
     void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
         checkActive();
         putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
-            pushMsgToNode(firstNode, msg);
+            pushMsgToNode(firstNode, msg, "");
             envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
         });
     }
@@ -197,9 +197,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
         checkActive();
         if (envelope.isEnqueue()) {
-            putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg));
+            putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg, envelope.getFromRelationType()));
         } else {
-            pushMsgToNode(firstNode, envelope.getMsg());
+            pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
         }
     }
 
@@ -218,17 +218,17 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             queue.ack(msg, ackId.getId(), msg.getClusterPartition());
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {
-                pushToTarget(msg, relation.getOut());
+                pushToTarget(msg, relation.getOut(), relation.getType());
             }
         } else {
             for (RuleNodeRelation relation : relations) {
                 EntityId target = relation.getOut();
                 switch (target.getEntityType()) {
                     case RULE_NODE:
-                        enqueueAndForwardMsgCopyToNode(msg, target);
+                        enqueueAndForwardMsgCopyToNode(msg, target, relation.getType());
                         break;
                     case RULE_CHAIN:
-                        enqueueAndForwardMsgCopyToChain(msg, target);
+                        enqueueAndForwardMsgCopyToChain(msg, target, relation.getType());
                         break;
                 }
             }
@@ -237,33 +237,33 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         }
     }
 
-    private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target) {
+    private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target, String fromRelationType) {
         RuleChainId targetRCId = new RuleChainId(target.getId());
         TbMsg copyMsg = msg.copy(UUIDs.timeBased(), targetRCId, null, DEFAULT_CLUSTER_PARTITION);
-        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, true), self);
+        parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, copyMsg, fromRelationType, true), self);
     }
 
-    private void enqueueAndForwardMsgCopyToNode(TbMsg msg, EntityId target) {
+    private void enqueueAndForwardMsgCopyToNode(TbMsg msg, EntityId target, String fromRelationType) {
         RuleNodeId targetId = new RuleNodeId(target.getId());
         RuleNodeCtx targetNodeCtx = nodeActors.get(targetId);
         TbMsg copy = msg.copy(UUIDs.timeBased(), entityId, targetId, DEFAULT_CLUSTER_PARTITION);
-        putToQueue(copy, queuedMsg -> pushMsgToNode(targetNodeCtx, queuedMsg));
+        putToQueue(copy, queuedMsg -> pushMsgToNode(targetNodeCtx, queuedMsg, fromRelationType));
     }
 
-    private void pushToTarget(TbMsg msg, EntityId target) {
+    private void pushToTarget(TbMsg msg, EntityId target, String fromRelationType) {
         switch (target.getEntityType()) {
             case RULE_NODE:
-                pushMsgToNode(nodeActors.get(new RuleNodeId(target.getId())), msg);
+                pushMsgToNode(nodeActors.get(new RuleNodeId(target.getId())), msg, fromRelationType);
                 break;
             case RULE_CHAIN:
-                parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, false), self);
+                parent.tell(new RuleChainToRuleChainMsg(new RuleChainId(target.getId()), entityId, msg, fromRelationType, false), self);
                 break;
         }
     }
 
-    private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg) {
+    private void pushMsgToNode(RuleNodeCtx nodeCtx, TbMsg msg, String fromRelationType) {
         if (nodeCtx != null) {
-            nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg), self);
+            nodeCtx.getSelfActor().tell(new RuleChainToRuleNodeMsg(new DefaultTbContext(systemContext, nodeCtx), msg, fromRelationType), self);
         }
     }
 

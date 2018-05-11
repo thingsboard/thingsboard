@@ -31,6 +31,7 @@ public final class RuleChainToRuleChainMsg implements TbActorMsg {
     private final RuleChainId target;
     private final RuleChainId source;
     private final TbMsg msg;
+    private final String fromRelationType;
     private final boolean enqueue;
 
     @Override

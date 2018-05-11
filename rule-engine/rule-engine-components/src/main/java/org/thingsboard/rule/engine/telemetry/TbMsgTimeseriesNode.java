@@ -63,12 +63,22 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellError(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
-
+        long ts = -1;
+        String tsStr = msg.getMetaData().getValue("ts");
+        if (!StringUtils.isEmpty(tsStr)) {
+            try {
+                ts = Long.parseLong(tsStr);
+            } catch (NumberFormatException e) {}
+        }
+        if (ts == -1) {
+            ctx.tellError(msg, new IllegalArgumentException("Msg metadata doesn't contain valid ts value: " + msg.getMetaData()));
+            return;
+        }
         String src = msg.getData();
-        TelemetryUploadRequest telemetryUploadRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(src));
+        TelemetryUploadRequest telemetryUploadRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         Map<Long, List<KvEntry>> tsKvMap = telemetryUploadRequest.getData();
         if (tsKvMap == null) {
-            ctx.tellError(msg, new IllegalArgumentException("Msg body us empty: " + src));
+            ctx.tellError(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;
         }
         List<TsKvEntry> tsKvEntryList = new ArrayList<>();

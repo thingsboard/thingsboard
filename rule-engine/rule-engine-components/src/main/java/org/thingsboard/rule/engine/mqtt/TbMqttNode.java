@@ -80,8 +80,7 @@ public class TbMqttNode implements TbNode {
         this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE)
                 .addListener(future -> {
                     if (future.isSuccess()) {
-                        TbMsg next = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
-                        ctx.tellNext(next, TbRelationTypes.SUCCESS);
+                        ctx.tellNext(msg, TbRelationTypes.SUCCESS);
                     } else {
                         TbMsg next = processException(ctx, msg, future.cause());
                         ctx.tellNext(next, TbRelationTypes.FAILURE, future.cause());
