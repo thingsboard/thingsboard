@@ -58,23 +58,17 @@ public class TbGetAttributesNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        // todo-vp: both telemetry and attributes should be processes
-        if (CollectionUtils.isNotEmpty(config.getLatestTsKeyNames())) {
-            withCallback(getLatestTelemetry(ctx, msg, config.getLatestTsKeyNames()),
-                    i -> ctx.tellNext(msg, SUCCESS),
-                    t -> ctx.tellError(msg, t));
-        } else {
-            ListenableFuture<List<Void>> future = Futures.allAsList(
-                    putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs_"),
-                    putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared_"),
-                    putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss_"));
-
-            withCallback(future, i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellError(msg, t));
-        }
+        ListenableFuture<List<Void>> allFutures = Futures.allAsList(
+                putLatestTelemetry(ctx, msg, config.getLatestTsKeyNames()),
+                putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs_"),
+                putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared_"),
+                putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss_")
+        );
+        withCallback(allFutures, i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellError(msg, t));
     }
 
     private ListenableFuture<Void> putAttrAsync(TbContext ctx, TbMsg msg, String scope, List<String> keys, String prefix) {
-        if (keys == null) {
+        if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(msg.getOriginator(), scope, keys);
@@ -84,8 +78,8 @@ public class TbGetAttributesNode implements TbNode {
         });
     }
 
-    private ListenableFuture<Void> getLatestTelemetry(TbContext ctx, TbMsg msg, List<String> keys) {
-        if (keys == null) {
+    private ListenableFuture<Void> putLatestTelemetry(TbContext ctx, TbMsg msg, List<String> keys) {
+        if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(msg.getOriginator(), keys);

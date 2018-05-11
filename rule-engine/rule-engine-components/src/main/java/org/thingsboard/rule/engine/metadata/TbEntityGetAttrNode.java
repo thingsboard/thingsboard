@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,12 @@ package org.thingsboard.rule.engine.metadata;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -30,9 +34,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
+@Slf4j
 public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode {
 
     private TbGetEntityAttrNodeConfiguration config;
@@ -47,15 +53,22 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
         try {
             withCallback(
                     findEntityAsync(ctx, msg.getOriginator()),
-                    entityId -> withCallback(
-                            config.isTelemetry() ? getLatestTelemetry(ctx, entityId) : getAttributesAsync(ctx, entityId),
-                            attributes -> putAttributesAndTell(ctx, msg, attributes),
-                            t -> ctx.tellError(msg, t)
-                    ),
+                    entityId -> safeGetAttributes(ctx, msg, entityId),
                     t -> ctx.tellError(msg, t));
         } catch (Throwable th) {
             ctx.tellError(msg, th);
         }
+    }
+
+    private void safeGetAttributes(TbContext ctx, TbMsg msg, T entityId) {
+        if(entityId == null || entityId.isNullUid()) {
+            ctx.tellNext(msg, FAILURE);
+            return;
+        }
+
+        withCallback(config.isTelemetry() ? getLatestTelemetry(ctx, entityId) : getAttributesAsync(ctx, entityId),
+                attributes -> putAttributesAndTell(ctx, msg, attributes),
+                t -> ctx.tellError(msg, t));
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId) {
