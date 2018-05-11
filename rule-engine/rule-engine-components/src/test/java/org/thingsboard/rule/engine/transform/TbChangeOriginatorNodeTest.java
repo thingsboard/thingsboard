@@ -40,6 +40,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbChangeOriginatorNodeTest {
@@ -54,7 +55,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void originatorCanBeChangedToCustomerId() throws TbNodeException {
-        init(false);
+        init();
         AssetId assetId = new AssetId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
         Asset asset = new Asset();
@@ -82,7 +83,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void newChainCanBeStarted() throws TbNodeException {
-        init(true);
+        init();
         AssetId assetId = new AssetId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
         Asset asset = new Asset();
@@ -109,7 +110,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void exceptionThrownIfCannotFindNewOriginator() throws TbNodeException {
-        init(true);
+        init();
         AssetId assetId = new AssetId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
         Asset asset = new Asset();
@@ -121,16 +122,13 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "ASSET", assetId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("wrong")));
+        when(assetService.findAssetByIdAsync(assetId)).thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellError(same(msg), captor.capture());
-        Throwable value = captor.getValue();
-        assertEquals("wrong", value.getMessage());
+        verify(ctx).tellNext(same(msg), same(FAILURE));
     }
 
-    public void init(boolean startNewChain) throws TbNodeException {
+    public void init() throws TbNodeException {
         TbChangeOriginatorNodeConfiguration config = new TbChangeOriginatorNodeConfiguration();
         config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
         ObjectMapper mapper = new ObjectMapper();

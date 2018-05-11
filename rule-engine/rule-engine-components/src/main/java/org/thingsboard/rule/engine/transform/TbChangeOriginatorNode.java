@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesTenantIdAsyncLoader;
@@ -34,7 +37,7 @@ import java.util.HashSet;
 @Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
-        name="change originator",
+        name = "change originator",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
         nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
         nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
@@ -61,7 +64,12 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
     @Override
     protected ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg) {
         ListenableFuture<? extends EntityId> newOriginator = getNewOriginator(ctx, msg.getOriginator());
-        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData()));
+        return Futures.transform(newOriginator, (Function<EntityId, TbMsg>) n -> {
+            if (n == null || n.isNullUid()) {
+                return null;
+            }
+            return ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData());
+        });
     }
 
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, EntityId original) {
