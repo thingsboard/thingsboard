@@ -31,12 +31,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -56,6 +51,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -148,7 +145,7 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     @Test
-    public void errorThrownIfCustomerCannotBeFound() {
+    public void failedChainUsedIfCustomerCannotBeFound() {
         UserId userId = new UserId(UUIDs.timeBased());
         CustomerId customerId = new CustomerId(UUIDs.timeBased());
         User user = new User();
@@ -159,13 +156,9 @@ public class TbGetCustomerAttributeNodeTest {
         when(ctx.getUserService()).thenReturn(userService);
         when(userService.findUserByIdAsync(userId)).thenReturn(Futures.immediateFuture(null));
 
-        node.onMsg(ctx, msg);
-        final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellError(same(msg), captor.capture());
 
-        Throwable value = captor.getValue();
-        assertEquals(IllegalStateException.class, value.getClass());
-        assertEquals("Customer not found", value.getMessage());
+        node.onMsg(ctx, msg);
+        verify(ctx).tellNext(msg, FAILURE);
         assertTrue(msg.getMetaData().getData().isEmpty());
     }
 
@@ -252,7 +245,7 @@ public class TbGetCustomerAttributeNodeTest {
                 .thenReturn(Futures.immediateFuture(timeseries));
 
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg);
+        verify(ctx).tellNext(msg, SUCCESS);
         assertEquals(msg.getMetaData().getValue("tempo"), "highest");
     }
 
@@ -264,7 +257,7 @@ public class TbGetCustomerAttributeNodeTest {
                 .thenReturn(Futures.immediateFuture(attributes));
 
         node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg);
+        verify(ctx).tellNext(msg, SUCCESS);
         assertEquals(msg.getMetaData().getValue("tempo"), "high");
     }
 }

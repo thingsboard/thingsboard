@@ -26,7 +26,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         name = "script",
         configClazz = TbTransformMsgNodeConfiguration.class,
         nodeDescription = "Change Message payload, Metadata or Message type using JavaScript",
-        nodeDetails = "JavaScript function receive 3 input parameters.<br/> " +
+        nodeDetails = "JavaScript function receive 3 input parameters <br/> " +
                 "<code>metadata</code> - is a Message metadata.<br/>" +
                 "<code>msg</code> - is a Message payload.<br/>" +
                 "<code>msgType</code> - is a Message type.<br/>" +

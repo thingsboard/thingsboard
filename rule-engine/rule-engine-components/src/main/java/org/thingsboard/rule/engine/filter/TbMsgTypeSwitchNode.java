@@ -30,7 +30,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         configClazz = EmptyNodeConfiguration.class,
         relationTypes = {"Post attributes", "Post telemetry", "RPC Request", "Activity Event", "Inactivity Event", "Connect Event", "Disconnect Event", "Other"},
         nodeDescription = "Route incoming messages by Message Type",
-        nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b> via corresponding chain, otherwise <b>Other</b> chain is used.",
+        nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b> etc. via corresponding chain, otherwise <b>Other</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbMsgTypeSwitchNode implements TbNode {

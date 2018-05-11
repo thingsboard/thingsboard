@@ -262,7 +262,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
             state.setInactivityTimeout(inactivityTimeout);
             boolean oldActive = state.isActive();
             state.setActive(ts < state.getLastActivityTime() + state.getInactivityTimeout());
-            if (!oldActive && state.isActive()) {
+            if (!oldActive && state.isActive() || oldActive && !state.isActive()) {
                 saveAttribute(deviceId, ACTIVITY_STATE, state.isActive());
             }
         }
@@ -333,10 +333,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
         });
     }
 
-    private long getLastPersistTime(List<AttributeKvEntry> attributes) {
-        return attributes.stream().map(AttributeKvEntry::getLastUpdateTs).max(Long::compare).orElse(0L);
-    }
-
     private long getAttributeValue(List<AttributeKvEntry> attributes, String attributeName, long defaultValue) {
         for (AttributeKvEntry attribute : attributes) {
             if (attribute.getKey().equals(attributeName)) {
@@ -349,7 +345,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private void pushRuleEngineMessage(DeviceStateData stateData, String msgType) {
         DeviceState state = stateData.getState();
         try {
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData(), TbMsgDataType.JSON
+            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, stateData.getDeviceId(), stateData.getMetaData().copy(), TbMsgDataType.JSON
                     , json.writeValueAsString(state)
                     , null, null, 0L);
             actorService.onMsg(new ServiceToRuleEngineMsg(stateData.getTenantId(), tbMsg));

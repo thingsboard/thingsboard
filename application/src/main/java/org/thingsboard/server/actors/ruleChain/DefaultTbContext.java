@@ -62,11 +62,6 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void tellNext(TbMsg msg) {
-        tellNext(msg, (String) null);
-    }
-
-    @Override
     public void tellNext(TbMsg msg, String relationType) {
         tellNext(msg, relationType, null);
     }
@@ -100,11 +95,6 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void spawn(TbMsg msg) {
-        throw new RuntimeException("Not Implemented!");
-    }
-
-    @Override
     public void ack(TbMsg msg) {
 
     }
@@ -124,12 +114,12 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(UUIDs.timeBased(), type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
+        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
     }
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(origMsg.getId(), type, originator, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
+        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
     }
 
     @Override

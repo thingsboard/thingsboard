@@ -118,6 +118,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                 case FILTER:
                 case TRANSFORMATION:
                 case ACTION:
+                case EXTERNAL:
                     RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
                     scannedComponent.setName(ruleNodeAnnotation.name());
                     scannedComponent.setScope(ruleNodeAnnotation.scope());
@@ -194,6 +195,8 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         nodeDefinition.setDefaultConfiguration(mapper.valueToTree(defaultConfiguration));
         nodeDefinition.setUiResources(nodeAnnotation.uiResources());
         nodeDefinition.setConfigDirective(nodeAnnotation.configDirective());
+        nodeDefinition.setIcon(nodeAnnotation.icon());
+        nodeDefinition.setIconUrl(nodeAnnotation.iconUrl());
         return nodeDefinition;
     }
 

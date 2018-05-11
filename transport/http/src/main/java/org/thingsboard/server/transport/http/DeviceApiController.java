@@ -26,7 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.core.*;
 import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
@@ -37,7 +36,6 @@ import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.QuotaService;
-import org.thingsboard.server.dao.device.DeviceOfflineService;
 import org.thingsboard.server.transport.http.session.HttpSessionCtx;
 
 import javax.servlet.http.HttpServletRequest;
@@ -65,9 +63,6 @@ public class DeviceApiController {
     @Autowired(required = false)
     private QuotaService quotaService;
 
-    @Autowired(required = false)
-    private DeviceOfflineService offlineService;
-
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = "application/json")
     public DeferredResult<ResponseEntity> getDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
                                                               @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
@@ -87,7 +82,7 @@ public class DeviceApiController {
                 Set<String> sharedKeySet = !StringUtils.isEmpty(sharedKeys) ? new HashSet<>(Arrays.asList(sharedKeys.split(","))) : null;
                 request = new BasicGetAttributesRequest(0, clientKeySet, sharedKeySet);
             }
-            process(ctx, request, false);
+            process(ctx, request);
         } else {
             responseWriter.setResult(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
         }
@@ -105,7 +100,7 @@ public class DeviceApiController {
         HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
         if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
             try {
-                process(ctx, JsonConverter.convertToAttributes(new JsonParser().parse(json)), true);
+                process(ctx, JsonConverter.convertToAttributes(new JsonParser().parse(json)));
             } catch (IllegalStateException | JsonSyntaxException ex) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             }
@@ -125,7 +120,7 @@ public class DeviceApiController {
         HttpSessionCtx ctx = getHttpSessionCtx(responseWriter);
         if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
             try {
-                process(ctx, JsonConverter.convertToTelemetry(new JsonParser().parse(json)), true);
+                process(ctx, JsonConverter.convertToTelemetry(new JsonParser().parse(json)));
             } catch (IllegalStateException | JsonSyntaxException ex) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             }
@@ -155,7 +150,7 @@ public class DeviceApiController {
         if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
             try {
                 JsonObject response = new JsonParser().parse(json).getAsJsonObject();
-                process(ctx, new ToDeviceRpcResponseMsg(requestId, response.toString()), true);
+                process(ctx, new ToDeviceRpcResponseMsg(requestId, response.toString()));
             } catch (IllegalStateException | JsonSyntaxException ex) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             }
@@ -178,7 +173,7 @@ public class DeviceApiController {
                 JsonObject request = new JsonParser().parse(json).getAsJsonObject();
                 process(ctx, new ToServerRpcRequestMsg(0,
                         request.get("method").getAsString(),
-                        request.get("params").toString()), true);
+                        request.get("params").toString()));
             } catch (IllegalStateException | JsonSyntaxException ex) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             }
@@ -204,7 +199,7 @@ public class DeviceApiController {
         HttpSessionCtx ctx = getHttpSessionCtx(responseWriter, timeout);
         if (ctx.login(new DeviceTokenCredentials(deviceToken))) {
             try {
-                process(ctx, msg, false);
+                process(ctx, msg);
             } catch (IllegalStateException | JsonSyntaxException ex) {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
             }
@@ -222,10 +217,9 @@ public class DeviceApiController {
         return new HttpSessionCtx(processor, authService, responseWriter, timeout != 0 ? timeout : defaultTimeout);
     }
 
-    private void process(HttpSessionCtx ctx, FromDeviceMsg request, boolean isUpdate) {
+    private void process(HttpSessionCtx ctx, FromDeviceMsg request) {
         AdaptorToSessionActorMsg msg = new BasicAdaptorToSessionActorMsg(ctx, request);
         processor.process(new BasicToDeviceActorSessionMsg(ctx.getDevice(), msg));
-        offlineService.online(ctx.getDevice(), isUpdate);
     }
 
     private boolean quotaExceeded(HttpServletRequest request, DeferredResult<ResponseEntity> responseWriter) {

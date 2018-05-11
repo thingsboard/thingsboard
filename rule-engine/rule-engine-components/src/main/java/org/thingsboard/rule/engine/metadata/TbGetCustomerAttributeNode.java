@@ -29,8 +29,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         configClazz = TbGetEntityAttrNodeConfiguration.class,
         nodeDescription = "Add Originators Customer Attributes or Latest Telemetry into Message Metadata",
         nodeDetails = "If Attributes enrichment configured, server scope attributes are added into Message metadata. " +
+                "If Latest Telemetry enrichment configured, latest telemetry added into metadata. " +
                 "To access those attributes in other nodes this template can be used " +
-                "<code>metadata.temperature</code>. If Latest Telemetry enrichment configured, latest telemetry added into metadata",
+                "<code>metadata.temperature</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
 public class TbGetCustomerAttributeNode extends TbEntityGetAttrNode<CustomerId> {

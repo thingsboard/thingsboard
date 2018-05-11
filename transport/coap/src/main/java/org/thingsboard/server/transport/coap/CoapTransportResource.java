@@ -35,7 +35,6 @@ import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.QuotaService;
-import org.thingsboard.server.dao.device.DeviceOfflineService;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 import org.thingsboard.server.transport.coap.session.CoapExchangeObserverProxy;
 import org.thingsboard.server.transport.coap.session.CoapSessionCtx;
@@ -54,17 +53,15 @@ public class CoapTransportResource extends CoapResource {
     private final SessionMsgProcessor processor;
     private final DeviceAuthService authService;
     private final QuotaService quotaService;
-    private final DeviceOfflineService offlineService;
     private final Field observerField;
     private final long timeout;
 
     public CoapTransportResource(SessionMsgProcessor processor, DeviceAuthService authService, CoapTransportAdaptor adaptor, String name,
-                                 long timeout, QuotaService quotaService, DeviceOfflineService offlineService) {
+                                 long timeout, QuotaService quotaService) {
         super(name);
         this.processor = processor;
         this.authService = authService;
         this.quotaService = quotaService;
-        this.offlineService = offlineService;
         this.adaptor = adaptor;
         this.timeout = timeout;
         // This is important to turn off existing observable logic in
@@ -171,7 +168,6 @@ public class CoapTransportResource extends CoapResource {
                 case TO_SERVER_RPC_REQUEST:
                     ctx.setSessionType(SessionType.SYNC);
                     msg = adaptor.convertToActorMsg(ctx, type, request);
-                    offlineService.online(ctx.getDevice(), true);
                     break;
                 case SUBSCRIBE_ATTRIBUTES_REQUEST:
                 case SUBSCRIBE_RPC_COMMANDS_REQUEST:
@@ -179,13 +175,11 @@ public class CoapTransportResource extends CoapResource {
                     advanced.setObserver(new CoapExchangeObserverProxy(systemObserver, ctx));
                     ctx.setSessionType(SessionType.ASYNC);
                     msg = adaptor.convertToActorMsg(ctx, type, request);
-                    offlineService.online(ctx.getDevice(), false);
                     break;
                 case UNSUBSCRIBE_ATTRIBUTES_REQUEST:
                 case UNSUBSCRIBE_RPC_COMMANDS_REQUEST:
                     ctx.setSessionType(SessionType.ASYNC);
                     msg = adaptor.convertToActorMsg(ctx, type, request);
-                    offlineService.online(ctx.getDevice(), false);
                     break;
                 default:
                     log.trace("[{}] Unsupported msg type: {}", ctx.getSessionId(), type);

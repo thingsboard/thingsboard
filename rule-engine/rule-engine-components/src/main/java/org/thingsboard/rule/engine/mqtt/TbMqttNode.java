@@ -43,13 +43,14 @@ import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.ACTION,
+        type = ComponentType.EXTERNAL,
         name = "mqtt",
         configClazz = TbMqttNodeConfiguration.class,
         nodeDescription = "Publish messages to MQTT broker",
         nodeDetails = "Expects messages with any message type. Will publish message to MQTT broker.",
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
-        configDirective = "tbActionNodeMqttConfig"
+        configDirective = "tbActionNodeMqttConfig",
+        icon = "call_split"
 )
 public class TbMqttNode implements TbNode {
 

@@ -18,10 +18,15 @@ package org.thingsboard.rule.engine.transform;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -39,19 +44,17 @@ public abstract class TbAbstractTransformNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(transform(ctx, msg),
-                m -> routeMsg(ctx, m),
+                m -> {
+                    if (m != null) {
+                        ctx.tellNext(m, SUCCESS);
+                    } else {
+                        ctx.tellNext(msg, FAILURE);
+                    }
+                },
                 t -> ctx.tellError(msg, t));
     }
 
     protected abstract ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg);
-
-    private void routeMsg(TbContext ctx, TbMsg msg) {
-        if (config.isStartNewChain()) {
-            ctx.spawn(msg);
-        } else {
-            ctx.tellNext(msg);
-        }
-    }
 
     public void setConfig(TbTransformNodeConfiguration config) {
         this.config = config;

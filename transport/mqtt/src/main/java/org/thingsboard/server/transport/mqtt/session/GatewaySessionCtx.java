@@ -36,7 +36,6 @@ import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
-import org.thingsboard.server.dao.device.DeviceOfflineService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
@@ -62,17 +61,14 @@ public class GatewaySessionCtx {
     private final DeviceService deviceService;
     private final DeviceAuthService authService;
     private final RelationService relationService;
-    private final DeviceOfflineService offlineService;
     private final Map<String, GatewayDeviceSessionCtx> devices;
     private ChannelHandlerContext channel;
 
-    public GatewaySessionCtx(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService,
-                             RelationService relationService, DeviceSessionCtx gatewaySessionCtx, DeviceOfflineService offlineService) {
+    public GatewaySessionCtx(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService, DeviceSessionCtx gatewaySessionCtx) {
         this.processor = processor;
         this.deviceService = deviceService;
         this.authService = authService;
         this.relationService = relationService;
-        this.offlineService = offlineService;
         this.gateway = gatewaySessionCtx.getDevice();
         this.gatewaySessionId = gatewaySessionCtx.getSessionId();
         this.devices = new HashMap<>();
@@ -102,7 +98,6 @@ public class GatewaySessionCtx {
             log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);
             processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
             processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
-            offlineService.online(device, false);
         }
     }
 
@@ -112,7 +107,6 @@ public class GatewaySessionCtx {
         if (deviceSessionCtx != null) {
             processor.process(SessionCloseMsg.onDisconnect(deviceSessionCtx.getSessionId()));
             deviceSessionCtx.setClosed(true);
-            offlineService.offline(deviceSessionCtx.getDevice());
             log.debug("[{}] Removed device [{}] from the gateway session", gatewaySessionId, deviceName);
         } else {
             log.debug("[{}] Device [{}] was already removed from the gateway session", gatewaySessionId, deviceName);
@@ -123,7 +117,6 @@ public class GatewaySessionCtx {
     public void onGatewayDisconnect() {
         devices.forEach((k, v) -> {
             processor.process(SessionCloseMsg.onDisconnect(v.getSessionId()));
-            offlineService.offline(v.getDevice());
         });
     }
 
@@ -145,7 +138,6 @@ public class GatewaySessionCtx {
                 GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
                 processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
                         new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
-                offlineService.online(deviceSessionCtx.getDevice(), true);
             }
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
@@ -162,7 +154,6 @@ public class GatewaySessionCtx {
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
             processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
-            offlineService.online(deviceSessionCtx.getDevice(), true);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }
@@ -185,7 +176,6 @@ public class GatewaySessionCtx {
                 GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
                 processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
                         new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
-                offlineService.online(deviceSessionCtx.getDevice(), true);
             }
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
@@ -220,7 +210,6 @@ public class GatewaySessionCtx {
             processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
             ack(msg);
-            offlineService.online(deviceSessionCtx.getDevice(), false);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }
