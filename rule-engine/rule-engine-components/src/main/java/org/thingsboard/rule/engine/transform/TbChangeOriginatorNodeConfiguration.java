@@ -43,7 +43,6 @@ public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfigur
         relationsQuery.setFilters(Collections.singletonList(entityTypeFilter));
         configuration.setRelationsQuery(relationsQuery);
 
-        configuration.setStartNewChain(false);
         return configuration;
     }
 }

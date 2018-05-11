@@ -40,11 +40,11 @@ public class EntitiesRelatedEntityIdAsyncLoader {
         if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
             return Futures.transform(asyncRelation, (AsyncFunction<? super List<EntityRelation>, EntityId>)
                     r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getTo())
-                            : Futures.immediateFailedFuture(new IllegalStateException("Relation not found")));
+                            : Futures.immediateFuture(null));
         } else if (relationsQuery.getDirection() == EntitySearchDirection.TO) {
             return Futures.transform(asyncRelation, (AsyncFunction<? super List<EntityRelation>, EntityId>)
                     r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getFrom())
-                            : Futures.immediateFailedFuture(new IllegalStateException("Relation not found")));
+                            : Futures.immediateFuture(null));
         }
         return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
     }

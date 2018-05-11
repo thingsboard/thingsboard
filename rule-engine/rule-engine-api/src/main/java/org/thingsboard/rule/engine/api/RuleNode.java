@@ -49,6 +49,10 @@ public @interface RuleNode {
 
     String configDirective() default "";
 
+    String icon() default "";
+
+    String iconUrl() default "";
+
     boolean customRelations() default false;
 
 }

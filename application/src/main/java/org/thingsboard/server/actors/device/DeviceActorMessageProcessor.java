@@ -340,7 +340,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             kv.getStrValue().ifPresent(v -> json.addProperty(kv.getKey(), v));
         }
 
-        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+        TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_ATTRIBUTES_REQUEST.name(), deviceId, defaultMetaData.copy(), TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
         PendingSessionMsgData msgData = new PendingSessionMsgData(src.getSessionId(), src.getServerAddress(),
                 SessionMsgType.POST_ATTRIBUTES_REQUEST, request.getRequestId(), true, 1);
         pushToRuleEngineWithTimeout(context, tbMsg, msgData);
@@ -365,7 +365,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 kv.getStrValue().ifPresent(v -> values.addProperty(kv.getKey(), v));
             }
             json.add("values", values);
-            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, defaultMetaData, TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
+            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, defaultMetaData.copy(), TbMsgDataType.JSON, gson.toJson(json), null, null, 0L);
             pushToRuleEngineWithTimeout(context, tbMsg, msgData);
         }
     }

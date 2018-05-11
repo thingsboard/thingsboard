@@ -15,37 +15,57 @@
  */
 package org.thingsboard.rule.engine.mail;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import javax.mail.internet.MimeMessage;
 import java.io.IOException;
+import java.util.Properties;
 
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.ACTION,
+        type = ComponentType.EXTERNAL,
         name = "send email",
         configClazz = TbSendEmailNodeConfiguration.class,
         nodeDescription = "Log incoming messages using JS script for transformation Message into String",
         nodeDetails = "Transform incoming Message with configured JS condition to String and log final value. " +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>" +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>")
+                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbActionNodeSendEmailConfig",
+        icon = "send"
+)
 public class TbSendEmailNode implements TbNode {
 
+    private static final String MAIL_PROP = "mail.";
     static final String SEND_EMAIL_TYPE = "SEND_EMAIL";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private TbSendEmailNodeConfiguration config;
+    private JavaMailSenderImpl mailSender;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbSendEmailNodeConfiguration.class);
+        try {
+            this.config = TbNodeUtils.convert(configuration, TbSendEmailNodeConfiguration.class);
+            if (!this.config.isUseSystemSmtpSettings()) {
+                mailSender = createMailSender();
+            }
+        } catch (Exception e) {
+            throw new TbNodeException(e);
+        }
     }
 
     @Override
@@ -54,14 +74,34 @@ public class TbSendEmailNode implements TbNode {
             validateType(msg.getType());
             EmailPojo email = getEmail(msg);
             withCallback(ctx.getMailExecutor().executeAsync(() -> {
-                        ctx.getMailService().send(email.getFrom(), email.getTo(), email.getCc(),
-                                email.getBcc(), email.getSubject(), email.getBody());
+                        sendEmail(ctx, email);
                         return null;
                     }),
-                    ok -> ctx.tellNext(msg),
+                    ok -> ctx.tellNext(msg, SUCCESS),
                     fail -> ctx.tellError(msg, fail));
         } catch (Exception ex) {
             ctx.tellError(msg, ex);
+        }
+    }
+
+    private void sendEmail(TbContext ctx, EmailPojo email) throws Exception {
+        if (this.config.isUseSystemSmtpSettings()) {
+            ctx.getMailService().send(email.getFrom(), email.getTo(), email.getCc(),
+                    email.getBcc(), email.getSubject(), email.getBody());
+        } else {
+            MimeMessage mailMsg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mailMsg, "UTF-8");
+            helper.setFrom(email.getFrom());
+            helper.setTo(email.getTo().split("\\s*,\\s*"));
+            if (!StringUtils.isBlank(email.getCc())) {
+                helper.setCc(email.getCc().split("\\s*,\\s*"));
+            }
+            if (!StringUtils.isBlank(email.getBcc())) {
+                helper.setBcc(email.getBcc().split("\\s*,\\s*"));
+            }
+            helper.setSubject(email.getSubject());
+            helper.setText(email.getBody());
+            mailSender.send(helper.getMimeMessage());
         }
     }
 
@@ -82,5 +122,27 @@ public class TbSendEmailNode implements TbNode {
 
     @Override
     public void destroy() {
+    }
+
+    private JavaMailSenderImpl createMailSender() {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(this.config.getSmtpHost());
+        mailSender.setPort(this.config.getSmtpPort());
+        mailSender.setUsername(this.config.getUsername());
+        mailSender.setPassword(this.config.getPassword());
+        mailSender.setJavaMailProperties(createJavaMailProperties());
+        return mailSender;
+    }
+
+    private Properties createJavaMailProperties() {
+        Properties javaMailProperties = new Properties();
+        String protocol = this.config.getSmtpProtocol();
+        javaMailProperties.put("mail.transport.protocol", protocol);
+        javaMailProperties.put(MAIL_PROP + protocol + ".host", this.config.getSmtpHost());
+        javaMailProperties.put(MAIL_PROP + protocol + ".port", this.config.getSmtpPort()+"");
+        javaMailProperties.put(MAIL_PROP + protocol + ".timeout", this.config.getTimeout()+"");
+        javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(this.config.getUsername())));
+        javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", Boolean.valueOf(this.config.isEnableTls()).toString());
+        return javaMailProperties;
     }
 }

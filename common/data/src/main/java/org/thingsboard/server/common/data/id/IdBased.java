@@ -17,9 +17,10 @@ package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-public abstract class IdBased<I extends UUIDBased> {
+public abstract class IdBased<I extends UUIDBased> implements Serializable {
 	
 	protected I id;
 	

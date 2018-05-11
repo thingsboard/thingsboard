@@ -45,6 +45,6 @@ public class EntitiesCustomerIdAsyncLoader {
     private static <T extends HasCustomerId> ListenableFuture<CustomerId> getCustomerAsync(ListenableFuture<T> future) {
         return Futures.transform(future, (AsyncFunction<HasCustomerId, CustomerId>) in -> {
             return in != null ? Futures.immediateFuture(in.getCustomerId())
-                    : Futures.immediateFailedFuture(new IllegalStateException("Customer not found"));});
+                    : Futures.immediateFuture(null);});
     }
 }

@@ -76,7 +76,7 @@
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
-        min-width: 180px;
+        min-width: 150px;
       }
       .fc-canvas {
         background: #f9f9f9;
@@ -160,6 +160,9 @@
   }
   &.tb-action-type {
     background-color: #f1928f;
+  }
+  &.tb-external-type {
+    background-color: #fbc766;
   }
   &.tb-rule-chain-type {
     background-color: #d6c4f1;
