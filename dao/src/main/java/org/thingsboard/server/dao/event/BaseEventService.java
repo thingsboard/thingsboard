@@ -82,6 +82,11 @@ public class BaseEventService implements EventService {
         return new TimePageData<>(events, pageLink);
     }
 
+    @Override
+    public List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
+        return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
+    }
+
     private DataValidator<Event> eventValidator =
             new DataValidator<Event>() {
                 @Override

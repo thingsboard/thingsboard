@@ -21,7 +21,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface EventService {
 
@@ -34,4 +36,7 @@ public interface EventService {
     TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, TimePageLink pageLink);
 
     TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
+
+    List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit);
+
 }

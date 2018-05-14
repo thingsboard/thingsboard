@@ -34,7 +34,8 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         getRuleNodeComponentByClazz: getRuleNodeComponentByClazz,
         getRuleNodeSupportedLinks: getRuleNodeSupportedLinks,
         resolveTargetRuleChains: resolveTargetRuleChains,
-        testScript: testScript
+        testScript: testScript,
+        getLatestRuleNodeDebugInput: getLatestRuleNodeDebugInput
     };
 
     return service;
@@ -306,6 +307,17 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         var deferred = $q.defer();
         var url = '/api/ruleChain/testScript';
         $http.post(url, inputParams).then(function success(response) {
+            deferred.resolve(response.data);
+        }, function fail() {
+            deferred.reject();
+        });
+        return deferred.promise;
+    }
+
+    function getLatestRuleNodeDebugInput(ruleNodeId) {
+        var deferred = $q.defer();
+        var url = '/api/ruleNode/' + ruleNodeId + '/debugIn';
+        $http.get(url).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
             deferred.reject();

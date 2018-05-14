@@ -76,4 +76,16 @@ public interface EventDao extends Dao<Event> {
      * @return the event list
      */
     List<Event> findEvents(UUID tenantId, EntityId entityId, String eventType, TimePageLink pageLink);
+
+    /**
+     * Find latest events by tenantId, entityId and eventType.
+     *
+     * @param tenantId the tenantId
+     * @param entityId the entityId
+     * @param eventType the eventType
+     * @param limit the limit
+     * @return the event list
+     */
+    List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit);
+
 }

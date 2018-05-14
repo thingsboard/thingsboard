@@ -109,6 +109,17 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
         return DaoUtil.convertDataList(eventRepository.findAll(where(timeSearchSpec).and(fieldsSpec), pageable).getContent());
     }
 
+    @Override
+    public List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit) {
+        List<EventEntity> latest = eventRepository.findLatestByTenantIdAndEntityTypeAndEntityIdAndEventType(
+                UUIDConverter.fromTimeUUID(tenantId),
+                entityId.getEntityType(),
+                UUIDConverter.fromTimeUUID(entityId.getId()),
+                eventType,
+                new PageRequest(0, limit));
+        return DaoUtil.convertDataList(latest);
+    }
+
     public Optional<Event> save(EventEntity entity, boolean ifNotExists) {
         log.debug("Save event [{}] ", entity);
         if (entity.getTenantId() == null) {

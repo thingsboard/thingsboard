@@ -44,7 +44,7 @@ import org.thingsboard.server.common.msg.TbMsg;
                         "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeClearAlarmConfig",
-        icon = "notifications_active"
+        icon = "notifications_off"
 )
 public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfiguration> {
 

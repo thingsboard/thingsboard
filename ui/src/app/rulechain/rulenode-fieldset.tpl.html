@@ -37,6 +37,7 @@
                 </md-input-container>
             </section>
             <tb-rule-node-config ng-model="ruleNode.configuration"
+                                 rule-node-id="ruleNode.ruleNodeId.id"
                                  ng-required="true"
                                  node-definition="ruleNode.component.configurationDescriptor.nodeDefinition"
                                  ng-readonly="$root.loading || !isEdit || isReadOnly">

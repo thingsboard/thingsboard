@@ -21,14 +21,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -38,6 +42,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.script.NashornJsEngine;
@@ -52,8 +57,12 @@ import java.util.Set;
 public class RuleChainController extends BaseController {
 
     public static final String RULE_CHAIN_ID = "ruleChainId";
+    public static final String RULE_NODE_ID = "ruleNodeId";
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private EventService eventService;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.GET)
@@ -213,6 +222,31 @@ public class RuleChainController extends BaseController {
                     null,
                     null,
                     ActionType.DELETED, e, strRuleChainId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleNode/{ruleNodeId}/debugIn", method = RequestMethod.GET)
+    @ResponseBody
+    public JsonNode getLatestRuleNodeDebugInput(@PathVariable(RULE_NODE_ID) String strRuleNodeId) throws ThingsboardException {
+        checkParameter(RULE_NODE_ID, strRuleNodeId);
+        try {
+            RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
+            TenantId tenantId = getCurrentUser().getTenantId();
+            List<Event> events = eventService.findLatestEvents(tenantId, ruleNodeId, DataConstants.DEBUG_RULE_NODE, 2);
+            JsonNode result = null;
+            if (events != null) {
+                for (Event event : events) {
+                    JsonNode body = event.getBody();
+                    if (body.has("type") && body.get("type").asText().equals("IN")) {
+                        result = body;
+                        break;
+                    }
+                }
+            }
+            return result;
+        } catch (Exception e) {
             throw handleException(e);
         }
     }

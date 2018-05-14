@@ -40,7 +40,7 @@ export default function RuleNodeDefinedConfigDirective($compile) {
                 scope.ruleNodeConfigScope.$destroy();
             }
             var directive = snake_case(attrs.ruleNodeDirective, '-');
-            var template = `<${directive} ng-model="configuration" ng-required="required" ng-readonly="readonly"></${directive}>`;
+            var template = `<${directive} rule-node-id="ruleNodeId" ng-model="configuration" ng-required="required" ng-readonly="readonly"></${directive}>`;
             element.html(template);
             scope.ruleNodeConfigScope = scope.$new();
             $compile(element.contents())(scope.ruleNodeConfigScope);
@@ -58,6 +58,7 @@ export default function RuleNodeDefinedConfigDirective($compile) {
         restrict: "E",
         require: "^ngModel",
         scope: {
+            ruleNodeId:'=',
             required:'=ngRequired',
             readonly:'=ngReadonly'
         },

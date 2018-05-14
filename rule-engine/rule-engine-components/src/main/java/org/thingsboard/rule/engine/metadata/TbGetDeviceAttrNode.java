@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.TbNodeUtils;
@@ -23,32 +22,31 @@ import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.EntitiesRelatedDeviceIdAsyncLoader;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-          name = "originator attributes",
-          configClazz = TbGetAttributesNodeConfiguration.class,
-          nodeDescription = "Add Message Originator Attributes or Latest Telemetry into Message Metadata",
-          nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
+        name = "device attributes",
+        configClazz = TbGetDeviceAttrNodeConfiguration.class,
+        nodeDescription = "Add Originators Related Device Attributes or Latest Telemetry into Message Metadata",
+        nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
                 "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into metadata without prefix. " +
-                  "To access those attributes in other nodes this template can be used " +
+                "To access those attributes in other nodes this template can be used " +
                 "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
-public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
+        configDirective = "tbEnrichmentNodeDeviceAttributesConfig")
+public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDeviceAttrNodeConfiguration, DeviceId> {
 
     @Override
-    protected TbGetAttributesNodeConfiguration loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbGetAttributesNodeConfiguration.class);
+    protected TbGetDeviceAttrNodeConfiguration loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
+        return TbNodeUtils.convert(configuration, TbGetDeviceAttrNodeConfiguration.class);
     }
 
     @Override
-    protected ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return Futures.immediateFuture(originator);
+    protected ListenableFuture<DeviceId> findEntityAsync(TbContext ctx, EntityId originator) {
+        return EntitiesRelatedDeviceIdAsyncLoader.findDeviceAsync(ctx, originator, config.getDeviceRelationsQuery());
     }
 }
