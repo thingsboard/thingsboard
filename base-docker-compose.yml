@@ -8,6 +8,9 @@ services:
       - "2181:2181"
 
   cassandra-tb:
+    build:
+      context: .
+      dockerfile: Dockerfile.cassandra
     image: cassandra
     networks:
       - core
@@ -15,7 +18,9 @@ services:
       - "7199:7199"
       - "9160:9160"
       - "9042:9042"
-
+    volumes:
+      - /cassandra:/var/lib/cassandra
+      - ./db-schema:/docker-entrypoint-initdb.d/
   redis:
     image: redis:4.0
     networks:

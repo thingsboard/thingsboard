@@ -1,0 +1,13 @@
+FROM cassandra
+
+WORKDIR /opt/cassandra
+
+COPY dao/src/main/resources/cassandra/schema.cql /opt/cassandra
+
+COPY entrypoint-with-db-init.sh /opt/cassandra/entrypoint-with-db-init.sh
+
+RUN chmod +x /opt/cassandra/entrypoint-with-db-init.sh
+
+ENTRYPOINT ["/opt/cassandra/entrypoint-with-db-init.sh"]
+
+CMD ["cassandra", "-f"]
