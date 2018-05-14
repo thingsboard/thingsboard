@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.mqtt;
 
-package org.thingsboard.rule.engine.mqtt.credentials;
+/**
+ * Created by Valerii Sosliuk on 12/30/2017.
+ */
+public interface MqttClientCallback {
 
-import io.netty.handler.ssl.SslContext;
-import org.thingsboard.mqtt.MqttClientConfig;
-
-import java.util.Optional;
-
-public class AnonymousCredentials implements MqttClientCredentials {
-
-    @Override
-    public Optional<SslContext> initSslContext() {
-        return Optional.empty();
-    }
-
-    @Override
-    public void configure(MqttClientConfig config) {
-
-    }
+    /**
+     * This method is called when the connection to the server is lost.
+     *
+     * @param cause the reason behind the loss of connection.
+     */
+    public void connectionLost(Throwable cause);
 }
-

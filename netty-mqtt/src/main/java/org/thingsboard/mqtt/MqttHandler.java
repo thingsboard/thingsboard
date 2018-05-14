@@ -13,24 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.mqtt;
 
-package org.thingsboard.rule.engine.mqtt.credentials;
+import io.netty.buffer.ByteBuf;
 
-import io.netty.handler.ssl.SslContext;
-import org.thingsboard.mqtt.MqttClientConfig;
+public interface MqttHandler {
 
-import java.util.Optional;
-
-public class AnonymousCredentials implements MqttClientCredentials {
-
-    @Override
-    public Optional<SslContext> initSslContext() {
-        return Optional.empty();
-    }
-
-    @Override
-    public void configure(MqttClientConfig config) {
-
-    }
+    void onMessage(String topic, ByteBuf payload);
 }
-

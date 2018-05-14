@@ -69,6 +69,10 @@
             <artifactId>rule-engine-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>netty-mqtt</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
@@ -89,10 +93,6 @@
         <dependency>
             <groupId>com.rabbitmq</groupId>
             <artifactId>amqp-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>nl.jk5.netty-mqtt</groupId>
-            <artifactId>netty-mqtt</artifactId>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>

@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.mqtt.credentials;
 
 import io.netty.handler.ssl.SslContext;
 import lombok.Data;
-import nl.jk5.mqtt.MqttClientConfig;
+import org.thingsboard.mqtt.MqttClientConfig;
 
 import java.util.Optional;
 
