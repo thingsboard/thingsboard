@@ -74,6 +74,7 @@ import thingsboardApiAttribute from './api/attribute.service';
 import thingsboardApiEntity from './api/entity.service';
 import thingsboardApiAlarm from './api/alarm.service';
 import thingsboardApiAuditLog from './api/audit-log.service';
+import thingsboardApiComponentDescriptor from './api/component-descriptor.service';
 import thingsboardApiRuleChain from './api/rule-chain.service';
 
 import 'typeface-roboto';
@@ -139,6 +140,7 @@ angular.module('thingsboard', [
     thingsboardApiEntity,
     thingsboardApiAlarm,
     thingsboardApiAuditLog,
+    thingsboardApiComponentDescriptor,
     thingsboardApiRuleChain,
     uiRouter])
     .config(AppConfig)
