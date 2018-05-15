@@ -29,15 +29,12 @@ import org.thingsboard.server.service.cluster.rpc.GrpcSessionListener;
 @Slf4j
 public class BasicRpcSessionListener implements GrpcSessionListener {
 
-    public static final String SESSION_RECEIVED_SESSION_ACTOR_MSG = "{} session [{}] received session actor msg {}";
-    private final ActorSystemContext context;
     private final ActorService service;
     private final ActorRef manager;
     private final ActorRef self;
 
-    public BasicRpcSessionListener(ActorSystemContext context, ActorRef manager, ActorRef self) {
-        this.context = context;
-        this.service = context.getActorService();
+    public BasicRpcSessionListener(ActorService service, ActorRef manager, ActorRef self) {
+        this.service = service;
         this.manager = manager;
         this.self = self;
     }
@@ -63,7 +60,6 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
                 clusterMessage);
         service.onRecievedMsg(clusterMessage);
     }
-
 
     @Override
     public void onError(GrpcSession session, Throwable t) {

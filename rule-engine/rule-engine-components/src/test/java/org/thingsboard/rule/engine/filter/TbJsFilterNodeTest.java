@@ -62,7 +62,7 @@ public class TbJsFilterNodeTest {
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
-        verify(ctx).tellNext(msg, "false");
+        verify(ctx).tellNext(msg, "False");
     }
 
     @Test
@@ -88,7 +88,7 @@ public class TbJsFilterNodeTest {
 
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
-        verify(ctx).tellNext(msg, "true");
+        verify(ctx).tellNext(msg, "True");
     }
 
     private void initWithScript() throws TbNodeException {

@@ -21,7 +21,7 @@ import nodeScriptTestTemplate from './node-script-test.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function NodeScriptTest($q, $mdDialog, $document) {
+export default function NodeScriptTest($q, $mdDialog, $document, ruleChainService) {
 
     var service = {
         testNodeScript: testNodeScript
@@ -29,12 +29,72 @@ export default function NodeScriptTest($q, $mdDialog, $document) {
 
     return service;
 
-    function testNodeScript($event, script, scriptType, functionTitle, functionName, argNames, msg, metadata, msgType) {
+    function testNodeScript($event, script, scriptType, functionTitle, functionName, argNames, ruleNodeId) {
         var deferred = $q.defer();
-
         if ($event) {
             $event.stopPropagation();
         }
+
+        var msg, metadata, msgType;
+        if (ruleNodeId) {
+            ruleChainService.getLatestRuleNodeDebugInput(ruleNodeId).then(
+                (debugIn) => {
+                    if (debugIn) {
+                        if (debugIn.data) {
+                            msg = angular.fromJson(debugIn.data);
+                        }
+                        if (debugIn.metadata) {
+                            metadata = angular.fromJson(debugIn.metadata);
+                        }
+                        msgType = debugIn.msgType;
+                    }
+                    openTestScriptDialog($event, script, scriptType, functionTitle,
+                                         functionName, argNames, msg, metadata, msgType).then(
+                        (script) => {
+                            deferred.resolve(script);
+                        },
+                        () => {
+                            deferred.reject();
+                        }
+                    );
+                },
+                () => {
+                    deferred.reject();
+                }
+            );
+        } else {
+            openTestScriptDialog($event, script, scriptType, functionTitle,
+                functionName, argNames).then(
+                (script) => {
+                    deferred.resolve(script);
+                },
+                () => {
+                    deferred.reject();
+                }
+            );
+        }
+        return deferred.promise;
+    }
+
+    function openTestScriptDialog($event, script, scriptType, functionTitle, functionName, argNames, msg, metadata, msgType) {
+        var deferred = $q.defer();
+        if (!msg) {
+            msg = {
+                temperature: 22.4,
+                humidity: 78
+            };
+        }
+        if (!metadata) {
+            metadata = {
+                deviceType: "default",
+                deviceName: "Test Device",
+                ts: new Date().getTime() + ""
+            };
+        }
+        if (!msgType) {
+            msgType = "POST_TELEMETRY_REQUEST";
+        }
+
         var onShowingCallback = {
             onShowed: () => {
             }
@@ -74,7 +134,6 @@ export default function NodeScriptTest($q, $mdDialog, $document) {
                 deferred.reject();
             }
         );
-
         return deferred.promise;
     }
 

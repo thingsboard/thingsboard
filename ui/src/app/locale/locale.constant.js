@@ -782,6 +782,7 @@ export default angular.module('thingsboard.locale', [])
                     "message-id": "Message Id",
                     "message-type": "Message Type",
                     "data-type": "Data Type",
+                    "relation-type": "Relation Type",
                     "metadata": "Metadata",
                     "data": "Data",
                     "event": "Event",
@@ -1242,7 +1243,8 @@ export default angular.module('thingsboard.locale', [])
                     "metadata": "Metadata",
                     "metadata-required": "Metadata entries can't be empty.",
                     "output": "Output",
-                    "test": "Test"
+                    "test": "Test",
+                    "help": "Help"
                 },
                 "rule-plugin": {
                     "management": "Rules and plugins management"

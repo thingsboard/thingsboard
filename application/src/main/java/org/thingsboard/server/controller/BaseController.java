@@ -607,7 +607,7 @@ public abstract class BaseController {
     }
 
     public static Exception toException(Throwable error) {
-        return Exception.class.isInstance(error) ? (Exception) error : new Exception(error);
+        return error != null ? (Exception.class.isInstance(error) ? (Exception) error : new Exception(error)) : null;
     }
 
 }

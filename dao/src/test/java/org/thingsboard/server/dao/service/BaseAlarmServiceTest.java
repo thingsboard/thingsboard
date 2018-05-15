@@ -168,7 +168,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
-        alarmService.clearAlarm(created.getId(), System.currentTimeMillis()).get();
+        alarmService.clearAlarm(created.getId(), null, System.currentTimeMillis()).get();
         created = alarmService.findAlarmByIdAsync(created.getId()).get();
 
         alarms = alarmService.findAlarms(AlarmQuery.builder()

@@ -36,7 +36,7 @@ public class TbGetRelatedAttrNodeConfiguration extends TbGetEntityAttrNodeConfig
         Map<String, String> attrMapping = new HashMap<>();
         attrMapping.putIfAbsent("temperature", "tempo");
         configuration.setAttrMapping(attrMapping);
-        configuration.setTelemetry(true);
+        configuration.setTelemetry(false);
 
         RelationsQuery relationsQuery = new RelationsQuery();
         relationsQuery.setDirection(EntitySearchDirection.FROM);

@@ -69,7 +69,7 @@ public class TbTransformMsgNodeTest {
         node.onMsg(ctx, msg);
         verify(ctx).getJsExecutor();
         ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellNext(captor.capture(), SUCCESS);
+        verify(ctx).tellNext(captor.capture(), eq(SUCCESS));
         TbMsg actualMsg = captor.getValue();
         assertEquals(transformedMsg, actualMsg);
     }

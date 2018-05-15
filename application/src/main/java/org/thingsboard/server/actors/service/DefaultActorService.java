@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,6 @@ import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
 import org.thingsboard.server.actors.rpc.RpcManagerActor;
 import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
-import org.thingsboard.server.actors.rpc.RpcSessionTellMsg;
 import org.thingsboard.server.actors.session.SessionManagerActor;
 import org.thingsboard.server.actors.stats.StatsActor;
 import org.thingsboard.server.common.data.id.*;
@@ -39,14 +38,10 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
-import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
 import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
 import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
@@ -59,10 +54,10 @@ import scala.concurrent.duration.Duration;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Optional;
 
+import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
+import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE_VALUE;
 import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_NETWORK_SERVER_DATA_MESSAGE;
-import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.RPC_BROADCAST_MSG;
 
 @Service
 @Slf4j
@@ -157,7 +152,6 @@ public class DefaultActorService implements ActorService {
     }
 
 
-
     @Override
     public void onServerAdded(ServerInstance server) {
         log.trace("Processing onServerAdded msg: {}", server);
@@ -204,8 +198,8 @@ public class DefaultActorService implements ActorService {
         rpcService.broadcast(new RpcBroadcastMsg(ClusterAPIProtos.ClusterMessage
                 .newBuilder()
                 .setPayload(ByteString
-                .copyFrom(actorContext.getEncodingService().encode(msg)))
-                .setMessageType(CLUSTER_NETWORK_SERVER_DATA_MESSAGE)
+                        .copyFrom(actorContext.getEncodingService().encode(msg)))
+                .setMessageType(CLUSTER_ACTOR_MESSAGE)
                 .build()));
         appActor.tell(msg, ActorRef.noSender());
     }
@@ -218,8 +212,9 @@ public class DefaultActorService implements ActorService {
 
     @Override
     public void onRecievedMsg(ClusterAPIProtos.ClusterMessage msg) {
-        switch(msg.getMessageType()) {
-            case CLUSTER_NETWORK_SERVER_DATA_MESSAGE:
+        ServerAddress serverAddress = new ServerAddress(msg.getServerAddress().getHost(), msg.getServerAddress().getPort());
+        switch (msg.getMessageType()) {
+            case CLUSTER_ACTOR_MESSAGE:
                 java.util.Optional<TbActorMsg> decodedMsg = actorContext.getEncodingService()
                         .decode(msg.getPayload().toByteArray());
                 if (decodedMsg.isPresent()) {
@@ -229,7 +224,25 @@ public class DefaultActorService implements ActorService {
                 }
                 break;
             case TO_ALL_NODES_MSG:
-                //ToDo
+                //TODO
+                break;
+            case CLUSTER_TELEMETRY_SUBSCRIPTION_CREATE_MESSAGE:
+                actorContext.getTsSubService().onNewRemoteSubscription(serverAddress, msg.getPayload().toByteArray());
+                break;
+            case CLUSTER_TELEMETRY_SUBSCRIPTION_UPDATE_MESSAGE:
+                actorContext.getTsSubService().onRemoteSubscriptionUpdate(serverAddress, msg.getPayload().toByteArray());
+                break;
+            case CLUSTER_TELEMETRY_SUBSCRIPTION_CLOSE_MESSAGE:
+                actorContext.getTsSubService().onRemoteSubscriptionClose(serverAddress, msg.getPayload().toByteArray());
+                break;
+            case CLUSTER_TELEMETRY_SESSION_CLOSE_MESSAGE:
+                actorContext.getTsSubService().onRemoteSessionClose(serverAddress, msg.getPayload().toByteArray());
+                break;
+            case CLUSTER_TELEMETRY_ATTR_UPDATE_MESSAGE:
+                actorContext.getTsSubService().onRemoteAttributesUpdate(serverAddress, msg.getPayload().toByteArray());
+                break;
+            case CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE:
+                actorContext.getTsSubService().onRemoteTsUpdate(serverAddress, msg.getPayload().toByteArray());
                 break;
         }
     }

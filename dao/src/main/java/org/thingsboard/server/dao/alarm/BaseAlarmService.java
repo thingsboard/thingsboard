@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.alarm;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -187,7 +188,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, long clearTime) {
+    public ListenableFuture<Boolean> clearAlarm(AlarmId alarmId, JsonNode details, long clearTime) {
         return getAndUpdate(alarmId, new Function<Alarm, Boolean>() {
             @Nullable
             @Override
@@ -199,6 +200,9 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     AlarmStatus newStatus = oldStatus.isAck() ? AlarmStatus.CLEARED_ACK : AlarmStatus.CLEARED_UNACK;
                     alarm.setStatus(newStatus);
                     alarm.setClearTs(clearTime);
+                    if (details != null) {
+                        alarm.setDetails(details);
+                    }
                     alarmDao.save(alarm);
                     updateRelations(alarm, oldStatus, newStatus);
                     return true;

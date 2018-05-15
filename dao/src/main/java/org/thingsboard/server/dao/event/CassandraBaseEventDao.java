@@ -134,6 +134,21 @@ public class CassandraBaseEventDao extends CassandraAbstractSearchTimeDao<EventE
         return DaoUtil.convertDataList(entities);
     }
 
+    @Override
+    public List<Event> findLatestEvents(UUID tenantId, EntityId entityId, String eventType, int limit) {
+        log.trace("Try to find latest events by tenant [{}], entity [{}], type [{}] and limit [{}]", tenantId, entityId, eventType, limit);
+        Select select = select().from(EVENT_BY_TYPE_AND_ID_VIEW_NAME);
+        Select.Where query = select.where();
+        query.and(eq(ModelConstants.EVENT_TENANT_ID_PROPERTY, tenantId));
+        query.and(eq(ModelConstants.EVENT_ENTITY_TYPE_PROPERTY, entityId.getEntityType()));
+        query.and(eq(ModelConstants.EVENT_ENTITY_ID_PROPERTY, entityId.getId()));
+        query.and(eq(ModelConstants.EVENT_TYPE_PROPERTY, eventType));
+        query.limit(limit);
+        query.orderBy(QueryBuilder.desc(ModelConstants.EVENT_TYPE_PROPERTY), QueryBuilder.desc(ModelConstants.ID_PROPERTY));
+        List<EventEntity> entities = findListByStatement(query);
+        return DaoUtil.convertDataList(entities);
+    }
+
     private Optional<Event> save(EventEntity entity, boolean ifNotExists) {
         if (entity.getId() == null) {
             entity.setId(UUIDs.timeBased());

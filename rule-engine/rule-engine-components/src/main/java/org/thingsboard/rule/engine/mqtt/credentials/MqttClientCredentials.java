@@ -19,7 +19,7 @@ package org.thingsboard.rule.engine.mqtt.credentials;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.netty.handler.ssl.SslContext;
-import nl.jk5.mqtt.MqttClientConfig;
+import org.thingsboard.mqtt.MqttClientConfig;
 
 import java.util.Optional;
 

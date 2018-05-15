@@ -24,9 +24,9 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
-import nl.jk5.mqtt.MqttClient;
-import nl.jk5.mqtt.MqttClientConfig;
-import nl.jk5.mqtt.MqttConnectResult;
+import org.thingsboard.mqtt.MqttClient;
+import org.thingsboard.mqtt.MqttClientConfig;
+import org.thingsboard.mqtt.MqttConnectResult;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
@@ -80,8 +80,7 @@ public class TbMqttNode implements TbNode {
         this.mqttClient.publish(topic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE)
                 .addListener(future -> {
                     if (future.isSuccess()) {
-                        TbMsg next = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
-                        ctx.tellNext(next, TbRelationTypes.SUCCESS);
+                        ctx.tellNext(msg, TbRelationTypes.SUCCESS);
                     } else {
                         TbMsg next = processException(ctx, msg, future.cause());
                         ctx.tellNext(next, TbRelationTypes.FAILURE, future.cause());

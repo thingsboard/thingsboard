@@ -93,7 +93,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     public void onRuleToSelfMsg(RuleNodeToSelfMsg msg) throws Exception {
         checkActive();
         if (ruleNode.isDebugMode()) {
-            systemContext.persistDebugInput(tenantId, entityId, msg.getMsg());
+            systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
         }
         tbNode.onMsg(defaultCtx, msg.getMsg());
     }
@@ -101,7 +101,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) throws Exception {
         checkActive();
         if (ruleNode.isDebugMode()) {
-            systemContext.persistDebugInput(tenantId, entityId, msg.getMsg());
+            systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
         }
         tbNode.onMsg(msg.getCtx(), msg.getMsg());
     }

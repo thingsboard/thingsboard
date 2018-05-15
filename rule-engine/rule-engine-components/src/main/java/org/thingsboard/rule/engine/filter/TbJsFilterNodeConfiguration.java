@@ -26,8 +26,7 @@ public class TbJsFilterNodeConfiguration implements NodeConfiguration<TbJsFilter
     @Override
     public TbJsFilterNodeConfiguration defaultConfiguration() {
         TbJsFilterNodeConfiguration configuration = new TbJsFilterNodeConfiguration();
-        configuration.setJsScript("return msg.passed < 15 && msg.name === 'Vit' " +
-                "&& metadata.temp == 10 && msg.bigObj.prop == 42 && msgType === 'POST_TELEMETRY';");
+        configuration.setJsScript("return msg.temperature > 20;");
         return configuration;
     }
 }

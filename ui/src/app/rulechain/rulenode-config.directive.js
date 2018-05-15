@@ -68,6 +68,7 @@ export default function RuleNodeConfigDirective($compile, $templateCache, $injec
         restrict: "E",
         require: "^ngModel",
         scope: {
+            ruleNodeId:'=',
             nodeDefinition:'=',
             required:'=ngRequired',
             readonly:'=ngReadonly'

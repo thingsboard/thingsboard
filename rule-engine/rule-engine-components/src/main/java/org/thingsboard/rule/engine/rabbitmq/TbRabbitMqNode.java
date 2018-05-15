@@ -106,7 +106,7 @@ public class TbRabbitMqNode implements TbNode {
                 routingKey,
                 properties,
                 msg.getData().getBytes(UTF8));
-        return ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
+        return msg;
     }
 
     private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {

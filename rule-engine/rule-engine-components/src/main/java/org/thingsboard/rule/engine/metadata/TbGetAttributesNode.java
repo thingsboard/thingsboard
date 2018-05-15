@@ -15,23 +15,16 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.thingsboard.rule.engine.TbNodeUtils;
-import org.thingsboard.rule.engine.api.*;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.List;
-
-import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.server.common.data.DataConstants.*;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -47,50 +40,15 @@ import static org.thingsboard.server.common.data.DataConstants.*;
                 "<code>metadata.cs_temperature</code> or <code>metadata.shared_limit</code> ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
-public class TbGetAttributesNode implements TbNode {
-
-    private TbGetAttributesNodeConfiguration config;
+public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbGetAttributesNodeConfiguration.class);
+    protected TbGetAttributesNodeConfiguration loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
+        return TbNodeUtils.convert(configuration, TbGetAttributesNodeConfiguration.class);
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        ListenableFuture<List<Void>> allFutures = Futures.allAsList(
-                putLatestTelemetry(ctx, msg, config.getLatestTsKeyNames()),
-                putAttrAsync(ctx, msg, CLIENT_SCOPE, config.getClientAttributeNames(), "cs_"),
-                putAttrAsync(ctx, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared_"),
-                putAttrAsync(ctx, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss_")
-        );
-        withCallback(allFutures, i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellError(msg, t));
-    }
-
-    private ListenableFuture<Void> putAttrAsync(TbContext ctx, TbMsg msg, String scope, List<String> keys, String prefix) {
-        if (CollectionUtils.isEmpty(keys)) {
-            return Futures.immediateFuture(null);
-        }
-        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(msg.getOriginator(), scope, keys);
-        return Futures.transform(latest, (Function<? super List<AttributeKvEntry>, Void>) l -> {
-            l.forEach(r -> msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString()));
-            return null;
-        });
-    }
-
-    private ListenableFuture<Void> putLatestTelemetry(TbContext ctx, TbMsg msg, List<String> keys) {
-        if (CollectionUtils.isEmpty(keys)) {
-            return Futures.immediateFuture(null);
-        }
-        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(msg.getOriginator(), keys);
-        return Futures.transform(latest, (Function<? super List<TsKvEntry>, Void>) l -> {
-            l.forEach(r -> msg.getMetaData().putValue(r.getKey(), r.getValueAsString()));
-            return null;
-        });
-    }
-
-    @Override
-    public void destroy() {
-
+    protected ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
+        return Futures.immediateFuture(originator);
     }
 }

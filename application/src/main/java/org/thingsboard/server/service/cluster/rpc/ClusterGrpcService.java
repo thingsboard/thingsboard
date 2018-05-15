@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,13 +26,18 @@ import org.springframework.util.SerializationUtils;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
 import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
 
+import org.thingsboard.server.extensions.api.plugins.rpc.RpcMsg;
+import org.thingsboard.server.extensions.core.plugin.telemetry.sub.Subscription;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
 import org.thingsboard.server.gen.cluster.ClusterRpcServiceGrpc;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 import org.thingsboard.server.service.cluster.discovery.ServerInstanceService;
+import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
@@ -51,6 +56,9 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
 
     @Autowired
     private ServerInstanceService instanceService;
+
+    @Autowired
+    private DataDecodingEncodingService encodingService;
 
     private RpcMsgListener listener;
 
@@ -77,8 +85,8 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
     }
 
     @Override
-    public void onSessionCreated(UUID msgUid,  StreamObserver<ClusterAPIProtos.ClusterMessage> inputStream) {
-        BlockingQueue<StreamObserver<ClusterAPIProtos.ClusterMessage>> queue  = pendingSessionMap.remove(msgUid);
+    public void onSessionCreated(UUID msgUid, StreamObserver<ClusterAPIProtos.ClusterMessage> inputStream) {
+        BlockingQueue<StreamObserver<ClusterAPIProtos.ClusterMessage>> queue = pendingSessionMap.remove(msgUid);
         if (queue != null) {
             try {
                 queue.put(inputStream);
@@ -120,7 +128,7 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
         listener.onBroadcastMsg(msg);
     }
 
-    private  StreamObserver<ClusterAPIProtos.ClusterMessage> createSession(RpcSessionCreateRequestMsg msg) {
+    private StreamObserver<ClusterAPIProtos.ClusterMessage> createSession(RpcSessionCreateRequestMsg msg) {
         BlockingQueue<StreamObserver<ClusterAPIProtos.ClusterMessage>> queue = new ArrayBlockingQueue<>(1);
         pendingSessionMap.put(msg.getMsgUid(), queue);
         listener.onRpcSessionCreateRequestMsg(msg);
@@ -139,5 +147,22 @@ public class ClusterGrpcService extends ClusterRpcServiceGrpc.ClusterRpcServiceI
         listener.onSendMsg(message);
     }
 
+    @Override
+    public void tell(ServerAddress serverAddress, TbActorMsg actorMsg) {
+        listener.onSendMsg(encodingService.convertToProtoDataMessage(serverAddress, actorMsg));
+    }
 
+    @Override
+    public void tell(ServerAddress serverAddress, ClusterAPIProtos.MessageType msgType, byte[] data) {
+        ClusterAPIProtos.ClusterMessage msg = ClusterAPIProtos.ClusterMessage
+                .newBuilder()
+                .setServerAddress(ClusterAPIProtos.ServerAddress
+                        .newBuilder()
+                        .setHost(serverAddress.getHost())
+                        .setPort(serverAddress.getPort())
+                        .build())
+                .setMessageType(msgType)
+                .setPayload(ByteString.copyFrom(data)).build();
+        listener.onSendMsg(msg);
+    }
 }

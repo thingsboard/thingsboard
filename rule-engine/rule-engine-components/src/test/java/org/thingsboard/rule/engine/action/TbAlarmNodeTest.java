@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -45,7 +46,7 @@ import java.util.concurrent.Callable;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static org.thingsboard.rule.engine.action.TbAlarmNode.*;
+import static org.thingsboard.rule.engine.action.TbAbstractAlarmNode.*;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.CRITICAL;
 import static org.thingsboard.server.common.data.alarm.AlarmSeverity.WARNING;
 import static org.thingsboard.server.common.data.alarm.AlarmStatus.*;
@@ -53,7 +54,7 @@ import static org.thingsboard.server.common.data.alarm.AlarmStatus.*;
 @RunWith(MockitoJUnitRunner.class)
 public class TbAlarmNodeTest {
 
-    private TbAlarmNode node;
+    private TbAbstractAlarmNode node;
 
     @Mock
     private TbContext ctx;
@@ -62,10 +63,6 @@ public class TbAlarmNodeTest {
     @Mock
     private AlarmService alarmService;
 
-    @Mock
-    private ScriptEngine createJs;
-    @Mock
-    private ScriptEngine clearJs;
     @Mock
     private ScriptEngine detailsJs;
 
@@ -100,11 +97,10 @@ public class TbAlarmNodeTest {
 
     @Test
     public void newAlarmCanBeCreated() throws ScriptException, IOException {
-        initWithScript();
+        initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
 
-        when(createJs.executeFilter(msg)).thenReturn(true);
         when(detailsJs.executeJson(msg)).thenReturn(null);
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
 
@@ -140,38 +136,15 @@ public class TbAlarmNodeTest {
 
         assertEquals(expectedAlarm, actualAlarm);
 
-        verify(executor, times(2)).executeAsync(any(Callable.class));
-    }
-
-    @Test
-    public void shouldCreateScriptThrowsException() throws ScriptException {
-        initWithScript();
-        metaData.putValue("key", "value");
-        TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
-
-        when(createJs.executeFilter(msg)).thenThrow(new NotImplementedException("message"));
-
-        node.onMsg(ctx, msg);
-
-        verifyError(msg, "message", NotImplementedException.class);
-
-
-        verify(ctx).createJsScriptEngine("CREATE", "isAlarm");
-        verify(ctx).createJsScriptEngine("CLEAR", "isCleared");
-        verify(ctx).createJsScriptEngine("DETAILS", "Details");
-        verify(ctx).getJsExecutor();
-        verify(ctx).getDbCallbackExecutor();
-
-        verifyNoMoreInteractions(ctx, alarmService, clearJs, detailsJs);
+        verify(executor, times(1)).executeAsync(any(Callable.class));
     }
 
     @Test
     public void buildDetailsThrowsException() throws ScriptException, IOException {
-        initWithScript();
+        initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
 
-        when(createJs.executeFilter(msg)).thenReturn(true);
         when(detailsJs.executeJson(msg)).thenThrow(new NotImplementedException("message"));
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(null));
 
@@ -179,27 +152,24 @@ public class TbAlarmNodeTest {
 
         verifyError(msg, "message", NotImplementedException.class);
 
-        verify(ctx).createJsScriptEngine("CREATE", "isAlarm");
-        verify(ctx).createJsScriptEngine("CLEAR", "isCleared");
         verify(ctx).createJsScriptEngine("DETAILS", "Details");
-        verify(ctx, times(2)).getJsExecutor();
+        verify(ctx, times(1)).getJsExecutor();
         verify(ctx).getAlarmService();
-        verify(ctx, times(3)).getDbCallbackExecutor();
+        verify(ctx, times(2)).getDbCallbackExecutor();
         verify(ctx).getTenantId();
         verify(alarmService).findLatestByOriginatorAndType(tenantId, originator, "SomeType");
 
-        verifyNoMoreInteractions(ctx, alarmService, clearJs);
+        verifyNoMoreInteractions(ctx, alarmService);
     }
 
     @Test
     public void ifAlarmClearedCreateNew() throws ScriptException, IOException {
-        initWithScript();
+        initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
 
         Alarm clearedAlarm = Alarm.builder().status(CLEARED_ACK).build();
 
-        when(createJs.executeFilter(msg)).thenReturn(true);
         when(detailsJs.executeJson(msg)).thenReturn(null);
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(clearedAlarm));
 
@@ -236,20 +206,18 @@ public class TbAlarmNodeTest {
 
         assertEquals(expectedAlarm, actualAlarm);
 
-        verify(executor, times(2)).executeAsync(any(Callable.class));
+        verify(executor, times(1)).executeAsync(any(Callable.class));
     }
 
     @Test
     public void alarmCanBeUpdated() throws ScriptException, IOException {
-        initWithScript();
+        initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();
 
-        when(createJs.executeFilter(msg)).thenReturn(true);
-        when(clearJs.executeFilter(msg)).thenReturn(false);
         when(detailsJs.executeJson(msg)).thenReturn(null);
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(activeAlarm));
 
@@ -287,23 +255,21 @@ public class TbAlarmNodeTest {
 
         assertEquals(expectedAlarm, actualAlarm);
 
-        verify(executor, times(2)).executeAsync(any(Callable.class));
+        verify(executor, times(1)).executeAsync(any(Callable.class));
     }
 
     @Test
     public void alarmCanBeCleared() throws ScriptException, IOException {
-        initWithScript();
+        initWithClearAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = new TbMsg(UUIDs.timeBased(), "USER", originator, metaData, rawJson, ruleChainId, ruleNodeId, 0L);
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(originator).status(ACTIVE_UNACK).severity(WARNING).endTs(oldEndDate).build();
 
-        when(createJs.executeFilter(msg)).thenReturn(false);
-        when(clearJs.executeFilter(msg)).thenReturn(true);
 //        when(detailsJs.executeJson(msg)).thenReturn(null);
         when(alarmService.findLatestByOriginatorAndType(tenantId, originator, "SomeType")).thenReturn(Futures.immediateFuture(activeAlarm));
-        when(alarmService.clearAlarm(eq(activeAlarm.getId()), anyLong())).thenReturn(Futures.immediateFuture(true));
+        when(alarmService.clearAlarm(eq(activeAlarm.getId()), org.mockito.Mockito.any(JsonNode.class), anyLong())).thenReturn(Futures.immediateFuture(true));
 //        doAnswer((Answer<Alarm>) invocationOnMock -> (Alarm) (invocationOnMock.getArguments())[0]).when(alarmService).createOrUpdateAlarm(activeAlarm);
 
         node.onMsg(ctx, msg);
@@ -338,20 +304,16 @@ public class TbAlarmNodeTest {
         assertEquals(expectedAlarm, actualAlarm);
     }
 
-    private void initWithScript() {
+    private void initWithCreateAlarmScript() {
         try {
-            TbAlarmNodeConfiguration config = new TbAlarmNodeConfiguration();
+            TbCreateAlarmNodeConfiguration config = new TbCreateAlarmNodeConfiguration();
             config.setPropagate(true);
             config.setSeverity(CRITICAL);
             config.setAlarmType("SomeType");
-            config.setCreateConditionJs("CREATE");
-            config.setClearConditionJs("CLEAR");
             config.setAlarmDetailsBuildJs("DETAILS");
             ObjectMapper mapper = new ObjectMapper();
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-            when(ctx.createJsScriptEngine("CREATE", "isAlarm")).thenReturn(createJs);
-            when(ctx.createJsScriptEngine("CLEAR", "isCleared")).thenReturn(clearJs);
             when(ctx.createJsScriptEngine("DETAILS", "Details")).thenReturn(detailsJs);
 
             when(ctx.getTenantId()).thenReturn(tenantId);
@@ -361,7 +323,31 @@ public class TbAlarmNodeTest {
 
             mockJsExecutor();
 
-            node = new TbAlarmNode();
+            node = new TbCreateAlarmNode();
+            node.init(ctx, nodeConfiguration);
+        } catch (TbNodeException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private void initWithClearAlarmScript() {
+        try {
+            TbClearAlarmNodeConfiguration config = new TbClearAlarmNodeConfiguration();
+            config.setAlarmType("SomeType");
+            config.setAlarmDetailsBuildJs("DETAILS");
+            ObjectMapper mapper = new ObjectMapper();
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+
+            when(ctx.createJsScriptEngine("DETAILS", "Details")).thenReturn(detailsJs);
+
+            when(ctx.getTenantId()).thenReturn(tenantId);
+            when(ctx.getJsExecutor()).thenReturn(executor);
+            when(ctx.getAlarmService()).thenReturn(alarmService);
+            when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
+
+            mockJsExecutor();
+
+            node = new TbClearAlarmNode();
             node.init(ctx, nodeConfiguration);
         } catch (TbNodeException ex) {
             throw new IllegalStateException(ex);

@@ -431,10 +431,17 @@
   }
 }
 
+.tb-rule-node-tooltip, .tb-rule-node-help {
+  color: #333;
+}
+
 .tb-rule-node-tooltip {
   font-size: 14px;
   width: 300px;
-  color: #333;
+}
+
+.tb-rule-node-help {
+  font-size: 16px;
 }
 
 .tb-rule-node-error-tooltip {
@@ -442,8 +449,8 @@
   color: #ea0d0d;
 }
 
-.tb-rule-node-tooltip, .tb-rule-node-error-tooltip {
-  #tooltip-content {
+.tb-rule-node-tooltip, .tb-rule-node-error-tooltip, .tb-rule-node-help {
+  #tb-node-content {
     .tb-node-title {
       font-weight: 600;
     }

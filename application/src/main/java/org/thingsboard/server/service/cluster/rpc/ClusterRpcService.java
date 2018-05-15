@@ -25,6 +25,7 @@ import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.ToPluginRpcResponseDeviceMsg;
 import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
+import org.thingsboard.server.extensions.core.plugin.telemetry.sub.Subscription;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 
@@ -45,4 +46,5 @@ public interface ClusterRpcService {
 
     void tell(ServerAddress serverAddress, TbActorMsg actorMsg);
 
+    void tell(ServerAddress serverAddress, ClusterAPIProtos.MessageType msgType, byte[] data);
 }

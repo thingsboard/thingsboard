@@ -21,7 +21,7 @@
 <div class="tb-cell" flex="15">{{event.body.entityName}}</div>
 <div class="tb-cell tb-nowrap" flex="20" ng-mouseenter="checkTooltip($event)">{{event.body.msgId}}</div>
 <div class="tb-cell" flex="20" ng-mouseenter="checkTooltip($event)">{{event.body.msgType}}</div>
-<div class="tb-cell" flex="15">{{event.body.dataType}}</div>
+<div class="tb-cell" flex="15">{{event.body.relationType}}</div>
 <div class="tb-cell" flex="10">
     <md-button ng-if="event.body.data" class="md-icon-button md-primary"
                ng-click="showContent($event, event.body.data, 'event.data', event.body.dataType)"

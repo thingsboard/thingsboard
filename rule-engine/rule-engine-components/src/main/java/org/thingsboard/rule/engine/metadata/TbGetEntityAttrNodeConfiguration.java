@@ -34,7 +34,7 @@ public class TbGetEntityAttrNodeConfiguration implements NodeConfiguration<TbGet
         Map<String, String> attrMapping = new HashMap<>();
         attrMapping.putIfAbsent("temperature", "tempo");
         configuration.setAttrMapping(attrMapping);
-        configuration.setTelemetry(true);
+        configuration.setTelemetry(false);
         return configuration;
     }
 }

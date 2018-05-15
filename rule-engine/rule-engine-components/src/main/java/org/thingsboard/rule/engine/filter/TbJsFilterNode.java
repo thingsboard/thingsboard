@@ -52,7 +52,7 @@ public class TbJsFilterNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         ListeningExecutor jsExecutor = ctx.getJsExecutor();
         withCallback(jsExecutor.executeAsync(() -> jsEngine.executeFilter(msg)),
-                filterResult -> ctx.tellNext(msg, Boolean.toString(filterResult)),
+                filterResult -> ctx.tellNext(msg, filterResult.booleanValue() ? "True" : "False"),
                 t -> ctx.tellError(msg, t));
     }
 
