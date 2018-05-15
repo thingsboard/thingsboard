@@ -67,7 +67,7 @@ public abstract class EntityActorsManager<T extends EntityId, A extends UntypedA
         }
     }
 
-    protected void visit(M entity, ActorRef actorRef) {}
+    public void visit(M entity, ActorRef actorRef) {}
 
     public ActorRef getOrCreateActor(ActorContext context, T entityId) {
         return actors.computeIfAbsent(entityId, eId ->

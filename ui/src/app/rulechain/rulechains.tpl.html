@@ -26,8 +26,10 @@
                      is-edit="vm.grid.detailsConfig.isDetailsEditMode"
                      is-read-only="vm.grid.isDetailsReadOnly(vm.grid.operatingItem())"
                      the-form="vm.grid.detailsForm"
+                     on-set-root-rule-chain="vm.setRootRuleChain(event, vm.grid.detailsConfig.currentItem)"
                      on-export-rule-chain="vm.exportRuleChain(event, vm.grid.detailsConfig.currentItem)"
-                     on-delete-rule-chain="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)"></tb-rule-chain>
+                     on-delete-rule-chain="vm.grid.deleteItem(event, vm.grid.detailsConfig.currentItem)">
+            </tb-rule-chain>
         </md-tab>
         <md-tab ng-if="!vm.grid.detailsConfig.isDetailsEditMode && vm.isRuleChainEditable(vm.grid.operatingItem())" md-on-select="vm.grid.triggerResize()" label="{{ 'attribute.attributes' | translate }}">
             <tb-attribute-table flex

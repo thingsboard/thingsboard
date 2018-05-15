@@ -49,7 +49,7 @@ public abstract class RuleChainManager extends EntityActorsManager<RuleChainId, 
     }
 
     @Override
-    protected void visit(RuleChain entity, ActorRef actorRef) {
+    public void visit(RuleChain entity, ActorRef actorRef) {
         if (entity.isRoot()) {
             rootChain = entity;
             rootChainActor = actorRef;

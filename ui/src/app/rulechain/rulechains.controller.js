@@ -21,7 +21,8 @@ import ruleChainCard from './rulechain-card.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function RuleChainsController(ruleChainService, userService, importExport, $state, $stateParams, $filter, $translate, types) {
+export default function RuleChainsController(ruleChainService, userService, importExport, $state,
+                                             $stateParams, $filter, $translate, $mdDialog, types) {
 
     var ruleChainActionsList = [
         {
@@ -42,12 +43,21 @@ export default function RuleChainsController(ruleChainService, userService, impo
         },
         {
             onAction: function ($event, item) {
+                setRootRuleChain($event, item);
+            },
+            name: function() { return $translate.instant('rulechain.set-root') },
+            details: function() { return $translate.instant('rulechain.set-root') },
+            icon: "flag",
+            isEnabled: isNonRootRuleChain
+        },
+        {
+            onAction: function ($event, item) {
                 vm.grid.deleteItem($event, item);
             },
             name: function() { return $translate.instant('action.delete') },
             details: function() { return $translate.instant('rulechain.delete') },
             icon: "delete",
-            isEnabled: isRuleChainEditable
+            isEnabled: isNonRootRuleChain
         }
     ];
 
@@ -107,10 +117,7 @@ export default function RuleChainsController(ruleChainService, userService, impo
         addItemText: function() { return $translate.instant('rulechain.add-rulechain-text') },
         noItemsText: function() { return $translate.instant('rulechain.no-rulechains-text') },
         itemDetailsText: function() { return $translate.instant('rulechain.rulechain-details') },
-        isSelectionEnabled: isRuleChainEditable,
-        isDetailsReadOnly: function(ruleChain) {
-            return !isRuleChainEditable(ruleChain);
-        }
+        isSelectionEnabled: isNonRootRuleChain
     };
 
     if (angular.isDefined($stateParams.items) && $stateParams.items !== null) {
@@ -121,9 +128,11 @@ export default function RuleChainsController(ruleChainService, userService, impo
         vm.ruleChainGridConfig.topIndex = $stateParams.topIndex;
     }
 
-    vm.isRuleChainEditable = isRuleChainEditable;
+    vm.isRootRuleChain = isRootRuleChain;
+    vm.isNonRootRuleChain = isNonRootRuleChain;
 
     vm.exportRuleChain = exportRuleChain;
+    vm.setRootRuleChain = setRootRuleChain;
 
     function deleteRuleChainTitle(ruleChain) {
         return $translate.instant('rulechain.delete-rulechain-title', {ruleChainName: ruleChain.name});
@@ -172,12 +181,12 @@ export default function RuleChainsController(ruleChainService, userService, impo
         return ruleChain ? ruleChain.name : '';
     }
 
-    function isRuleChainEditable(ruleChain) {
-        if (userService.getAuthority() === 'TENANT_ADMIN') {
-            return ruleChain && ruleChain.tenantId.id != types.id.nullUid;
-        } else {
-            return userService.getAuthority() === 'SYS_ADMIN';
-        }
+    function isRootRuleChain(ruleChain) {
+        return ruleChain && ruleChain.root;
+    }
+
+    function isNonRootRuleChain(ruleChain) {
+        return ruleChain && !ruleChain.root;
     }
 
     function exportRuleChain($event, ruleChain) {
@@ -185,4 +194,22 @@ export default function RuleChainsController(ruleChainService, userService, impo
         importExport.exportRuleChain(ruleChain.id.id);
     }
 
+    function setRootRuleChain($event, ruleChain) {
+        $event.stopPropagation();
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('rulechain.set-root-rulechain-title', {ruleChainName: ruleChain.name}))
+            .htmlContent($translate.instant('rulechain.set-root-rulechain-text'))
+            .ariaLabel($translate.instant('rulechain.set-root'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            ruleChainService.setRootRuleChain(ruleChain.id.id).then(
+                () => {
+                    vm.grid.refreshList();
+                }
+            );
+        });
+
+    }
 }

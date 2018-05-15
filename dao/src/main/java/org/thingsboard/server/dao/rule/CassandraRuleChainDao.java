@@ -60,15 +60,4 @@ public class CassandraRuleChainDao extends CassandraAbstractSearchTextDao<RuleCh
         return DaoUtil.convertDataList(ruleChainEntities);
     }
 
-    @Override
-    public List<RuleChain> findAllRuleChainsByTenantId(UUID tenantId, TextPageLink pageLink) {
-        log.debug("Try to find all rule chains by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
-        List<RuleChainEntity> ruleChainEntities = findPageWithTextSearch(RULE_CHAIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(in(ModelConstants.RULE_CHAIN_TENANT_ID_PROPERTY, Arrays.asList(NULL_UUID, tenantId))),
-                pageLink);
-
-        log.trace("Found rule chains [{}] by tenantId [{}] and pageLink [{}]", ruleChainEntities, tenantId, pageLink);
-        return DaoUtil.convertDataList(ruleChainEntities);
-    }
-
 }

@@ -48,12 +48,6 @@ public interface TbContext {
 
     void tellSelf(TbMsg msg, long delayMs);
 
-    void tellOthers(TbMsg msg);
-
-    void tellSibling(TbMsg msg, ServerAddress address);
-
-    void ack(TbMsg msg);
-
     void tellError(TbMsg msg, Throwable th);
 
     void updateSelf(RuleNode self);

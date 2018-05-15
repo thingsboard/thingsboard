@@ -81,7 +81,7 @@ export default function RuleChainRoutes($stateProvider, NodeTemplatePathProvider
                 pageTitle: 'rulechain.rulechain'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name }}", "translate": "false"}'
+                label: '{"icon": "settings_ethernet", "label": "{{ vm.ruleChain.name + (vm.ruleChain.root ? (\' (\' + (\'rulechain.root\' | translate) + \')\') : \'\') }}", "translate": "false"}'
             }
     }).state('home.ruleChains.importRuleChain', {
         url: '/ruleChain/import',

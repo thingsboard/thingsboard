@@ -35,12 +35,4 @@ public interface RuleChainRepository extends CrudRepository<RuleChainEntity, Str
                                          @Param("idOffset") String idOffset,
                                          Pageable pageable);
 
-    @Query("SELECT rc FROM RuleChainEntity rc WHERE rc.tenantId IN (:tenantId, :nullTenantId) " +
-            "AND LOWER(rc.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
-            "AND rc.id > :idOffset ORDER BY rc.id")
-    List<RuleChainEntity> findAllTenantRuleChainsByTenantId(@Param("tenantId") String tenantId,
-                                                            @Param("nullTenantId") String nullTenantId,
-                                                            @Param("searchText") String searchText,
-                                                            @Param("idOffset") String idOffset,
-                                                            Pageable pageable);
 }

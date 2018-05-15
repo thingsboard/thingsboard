@@ -20,9 +20,13 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.plugin.PluginManager;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
+import org.thingsboard.server.common.data.page.TextPageData;
+import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.plugin.BasePluginService;
+
+import java.util.Collections;
 
 public class SystemRuleChainManager extends RuleChainManager {
 
@@ -32,7 +36,7 @@ public class SystemRuleChainManager extends RuleChainManager {
 
     @Override
     protected FetchFunction<RuleChain> getFetchEntitiesFunction() {
-        return service::findSystemRuleChains;
+        return link -> new TextPageData<>(Collections.emptyList(), link);
     }
 
     @Override

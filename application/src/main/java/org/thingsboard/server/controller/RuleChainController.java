@@ -64,7 +64,7 @@ public class RuleChainController extends BaseController {
     @Autowired
     private EventService eventService;
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.GET)
     @ResponseBody
     public RuleChain getRuleChainById(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
@@ -77,7 +77,7 @@ public class RuleChainController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}/metadata", method = RequestMethod.GET)
     @ResponseBody
     public RuleChainMetaData getRuleChainMetaData(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
@@ -92,7 +92,7 @@ public class RuleChainController extends BaseController {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
     @ResponseBody
     public RuleChain saveRuleChain(@RequestBody RuleChain ruleChain) throws ThingsboardException {
@@ -118,7 +118,46 @@ public class RuleChainController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/root", method = RequestMethod.POST)
+    @ResponseBody
+    public RuleChain setRootRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+        checkParameter(RULE_CHAIN_ID, strRuleChainId);
+        try {
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            RuleChain ruleChain = checkRuleChain(ruleChainId);
+            TenantId tenantId = getCurrentUser().getTenantId();
+            RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
+            if (ruleChainService.setRootRuleChain(ruleChainId)) {
+
+                previousRootRuleChain = ruleChainService.findRuleChainById(previousRootRuleChain.getId());
+
+                actorService.onEntityStateChange(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
+                        ComponentLifecycleEvent.UPDATED);
+
+                logEntityAction(previousRootRuleChain.getId(), previousRootRuleChain,
+                        null, ActionType.UPDATED, null);
+
+                ruleChain = ruleChainService.findRuleChainById(ruleChainId);
+
+                actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(),
+                        ComponentLifecycleEvent.UPDATED);
+
+                logEntityAction(ruleChain.getId(), ruleChain,
+                        null, ActionType.UPDATED, null);
+
+            }
+            return ruleChain;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.RULE_CHAIN),
+                    null,
+                    null,
+                    ActionType.UPDATED, e, strRuleChainId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/metadata", method = RequestMethod.POST)
     @ResponseBody
     public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
@@ -142,52 +181,10 @@ public class RuleChainController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChains", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<RuleChain> getRuleChains(
-            @RequestParam int limit,
-            @RequestParam(required = false) String textSearch,
-            @RequestParam(required = false) String idOffset,
-            @RequestParam(required = false) String textOffset) throws ThingsboardException {
-        try {
-            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN) {
-                return checkNotNull(ruleChainService.findSystemRuleChains(pageLink));
-            } else {
-                TenantId tenantId = getCurrentUser().getTenantId();
-                TextPageData<RuleChain> ruleChainsData = checkNotNull(ruleChainService.findAllTenantRuleChainsByTenantIdAndPageLink(tenantId, pageLink));
-                List<RuleChain> ruleChains = ruleChainsData.getData();
-                ruleChains.stream()
-                        .filter(ruleChain -> ruleChain.getTenantId().getId().equals(ModelConstants.NULL_UUID))
-                        .forEach(ruleChain -> ruleChain.setConfiguration(null));
-                return ruleChainsData;
-            }
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/system/ruleChains", params = {"limit"}, method = RequestMethod.GET)
-    @ResponseBody
-    public TextPageData<RuleChain> getSystemRuleChains(
-            @RequestParam int limit,
-            @RequestParam(required = false) String textSearch,
-            @RequestParam(required = false) String idOffset,
-            @RequestParam(required = false) String textOffset) throws ThingsboardException {
-        try {
-            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
-            return checkNotNull(ruleChainService.findSystemRuleChains(pageLink));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/ruleChains", params = {"limit"}, method = RequestMethod.GET)
-    @ResponseBody
-    public TextPageData<RuleChain> getTenantRuleChains(
             @RequestParam int limit,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String idOffset,
@@ -201,7 +198,7 @@ public class RuleChainController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRuleChain(@PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
@@ -209,6 +206,7 @@ public class RuleChainController extends BaseController {
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             RuleChain ruleChain = checkRuleChain(ruleChainId);
+
             ruleChainService.deleteRuleChainById(ruleChainId);
 
             actorService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);

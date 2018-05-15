@@ -69,13 +69,13 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
 
     protected ListenableFuture<JsonNode> buildAlarmDetails(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
         return ctx.getJsExecutor().executeAsync(() -> {
-            TbMsg theMsg = msg;
+            TbMsg dummyMsg = msg;
             if (previousDetails != null) {
                 TbMsgMetaData metaData = msg.getMetaData().copy();
                 metaData.putValue(PREV_ALARM_DETAILS, mapper.writeValueAsString(previousDetails));
-                theMsg = ctx.newMsg(msg.getType(), msg.getOriginator(), metaData, msg.getData());
+                dummyMsg = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), metaData, msg.getData());
             }
-            return buildDetailsJsEngine.executeJson(theMsg);
+            return buildDetailsJsEngine.executeJson(dummyMsg);
         });
     }
 

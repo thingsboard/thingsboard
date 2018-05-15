@@ -40,6 +40,7 @@ export default function RuleChainDirective($compile, $templateCache, $mdDialog, 
             isEdit: '=',
             isReadOnly: '=',
             theForm: '=',
+            onSetRootRuleChain: '&',
             onExportRuleChain: '&',
             onDeleteRuleChain: '&'
         }
