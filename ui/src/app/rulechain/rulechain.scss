@@ -223,6 +223,7 @@
 .fc-node {
   z-index: 1;
   outline: none;
+  border-radius: 8px;
   &.fc-dragging {
     z-index: 10;
   }
@@ -239,6 +240,7 @@
     bottom: 0;
     background-color: #000;
     opacity: 0;
+    border-radius: 5px;
   }
   &.fc-hover {
     .fc-node-overlay {
@@ -248,6 +250,12 @@
   &.fc-selected {
     .fc-node-overlay {
       opacity: 0.25;
+    }
+  }
+  &.fc-selected {
+    &:not(.fc-edit) {
+      border: solid 3px red;
+      margin: -3px;
     }
   }
 }
@@ -340,27 +348,43 @@
 
 .fc-nodedelete {
   display: none;
+  font-size: 18px;
 }
 
-.fc-selected .fc-nodedelete {
-  outline: none;
-  display: block;
-  position: absolute;
-  right: -13px;
-  top: -16px;
-  border: solid 2px white;
-  border-radius: 50%;
-  font-weight: 600;
-  font-size: 18px;
-  line-height: 18px;
-  height: 20px;
-  padding-top: 2px;
-  width: 22px;
-  background: #494949;
-  color: #fff;
-  text-align: center;
-  vertical-align: bottom;
-  cursor: pointer;
+.fc-nodeedit {
+  display: none;
+  font-size: 15px;
+}
+
+.fc-edit {
+  .fc-nodedelete, .fc-nodeedit {
+    outline: none;
+    display: block;
+    position: absolute;
+    border: solid 2px white;
+    border-radius: 50%;
+    font-weight: 600;
+    line-height: 20px;
+    height: 20px;
+    padding-top: 2px;
+    width: 22px;
+    background: #f83e05;
+    color: #fff;
+    text-align: center;
+    vertical-align: bottom;
+    cursor: pointer;
+  }
+
+  .fc-nodeedit {
+    top: -24px;
+    right: 16px;
+  }
+
+  .fc-nodedelete {
+    top: -24px;
+    right: -13px;
+  }
+
 }
 
 .fc-noselect {
@@ -376,7 +400,7 @@
 .fc-edge-label {
   position: absolute;
   transition: transform .2s;
-  opacity: 0.8;
+//  opacity: 0.8;
   &.ng-leave {
     transition: 0s none;
   }
@@ -387,13 +411,19 @@
     .fc-edge-label-text {
       span {
         border: solid red;
-        color: red;
+        color: #fff;
+        font-weight: 600;
+        background-color: red;
       }
     }
   }
-  .fc-nodedelete {
-    right: -13px;
+  .fc-nodeedit {
     top: -30px;
+    right: 14px;
+  }
+  .fc-nodedelete {
+    top: -30px;
+    right: -13px;
   }
   &:focus {
     outline: 0;

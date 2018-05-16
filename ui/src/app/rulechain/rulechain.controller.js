@@ -598,8 +598,14 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         edgeDoubleClick: function (event, edge) {
             openLinkDetails(edge);
         },
+        edgeEdit: function(event, edge) {
+            openLinkDetails(edge);
+        },
         nodeCallbacks: {
             'doubleClick': function (event, node) {
+                openNodeDetails(node);
+            },
+            'nodeEdit': function (event, node) {
                 openNodeDetails(node);
             }
         },
