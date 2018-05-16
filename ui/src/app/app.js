@@ -82,7 +82,7 @@ import 'font-awesome/css/font-awesome.min.css';
 import 'angular-material/angular-material.min.css';
 import 'angular-material-icons/angular-material-icons.css';
 import 'angular-gridster/dist/angular-gridster.min.css';
-import 'v-accordion/dist/v-accordion.min.css'
+import 'v-accordion/dist/v-accordion.min.css';
 import 'md-color-picker/dist/mdColorPicker.min.css';
 import 'mdPickers/dist/mdPickers.min.css';
 import 'angular-hotkeys/build/hotkeys.min.css';
