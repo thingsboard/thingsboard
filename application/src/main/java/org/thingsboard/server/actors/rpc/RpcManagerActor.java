@@ -89,9 +89,9 @@ public class RpcManagerActor extends ContextAwareActor {
     }
 
     private void onMsg(ClusterAPIProtos.ClusterMessage msg) {
-        if (msg.hasServerAdresss()) {
-            ServerAddress address = new ServerAddress(msg.getServerAdresss().getHost(),
-                    msg.getServerAdresss().getPort());
+        if (msg.hasServerAddress()) {
+            ServerAddress address = new ServerAddress(msg.getServerAddress().getHost(),
+                    msg.getServerAddress().getPort());
             SessionActorInfo session = sessionActors.get(address);
             if (session != null) {
                 log.debug("{} Forwarding msg to session actor", address);
@@ -102,7 +102,7 @@ public class RpcManagerActor extends ContextAwareActor {
                 if (queue == null) {
                     queue = new LinkedList<>();
                     pendingMsgs.put(new ServerAddress(
-                            msg.getServerAdresss().getHost(), msg.getServerAdresss().getPort()), queue);
+                            msg.getServerAddress().getHost(), msg.getServerAddress().getPort()), queue);
                 }
                 queue.add(msg);
             }

@@ -78,7 +78,7 @@ public class RpcSessionActor extends ContextAwareActor {
     private void initSession(RpcSessionCreateRequestMsg msg) {
         log.info("[{}] Initializing session", context().self());
         ServerAddress remoteServer = msg.getRemoteAddress();
-        listener = new BasicRpcSessionListener(systemContext, context().parent(), context().self());
+        listener = new BasicRpcSessionListener(systemContext.getActorService(), context().parent(), context().self());
         if (msg.getRemoteAddress() == null) {
             // Server session
             session = new GrpcSession(listener);
@@ -119,7 +119,7 @@ public class RpcSessionActor extends ContextAwareActor {
 
     private ClusterAPIProtos.ClusterMessage toConnectMsg() {
         ServerAddress instance = systemContext.getDiscoveryService().getCurrentServer().getServerAddress();
-        return ClusterAPIProtos.ClusterMessage.newBuilder().setMessageType(CONNECT_RPC_MESSAGE).setServerAdresss(
+        return ClusterAPIProtos.ClusterMessage.newBuilder().setMessageType(CONNECT_RPC_MESSAGE).setServerAddress(
                 ClusterAPIProtos.ServerAddress.newBuilder().setHost(instance.getHost())
                         .setPort(instance.getPort()).build()).build();
     }

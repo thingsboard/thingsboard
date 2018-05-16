@@ -61,7 +61,7 @@ public final class GrpcSession implements Closeable {
             public void onNext(ClusterAPIProtos.ClusterMessage clusterMessage) {
                 if (!connected && clusterMessage.getMessageType() == ClusterAPIProtos.MessageType.CONNECT_RPC_MESSAGE) {
                     connected = true;
-                    ServerAddress rpcAddress = new ServerAddress(clusterMessage.getServerAdresss().getHost(), clusterMessage.getServerAdresss().getPort());
+                    ServerAddress rpcAddress = new ServerAddress(clusterMessage.getServerAddress().getHost(), clusterMessage.getServerAddress().getPort());
                     remoteServer = new ServerAddress(rpcAddress.getHost(), rpcAddress.getPort());
                     listener.onConnected(GrpcSession.this);
                 }

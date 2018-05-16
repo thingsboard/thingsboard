@@ -102,12 +102,12 @@ public class CassandraAlarmDao extends CassandraAbstractModelDao<AlarmEntity, Al
         }
         String relationType = BaseAlarmService.ALARM_RELATION_PREFIX + searchStatusName;
         ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
-        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<AlarmInfo>>) input -> {
+        return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
                 alarmFutures.add(Futures.transform(
                         findAlarmByIdAsync(relation.getTo().getId()),
-                        (Function<Alarm, AlarmInfo>) AlarmInfo::new));
+                        AlarmInfo::new));
             }
             return Futures.successfulAsList(alarmFutures);
         });

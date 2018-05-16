@@ -107,7 +107,7 @@ mqtt:
 # CoAP server parameters
 coap:
   # Enable/disable coap transport protocol.
-  enabled: "${COAP_ENABLED:true}"
+  enabled: "${COAP_ENABLED:false}"
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${COAP_BIND_PORT:5683}"
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"

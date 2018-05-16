@@ -32,9 +32,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.annotation.PostConstruct;
@@ -67,6 +69,10 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
 
     @Autowired
     private ServerInstanceService serverInstance;
+
+    @Autowired
+    @Lazy
+    private TelemetrySubscriptionService tsSubService;
 
     private final List<DiscoveryServiceListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -196,12 +202,14 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         log.info("Processing [{}] event for [{}:{}]", pathChildrenCacheEvent.getType(), instance.getHost(), instance.getPort());
         switch (pathChildrenCacheEvent.getType()) {
             case CHILD_ADDED:
+                tsSubService.onClusterUpdate();
                 listeners.forEach(listener -> listener.onServerAdded(instance));
                 break;
             case CHILD_UPDATED:
                 listeners.forEach(listener -> listener.onServerUpdated(instance));
                 break;
             case CHILD_REMOVED:
+                tsSubService.onClusterUpdate();
                 listeners.forEach(listener -> listener.onServerRemoved(instance));
                 break;
             default:

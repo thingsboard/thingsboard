@@ -18,8 +18,12 @@ package org.thingsboard.server.dao.cassandra;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.ProtocolOptions.Compression;
+import com.datastax.driver.mapping.DefaultPropertyMapper;
 import com.datastax.driver.mapping.Mapper;
+import com.datastax.driver.mapping.MappingConfiguration;
 import com.datastax.driver.mapping.MappingManager;
+import com.datastax.driver.mapping.PropertyAccessStrategy;
+import com.datastax.driver.mapping.PropertyMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,7 +149,10 @@ public abstract class AbstractCassandraCluster {
                 } else {
                     session = cluster.connect();
                 }
-                mappingManager = new MappingManager(session);
+                DefaultPropertyMapper propertyMapper = new DefaultPropertyMapper();
+                propertyMapper.setPropertyAccessStrategy(PropertyAccessStrategy.FIELDS);
+                MappingConfiguration configuration = MappingConfiguration.builder().withPropertyMapper(propertyMapper).build();
+                mappingManager = new MappingManager(session, configuration);
                 break;
             } catch (Exception e) {
                 log.warn("Failed to initialize cassandra cluster due to {}. Will retry in {} ms", e.getMessage(), initRetryInterval);

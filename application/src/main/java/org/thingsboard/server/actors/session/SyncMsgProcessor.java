@@ -73,7 +73,7 @@ class SyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     @Override
     public void processClusterEvent(ActorContext context, ClusterEventMsg msg) {
         if (pendingResponse) {
-            Optional<ServerAddress> newTargetServer = forwardToAppActorIfAdressChanged(context, pendingMsg, currentTargetServer);
+            Optional<ServerAddress> newTargetServer = forwardToAppActorIfAddressChanged(context, pendingMsg, currentTargetServer);
             if (logger.isDebugEnabled()) {
                 if (!newTargetServer.equals(currentTargetServer)) {
                     if (newTargetServer.isPresent()) {

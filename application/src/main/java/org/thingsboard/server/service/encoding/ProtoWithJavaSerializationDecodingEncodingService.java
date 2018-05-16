@@ -25,7 +25,7 @@ import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
 import java.util.Optional;
 
-import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_NETWORK_SERVER_DATA_MESSAGE;
+import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
 
 
 @Slf4j
@@ -55,12 +55,12 @@ public class ProtoWithJavaSerializationDecodingEncodingService implements DataDe
                                                                      TbActorMsg msg) {
         return ClusterAPIProtos.ClusterMessage
                 .newBuilder()
-                .setServerAdresss(ClusterAPIProtos.ServerAddress
+                .setServerAddress(ClusterAPIProtos.ServerAddress
                         .newBuilder()
                         .setHost(serverAddress.getHost())
                         .setPort(serverAddress.getPort())
                         .build())
-                .setMessageType(CLUSTER_NETWORK_SERVER_DATA_MESSAGE)
+                .setMessageType(CLUSTER_ACTOR_MESSAGE)
                 .setPayload(ByteString.copyFrom(encode(msg))).build();
 
     }

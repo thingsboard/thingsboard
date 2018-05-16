@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,8 +56,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
-import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE_VALUE;
-import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_NETWORK_SERVER_DATA_MESSAGE;
 
 @Service
 @Slf4j
@@ -211,8 +209,8 @@ public class DefaultActorService implements ActorService {
     }
 
     @Override
-    public void onRecievedMsg(ClusterAPIProtos.ClusterMessage msg) {
-        ServerAddress serverAddress = new ServerAddress(msg.getServerAddress().getHost(), msg.getServerAddress().getPort());
+    public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
+        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort());
         switch (msg.getMessageType()) {
             case CLUSTER_ACTOR_MESSAGE:
                 java.util.Optional<TbActorMsg> decodedMsg = actorContext.getEncodingService()

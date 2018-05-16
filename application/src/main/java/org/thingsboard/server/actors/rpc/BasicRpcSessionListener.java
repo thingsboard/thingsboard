@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.rpc;
 
 import akka.actor.ActorRef;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.rpc.GrpcSession;
@@ -58,7 +57,7 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
         log.trace("{} Service [{}] received session actor msg {}", getType(session),
                 session.getRemoteServer(),
                 clusterMessage);
-        service.onRecievedMsg(clusterMessage);
+        service.onReceivedMsg(session.getRemoteServer(), clusterMessage);
     }
 
     @Override

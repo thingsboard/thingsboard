@@ -87,7 +87,7 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
         return address;
     }
 
-    protected Optional<ServerAddress> forwardToAppActorIfAdressChanged(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
+    protected Optional<ServerAddress> forwardToAppActorIfAddressChanged(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
 
         Optional<ServerAddress> newAddress = systemContext.getRoutingService().resolveById(toForward.getDeviceId());
         if (!newAddress.equals(oldAddress)) {

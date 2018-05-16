@@ -222,15 +222,14 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<AlarmInfo> findAlarmInfoByIdAsync(AlarmId alarmId) {
         log.trace("Executing findAlarmInfoByIdAsync [{}]", alarmId);
         validateId(alarmId, "Incorrect alarmId " + alarmId);
-        return Futures.transform(alarmDao.findAlarmByIdAsync(alarmId.getId()),
-                (AsyncFunction<Alarm, AlarmInfo>) alarm1 -> {
-                    AlarmInfo alarmInfo = new AlarmInfo(alarm1);
+        return Futures.transformAsync(alarmDao.findAlarmByIdAsync(alarmId.getId()),
+                a -> {
+                    AlarmInfo alarmInfo = new AlarmInfo(a);
                     return Futures.transform(
-                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
-                                    originatorName -> {
-                                        alarmInfo.setOriginatorName(originatorName);
-                                        return alarmInfo;
-                                    }
+                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), originatorName -> {
+                                alarmInfo.setOriginatorName(originatorName);
+                                return alarmInfo;
+                            }
                     );
                 });
     }
@@ -239,18 +238,17 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     public ListenableFuture<TimePageData<AlarmInfo>> findAlarms(AlarmQuery query) {
         ListenableFuture<List<AlarmInfo>> alarms = alarmDao.findAlarms(query);
         if (query.getFetchOriginator() != null && query.getFetchOriginator().booleanValue()) {
-            alarms = Futures.transform(alarms, (AsyncFunction<List<AlarmInfo>, List<AlarmInfo>>) input -> {
+            alarms = Futures.transformAsync(alarms, input -> {
                 List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
                 for (AlarmInfo alarmInfo : input) {
                     alarmFutures.add(Futures.transform(
-                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), (Function<String, AlarmInfo>)
-                                    originatorName -> {
-                                        if (originatorName == null) {
-                                            originatorName = "Deleted";
-                                        }
-                                        alarmInfo.setOriginatorName(originatorName);
-                                        return alarmInfo;
-                                    }
+                            entityService.fetchEntityNameAsync(alarmInfo.getOriginator()), originatorName -> {
+                                if (originatorName == null) {
+                                    originatorName = "Deleted";
+                                }
+                                alarmInfo.setOriginatorName(originatorName);
+                                return alarmInfo;
+                            }
                     ));
                 }
                 return Futures.successfulAsList(alarmFutures);

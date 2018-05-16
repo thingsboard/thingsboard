@@ -51,7 +51,7 @@ public class EntitiesTenantIdAsyncLoader {
     }
 
     private static <T extends HasTenantId> ListenableFuture<TenantId> getTenantAsync(ListenableFuture<T> future) {
-        return Futures.transform(future, (AsyncFunction<HasTenantId, TenantId>) in -> {
+        return Futures.transformAsync(future, in -> {
             return in != null ? Futures.immediateFuture(in.getTenantId())
                     : Futures.immediateFuture(null);});
     }

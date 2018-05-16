@@ -217,7 +217,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
         ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
 
-        ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transform(partitionsListFuture,
+        ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transformAsync(partitionsListFuture,
                 getFetchChunksAsyncFunction(entityId, key, aggregation, startTs, endTs), readResultsProcessingExecutor);
 
         return Futures.transform(aggregationChunks, new AggregatePartitionsFunction(aggregation, key, ts), readResultsProcessingExecutor);
