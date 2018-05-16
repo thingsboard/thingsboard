@@ -63,6 +63,7 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
+import org.thingsboard.server.service.queue.MsgQueueService;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
 import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -196,7 +197,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private MsgQueue msgQueue;
+    private MsgQueueService msgQueueService;
 
     @Autowired
     @Getter

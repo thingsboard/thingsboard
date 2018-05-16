@@ -13,8 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue.jpa;
+package org.thingsboard.server.dao.queue.memory;
 
-//@todo-vp: implement
-public class SqlMsgQueue {
+import lombok.Data;
+
+import java.util.UUID;
+
+/**
+ * Created by ashvayka on 30.04.18.
+ */
+@Data
+public final class InMemoryMsgKey {
+    final UUID nodeId;
+    final long clusterPartition;
 }

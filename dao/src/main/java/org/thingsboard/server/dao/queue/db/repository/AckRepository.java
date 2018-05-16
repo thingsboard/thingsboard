@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.queue.cassandra.repository;
+package org.thingsboard.server.dao.queue.db.repository;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.queue.db.nosql.MsgAck;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface MsgRepository {
+public interface AckRepository {
 
-    ListenableFuture<Void> save(TbMsg msg, UUID nodeId, long clusterPartition, long tsPartition, long msgTs);
+    ListenableFuture<Void> ack(MsgAck msgAck);
 
-    List<TbMsg> findMsgs(UUID nodeId, long clusterPartition, long tsPartition);
-
+    List<MsgAck> findAcks(UUID nodeId, long clusterPartition, long tsPartition);
 }

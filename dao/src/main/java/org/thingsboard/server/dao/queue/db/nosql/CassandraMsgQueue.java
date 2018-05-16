@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.queue.cassandra;
+package org.thingsboard.server.dao.queue.db.nosql;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.queue.MsgQueue;
-import org.thingsboard.server.dao.service.queue.cassandra.repository.AckRepository;
-import org.thingsboard.server.dao.service.queue.cassandra.repository.MsgRepository;
+import org.thingsboard.server.dao.queue.db.repository.AckRepository;
+import org.thingsboard.server.dao.queue.db.repository.MsgRepository;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(prefix = "rule.queue", value = "type", havingValue = "db")
 @Slf4j
 @NoSqlDao
 public class CassandraMsgQueue implements MsgQueue {
@@ -45,21 +49,21 @@ public class CassandraMsgQueue implements MsgQueue {
     private QueuePartitioner queuePartitioner;
 
     @Override
-    public ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusterPartition) {
+    public ListenableFuture<Void> put(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition) {
         long msgTime = getMsgTime(msg);
         long tsPartition = queuePartitioner.getPartition(msgTime);
         return msgRepository.save(msg, nodeId, clusterPartition, tsPartition, msgTime);
     }
 
     @Override
-    public ListenableFuture<Void> ack(TbMsg msg, UUID nodeId, long clusterPartition) {
+    public ListenableFuture<Void> ack(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition) {
         long tsPartition = queuePartitioner.getPartition(getMsgTime(msg));
         MsgAck ack = new MsgAck(msg.getId(), nodeId, clusterPartition, tsPartition);
         return ackRepository.ack(ack);
     }
 
     @Override
-    public Iterable<TbMsg> findUnprocessed(UUID nodeId, long clusterPartition) {
+    public Iterable<TbMsg> findUnprocessed(TenantId tenantId, UUID nodeId, long clusterPartition) {
         List<TbMsg> unprocessedMsgs = Lists.newArrayList();
         for (Long tsPartition : queuePartitioner.findUnprocessedPartitions(nodeId, clusterPartition)) {
             List<TbMsg> msgs = msgRepository.findMsgs(nodeId, clusterPartition, tsPartition);
@@ -67,6 +71,11 @@ public class CassandraMsgQueue implements MsgQueue {
             unprocessedMsgs.addAll(unprocessedMsgFilter.filter(msgs, acks));
         }
         return unprocessedMsgs;
+    }
+
+    @Override
+    public ListenableFuture<Void> cleanUp(TenantId tenantId) {
+        return Futures.immediateFuture(null);
     }
 
     private long getMsgTime(TbMsg msg) {

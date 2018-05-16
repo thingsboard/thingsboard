@@ -13,22 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue;
+package org.thingsboard.server.dao.queue.db.sql;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.UUID;
-
-public interface MsgQueue {
-
-    ListenableFuture<Void> put(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition);
-
-    ListenableFuture<Void> ack(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition);
-
-    Iterable<TbMsg> findUnprocessed(TenantId tenantId, UUID nodeId, long clusterPartition);
-
-    ListenableFuture<Void> cleanUp(TenantId tenantId);
-
+//@todo-vp: implement
+public class SqlMsgQueue {
 }

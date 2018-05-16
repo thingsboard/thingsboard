@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.queue.cassandra.repository.impl;
+package org.thingsboard.server.dao.queue.db.nosql.repository;
 
 import com.datastax.driver.core.*;
 import com.google.common.base.Function;
@@ -22,8 +22,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.dao.nosql.CassandraAbstractDao;
-import org.thingsboard.server.dao.service.queue.cassandra.MsgAck;
-import org.thingsboard.server.dao.service.queue.cassandra.repository.AckRepository;
+import org.thingsboard.server.dao.queue.db.nosql.MsgAck;
+import org.thingsboard.server.dao.queue.db.repository.AckRepository;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
 import java.util.ArrayList;

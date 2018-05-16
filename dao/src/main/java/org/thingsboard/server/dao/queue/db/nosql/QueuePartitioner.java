@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.queue.cassandra;
+package org.thingsboard.server.dao.queue.db.nosql;
 
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.service.queue.cassandra.repository.ProcessedPartitionRepository;
+import org.thingsboard.server.dao.queue.db.repository.ProcessedPartitionRepository;
 import org.thingsboard.server.dao.timeseries.TsPartitionDate;
 import org.thingsboard.server.dao.util.NoSqlDao;
 

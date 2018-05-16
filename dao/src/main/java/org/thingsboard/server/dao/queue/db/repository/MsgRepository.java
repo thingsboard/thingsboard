@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.queue;
+package org.thingsboard.server.dao.queue.db.repository;
 
-import lombok.Data;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by ashvayka on 30.04.18.
- */
-@Data
-public final class InMemoryMsgKey {
-    final UUID nodeId;
-    final long clusterPartition;
+public interface MsgRepository {
+
+    ListenableFuture<Void> save(TbMsg msg, UUID nodeId, long clusterPartition, long tsPartition, long msgTs);
+
+    List<TbMsg> findMsgs(UUID nodeId, long clusterPartition, long tsPartition);
+
 }

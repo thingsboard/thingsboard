@@ -28,8 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.Bean;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -80,7 +82,7 @@ public class QueueBenchmark implements CommandLineRunner {
                     try {
                         TbMsg msg = randomMsg();
                         UUID nodeId = UUIDs.timeBased();
-                        ListenableFuture<Void> put = msgQueue.put(msg, nodeId, 100L);
+                        ListenableFuture<Void> put = msgQueue.put(new TenantId(EntityId.NULL_UUID), msg, nodeId, 100L);
 //                    ListenableFuture<Void> put = msgQueue.ack(msg, nodeId, 100L);
                         Futures.addCallback(put, new FutureCallback<Void>() {
                             @Override

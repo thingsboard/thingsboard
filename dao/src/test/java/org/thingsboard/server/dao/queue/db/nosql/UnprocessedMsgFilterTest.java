@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.queue.cassandra;
+package org.thingsboard.server.dao.queue.db.nosql;
 
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.queue.db.nosql.MsgAck;
+import org.thingsboard.server.dao.queue.db.nosql.UnprocessedMsgFilter;
 
 import java.util.Collection;
 import java.util.List;

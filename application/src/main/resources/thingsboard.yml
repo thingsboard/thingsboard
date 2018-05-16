@@ -305,17 +305,20 @@ spring:
 
 rule:
   queue:
-    type: "memory"
-    max_size: 10000
-
+    #Message queue type (memory or db)
+    type: "${RULE_QUEUE_TYPE:memory}"
+    #Message queue maximum size (per tenant)
+    max_size: "${RULE_QUEUE_MAX_SIZE:100}"
+    #Message queue cleanup period in seconds
+    cleanup_period: "${RULE_QUEUE_CLEANUP_PERIOD:3600}"
 
 # PostgreSQL DAO Configuration
 #spring:
 #  data:
-#    jpa:
+#    sql:
 #      repositories:
 #        enabled: "true"
-#  jpa:
+#  sql:
 #    hibernate:
 #      ddl-auto: "validate"
 #    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"

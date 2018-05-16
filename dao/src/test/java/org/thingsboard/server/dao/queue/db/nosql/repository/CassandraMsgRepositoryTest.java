@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.queue.cassandra.repository.impl;
+package org.thingsboard.server.dao.queue.db.nosql.repository;
 
 //import static org.junit.jupiter.api.Assertions.*;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;

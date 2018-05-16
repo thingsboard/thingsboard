@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.queue.cassandra.repository;
+package org.thingsboard.server.dao.queue.db.repository;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.dao.service.queue.cassandra.MsgAck;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-public interface AckRepository {
+public interface ProcessedPartitionRepository {
 
-    ListenableFuture<Void> ack(MsgAck msgAck);
+    ListenableFuture<Void> partitionProcessed(UUID nodeId, long clusteredHash, long partition);
 
-    List<MsgAck> findAcks(UUID nodeId, long clusterPartition, long tsPartition);
+    Optional<Long> findLastProcessedPartition(UUID nodeId, long clusteredHash);
+
 }
