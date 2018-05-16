@@ -42,9 +42,9 @@
         <mockito.version>1.9.5</mockito.version>
         <rat.version>0.10</rat.version>
         <cassandra.version>3.5.0</cassandra.version>
-        <cassandra-unit.version>3.0.0.1</cassandra-unit.version>
+        <cassandra-unit.version>3.3.0.2</cassandra-unit.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
-        <guava.version>20.0</guava.version>
+        <guava.version>21.0</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-validator.version>1.5.0</commons-validator.version>

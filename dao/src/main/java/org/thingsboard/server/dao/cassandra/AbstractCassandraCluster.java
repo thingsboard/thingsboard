@@ -16,14 +16,17 @@
 package org.thingsboard.server.dao.cassandra;
 
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions.Compression;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.DefaultPropertyMapper;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingConfiguration;
 import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.PropertyAccessStrategy;
-import com.datastax.driver.mapping.PropertyMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,10 +152,13 @@ public abstract class AbstractCassandraCluster {
                 } else {
                     session = cluster.connect();
                 }
+//                For Cassandra Driver version 3.5.0
                 DefaultPropertyMapper propertyMapper = new DefaultPropertyMapper();
                 propertyMapper.setPropertyAccessStrategy(PropertyAccessStrategy.FIELDS);
                 MappingConfiguration configuration = MappingConfiguration.builder().withPropertyMapper(propertyMapper).build();
                 mappingManager = new MappingManager(session, configuration);
+//                For Cassandra Driver version 3.0.0
+//                mappingManager = new MappingManager(session);
                 break;
             } catch (Exception e) {
                 log.warn("Failed to initialize cassandra cluster due to {}. Will retry in {} ms", e.getMessage(), initRetryInterval);

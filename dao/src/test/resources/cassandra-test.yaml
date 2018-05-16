@@ -103,6 +103,8 @@ commitlog_directory: target/embeddedCassandra/commitlog
 
 hints_directory: target/embeddedCassandra/hints
 
+cdc_raw_directory: target/embeddedCassandra/cdc
+
 # policy for data disk failures:
 # stop: shut down gossip and Thrift, leaving the node effectively dead, but
 #       can still be inspected via JMX.
