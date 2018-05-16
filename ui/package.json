@@ -48,6 +48,7 @@
     "angular-websocket": "^2.0.1",
     "base64-js": "^1.2.1",
     "brace": "^0.8.0",
+    "bufferutil": "^3.0.5",
     "canvas-gauges": "^2.0.9",
     "clipboard": "^1.5.15",
     "compass-sass-mixins": "^0.12.7",
@@ -62,7 +63,7 @@
     "json-schema-defaults": "^0.2.0",
     "leaflet": "^1.0.3",
     "leaflet-providers": "^1.1.17",
-    "material-ui": "^0.16.1",
+    "material-ui": "^0.16.7",
     "material-ui-number-input": "^5.0.16",
     "md-color-picker": "^0.2.6",
     "mdPickers": "git://github.com/alenaksu/mdPickers.git#0.7.5",
@@ -86,6 +87,7 @@
     "tinycolor2": "^1.4.1",
     "tooltipster": "^4.2.4",
     "typeface-roboto": "0.0.22",
+    "utf-8-validate": "^4.0.2",
     "v-accordion": "^1.6.0"
   },
   "devDependencies": {
