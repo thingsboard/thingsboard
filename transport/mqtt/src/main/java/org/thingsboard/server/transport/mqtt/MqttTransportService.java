@@ -29,7 +29,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
-import org.thingsboard.server.common.transport.quota.QuotaService;
+import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
@@ -67,7 +67,7 @@ public class MqttTransportService {
     private MqttSslHandlerProvider sslHandlerProvider;
 
     @Autowired(required = false)
-    private QuotaService quotaService;
+    private HostRequestsQuotaService quotaService;
 
     @Value("${mqtt.bind_address}")
     private String host;

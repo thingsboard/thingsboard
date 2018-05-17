@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.transport.quota.tenant.TenantQuotaService;
 import org.thingsboard.server.dao.queue.MsgQueue;
 
 import javax.annotation.PostConstruct;
@@ -48,6 +49,9 @@ public class DefaultMsgQueueService implements MsgQueueService {
     @Autowired
     private MsgQueue msgQueue;
 
+    @Autowired
+    private TenantQuotaService quotaService;
+
     private ScheduledExecutorService cleanupExecutor;
 
     private Map<TenantId, AtomicLong> pendingCountPerTenant = new ConcurrentHashMap<>();
@@ -70,6 +74,11 @@ public class DefaultMsgQueueService implements MsgQueueService {
 
     @Override
     public ListenableFuture<Void> put(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition) {
+        if(quotaService.isQuotaExceeded(tenantId.getId().toString())) {
+            log.warn("Tenant TbMsg Quota exceeded for [{}:{}] . Reject", tenantId.getId());
+            return Futures.immediateFailedFuture(new RuntimeException("Tenant TbMsg Quota exceeded"));
+        }
+
         AtomicLong pendingMsgCount = pendingCountPerTenant.computeIfAbsent(tenantId, key -> new AtomicLong());
         if (pendingMsgCount.incrementAndGet() < queueMaxSize) {
             return msgQueue.put(tenantId, msg, nodeId, clusterPartition);

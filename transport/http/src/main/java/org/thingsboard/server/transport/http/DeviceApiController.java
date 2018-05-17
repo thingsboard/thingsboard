@@ -36,6 +36,7 @@ import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.QuotaService;
+import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 import org.thingsboard.server.transport.http.session.HttpSessionCtx;
 
 import javax.servlet.http.HttpServletRequest;
@@ -61,7 +62,7 @@ public class DeviceApiController {
     private DeviceAuthService authService;
 
     @Autowired(required = false)
-    private QuotaService quotaService;
+    private HostRequestsQuotaService quotaService;
 
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = "application/json")
     public DeferredResult<ResponseEntity> getDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
