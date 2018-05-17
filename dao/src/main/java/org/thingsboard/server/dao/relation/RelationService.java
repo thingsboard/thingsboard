@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ashvayka on 27.04.17.
@@ -47,9 +48,9 @@ public interface RelationService {
 
     ListenableFuture<Boolean> deleteRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    boolean deleteEntityRelations(EntityId entity);
+    void deleteEntityRelations(EntityId entity) throws ExecutionException, InterruptedException;
 
-    ListenableFuture<Boolean> deleteEntityRelationsAsync(EntityId entity);
+    ListenableFuture<Void> deleteEntityRelationsAsync(EntityId entity);
 
     List<EntityRelation> findByFrom(EntityId from, RelationTypeGroup typeGroup);
 

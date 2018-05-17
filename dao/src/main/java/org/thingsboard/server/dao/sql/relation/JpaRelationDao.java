@@ -132,39 +132,35 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     @Override
     public boolean deleteRelation(EntityRelation relation) {
         RelationCompositeKey key = new RelationCompositeKey(relation);
-        boolean relationExistsBeforeDelete = relationRepository.exists(key);
-        relationRepository.delete(key);
-        return relationExistsBeforeDelete;
+        return deleteRelationIfExists(key);
     }
 
     @Override
     public ListenableFuture<Boolean> deleteRelationAsync(EntityRelation relation) {
         RelationCompositeKey key = new RelationCompositeKey(relation);
         return service.submit(
-                () -> {
-                    boolean relationExistsBeforeDelete = relationRepository.exists(key);
-                    relationRepository.delete(key);
-                    return relationExistsBeforeDelete;
-                });
+                () -> deleteRelationIfExists(key));
     }
 
     @Override
     public boolean deleteRelation(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         RelationCompositeKey key = getRelationCompositeKey(from, to, relationType, typeGroup);
-        boolean relationExistsBeforeDelete = relationRepository.exists(key);
-        relationRepository.delete(key);
-        return relationExistsBeforeDelete;
+        return deleteRelationIfExists(key);
     }
 
     @Override
     public ListenableFuture<Boolean> deleteRelationAsync(EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         RelationCompositeKey key = getRelationCompositeKey(from, to, relationType, typeGroup);
         return service.submit(
-                () -> {
-                    boolean relationExistsBeforeDelete = relationRepository.exists(key);
-                    relationRepository.delete(key);
-                    return relationExistsBeforeDelete;
-                });
+                () -> deleteRelationIfExists(key));
+    }
+
+    private boolean deleteRelationIfExists(RelationCompositeKey key) {
+        boolean relationExistsBeforeDelete = relationRepository.exists(key);
+        if (relationExistsBeforeDelete) {
+            relationRepository.delete(key);
+        }
+        return relationExistsBeforeDelete;
     }
 
     @Override
@@ -172,7 +168,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         boolean relationExistsBeforeDelete = relationRepository
                 .findAllByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name())
                 .size() > 0;
-        relationRepository.deleteByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name());
+        if (relationExistsBeforeDelete) {
+            relationRepository.deleteByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name());
+        }
         return relationExistsBeforeDelete;
     }
 
@@ -183,7 +181,9 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                     boolean relationExistsBeforeDelete = relationRepository
                             .findAllByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name())
                             .size() > 0;
-                    relationRepository.deleteByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name());
+                    if (relationExistsBeforeDelete) {
+                        relationRepository.deleteByFromIdAndFromType(UUIDConverter.fromTimeUUID(entity.getId()), entity.getEntityType().name());
+                    }
                     return relationExistsBeforeDelete;
                 });
     }
