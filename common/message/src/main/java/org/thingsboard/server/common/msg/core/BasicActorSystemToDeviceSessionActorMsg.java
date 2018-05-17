@@ -19,12 +19,12 @@ import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 
-public class BasicToDeviceSessionActorMsg implements ToDeviceSessionActorMsg {
+public class BasicActorSystemToDeviceSessionActorMsg implements ActorSystemToDeviceSessionActorMsg {
 
     private final ToDeviceMsg msg;
     private final SessionId sessionId;
 
-    public BasicToDeviceSessionActorMsg(ToDeviceMsg msg, SessionId sessionId) {
+    public BasicActorSystemToDeviceSessionActorMsg(ToDeviceMsg msg, SessionId sessionId) {
         super();
         this.msg = msg;
         this.sessionId = sessionId;
@@ -47,6 +47,6 @@ public class BasicToDeviceSessionActorMsg implements ToDeviceSessionActorMsg {
 
     @Override
     public MsgType getMsgType() {
-        return null;
+        return MsgType.ACTOR_SYSTEM_TO_DEVICE_SESSION_ACTOR_MSG;
     }
 }

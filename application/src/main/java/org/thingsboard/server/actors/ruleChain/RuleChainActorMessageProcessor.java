@@ -206,9 +206,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
         checkActive();
         RuleNodeId originator = envelope.getOriginator();
-        String targetRelationType = envelope.getRelationType();
         List<RuleNodeRelation> relations = nodeRoutes.get(originator).stream()
-                .filter(r -> targetRelationType == null || targetRelationType.equalsIgnoreCase(r.getType()))
+                .filter(r -> contains(envelope.getRelationTypes(), r.getType()))
                 .collect(Collectors.toList());
 
         TbMsg msg = envelope.getMsg();
@@ -235,6 +234,18 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
             queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
         }
+    }
+
+    private boolean contains(Set<String> relationTypes, String type) {
+        if (relationTypes == null) {
+            return true;
+        }
+        for (String relationType : relationTypes) {
+            if (relationType.equalsIgnoreCase(type)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target, String fromRelationType) {

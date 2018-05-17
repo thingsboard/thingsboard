@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.common.msg.core;
 
-import org.thingsboard.server.common.msg.aware.CustomerAwareMsg;
-import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
-import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
+import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 
-public interface ToDeviceActorSessionMsg extends DeviceAwareMsg, CustomerAwareMsg, TenantAwareMsg, SessionAwareMsg {
+import java.io.Serializable;
 
-    AdaptorToSessionActorMsg getSessionMsg();
+/**
+ * @author Andrew Shvayka
+ */
+public interface ActorSystemToDeviceSessionActorMsg extends SessionAwareMsg, Serializable, TbActorMsg {
 
+    ToDeviceMsg getMsg();
 }

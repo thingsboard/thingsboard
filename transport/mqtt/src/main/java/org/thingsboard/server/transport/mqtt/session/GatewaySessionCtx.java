@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.core.*;
 import org.thingsboard.server.common.msg.session.BasicAdaptorToSessionActorMsg;
-import org.thingsboard.server.common.msg.session.BasicToDeviceActorSessionMsg;
+import org.thingsboard.server.common.msg.session.BasicTransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -96,8 +96,8 @@ public class GatewaySessionCtx {
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
             devices.put(deviceName, ctx);
             log.debug("[{}] Added device [{}] to the gateway session", gatewaySessionId, deviceName);
-            processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
-            processor.process(new BasicToDeviceActorSessionMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
+            processor.process(new BasicTransportToDeviceSessionActorMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new AttributesSubscribeMsg())));
+            processor.process(new BasicTransportToDeviceSessionActorMsg(device, new BasicAdaptorToSessionActorMsg(ctx, new RpcSubscribeMsg())));
         }
     }
 
@@ -136,7 +136,7 @@ public class GatewaySessionCtx {
                     JsonConverter.parseWithTs(request, element.getAsJsonObject());
                 }
                 GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-                processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+                processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                         new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
             }
         } else {
@@ -152,7 +152,7 @@ public class GatewaySessionCtx {
             Integer requestId = jsonObj.get("id").getAsInt();
             String data = jsonObj.get("data").toString();
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-            processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+            processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
@@ -174,7 +174,7 @@ public class GatewaySessionCtx {
                 JsonObject deviceData = deviceEntry.getValue().getAsJsonObject();
                 request.add(JsonConverter.parseValues(deviceData).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
                 GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-                processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+                processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                         new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
             }
         } else {
@@ -207,7 +207,7 @@ public class GatewaySessionCtx {
                 request = new BasicGetAttributesRequest(requestId, null, keys);
             }
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
-            processor.process(new BasicToDeviceActorSessionMsg(deviceSessionCtx.getDevice(),
+            processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
             ack(msg);
         } else {

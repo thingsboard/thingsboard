@@ -211,6 +211,10 @@ public class DefaultActorService implements ActorService {
     @Override
     public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
         ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort());
+        log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
+        if(log.isDebugEnabled()){
+            log.info("MSG: ", msg);
+        }
         switch (msg.getMessageType()) {
             case CLUSTER_ACTOR_MESSAGE:
                 java.util.Optional<TbActorMsg> decodedMsg = actorContext.getEncodingService()

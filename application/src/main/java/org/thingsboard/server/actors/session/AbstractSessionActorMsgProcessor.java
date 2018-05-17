@@ -45,7 +45,7 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
         this.sessionId = sessionId;
     }
 
-    protected abstract void processToDeviceActorMsg(ActorContext ctx, ToDeviceActorSessionMsg msg);
+    protected abstract void processToDeviceActorMsg(ActorContext ctx, TransportToDeviceSessionActorMsg msg);
 
     protected abstract void processTimeoutMsg(ActorContext context, SessionTimeoutMsg msg);
 
@@ -63,12 +63,12 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
     protected void cleanupSession(ActorContext ctx) {
     }
 
-    protected void updateSessionCtx(ToDeviceActorSessionMsg msg, SessionType type) {
+    protected void updateSessionCtx(TransportToDeviceSessionActorMsg msg, SessionType type) {
         sessionCtx = msg.getSessionMsg().getSessionContext();
         deviceToDeviceActorMsgPrototype = new BasicDeviceToDeviceActorMsg(msg, type);
     }
 
-    protected DeviceToDeviceActorMsg toDeviceMsg(ToDeviceActorSessionMsg msg) {
+    protected DeviceToDeviceActorMsg toDeviceMsg(TransportToDeviceSessionActorMsg msg) {
         AdaptorToSessionActorMsg adaptorMsg = msg.getSessionMsg();
         return new BasicDeviceToDeviceActorMsg(deviceToDeviceActorMsgPrototype, adaptorMsg.getMsg());
     }
