@@ -36,14 +36,14 @@ public class RateLimitedResultSetFuture implements ResultSetFuture {
     private final ListenableFuture<Void> rateLimitFuture;
 
     public RateLimitedResultSetFuture(Session session, AsyncRateLimiter rateLimiter, Statement statement) {
-        this.rateLimitFuture = Futures.withFallback(rateLimiter.acquireAsync(), t -> {
+        this.rateLimitFuture = Futures.catchingAsync(rateLimiter.acquireAsync(), Throwable.class, t -> {
             if (!(t instanceof BufferLimitException)) {
                 rateLimiter.release();
             }
             return Futures.immediateFailedFuture(t);
         });
         this.originalFuture = Futures.transform(rateLimitFuture,
-                (Function<Void, ResultSetFuture>) i -> executeAsyncWithRelease(rateLimiter, session, statement));
+                i -> executeAsyncWithRelease(rateLimiter, session, statement));
 
     }
 

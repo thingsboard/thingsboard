@@ -108,8 +108,8 @@ public class CoapServerTest {
 
                 @Override
                 public void process(SessionAwareMsg toActorMsg) {
-                    if (toActorMsg instanceof ToDeviceActorSessionMsg) {
-                        AdaptorToSessionActorMsg sessionMsg = ((ToDeviceActorSessionMsg) toActorMsg).getSessionMsg();
+                    if (toActorMsg instanceof TransportToDeviceSessionActorMsg) {
+                        AdaptorToSessionActorMsg sessionMsg = ((TransportToDeviceSessionActorMsg) toActorMsg).getSessionMsg();
                         try {
                             FromDeviceMsg deviceMsg = sessionMsg.getMsg();
                             ToDeviceMsg toDeviceMsg = null;

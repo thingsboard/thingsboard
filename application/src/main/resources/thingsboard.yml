@@ -58,6 +58,8 @@ cluster:
   hash_function_name: "${CLUSTER_HASH_FUNCTION_NAME:murmur3_128}"
   # Amount of virtual nodes in consistent hash ring.
   vitrual_nodes_size: "${CLUSTER_VIRTUAL_NODES_SIZE:16}"
+  # Queue partition id for current node
+  partition_id: "${QUEUE_PARTITION_ID:0}"
 
 # Plugins configuration parameters
 plugins:
@@ -106,7 +108,7 @@ mqtt:
 # CoAP server parameters
 coap:
   # Enable/disable coap transport protocol.
-  enabled: "${COAP_ENABLED:true}"
+  enabled: "${COAP_ENABLED:false}"
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${COAP_BIND_PORT:5683}"
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
@@ -311,6 +313,7 @@ rule:
     max_size: "${RULE_QUEUE_MAX_SIZE:100}"
     #Message queue cleanup period in seconds
     cleanup_period: "${RULE_QUEUE_CLEANUP_PERIOD:3600}"
+
 
 # PostgreSQL DAO Configuration
 #spring:

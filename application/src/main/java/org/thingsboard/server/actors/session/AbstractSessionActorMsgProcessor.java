@@ -21,6 +21,7 @@ import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.device.BasicDeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
@@ -44,7 +45,7 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
         this.sessionId = sessionId;
     }
 
-    protected abstract void processToDeviceActorMsg(ActorContext ctx, ToDeviceActorSessionMsg msg);
+    protected abstract void processToDeviceActorMsg(ActorContext ctx, TransportToDeviceSessionActorMsg msg);
 
     protected abstract void processTimeoutMsg(ActorContext context, SessionTimeoutMsg msg);
 
@@ -62,12 +63,12 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
     protected void cleanupSession(ActorContext ctx) {
     }
 
-    protected void updateSessionCtx(ToDeviceActorSessionMsg msg, SessionType type) {
+    protected void updateSessionCtx(TransportToDeviceSessionActorMsg msg, SessionType type) {
         sessionCtx = msg.getSessionMsg().getSessionContext();
         deviceToDeviceActorMsgPrototype = new BasicDeviceToDeviceActorMsg(msg, type);
     }
 
-    protected DeviceToDeviceActorMsg toDeviceMsg(ToDeviceActorSessionMsg msg) {
+    protected DeviceToDeviceActorMsg toDeviceMsg(TransportToDeviceSessionActorMsg msg) {
         AdaptorToSessionActorMsg adaptorMsg = msg.getSessionMsg();
         return new BasicDeviceToDeviceActorMsg(deviceToDeviceActorMsgPrototype, adaptorMsg.getMsg());
     }
@@ -86,23 +87,20 @@ abstract class AbstractSessionActorMsgProcessor extends AbstractContextAwareMsgP
         return address;
     }
 
-    protected Optional<ServerAddress> forwardToAppActorIfAdressChanged(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
+    protected Optional<ServerAddress> forwardToAppActorIfAddressChanged(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> oldAddress) {
+
         Optional<ServerAddress> newAddress = systemContext.getRoutingService().resolveById(toForward.getDeviceId());
         if (!newAddress.equals(oldAddress)) {
-            if (newAddress.isPresent()) {
-                systemContext.getRpcService().tell(newAddress.get(),
-                        toForward.toOtherAddress(systemContext.getRoutingService().getCurrentServer()));
-            } else {
-                getAppActor().tell(toForward, ctx.self());
-            }
+            getAppActor().tell(new SendToClusterMsg(toForward.getDeviceId(), toForward
+                    .toOtherAddress(systemContext.getRoutingService().getCurrentServer())), ctx.self());
         }
         return newAddress;
     }
 
     protected void forwardToAppActor(ActorContext ctx, DeviceToDeviceActorMsg toForward, Optional<ServerAddress> address) {
         if (address.isPresent()) {
-            systemContext.getRpcService().tell(address.get(),
-                    toForward.toOtherAddress(systemContext.getRoutingService().getCurrentServer()));
+            systemContext.getRpcService().tell(systemContext.getEncodingService().convertToProtoDataMessage(address.get(),
+                    toForward.toOtherAddress(systemContext.getRoutingService().getCurrentServer())));
         } else {
             getAppActor().tell(toForward, ctx.self());
         }

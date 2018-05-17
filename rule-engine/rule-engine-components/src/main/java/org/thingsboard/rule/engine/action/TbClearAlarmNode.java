@@ -56,7 +56,7 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
     @Override
     protected ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), config.getAlarmType());
-        return Futures.transform(latest, (AsyncFunction<Alarm, AlarmResult>) a -> {
+        return Futures.transformAsync(latest, a -> {
             if (a != null && !a.getStatus().isCleared()) {
                 return clearAlarm(ctx, msg, a);
             }
@@ -66,9 +66,9 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
 
     private ListenableFuture<AlarmResult> clearAlarm(TbContext ctx, TbMsg msg, Alarm alarm) {
         ListenableFuture<JsonNode> asyncDetails = buildAlarmDetails(ctx, msg, alarm.getDetails());
-        return Futures.transform(asyncDetails, (AsyncFunction<JsonNode, AlarmResult>) details -> {
+        return Futures.transformAsync(asyncDetails, details -> {
             ListenableFuture<Boolean> clearFuture = ctx.getAlarmService().clearAlarm(alarm.getId(), details, System.currentTimeMillis());
-            return Futures.transform(clearFuture, (AsyncFunction<Boolean, AlarmResult>) cleared -> {
+            return Futures.transformAsync(clearFuture, cleared -> {
                 if (cleared && details != null) {
                     alarm.setDetails(details);
                 }

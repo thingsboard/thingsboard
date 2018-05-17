@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.rpc;
+package org.thingsboard.server.common.msg.cluster;
 
-import io.grpc.stub.StreamObserver;
 import lombok.Data;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
-import java.util.UUID;
-
-/**
- * @author Andrew Shvayka
- */
 @Data
-public final class RpcSessionCreateRequestMsg {
+public class SendToClusterMsg implements TbActorMsg {
 
-    private final UUID msgUid;
-    private final ServerAddress remoteAddress;
-    private final StreamObserver<ClusterAPIProtos.ClusterMessage> responseObserver;
+    private TbActorMsg msg;
+    private EntityId entityId;
 
+    public SendToClusterMsg(EntityId entityId, TbActorMsg msg) {
+        this.entityId = entityId;
+        this.msg = msg;
+    }
+
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.SEND_TO_CLUSTER_MSG;
+    }
 }

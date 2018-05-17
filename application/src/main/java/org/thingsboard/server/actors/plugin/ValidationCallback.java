@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.actors.plugin;
 
-import com.hazelcast.util.function.Consumer;
+import java.util.function.Consumer;
 import org.thingsboard.server.extensions.api.exception.AccessDeniedException;
 import org.thingsboard.server.extensions.api.exception.EntityNotFoundException;
 import org.thingsboard.server.extensions.api.exception.InternalErrorException;

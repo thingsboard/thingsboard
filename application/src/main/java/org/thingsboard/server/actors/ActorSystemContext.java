@@ -60,6 +60,7 @@ import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
@@ -101,6 +102,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private ClusterRpcService rpcService;
+
+    @Autowired
+    @Getter
+    private DataDecodingEncodingService encodingService;
 
     @Autowired
     @Getter
@@ -202,6 +207,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DeviceStateService deviceStateService;
+
+    @Value("${cluster.partition_id}")
+    @Getter
+    private long queuePartitionId;
 
     @Value("${actors.session.sync.timeout}")
     @Getter

@@ -39,9 +39,8 @@ public class EntitiesRelatedDeviceIdAsyncLoader {
 
         ListenableFuture<List<Device>> asyncDevices = deviceService.findDevicesByQuery(query);
 
-        return Futures.transform(asyncDevices, (AsyncFunction<List<Device>, DeviceId>)
-                d -> CollectionUtils.isNotEmpty(d) ? Futures.immediateFuture(d.get(0).getId())
-                        : Futures.immediateFuture(null));
+        return Futures.transformAsync(asyncDevices, d -> CollectionUtils.isNotEmpty(d) ? Futures.immediateFuture(d.get(0).getId())
+                : Futures.immediateFuture(null));
     }
 
     private static DeviceSearchQuery buildQuery(EntityId originator, DeviceRelationsQuery deviceRelationsQuery) {

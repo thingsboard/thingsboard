@@ -21,6 +21,8 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Set;
+
 /**
  * Created by ashvayka on 19.03.18.
  */
@@ -28,7 +30,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 final class RuleNodeToRuleChainTellNextMsg implements TbActorMsg {
 
     private final RuleNodeId originator;
-    private final String relationType;
+    private final Set<String> relationTypes;
     private final TbMsg msg;
 
     @Override

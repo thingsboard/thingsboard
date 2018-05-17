@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.session;
+package org.thingsboard.server.service.encoding;
 
-import org.thingsboard.server.common.msg.aware.CustomerAwareMsg;
-import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
-import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
-import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
-public interface ToDeviceActorSessionMsg extends DeviceAwareMsg, CustomerAwareMsg, TenantAwareMsg, SessionAwareMsg {
+import java.util.Optional;
 
-    AdaptorToSessionActorMsg getSessionMsg();
+public interface DataDecodingEncodingService {
+
+    Optional<TbActorMsg> decode(byte[] byteArray);
+
+    byte[] encode(TbActorMsg msq);
+
+    ClusterAPIProtos.ClusterMessage convertToProtoDataMessage(ServerAddress serverAddress,
+                                                              TbActorMsg msg);
 
 }
+
