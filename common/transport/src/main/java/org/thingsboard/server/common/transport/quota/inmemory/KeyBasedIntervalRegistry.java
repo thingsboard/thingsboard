@@ -18,22 +18,14 @@ package org.thingsboard.server.common.transport.quota.inmemory;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * @author Vitaliy Paromskiy
- * @version 1.0
- */
-@Component
 @Slf4j
-public class HostRequestIntervalRegistry {
+public abstract class KeyBasedIntervalRegistry {
 
     private final Map<String, IntervalCount> hostCounts = new ConcurrentHashMap<>();
     private final long intervalDurationMs;
@@ -41,23 +33,20 @@ public class HostRequestIntervalRegistry {
     private final Set<String> whiteList;
     private final Set<String> blackList;
 
-    public HostRequestIntervalRegistry(@Value("${quota.host.intervalMs}") long intervalDurationMs,
-                                       @Value("${quota.host.ttlMs}") long ttlMs,
-                                       @Value("${quota.host.whitelist}") String whiteList,
-                                       @Value("${quota.host.blacklist}") String blackList) {
+    public KeyBasedIntervalRegistry(long intervalDurationMs, long ttlMs, String whiteList, String blackList, String name) {
         this.intervalDurationMs = intervalDurationMs;
         this.ttlMs = ttlMs;
         this.whiteList = Sets.newHashSet(StringUtils.split(whiteList, ','));
         this.blackList = Sets.newHashSet(StringUtils.split(blackList, ','));
+        validate(name);
     }
 
-    @PostConstruct
-    public void init() {
+    private void validate(String name) {
         if (ttlMs < intervalDurationMs) {
-            log.warn("TTL for IntervalRegistry [{}] smaller than interval duration [{}]", ttlMs, intervalDurationMs);
+            log.warn("TTL for {} IntervalRegistry [{}] smaller than interval duration [{}]", name, ttlMs, intervalDurationMs);
         }
-        log.info("Start Host Quota Service with whitelist {}", whiteList);
-        log.info("Start Host Quota Service with blacklist {}", blackList);
+        log.info("Start {} KeyBasedIntervalRegistry with whitelist {}", name, whiteList);
+        log.info("Start {} KeyBasedIntervalRegistry with blacklist {}", name, blackList);
     }
 
     public long tick(String clientHostId) {
