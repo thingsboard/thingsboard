@@ -67,6 +67,10 @@ public abstract class AbstractCassandraCluster {
     private long initTimeout;
     @Value("${cassandra.init_retry_interval_ms}")
     private long initRetryInterval;
+    @Value("${cassandra.max_requests_per_connection_local:128}")
+    private int max_requests_local;
+    @Value("${cassandra.max_requests_per_connection_remote:128}")
+    private int max_requests_remote;
 
     @Autowired
     private CassandraSocketOptions socketOpts;
@@ -97,8 +101,8 @@ public abstract class AbstractCassandraCluster {
                 .withClusterName(clusterName)
                 .withSocketOptions(socketOpts.getOpts())
                 .withPoolingOptions(new PoolingOptions()
-                        .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
-                        .setMaxRequestsPerConnection(HostDistance.REMOTE, 32768));
+                        .setMaxRequestsPerConnection(HostDistance.LOCAL, max_requests_local)
+                        .setMaxRequestsPerConnection(HostDistance.REMOTE, max_requests_remote));
         this.clusterBuilder.withQueryOptions(queryOpts.getOpts());
         this.clusterBuilder.withCompression(StringUtils.isEmpty(compression) ? Compression.NONE : Compression.valueOf(compression.toUpperCase()));
         if (ssl) {

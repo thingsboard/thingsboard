@@ -16,15 +16,19 @@
 package org.thingsboard.server.dao.queue;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
 public interface MsgQueue {
 
-    ListenableFuture<Void> put(TbMsg msg, UUID nodeId, long clusterPartition);
+    ListenableFuture<Void> put(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition);
 
-    ListenableFuture<Void> ack(TbMsg msg, UUID nodeId, long clusterPartition);
+    ListenableFuture<Void> ack(TenantId tenantId, TbMsg msg, UUID nodeId, long clusterPartition);
 
-    Iterable<TbMsg> findUnprocessed(UUID nodeId, long clusterPartition);
+    Iterable<TbMsg> findUnprocessed(TenantId tenantId, UUID nodeId, long clusterPartition);
+
+    ListenableFuture<Void> cleanUp(TenantId tenantId);
+
 }

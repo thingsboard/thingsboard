@@ -297,16 +297,15 @@ export default angular.module('thingsboard.types', [])
                 }
             },
             componentType: {
+                enrichment: "ENRICHMENT",
                 filter: "FILTER",
-                processor: "PROCESSOR",
+                transformation: "TRANSFORMATION",
                 action: "ACTION",
-                plugin: "PLUGIN"
+                external: "EXTERNAL"
             },
             entityType: {
                 device: "DEVICE",
                 asset: "ASSET",
-                rule: "RULE",
-                plugin: "PLUGIN",
                 tenant: "TENANT",
                 customer: "CUSTOMER",
                 user: "USER",
@@ -330,18 +329,6 @@ export default angular.module('thingsboard.types', [])
                     typePlural: 'entity.type-assets',
                     list: 'entity.list-of-assets',
                     nameStartsWith: 'entity.asset-name-starts-with'
-                },
-                "RULE": {
-                    type: 'entity.type-rule',
-                    typePlural: 'entity.type-rules',
-                    list: 'entity.list-of-rules',
-                    nameStartsWith: 'entity.rule-name-starts-with'
-                },
-                "PLUGIN": {
-                    type: 'entity.type-plugin',
-                    typePlural: 'entity.type-plugins',
-                    list: 'entity.list-of-plugins',
-                    nameStartsWith: 'entity.plugin-name-starts-with'
                 },
                 "TENANT": {
                     type: 'entity.type-tenant',
@@ -419,7 +406,8 @@ export default angular.module('thingsboard.types', [])
             extensionType: {
                 http: "HTTP",
                 mqtt: "MQTT",
-                opc: "OPC UA"
+                opc: "OPC UA",
+                modbus: "MODBUS"
             },
             extensionValueType: {
                 string: 'value.string',
@@ -462,6 +450,26 @@ export default angular.module('thingsboard.types', [])
             extensionKeystoreType: {
                 PKCS12: "PKCS12",
                 JKS: "JKS"
+            },
+            extensionModbusFunctionCodes: {
+                1: "Read Coils (1)",
+                2: "Read Discrete Inputs (2)",
+                3: "Read Multiple Holding Registers (3)",
+                4: "Read Input Registers (4)"
+            },
+            extensionModbusTransports: {
+                tcp: "TCP",
+                udp: "UDP",
+                rtu: "RTU"
+            },
+            extensionModbusRtuParities: {
+                none: "none",
+                even: "even",
+                odd: "odd"
+            },
+            extensionModbusRtuEncodings: {
+                ascii: "ascii",
+                rtu: "rtu"
             },
             latestTelemetry: {
                 value: "LATEST_TELEMETRY",

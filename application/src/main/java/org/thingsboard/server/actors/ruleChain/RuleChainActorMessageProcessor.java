@@ -95,12 +95,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void reprocess(List<RuleNode> ruleNodeList) {
         for (RuleNode ruleNode : ruleNodeList) {
-            for (TbMsg tbMsg : queue.findUnprocessed(ruleNode.getId().getId(), systemContext.getQueuePartitionId())) {
+            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, ruleNode.getId().getId(), systemContext.getQueuePartitionId())) {
                 pushMsgToNode(nodeActors.get(ruleNode.getId()), tbMsg, "");
             }
         }
         if (firstNode != null) {
-            for (TbMsg tbMsg : queue.findUnprocessed(entityId.getId(), systemContext.getQueuePartitionId())) {
+            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, entityId.getId(), systemContext.getQueuePartitionId())) {
                 pushMsgToNode(firstNode, tbMsg, "");
             }
         }
@@ -215,7 +215,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         int relationsCount = relations.size();
         EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
         if (relationsCount == 0) {
-            queue.ack(msg, ackId.getId(), msg.getClusterPartition());
+            queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {
                 pushToTarget(msg, relation.getOut(), relation.getType());
@@ -233,7 +233,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 }
             }
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
-            queue.ack(msg, ackId.getId(), msg.getClusterPartition());
+            queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
         }
     }
 

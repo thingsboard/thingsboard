@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.dao.queue.MsgQueue;
+import org.thingsboard.server.service.queue.MsgQueueService;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
@@ -35,14 +36,14 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected final TenantId tenantId;
     protected final T entityId;
-    protected final MsgQueue queue;
+    protected final MsgQueueService queue;
     protected ComponentLifecycleState state;
 
     protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
         super(systemContext, logger);
         this.tenantId = tenantId;
         this.entityId = id;
-        this.queue = systemContext.getMsgQueue();
+        this.queue = systemContext.getMsgQueueService();
     }
 
     public abstract void start(ActorContext context) throws Exception;
@@ -88,7 +89,7 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
 
     protected void putToQueue(final TbMsg tbMsg, final Consumer<TbMsg> onSuccess) {
         EntityId entityId = tbMsg.getRuleNodeId() != null ? tbMsg.getRuleNodeId() : tbMsg.getRuleChainId();
-        Futures.addCallback(queue.put(tbMsg, entityId.getId(), tbMsg.getClusterPartition()), new FutureCallback<Void>() {
+        Futures.addCallback(queue.put(this.tenantId, tbMsg, entityId.getId(), tbMsg.getClusterPartition()), new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
                 onSuccess.accept(tbMsg);

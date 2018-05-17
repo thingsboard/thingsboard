@@ -18,8 +18,11 @@
 <md-button ng-click="onExportRuleChain({event: $event})"
            ng-show="!isEdit"
            class="md-raised md-primary">{{ 'rulechain.export' | translate }}</md-button>
+<md-button ng-click="onSetRootRuleChain({event: $event})"
+           ng-show="!isEdit && !ruleChain.root"
+           class="md-raised md-primary">{{ 'rulechain.set-root' | translate }}</md-button>
 <md-button ng-click="onDeleteRuleChain({event: $event})"
-           ng-show="!isEdit && !isReadOnly"
+           ng-show="!isEdit && !ruleChain.root"
            class="md-raised md-primary">{{ 'rulechain.delete' | translate }}</md-button>
 
 <div layout="row">

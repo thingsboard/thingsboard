@@ -36,6 +36,8 @@ public interface RuleChainService {
 
     RuleChain saveRuleChain(RuleChain ruleChain);
 
+    boolean setRootRuleChain(RuleChainId ruleChainId);
+
     RuleChainMetaData saveRuleChainMetaData(RuleChainMetaData ruleChainMetaData);
 
     RuleChainMetaData loadRuleChainMetaData(RuleChainId ruleChainId);
@@ -54,11 +56,7 @@ public interface RuleChainService {
 
     List<EntityRelation> getRuleNodeRelations(RuleNodeId ruleNodeId);
 
-    TextPageData<RuleChain> findSystemRuleChains(TextPageLink pageLink);
-
     TextPageData<RuleChain> findTenantRuleChains(TenantId tenantId, TextPageLink pageLink);
-
-    TextPageData<RuleChain> findAllTenantRuleChainsByTenantIdAndPageLink(TenantId tenantId, TextPageLink pageLink);
 
     void deleteRuleChainById(RuleChainId ruleChainId);
 

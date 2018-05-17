@@ -30,8 +30,11 @@ import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.plugin.TenantPluginManager;
 import org.thingsboard.server.actors.shared.rulechain.TenantRuleChainManager;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
@@ -130,6 +133,11 @@ public class TenantActor extends RuleChainManagerActor {
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         ActorRef target = getEntityActorRef(msg.getEntityId());
         if (target != null) {
+            if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                RuleChain ruleChain = systemContext.getRuleChainService().
+                        findRuleChainById(new RuleChainId(msg.getEntityId().getId()));
+                ruleChainManager.visit(ruleChain, target);
+            }
             target.tell(msg, ActorRef.noSender());
         } else {
             logger.debug("Invalid component lifecycle msg: {}", msg);

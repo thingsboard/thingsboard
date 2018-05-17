@@ -45,6 +45,9 @@
             </div>
         </div>
     </div>
+    <div ng-if="modelservice.isEditable() && !node.readonly" class="fc-nodeedit" ng-click="callbacks.nodeEdit($event, node)">
+        <i class="fa fa-pencil" aria-hidden="true"></i>
+    </div>
     <div ng-if="modelservice.isEditable() && !node.readonly" class="fc-nodedelete" ng-click="modelservice.nodes.delete(node)">
         &times;
     </div>

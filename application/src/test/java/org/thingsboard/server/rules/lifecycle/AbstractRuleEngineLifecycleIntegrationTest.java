@@ -186,7 +186,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 new TbMsgMetaData(),
                 "{}",
                 ruleChain.getId(), null, 0L);
-        msgQueue.put(tbMsg, ruleChain.getId().getId(), 0L);
+        msgQueueService.put(device.getTenantId(), tbMsg, ruleChain.getId().getId(), 0L);
 
         Thread.sleep(1000);
 

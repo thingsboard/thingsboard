@@ -88,15 +88,27 @@ public abstract class CassandraAbstractDao {
     }
 
     private ResultSet execute(Statement statement, ConsistencyLevel level) {
-        log.debug("Execute cassandra statement {}", statement);
+        if (log.isDebugEnabled()) {
+            log.debug("Execute cassandra statement {}", statementToString(statement));
+        }
         return executeAsync(statement, level).getUninterruptibly();
     }
 
     private ResultSetFuture executeAsync(Statement statement, ConsistencyLevel level) {
-        log.debug("Execute cassandra async statement {}", statement);
+        if (log.isDebugEnabled()) {
+            log.debug("Execute cassandra async statement {}", statementToString(statement));
+        }
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
         return new RateLimitedResultSetFuture(getSession(), rateLimiter, statement);
+    }
+
+    private static String statementToString(Statement statement) {
+        if (statement instanceof BoundStatement) {
+            return ((BoundStatement)statement).preparedStatement().getQueryString();
+        } else {
+            return statement.toString();
+        }
     }
 }

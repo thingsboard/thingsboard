@@ -85,21 +85,6 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void tellOthers(TbMsg msg) {
-        throw new RuntimeException("Not Implemented!");
-    }
-
-    @Override
-    public void tellSibling(TbMsg msg, ServerAddress address) {
-        throw new RuntimeException("Not Implemented!");
-    }
-
-    @Override
-    public void ack(TbMsg msg) {
-
-    }
-
-    @Override
     public void tellError(TbMsg msg, Throwable th) {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, "", th);
@@ -119,7 +104,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), mainCtx.getQueuePartitionId());
+        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), data, origMsg.getRuleChainId(), origMsg.getRuleNodeId(), mainCtx.getQueuePartitionId());
     }
 
     @Override
@@ -134,6 +119,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellNext(TbMsg msg, Set<String> relationTypes) {
+        //TODO: fix this to send set of relations instead of loop.
         relationTypes.forEach(type -> tellNext(msg, type));
     }
 

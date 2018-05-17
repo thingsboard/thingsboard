@@ -558,15 +558,10 @@ public abstract class BaseController {
         SecurityUser authUser = getCurrentUser();
         TenantId tenantId = ruleChain.getTenantId();
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        if (authUser.getAuthority() != Authority.SYS_ADMIN) {
-            if (authUser.getTenantId() == null ||
-                    !tenantId.getId().equals(ModelConstants.NULL_UUID) && !authUser.getTenantId().equals(tenantId)) {
-                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
-                        ThingsboardErrorCode.PERMISSION_DENIED);
-
-            } else if (tenantId.getId().equals(ModelConstants.NULL_UUID)) {
-                ruleChain.setConfiguration(null);
-            }
+        if (authUser.getAuthority() != Authority.TENANT_ADMIN ||
+                !authUser.getTenantId().equals(tenantId)) {
+            throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
+                    ThingsboardErrorCode.PERMISSION_DENIED);
         }
         return ruleChain;
     }
