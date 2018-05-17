@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cluster.discovery;
 
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;

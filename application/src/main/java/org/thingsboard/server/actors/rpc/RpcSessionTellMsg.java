@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.rpc;
 
 import lombok.Data;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 
 /**

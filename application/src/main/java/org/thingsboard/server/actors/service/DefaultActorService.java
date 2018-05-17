@@ -23,6 +23,8 @@ import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.rpc.RpcBroadcastMsg;
@@ -30,7 +32,9 @@ import org.thingsboard.server.actors.rpc.RpcManagerActor;
 import org.thingsboard.server.actors.rpc.RpcSessionCreateRequestMsg;
 import org.thingsboard.server.actors.session.SessionManagerActor;
 import org.thingsboard.server.actors.stats.StatsActor;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
@@ -38,12 +42,8 @@ import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
-import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
-import org.thingsboard.server.extensions.api.device.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.extensions.api.device.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.rest.PluginRestMsg;
-import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.discovery.DiscoveryService;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
@@ -91,7 +91,7 @@ public class DefaultActorService implements ActorService {
 
     @PostConstruct
     public void initActorSystem() {
-        log.info("Initializing Actor system. {}", actorContext.getRuleService());
+        log.info("Initializing Actor system. {}", actorContext.getRuleChainService());
         actorContext.setActorService(this);
         system = ActorSystem.create(ACTOR_SYSTEM_NAME, actorContext.getConfig());
         actorContext.setActorSystem(system);
@@ -136,19 +136,6 @@ public class DefaultActorService implements ActorService {
         log.debug("Processing session aware msg: {}", msg);
         sessionManagerActor.tell(msg, ActorRef.noSender());
     }
-
-    @Override
-    public void process(PluginWebsocketMsg<?> msg) {
-        log.debug("Processing websocket msg: {}", msg);
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
-    @Override
-    public void process(PluginRestMsg msg) {
-        log.debug("Processing rest msg: {}", msg);
-        appActor.tell(msg, ActorRef.noSender());
-    }
-
 
     @Override
     public void onServerAdded(ServerInstance server) {
@@ -263,4 +250,5 @@ public class DefaultActorService implements ActorService {
     public void onBroadcastMsg(RpcBroadcastMsg msg) {
         rpcManagerActor.tell(msg, ActorRef.noSender());
     }
+
 }

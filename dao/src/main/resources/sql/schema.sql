@@ -140,19 +140,6 @@ CREATE TABLE IF NOT EXISTS event (
     CONSTRAINT event_unq_key UNIQUE (tenant_id, entity_type, entity_id, event_type, event_uid)
 );
 
-CREATE TABLE IF NOT EXISTS plugin (
-    id varchar(31) NOT NULL CONSTRAINT plugin_pkey PRIMARY KEY,
-    additional_info varchar,
-    api_token varchar(255),
-    plugin_class varchar(255),
-    configuration varchar,
-    name varchar(255),
-    public_access boolean,
-    search_text varchar(255),
-    state varchar(255),
-    tenant_id varchar(31)
-);
-
 CREATE TABLE IF NOT EXISTS relation (
     from_id varchar(31),
     from_type varchar(255),
@@ -162,20 +149,6 @@ CREATE TABLE IF NOT EXISTS relation (
     relation_type varchar(255),
     additional_info varchar,
     CONSTRAINT relation_unq_key UNIQUE (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
-);
-
-CREATE TABLE IF NOT EXISTS rule (
-    id varchar(31) NOT NULL CONSTRAINT rule_pkey PRIMARY KEY,
-    action varchar,
-    additional_info varchar,
-    filters varchar,
-    name varchar(255),
-    plugin_token varchar(255),
-    processor varchar,
-    search_text varchar(255),
-    state varchar(255),
-    tenant_id varchar(31),
-    weight integer
 );
 
 CREATE TABLE IF NOT EXISTS tb_user (

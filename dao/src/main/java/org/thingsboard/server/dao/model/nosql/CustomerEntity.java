@@ -30,7 +30,20 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ADDRESS2_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ADDRESS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.CITY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.COUNTRY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_TITLE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EMAIL_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.PHONE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.STATE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ZIP_PROPERTY;
 
 @Table(name = CUSTOMER_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode

@@ -15,18 +15,26 @@
  */
 package org.thingsboard.server.actors.session;
 
+import akka.actor.ActorContext;
+import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.core.*;
+import org.thingsboard.server.common.msg.core.AttributesSubscribeMsg;
+import org.thingsboard.server.common.msg.core.ResponseMsg;
+import org.thingsboard.server.common.msg.core.RpcSubscribeMsg;
 import org.thingsboard.server.common.msg.core.SessionCloseMsg;
+import org.thingsboard.server.common.msg.core.SessionOpenMsg;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
-import org.thingsboard.server.common.msg.session.*;
-
-import akka.actor.ActorContext;
-import akka.event.LoggingAdapter;
+import org.thingsboard.server.common.msg.session.BasicSessionActorToAdaptorMsg;
+import org.thingsboard.server.common.msg.session.FromDeviceMsg;
+import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionType;
+import org.thingsboard.server.common.msg.session.ToDeviceMsg;
+import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ex.SessionException;
 
 import java.util.HashMap;

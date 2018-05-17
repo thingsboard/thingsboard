@@ -428,7 +428,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.attributes_kv_cf (
 
 CREATE TABLE IF NOT EXISTS  thingsboard.component_descriptor (
     id timeuuid,
-    type text, //("FILTER", "PROCESSOR", "ACTION", "PLUGIN")
+    type text,
     scope text,
     name text,
     search_text text,
@@ -459,67 +459,12 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.component_desc_by_id AS
     PRIMARY KEY ( id, clazz, scope, type )
     WITH CLUSTERING ORDER BY ( clazz ASC, scope ASC, type DESC);
 
-CREATE TABLE IF NOT EXISTS  thingsboard.rule (
-    id timeuuid,
-    tenant_id timeuuid,
-    name text,
-    state text,
-    search_text text,
-    weight int,
-    plugin_token text,
-    filters text, // Format: {"clazz":"A", "name": "Filter A", "configuration": {"types":["TELEMETRY"]}}
-    processor text, // Format: {"clazz":"A", "name": "Processor A", "configuration": null}
-    action text, // Format: {"clazz":"A", "name": "Action A", "configuration": null}
-    additional_info text,
-    PRIMARY KEY (id, tenant_id)
-);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.rule_by_plugin_token AS
-    SELECT *
-
-    FROM thingsboard.rule
-    WHERE tenant_id IS NOT NULL AND id IS NOT NULL AND plugin_token IS NOT NULL
-    PRIMARY KEY (plugin_token, tenant_id, id) WITH CLUSTERING ORDER BY (tenant_id DESC, id DESC);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.rule_by_tenant_and_search_text AS
-    SELECT *
-    FROM thingsboard.rule
-    WHERE tenant_id IS NOT NULL AND id IS NOT NULL AND search_text IS NOT NULL
-    PRIMARY KEY (tenant_id, search_text, id) WITH CLUSTERING ORDER BY (search_text ASC);
-
-CREATE TABLE IF NOT EXISTS  thingsboard.plugin (
-    id uuid,
-    tenant_id uuid,
-    name text,
-    state text,
-    search_text text,
-    api_token text,
-    plugin_class text,
-    public_access boolean,
-    configuration text,
-    additional_info text,
-    PRIMARY KEY (id, tenant_id)
-);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.plugin_by_api_token AS
-    SELECT *
-    FROM thingsboard.plugin
-    WHERE api_token IS NOT NULL AND id IS NOT NULL AND tenant_id IS NOT NULL
-    PRIMARY KEY (api_token, id, tenant_id) WITH CLUSTERING ORDER BY (id DESC);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.plugin_by_tenant_and_search_text AS
-    SELECT *
-    from thingsboard.plugin
-    WHERE tenant_id IS NOT NULL AND search_text IS NOT NULL AND id IS NOT NULL
-    PRIMARY KEY ( tenant_id, search_text, id )
-    WITH CLUSTERING ORDER BY ( search_text ASC, id DESC );
-
 CREATE TABLE IF NOT EXISTS thingsboard.event (
 	tenant_id timeuuid, // tenant or system
 	id timeuuid,
 	event_type text,
 	event_uid text,
-	entity_type text, // (device, customer, rule, plugin)
+	entity_type text,
 	entity_id timeuuid,
 	body text,
 	PRIMARY KEY ((tenant_id, entity_type, entity_id), event_type, event_uid)

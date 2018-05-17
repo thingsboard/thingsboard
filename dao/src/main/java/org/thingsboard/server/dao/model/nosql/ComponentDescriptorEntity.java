@@ -28,7 +28,15 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.COMPONENT_DESCRIPTOR_ACTIONS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.COMPONENT_DESCRIPTOR_CLASS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.COMPONENT_DESCRIPTOR_CONFIGURATION_DESCRIPTOR_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.COMPONENT_DESCRIPTOR_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.COMPONENT_DESCRIPTOR_SCOPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.COMPONENT_DESCRIPTOR_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 /**
  * @author Andrew Shvayka

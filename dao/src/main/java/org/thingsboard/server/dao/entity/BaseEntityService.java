@@ -23,14 +23,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.AlarmId;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.plugin.PluginService;
-import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
@@ -46,12 +50,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     private DeviceService deviceService;
-
-    @Autowired
-    private RuleService ruleService;
-
-    @Autowired
-    private PluginService pluginService;
 
     @Autowired
     private TenantService tenantService;
@@ -84,12 +82,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 break;
             case DEVICE:
                 hasName = deviceService.findDeviceByIdAsync(new DeviceId(entityId.getId()));
-                break;
-            case RULE:
-                hasName = ruleService.findRuleByIdAsync(new RuleId(entityId.getId()));
-                break;
-            case PLUGIN:
-                hasName = pluginService.findPluginByIdAsync(new PluginId(entityId.getId()));
                 break;
             case TENANT:
                 hasName = tenantService.findTenantByIdAsync(new TenantId(entityId.getId()));

@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.driver.core.utils.UUIDs;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

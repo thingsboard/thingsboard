@@ -19,7 +19,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 
 import java.util.function.Consumer;
 

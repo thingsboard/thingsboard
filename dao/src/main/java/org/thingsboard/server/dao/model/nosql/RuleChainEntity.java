@@ -35,7 +35,16 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ADDITIONAL_INFO_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEBUG_MODE;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_CONFIGURATION_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_FIRST_RULE_NODE_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_ROOT_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RULE_CHAIN_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Table(name = RULE_CHAIN_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.model;
 import com.datastax.driver.core.utils.UUIDs;
 import org.apache.commons.lang3.ArrayUtils;
 import org.thingsboard.server.common.data.UUIDConverter;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 
 import java.util.UUID;
@@ -29,6 +30,7 @@ public class ModelConstants {
 
     public static final UUID NULL_UUID = UUIDs.startOf(0);
     public static final String NULL_UUID_STR = UUIDConverter.fromTimeUUID(NULL_UUID);
+    public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
 
     /**
      * Generic constants.
@@ -273,21 +275,6 @@ public class ModelConstants {
     public static final String DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "dashboard_by_tenant_and_search_text";
 
     /**
-     * Cassandra plugin metadata constants.
-     */
-    public static final String PLUGIN_COLUMN_FAMILY_NAME = "plugin";
-    public static final String PLUGIN_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String PLUGIN_NAME_PROPERTY = "name";
-    public static final String PLUGIN_API_TOKEN_PROPERTY = "api_token";
-    public static final String PLUGIN_CLASS_PROPERTY = "plugin_class";
-    public static final String PLUGIN_ACCESS_PROPERTY = "public_access";
-    public static final String PLUGIN_STATE_PROPERTY = STATE_PROPERTY;
-    public static final String PLUGIN_CONFIGURATION_PROPERTY = "configuration";
-
-    public static final String PLUGIN_BY_API_TOKEN_COLUMN_FAMILY_NAME = "plugin_by_api_token";
-    public static final String PLUGIN_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "plugin_by_tenant_and_search_text";
-
-    /**
      * Cassandra plugin component metadata constants.
      */
     public static final String COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME = "component_descriptor";
@@ -301,22 +288,6 @@ public class ModelConstants {
     public static final String COMPONENT_DESCRIPTOR_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "component_desc_by_type_search_text";
     public static final String COMPONENT_DESCRIPTOR_BY_SCOPE_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "component_desc_by_scope_type_search_text";
     public static final String COMPONENT_DESCRIPTOR_BY_ID = "component_desc_by_id";
-
-    /**
-     * Cassandra rule metadata constants.
-     */
-    public static final String RULE_COLUMN_FAMILY_NAME = "rule";
-    public static final String RULE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-    public static final String RULE_NAME_PROPERTY = "name";
-    public static final String RULE_STATE_PROPERTY = STATE_PROPERTY;
-    public static final String RULE_WEIGHT_PROPERTY = "weight";
-    public static final String RULE_PLUGIN_TOKEN_PROPERTY = "plugin_token";
-    public static final String RULE_FILTERS = "filters";
-    public static final String RULE_PROCESSOR = "processor";
-    public static final String RULE_ACTION = "action";
-
-    public static final String RULE_BY_PLUGIN_TOKEN = "rule_by_plugin_token";
-    public static final String RULE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "rule_by_tenant_and_search_text";
 
     /**
      * Cassandra event constants.

@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.service.component;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,17 +26,24 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.env.Environment;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.api.NodeDefinition;
+import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
-import org.thingsboard.server.extensions.api.component.*;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -112,7 +117,6 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         try {
             scannedComponent.setType(type);
             Class<?> clazz = Class.forName(clazzName);
-            String descriptorResourceName;
             switch (type) {
                 case ENRICHMENT:
                 case FILTER:
@@ -127,34 +131,6 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
                     JsonNode node = mapper.valueToTree(nodeDefinition);
                     configurationDescriptor.set("nodeDefinition", node);
                     scannedComponent.setConfigurationDescriptor(configurationDescriptor);
-                    break;
-                case OLD_ACTION:
-                    Action oldActionAnnotation = clazz.getAnnotation(Action.class);
-                    scannedComponent.setName(oldActionAnnotation.name());
-                    scannedComponent.setScope(oldActionAnnotation.scope());
-                    descriptorResourceName = oldActionAnnotation.descriptor();
-                    scannedComponent.setConfigurationDescriptor(mapper.readTree(
-                            Resources.toString(Resources.getResource(descriptorResourceName), Charsets.UTF_8)));
-                    break;
-                case PLUGIN:
-                    Plugin pluginAnnotation = clazz.getAnnotation(Plugin.class);
-                    scannedComponent.setName(pluginAnnotation.name());
-                    scannedComponent.setScope(pluginAnnotation.scope());
-                    descriptorResourceName = pluginAnnotation.descriptor();
-                    for (Class<?> actionClazz : pluginAnnotation.actions()) {
-                        ComponentDescriptor actionComponent = getComponent(actionClazz.getName())
-                                .orElseThrow(() -> {
-                                    log.error("Can't initialize plugin {}, due to missing action {}!", def.getBeanClassName(), actionClazz.getName());
-                                    return new ClassNotFoundException("Action: " + actionClazz.getName() + "is missing!");
-                                });
-                        if (actionComponent.getType() != ComponentType.OLD_ACTION) {
-                            log.error("Plugin {} action {} has wrong component type!", def.getBeanClassName(), actionClazz.getName(), actionComponent.getType());
-                            throw new RuntimeException("Plugin " + def.getBeanClassName() + "action " + actionClazz.getName() + " has wrong component type!");
-                        }
-                    }
-                    scannedComponent.setActions(Arrays.stream(pluginAnnotation.actions()).map(Class::getName).collect(Collectors.joining(",")));
-                    scannedComponent.setConfigurationDescriptor(mapper.readTree(
-                            Resources.toString(Resources.getResource(descriptorResourceName), Charsets.UTF_8)));
                     break;
                 default:
                     throw new RuntimeException(type + " is not supported yet!");
@@ -212,13 +188,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     @Override
     public void discoverComponents() {
-
         registerRuleNodeComponents();
-
-        registerComponents(ComponentType.OLD_ACTION, Action.class);
-
-        registerComponents(ComponentType.PLUGIN, Plugin.class);
-
         log.info("Found following definitions: {}", components.values());
     }
 
@@ -243,23 +213,5 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     @Override
     public Optional<ComponentDescriptor> getComponent(String clazz) {
         return Optional.ofNullable(components.get(clazz));
-    }
-
-    @Override
-    public List<ComponentDescriptor> getPluginActions(String pluginClazz) {
-        Optional<ComponentDescriptor> pluginOpt = getComponent(pluginClazz);
-        if (pluginOpt.isPresent()) {
-            ComponentDescriptor plugin = pluginOpt.get();
-            if (ComponentType.PLUGIN != plugin.getType()) {
-                throw new IllegalArgumentException(pluginClazz + " is not a plugin!");
-            }
-            List<ComponentDescriptor> result = new ArrayList<>();
-            for (String action : plugin.getActions().split(",")) {
-                getComponent(action).ifPresent(result::add);
-            }
-            return result;
-        } else {
-            throw new IllegalArgumentException(pluginClazz + " is not a component!");
-        }
     }
 }

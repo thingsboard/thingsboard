@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.BasePageLink;
-import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.List;

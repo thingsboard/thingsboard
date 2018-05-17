@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface EventService {
 

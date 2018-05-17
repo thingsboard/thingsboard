@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import org.thingsboard.server.extensions.api.plugins.ws.PluginWebsocketSessionRef;
 
 /**
  * Created by ashvayka on 27.03.18.

@@ -88,9 +88,6 @@
         <module>common</module>
         <module>rule-engine</module>
         <module>dao</module>
-        <module>extensions-api</module>
-        <module>extensions-core</module>
-        <module>extensions</module>
         <module>transport</module>
         <module>ui</module>
         <module>tools</module>

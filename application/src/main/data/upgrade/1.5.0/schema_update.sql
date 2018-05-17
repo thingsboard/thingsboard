@@ -36,3 +36,6 @@ CREATE TABLE IF NOT EXISTS rule_node (
     debug_mode boolean,
     search_text varchar(255)
 );
+
+DROP TABLE rule;
+DROP TABLE plugin;

@@ -19,7 +19,6 @@ import com.github.springtestdbunit.bean.DatabaseConfigBean;
 import com.github.springtestdbunit.bean.DatabaseDataSourceConnectionFactoryBean;
 import org.dbunit.DatabaseUnitException;
 import org.dbunit.ext.hsqldb.HsqldbDataTypeFactory;
-import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

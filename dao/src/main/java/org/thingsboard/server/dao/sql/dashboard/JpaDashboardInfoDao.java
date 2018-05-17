@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.dashboard;
 
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +37,6 @@ import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

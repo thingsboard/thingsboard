@@ -348,8 +348,6 @@ audit_log:
       "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}"
       "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}"
       "user": "${AUDIT_LOG_MASK_USER:W}"
-      "rule": "${AUDIT_LOG_MASK_RULE:W}"
-      "plugin": "${AUDIT_LOG_MASK_PLUGIN:W}"
       "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch

@@ -40,10 +40,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.auth.jwt.JwtTokenAuthenticationProcessingFilter;
+import org.thingsboard.server.service.security.auth.jwt.RefreshTokenAuthenticationProvider;
+import org.thingsboard.server.service.security.auth.jwt.RefreshTokenProcessingFilter;
+import org.thingsboard.server.service.security.auth.jwt.SkipPathRequestMatcher;
+import org.thingsboard.server.service.security.auth.jwt.extractor.TokenExtractor;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.rest.RestLoginProcessingFilter;
-import org.thingsboard.server.service.security.auth.jwt.*;
-import org.thingsboard.server.service.security.auth.jwt.extractor.TokenExtractor;
 import org.thingsboard.server.service.security.auth.rest.RestPublicLoginProcessingFilter;
 
 import java.util.ArrayList;

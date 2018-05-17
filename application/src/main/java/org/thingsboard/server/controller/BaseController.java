@@ -22,20 +22,38 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -49,17 +67,13 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -115,12 +129,6 @@ public abstract class BaseController {
 
     @Autowired
     protected ComponentDiscoveryService componentDescriptorService;
-
-    @Autowired
-    protected RuleService ruleService;
-
-    @Autowired
-    protected PluginService pluginService;
 
     @Autowired
     protected RuleChainService ruleChainService;
@@ -298,12 +306,6 @@ public abstract class BaseController {
                     return;
                 case TENANT:
                     checkTenantId(new TenantId(entityId.getId()));
-                    return;
-                case PLUGIN:
-                    checkPlugin(new PluginId(entityId.getId()));
-                    return;
-                case RULE:
-                    checkRule(new RuleId(entityId.getId()));
                     return;
                 case RULE_CHAIN:
                     checkRuleChain(new RuleChainId(entityId.getId()));
@@ -492,60 +494,6 @@ public abstract class BaseController {
         } catch (Exception e) {
             throw handleException(e, false);
         }
-    }
-
-    List<ComponentDescriptor> checkPluginActionsByPluginClazz(String pluginClazz) throws ThingsboardException {
-        try {
-            checkComponentDescriptorByClazz(pluginClazz);
-            log.debug("[{}] Lookup plugin actions", pluginClazz);
-            return componentDescriptorService.getPluginActions(pluginClazz);
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
-    }
-
-    protected PluginMetaData checkPlugin(PluginMetaData plugin) throws ThingsboardException {
-        checkNotNull(plugin);
-        SecurityUser authUser = getCurrentUser();
-        TenantId tenantId = plugin.getTenantId();
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        if (authUser.getAuthority() != Authority.SYS_ADMIN) {
-            if (authUser.getTenantId() == null ||
-                    !tenantId.getId().equals(ModelConstants.NULL_UUID) && !authUser.getTenantId().equals(tenantId)) {
-                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
-                        ThingsboardErrorCode.PERMISSION_DENIED);
-
-            } else if (tenantId.getId().equals(ModelConstants.NULL_UUID)) {
-                plugin.setConfiguration(null);
-            }
-        }
-        return plugin;
-    }
-
-    protected PluginMetaData checkPlugin(PluginId pluginId) throws ThingsboardException {
-        checkNotNull(pluginId);
-        return checkPlugin(pluginService.findPluginById(pluginId));
-    }
-
-    protected RuleMetaData checkRule(RuleId ruleId) throws ThingsboardException {
-        checkNotNull(ruleId);
-        return checkRule(ruleService.findRuleById(ruleId));
-    }
-
-    protected RuleMetaData checkRule(RuleMetaData rule) throws ThingsboardException {
-        checkNotNull(rule);
-        SecurityUser authUser = getCurrentUser();
-        TenantId tenantId = rule.getTenantId();
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        if (authUser.getAuthority() != Authority.SYS_ADMIN) {
-            if (authUser.getTenantId() == null ||
-                    !tenantId.getId().equals(ModelConstants.NULL_UUID) && !authUser.getTenantId().equals(tenantId)) {
-                throw new ThingsboardException(YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION,
-                        ThingsboardErrorCode.PERMISSION_DENIED);
-
-            }
-        }
-        return rule;
     }
 
     protected RuleChain checkRuleChain(RuleChainId ruleChainId) throws ThingsboardException {

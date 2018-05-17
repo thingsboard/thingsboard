@@ -18,10 +18,8 @@ package org.thingsboard.server.actors.ruleChain;
 import akka.actor.ActorRef;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
-import org.thingsboard.server.actors.shared.plugin.PluginManager;
 import org.thingsboard.server.actors.shared.rulechain.RuleChainManager;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
@@ -33,7 +31,7 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
     protected final RuleChainManager ruleChainManager;
     protected final RuleChainService ruleChainService;
 
-    public RuleChainManagerActor(ActorSystemContext systemContext, RuleChainManager ruleChainManager, PluginManager pluginManager) {
+    public RuleChainManagerActor(ActorSystemContext systemContext, RuleChainManager ruleChainManager) {
         super(systemContext);
         this.ruleChainManager = ruleChainManager;
         this.ruleChainService = systemContext.getRuleChainService();

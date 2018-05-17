@@ -19,18 +19,13 @@ import akka.actor.ActorContext;
 import akka.actor.ActorRef;
 import akka.actor.Scheduler;
 import akka.event.LoggingAdapter;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.extensions.api.component.*;
 import scala.concurrent.ExecutionContextExecutor;
 import scala.concurrent.duration.Duration;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractContextAwareMsgProcessor {
@@ -74,50 +69,6 @@ public abstract class AbstractContextAwareMsgProcessor {
     protected void scheduleMsgWithDelay(ActorContext ctx, Object msg, long delayInMs, ActorRef target) {
         logger.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
         getScheduler().scheduleOnce(Duration.create(delayInMs, TimeUnit.MILLISECONDS), target, msg, getSystemDispatcher(), null);
-    }
-
-    protected <T extends ConfigurableComponent> T initComponent(JsonNode componentNode) throws Exception {
-        ComponentConfiguration configuration = new ComponentConfiguration(
-                componentNode.get("clazz").asText(),
-                componentNode.get("name").asText(),
-                mapper.writeValueAsString(componentNode.get("configuration"))
-        );
-        logger.info("Initializing [{}][{}] component", configuration.getName(), configuration.getClazz());
-        ComponentDescriptor componentDescriptor = systemContext.getComponentService().getComponent(configuration.getClazz())
-                .orElseThrow(() -> new InstantiationException("Component Not found!"));
-        return initComponent(componentDescriptor, configuration);
-    }
-
-    protected <T extends ConfigurableComponent> T initComponent(ComponentDescriptor componentDefinition, ComponentConfiguration configuration)
-            throws Exception {
-        return initComponent(componentDefinition.getClazz(), componentDefinition.getType(), configuration.getConfiguration());
-    }
-
-    protected <T extends ConfigurableComponent> T initComponent(String clazz, ComponentType type, String configuration)
-            throws Exception {
-        Class<?> componentClazz = Class.forName(clazz);
-        T component = (T) (componentClazz.newInstance());
-        Class<?> configurationClazz;
-        switch (type) {
-            case FILTER:
-                configurationClazz = ((Filter) componentClazz.getAnnotation(Filter.class)).configuration();
-                break;
-            case ACTION:
-                configurationClazz = ((Action) componentClazz.getAnnotation(Action.class)).configuration();
-                break;
-            case PLUGIN:
-                configurationClazz = ((Plugin) componentClazz.getAnnotation(Plugin.class)).configuration();
-                break;
-            default:
-                throw new IllegalStateException("Component with type: " + type + " is not supported!");
-        }
-        component.init(decode(configuration, configurationClazz));
-        return component;
-    }
-
-    public <C> C decode(String configuration, Class<C> configurationClazz) throws IOException, RuntimeException {
-        logger.info("Initializing using configuration: {}", configuration);
-        return mapper.readValue(configuration, configurationClazz);
     }
 
     @Data

@@ -17,14 +17,11 @@ package org.thingsboard.server.actors.shared.rulechain;
 
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.actors.shared.plugin.PluginManager;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable.FetchFunction;
 import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.page.TextPageLink;
-import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.dao.plugin.BasePluginService;
+import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.Collections;
 
@@ -41,7 +38,7 @@ public class SystemRuleChainManager extends RuleChainManager {
 
     @Override
     protected TenantId getTenantId() {
-        return BasePluginService.SYSTEM_TENANT;
+        return ModelConstants.SYSTEM_TENANT;
     }
 
     @Override

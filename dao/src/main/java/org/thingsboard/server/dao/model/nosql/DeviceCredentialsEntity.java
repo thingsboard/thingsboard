@@ -30,7 +30,12 @@ import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CREDENTIALS_CREDENTIALS_VALUE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 
 @Table(name = DEVICE_CREDENTIALS_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode

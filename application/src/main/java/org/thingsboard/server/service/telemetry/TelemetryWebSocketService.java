@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import org.thingsboard.server.extensions.api.plugins.ws.SessionEvent;
-import org.thingsboard.server.extensions.core.plugin.telemetry.sub.SubscriptionUpdate;
+import org.thingsboard.server.service.telemetry.sub.SubscriptionUpdate;
 
 /**
  * Created by ashvayka on 27.03.18.

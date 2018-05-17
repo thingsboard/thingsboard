@@ -17,8 +17,14 @@ package org.thingsboard.server.actors.ruleChain;
 
 import akka.actor.ActorRef;
 import com.datastax.driver.core.utils.UUIDs;
-import com.google.common.base.Function;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.ListeningExecutor;
+import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
+import org.thingsboard.rule.engine.api.RuleEngineRpcService;
+import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.ScriptEngine;
+import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -28,14 +34,12 @@ import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -44,7 +48,6 @@ import org.thingsboard.server.service.script.NashornJsEngine;
 import scala.concurrent.duration.Duration;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -165,11 +168,6 @@ class DefaultTbContext implements TbContext {
     @Override
     public UserService getUserService() {
         return mainCtx.getUserService();
-    }
-
-    @Override
-    public PluginService getPluginService() {
-        return mainCtx.getPluginService();
     }
 
     @Override

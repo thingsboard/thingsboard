@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.service.environment.EnvironmentLogService;
 
 import javax.annotation.PostConstruct;
 import java.util.Collections;

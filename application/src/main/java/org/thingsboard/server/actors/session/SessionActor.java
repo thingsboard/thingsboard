@@ -17,6 +17,8 @@ package org.thingsboard.server.actors.session;
 
 import akka.actor.OneForOneStrategy;
 import akka.actor.SupervisorStrategy;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -25,14 +27,11 @@ import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.core.ActorSystemToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
 import org.thingsboard.server.common.msg.session.SessionMsg;
 import org.thingsboard.server.common.msg.session.SessionType;
+import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
-
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import scala.concurrent.duration.Duration;
 
 public class SessionActor extends ContextAwareActor {

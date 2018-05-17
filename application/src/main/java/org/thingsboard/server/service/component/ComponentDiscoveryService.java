@@ -35,6 +35,4 @@ public interface ComponentDiscoveryService {
 
     Optional<ComponentDescriptor> getComponent(String clazz);
 
-    List<ComponentDescriptor> getPluginActions(String pluginClazz);
-
 }

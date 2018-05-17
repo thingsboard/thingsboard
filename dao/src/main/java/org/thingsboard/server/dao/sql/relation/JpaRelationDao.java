@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -38,14 +37,10 @@ import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTimeDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.springframework.data.domain.Sort.Direction.ASC;
 import static org.springframework.data.jpa.domain.Specifications.where;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 

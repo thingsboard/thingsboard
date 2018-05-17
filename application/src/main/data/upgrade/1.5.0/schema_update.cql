@@ -94,3 +94,10 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_node (
     PRIMARY KEY (id)
 );
 
+DROP MATERIALIZED VIEW IF EXISTS rule_by_plugin_token;
+DROP MATERIALIZED VIEW IF EXISTS rule_by_tenant_and_search_text;
+DROP MATERIALIZED VIEW IF EXISTS plugin_by_api_token;
+DROP MATERIALIZED VIEW IF EXISTS plugin_by_tenant_and_search_text;
+
+DROP TABLE IF EXISTS rule;
+DROP TABLE IF EXISTS plugin;

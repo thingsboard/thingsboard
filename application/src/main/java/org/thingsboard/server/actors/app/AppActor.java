@@ -15,24 +15,26 @@
  */
 package org.thingsboard.server.actors.app;
 
-import akka.actor.*;
+import akka.actor.ActorRef;
+import akka.actor.LocalActorRef;
+import akka.actor.OneForOneStrategy;
+import akka.actor.Props;
+import akka.actor.SupervisorStrategy;
 import akka.actor.SupervisorStrategy.Directive;
+import akka.actor.Terminated;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Function;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.plugin.PluginTerminationMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.actors.shared.plugin.SystemPluginManager;
 import org.thingsboard.server.actors.shared.rulechain.SystemRuleChainManager;
 import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
@@ -41,8 +43,6 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
 import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
@@ -58,7 +58,7 @@ public class AppActor extends RuleChainManagerActor {
     private final Map<TenantId, ActorRef> tenantActors;
 
     private AppActor(ActorSystemContext systemContext) {
-        super(systemContext, new SystemRuleChainManager(systemContext), new SystemPluginManager(systemContext));
+        super(systemContext, new SystemRuleChainManager(systemContext));
         this.tenantService = systemContext.getTenantService();
         this.tenantActors = new HashMap<>();
     }

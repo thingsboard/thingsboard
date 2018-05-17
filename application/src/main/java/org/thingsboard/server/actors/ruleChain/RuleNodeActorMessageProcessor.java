@@ -21,7 +21,6 @@ import akka.event.LoggingAdapter;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.ComponentMsgProcessor;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -31,8 +30,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.dao.rule.RuleChainService;
-
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author Andrew Shvayka

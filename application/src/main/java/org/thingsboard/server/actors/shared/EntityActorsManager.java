@@ -24,12 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.SearchTextBased;
-import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.plugin.PluginMetaData;
 
 import java.util.HashMap;
 import java.util.Map;

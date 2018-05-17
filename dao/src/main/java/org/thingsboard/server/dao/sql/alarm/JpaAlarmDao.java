@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;

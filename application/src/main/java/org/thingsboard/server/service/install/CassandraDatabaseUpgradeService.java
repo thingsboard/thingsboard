@@ -18,7 +18,6 @@ package org.thingsboard.server.service.install;
 import com.datastax.driver.core.KeyspaceMetadata;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
@@ -33,7 +32,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static org.thingsboard.server.service.install.DatabaseHelper.*;
+import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
+import static org.thingsboard.server.service.install.DatabaseHelper.ASSET;
+import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
+import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
+import static org.thingsboard.server.service.install.DatabaseHelper.CUSTOMER_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.DASHBOARD;
+import static org.thingsboard.server.service.install.DatabaseHelper.DEVICE;
+import static org.thingsboard.server.service.install.DatabaseHelper.ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
+import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
 
 @Service
 @NoSqlDao

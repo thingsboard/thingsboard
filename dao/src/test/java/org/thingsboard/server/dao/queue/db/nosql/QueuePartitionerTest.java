@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.thingsboard.server.dao.queue.db.nosql.QueuePartitioner;
 import org.thingsboard.server.dao.queue.db.repository.ProcessedPartitionRepository;
 
 import java.time.Clock;

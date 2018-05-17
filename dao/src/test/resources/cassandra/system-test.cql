@@ -1,5 +1,5 @@
-TRUNCATE thingsboard.plugin;
-TRUNCATE thingsboard.rule;
+TRUNCATE thingsboard.rule_chain;
+TRUNCATE thingsboard.rule_node;
 
 -- msg_queue dataset
 

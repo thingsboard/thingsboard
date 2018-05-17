@@ -36,7 +36,10 @@ import org.thingsboard.server.dao.device.DeviceService;
 
 import java.util.UUID;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public abstract class BaseDeviceCredentialsCacheTest extends AbstractServiceTest {
 

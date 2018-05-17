@@ -35,7 +35,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by Valerii Sosliuk on 5/21/2017.

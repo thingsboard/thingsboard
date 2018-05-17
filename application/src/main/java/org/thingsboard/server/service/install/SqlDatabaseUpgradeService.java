@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.util.SqlDao;
-import org.thingsboard.server.service.install.cql.CassandraDbHelper;
 import org.thingsboard.server.service.install.sql.SqlDbHelper;
 
 import java.nio.charset.Charset;
@@ -30,11 +29,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 
-import static org.thingsboard.server.service.install.DatabaseHelper.*;
+import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
 import static org.thingsboard.server.service.install.DatabaseHelper.CONFIGURATION;
+import static org.thingsboard.server.service.install.DatabaseHelper.CUSTOMER_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.DASHBOARD;
+import static org.thingsboard.server.service.install.DatabaseHelper.ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.SEARCH_TEXT;
+import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
+import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
 
 @Service
 @Profile("install")

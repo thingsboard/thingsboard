@@ -31,7 +31,14 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_ADDITIONAL_INFO_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPERTY;
 
 @Table(name = ASSET_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode

@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.actors.session;
 
+import akka.actor.ActorContext;
+import akka.actor.ActorRef;
+import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
@@ -25,12 +28,14 @@ import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.device.BasicDeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
-import org.thingsboard.server.common.msg.session.*;
+import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
+import org.thingsboard.server.common.msg.session.FromDeviceMsg;
+import org.thingsboard.server.common.msg.session.SessionContext;
+import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
+import org.thingsboard.server.common.msg.session.SessionType;
+import org.thingsboard.server.common.msg.session.ToDeviceMsg;
+import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
-
-import akka.actor.ActorContext;
-import akka.actor.ActorRef;
-import akka.event.LoggingAdapter;
 
 import java.util.Optional;
 

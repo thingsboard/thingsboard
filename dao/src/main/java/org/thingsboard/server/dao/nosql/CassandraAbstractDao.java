@@ -15,12 +15,26 @@
  */
 package org.thingsboard.server.dao.nosql;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.model.type.*;
+import org.thingsboard.server.dao.model.type.AuthorityCodec;
+import org.thingsboard.server.dao.model.type.ComponentLifecycleStateCodec;
+import org.thingsboard.server.dao.model.type.ComponentScopeCodec;
+import org.thingsboard.server.dao.model.type.ComponentTypeCodec;
+import org.thingsboard.server.dao.model.type.DeviceCredentialsTypeCodec;
+import org.thingsboard.server.dao.model.type.EntityTypeCodec;
+import org.thingsboard.server.dao.model.type.JsonCodec;
 import org.thingsboard.server.dao.util.BufferedRateLimiter;
 
 import java.util.concurrent.ConcurrentHashMap;

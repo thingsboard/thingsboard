@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -41,14 +42,12 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.rpc.RpcRequest;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.extensions.api.exception.ToErrorResponseEntity;
-import org.thingsboard.server.extensions.api.plugins.PluginConstants;
-import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
-import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 import org.thingsboard.server.service.rpc.DeviceRpcService;
+import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.LocalRequestMetaData;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -58,13 +57,12 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 /**
  * Created by ashvayka on 22.03.18.
  */
 @RestController
-@RequestMapping(PluginConstants.RPC_URL_PREFIX)
+@RequestMapping(TbUrlConstants.RPC_URL_PREFIX)
 @Slf4j
 public class RpcController extends BaseController {
 
@@ -130,13 +128,7 @@ public class RpcController extends BaseController {
                             timeout,
                             body
                     );
-                    deviceRpcService.process(rpcRequest, new Consumer<FromDeviceRpcResponse>(){
-
-                        @Override
-                        public void accept(FromDeviceRpcResponse fromDeviceRpcResponse) {
-                            reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse);
-                        }
-                    });
+                    deviceRpcService.process(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));
                 }
 
                 @Override

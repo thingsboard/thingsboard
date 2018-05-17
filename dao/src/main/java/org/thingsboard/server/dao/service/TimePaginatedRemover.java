@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.service;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
-import java.sql.Time;
 import java.util.List;
 import java.util.UUID;
 

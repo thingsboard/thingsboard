@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction;
-import org.thingsboard.server.extensions.core.plugin.telemetry.TelemetryStoragePlugin;
 
 import java.util.List;
 

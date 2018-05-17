@@ -18,7 +18,9 @@ package org.thingsboard.server.common.msg.plugin;
 import lombok.Getter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -43,14 +45,6 @@ public class ComponentLifecycleMsg implements TbActorMsg, TenantAwareMsg, ToAllN
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.event = event;
-    }
-
-    public Optional<PluginId> getPluginId() {
-        return entityId.getEntityType() == EntityType.PLUGIN ? Optional.of((PluginId) entityId) : Optional.empty();
-    }
-
-    public Optional<RuleId> getRuleId() {
-        return entityId.getEntityType() == EntityType.RULE ? Optional.of((RuleId) entityId) : Optional.empty();
     }
 
     public Optional<RuleChainId> getRuleChainId() {

@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.actors.session;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import akka.actor.*;
+import akka.actor.ActorRef;
+import akka.actor.InvalidActorNameException;
+import akka.actor.LocalActorRef;
+import akka.actor.Props;
+import akka.actor.Terminated;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -27,14 +30,13 @@ import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
-
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.core.SessionCloseMsg;
 import org.thingsboard.server.common.msg.core.ActorSystemToDeviceSessionActorMsg;
+import org.thingsboard.server.common.msg.core.SessionCloseMsg;
 import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
-import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class SessionManagerActor extends ContextAwareActor {
 

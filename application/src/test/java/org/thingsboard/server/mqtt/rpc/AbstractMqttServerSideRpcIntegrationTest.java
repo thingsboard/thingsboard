@@ -15,23 +15,27 @@
  */
 package org.thingsboard.server.mqtt.rpc;
 
-import java.util.Arrays;
-
 import com.datastax.driver.core.utils.UUIDs;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.paho.client.mqttv3.*;
-import org.junit.*;
-import org.thingsboard.server.actors.plugin.PluginProcessingContext;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.page.TextPageData;
-import org.thingsboard.server.common.data.plugin.PluginMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.service.security.AccessValidator;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -55,7 +59,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
     public void beforeTest() throws Exception {
         loginSysAdmin();
 
-        asyncContextTimeoutToUseRpcPlugin = getAsyncContextTimeoutToUseRpcPlugin();
+        asyncContextTimeoutToUseRpcPlugin = 10000L;
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
@@ -131,7 +135,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
 
         String result = doPostAsync("/api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class,
                 status().isNotFound());
-        Assert.assertEquals(PluginProcessingContext.DEVICE_WITH_REQUESTED_ID_NOT_FOUND, result);
+        Assert.assertEquals(AccessValidator.DEVICE_WITH_REQUESTED_ID_NOT_FOUND, result);
     }
 
     @Test
@@ -186,7 +190,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
 
         String result = doPostAsync("/api/plugins/rpc/twoway/" + nonExistentDeviceId, setGpioRequest, String.class,
                 status().isNotFound());
-        Assert.assertEquals(PluginProcessingContext.DEVICE_WITH_REQUESTED_ID_NOT_FOUND, result);
+        Assert.assertEquals(AccessValidator.DEVICE_WITH_REQUESTED_ID_NOT_FOUND, result);
     }
 
     private Device getSavedDevice(Device device) throws Exception {
@@ -195,13 +199,6 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractC
 
     private DeviceCredentials getDeviceCredentials(Device savedDevice) throws Exception {
         return doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-    }
-
-    private Long getAsyncContextTimeoutToUseRpcPlugin() throws Exception {
-        TextPageData<PluginMetaData> plugins = doGetTyped("/api/plugin/system?limit=1&textSearch=system rpc plugin",
-                new TypeReference<TextPageData<PluginMetaData>>(){});
-        Long systemRpcPluginTimeout = plugins.getData().iterator().next().getConfiguration().get("defaultTimeout").asLong();
-        return systemRpcPluginTimeout + TIME_TO_HANDLE_REQUEST;
     }
 
     private static class TestMqttCallback implements MqttCallback {

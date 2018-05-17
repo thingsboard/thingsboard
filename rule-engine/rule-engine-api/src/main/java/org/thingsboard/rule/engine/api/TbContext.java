@@ -21,13 +21,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.plugin.PluginService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -65,8 +63,6 @@ public interface TbContext {
     CustomerService getCustomerService();
 
     UserService getUserService();
-
-    PluginService getPluginService();
 
     AssetService getAssetService();
 

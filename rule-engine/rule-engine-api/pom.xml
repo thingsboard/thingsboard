@@ -45,11 +45,6 @@
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
-            <artifactId>extensions-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.thingsboard</groupId>
             <artifactId>dao</artifactId>
             <scope>provided</scope>
         </dependency>

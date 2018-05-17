@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.api;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
 
 import java.util.Optional;
 

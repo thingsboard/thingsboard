@@ -39,6 +39,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.UUIDBased;
@@ -58,15 +59,13 @@ import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.extensions.api.exception.InvalidParametersException;
-import org.thingsboard.server.extensions.api.exception.UncheckedApiException;
-import org.thingsboard.server.extensions.api.plugins.PluginConstants;
-import org.thingsboard.server.extensions.core.plugin.telemetry.AttributeData;
-import org.thingsboard.server.extensions.core.plugin.telemetry.TsData;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.telemetry.AttributeData;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
+import org.thingsboard.server.service.telemetry.TsData;
+import org.thingsboard.server.service.telemetry.exception.InvalidParametersException;
+import org.thingsboard.server.service.telemetry.exception.UncheckedApiException;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -84,7 +83,7 @@ import java.util.stream.Collectors;
  * Created by ashvayka on 22.03.18.
  */
 @RestController
-@RequestMapping(PluginConstants.TELEMETRY_URL_PREFIX)
+@RequestMapping(TbUrlConstants.TELEMETRY_URL_PREFIX)
 @Slf4j
 public class TelemetryController extends BaseController {
 

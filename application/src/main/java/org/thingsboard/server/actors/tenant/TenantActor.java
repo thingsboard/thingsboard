@@ -23,12 +23,10 @@ import akka.japi.Function;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
-import org.thingsboard.server.actors.plugin.PluginTerminationMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.ruleChain.RuleChainToRuleChainMsg;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.actors.shared.plugin.TenantPluginManager;
 import org.thingsboard.server.actors.shared.rulechain.TenantRuleChainManager;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -37,11 +35,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
-import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
 import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
@@ -53,7 +48,7 @@ public class TenantActor extends RuleChainManagerActor {
     private final Map<DeviceId, ActorRef> deviceActors;
 
     private TenantActor(ActorSystemContext systemContext, TenantId tenantId) {
-        super(systemContext, new TenantRuleChainManager(systemContext, tenantId), new TenantPluginManager(systemContext, tenantId));
+        super(systemContext, new TenantRuleChainManager(systemContext, tenantId));
         this.tenantId = tenantId;
         this.deviceActors = new HashMap<>();
     }

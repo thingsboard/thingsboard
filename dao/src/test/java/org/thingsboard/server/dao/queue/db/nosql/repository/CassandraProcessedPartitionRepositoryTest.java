@@ -30,7 +30,9 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @DaoNoSqlTest
 public class CassandraProcessedPartitionRepositoryTest extends AbstractServiceTest {

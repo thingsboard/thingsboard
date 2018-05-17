@@ -45,10 +45,6 @@ public class EntityIdFactory {
                 return new CustomerId(uuid);
             case USER:
                 return new UserId(uuid);
-            case RULE:
-                return new RuleId(uuid);
-            case PLUGIN:
-                return new PluginId(uuid);
             case DASHBOARD:
                 return new DashboardId(uuid);
             case DEVICE:

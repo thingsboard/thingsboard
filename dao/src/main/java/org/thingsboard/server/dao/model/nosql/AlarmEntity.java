@@ -16,7 +16,10 @@
 package org.thingsboard.server.dao.model.nosql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.annotations.ClusteringColumn;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -35,7 +38,20 @@ import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ACK_TS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_CLEAR_TS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_DETAILS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_END_TS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_PROPAGATE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_SEVERITY_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_START_TS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_STATUS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ALARM_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 
 @Table(name = ALARM_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode

@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.rule.engine.api.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
@@ -40,7 +39,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
-import org.thingsboard.server.controller.plugin.PluginWebSocketMsgEndpoint;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -48,11 +46,8 @@ import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.event.EventService;
-import org.thingsboard.server.dao.plugin.PluginService;
-import org.thingsboard.server.dao.queue.MsgQueue;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
@@ -133,15 +128,7 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private RuleService ruleService;
-
-    @Autowired
-    @Getter
     private RuleChainService ruleChainService;
-
-    @Autowired
-    @Getter
-    private PluginService pluginService;
 
     @Autowired
     @Getter
@@ -174,11 +161,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DeviceRpcService deviceRpcService;
-
-    @Autowired
-    @Getter
-    @Setter
-    private PluginWebSocketMsgEndpoint wsMsgEndpoint;
 
     @Autowired
     @Getter

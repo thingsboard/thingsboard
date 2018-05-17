@@ -25,11 +25,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.thingsboard.server.config.WebSocketConfiguration;
-import org.thingsboard.server.extensions.api.plugins.ws.PluginWebsocketSessionRef;
-import org.thingsboard.server.extensions.api.plugins.ws.SessionEvent;
-import org.thingsboard.server.extensions.api.plugins.ws.msg.PluginWebsocketMsg;
-import org.thingsboard.server.extensions.api.plugins.ws.msg.TextPluginWebSocketMsg;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.telemetry.SessionEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
@@ -43,7 +40,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @Service
 @Slf4j
-public class TbWebSocketHandler extends TextWebSocketHandler implements PluginWebSocketMsgEndpoint, TelemetryWebSocketMsgEndpoint {
+public class TbWebSocketHandler extends TextWebSocketHandler implements TelemetryWebSocketMsgEndpoint {
 
     private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
@@ -183,43 +180,4 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements PluginWe
         }
     }
 
-    //TODO: remove
-    @Override
-    public void send(PluginWebsocketMsg<?> wsMsg) throws IOException {
-        PluginWebsocketSessionRef sessionRef = wsMsg.getSessionRef();
-        String externalId = sessionRef.getSessionId();
-        log.debug("[{}] Processing {}", externalId, wsMsg);
-        String internalId = externalSessionMap.get(externalId);
-        if (internalId != null) {
-            SessionMetaData sessionMd = internalSessionMap.get(internalId);
-            if (sessionMd != null) {
-                if (wsMsg instanceof TextPluginWebSocketMsg) {
-                    String payload = ((TextPluginWebSocketMsg) wsMsg).getPayload();
-                    sessionMd.session.sendMessage(new TextMessage(payload));
-                }
-            } else {
-                log.warn("[{}][{}] Failed to find session by internal id", externalId, internalId);
-            }
-        } else {
-            log.warn("[{}] Failed to find session by external id", externalId);
-        }
-    }
-
-    //TODO: remove
-    @Override
-    public void close(PluginWebsocketSessionRef sessionRef) throws IOException {
-        String externalId = sessionRef.getSessionId();
-        log.debug("[{}] Processing close request", externalId);
-        String internalId = externalSessionMap.get(externalId);
-        if (internalId != null) {
-            SessionMetaData sessionMd = internalSessionMap.get(internalId);
-            if (sessionMd != null) {
-                sessionMd.session.close(CloseStatus.NORMAL);
-            } else {
-                log.warn("[{}][{}] Failed to find session by internal id", externalId, internalId);
-            }
-        } else {
-            log.warn("[{}] Failed to find session by external id", externalId);
-        }
-    }
 }
