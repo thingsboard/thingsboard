@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue.db.nosql;
+package org.thingsboard.server.dao.queue.db;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.queue.db.MsgAck;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-@Data
-@EqualsAndHashCode
-public class MsgAck {
+@Component
+public class UnprocessedMsgFilter {
 
-    private final UUID msgId;
-    private final UUID nodeId;
-    private final long clusteredPartition;
-    private final long tsPartition;
-
+    public Collection<TbMsg> filter(List<TbMsg> msgs, List<MsgAck> acks) {
+        Set<UUID> processedIds = acks.stream().map(MsgAck::getMsgId).collect(Collectors.toSet());
+        return msgs.stream().filter(i -> !processedIds.contains(i.getId())).collect(Collectors.toList());
+    }
 }

@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.queue.db.repository;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.dao.queue.db.nosql.MsgAck;
+import org.thingsboard.server.dao.queue.db.MsgAck;
 
 import java.util.List;
 import java.util.UUID;

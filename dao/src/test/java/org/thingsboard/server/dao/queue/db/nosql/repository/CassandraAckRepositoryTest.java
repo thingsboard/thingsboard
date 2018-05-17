@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
-import org.thingsboard.server.dao.queue.db.nosql.MsgAck;
+import org.thingsboard.server.dao.queue.db.MsgAck;
 
 import java.util.List;
 import java.util.UUID;

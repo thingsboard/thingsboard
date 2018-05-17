@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.queue.db.nosql;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.queue.db.nosql.MsgAck;
-import org.thingsboard.server.dao.queue.db.nosql.UnprocessedMsgFilter;
+import org.thingsboard.server.dao.queue.db.MsgAck;
+import org.thingsboard.server.dao.queue.db.UnprocessedMsgFilter;
 
 import java.util.Collection;
 import java.util.List;

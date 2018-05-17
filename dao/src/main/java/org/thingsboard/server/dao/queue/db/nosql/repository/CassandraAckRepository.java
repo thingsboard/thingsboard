@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.dao.nosql.CassandraAbstractDao;
-import org.thingsboard.server.dao.queue.db.nosql.MsgAck;
+import org.thingsboard.server.dao.queue.db.MsgAck;
 import org.thingsboard.server.dao.queue.db.repository.AckRepository;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
