@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.script.NashornJsEngine;
 import scala.concurrent.duration.Duration;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -63,15 +64,24 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void tellNext(TbMsg msg, String relationType) {
-        tellNext(msg, relationType, null);
+        tellNext(msg, Collections.singleton(relationType), null);
+    }
+
+    @Override
+    public void tellNext(TbMsg msg, Set<String> relationTypes) {
+        tellNext(msg, relationTypes, null);
     }
 
     @Override
     public void tellNext(TbMsg msg, String relationType, Throwable th) {
+        tellNext(msg, Collections.singleton(relationType), th);
+    }
+
+    private void tellNext(TbMsg msg, Set<String> relationTypes, Throwable th) {
         if (nodeCtx.getSelf().isDebugMode()) {
-            mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, relationType, th);
+            relationTypes.forEach(relationType -> mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, relationType, th));
         }
-        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), relationType, msg), nodeCtx.getSelfActor());
+        nodeCtx.getChainActor().tell(new RuleNodeToRuleChainTellNextMsg(nodeCtx.getSelf().getId(), relationTypes, msg), nodeCtx.getSelfActor());
     }
 
     @Override
@@ -99,12 +109,12 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), 0L);
+        return new TbMsg(UUIDs.timeBased(), type, originator, metaData.copy(), data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId(), mainCtx.getQueuePartitionId());
     }
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), data, origMsg.getRuleChainId(), origMsg.getRuleNodeId(), 0L);
+        return new TbMsg(origMsg.getId(), type, originator, metaData.copy(), data, origMsg.getRuleChainId(), origMsg.getRuleNodeId(), mainCtx.getQueuePartitionId());
     }
 
     @Override
@@ -115,11 +125,6 @@ class DefaultTbContext implements TbContext {
     @Override
     public TenantId getTenantId() {
         return nodeCtx.getTenantId();
-    }
-
-    @Override
-    public void tellNext(TbMsg msg, Set<String> relationTypes) {
-        relationTypes.forEach(type -> tellNext(msg, type));
     }
 
     @Override

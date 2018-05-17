@@ -39,8 +39,12 @@ public abstract class ContextAwareActor extends UntypedActor {
             logger.debug("Processing msg: {}", msg);
         }
         if (msg instanceof TbActorMsg) {
-            if(!process((TbActorMsg) msg)){
-                logger.warning("Unknown message: {}!", msg);
+            try {
+                if (!process((TbActorMsg) msg)) {
+                    logger.warning("Unknown message: {}!", msg);
+                }
+            } catch (Exception e) {
+                throw e;
             }
         } else {
             logger.warning("Unknown message: {}!", msg);

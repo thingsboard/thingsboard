@@ -95,12 +95,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private void reprocess(List<RuleNode> ruleNodeList) {
         for (RuleNode ruleNode : ruleNodeList) {
-            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, ruleNode.getId().getId(), 0L)) {
+            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, ruleNode.getId().getId(), systemContext.getQueuePartitionId())) {
                 pushMsgToNode(nodeActors.get(ruleNode.getId()), tbMsg, "");
             }
         }
         if (firstNode != null) {
-            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, entityId.getId(), 0L)) {
+            for (TbMsg tbMsg : queue.findUnprocessed(tenantId, entityId.getId(), systemContext.getQueuePartitionId())) {
                 pushMsgToNode(firstNode, tbMsg, "");
             }
         }
@@ -206,9 +206,8 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
         checkActive();
         RuleNodeId originator = envelope.getOriginator();
-        String targetRelationType = envelope.getRelationType();
         List<RuleNodeRelation> relations = nodeRoutes.get(originator).stream()
-                .filter(r -> targetRelationType == null || targetRelationType.equalsIgnoreCase(r.getType()))
+                .filter(r -> contains(envelope.getRelationTypes(), r.getType()))
                 .collect(Collectors.toList());
 
         TbMsg msg = envelope.getMsg();
@@ -235,6 +234,18 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
             queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
         }
+    }
+
+    private boolean contains(Set<String> relationTypes, String type) {
+        if (relationTypes == null) {
+            return true;
+        }
+        for (String relationType : relationTypes) {
+            if (relationType.equalsIgnoreCase(type)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void enqueueAndForwardMsgCopyToChain(TbMsg msg, EntityId target, String fromRelationType) {
@@ -269,6 +280,6 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     private TbMsg enrichWithRuleChainId(TbMsg tbMsg) {
         // We don't put firstNodeId because it may change over time;
-        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(), tbMsg.getData(), entityId, null, 0L);
+        return new TbMsg(tbMsg.getId(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.getMetaData().copy(), tbMsg.getData(), entityId, null, systemContext.getQueuePartitionId());
     }
 }

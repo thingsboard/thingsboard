@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.ToServerRpcResponseMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
@@ -38,6 +40,7 @@ import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.extensions.api.plugins.msg.FromDeviceRpcResponse;
 import org.thingsboard.server.extensions.api.plugins.msg.RpcError;
+import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -135,23 +138,16 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     @Override
     public void sendRpcReplyToDevice(TenantId tenantId, DeviceId deviceId, int requestId, String body) {
         ToServerRpcResponseActorMsg rpcMsg = new ToServerRpcResponseActorMsg(tenantId, deviceId, new ToServerRpcResponseMsg(requestId, body));
-        forward(deviceId, rpcMsg, rpcService::tell);
+        forward(deviceId, rpcMsg);
     }
 
     private void sendRpcRequest(ToDeviceRpcRequest msg) {
         log.trace("[{}] Forwarding msg {} to device actor!", msg.getDeviceId(), msg);
         ToDeviceRpcRequestActorMsg rpcMsg = new ToDeviceRpcRequestActorMsg(msg);
-        forward(msg.getDeviceId(), rpcMsg, rpcService::tell);
+        forward(msg.getDeviceId(), rpcMsg);
     }
 
-    private <T extends ToDeviceActorNotificationMsg> void forward(DeviceId deviceId, T msg, BiConsumer<ServerAddress, T> rpcFunction) {
-        Optional<ServerAddress> instance = routingService.resolveById(deviceId);
-        if (instance.isPresent()) {
-            log.trace("[{}] Forwarding msg {} to remote device actor!", msg.getTenantId(), msg);
-            rpcFunction.accept(instance.get(), msg);
-        } else {
-            log.trace("[{}] Forwarding msg {} to local device actor!", msg.getTenantId(), msg);
-            actorService.onMsg(msg);
-        }
+    private <T extends ToDeviceActorNotificationMsg> void forward(DeviceId deviceId, T msg) {
+        actorService.onMsg(new SendToClusterMsg(deviceId, msg));
     }
 }

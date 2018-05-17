@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.session;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import akka.actor.*;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -33,8 +32,9 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.core.SessionCloseMsg;
-import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
+import org.thingsboard.server.common.msg.core.ActorSystemToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.SessionCtrlMsg;
+import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 
 public class SessionManagerActor extends ContextAwareActor {
 
@@ -104,7 +104,7 @@ public class SessionManagerActor extends ContextAwareActor {
     }
 
     private void forwardToSessionActor(SessionAwareMsg msg) {
-        if (msg instanceof ToDeviceSessionActorMsg || msg instanceof SessionCloseMsg) {
+        if (msg instanceof ActorSystemToDeviceSessionActorMsg || msg instanceof SessionCloseMsg) {
             String sessionIdStr = msg.getSessionId().toUidStr();
             ActorRef sessionActor = sessionActors.get(sessionIdStr);
             if (sessionActor != null) {

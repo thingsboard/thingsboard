@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.rpc;
+package org.thingsboard.server.common.msg.session;
 
-import io.grpc.stub.StreamObserver;
-import lombok.Data;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.aware.CustomerAwareMsg;
+import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
+import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
+import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 
-import java.util.UUID;
+public interface TransportToDeviceSessionActorMsg extends DeviceAwareMsg, CustomerAwareMsg, TenantAwareMsg, SessionAwareMsg, TbActorMsg {
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public final class RpcSessionCreateRequestMsg {
-
-    private final UUID msgUid;
-    private final ServerAddress remoteAddress;
-    private final StreamObserver<ClusterAPIProtos.ClusterMessage> responseObserver;
+    AdaptorToSessionActorMsg getSessionMsg();
 
 }

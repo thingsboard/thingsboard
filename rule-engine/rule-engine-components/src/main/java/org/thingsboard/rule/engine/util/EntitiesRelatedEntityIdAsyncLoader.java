@@ -38,13 +38,11 @@ public class EntitiesRelatedEntityIdAsyncLoader {
         EntityRelationsQuery query = buildQuery(originator, relationsQuery);
         ListenableFuture<List<EntityRelation>> asyncRelation = relationService.findByQuery(query);
         if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
-            return Futures.transform(asyncRelation, (AsyncFunction<? super List<EntityRelation>, EntityId>)
-                    r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getTo())
-                            : Futures.immediateFuture(null));
+            return Futures.transformAsync(asyncRelation, r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getTo())
+                    : Futures.immediateFuture(null));
         } else if (relationsQuery.getDirection() == EntitySearchDirection.TO) {
-            return Futures.transform(asyncRelation, (AsyncFunction<? super List<EntityRelation>, EntityId>)
-                    r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getFrom())
-                            : Futures.immediateFuture(null));
+            return Futures.transformAsync(asyncRelation, r -> CollectionUtils.isNotEmpty(r) ? Futures.immediateFuture(r.get(0).getFrom())
+                    : Futures.immediateFuture(null));
         }
         return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
     }

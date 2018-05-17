@@ -24,6 +24,5 @@ import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
  */
 @Data
 public final class RpcSessionTellMsg {
-    private final ServerAddress serverAddress;
-    private final ClusterAPIProtos.ToRpcServerMessage msg;
+    private final ClusterAPIProtos.ClusterMessage msg;
 }

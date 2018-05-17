@@ -20,27 +20,21 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
 
-public class BasicToDeviceActorSessionMsg implements ToDeviceActorSessionMsg {
+public class BasicTransportToDeviceSessionActorMsg implements TransportToDeviceSessionActorMsg {
 
     private final TenantId tenantId;
     private final CustomerId customerId;
     private final DeviceId deviceId;
     private final AdaptorToSessionActorMsg msg;
 
-    public BasicToDeviceActorSessionMsg(Device device, AdaptorToSessionActorMsg msg) {
+    public BasicTransportToDeviceSessionActorMsg(Device device, AdaptorToSessionActorMsg msg) {
         super();
         this.tenantId = device.getTenantId();
         this.customerId = device.getCustomerId();
         this.deviceId = device.getId();
         this.msg = msg;
-    }
-
-    public BasicToDeviceActorSessionMsg(ToDeviceActorSessionMsg deviceMsg) {
-        this.tenantId = deviceMsg.getTenantId();
-        this.customerId = deviceMsg.getCustomerId();
-        this.deviceId = deviceMsg.getDeviceId();
-        this.msg = deviceMsg.getSessionMsg();
     }
 
     @Override
@@ -69,8 +63,12 @@ public class BasicToDeviceActorSessionMsg implements ToDeviceActorSessionMsg {
 
     @Override
     public String toString() {
-        return "BasicToDeviceActorSessionMsg [tenantId=" + tenantId + ", customerId=" + customerId + ", deviceId=" + deviceId + ", msg=" + msg
+        return "BasicTransportToDeviceSessionActorMsg [tenantId=" + tenantId + ", customerId=" + customerId + ", deviceId=" + deviceId + ", msg=" + msg
                 + "]";
     }
 
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.TRANSPORT_TO_DEVICE_SESSION_ACTOR_MSG;
+    }
 }

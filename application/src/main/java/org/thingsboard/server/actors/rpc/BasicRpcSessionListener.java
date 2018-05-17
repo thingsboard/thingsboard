@@ -17,30 +17,10 @@ package org.thingsboard.server.actors.rpc;
 
 import akka.actor.ActorRef;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.SerializationUtils;
-import org.springframework.util.StringUtils;
-import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.PluginId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
-import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
-import org.thingsboard.server.common.msg.core.ToDeviceSessionActorMsg;
-import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.*;
-import org.thingsboard.server.extensions.api.plugins.rpc.PluginRpcMsg;
-import org.thingsboard.server.extensions.api.plugins.rpc.RpcMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.rpc.GrpcSession;
 import org.thingsboard.server.service.cluster.rpc.GrpcSessionListener;
-import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
-
-import java.io.Serializable;
-import java.util.UUID;
 
 /**
  * @author Andrew Shvayka
@@ -48,15 +28,12 @@ import java.util.UUID;
 @Slf4j
 public class BasicRpcSessionListener implements GrpcSessionListener {
 
-    public static final String SESSION_RECEIVED_SESSION_ACTOR_MSG = "{} session [{}] received session actor msg {}";
-    private final ActorSystemContext context;
     private final ActorService service;
     private final ActorRef manager;
     private final ActorRef self;
 
-    public BasicRpcSessionListener(ActorSystemContext context, ActorRef manager, ActorRef self) {
-        this.context = context;
-        this.service = context.getActorService();
+    public BasicRpcSessionListener(ActorService service, ActorRef manager, ActorRef self) {
+        this.service = service;
         this.manager = manager;
         this.self = self;
     }
@@ -76,47 +53,11 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
     }
 
     @Override
-    public void onToPluginRpcMsg(GrpcSession session, ClusterAPIProtos.ToPluginRpcMessage msg) {
-        if (log.isTraceEnabled()) {
-            log.trace("{} session [{}] received plugin msg {}", getType(session), session.getRemoteServer(), msg);
-        }
-        service.onMsg(convert(session.getRemoteServer(), msg));
-    }
-
-    @Override
-    public void onToDeviceActorRpcMsg(GrpcSession session, ClusterAPIProtos.ToDeviceActorRpcMessage msg) {
-        log.trace("{} session [{}] received device actor msg {}", getType(session), session.getRemoteServer(), msg);
-        service.onMsg((DeviceToDeviceActorMsg) deserialize(msg.getData().toByteArray()));
-    }
-
-    @Override
-    public void onToDeviceActorNotificationRpcMsg(GrpcSession session, ClusterAPIProtos.ToDeviceActorNotificationRpcMessage msg) {
-        log.trace("{} session [{}] received device actor notification msg {}", getType(session), session.getRemoteServer(), msg);
-        service.onMsg((ToDeviceActorNotificationMsg) deserialize(msg.getData().toByteArray()));
-    }
-
-    @Override
-    public void onToDeviceSessionActorRpcMsg(GrpcSession session, ClusterAPIProtos.ToDeviceSessionActorRpcMessage msg) {
-        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
-        service.onMsg((ToDeviceSessionActorMsg) deserialize(msg.getData().toByteArray()));
-    }
-
-    @Override
-    public void onToDeviceRpcRequestRpcMsg(GrpcSession session, ClusterAPIProtos.ToDeviceRpcRequestRpcMessage msg) {
-        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
-        service.onMsg(deserialize(session.getRemoteServer(), msg));
-    }
-
-    @Override
-    public void onFromDeviceRpcResponseRpcMsg(GrpcSession session, ClusterAPIProtos.ToPluginRpcResponseRpcMessage msg) {
-        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
-        service.onMsg(deserialize(session.getRemoteServer(), msg));
-    }
-
-    @Override
-    public void onToAllNodesRpcMessage(GrpcSession session, ClusterAPIProtos.ToAllNodesRpcMessage msg) {
-        log.trace(SESSION_RECEIVED_SESSION_ACTOR_MSG, getType(session), session.getRemoteServer(), msg);
-        service.onMsg((ToAllNodesMsg) deserialize(msg.getData().toByteArray()));
+    public void onReceiveClusterGrpcMsg(GrpcSession session, ClusterAPIProtos.ClusterMessage clusterMessage) {
+        log.trace("{} Service [{}] received session actor msg {}", getType(session),
+                session.getRemoteServer(),
+                clusterMessage);
+        service.onReceivedMsg(session.getRemoteServer(), clusterMessage);
     }
 
     @Override
@@ -130,37 +71,5 @@ public class BasicRpcSessionListener implements GrpcSessionListener {
         return session.isClient() ? "Client" : "Server";
     }
 
-    private static PluginRpcMsg convert(ServerAddress serverAddress, ClusterAPIProtos.ToPluginRpcMessage msg) {
-        ClusterAPIProtos.PluginAddress address = msg.getAddress();
-        TenantId tenantId = new TenantId(toUUID(address.getTenantId()));
-        PluginId pluginId = new PluginId(toUUID(address.getPluginId()));
-        RpcMsg rpcMsg = new RpcMsg(serverAddress, msg.getClazz(), msg.getData().toByteArray());
-        return new PluginRpcMsg(tenantId, pluginId, rpcMsg);
-    }
-
-    private static UUID toUUID(ClusterAPIProtos.Uid uid) {
-        return new UUID(uid.getPluginUuidMsb(), uid.getPluginUuidLsb());
-    }
-
-    private static ToDeviceRpcRequestActorMsg deserialize(ServerAddress serverAddress, ClusterAPIProtos.ToDeviceRpcRequestRpcMessage msg) {
-        TenantId deviceTenantId = new TenantId(toUUID(msg.getDeviceTenantId()));
-        DeviceId deviceId = new DeviceId(toUUID(msg.getDeviceId()));
-
-        ToDeviceRpcRequestBody requestBody = new ToDeviceRpcRequestBody(msg.getMethod(), msg.getParams());
-        ToDeviceRpcRequest request = new ToDeviceRpcRequest(toUUID(msg.getMsgId()), deviceTenantId, deviceId, msg.getOneway(), msg.getExpTime(), requestBody);
-
-        return new ToDeviceRpcRequestActorMsg(serverAddress, request);
-    }
-
-    private static ToPluginRpcResponseDeviceMsg deserialize(ServerAddress serverAddress, ClusterAPIProtos.ToPluginRpcResponseRpcMessage msg) {
-        RpcError error = !StringUtils.isEmpty(msg.getError()) ? RpcError.valueOf(msg.getError()) : null;
-        FromDeviceRpcResponse response = new FromDeviceRpcResponse(toUUID(msg.getMsgId()), msg.getResponse(), error);
-        return new ToPluginRpcResponseDeviceMsg(null, null, response);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends Serializable> T deserialize(byte[] data) {
-        return (T) SerializationUtils.deserialize(data);
-    }
 
 }

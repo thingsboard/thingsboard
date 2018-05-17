@@ -77,7 +77,7 @@ public class CassandraDashboardInfoDao extends CassandraAbstractSearchTextDao<Da
 
         ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new CustomerId(customerId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD, EntityType.DASHBOARD, pageLink);
 
-        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<DashboardInfo>>) input -> {
+        return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
                 dashboardFutures.add(findByIdAsync(relation.getTo().getId()));

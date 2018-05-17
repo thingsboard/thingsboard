@@ -21,6 +21,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.PluginId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.timeout.TimeoutMsg;
@@ -100,7 +101,7 @@ public final class SharedPluginProcessingContext {
     }
 
     public void toDeviceActor(DeviceAttributesEventNotificationMsg msg) {
-        forward(msg.getDeviceId(), msg, rpcService::tell);
+        forward(msg.getDeviceId(), msg);
     }
 
     public void sendRpcRequest(ToDeviceRpcRequest msg) {
@@ -109,11 +110,11 @@ public final class SharedPluginProcessingContext {
 //        forward(msg.getDeviceId(), rpcMsg, rpcService::tell);
     }
 
-    private <T> void forward(DeviceId deviceId, T msg, BiConsumer<ServerAddress, T> rpcFunction) {
+    private <T extends TbActorMsg> void forward(DeviceId deviceId, T msg) {
         Optional<ServerAddress> instance = routingService.resolveById(deviceId);
         if (instance.isPresent()) {
             log.trace("[{}] Forwarding msg {} to remote device actor!", pluginId, msg);
-            rpcFunction.accept(instance.get(), msg);
+            rpcService.tell(systemContext.getEncodingService().convertToProtoDataMessage(instance.get(), msg));
         } else {
             log.trace("[{}] Forwarding msg {} to local device actor!", pluginId, msg);
             parentActor.tell(msg, ActorRef.noSender());

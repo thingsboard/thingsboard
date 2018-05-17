@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.core;
+package org.thingsboard.server.mqtt;
 
-import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
-import org.thingsboard.server.common.msg.session.ToDeviceMsg;
-
-import java.io.Serializable;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 /**
- * @author Andrew Shvayka
+ * Created by ashvayka on 11.05.18.
  */
-public interface ToDeviceSessionActorMsg extends SessionAwareMsg, Serializable {
+public class DbConfigurationTestRule implements TestRule {
 
-    ToDeviceMsg getMsg();
+    @Override
+    public Statement apply(Statement base, Description description) {
+        return null;
+    }
 }

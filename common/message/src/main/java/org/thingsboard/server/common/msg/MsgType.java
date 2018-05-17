@@ -29,6 +29,11 @@ public enum MsgType {
     CLUSTER_EVENT_MSG,
 
     /**
+     * All messages, could be send  to cluster
+    */
+    SEND_TO_CLUSTER_MSG,
+
+    /**
      * ADDED/UPDATED/DELETED events for main entities.
      *
      * See {@link org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg}
@@ -96,6 +101,6 @@ public enum MsgType {
     /**
      * Message that is sent from Rule Engine to the Device Actor when message is successfully pushed to queue.
      */
-    RULE_ENGINE_QUEUE_PUT_ACK_MSG;
+    RULE_ENGINE_QUEUE_PUT_ACK_MSG, ACTOR_SYSTEM_TO_DEVICE_SESSION_ACTOR_MSG, TRANSPORT_TO_DEVICE_SESSION_ACTOR_MSG, SESSION_TIMEOUT_MSG, SESSION_CTRL_MSG;
 
 }

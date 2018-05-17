@@ -58,7 +58,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     @Override
     protected ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         ListenableFuture<Alarm> latest = ctx.getAlarmService().findLatestByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), config.getAlarmType());
-        return Futures.transform(latest, (AsyncFunction<Alarm, AlarmResult>) a -> {
+        return Futures.transformAsync(latest, a -> {
             if (a == null || a.getStatus().isCleared()) {
                 return createNewAlarm(ctx, msg);
             } else {
@@ -70,10 +70,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     private ListenableFuture<AlarmResult> createNewAlarm(TbContext ctx, TbMsg msg) {
         ListenableFuture<Alarm> asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg, null),
-                (Function<JsonNode, Alarm>) details -> buildAlarm(msg, details, ctx.getTenantId()));
+                details -> buildAlarm(msg, details, ctx.getTenantId()));
         ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm,
-                (Function<Alarm, Alarm>) alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
-        return Futures.transform(asyncCreated, (Function<Alarm, AlarmResult>) alarm -> new AlarmResult(true, false, false, alarm));
+                alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
+        return Futures.transform(asyncCreated, alarm -> new AlarmResult(true, false, false, alarm));
     }
 
     private ListenableFuture<AlarmResult> updateAlarm(TbContext ctx, TbMsg msg, Alarm alarm) {
@@ -85,7 +85,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             return ctx.getAlarmService().createOrUpdateAlarm(alarm);
         }, ctx.getDbCallbackExecutor());
 
-        return Futures.transform(asyncUpdated, (Function<Alarm, AlarmResult>) a -> new AlarmResult(false, true, false, a));
+        return Futures.transform(asyncUpdated, a -> new AlarmResult(false, true, false, a));
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
