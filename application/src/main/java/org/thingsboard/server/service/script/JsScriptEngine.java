@@ -19,14 +19,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
-import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.Collections;
 import java.util.Map;
@@ -34,7 +31,7 @@ import java.util.Set;
 
 
 @Slf4j
-public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
+public class JsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
     public static final String MSG = "msg";
     public static final String METADATA = "metadata";
@@ -49,12 +46,14 @@ public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEn
             "\n}";
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
-    private ScriptEngine engine = factory.getScriptEngine(new String[]{"--no-java"});
+//    private static NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
+//    private ScriptEngine engine = factory.getScriptEngine(new String[]{"--no-java"});
+    private final JsSandboxService sandboxService;
 
     private final String invokeFunctionName;
 
-    public NashornJsEngine(String script, String functionName, String... argNames) {
+    public JsScriptEngine(JsSandboxService sandboxService, String script, String functionName, String... argNames) {
+        this.sandboxService = sandboxService;
         this.invokeFunctionName = "invokeInternal" + this.hashCode();
         String msgArg;
         String metadataArg;
@@ -75,7 +74,8 @@ public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEn
 
     private void compileScript(String script) {
         try {
-            engine.eval(script);
+            //engine.eval(script);
+            sandboxService.eval(script);
         } catch (ScriptException e) {
             log.warn("Failed to compile JS script: {}", e.getMessage(), e);
             throw new IllegalArgumentException("Can't compile script: " + e.getMessage());
@@ -195,7 +195,8 @@ public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEn
     private JsonNode executeScript(TbMsg msg) throws ScriptException {
         try {
             String[] inArgs = prepareArgs(msg);
-            String eval = ((Invocable)engine).invokeFunction(this.invokeFunctionName, inArgs[0], inArgs[1], inArgs[2]).toString();
+            //String eval = ((Invocable)engine).invokeFunction(this.invokeFunctionName, inArgs[0], inArgs[1], inArgs[2]).toString();
+            String eval = sandboxService.invokeFunction(this.invokeFunctionName, inArgs[0], inArgs[1], inArgs[2]).toString();
             return mapper.readTree(eval);
         } catch (ScriptException | IllegalArgumentException th) {
             throw th;
@@ -206,6 +207,6 @@ public class NashornJsEngine implements org.thingsboard.rule.engine.api.ScriptEn
     }
 
     public void destroy() {
-        engine = null;
+        //engine = null;
     }
 }

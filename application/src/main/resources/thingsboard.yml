@@ -238,6 +238,11 @@ actors:
     mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:10}"
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:10}"
+    js_sandbox:
+      # Specify thread pool size for JavaScript sandbox resource monitor
+      monitor_thread_pool_size: "${ACTORS_RULE_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
+      # Maximum CPU time in milliseconds allowed for script execution
+      max_cpu_time: "${ACTORS_RULE_JS_SANDBOX_MAX_CPU_TIME:100}"
     chain:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"

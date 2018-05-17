@@ -44,7 +44,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.service.script.NashornJsEngine;
+import org.thingsboard.server.service.script.JsScriptEngine;
 import scala.concurrent.duration.Duration;
 
 import java.util.Collections;
@@ -152,7 +152,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public ScriptEngine createJsScriptEngine(String script, String functionName, String... argNames) {
-        return new NashornJsEngine(script, functionName, argNames);
+        return new JsScriptEngine(mainCtx.getJsSandbox(), script, functionName, argNames);
     }
 
     @Override

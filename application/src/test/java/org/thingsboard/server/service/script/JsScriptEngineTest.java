@@ -17,6 +17,8 @@ package org.thingsboard.server.service.script;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.collect.Sets;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -25,17 +27,30 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import javax.script.ScriptException;
 
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 
-public class NashornJsEngineTest {
+public class JsScriptEngineTest {
 
     private ScriptEngine scriptEngine;
+    private TestNashornJsSandboxService jsSandboxService;
+
+    @Before
+    public void beforeTest() throws Exception {
+        jsSandboxService = new TestNashornJsSandboxService(1, 100);
+    }
+
+    @After
+    public void afterTest() throws Exception {
+        jsSandboxService.destroy();
+    }
 
     @Test
     public void msgCanBeUpdated() throws ScriptException {
         String function = "metadata.temp = metadata.temp * 10; return {metadata: metadata};";
-        scriptEngine = new NashornJsEngine(function, "Transform");
+        scriptEngine = new JsScriptEngine(jsSandboxService, function, "Transform");
 
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
@@ -51,7 +66,7 @@ public class NashornJsEngineTest {
     @Test
     public void newAttributesCanBeAddedInMsg() throws ScriptException {
         String function = "metadata.newAttr = metadata.humidity - msg.passed; return {metadata: metadata};";
-        scriptEngine = new NashornJsEngine(function, "Transform");
+        scriptEngine = new JsScriptEngine(jsSandboxService, function, "Transform");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -66,7 +81,7 @@ public class NashornJsEngineTest {
     @Test
     public void payloadCanBeUpdated() throws ScriptException {
         String function = "msg.passed = msg.passed * metadata.temp; msg.bigObj.newProp = 'Ukraine'; return {msg: msg};";
-        scriptEngine = new NashornJsEngine(function, "Transform");
+        scriptEngine = new JsScriptEngine(jsSandboxService, function, "Transform");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -83,7 +98,7 @@ public class NashornJsEngineTest {
     @Test
     public void metadataAccessibleForFilter() throws ScriptException {
         String function = "return metadata.humidity < 15;";
-        scriptEngine = new NashornJsEngine(function, "Filter");
+        scriptEngine = new JsScriptEngine(jsSandboxService, function, "Filter");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -96,7 +111,7 @@ public class NashornJsEngineTest {
     @Test
     public void dataAccessibleForFilter() throws ScriptException {
         String function = "return msg.passed < 15 && msg.name === 'Vit' && metadata.temp == 7 && msg.bigObj.prop == 42;";
-        scriptEngine = new NashornJsEngine(function, "Filter");
+        scriptEngine = new JsScriptEngine(jsSandboxService, function, "Filter");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "7");
         metaData.putValue("humidity", "99");
@@ -116,7 +131,7 @@ public class NashornJsEngineTest {
                 "};\n" +
                 "\n" +
                 "return nextRelation(metadata, msg);";
-        scriptEngine = new NashornJsEngine(jsCode, "Switch");
+        scriptEngine = new JsScriptEngine(jsSandboxService, jsCode, "Switch");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");
@@ -137,7 +152,7 @@ public class NashornJsEngineTest {
                 "};\n" +
                 "\n" +
                 "return nextRelation(metadata, msg);";
-        scriptEngine = new NashornJsEngine(jsCode, "Switch");
+        scriptEngine = new JsScriptEngine(jsSandboxService, jsCode, "Switch");
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temp", "10");
         metaData.putValue("humidity", "99");

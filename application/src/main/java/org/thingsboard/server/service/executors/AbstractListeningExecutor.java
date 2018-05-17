@@ -54,6 +54,10 @@ public abstract class AbstractListeningExecutor implements ListeningExecutor {
         service.execute(command);
     }
 
+    public ListeningExecutorService executor() {
+        return service;
+    }
+
     protected abstract int getThreadPollSize();
 
 }

@@ -81,6 +81,7 @@
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
+        <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
     </properties>
 
     <modules>
@@ -813,6 +814,11 @@
                 <groupId>org.elasticsearch.client</groupId>
                 <artifactId>rest</artifactId>
                 <version>${elasticsearch.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.javadelight</groupId>
+                <artifactId>delight-nashorn-sandbox</artifactId>
+                <version>${delight-nashorn-sandbox.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
