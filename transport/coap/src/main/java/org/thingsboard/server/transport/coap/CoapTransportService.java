@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
 import org.thingsboard.server.common.transport.auth.DeviceAuthService;
 import org.thingsboard.server.common.transport.quota.QuotaService;
+import org.thingsboard.server.common.transport.quota.host.HostRequestsQuotaService;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
 import javax.annotation.PostConstruct;
@@ -55,7 +56,7 @@ public class CoapTransportService {
     private DeviceAuthService authService;
 
     @Autowired(required = false)
-    private QuotaService quotaService;
+    private HostRequestsQuotaService quotaService;
 
 
     @Value("${coap.bind_address}")

@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.quota;
 
 import org.junit.Test;
+import org.thingsboard.server.common.transport.quota.host.HostRequestLimitPolicy;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
