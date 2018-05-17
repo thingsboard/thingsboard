@@ -33,8 +33,6 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
  */
 public class MqttTransportServerInitializer extends ChannelInitializer<SocketChannel> {
 
-    private static final int MAX_PAYLOAD_SIZE = 64 * 1024 * 1024;
-
     private final SessionMsgProcessor processor;
     private final DeviceService deviceService;
     private final DeviceAuthService authService;
@@ -42,10 +40,11 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
     private final MqttTransportAdaptor adaptor;
     private final MqttSslHandlerProvider sslHandlerProvider;
     private final QuotaService quotaService;
+    private final int maxPayloadSize;
 
     public MqttTransportServerInitializer(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService,
                                           MqttTransportAdaptor adaptor, MqttSslHandlerProvider sslHandlerProvider,
-                                          QuotaService quotaService) {
+                                          QuotaService quotaService, int maxPayloadSize) {
         this.processor = processor;
         this.deviceService = deviceService;
         this.authService = authService;
@@ -53,6 +52,7 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
         this.adaptor = adaptor;
         this.sslHandlerProvider = sslHandlerProvider;
         this.quotaService = quotaService;
+        this.maxPayloadSize = maxPayloadSize;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
             sslHandler = sslHandlerProvider.getSslHandler();
             pipeline.addLast(sslHandler);
         }
-        pipeline.addLast("decoder", new MqttDecoder(MAX_PAYLOAD_SIZE));
+        pipeline.addLast("decoder", new MqttDecoder(maxPayloadSize));
         pipeline.addLast("encoder", MqttEncoder.INSTANCE);
 
         MqttTransportHandler handler = new MqttTransportHandler(processor, deviceService, authService, relationService,

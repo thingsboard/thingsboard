@@ -82,7 +82,8 @@ public class MqttTransportService {
     private Integer bossGroupThreadCount;
     @Value("${mqtt.netty.worker_group_thread_count}")
     private Integer workerGroupThreadCount;
-
+    @Value("${mqtt.netty.max_payload_size}")
+    private Integer maxPayloadSize;
 
     private MqttTransportAdaptor adaptor;
 
@@ -106,7 +107,7 @@ public class MqttTransportService {
         b.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new MqttTransportServerInitializer(processor, deviceService, authService, relationService,
-                        adaptor, sslHandlerProvider, quotaService));
+                        adaptor, sslHandlerProvider, quotaService, maxPayloadSize));
 
         serverChannel = b.bind(host, port).sync().channel();
         log.info("Mqtt transport started!");
