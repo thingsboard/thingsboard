@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue.db.repository;
+package org.thingsboard.server.common.transport.quota.host;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.dao.queue.db.MsgAck;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.quota.RequestLimitPolicy;
 
-import java.util.List;
-import java.util.UUID;
+/**
+ * @author Vitaliy Paromskiy
+ * @version 1.0
+ */
+@Component
+public class HostRequestLimitPolicy extends RequestLimitPolicy {
 
-public interface AckRepository {
+    public HostRequestLimitPolicy(@Value("${quota.host.limit}") long limit) {
+        super(limit);
+    }
 
-    ListenableFuture<Void> ack(MsgAck msgAck);
-
-    List<MsgAck> findAcks(UUID nodeId, long clusterPartition, long tsPartition);
 }

@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue.db.repository;
+package org.thingsboard.server.common.transport.quota.host;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.dao.queue.db.MsgAck;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.quota.inmemory.IntervalRegistryCleaner;
 
-import java.util.List;
-import java.util.UUID;
+@Component
+public class HostIntervalRegistryCleaner extends IntervalRegistryCleaner {
 
-public interface AckRepository {
-
-    ListenableFuture<Void> ack(MsgAck msgAck);
-
-    List<MsgAck> findAcks(UUID nodeId, long clusterPartition, long tsPartition);
+    public HostIntervalRegistryCleaner(HostRequestIntervalRegistry intervalRegistry,
+                                       @Value("${quota.host.cleanPeriodMs}") long cleanPeriodMs) {
+        super(intervalRegistry, cleanPeriodMs);
+    }
 }

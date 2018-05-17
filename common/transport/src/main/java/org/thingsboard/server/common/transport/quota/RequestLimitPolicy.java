@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue.db.nosql;
+package org.thingsboard.server.common.transport.quota;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-import java.util.UUID;
+public abstract class RequestLimitPolicy {
 
-@Data
-@EqualsAndHashCode
-public class MsgAck {
+    private final long limit;
 
-    private final UUID msgId;
-    private final UUID nodeId;
-    private final long clusteredPartition;
-    private final long tsPartition;
+    public RequestLimitPolicy(long limit) {
+        this.limit = limit;
+    }
 
+    public boolean isValid(long currentValue) {
+        return currentValue <= limit;
+    }
 }

@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.quota;
+package org.thingsboard.server.common.transport.quota.host;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.transport.quota.AbstractQuotaService;
 
 /**
  * @author Vitaliy Paromskiy
  * @version 1.0
  */
-@Component
-public class HostRequestLimitPolicy {
+@Service
+@Slf4j
+public class HostRequestsQuotaService extends AbstractQuotaService {
 
-    private final long limit;
-
-    public HostRequestLimitPolicy(@Value("${quota.host.limit}") long limit) {
-        this.limit = limit;
-    }
-
-    public boolean isValid(long currentValue) {
-        return currentValue <= limit;
+    public HostRequestsQuotaService(HostRequestIntervalRegistry requestRegistry, HostRequestLimitPolicy requestsPolicy,
+                                    HostIntervalRegistryCleaner registryCleaner, HostIntervalRegistryLogger registryLogger,
+                                    @Value("${quota.host.enabled}") boolean enabled) {
+        super(requestRegistry, requestsPolicy, registryCleaner, registryLogger, enabled);
     }
 
 }

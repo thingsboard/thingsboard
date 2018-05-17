@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue.db.repository;
+package org.thingsboard.server.dao.queue.db;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.dao.queue.db.MsgAck;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.List;
 import java.util.UUID;
 
-public interface AckRepository {
+@Data
+@EqualsAndHashCode
+public class MsgAck {
 
-    ListenableFuture<Void> ack(MsgAck msgAck);
+    private final UUID msgId;
+    private final UUID nodeId;
+    private final long clusteredPartition;
+    private final long tsPartition;
 
-    List<MsgAck> findAcks(UUID nodeId, long clusterPartition, long tsPartition);
 }

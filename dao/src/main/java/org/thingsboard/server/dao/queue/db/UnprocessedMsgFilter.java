@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.queue.db.nosql;
+package org.thingsboard.server.dao.queue.db;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.queue.db.MsgAck;
 
 import java.util.Collection;
 import java.util.List;

@@ -26,6 +26,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.queue.MsgQueue;
+import org.thingsboard.server.dao.queue.db.MsgAck;
+import org.thingsboard.server.dao.queue.db.UnprocessedMsgFilter;
 import org.thingsboard.server.dao.queue.db.repository.AckRepository;
 import org.thingsboard.server.dao.queue.db.repository.MsgRepository;
 import org.thingsboard.server.dao.util.NoSqlDao;
