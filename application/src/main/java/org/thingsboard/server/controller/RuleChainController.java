@@ -50,7 +50,9 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
-import org.thingsboard.server.service.script.NashornJsEngine;
+import org.thingsboard.server.service.script.JsExecutorService;
+import org.thingsboard.server.service.script.JsSandboxService;
+import org.thingsboard.server.service.script.JsScriptEngine;
 
 import java.util.List;
 import java.util.Map;
@@ -68,6 +70,9 @@ public class RuleChainController extends BaseController {
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private JsSandboxService jsSandboxService;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.GET)
@@ -273,7 +278,7 @@ public class RuleChainController extends BaseController {
             String errorText = "";
             ScriptEngine engine = null;
             try {
-                engine = new NashornJsEngine(script, functionName, argNames);
+                engine = new JsScriptEngine(jsSandboxService, script, functionName, argNames);
                 TbMsg inMsg = new TbMsg(UUIDs.timeBased(), msgType, null, new TbMsgMetaData(metadata), data, null, null, 0L);
                 switch (scriptType) {
                     case "update":
