@@ -30,6 +30,10 @@ import jsFuncTemplate from './js-func.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
+import beautify from 'js-beautify';
+
+const js_beautify = beautify.js;
+
 /* eslint-disable angular/angularelement */
 
 export default angular.module('thingsboard.directives.jsFunc', [thingsboardToast, thingsboardUtils, thingsboardExpandFullscreen])
@@ -70,6 +74,11 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
 
         scope.onFullscreenChanged = function () {
             updateEditorSize();
+        };
+
+        scope.beautifyJs = function () {
+            var res = js_beautify(scope.functionBody, {indent_size: 4, wrap_line_length: 60});
+            scope.functionBody = res;
         };
 
         function updateEditorSize() {

@@ -16,9 +16,12 @@
 
 -->
 <div style="background: #fff;" ng-class="{'fill-height': fillHeight}" tb-expand-fullscreen fullscreen-zindex="100" expand-button-id="expand-button" on-fullscreen-changed="onFullscreenChanged()" layout="column">
-    <div layout="row" layout-align="start center">
+    <div layout="row" layout-align="start center" style="height: 40px;" class="tb-json-content-toolbar">
         <label class="tb-title no-padding">{{ label }}</label>
         <span flex></span>
+        <md-button ng-if="!readonly" class="tidy" aria-label="{{ 'js-func.tidy' | translate }}" ng-click="beautifyJson()">{{
+            'js-func.tidy' | translate }}
+        </md-button>
         <md-button id="expand-button" aria-label="Fullscreen" class="md-icon-button tb-md-32 tb-fullscreen-button-style"></md-button>
     </div>
     <div flex id="tb-json-panel" class="tb-json-content-panel" layout="column">

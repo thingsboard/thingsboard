@@ -20,6 +20,19 @@ tb-json-content {
   }
 }
 
+.tb-json-content-toolbar {
+  .md-button.tidy {
+    color: #7B7B7B;
+    min-width: 32px;
+    min-height: 15px;
+    line-height: 15px;
+    font-size: 0.800rem;
+    margin: 0 5px 0 0;
+    padding: 4px;
+    background: rgba(220, 220, 220, 0.35);
+  }
+}
+
 .tb-json-content-panel {
   margin-left: 15px;
   border: 1px solid #C0C0C0;

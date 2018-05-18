@@ -37,7 +37,7 @@ public class RuleNodeJsScriptEngineTest {
 
     @Before
     public void beforeTest() throws Exception {
-        jsSandboxService = new TestNashornJsSandboxService(1, 100, 3);
+        jsSandboxService = new TestNashornJsSandboxService(false, 1, 100, 3);
     }
 
     @After

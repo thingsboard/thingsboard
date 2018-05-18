@@ -29,6 +29,10 @@ import jsonContentTemplate from './json-content.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
+import beautify from 'js-beautify';
+
+const js_beautify = beautify.js;
+
 export default angular.module('thingsboard.directives.jsonContent', [])
     .directive('tbJsonContent', JsonContent)
     .name;
@@ -50,6 +54,11 @@ function JsonContent($compile, $templateCache, toast, types, utils) {
 
         scope.onFullscreenChanged = function () {
             updateEditorSize();
+        };
+
+        scope.beautifyJson = function () {
+            var res = js_beautify(scope.contentBody, {indent_size: 4, wrap_line_length: 60});
+            scope.contentBody = res;
         };
 
         function updateEditorSize() {

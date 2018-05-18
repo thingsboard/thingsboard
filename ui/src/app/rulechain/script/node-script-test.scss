@@ -76,9 +76,12 @@ md-dialog.tb-node-script-test-dialog {
     position: absolute;
     font-size: 0.800rem;
     font-weight: 500;
-    top: 10px;
+    top: 13px;
     right: 40px;
     z-index: 5;
+    &.tb-js-function {
+      right: 80px;
+    }
     label {
       color: #00acc1;
       background: rgba(220, 220, 220, 0.35);

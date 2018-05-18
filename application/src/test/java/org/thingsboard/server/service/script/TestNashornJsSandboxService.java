@@ -27,15 +27,22 @@ import java.util.concurrent.Executors;
 
 public class TestNashornJsSandboxService extends AbstractNashornJsSandboxService {
 
+    private boolean useJsSandbox;
     private final int monitorThreadPoolSize;
     private final long maxCpuTime;
     private final int maxErrors;
 
-    public TestNashornJsSandboxService(int monitorThreadPoolSize, long maxCpuTime, int maxErrors) {
+    public TestNashornJsSandboxService(boolean useJsSandbox, int monitorThreadPoolSize, long maxCpuTime, int maxErrors) {
+        this.useJsSandbox = useJsSandbox;
         this.monitorThreadPoolSize = monitorThreadPoolSize;
         this.maxCpuTime = maxCpuTime;
         this.maxErrors = maxErrors;
         init();
+    }
+
+    @Override
+    protected boolean useJsSandbox() {
+        return useJsSandbox;
     }
 
     @Override

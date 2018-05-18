@@ -20,10 +20,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import delight.nashornsandbox.NashornSandbox;
 import delight.nashornsandbox.NashornSandboxes;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.Map;
 import java.util.UUID;
@@ -35,7 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractNashornJsSandboxService implements JsSandboxService {
 
-    private NashornSandbox sandbox = NashornSandboxes.create();
+    private NashornSandbox sandbox;
+    private ScriptEngine engine;
     private ExecutorService monitorExecutorService;
 
     private Map<UUID, String> functionsMap = new ConcurrentHashMap<>();
@@ -44,11 +48,17 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
 
     @PostConstruct
     public void init() {
-        monitorExecutorService = Executors.newFixedThreadPool(getMonitorThreadPoolSize());
-        sandbox.setExecutor(monitorExecutorService);
-        sandbox.setMaxCPUTime(getMaxCpuTime());
-        sandbox.allowNoBraces(false);
-        sandbox.setMaxPreparedStatements(30);
+        if (useJsSandbox()) {
+            sandbox = NashornSandboxes.create();
+            monitorExecutorService = Executors.newFixedThreadPool(getMonitorThreadPoolSize());
+            sandbox.setExecutor(monitorExecutorService);
+            sandbox.setMaxCPUTime(getMaxCpuTime());
+            sandbox.allowNoBraces(false);
+            sandbox.setMaxPreparedStatements(30);
+        } else {
+            NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
+            engine = factory.getScriptEngine(new String[]{"--no-java"});
+        }
     }
 
     @PreDestroy
@@ -57,6 +67,8 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
             monitorExecutorService.shutdownNow();
         }
     }
+
+    protected abstract boolean useJsSandbox();
 
     protected abstract int getMonitorThreadPoolSize();
 
@@ -70,7 +82,11 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
         String functionName = "invokeInternal_" + scriptId.toString().replace('-','_');
         String jsScript = generateJsScript(scriptType, functionName, scriptBody, argNames);
         try {
-            sandbox.eval(jsScript);
+            if (useJsSandbox()) {
+                sandbox.eval(jsScript);
+            } else {
+                engine.eval(jsScript);
+            }
             functionsMap.put(scriptId, functionName);
         } catch (Exception e) {
             log.warn("Failed to compile JS script: {}", e.getMessage(), e);
@@ -87,7 +103,13 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
         }
         if (!isBlackListed(scriptId)) {
             try {
-                return Futures.immediateFuture(sandbox.getSandboxedInvocable().invokeFunction(functionName, args));
+                Object result;
+                if (useJsSandbox()) {
+                    result = sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
+                } else {
+                    result = ((Invocable)engine).invokeFunction(functionName, args);
+                }
+                return Futures.immediateFuture(result);
             } catch (Exception e) {
                 blackListedFunctions.computeIfAbsent(scriptId, key -> new AtomicInteger(0)).incrementAndGet();
                 return Futures.immediateFailedFuture(e);
@@ -103,7 +125,11 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
         String functionName = functionsMap.get(scriptId);
         if (functionName != null) {
             try {
-                sandbox.eval(functionName + " = undefined;");
+                if (useJsSandbox()) {
+                    sandbox.eval(functionName + " = undefined;");
+                } else {
+                    engine.eval(functionName + " = undefined;");
+                }
                 functionsMap.remove(scriptId);
                 blackListedFunctions.remove(scriptId);
             } catch (ScriptException e) {

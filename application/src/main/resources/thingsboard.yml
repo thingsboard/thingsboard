@@ -239,6 +239,8 @@ actors:
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:10}"
     js_sandbox:
+      # Use Sandboxed (secured) JavaScript environment
+      use_js_sandbox: "${ACTORS_RULE_JS_SANDBOX_USE_JS_SANDBOX:true}"
       # Specify thread pool size for JavaScript sandbox resource monitor
       monitor_thread_pool_size: "${ACTORS_RULE_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
       # Maximum CPU time in milliseconds allowed for script execution

@@ -991,7 +991,8 @@ export default angular.module('thingsboard.locale', [])
                 },
                 "js-func": {
                     "no-return-error": "Function must return value!",
-                    "return-type-mismatch": "Function must return value of '{{type}}' type!"
+                    "return-type-mismatch": "Function must return value of '{{type}}' type!",
+                    "tidy": "Tidy"
                 },
                 "key-val": {
                     "key": "Key",

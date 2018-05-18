@@ -24,6 +24,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class NashornJsSandboxService extends AbstractNashornJsSandboxService {
 
+    @Value("${actors.rule.js_sandbox.use_js_sandbox}")
+    private boolean useJsSandbox;
+
     @Value("${actors.rule.js_sandbox.monitor_thread_pool_size}")
     private int monitorThreadPoolSize;
 
@@ -32,6 +35,11 @@ public class NashornJsSandboxService extends AbstractNashornJsSandboxService {
 
     @Value("${actors.rule.js_sandbox.max_errors}")
     private int maxErrors;
+
+    @Override
+    protected boolean useJsSandbox() {
+        return useJsSandbox;
+    }
 
     @Override
     protected int getMonitorThreadPoolSize() {
