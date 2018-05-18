@@ -46,7 +46,7 @@ public class TbLogNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbLogNodeConfiguration.class);
-        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "ToString");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript());
     }
 
     @Override

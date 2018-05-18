@@ -16,16 +16,6 @@
 
 package org.thingsboard.server.service.script;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
-import java.util.UUID;
-
-public interface JsSandboxService {
-
-    ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames);
-
-    ListenableFuture<Object> invokeFunction(UUID scriptId, Object... args);
-
-    ListenableFuture<Void> release(UUID scriptId);
-
+public enum JsScriptType {
+    RULE_NODE_SCRIPT
 }

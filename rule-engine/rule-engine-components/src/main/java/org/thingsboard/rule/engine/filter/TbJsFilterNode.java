@@ -45,7 +45,7 @@ public class TbJsFilterNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsFilterNodeConfiguration.class);
-        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "Filter");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript());
     }
 
     @Override

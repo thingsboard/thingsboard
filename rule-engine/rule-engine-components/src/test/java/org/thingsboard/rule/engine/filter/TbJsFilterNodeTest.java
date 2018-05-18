@@ -97,7 +97,7 @@ public class TbJsFilterNodeTest {
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-        when(ctx.createJsScriptEngine("scr", "Filter")).thenReturn(scriptEngine);
+        when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);
 
         node = new TbJsFilterNode();
         node.init(ctx, nodeConfiguration);

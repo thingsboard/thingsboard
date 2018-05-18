@@ -50,9 +50,8 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
-import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsSandboxService;
-import org.thingsboard.server.service.script.JsScriptEngine;
+import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.List;
 import java.util.Map;
@@ -266,7 +265,6 @@ public class RuleChainController extends BaseController {
         try {
             String script = inputParams.get("script").asText();
             String scriptType = inputParams.get("scriptType").asText();
-            String functionName = inputParams.get("functionName").asText();
             JsonNode argNamesJson = inputParams.get("argNames");
             String[] argNames = objectMapper.treeToValue(argNamesJson, String[].class);
 
@@ -278,7 +276,7 @@ public class RuleChainController extends BaseController {
             String errorText = "";
             ScriptEngine engine = null;
             try {
-                engine = new JsScriptEngine(jsSandboxService, script, functionName, argNames);
+                engine = new RuleNodeJsScriptEngine(jsSandboxService, script, argNames);
                 TbMsg inMsg = new TbMsg(UUIDs.timeBased(), msgType, null, new TbMsgMetaData(metadata), data, null, null, 0L);
                 switch (scriptType) {
                     case "update":

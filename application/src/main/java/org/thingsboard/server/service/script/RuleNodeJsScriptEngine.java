@@ -28,56 +28,23 @@ import javax.script.ScriptException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 
 @Slf4j
-public class JsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
-
-    public static final String MSG = "msg";
-    public static final String METADATA = "metadata";
-    public static final String MSG_TYPE = "msgType";
-
-    private static final String JS_WRAPPER_PREFIX_TEMPLATE = "function %s(msgStr, metadataStr, msgType) { " +
-            "    var msg = JSON.parse(msgStr); " +
-            "    var metadata = JSON.parse(metadataStr); " +
-            "    return JSON.stringify(%s(msg, metadata, msgType));" +
-            "    function %s(%s, %s, %s) {";
-    private static final String JS_WRAPPER_SUFFIX = "}" +
-            "\n}";
+public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-//    private static NashornScriptEngineFactory factory = new NashornScriptEngineFactory();
-//    private ScriptEngine engine = factory.getScriptEngine(new String[]{"--no-java"});
     private final JsSandboxService sandboxService;
 
-    private final String invokeFunctionName;
+    private final UUID scriptId;
 
-    public JsScriptEngine(JsSandboxService sandboxService, String script, String functionName, String... argNames) {
+    public RuleNodeJsScriptEngine(JsSandboxService sandboxService, String script, String... argNames) {
         this.sandboxService = sandboxService;
-        this.invokeFunctionName = "invokeInternal" + this.hashCode();
-        String msgArg;
-        String metadataArg;
-        String msgTypeArg;
-        if (argNames != null && argNames.length == 3) {
-            msgArg = argNames[0];
-            metadataArg = argNames[1];
-            msgTypeArg = argNames[2];
-        } else {
-            msgArg = MSG;
-            metadataArg = METADATA;
-            msgTypeArg = MSG_TYPE;
-        }
-        String jsWrapperPrefix = String.format(JS_WRAPPER_PREFIX_TEMPLATE, this.invokeFunctionName,
-                functionName, functionName, msgArg, metadataArg, msgTypeArg);
-        compileScript(jsWrapperPrefix + script + JS_WRAPPER_SUFFIX);
-    }
-
-    private void compileScript(String script) {
         try {
-            //engine.eval(script);
-            sandboxService.eval(script);
-        } catch (ScriptException e) {
-            log.warn("Failed to compile JS script: {}", e.getMessage(), e);
+            this.scriptId = this.sandboxService.eval(JsScriptType.RULE_NODE_SCRIPT, script, argNames).get();
+        } catch (Exception e) {
             throw new IllegalArgumentException("Can't compile script: " + e.getMessage());
         }
     }
@@ -103,17 +70,17 @@ public class JsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEng
             String data = null;
             Map<String, String> metadata = null;
             String messageType = null;
-            if (msgData.has(MSG)) {
-                JsonNode msgPayload = msgData.get(MSG);
+            if (msgData.has(RuleNodeScriptFactory.MSG)) {
+                JsonNode msgPayload = msgData.get(RuleNodeScriptFactory.MSG);
                 data = mapper.writeValueAsString(msgPayload);
             }
-            if (msgData.has(METADATA)) {
-                JsonNode msgMetadata = msgData.get(METADATA);
+            if (msgData.has(RuleNodeScriptFactory.METADATA)) {
+                JsonNode msgMetadata = msgData.get(RuleNodeScriptFactory.METADATA);
                 metadata = mapper.convertValue(msgMetadata, new TypeReference<Map<String, String>>() {
                 });
             }
-            if (msgData.has(MSG_TYPE)) {
-                messageType = msgData.get(MSG_TYPE).asText();
+            if (msgData.has(RuleNodeScriptFactory.MSG_TYPE)) {
+                messageType = msgData.get(RuleNodeScriptFactory.MSG_TYPE).asText();
             }
             String newData = data != null ? data : msg.getData();
             TbMsgMetaData newMetadata = metadata != null ? new TbMsgMetaData(metadata) : msg.getMetaData().copy();
@@ -195,18 +162,20 @@ public class JsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEng
     private JsonNode executeScript(TbMsg msg) throws ScriptException {
         try {
             String[] inArgs = prepareArgs(msg);
-            //String eval = ((Invocable)engine).invokeFunction(this.invokeFunctionName, inArgs[0], inArgs[1], inArgs[2]).toString();
-            String eval = sandboxService.invokeFunction(this.invokeFunctionName, inArgs[0], inArgs[1], inArgs[2]).toString();
+            String eval = sandboxService.invokeFunction(this.scriptId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
             return mapper.readTree(eval);
-        } catch (ScriptException | IllegalArgumentException th) {
-            throw th;
-        } catch (Throwable th) {
-            th.printStackTrace();
-            throw new RuntimeException("Failed to execute js script", th);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof ScriptException) {
+                throw (ScriptException)e.getCause();
+            } else {
+                throw new ScriptException("Failed to execute js script: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            throw new ScriptException("Failed to execute js script: " + e.getMessage());
         }
     }
 
     public void destroy() {
-        //engine = null;
+        sandboxService.release(this.scriptId);
     }
 }

@@ -65,7 +65,7 @@ public class TbMsgGeneratorNode implements TbNode {
         } else {
             originatorId = ctx.getSelfId();
         }
-        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "Generate", "prevMsg", "prevMetadata", "prevMsgType");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "prevMsg", "prevMetadata", "prevMsgType");
         sentTickMsg(ctx);
     }
 

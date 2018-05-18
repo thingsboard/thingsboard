@@ -90,6 +90,6 @@ public interface TbContext {
 
     MailService getMailService();
 
-    ScriptEngine createJsScriptEngine(String script, String functionName, String... argNames);
+    ScriptEngine createJsScriptEngine(String script, String... argNames);
 
 }

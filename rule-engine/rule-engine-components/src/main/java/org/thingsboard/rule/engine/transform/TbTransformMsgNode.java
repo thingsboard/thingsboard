@@ -43,7 +43,7 @@ public class TbTransformMsgNode extends TbAbstractTransformNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
-        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "Transform");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript());
         setConfig(config);
     }
 

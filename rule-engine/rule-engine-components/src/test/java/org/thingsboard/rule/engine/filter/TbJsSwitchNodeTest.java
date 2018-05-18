@@ -79,7 +79,7 @@ public class TbJsSwitchNodeTest {
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-        when(ctx.createJsScriptEngine("scr", "Switch")).thenReturn(scriptEngine);
+        when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);
 
         node = new TbJsSwitchNode();
         node.init(ctx, nodeConfiguration);

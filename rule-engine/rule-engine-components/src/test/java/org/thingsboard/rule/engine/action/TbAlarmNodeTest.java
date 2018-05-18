@@ -152,7 +152,7 @@ public class TbAlarmNodeTest {
 
         verifyError(msg, "message", NotImplementedException.class);
 
-        verify(ctx).createJsScriptEngine("DETAILS", "Details");
+        verify(ctx).createJsScriptEngine("DETAILS");
         verify(ctx, times(1)).getJsExecutor();
         verify(ctx).getAlarmService();
         verify(ctx, times(2)).getDbCallbackExecutor();
@@ -314,7 +314,7 @@ public class TbAlarmNodeTest {
             ObjectMapper mapper = new ObjectMapper();
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-            when(ctx.createJsScriptEngine("DETAILS", "Details")).thenReturn(detailsJs);
+            when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
             when(ctx.getTenantId()).thenReturn(tenantId);
             when(ctx.getJsExecutor()).thenReturn(executor);
@@ -338,7 +338,7 @@ public class TbAlarmNodeTest {
             ObjectMapper mapper = new ObjectMapper();
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-            when(ctx.createJsScriptEngine("DETAILS", "Details")).thenReturn(detailsJs);
+            when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
             when(ctx.getTenantId()).thenReturn(tenantId);
             when(ctx.getJsExecutor()).thenReturn(executor);

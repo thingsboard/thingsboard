@@ -97,7 +97,7 @@ public class TbTransformMsgNodeTest {
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-        when(ctx.createJsScriptEngine("scr", "Transform")).thenReturn(scriptEngine);
+        when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);
 
         node = new TbTransformMsgNode();
         node.init(ctx, nodeConfiguration);

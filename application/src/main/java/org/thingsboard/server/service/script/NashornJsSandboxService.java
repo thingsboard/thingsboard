@@ -16,21 +16,13 @@
 
 package org.thingsboard.server.service.script;
 
-import delight.nashornsandbox.NashornSandbox;
-import delight.nashornsandbox.NashornSandboxes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.script.ScriptException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 @Slf4j
 @Service
-public class NashornJsSandboxService implements JsSandboxService {
+public class NashornJsSandboxService extends AbstractNashornJsSandboxService {
 
     @Value("${actors.rule.js_sandbox.monitor_thread_pool_size}")
     private int monitorThreadPoolSize;
@@ -38,33 +30,21 @@ public class NashornJsSandboxService implements JsSandboxService {
     @Value("${actors.rule.js_sandbox.max_cpu_time}")
     private long maxCpuTime;
 
-    private NashornSandbox sandbox = NashornSandboxes.create();
-    private ExecutorService monitorExecutorService;
+    @Value("${actors.rule.js_sandbox.max_errors}")
+    private int maxErrors;
 
-    @PostConstruct
-    public void init() {
-        monitorExecutorService = Executors.newFixedThreadPool(monitorThreadPoolSize);
-        sandbox.setExecutor(monitorExecutorService);
-        sandbox.setMaxCPUTime(maxCpuTime);
-        sandbox.allowNoBraces(false);
-        sandbox.setMaxPreparedStatements(30);
-    }
-
-    @PreDestroy
-    public void stop() {
-        if  (monitorExecutorService != null) {
-            monitorExecutorService.shutdownNow();
-        }
+    @Override
+    protected int getMonitorThreadPoolSize() {
+        return monitorThreadPoolSize;
     }
 
     @Override
-    public Object eval(String js) throws ScriptException {
-        return sandbox.eval(js);
+    protected long getMaxCpuTime() {
+        return maxCpuTime;
     }
 
     @Override
-    public Object invokeFunction(String name, Object... args) throws ScriptException, NoSuchMethodException {
-        return sandbox.getSandboxedInvocable().invokeFunction(name, args);
+    protected int getMaxErrors() {
+        return maxErrors;
     }
-
 }

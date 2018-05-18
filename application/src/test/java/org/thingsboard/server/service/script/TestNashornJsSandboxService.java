@@ -16,39 +16,40 @@
 
 package org.thingsboard.server.service.script;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import delight.nashornsandbox.NashornSandbox;
 import delight.nashornsandbox.NashornSandboxes;
 
 import javax.script.ScriptException;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class TestNashornJsSandboxService implements JsSandboxService {
+public class TestNashornJsSandboxService extends AbstractNashornJsSandboxService {
 
-    private NashornSandbox sandbox = NashornSandboxes.create();
-    private ExecutorService monitorExecutorService;
+    private final int monitorThreadPoolSize;
+    private final long maxCpuTime;
+    private final int maxErrors;
 
-    public TestNashornJsSandboxService(int monitorThreadPoolSize, long maxCpuTime) {
-        monitorExecutorService = Executors.newFixedThreadPool(monitorThreadPoolSize);
-        sandbox.setExecutor(monitorExecutorService);
-        sandbox.setMaxCPUTime(maxCpuTime);
-        sandbox.allowNoBraces(false);
-        sandbox.setMaxPreparedStatements(30);
+    public TestNashornJsSandboxService(int monitorThreadPoolSize, long maxCpuTime, int maxErrors) {
+        this.monitorThreadPoolSize = monitorThreadPoolSize;
+        this.maxCpuTime = maxCpuTime;
+        this.maxErrors = maxErrors;
+        init();
     }
 
     @Override
-    public Object eval(String js) throws ScriptException {
-        return sandbox.eval(js);
+    protected int getMonitorThreadPoolSize() {
+        return monitorThreadPoolSize;
     }
 
     @Override
-    public Object invokeFunction(String name, Object... args) throws ScriptException, NoSuchMethodException {
-        return sandbox.getSandboxedInvocable().invokeFunction(name, args);
+    protected long getMaxCpuTime() {
+        return maxCpuTime;
     }
 
-    public void destroy() {
-        if (monitorExecutorService != null) {
-            monitorExecutorService.shutdownNow();
-        }
+    @Override
+    protected int getMaxErrors() {
+        return maxErrors;
     }
 }

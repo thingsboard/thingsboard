@@ -47,7 +47,7 @@ public class TbJsSwitchNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbJsSwitchNodeConfiguration.class);
-        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript(), "Switch");
+        this.jsEngine = ctx.createJsScriptEngine(config.getJsScript());
     }
 
     @Override
