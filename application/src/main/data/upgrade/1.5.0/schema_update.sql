@@ -39,3 +39,6 @@ CREATE TABLE IF NOT EXISTS rule_node (
 
 DROP TABLE rule;
 DROP TABLE plugin;
+
+DELETE FROM alarm WHERE originator_type = 3 OR originator_type = 4;
+UPDATE alarm SET originator_type = (originator_type - 2) where  originator_type > 2;
