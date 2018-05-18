@@ -1268,6 +1268,8 @@ export default angular.module('thingsboard.locale', [])
                     "type-external-details": "Interacts with external system",
                     "type-rule-chain": "Rule Chain",
                     "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
+                    "type-input": "Input",
+                    "type-input-details": "Logical input of Rule Chain, forwards incoming messages to next related Rule Node",
                     "directive-is-not-loaded": "Defined configuration directive '{{directiveName}}' is not available.",
                     "ui-resources-load-error": "Failed to load configuration ui resources.",
                     "invalid-target-rulechain": "Unable to resolve target rule chain!",

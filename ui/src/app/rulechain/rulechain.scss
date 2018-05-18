@@ -146,6 +146,9 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  svg {
+    display: block;
+  }
 }
 
 .tb-rule-node, #tb-rule-chain-context-menu .tb-context-menu-header {
@@ -467,7 +470,10 @@
 
 .tb-rule-node-tooltip {
   font-size: 14px;
-  width: 300px;
+  max-width: 300px;
+  &.tb-lib-tooltip {
+    width: 300px;
+  }
 }
 
 .tb-rule-node-help {

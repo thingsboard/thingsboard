@@ -448,7 +448,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     vm.nodeLibCallbacks = {
         nodeCallbacks: {
             'mouseEnter': function (event, node) {
-                displayNodeDescriptionTooltip(event, node);
+                displayLibNodeDescriptionTooltip(event, node);
             },
             'mouseLeave': function () {
                 destroyTooltips();
@@ -462,8 +462,8 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     vm.typeHeaderMouseEnter = function(event, typeId) {
         var ruleNodeType = types.ruleNodeType[typeId];
         displayTooltip(event,
-            '<div class="tb-rule-node-tooltip">' +
-            '<div id="tooltip-content" layout="column">' +
+            '<div class="tb-rule-node-tooltip tb-lib-tooltip">' +
+            '<div id="tb-node-content" layout="column">' +
             '<div class="tb-node-title">' + $translate.instant(ruleNodeType.name) + '</div>' +
             '<div class="tb-node-details">' + $translate.instant(ruleNodeType.details) + '</div>' +
             '</div>' +
@@ -486,9 +486,9 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         });
     }
 
-    function displayNodeDescriptionTooltip(event, node) {
+    function displayLibNodeDescriptionTooltip(event, node) {
         displayTooltip(event,
-            '<div class="tb-rule-node-tooltip">' +
+            '<div class="tb-rule-node-tooltip tb-lib-tooltip">' +
             '<div id="tb-node-content" layout="column">' +
             '<div class="tb-node-title">' + node.component.name + '</div>' +
             '<div class="tb-node-description">' + node.component.configurationDescriptor.nodeDefinition.description + '</div>' +
@@ -496,6 +496,32 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             '</div>' +
             '</div>'
         );
+    }
+
+    function displayNodeDescriptionTooltip(event, node) {
+        if (!vm.errorTooltips[node.id]) {
+            var name, desc, details;
+            if (node.component.type == vm.types.ruleNodeType.INPUT.value) {
+                name = $translate.instant(vm.types.ruleNodeType.INPUT.name) + '';
+                desc = $translate.instant(vm.types.ruleNodeType.INPUT.details) + '';
+            } else {
+                name = node.name;
+                desc = $translate.instant(vm.types.ruleNodeType[node.component.type].name) + ' - ' + node.component.name;
+                if (node.additionalInfo) {
+                    details = node.additionalInfo.description;
+                }
+            }
+            var tooltipContent = '<div class="tb-rule-node-tooltip">' +
+                '<div id="tb-node-content" layout="column">' +
+                '<div class="tb-node-title">' + name + '</div>' +
+                '<div class="tb-node-description">' + desc + '</div>';
+            if (details) {
+                tooltipContent += '<div class="tb-node-details">' + details + '</div>';
+            }
+            tooltipContent += '</div>' +
+                '</div>';
+            displayTooltip(event, tooltipContent);
+        }
     }
 
     function displayTooltip(event, content) {
@@ -607,6 +633,15 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             },
             'nodeEdit': function (event, node) {
                 openNodeDetails(node);
+            },
+            'mouseEnter': function (event, node) {
+                displayNodeDescriptionTooltip(event, node);
+            },
+            'mouseLeave': function () {
+                destroyTooltips();
+            },
+            'mouseDown': function () {
+                destroyTooltips();
             }
         },
         isValidEdge: function (source, destination) {

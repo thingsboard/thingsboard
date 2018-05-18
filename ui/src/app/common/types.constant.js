@@ -560,6 +560,8 @@ export default angular.module('thingsboard.types', [])
                 },
                 INPUT: {
                     value: "INPUT",
+                    name: "rulenode.type-input",
+                    details: "rulenode.type-input-details",
                     nodeClass: "tb-input-type",
                     icon: "input",
                     special: true
