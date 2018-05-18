@@ -23,18 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.alarm.AlarmId;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
@@ -65,6 +60,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     private AlarmService alarmService;
+
+    @Autowired
+    private RuleChainService ruleChainService;
 
     @Override
     public void deleteEntityRelations(EntityId entityId) {
@@ -97,6 +95,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 break;
             case ALARM:
                 hasName = alarmService.findAlarmByIdAsync(new AlarmId(entityId.getId()));
+                break;
+            case RULE_CHAIN:
+                hasName = ruleChainService.findRuleChainByIdAsync(new RuleChainId(entityId.getId()));
                 break;
             default:
                 throw new IllegalStateException("Not Implemented!");
