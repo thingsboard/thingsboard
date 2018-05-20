@@ -15,9 +15,7 @@
  */
 package org.thingsboard.rule.engine.mail;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -78,9 +76,9 @@ public class TbSendEmailNode implements TbNode {
                         return null;
                     }),
                     ok -> ctx.tellNext(msg, SUCCESS),
-                    fail -> ctx.tellError(msg, fail));
+                    fail -> ctx.tellFailure(msg, fail));
         } catch (Exception ex) {
-            ctx.tellError(msg, ex);
+            ctx.tellFailure(msg, ex);
         }
     }
 

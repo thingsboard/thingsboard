@@ -100,7 +100,6 @@ public class TbGetCustomerAttributeNodeTest {
         User user = new User();
         user.setCustomerId(customerId);
 
-
         msg = new TbMsg(UUIDs.timeBased(), "USER", userId, new TbMsgMetaData(), "{}", ruleChainId, ruleNodeId, 0L);
 
         when(ctx.getUserService()).thenReturn(userService);
@@ -112,7 +111,7 @@ public class TbGetCustomerAttributeNodeTest {
 
         node.onMsg(ctx, msg);
         final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellError(same(msg), captor.capture());
+        verify(ctx).tellFailure(same(msg), captor.capture());
 
         Throwable value = captor.getValue();
         assertEquals("something wrong", value.getMessage());
@@ -137,7 +136,7 @@ public class TbGetCustomerAttributeNodeTest {
 
         node.onMsg(ctx, msg);
         final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellError(same(msg), captor.capture());
+        verify(ctx).tellFailure(same(msg), captor.capture());
 
         Throwable value = captor.getValue();
         assertEquals("something wrong", value.getMessage());

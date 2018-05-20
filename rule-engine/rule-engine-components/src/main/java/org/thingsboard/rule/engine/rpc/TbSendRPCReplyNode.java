@@ -52,11 +52,11 @@ public class TbSendRPCReplyNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         String requestIdStr = msg.getMetaData().getValue(config.getRequestIdMetaDataAttribute());
         if (msg.getOriginator().getEntityType() != EntityType.DEVICE) {
-            ctx.tellError(msg, new RuntimeException("Message originator is not a device entity!"));
+            ctx.tellFailure(msg, new RuntimeException("Message originator is not a device entity!"));
         } else if (StringUtils.isEmpty(requestIdStr)) {
-            ctx.tellError(msg, new RuntimeException("Request id is not present in the metadata!"));
+            ctx.tellFailure(msg, new RuntimeException("Request id is not present in the metadata!"));
         } else if (StringUtils.isEmpty(msg.getData())) {
-            ctx.tellError(msg, new RuntimeException("Request body is empty!"));
+            ctx.tellFailure(msg, new RuntimeException("Request body is empty!"));
         } else {
             ctx.getRpcService().sendRpcReply(new DeviceId(msg.getOriginator().getId()), Integer.parseInt(requestIdStr), msg.getData());
         }

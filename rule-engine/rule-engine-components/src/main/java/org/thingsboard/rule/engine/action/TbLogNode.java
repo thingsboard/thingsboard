@@ -57,7 +57,7 @@ public class TbLogNode implements TbNode {
                     log.info(toString);
                     ctx.tellNext(msg, SUCCESS);
                 },
-                t -> ctx.tellError(msg, t));
+                t -> ctx.tellFailure(msg, t));
     }
 
     @Override

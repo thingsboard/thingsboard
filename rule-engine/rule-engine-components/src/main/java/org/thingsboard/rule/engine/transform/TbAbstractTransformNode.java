@@ -51,7 +51,7 @@ public abstract class TbAbstractTransformNode implements TbNode {
                         ctx.tellNext(msg, FAILURE);
                     }
                 },
-                t -> ctx.tellError(msg, t));
+                t -> ctx.tellFailure(msg, t));
     }
 
     protected abstract ListenableFuture<TbMsg> transform(TbContext ctx, TbMsg msg);

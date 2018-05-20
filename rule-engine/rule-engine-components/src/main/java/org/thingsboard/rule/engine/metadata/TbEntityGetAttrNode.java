@@ -54,9 +54,9 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
             withCallback(
                     findEntityAsync(ctx, msg.getOriginator()),
                     entityId -> safeGetAttributes(ctx, msg, entityId),
-                    t -> ctx.tellError(msg, t));
+                    t -> ctx.tellFailure(msg, t));
         } catch (Throwable th) {
-            ctx.tellError(msg, th);
+            ctx.tellFailure(msg, th);
         }
     }
 
@@ -68,18 +68,18 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
 
         withCallback(config.isTelemetry() ? getLatestTelemetry(ctx, entityId) : getAttributesAsync(ctx, entityId),
                 attributes -> putAttributesAndTell(ctx, msg, attributes),
-                t -> ctx.tellError(msg, t));
+                t -> ctx.tellFailure(msg, t));
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId) {
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, SERVER_SCOPE, config.getAttrMapping().keySet());
-        return Futures.transform(latest, (Function<? super List<AttributeKvEntry>, ? extends List<KvEntry>>) l ->
+        return Futures.transform(latest, l ->
                 l.stream().map(i -> (KvEntry) i).collect(Collectors.toList()));
     }
 
     private ListenableFuture<List<KvEntry>> getLatestTelemetry(TbContext ctx, EntityId entityId) {
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(entityId, config.getAttrMapping().keySet());
-        return Futures.transform(latest, (Function<? super List<TsKvEntry>, ? extends List<KvEntry>>) l ->
+        return Futures.transform(latest, l ->
                 l.stream().map(i -> (KvEntry) i).collect(Collectors.toList()));
     }
 

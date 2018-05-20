@@ -80,15 +80,15 @@ public class TbRabbitMqNode implements TbNode {
                 m -> ctx.tellNext(m, TbRelationTypes.SUCCESS),
                 t -> {
                     TbMsg next = processException(ctx, msg, t);
-                    ctx.tellNext(next, TbRelationTypes.FAILURE, t);
+                    ctx.tellFailure(next, t);
                 });
     }
 
-    ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
+    private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
         return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(ctx, msg));
     }
 
-    TbMsg publishMessage(TbContext ctx, TbMsg msg) throws Exception {
+    private TbMsg publishMessage(TbContext ctx, TbMsg msg) throws Exception {
         String exchangeName = "";
         if (!StringUtils.isEmpty(this.config.getExchangeNamePattern())) {
             exchangeName = TbNodeUtils.processPattern(this.config.getExchangeNamePattern(), msg.getMetaData());

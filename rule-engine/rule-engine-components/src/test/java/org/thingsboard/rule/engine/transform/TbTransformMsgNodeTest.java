@@ -117,7 +117,7 @@ public class TbTransformMsgNodeTest {
 
     private void verifyError(TbMsg msg, String message, Class expectedClass) {
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellError(same(msg), captor.capture());
+        verify(ctx).tellFailure(same(msg), captor.capture());
 
         Throwable value = captor.getValue();
         assertEquals(expectedClass, value.getClass());

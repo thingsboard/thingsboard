@@ -83,7 +83,7 @@ public class TbMqttNode implements TbNode {
                         ctx.tellNext(msg, TbRelationTypes.SUCCESS);
                     } else {
                         TbMsg next = processException(ctx, msg, future.cause());
-                        ctx.tellNext(next, TbRelationTypes.FAILURE, future.cause());
+                        ctx.tellFailure(next, future.cause());
                     }
                 }
         );

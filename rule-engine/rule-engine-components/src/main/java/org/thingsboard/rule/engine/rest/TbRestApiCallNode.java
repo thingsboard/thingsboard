@@ -89,7 +89,7 @@ public class TbRestApiCallNode implements TbNode {
             @Override
             public void onFailure(Throwable throwable) {
                 TbMsg next = processException(ctx, msg, throwable);
-                ctx.tellNext(next, TbRelationTypes.FAILURE, throwable);
+                ctx.tellFailure(next, throwable);
             }
 
             @Override

@@ -46,7 +46,7 @@ public interface TbContext {
 
     void tellSelf(TbMsg msg, long delayMs);
 
-    void tellError(TbMsg msg, Throwable th);
+    void tellFailure(TbMsg msg, Throwable th);
 
     void updateSelf(RuleNode self);
 

@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
+import org.thingsboard.rule.engine.api.TbRelationTypes;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
@@ -36,6 +38,7 @@ import org.thingsboard.server.dao.component.ComponentDescriptorService;
 import javax.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -163,7 +166,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         nodeDefinition.setDescription(nodeAnnotation.nodeDescription());
         nodeDefinition.setInEnabled(nodeAnnotation.inEnabled());
         nodeDefinition.setOutEnabled(nodeAnnotation.outEnabled());
-        nodeDefinition.setRelationTypes(nodeAnnotation.relationTypes());
+        nodeDefinition.setRelationTypes(getRelationTypesWithFailureRelation(nodeAnnotation));
         nodeDefinition.setCustomRelations(nodeAnnotation.customRelations());
         Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
         NodeConfiguration config = configClazz.newInstance();
@@ -174,6 +177,14 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         nodeDefinition.setIcon(nodeAnnotation.icon());
         nodeDefinition.setIconUrl(nodeAnnotation.iconUrl());
         return nodeDefinition;
+    }
+
+    private String[] getRelationTypesWithFailureRelation(RuleNode nodeAnnotation) {
+        List<String> relationTypes = new ArrayList<>(Arrays.asList(nodeAnnotation.relationTypes()));
+        if (!relationTypes.contains(TbRelationTypes.FAILURE)) {
+            relationTypes.add(TbRelationTypes.FAILURE);
+        }
+        return relationTypes.toArray(new String[relationTypes.size()]);
     }
 
     private Set<BeanDefinition> getBeanDefinitions(Class<? extends Annotation> componentType) {

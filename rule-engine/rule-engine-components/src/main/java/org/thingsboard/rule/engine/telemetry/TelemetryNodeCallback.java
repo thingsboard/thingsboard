@@ -39,6 +39,6 @@ class TelemetryNodeCallback implements FutureCallback<Void> {
 
     @Override
     public void onFailure(Throwable t) {
-        ctx.tellError(msg, t);
+        ctx.tellFailure(msg, t);
     }
 }

@@ -74,7 +74,7 @@ public class TbMsgGeneratorNode implements TbNode {
         if (msg.getType().equals(TB_MSG_GENERATOR_NODE_MSG) && msg.getId().equals(nextTickId)) {
             withCallback(generate(ctx),
                     m -> {ctx.tellNext(m, SUCCESS); sentTickMsg(ctx);},
-                    t -> {ctx.tellError(msg, t); sentTickMsg(ctx);});
+                    t -> {ctx.tellFailure(msg, t); sentTickMsg(ctx);});
         }
     }
 

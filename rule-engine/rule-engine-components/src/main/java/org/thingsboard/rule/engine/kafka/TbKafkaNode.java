@@ -82,11 +82,11 @@ public class TbKafkaNode implements TbNode {
                             ctx.tellNext(next, TbRelationTypes.SUCCESS);
                         } else {
                             TbMsg next = processException(ctx, msg, e);
-                            ctx.tellNext(next, TbRelationTypes.FAILURE, e);
+                            ctx.tellFailure(next, e);
                         }
                     });
         } catch (Exception e) {
-            ctx.tellError(msg, e);
+            ctx.tellFailure(msg, e);
         }
     }
 

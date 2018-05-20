@@ -55,7 +55,7 @@ public class TbJsSwitchNode implements TbNode {
         ListeningExecutor jsExecutor = ctx.getJsExecutor();
         withCallback(jsExecutor.executeAsync(() -> jsEngine.executeSwitch(msg)),
                 result -> processSwitch(ctx, msg, result),
-                t -> ctx.tellError(msg, t));
+                t -> ctx.tellFailure(msg, t));
     }
 
     private void processSwitch(TbContext ctx, TbMsg msg, Set<String> nextRelations) {

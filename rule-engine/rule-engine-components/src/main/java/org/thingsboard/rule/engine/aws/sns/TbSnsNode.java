@@ -77,15 +77,15 @@ public class TbSnsNode implements TbNode {
                 m -> ctx.tellNext(m, TbRelationTypes.SUCCESS),
                 t -> {
                     TbMsg next = processException(ctx, msg, t);
-                    ctx.tellNext(next, TbRelationTypes.FAILURE, t);
+                    ctx.tellFailure(next, t);
                 });
     }
 
-    ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
+    private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
         return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(ctx, msg));
     }
 
-    TbMsg publishMessage(TbContext ctx, TbMsg msg) {
+    private TbMsg publishMessage(TbContext ctx, TbMsg msg) {
         String topicArn = TbNodeUtils.processPattern(this.config.getTopicArnPattern(), msg.getMetaData());
         PublishRequest publishRequest = new PublishRequest()
                 .withTopicArn(topicArn)

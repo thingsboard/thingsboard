@@ -52,9 +52,9 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             withCallback(
                     findEntityAsync(ctx, msg.getOriginator()),
                     entityId -> safePutAttributes(ctx, msg, entityId),
-                    t -> ctx.tellError(msg, t), ctx.getDbCallbackExecutor());
+                    t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
         } catch (Throwable th) {
-            ctx.tellError(msg, th);
+            ctx.tellFailure(msg, th);
         }
     }
 
@@ -69,7 +69,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 putAttrAsync(ctx, entityId, msg, SHARED_SCOPE, config.getSharedAttributeNames(), "shared_"),
                 putAttrAsync(ctx, entityId, msg, SERVER_SCOPE, config.getServerAttributeNames(), "ss_")
         );
-        withCallback(allFutures, i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellError(msg, t));
+        withCallback(allFutures, i -> ctx.tellNext(msg, SUCCESS), t -> ctx.tellFailure(msg, t));
     }
 
     private ListenableFuture<Void> putAttrAsync(TbContext ctx, EntityId entityId, TbMsg msg, String scope, List<String> keys, String prefix) {
@@ -77,7 +77,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, scope, keys);
-        return Futures.transform(latest, (Function<? super List<AttributeKvEntry>, Void>) l -> {
+        return Futures.transform(latest, l -> {
             l.forEach(r -> msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString()));
             return null;
         });
@@ -88,7 +88,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
             return Futures.immediateFuture(null);
         }
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(entityId, keys);
-        return Futures.transform(latest, (Function<? super List<TsKvEntry>, Void>) l -> {
+        return Futures.transform(latest, l -> {
             l.forEach(r -> msg.getMetaData().putValue(r.getKey(), r.getValueAsString()));
             return null;
         });

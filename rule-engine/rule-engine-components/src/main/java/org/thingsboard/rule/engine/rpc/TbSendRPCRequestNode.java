@@ -63,15 +63,15 @@ public class TbSendRPCRequestNode implements TbNode {
         JsonObject json = jsonParser.parse(msg.getData()).getAsJsonObject();
 
         if (msg.getOriginator().getEntityType() != EntityType.DEVICE) {
-            ctx.tellError(msg, new RuntimeException("Message originator is not a device entity!"));
+            ctx.tellFailure(msg, new RuntimeException("Message originator is not a device entity!"));
         } else if (!json.has("method")) {
-            ctx.tellError(msg, new RuntimeException("Method is not present in the message!"));
+            ctx.tellFailure(msg, new RuntimeException("Method is not present in the message!"));
         } else if (!json.has("params")) {
-            ctx.tellError(msg, new RuntimeException("Params are not present in the message!"));
+            ctx.tellFailure(msg, new RuntimeException("Params are not present in the message!"));
         } else {
             int requestId = json.has("requestId") ? json.get("requestId").getAsInt() : random.nextInt();
             RuleEngineDeviceRpcRequest request = RuleEngineDeviceRpcRequest.builder()
-                    .method(gson.toJson(json.get("method")))
+                    .method(json.get("method").getAsString())
                     .body(gson.toJson(json.get("params")))
                     .deviceId(new DeviceId(msg.getOriginator().getId()))
                     .requestId(requestId)
@@ -84,8 +84,7 @@ public class TbSendRPCRequestNode implements TbNode {
                     ctx.tellNext(next, TbRelationTypes.SUCCESS);
                 } else {
                     TbMsg next = ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
-                    ctx.tellNext(next, TbRelationTypes.FAILURE);
-                    ctx.tellError(msg, new RuntimeException(ruleEngineDeviceRpcResponse.getError().get().name()));
+                    ctx.tellFailure(next, new RuntimeException(ruleEngineDeviceRpcResponse.getError().get().name()));
                 }
             });
         }

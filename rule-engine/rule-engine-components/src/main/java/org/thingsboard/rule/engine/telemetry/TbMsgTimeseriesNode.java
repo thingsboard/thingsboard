@@ -60,7 +60,7 @@ public class TbMsgTimeseriesNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         if (!msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
-            ctx.tellError(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
+            ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
         long ts = -1;
@@ -71,14 +71,14 @@ public class TbMsgTimeseriesNode implements TbNode {
             } catch (NumberFormatException e) {}
         }
         if (ts == -1) {
-            ctx.tellError(msg, new IllegalArgumentException("Msg metadata doesn't contain valid ts value: " + msg.getMetaData()));
+            ctx.tellFailure(msg, new IllegalArgumentException("Msg metadata doesn't contain valid ts value: " + msg.getMetaData()));
             return;
         }
         String src = msg.getData();
         TelemetryUploadRequest telemetryUploadRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         Map<Long, List<KvEntry>> tsKvMap = telemetryUploadRequest.getData();
         if (tsKvMap == null) {
-            ctx.tellError(msg, new IllegalArgumentException("Msg body is empty: " + src));
+            ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;
         }
         List<TsKvEntry> tsKvEntryList = new ArrayList<>();

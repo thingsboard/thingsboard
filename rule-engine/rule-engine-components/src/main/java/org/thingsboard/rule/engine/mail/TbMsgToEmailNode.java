@@ -61,7 +61,7 @@ public class TbMsgToEmailNode implements TbNode {
             ctx.tellNext(emailMsg, SUCCESS);
         } catch (Exception ex) {
             log.warn("Can not convert message to email " + ex.getMessage());
-            ctx.tellError(msg, ex);
+            ctx.tellFailure(msg, ex);
         }
     }
 
