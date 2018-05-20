@@ -119,8 +119,8 @@ public class MqttTransportService {
         try {
             serverChannel.close().sync();
         } finally {
-            bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
         }
         log.info("MQTT transport stopped!");
     }
