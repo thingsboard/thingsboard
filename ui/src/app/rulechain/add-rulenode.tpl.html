@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<md-dialog aria-label="{{ 'rulenode.add' | translate }}" tb-help="'rulechains'" help-container-id="help-container" style="min-width: 650px;">
+<md-dialog aria-label="{{ 'rulenode.add' | translate }}" tb-help="vm.helpLinks.getRuleNodeLink(vm.ruleNode)" help-container-id="help-container" style="min-width: 650px;">
     <form name="theForm" ng-submit="vm.add()">
         <md-toolbar>
             <div class="md-toolbar-tools">

@@ -37,10 +37,9 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.EXTERNAL,
         name = "send email",
         configClazz = TbSendEmailNodeConfiguration.class,
-        nodeDescription = "Log incoming messages using JS script for transformation Message into String",
-        nodeDetails = "Transform incoming Message with configured JS condition to String and log final value. " +
-                "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>" +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>",
+        nodeDescription = "Sends email message via SMTP server",
+        nodeDetails = "Expects messages with 'SEND_EMAIL' message type, usually processed by 'to email' node. " +
+                "Will send email message via configured SMTP server.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeSendEmailConfig",
         icon = "send"

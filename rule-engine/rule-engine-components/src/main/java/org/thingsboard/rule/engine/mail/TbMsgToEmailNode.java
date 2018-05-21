@@ -35,9 +35,9 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
         type = ComponentType.TRANSFORMATION,
         name = "to email",
         configClazz = TbMsgToEmailNodeConfiguration.class,
-        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity",
-        nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded. ",
+        nodeDescription = "Transforms message to email message",
+        nodeDetails = "Transforms message to email message by populating email fields using values derived from message metadata. " +
+                      "Set 'SEND_EMAIL' output message type.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeToEmailConfig",
         icon = "email"

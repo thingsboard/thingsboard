@@ -30,7 +30,7 @@ import addRuleNodeLinkTemplate from './add-link.tpl.html';
 /*@ngInject*/
 export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $timeout, $mdExpansionPanel, $window, $document, $mdDialog,
                                     $filter, $translate, hotkeys, types, ruleChainService, itembuffer, Modelfactory, flowchartConstants,
-                                    ruleChain, ruleChainMetaData, ruleNodeComponents) {
+                                    ruleChain, ruleChainMetaData, ruleNodeComponents, helpLinks) {
 
     var vm = this;
 
@@ -112,6 +112,8 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     vm.triggerResize = triggerResize;
 
     vm.openRuleChainContextMenu = openRuleChainContextMenu;
+
+    vm.helpLinkIdForRuleNodeType = helpLinkIdForRuleNodeType;
 
     initHotKeys();
 
@@ -472,6 +474,10 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
     };
 
     vm.destroyTooltips = destroyTooltips;
+
+    function helpLinkIdForRuleNodeType() {
+        return helpLinks.getRuleNodeLink(vm.editingRuleNode);
+    }
 
     function destroyTooltips() {
         if (vm.tooltipTimeout) {
