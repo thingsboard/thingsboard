@@ -37,9 +37,10 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         type = ComponentType.EXTERNAL,
         name = "send email",
         configClazz = TbSendEmailNodeConfiguration.class,
-        nodeDescription = "Sends email message via SMTP server",
-        nodeDetails = "Expects messages with 'SEND_EMAIL' message type, usually processed by 'to email' node. " +
-                "Will send email message via configured SMTP server.",
+        nodeDescription = "Sends email message via SMTP server.",
+        nodeDetails = "Expects messages with <b>SEND_EMAIL</b> type. Node works only with messages that " +
+                " where created using <code>to Email</code> transformation Node, please connect this Node " +
+                "with <code>to Email</code> Node using <code>Successful</code> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeSendEmailConfig",
         icon = "send"
