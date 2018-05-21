@@ -493,46 +493,31 @@ public class TelemetryController extends BaseController {
     }
 
     private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
-        auditLogService.logEntityAction(
-                user.getTenantId(),
-                user.getCustomerId(),
-                user.getId(),
-                user.getName(),
-                (UUIDBased & EntityId) entityId,
-                null,
-                ActionType.ATTRIBUTES_DELETED,
-                toException(e),
-                scope,
-                keys);
+        try {
+            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_DELETED, toException(e),
+                    scope, keys);
+        } catch (ThingsboardException te) {
+            log.warn("Failed to log attributes delete", te);
+        }
     }
 
     private void logAttributesUpdated(SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) {
-        auditLogService.logEntityAction(
-                user.getTenantId(),
-                user.getCustomerId(),
-                user.getId(),
-                user.getName(),
-                (UUIDBased & EntityId) entityId,
-                null,
-                ActionType.ATTRIBUTES_UPDATED,
-                toException(e),
-                scope,
-                attributes);
+        try {
+            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_UPDATED, toException(e),
+                    scope, attributes);
+        } catch (ThingsboardException te) {
+            log.warn("Failed to log attributes update", te);
+        }
     }
 
 
     private void logAttributesRead(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
-        auditLogService.logEntityAction(
-                user.getTenantId(),
-                user.getCustomerId(),
-                user.getId(),
-                user.getName(),
-                (UUIDBased & EntityId) entityId,
-                null,
-                ActionType.ATTRIBUTES_READ,
-                toException(e),
-                scope,
-                keys);
+        try {
+            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_READ, toException(e),
+                    scope, keys);
+        } catch (ThingsboardException te) {
+            log.warn("Failed to log attributes read", te);
+        }
     }
 
     private ListenableFuture<List<AttributeKvEntry>> mergeAllAttributesFutures(List<ListenableFuture<List<AttributeKvEntry>>> futures) {

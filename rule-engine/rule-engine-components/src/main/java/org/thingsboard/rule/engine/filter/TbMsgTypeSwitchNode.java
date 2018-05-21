@@ -28,7 +28,9 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         type = ComponentType.FILTER,
         name = "message type switch",
         configClazz = EmptyNodeConfiguration.class,
-        relationTypes = {"Post attributes", "Post telemetry", "RPC Request", "Activity Event", "Inactivity Event", "Connect Event", "Disconnect Event", "Other"},
+        relationTypes = {"Post attributes", "Post telemetry", "RPC Request", "Activity Event", "Inactivity Event",
+                "Connect Event", "Disconnect Event", "Entity Created", "Entity Updated", "Entity Deleted", "Entity Assigned",
+                "Entity Unassigned", "Attributes Updated", "Attributes Deleted", "Other"},
         nodeDescription = "Route incoming messages by Message Type",
         nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b> etc. via corresponding chain, otherwise <b>Other</b> chain is used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
@@ -59,6 +61,20 @@ public class TbMsgTypeSwitchNode implements TbNode {
             relationType = "Connect Event";
         } else if (msg.getType().equals(DataConstants.DISCONNECT_EVENT)) {
             relationType = "Disconnect Event";
+        } else if (msg.getType().equals(DataConstants.ENTITY_CREATED)) {
+            relationType = "Entity Created";
+        } else if (msg.getType().equals(DataConstants.ENTITY_UPDATED)) {
+            relationType = "Entity Updated";
+        } else if (msg.getType().equals(DataConstants.ENTITY_DELETED)) {
+            relationType = "Entity Deleted";
+        } else if (msg.getType().equals(DataConstants.ENTITY_ASSIGNED)) {
+            relationType = "Entity Assigned";
+        } else if (msg.getType().equals(DataConstants.ENTITY_UNASSIGNED)) {
+            relationType = "Entity Unassigned";
+        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_UPDATED)) {
+            relationType = "Attributes Updated";
+        } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
+            relationType = "Attributes Deleted";
         } else {
             relationType = "Other";
         }

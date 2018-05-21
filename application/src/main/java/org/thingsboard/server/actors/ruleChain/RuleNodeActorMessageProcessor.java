@@ -92,7 +92,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         if (ruleNode.isDebugMode()) {
             systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
         }
-        tbNode.onMsg(defaultCtx, msg.getMsg());
+        try {
+            tbNode.onMsg(defaultCtx, msg.getMsg());
+        } catch (Exception e) {
+            defaultCtx.tellFailure(msg.getMsg(), e);
+        }
     }
 
     void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) throws Exception {
@@ -100,7 +104,11 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         if (ruleNode.isDebugMode()) {
             systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
         }
-        tbNode.onMsg(msg.getCtx(), msg.getMsg());
+        try {
+            tbNode.onMsg(msg.getCtx(), msg.getMsg());
+        } catch (Exception e) {
+            msg.getCtx().tellFailure(msg.getMsg(), e);
+        }
     }
 
     private TbNode initComponent(RuleNode ruleNode) throws Exception {

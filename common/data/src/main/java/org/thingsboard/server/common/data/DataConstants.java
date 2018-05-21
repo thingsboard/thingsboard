@@ -50,4 +50,12 @@ public class DataConstants {
     public static final String DISCONNECT_EVENT = "DISCONNECT_EVENT";
     public static final String ACTIVITY_EVENT = "ACTIVITY_EVENT";
 
+    public static final String ENTITY_CREATED = "ENTITY_CREATED";
+    public static final String ENTITY_UPDATED = "ENTITY_UPDATED";
+    public static final String ENTITY_DELETED = "ENTITY_DELETED";
+    public static final String ENTITY_ASSIGNED = "ENTITY_ASSIGNED";
+    public static final String ENTITY_UNASSIGNED = "ENTITY_UNASSIGNED";
+    public static final String ATTRIBUTES_UPDATED = "ATTRIBUTES_UPDATED";
+    public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
+
 }

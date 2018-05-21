@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.controller;
 
+import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.thingsboard.server.actors.service.ActorService;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmId;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -37,18 +34,9 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.id.WidgetTypeId;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
@@ -57,6 +45,10 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.audit.AuditLogService;
@@ -93,6 +85,8 @@ public abstract class BaseController {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
+
+    private static final ObjectMapper json = new ObjectMapper();
 
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
@@ -542,15 +536,127 @@ public abstract class BaseController {
     protected <E extends BaseData<I> & HasName,
             I extends UUIDBased & EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
                                                                  ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
-        User user = getCurrentUser();
+        logEntityAction(getCurrentUser(), entityId, entity, customerId, actionType, e, additionalInfo);
+    }
+
+    protected <E extends BaseData<I> & HasName,
+            I extends UUIDBased & EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
+                                                                 ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
+        }
+        if (e == null) {
+            pushEntityActionToRuleEngine(entityId, entity, user, customerId, actionType, additionalInfo);
         }
         auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
     }
 
+
     public static Exception toException(Throwable error) {
         return error != null ? (Exception.class.isInstance(error) ? (Exception) error : new Exception(error)) : null;
     }
+
+    private <E extends BaseData<I> & HasName,
+            I extends UUIDBased & EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
+                                                                         ActionType actionType, Object... additionalInfo) {
+        String msgType = null;
+        switch (actionType) {
+            case ADDED:
+                msgType = DataConstants.ENTITY_CREATED;
+                break;
+            case DELETED:
+                msgType = DataConstants.ENTITY_DELETED;
+                break;
+            case UPDATED:
+                msgType = DataConstants.ENTITY_UPDATED;
+                break;
+            case ASSIGNED_TO_CUSTOMER:
+                msgType = DataConstants.ENTITY_ASSIGNED;
+                break;
+            case UNASSIGNED_FROM_CUSTOMER:
+                msgType = DataConstants.ENTITY_UNASSIGNED;
+                break;
+            case ATTRIBUTES_UPDATED:
+                msgType = DataConstants.ATTRIBUTES_UPDATED;
+                break;
+            case ATTRIBUTES_DELETED:
+                msgType = DataConstants.ATTRIBUTES_DELETED;
+                break;
+        }
+        if (!StringUtils.isEmpty(msgType)) {
+            try {
+                TbMsgMetaData metaData = new TbMsgMetaData();
+                metaData.putValue("userId", user.getId().toString());
+                metaData.putValue("userName", user.getName());
+                if (customerId != null && !customerId.isNullUid()) {
+                    metaData.putValue("customerId", customerId.toString());
+                }
+                if (actionType == ActionType.ASSIGNED_TO_CUSTOMER) {
+                    String strCustomerId = extractParameter(String.class, 1, additionalInfo);
+                    String strCustomerName = extractParameter(String.class, 2, additionalInfo);
+                    metaData.putValue("assignedCustomerId", strCustomerId);
+                    metaData.putValue("assignedCustomerName", strCustomerName);
+                } else if (actionType == ActionType.UNASSIGNED_FROM_CUSTOMER) {
+                    String strCustomerId = extractParameter(String.class, 1, additionalInfo);
+                    String strCustomerName = extractParameter(String.class, 2, additionalInfo);
+                    metaData.putValue("unassignedCustomerId", strCustomerId);
+                    metaData.putValue("unassignedCustomerName", strCustomerName);
+                }
+                ObjectNode entityNode;
+                if (entity != null) {
+                    entityNode = json.valueToTree(entity);
+                    if (entityId.getEntityType() == EntityType.DASHBOARD) {
+                        entityNode.put("configuration", "");
+                    }
+                } else {
+                    entityNode = json.createObjectNode();
+                    if (actionType == ActionType.ATTRIBUTES_UPDATED) {
+                        String scope = extractParameter(String.class, 0, additionalInfo);
+                        List<AttributeKvEntry> attributes = extractParameter(List.class, 1, additionalInfo);
+                        metaData.putValue("scope", scope);
+                        if (attributes != null) {
+                            for (AttributeKvEntry attr : attributes) {
+                                if (attr.getDataType() == DataType.BOOLEAN) {
+                                    entityNode.put(attr.getKey(), attr.getBooleanValue().get());
+                                } else if (attr.getDataType() == DataType.DOUBLE) {
+                                    entityNode.put(attr.getKey(), attr.getDoubleValue().get());
+                                } else if (attr.getDataType() == DataType.LONG) {
+                                    entityNode.put(attr.getKey(), attr.getLongValue().get());
+                                } else {
+                                    entityNode.put(attr.getKey(), attr.getValueAsString());
+                                }
+                            }
+                        }
+                    } else if (actionType == ActionType.ATTRIBUTES_DELETED) {
+                        String scope = extractParameter(String.class, 0, additionalInfo);
+                        List<String> keys = extractParameter(List.class, 1, additionalInfo);
+                        metaData.putValue("scope", scope);
+                        ArrayNode attrsArrayNode =  entityNode.putArray("attributes");
+                        if (keys != null) {
+                            keys.forEach(attrsArrayNode::add);
+                        }
+                    }
+                }
+                TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), msgType, entityId, metaData, TbMsgDataType.JSON
+                        , json.writeValueAsString(entityNode)
+                        , null, null, 0L);
+                actorService.onMsg(new ServiceToRuleEngineMsg(user.getTenantId(), tbMsg));
+            } catch (Exception e) {
+                log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
+            }
+        }
+    }
+
+    private <T> T extractParameter(Class<T> clazz, int index, Object... additionalInfo) {
+        T result = null;
+        if (additionalInfo != null && additionalInfo.length > index) {
+            Object paramObject = additionalInfo[index];
+            if (clazz.isInstance(paramObject)) {
+                result = clazz.cast(paramObject);
+            }
+        }
+        return result;
+    }
+
 
 }
