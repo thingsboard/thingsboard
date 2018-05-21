@@ -46,9 +46,9 @@ import java.util.concurrent.TimeUnit;
         nodeDescription = "Invoke REST API calls to external REST server",
         nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
                 "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
-                " Outbound message will contain responce fields " +
-                "(<code>status</code>, <code>statusCode</code>, <code>statusReason</code> and responce <code>headers</code>) in the Message Metadata." +
-                " Responce body saved in outbound Message payload. " +
+                " Outbound message will contain response fields " +
+                "(<code>status</code>, <code>statusCode</code>, <code>statusReason</code> and response <code>headers</code>) in the Message Metadata." +
+                " Response body saved in outbound Message payload. " +
                 "For example <b>statusCode</b> field can be accessed with <code>metadata.statusCode</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRestApiCallConfig",

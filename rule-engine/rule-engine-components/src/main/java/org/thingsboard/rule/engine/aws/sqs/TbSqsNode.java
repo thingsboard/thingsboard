@@ -46,7 +46,7 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         configClazz = TbSqsNodeConfiguration.class,
         nodeDescription = "Publish messages to the AWS SQS",
         nodeDetails = "Will publish message payload and metadata attributes to the AWS SQS queue. Outbound message will contain " +
-                "responce fields (<code>messageId</code>, <code>requestId</code>, <code>messageBodyMd5</code>, <code>messageAttributesMd5</code>" +
+                "response fields (<code>messageId</code>, <code>requestId</code>, <code>messageBodyMd5</code>, <code>messageAttributesMd5</code>" +
                 ", <code>sequenceNumber</code>) in the Message Metadata from the AWS SQS." +
                 " For example <b>requestId</b> field can be accessed with <code>metadata.requestId</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},

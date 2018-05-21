@@ -42,7 +42,7 @@ import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
         name = "aws sns",
         configClazz = TbSnsNodeConfiguration.class,
         nodeDescription = "Publish message to the AWS SNS",
-        nodeDetails = "Will publish message payload to the AWS SNS topic. Outbound message will contain responce fields " +
+        nodeDetails = "Will publish message payload to the AWS SNS topic. Outbound message will contain response fields " +
                 "(<code>messageId</code>, <code>requestId</code>) in the Message Metadata from the AWS SNS. " +
                 "For example <b>requestId</b> field can be accessed with <code>metadata.requestId</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},

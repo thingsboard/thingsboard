@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
         configClazz = TbKafkaNodeConfiguration.class,
         nodeDescription = "Publish messages to Kafka server",
         nodeDetails = "Will send record via Kafka producer to Kafka server. " +
-                "Outbound message will contain responce fields (<code>offset</code>, <code>partition</code>, <code>topic</code>)" +
+                "Outbound message will contain response fields (<code>offset</code>, <code>partition</code>, <code>topic</code>)" +
                 " from the Kafka in the Message Metadata. For example <b>partition</b> field can be accessed with <code>metadata.partition</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeKafkaConfig",
