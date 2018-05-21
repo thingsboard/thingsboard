@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "device attributes",
         configClazz = TbGetDeviceAttrNodeConfiguration.class,
-        nodeDescription = "Add Originators Related Device Attributes or Latest Telemetry into Message Metadata",
+        nodeDescription = "Add Originators Related Device Attributes and Latest Telemetry value into Message Metadata",
         nodeDetails = "If Attributes enrichment configured, <b>CLIENT/SHARED/SERVER</b> attributes are added into Message metadata " +
                 "with specific prefix: <i>cs/shared/ss</i>. Latest telemetry value added into metadata without prefix. " +
                 "To access those attributes in other nodes this template can be used " +
