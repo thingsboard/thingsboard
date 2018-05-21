@@ -38,7 +38,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         name = "generator",
         configClazz = TbMsgGeneratorNodeConfiguration.class,
         nodeDescription = "Periodically generates messages",
-        nodeDetails = "Generates messages with configurable period. Javascript function used fore message generation.",
+        nodeDetails = "Generates messages with configurable period. Javascript function used for message generation.",
         inEnabled = false,
         uiResources = {"static/rulenode/rulenode-core-config.js", "static/rulenode/rulenode-core-config.css"},
         configDirective = "tbActionNodeGeneratorConfig",
