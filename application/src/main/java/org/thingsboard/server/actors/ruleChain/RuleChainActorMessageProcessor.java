@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -183,23 +183,35 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
         checkActive();
-        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg, ""));
+        if (firstNode != null) {
+            putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg, ""));
+        }
     }
 
     void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
         checkActive();
-        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
-            pushMsgToNode(firstNode, msg, "");
-            envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
-        });
+        if (firstNode != null) {
+            putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
+                pushMsgToNode(firstNode, msg, "");
+                envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
+            });
+        }
     }
 
     void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
         checkActive();
         if (envelope.isEnqueue()) {
-            putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg, envelope.getFromRelationType()));
+            if (firstNode != null) {
+                putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg, envelope.getFromRelationType()));
+            }
         } else {
-            pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
+            if (firstNode != null) {
+                pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
+            } else {
+                TbMsg msg = envelope.getMsg();
+                EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
+                queue.ack(tenantId, envelope.getMsg(), ackId.getId(), msg.getClusterPartition());
+            }
         }
     }
 

@@ -32,6 +32,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.service.queue.MsgQueueService;
 
 import java.io.IOException;
+import java.util.function.Predicate;
 
 /**
  * Created by ashvayka on 20.03.18.
@@ -75,4 +76,9 @@ public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
             throw new RuntimeException(e);
         }
     }
+
+    protected Predicate<Event> filterByCustomEvent() {
+        return event -> event.getBody().get("msgType").textValue().equals("CUSTOM");
+    }
+
 }
