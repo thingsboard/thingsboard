@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-@ConditionalOnProperty(prefix = "rule.queue", value = "type", havingValue = "db")
+@ConditionalOnProperty(prefix = "actors.rule.queue", value = "type", havingValue = "db")
 @Slf4j
 @NoSqlDao
 public class CassandraMsgQueue implements MsgQueue {

@@ -40,7 +40,7 @@ import java.util.concurrent.Executors;
  * Created by ashvayka on 27.04.18.
  */
 @Component
-@ConditionalOnProperty(prefix = "rule.queue", value = "type", havingValue = "memory", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "actors.rule.queue", value = "type", havingValue = "memory", matchIfMissing = true)
 @Slf4j
 public class InMemoryMsgQueue implements MsgQueue {
 

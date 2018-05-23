@@ -40,10 +40,10 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class DefaultMsgQueueService implements MsgQueueService {
 
-    @Value("${rule.queue.max_size}")
+    @Value("${actors.rule.queue.max_size}")
     private long queueMaxSize;
 
-    @Value("${rule.queue.cleanup_period}")
+    @Value("${actors.rule.queue.cleanup_period}")
     private long queueCleanUpPeriod;
 
     @Autowired
