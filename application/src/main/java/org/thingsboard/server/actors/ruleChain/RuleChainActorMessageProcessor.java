@@ -183,23 +183,35 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg envelope) {
         checkActive();
-        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg, ""));
+        if (firstNode != null) {
+            putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> pushMsgToNode(firstNode, msg, ""));
+        }
     }
 
     void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg envelope) {
         checkActive();
-        putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
-            pushMsgToNode(firstNode, msg, "");
-            envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
-        });
+        if (firstNode != null) {
+            putToQueue(enrichWithRuleChainId(envelope.getTbMsg()), msg -> {
+                pushMsgToNode(firstNode, msg, "");
+                envelope.getCallbackRef().tell(new RuleEngineQueuePutAckMsg(msg.getId()), self);
+            });
+        }
     }
 
     void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
         checkActive();
         if (envelope.isEnqueue()) {
-            putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg, envelope.getFromRelationType()));
+            if (firstNode != null) {
+                putToQueue(enrichWithRuleChainId(envelope.getMsg()), msg -> pushMsgToNode(firstNode, msg, envelope.getFromRelationType()));
+            }
         } else {
-            pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
+            if (firstNode != null) {
+                pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
+            } else {
+                TbMsg msg = envelope.getMsg();
+                EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
+                queue.ack(tenantId, envelope.getMsg(), ackId.getId(), msg.getClusterPartition());
+            }
         }
     }
 

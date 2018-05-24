@@ -235,6 +235,10 @@ public class ActorSystemContext {
     @Getter
     private boolean tenantComponentsInitEnabled;
 
+    @Value("${actors.rule.allow_system_mail_service}")
+    @Getter
+    private boolean allowSystemMailService;
+
     @Getter
     @Setter
     private ActorSystem actorSystem;

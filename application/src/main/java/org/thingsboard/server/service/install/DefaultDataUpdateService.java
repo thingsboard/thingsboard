@@ -47,7 +47,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
             case "1.4.0":
-                log.info("Updating data from version 1.4.0 to 1.5.0 ...");
+                log.info("Updating data from version 1.4.0 to 2.0.0 ...");
                 tenantsDefaultRuleChainUpdater.updateEntities(null);
                 break;
             default:

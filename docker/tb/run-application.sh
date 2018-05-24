@@ -18,6 +18,11 @@
 
 dpkg -i /thingsboard.deb
 
+# Copying env variables into conf files
+printenv | awk -F "=" '{print "export " $1 "='\''" $2 "'\''"}' >> /usr/share/thingsboard/conf/thingsboard.conf
+
+cat /usr/share/thingsboard/conf/thingsboard.conf
+
 if [ "$DATABASE_TYPE" == "cassandra" ]; then
     until nmap $CASSANDRA_HOST -p $CASSANDRA_PORT | grep "$CASSANDRA_PORT/tcp open\|filtered"
     do
@@ -45,12 +50,6 @@ if [ "$ADD_SCHEMA_AND_SYSTEM_DATA" == "true" ]; then
         /usr/share/thingsboard/bin/install/install.sh
     fi
 fi
-
-
-# Copying env variables into conf files
-printenv | awk -F "=" '{print "export " $1 "='\''" $2 "'\''"}' >> /usr/share/thingsboard/conf/thingsboard.conf
-
-cat /usr/share/thingsboard/conf/thingsboard.conf
 
 echo "Starting 'Thingsboard' service..."
 service thingsboard start

@@ -69,10 +69,8 @@ public class TbMsgTimeseriesNode implements TbNode {
             try {
                 ts = Long.parseLong(tsStr);
             } catch (NumberFormatException e) {}
-        }
-        if (ts == -1) {
-            ctx.tellFailure(msg, new IllegalArgumentException("Msg metadata doesn't contain valid ts value: " + msg.getMetaData()));
-            return;
+        } else {
+            ts = System.currentTimeMillis();
         }
         String src = msg.getData();
         TelemetryUploadRequest telemetryUploadRequest = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);

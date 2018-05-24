@@ -20,6 +20,7 @@ import 'brace/mode/javascript';
 import 'brace/mode/html';
 import 'brace/mode/css';
 import 'brace/mode/json';
+import 'ace-builds/src-min-noconflict/ace';
 import 'ace-builds/src-min-noconflict/snippets/javascript';
 import 'ace-builds/src-min-noconflict/snippets/text';
 import 'ace-builds/src-min-noconflict/snippets/html';

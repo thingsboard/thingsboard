@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.collections.CollectionUtils;
@@ -33,9 +32,11 @@ import java.util.List;
 import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.server.common.data.DataConstants.*;
+import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
-public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId>  implements TbNode {
+public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
     protected C config;
 
@@ -59,7 +60,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private void safePutAttributes(TbContext ctx, TbMsg msg, T entityId) {
-        if(entityId == null || entityId.isNullUid()) {
+        if (entityId == null || entityId.isNullUid()) {
             ctx.tellNext(msg, FAILURE);
             return;
         }
@@ -78,7 +79,13 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         }
         ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, scope, keys);
         return Futures.transform(latest, l -> {
-            l.forEach(r -> msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString()));
+            l.forEach(r -> {
+                if (r.getValue() != null) {
+                    msg.getMetaData().putValue(prefix + r.getKey(), r.getValueAsString());
+                } else {
+                    throw new RuntimeException("[" + scope + "][" + r.getKey() + "] attribute value is not present in the DB!");
+                }
+            });
             return null;
         });
     }
@@ -89,7 +96,13 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         }
         ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(entityId, keys);
         return Futures.transform(latest, l -> {
-            l.forEach(r -> msg.getMetaData().putValue(r.getKey(), r.getValueAsString()));
+            l.forEach(r -> {
+                if (r.getValue() != null) {
+                    msg.getMetaData().putValue(r.getKey(), r.getValueAsString());
+                } else {
+                    throw new RuntimeException("[" + r.getKey() + "] telemetry value is not present in the DB!");
+                }
+            });
             return null;
         });
     }
