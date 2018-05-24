@@ -26,18 +26,20 @@ public class BaseTsKvQuery implements TsKvQuery {
     private final long interval;
     private final int limit;
     private final Aggregation aggregation;
+    private final String orderBy;
 
-    public BaseTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation) {
+    public BaseTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation, String orderBy) {
         this.key = key;
         this.startTs = startTs;
         this.endTs = endTs;
         this.interval = interval;
         this.limit = limit;
         this.aggregation = aggregation;
+        this.orderBy = orderBy;
     }
 
     public BaseTsKvQuery(String key, long startTs, long endTs) {
-        this(key, startTs, endTs, endTs-startTs, 1, Aggregation.AVG);
+        this(key, startTs, endTs, endTs - startTs, 1, Aggregation.AVG, "DESC");
     }
 
 }

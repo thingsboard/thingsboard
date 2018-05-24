@@ -140,7 +140,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
             Aggregation agg = (interval.isPresent() && interval.get() == 0) ? Aggregation.valueOf(Aggregation.NONE.name()) :
                                                                               Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
 
-            List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg))
+            List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg, "DESC"))
                     .collect(Collectors.toList());
             ctx.loadTimeseries(entityId, queries, getTsKvListCallback(msg));
         } else {

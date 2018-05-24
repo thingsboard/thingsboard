@@ -299,6 +299,18 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         });
     }
 
+    @Override
+    public ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query) {
+        //TODO: implement
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query) {
+        //TODO: implement
+        return null;
+    }
+
     @PreDestroy
     void onDestroy() {
         if (insertService != null) {

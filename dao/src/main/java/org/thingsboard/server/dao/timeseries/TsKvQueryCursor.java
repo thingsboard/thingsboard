@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.timeseries.CassandraBaseTimeseriesDao.DESC_ORDER;
+
 /**
  * Created by ashvayka on 21.02.17.
  */
@@ -40,6 +42,8 @@ public class TsKvQueryCursor {
     private final List<Long> partitions;
     @Getter
     private final List<TsKvEntry> data;
+    @Getter
+    private String orderBy;
 
     private int partitionIndex;
     private int currentLimit;
@@ -51,13 +55,14 @@ public class TsKvQueryCursor {
         this.startTs = baseQuery.getStartTs();
         this.endTs = baseQuery.getEndTs();
         this.partitions = partitions;
-        this.partitionIndex = partitions.size() - 1;
+        this.orderBy = baseQuery.getOrderBy();
+        this.partitionIndex = isDesc() ? partitions.size() - 1 : 0;
         this.data = new ArrayList<>();
         this.currentLimit = baseQuery.getLimit();
     }
 
     public boolean hasNextPartition() {
-        return partitionIndex >= 0;
+        return isDesc() ? partitionIndex >= 0 : partitionIndex <= partitions.size() - 1;
     }
 
     public boolean isFull() {
@@ -66,7 +71,11 @@ public class TsKvQueryCursor {
 
     public long getNextPartition() {
         long partition = partitions.get(partitionIndex);
-        partitionIndex--;
+        if (isDesc()) {
+            partitionIndex--;
+        } else {
+            partitionIndex++;
+        }
         return partition;
     }
 
@@ -77,5 +86,9 @@ public class TsKvQueryCursor {
     public void addData(List<TsKvEntry> newData) {
         currentLimit -= newData.size();
         data.addAll(newData);
+    }
+
+    private boolean isDesc() {
+        return orderBy.equals(DESC_ORDER);
     }
 }

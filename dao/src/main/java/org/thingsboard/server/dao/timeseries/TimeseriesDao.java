@@ -38,4 +38,8 @@ public interface TimeseriesDao {
     ListenableFuture<Void> savePartition(EntityId entityId, long tsKvEntryTs, String key, long ttl);
 
     ListenableFuture<Void> saveLatest(EntityId entityId, TsKvEntry tsKvEntry);
+
+    ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query);
+
+    ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query);
 }
