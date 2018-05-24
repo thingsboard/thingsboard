@@ -62,7 +62,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), "Cleared");
                     }
                 },
-                t -> ctx.tellFailure(msg, t));
+                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     protected abstract ListenableFuture<AlarmResult> processAlarm(TbContext ctx, TbMsg msg);

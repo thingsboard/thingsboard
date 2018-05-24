@@ -54,7 +54,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
             withCallback(
                     findEntityAsync(ctx, msg.getOriginator()),
                     entityId -> safeGetAttributes(ctx, msg, entityId),
-                    t -> ctx.tellFailure(msg, t));
+                    t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
         } catch (Throwable th) {
             ctx.tellFailure(msg, th);
         }
@@ -68,7 +68,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
 
         withCallback(config.isTelemetry() ? getLatestTelemetry(ctx, entityId) : getAttributesAsync(ctx, entityId),
                 attributes -> putAttributesAndTell(ctx, msg, attributes),
-                t -> ctx.tellFailure(msg, t));
+                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId) {
