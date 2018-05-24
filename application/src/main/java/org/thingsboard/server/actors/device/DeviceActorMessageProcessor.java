@@ -65,6 +65,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private final Map<SessionId, SessionInfo> rpcSubscriptions;
 
     private final Map<Integer, ToDeviceRpcRequestMetadata> rpcPendingMap;
+    
+    private final List<AttributeKvEntry> attributePendingList;
 
     private int rpcSeq = 0;
     private String deviceName;
@@ -73,11 +75,13 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     public DeviceActorMessageProcessor(ActorSystemContext systemContext, LoggingAdapter logger, DeviceId deviceId) {
         super(systemContext, logger);
+        logger.debug("[{}] Created DeviceActorMessageProcessor",deviceId);
         this.deviceId = deviceId;
         this.sessions = new HashMap<>();
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.rpcPendingMap = new HashMap<>();
+        this.attributePendingList = new ArrayList<>();
         initAttributes();
     }
 
@@ -112,7 +116,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             logger.debug("[{}][{}] Ignoring message due to exp time reached", deviceId, request.getId(), request.getExpirationTime());
             return;
         }
-
+        logger.debug("[{}] Num Subscriptions {}",deviceId,rpcSubscriptions.size());
         boolean sent = rpcSubscriptions.size() > 0;
         Set<SessionId> syncSessionSet = new HashSet<>();
         rpcSubscriptions.entrySet().forEach(sub -> {
@@ -138,11 +142,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
 
     }
+    
+    private void registerPendingAttributeRequest(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
+    	attributePendingList.addAll(msg.getValues());
+    	logger.debug("[{}] Saving a pending Attribute messages {}", deviceId, attributePendingList.size());
+    }
 
     private void registerPendingRpcRequest(ActorContext context, ToDeviceRpcRequestPluginMsg msg, boolean sent, ToDeviceRpcRequestMsg rpcRequest, long timeout) {
+    	logger.debug("Adding request {}",rpcRequest.getRequestId());
         rpcPendingMap.put(rpcRequest.getRequestId(), new ToDeviceRpcRequestMetadata(msg, sent));
         TimeoutIntMsg timeoutMsg = new TimeoutIntMsg(rpcRequest.getRequestId(), timeout);
         scheduleMsgWithDelay(context, timeoutMsg, timeoutMsg.getTimeout());
+        logger.debug("[{}] Saving a pending RPC messages {}. Timing out in {}", deviceId, rpcPendingMap.size(),timeoutMsg.getTimeout());
     }
 
     public void processTimeout(ActorContext context, TimeoutMsg msg) {
@@ -151,6 +162,31 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             logger.debug("[{}] RPC request [{}] timeout detected!", deviceId, msg.getId());
             ToPluginRpcResponseDeviceMsg responsePluginMsg = toPluginRpcResponseMsg(requestMd.getMsg(), requestMd.isSent() ? RpcError.TIMEOUT : RpcError.NO_ACTIVE_CONNECTION);
             context.parent().tell(responsePluginMsg, ActorRef.noSender());
+        }
+    }
+    
+    private void sendPendingAttributes(ActorContext context, SessionId sessionId, SessionType type, Optional<ServerAddress> server) {
+    	if (!attributePendingList.isEmpty()) {
+    		logger.debug("[{}] Pushing {} pending Attribute messages to new async session [{}]", deviceId, attributePendingList.size(), sessionId);
+    		HashMap<String,AttributeKvEntry> sortList= new HashMap<>();
+	    	for (AttributeKvEntry v:attributePendingList) {
+		    	sortList.put(v.getKey(),v);
+	    	}
+	    	
+	    	ToDeviceMsg notification = new AttributesUpdateNotification(BasicAttributeKVMsg.fromShared(new ArrayList<AttributeKvEntry>(sortList.values())));
+		    
+	    	if (notification != null) {
+	    		ToDeviceMsg finalNotification = notification;
+	    		attributeSubscriptions.entrySet().forEach(sub -> {
+	    			ToDeviceSessionActorMsg response = new BasicToDeviceSessionActorMsg(finalNotification, sub.getKey());
+	    			sendMsgToSessionActor(response, sub.getValue().getServer());
+	    		});
+	    	}
+	    	
+	    	attributePendingList.clear();
+	    	
+    	} else {
+            logger.debug("[{}] No pending Attributes messages for new async session [{}]", deviceId, sessionId);
         }
     }
 
@@ -166,12 +202,17 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
         Set<Integer> sentOneWayIds = new HashSet<>();
         if (type == SessionType.ASYNC) {
+        	logger.debug("Session is ASYNC");
             rpcPendingMap.entrySet().forEach(processPendingRpc(context, sessionId, server, sentOneWayIds));
         } else {
+        	logger.debug("Session is SYNC");
             rpcPendingMap.entrySet().stream().findFirst().ifPresent(processPendingRpc(context, sessionId, server, sentOneWayIds));
         }
 
+        logger.debug("sentOneWayIds {}",sentOneWayIds.size());
+        logger.debug("rpcPendingMap b4 {}",rpcPendingMap.size());
         sentOneWayIds.forEach(rpcPendingMap::remove);
+        logger.debug("rpcPendingMap after{}",rpcPendingMap.size());
     }
 
     private Consumer<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> processPendingRpc(ActorContext context, SessionId sessionId, Optional<ServerAddress> server, Set<Integer> sentOneWayIds) {
@@ -179,6 +220,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             ToDeviceRpcRequest request = entry.getValue().getMsg().getMsg();
             ToDeviceRpcRequestBody body = request.getBody();
             if (request.isOneway()) {
+            	logger.debug("adding processed RPC request id to sentOneWayIds {}",entry.getKey());
                 sentOneWayIds.add(entry.getKey());
                 ToPluginRpcResponseDeviceMsg responsePluginMsg = toPluginRpcResponseMsg(entry.getValue().getMsg(), (String) null);
                 context.parent().tell(responsePluginMsg, ActorRef.noSender());
@@ -201,6 +243,12 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     void processAttributesUpdate(ActorContext context, DeviceAttributesEventNotificationMsg msg) {
         refreshAttributes(msg);
+        
+        List<AttributeKvEntry> attributesChanged = new ArrayList<>(msg.getValues());
+        for (AttributeKvEntry v : attributesChanged) {
+        	logger.debug("key:"+v.getKey()+" value:"+v.getValueAsString());
+        } 
+        
         if (attributeSubscriptions.size() > 0) {
             ToDeviceMsg notification = null;
             if (msg.isDeleted()) {
@@ -226,7 +274,11 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 });
             }
         } else {
-            logger.debug("[{}] No registered attributes subscriptions to process!", deviceId);
+        	if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
+        		registerPendingAttributeRequest(context,msg);
+        	} else {
+        		logger.debug("[{}] No registered attributes subscriptions to process!", deviceId);
+        	}
         }
     }
 
@@ -322,6 +374,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (inMsg.getMsgType() == MsgType.SUBSCRIBE_ATTRIBUTES_REQUEST) {
             logger.debug("[{}] Registering attributes subscription for session [{}]", deviceId, sessionId);
             attributeSubscriptions.put(sessionId, new SessionInfo(sessionType, msg.getServerAddress()));
+            sendPendingAttributes(context, sessionId, sessionType, msg.getServerAddress());
         } else if (inMsg.getMsgType() == MsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST) {
             logger.debug("[{}] Canceling attributes subscription for session [{}]", deviceId, sessionId);
             attributeSubscriptions.remove(sessionId);
@@ -341,11 +394,16 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (inMsg instanceof SessionOpenMsg) {
             logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
             sessions.put(sessionId, new SessionInfo(SessionType.ASYNC, msg.getServerAddress()));
+            logger.debug("[{}] Number of subscriptions {}",deviceId,rpcSubscriptions.size());
+            
         } else if (inMsg instanceof SessionCloseMsg) {
-            logger.debug("[{}] Canceling subscriptions for closed session [{}]", deviceId, sessionId);
-            sessions.remove(sessionId);
+            logger.debug("[{}] Cancelling subscriptions for closed session [{}]", deviceId, sessionId);
+            /*sessions.remove(sessionId);
             attributeSubscriptions.remove(sessionId);
-            rpcSubscriptions.remove(sessionId);
+            rpcSubscriptions.remove(sessionId);*/
+            sessions.clear();
+            attributeSubscriptions.clear();
+            rpcSubscriptions.clear();
         }
     }
 
@@ -361,8 +419,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     private List<AttributeKvEntry> fetchAttributes(String scope) {
         try {
-            //TODO: replace this with async operation. Happens only during actor creation, but is still criticla for performance,
-            return systemContext.getAttributesService().findAll(this.deviceId, scope).get();
+            //TODO: replace this with async operation. Happens only during actor creation, but is still criticla for performance,    	
+            return systemContext.getAttributesService().findAll(this.deviceId, scope,false).get();
         } catch (InterruptedException | ExecutionException e) {
             logger.warning("[{}] Failed to fetch attributes for scope: {}", deviceId, scope);
             throw new RuntimeException(e);

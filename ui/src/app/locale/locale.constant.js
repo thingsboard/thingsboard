@@ -291,6 +291,7 @@ export default angular.module('thingsboard.locale', [])
                     "timestamp": "Timestamp",
                     "entity-type": "Entity Type",
                     "entity-name": "Entity Name",
+					"entity-description": "Entity Description",
                     "user": "User",
                     "type": "Type",
                     "status": "Status",
@@ -749,6 +750,7 @@ export default angular.module('thingsboard.locale', [])
                     "search": "Search entities",
                     "selected-entities": "{ count, select, 1 {1 entity} other {# entities} } selected",
                     "entity-name": "Entity name",
+					"entity-description": "Entity Description",
                     "details": "Entity details",
                     "no-entities-prompt": "No entities found",
                     "no-data": "No data to display"

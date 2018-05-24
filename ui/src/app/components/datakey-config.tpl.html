@@ -75,9 +75,9 @@
         </md-checkbox>		
 		<tb-js-func ng-if="model.usePostProcessing"
 		         ng-model="model.postFuncBody"
-				 function-args="{{ ['time', 'value', 'prevValue'] }}"
-				 validation-args="{{ [[1, 1, 1],[1, '1', '1']] }}"
-				 result-type="any">
+				 function-args="{{ ['time', 'value', 'prevValue', 'srcData'] }}"
+				 validation-args="{{ [] }}"
+				 result-type="nocheck">
 		</tb-js-func>
 	</section>
 </md-content>

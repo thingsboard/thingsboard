@@ -23,6 +23,7 @@ import java.util.Optional;
 public class BaseAttributeKvEntry implements AttributeKvEntry {
 
     private final long lastUpdateTs;
+    private boolean isInherited;
     private final KvEntry kv;
 
     public BaseAttributeKvEntry(KvEntry kv, long lastUpdateTs) {
@@ -100,5 +101,13 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
                 "lastUpdateTs=" + lastUpdateTs +
                 ", kv=" + kv +
                 '}';
+    }
+    @Override
+    public boolean getIsInherited() {
+        return isInherited;
+    }
+    @Override
+    public void setIsInherited() {
+        this.isInherited=true;
     }
 }

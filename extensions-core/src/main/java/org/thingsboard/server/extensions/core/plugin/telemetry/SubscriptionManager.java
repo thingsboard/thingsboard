@@ -176,17 +176,20 @@ public class SubscriptionManager {
     }
 
     public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, SubscriptionType type, Function<Subscription, List<TsKvEntry>> f) {
-        onLocalSubscriptionUpdate(ctx, entityId, s -> type == s.getType(), f);
+    	onLocalSubscriptionUpdate(ctx,entityId,s -> type == s.getType(),f,null);
     }
-
-    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, Predicate<Subscription> filter, Function<Subscription, List<TsKvEntry>> f) {
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, Predicate<Subscription> filter, Function<Subscription, List<TsKvEntry>> f) {      
+        onLocalSubscriptionUpdate(ctx,entityId,filter,f,null);
+    }
+    public void onLocalSubscriptionUpdate(PluginContext ctx, EntityId entityId, Predicate<Subscription> filter, Function<Subscription, List<TsKvEntry>> f,List<AttributeKvEntry> dataAtt) {
+        log.debug("[{}] entityId",entityId);
         Set<Subscription> deviceSubscriptions = subscriptionsByEntityId.get(entityId);
         if (deviceSubscriptions != null) {
             deviceSubscriptions.stream().filter(filter).forEach(s -> {
                 String sessionId = s.getWsSessionId();
                 List<TsKvEntry> subscriptionUpdate = f.apply(s);
                 if (!subscriptionUpdate.isEmpty()) {
-                    SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
+                    SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate,dataAtt);
                     if (s.isLocal()) {
                         updateSubscriptionState(sessionId, s, update);
                         websocketHandler.sendWsMsg(ctx, sessionId, update);

@@ -23,6 +23,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.handler.codec.mqtt.*;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by ashvayka on 19.01.17.
  */
+@Slf4j
 public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
 
     private static final Gson GSON = new Gson();
@@ -86,8 +88,12 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
                 if (responseMsg.isSuccess()) {
                     MsgType requestMsgType = responseMsg.getRequestMsgType();
                     Integer requestId = responseMsg.getRequestId();
-                    if (requestId >= 0 && requestMsgType == MsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == MsgType.POST_TELEMETRY_REQUEST) {
+                    if (requestId>0 && requestId<65536) {
+                    if (requestMsgType == MsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == MsgType.POST_TELEMETRY_REQUEST) {
                         return Optional.of(MqttTransportHandler.createMqttPubAckMsg(requestId));
+                    }
+                    } else {
+                    	log.debug("Not Acknowledging because no Request ID supplied.");
                     }
                 }
                 break;

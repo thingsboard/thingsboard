@@ -87,6 +87,10 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
     @Override
     public void handleTelemetryUploadRequest(PluginContext ctx, TenantId tenantId, RuleId ruleId, TelemetryUploadRequestRuleToPluginMsg msg) {
         TelemetryUploadRequest request = msg.getPayload();
+    	ctx.loadAttributes(msg.getDeviceId(),DataConstants.SERVER_SCOPE,new PluginCallback<List<AttributeKvEntry>>() {
+    		@Override
+    		public void onSuccess(PluginContext ctx, List<AttributeKvEntry> dataAtt) {
+    			log.debug("Num Attributes Server ATT to be added [{}]",dataAtt.size());
         List<TsKvEntry> tsKvEntries = new ArrayList<>();
         for (Map.Entry<Long, List<KvEntry>> entry : request.getData().entrySet()) {
             for (KvEntry kv : entry.getValue()) {
@@ -97,14 +101,21 @@ public class TelemetryRuleMsgHandler extends DefaultRuleMsgHandler {
             @Override
             public void onSuccess(PluginContext ctx, Void data) {
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onSuccess(request.getMsgType(), request.getRequestId())));
-                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), SubscriptionType.TIMESERIES, s ->
-                    prepareSubscriptionUpdate(request, s)
+    	                subscriptionManager.onLocalSubscriptionUpdate(ctx, msg.getDeviceId(), s -> SubscriptionType.TIMESERIES == s.getType(), s ->
+    	                    prepareSubscriptionUpdate(request, s),dataAtt
                 );
             }
 
             @Override
             public void onFailure(PluginContext ctx, Exception e) {
                 log.error("Failed to process telemetry upload request", e);
+    	                ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
+    	            }
+    	        });
+    		}
+    		 @Override
+             public void onFailure(PluginContext ctx, Exception e) {
+                 log.error("Failed to process get attributes request with Telemetry", e);
                 ctx.reply(new ResponsePluginToRuleMsg(msg.getUid(), tenantId, ruleId, BasicStatusCodeResponse.onError(request.getMsgType(), request.getRequestId(), e)));
             }
         });

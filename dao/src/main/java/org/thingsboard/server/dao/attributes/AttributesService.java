@@ -28,11 +28,11 @@ import java.util.Optional;
  */
 public interface AttributesService {
 
-    ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String scope, String attributeKey);
+    ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String scope, String attributeKey,boolean isInherited);
 
-    ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String scope, Collection<String> attributeKeys);
+    ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String scope, Collection<String> attributeKeys,boolean isInherited);
 
-    ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String scope);
+    ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String scope,boolean isInherited);
 
     ListenableFuture<List<Void>> save(EntityId entityId, String scope, List<AttributeKvEntry> attributes);
 
