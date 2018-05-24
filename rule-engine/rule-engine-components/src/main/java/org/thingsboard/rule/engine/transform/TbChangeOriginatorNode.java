@@ -69,7 +69,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode {
                 return null;
             }
             return ctx.transformMsg(msg, msg.getType(), n, msg.getMetaData(), msg.getData());
-        });
+        }, ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, EntityId original) {
