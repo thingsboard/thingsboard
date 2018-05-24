@@ -15,11 +15,10 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.TbNodeUtils;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -33,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;

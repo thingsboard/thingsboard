@@ -18,15 +18,13 @@ package org.thingsboard.rule.engine.aws.sns;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.TbNodeUtils;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -34,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.concurrent.ExecutionException;
 
-import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(

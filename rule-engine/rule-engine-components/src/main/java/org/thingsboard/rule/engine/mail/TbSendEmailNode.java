@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.thingsboard.rule.engine.TbNodeUtils;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -29,7 +29,7 @@ import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.util.Properties;
 
-import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j

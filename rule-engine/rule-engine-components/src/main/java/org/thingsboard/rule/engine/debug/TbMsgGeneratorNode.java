@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.debug;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
-import org.thingsboard.rule.engine.TbNodeUtils;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -29,7 +29,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @Slf4j

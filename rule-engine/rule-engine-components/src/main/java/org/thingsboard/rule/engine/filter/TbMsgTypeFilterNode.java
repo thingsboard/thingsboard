@@ -16,7 +16,7 @@
 package org.thingsboard.rule.engine.filter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.TbNodeUtils;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
