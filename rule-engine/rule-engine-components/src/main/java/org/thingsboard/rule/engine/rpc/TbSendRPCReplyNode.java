@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         type = ComponentType.ACTION,
         name = "rpc call reply",
         configClazz = TbSendRpcReplyNodeConfiguration.class,
-        nodeDescription = "Sends reply to the RPC call from device",
+        nodeDescription = "Sends one-way RPC call to device",
         nodeDetails = "Expects messages with any message type. Will forward message body to the device.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcReplyConfig",
