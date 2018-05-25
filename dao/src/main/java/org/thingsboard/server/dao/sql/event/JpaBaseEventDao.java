@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.event;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +83,18 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     }
 
     @Override
+    public ListenableFuture<Event> saveAsync(Event event) {
+        log.debug("Save event [{}] ", event);
+        if (event.getId() == null) {
+            event.setId(new EventId(UUIDs.timeBased()));
+        }
+        if (StringUtils.isEmpty(event.getUid())) {
+            event.setUid(event.getId().toString());
+        }
+        return service.submit(() -> save(new EventEntity(event), false).orElse(null));
+    }
+
+    @Override
     public Optional<Event> saveIfNotExists(Event event) {
         return save(new EventEntity(event), true);
     }
@@ -89,7 +102,7 @@ public class JpaBaseEventDao extends JpaAbstractSearchTimeDao<EventEntity, Event
     @Override
     public Event findEvent(UUID tenantId, EntityId entityId, String eventType, String eventUid) {
         return DaoUtil.getData(eventRepository.findByTenantIdAndEntityTypeAndEntityIdAndEventTypeAndEventUid(
-                UUIDConverter.fromTimeUUID(tenantId), entityId.getEntityType(),  UUIDConverter.fromTimeUUID(entityId.getId()), eventType, eventUid));
+                UUIDConverter.fromTimeUUID(tenantId), entityId.getEntityType(), UUIDConverter.fromTimeUUID(entityId.getId()), eventType, eventUid));
     }
 
     @Override

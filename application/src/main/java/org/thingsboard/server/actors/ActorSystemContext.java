@@ -21,6 +21,9 @@ import akka.actor.Scheduler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
@@ -66,6 +69,7 @@ import org.thingsboard.server.service.script.JsSandboxService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -314,22 +318,22 @@ public class ActorSystemContext {
     }
 
     public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {
-        persistDebug(tenantId, entityId, "IN", tbMsg, relationType, null);
+        persistDebugAsync(tenantId, entityId, "IN", tbMsg, relationType, null);
     }
 
     public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType, Throwable error) {
-        persistDebug(tenantId, entityId, "IN", tbMsg, relationType, error);
+        persistDebugAsync(tenantId, entityId, "IN", tbMsg, relationType, error);
     }
 
     public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType, Throwable error) {
-        persistDebug(tenantId, entityId, "OUT", tbMsg, relationType, error);
+        persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, error);
     }
 
     public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {
-        persistDebug(tenantId, entityId, "OUT", tbMsg, relationType, null);
+        persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, null);
     }
 
-    private void persistDebug(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error) {
+    private void persistDebugAsync(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error) {
         try {
             Event event = new Event();
             event.setTenantId(tenantId);
@@ -355,7 +359,18 @@ public class ActorSystemContext {
             }
 
             event.setBody(node);
-            eventService.save(event);
+            ListenableFuture<Event> future = eventService.saveAsync(event);
+            Futures.addCallback(future, new FutureCallback<Event>() {
+                @Override
+                public void onSuccess(@Nullable Event event) {
+
+                }
+
+                @Override
+                public void onFailure(Throwable th) {
+                    log.error("Could not save debug Event for Node", th);
+                }
+            });
         } catch (IOException ex) {
             log.warn("Failed to persist rule node debug message", ex);
         }
