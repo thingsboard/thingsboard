@@ -326,52 +326,6 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>extensions-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>extensions-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-rabbitmq</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-rest-api-call</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-kafka</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-mqtt</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-sqs</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-sns</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>data</artifactId>
                 <version>${project.version}</version>
