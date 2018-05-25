@@ -17,7 +17,7 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "SaveTS",
-        "debugMode": true,
+        "debugMode": false,
         "configuration": {
           "defaultTTL": 0
         }
@@ -29,7 +29,7 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "save client attributes",
-        "debugMode": true,
+        "debugMode": false,
         "configuration": {
           "scope": "CLIENT_SCOPE"
         }
