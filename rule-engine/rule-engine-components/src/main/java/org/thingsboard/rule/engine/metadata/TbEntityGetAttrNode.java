@@ -15,11 +15,10 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.TbNodeUtils;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -33,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.rule.engine.DonAsynchron.withCallback;
+import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
@@ -54,7 +53,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
             withCallback(
                     findEntityAsync(ctx, msg.getOriginator()),
                     entityId -> safeGetAttributes(ctx, msg, entityId),
-                    t -> ctx.tellFailure(msg, t));
+                    t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
         } catch (Throwable th) {
             ctx.tellFailure(msg, th);
         }
@@ -68,7 +67,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
 
         withCallback(config.isTelemetry() ? getLatestTelemetry(ctx, entityId) : getAttributesAsync(ctx, entityId),
                 attributes -> putAttributesAndTell(ctx, msg, attributes),
-                t -> ctx.tellFailure(msg, t));
+                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId) {

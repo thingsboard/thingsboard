@@ -18,11 +18,14 @@ package org.thingsboard.rule.engine.transform;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.thingsboard.rule.engine.api.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -35,6 +38,8 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
+
+import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.same;
@@ -52,6 +57,26 @@ public class TbChangeOriginatorNodeTest {
     @Mock
     private AssetService assetService;
 
+    private ListeningExecutor dbExecutor;
+
+    @Before
+    public void before() {
+        dbExecutor = new ListeningExecutor() {
+            @Override
+            public <T> ListenableFuture<T> executeAsync(Callable<T> task) {
+                try {
+                    return Futures.immediateFuture(task.call());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        };
+    }
 
     @Test
     public void originatorCanBeChangedToCustomerId() throws TbNodeException {
@@ -133,6 +158,8 @@ public class TbChangeOriginatorNodeTest {
         config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+
+        when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
         node = new TbChangeOriginatorNode();
         node.init(null, nodeConfiguration);

@@ -668,18 +668,22 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     deferred.resolve(edge);
                 }
             } else {
-                var labels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
-                vm.enableHotKeys = false;
-                addRuleNodeLink(event, edge, labels).then(
-                    (link) => {
-                        deferred.resolve(link);
-                        vm.enableHotKeys = true;
-                    },
-                    () => {
-                        deferred.reject();
-                        vm.enableHotKeys = true;
-                    }
-                );
+                if (edge.label) {
+                    deferred.resolve(edge);
+                } else {
+                    var labels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+                    vm.enableHotKeys = false;
+                    addRuleNodeLink(event, edge, labels).then(
+                        (link) => {
+                            deferred.resolve(link);
+                            vm.enableHotKeys = true;
+                        },
+                        () => {
+                            deferred.reject();
+                            vm.enableHotKeys = true;
+                        }
+                    );
+                }
             }
             return deferred.promise;
         },

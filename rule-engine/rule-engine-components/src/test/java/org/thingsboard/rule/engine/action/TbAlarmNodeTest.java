@@ -155,7 +155,7 @@ public class TbAlarmNodeTest {
         verify(ctx).createJsScriptEngine("DETAILS");
         verify(ctx, times(1)).getJsExecutor();
         verify(ctx).getAlarmService();
-        verify(ctx, times(2)).getDbCallbackExecutor();
+        verify(ctx, times(3)).getDbCallbackExecutor();
         verify(ctx).getTenantId();
         verify(alarmService).findLatestByOriginatorAndType(tenantId, originator, "SomeType");
 

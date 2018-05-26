@@ -99,13 +99,18 @@ export default angular.module('thingsboard.help', [])
                 widgetsConfigStatic: helpBaseUrl +  "/docs/user-guide/ui/dashboards#static",
             },
             getRuleNodeLink: function(ruleNode) {
-                var link = 'ruleEngine';
-                if (ruleNode && ruleNode.component && ruleNode.component.clazz) {
-                    if (ruleNodeClazzHelpLinkMap[ruleNode.component.clazz]) {
-                        link = ruleNodeClazzHelpLinkMap[ruleNode.component.clazz];
+                if (ruleNode && ruleNode.component) {
+                    if (ruleNode.component.configurationDescriptor &&
+                        ruleNode.component.configurationDescriptor.nodeDefinition &&
+                        ruleNode.component.configurationDescriptor.nodeDefinition.docUrl) {
+                        return ruleNode.component.configurationDescriptor.nodeDefinition.docUrl;
+                    } else if (ruleNode.component.clazz) {
+                        if (ruleNodeClazzHelpLinkMap[ruleNode.component.clazz]) {
+                            return ruleNodeClazzHelpLinkMap[ruleNode.component.clazz];
+                        }
                     }
                 }
-                return link;
+                return 'ruleEngine';
             }
         }
     ).name;

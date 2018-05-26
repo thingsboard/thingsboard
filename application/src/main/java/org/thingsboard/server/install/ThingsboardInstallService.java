@@ -82,7 +82,7 @@ public class ThingsboardInstallService {
                         databaseUpgradeService.upgradeDatabase("1.3.1");
 
                     case "1.4.0":
-                        log.info("Upgrading ThingsBoard from version 1.4.0 to 1.5.0 ...");
+                        log.info("Upgrading ThingsBoard from version 1.4.0 to 2.0.0 ...");
 
                         databaseUpgradeService.upgradeDatabase("1.4.0");
 

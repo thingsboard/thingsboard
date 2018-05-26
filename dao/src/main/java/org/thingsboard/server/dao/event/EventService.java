@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.event;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,6 +28,8 @@ import java.util.Optional;
 public interface EventService {
 
     Event save(Event event);
+
+    ListenableFuture<Event> saveAsync(Event event);
 
     Optional<Event> saveIfNotExists(Event event);
 
