@@ -27,7 +27,6 @@ import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -224,7 +223,7 @@ class DefaultTbContext implements TbContext {
             public void sendRpcRequest(RuleEngineDeviceRpcRequest src, Consumer<RuleEngineDeviceRpcResponse> consumer) {
                 ToDeviceRpcRequest request = new ToDeviceRpcRequest(UUIDs.timeBased(), nodeCtx.getTenantId(), src.getDeviceId(),
                         src.isOneway(), System.currentTimeMillis() + src.getTimeout(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
-                mainCtx.getDeviceRpcService().process(request, response -> {
+                mainCtx.getDeviceRpcService().processRpcRequestToDevice(request, response -> {
                     consumer.accept(RuleEngineDeviceRpcResponse.builder()
                             .deviceId(src.getDeviceId())
                             .requestId(src.getRequestId())

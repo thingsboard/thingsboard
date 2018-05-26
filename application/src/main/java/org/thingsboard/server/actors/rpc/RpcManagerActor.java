@@ -114,6 +114,7 @@ public class RpcManagerActor extends ContextAwareActor {
             logger.warning("Cluster msg doesn't have set Server Address [{}]", msg);
         }
     }
+
     @Override
     public void postStop() {
         sessionActors.clear();
@@ -157,7 +158,7 @@ public class RpcManagerActor extends ContextAwareActor {
     private void onSessionClose(boolean reconnect, ServerAddress remoteAddress) {
         log.debug("[{}] session closed. Should reconnect: {}", remoteAddress, reconnect);
         SessionActorInfo sessionRef = sessionActors.get(remoteAddress);
-        if (context().sender().equals(sessionRef.actor)) {
+        if (context().sender() != null && context().sender().equals(sessionRef.actor)) {
             sessionActors.remove(remoteAddress);
             pendingMsgs.remove(remoteAddress);
             if (reconnect) {

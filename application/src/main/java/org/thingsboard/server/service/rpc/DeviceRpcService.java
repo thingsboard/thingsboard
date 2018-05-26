@@ -27,12 +27,11 @@ import java.util.function.Consumer;
  */
 public interface DeviceRpcService {
 
-    void process(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer);
+    void processRpcRequestToDevice(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer);
 
-    void process(ToDeviceRpcRequest request, ServerAddress originator);
-
-    void process(FromDeviceRpcResponse response);
+    void processRpcResponseFromDevice(FromDeviceRpcResponse response);
 
     void sendRpcReplyToDevice(TenantId tenantId, DeviceId deviceId, int requestId, String body);
 
+    void processRemoteResponseFromDevice(ServerAddress serverAddress, byte[] bytes);
 }

@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.rule.engine.api.RpcError;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +32,8 @@ import java.util.UUID;
 public class FromDeviceRpcResponse {
     @Getter
     private final UUID id;
+    @Getter
+    private final ServerAddress serverAddress;
     private final String response;
     private final RpcError error;
 

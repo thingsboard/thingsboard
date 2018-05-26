@@ -128,7 +128,7 @@ public class RpcController extends BaseController {
                             timeout,
                             body
                     );
-                    deviceRpcService.process(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));
+                    deviceRpcService.processRpcRequestToDevice(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse));
                 }
 
                 @Override

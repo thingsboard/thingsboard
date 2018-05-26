@@ -56,6 +56,7 @@ enum MessageType {
   CLUSTER_TELEMETRY_SESSION_CLOSE_MESSAGE = 9;
   CLUSTER_TELEMETRY_ATTR_UPDATE_MESSAGE = 10;
   CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE = 11;
+  CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE = 12;
 }
 
 // Messages related to CLUSTER_TELEMETRY_MESSAGE
@@ -121,3 +122,9 @@ message KeyValueProto {
     bool boolValue = 7;
 }
 
+message FromDeviceRPCResponseProto {
+    int64 requestIdMSB = 1;
+    int64 requestIdLSB = 2;
+    string response = 3;
+    int32 error = 4;
+}

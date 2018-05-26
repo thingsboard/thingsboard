@@ -42,7 +42,7 @@ public class BasicActorSystemToDeviceSessionActorMsg implements ActorSystemToDev
 
     @Override
     public String toString() {
-        return "BasicToSessionResponseMsg [msg=" + msg + ", sessionId=" + sessionId + "]";
+        return "BasicActorSystemToDeviceSessionActorMsg [msg=" + msg + ", sessionId=" + sessionId + "]";
     }
 
     @Override

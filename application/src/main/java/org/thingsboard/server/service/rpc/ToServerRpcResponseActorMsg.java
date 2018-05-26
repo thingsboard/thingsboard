@@ -34,8 +34,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ToServerRpcResponseActorMsg implements ToDeviceActorNotificationMsg {
 
-    private final ServerAddress serverAddress;
-
     @Getter
     private final TenantId tenantId;
 
@@ -44,14 +42,6 @@ public class ToServerRpcResponseActorMsg implements ToDeviceActorNotificationMsg
 
     @Getter
     private final ToServerRpcResponseMsg msg;
-
-    public ToServerRpcResponseActorMsg(TenantId tenantId, DeviceId deviceId, ToServerRpcResponseMsg msg) {
-        this(null, tenantId, deviceId, msg);
-    }
-
-    public Optional<ServerAddress> getServerAddress() {
-        return Optional.ofNullable(serverAddress);
-    }
 
     @Override
     public MsgType getMsgType() {

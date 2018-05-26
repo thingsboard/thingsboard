@@ -34,17 +34,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ToDeviceRpcRequestActorMsg implements ToDeviceActorNotificationMsg {
 
+    @Getter
     private final ServerAddress serverAddress;
     @Getter
     private final ToDeviceRpcRequest msg;
-
-    public ToDeviceRpcRequestActorMsg(ToDeviceRpcRequest msg) {
-        this(null, msg);
-    }
-
-    public Optional<ServerAddress> getServerAddress() {
-        return Optional.ofNullable(serverAddress);
-    }
 
     @Override
     public DeviceId getDeviceId() {

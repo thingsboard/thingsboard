@@ -38,6 +38,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
+import org.thingsboard.server.common.msg.core.BasicActorSystemToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
@@ -112,21 +113,27 @@ public class AppActor extends RuleChainManagerActor {
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg);
                 break;
+            case ACTOR_SYSTEM_TO_DEVICE_SESSION_ACTOR_MSG:
+                onToDeviceSessionMsg((BasicActorSystemToDeviceSessionActorMsg) msg);
             default:
                 return false;
         }
         return true;
     }
 
+    private void onToDeviceSessionMsg(BasicActorSystemToDeviceSessionActorMsg msg) {
+        systemContext.getSessionManagerActor().tell(msg, self());
+    }
+
     private void onPossibleClusterMsg(SendToClusterMsg msg) {
         Optional<ServerAddress> address = systemContext.getRoutingService().resolveById(msg.getEntityId());
-            if (address.isPresent()) {
-                systemContext.getRpcService().tell(
-                        systemContext.getEncodingService().convertToProtoDataMessage(address.get(), msg.getMsg()));
-            } else {
-                self().tell(msg.getMsg(), ActorRef.noSender());
-            }
+        if (address.isPresent()) {
+            systemContext.getRpcService().tell(
+                    systemContext.getEncodingService().convertToProtoDataMessage(address.get(), msg.getMsg()));
+        } else {
+            self().tell(msg.getMsg(), ActorRef.noSender());
         }
+    }
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
         if (SYSTEM_TENANT.equals(msg.getTenantId())) {

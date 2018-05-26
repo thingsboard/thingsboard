@@ -233,6 +233,9 @@ public class DefaultActorService implements ActorService {
             case CLUSTER_TELEMETRY_TS_UPDATE_MESSAGE:
                 actorContext.getTsSubService().onRemoteTsUpdate(serverAddress, msg.getPayload().toByteArray());
                 break;
+            case CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE:
+                actorContext.getDeviceRpcService().processRemoteResponseFromDevice(serverAddress, msg.getPayload().toByteArray());
+                break;
         }
     }
 
