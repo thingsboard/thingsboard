@@ -81,6 +81,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -117,7 +118,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         super(systemContext, logger);
         this.tenantId = tenantId;
         this.deviceId = deviceId;
-        this.sessions = new HashMap<>();
+        this.sessions = new LinkedHashMap<>();
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new HashMap<>();
@@ -501,6 +502,12 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         FromDeviceMsg inMsg = msg.getPayload();
         if (inMsg instanceof SessionOpenMsg) {
             logger.debug("[{}] Processing new session [{}]", deviceId, sessionId);
+            if (sessions.size() >= systemContext.getMaxConcurrentSessionsPerDevice()) {
+                SessionId sessionIdToRemove = sessions.keySet().stream().findFirst().orElse(null);
+                if (sessionIdToRemove != null) {
+                    closeSession(sessionIdToRemove, sessions.remove(sessionIdToRemove));
+                }
+            }
             sessions.put(sessionId, new SessionInfo(SessionType.ASYNC, msg.getServerAddress()));
             if (sessions.size() == 1) {
                 reportSessionOpen();
@@ -528,11 +535,13 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     void processCredentialsUpdate() {
-        sessions.forEach((k, v) -> {
-            sendMsgToSessionActor(new BasicActorSystemToDeviceSessionActorMsg(new SessionCloseNotification(), k), v.getServer());
-        });
+        sessions.forEach(this::closeSession);
         attributeSubscriptions.clear();
         rpcSubscriptions.clear();
+    }
+
+    private void closeSession(SessionId sessionId, SessionInfo sessionInfo) {
+        sendMsgToSessionActor(new BasicActorSystemToDeviceSessionActorMsg(new SessionCloseNotification(), sessionId), sessionInfo.getServer());
     }
 
     void processNameOrTypeUpdate(DeviceNameOrTypeUpdateMsg msg) {

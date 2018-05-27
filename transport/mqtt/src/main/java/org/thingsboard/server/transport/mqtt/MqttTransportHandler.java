@@ -29,7 +29,9 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.data.security.DeviceX509Credentials;
+import org.thingsboard.server.common.msg.core.SessionOpenMsg;
 import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
+import org.thingsboard.server.common.msg.session.BasicAdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.BasicTransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
 import org.thingsboard.server.common.transport.SessionMsgProcessor;
@@ -95,6 +97,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Processing msg: {}", sessionId, msg);
         if (msg instanceof MqttMessage) {
             processMqttMsg(ctx, (MqttMessage) msg);
+        } else {
+            ctx.close();
         }
     }
 
@@ -303,6 +307,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } else {
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
             connected = true;
+            processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
+                    new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new SessionOpenMsg())));
             checkGatewaySession();
         }
     }
@@ -314,6 +320,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             if (deviceSessionCtx.login(new DeviceX509Credentials(sha3Hash))) {
                 ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED));
                 connected = true;
+                processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
+                        new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new SessionOpenMsg())));
                 checkGatewaySession();
             } else {
                 ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED));

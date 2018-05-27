@@ -56,12 +56,14 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     @Override
     protected void processToDeviceActorMsg(ActorContext ctx, TransportToDeviceSessionActorMsg msg) {
         updateSessionCtx(msg, SessionType.ASYNC);
-        if (firstMsg) {
-            toDeviceMsg(new SessionOpenMsg()).ifPresent(m -> forwardToAppActor(ctx, m));
-            firstMsg = false;
-        }
         DeviceToDeviceActorMsg pendingMsg = toDeviceMsg(msg);
         FromDeviceMsg fromDeviceMsg = pendingMsg.getPayload();
+        if (firstMsg) {
+            if (fromDeviceMsg.getMsgType() != SessionMsgType.SESSION_OPEN) {
+                toDeviceMsg(new SessionOpenMsg()).ifPresent(m -> forwardToAppActor(ctx, m));
+            }
+            firstMsg = false;
+        }
         switch (fromDeviceMsg.getMsgType()) {
             case POST_TELEMETRY_REQUEST:
             case POST_ATTRIBUTES_REQUEST:

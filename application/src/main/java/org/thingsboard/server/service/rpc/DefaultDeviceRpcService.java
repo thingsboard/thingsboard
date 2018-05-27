@@ -97,7 +97,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     @Override
     public void processRpcResponseFromDevice(FromDeviceRpcResponse response) {
-        log.error("[{}] response the request: [{}]", this.hashCode(), response.getId());
+        log.error("[{}] response to request: [{}]", this.hashCode(), response.getId());
         if (routingService.getCurrentServer().equals(response.getServerAddress())) {
             UUID requestId = response.getId();
             Consumer<FromDeviceRpcResponse> consumer = localRpcRequests.remove(requestId);
