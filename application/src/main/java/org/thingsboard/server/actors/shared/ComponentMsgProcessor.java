@@ -17,39 +17,87 @@ package org.thingsboard.server.actors.shared;
 
 import akka.actor.ActorContext;
 import akka.event.LoggingAdapter;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.stats.StatsPersistTick;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
+import org.thingsboard.server.service.queue.MsgQueueService;
 
-public abstract class ComponentMsgProcessor<T> extends AbstractContextAwareMsgProcessor {
+import javax.annotation.Nullable;
+import java.util.function.Consumer;
+
+public abstract class ComponentMsgProcessor<T extends EntityId> extends AbstractContextAwareMsgProcessor {
 
     protected final TenantId tenantId;
     protected final T entityId;
+    protected final MsgQueueService queue;
+    protected ComponentLifecycleState state;
 
     protected ComponentMsgProcessor(ActorSystemContext systemContext, LoggingAdapter logger, TenantId tenantId, T id) {
         super(systemContext, logger);
         this.tenantId = tenantId;
         this.entityId = id;
+        this.queue = systemContext.getMsgQueueService();
     }
 
-    public abstract void start() throws Exception;
+    public abstract void start(ActorContext context) throws Exception;
 
-    public abstract void stop() throws Exception;
-
-    public abstract void onCreated(ActorContext context) throws Exception;
-
-    public abstract void onUpdate(ActorContext context) throws Exception;
-
-    public abstract void onActivate(ActorContext context) throws Exception;
-
-    public abstract void onSuspend(ActorContext context) throws Exception;
-
-    public abstract void onStop(ActorContext context) throws Exception;
+    public abstract void stop(ActorContext context) throws Exception;
 
     public abstract void onClusterEventMsg(ClusterEventMsg msg) throws Exception;
 
+    public void onCreated(ActorContext context) throws Exception {
+        start(context);
+    }
+
+    public void onUpdate(ActorContext context) throws Exception {
+        restart(context);
+    }
+
+    public void onActivate(ActorContext context) throws Exception {
+        restart(context);
+    }
+
+    public void onSuspend(ActorContext context) throws Exception {
+        stop(context);
+    }
+
+    public void onStop(ActorContext context) throws Exception {
+        stop(context);
+    }
+
+    private void restart(ActorContext context) throws Exception {
+        stop(context);
+        start(context);
+    }
+
     public void scheduleStatsPersistTick(ActorContext context, long statsPersistFrequency) {
         schedulePeriodicMsgWithDelay(context, new StatsPersistTick(), statsPersistFrequency, statsPersistFrequency);
+    }
+
+    protected void checkActive() {
+        if (state != ComponentLifecycleState.ACTIVE) {
+            throw new IllegalStateException("Rule chain is not active!");
+        }
+    }
+
+    protected void putToQueue(final TbMsg tbMsg, final Consumer<TbMsg> onSuccess) {
+        EntityId entityId = tbMsg.getRuleNodeId() != null ? tbMsg.getRuleNodeId() : tbMsg.getRuleChainId();
+        Futures.addCallback(queue.put(this.tenantId, tbMsg, entityId.getId(), tbMsg.getClusterPartition()), new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(@Nullable Void result) {
+                onSuccess.accept(tbMsg);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                logger.debug("Failed to push message [{}] to queue due to [{}]", tbMsg, t);
+            }
+        });
     }
 }

@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.relation.RelationService;
 
-import java.util.concurrent.ExecutionException;
-
 @Slf4j
 public abstract class AbstractEntityService {
 

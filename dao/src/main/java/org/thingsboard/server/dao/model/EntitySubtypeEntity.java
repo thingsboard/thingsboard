@@ -25,7 +25,10 @@ import org.thingsboard.server.dao.model.type.EntityTypeCodec;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_ENTITY_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_SUBTYPE_TYPE_PROPERTY;
 
 @Table(name = ENTITY_SUBTYPE_COLUMN_FAMILY_NAME)
 public class EntitySubtypeEntity {

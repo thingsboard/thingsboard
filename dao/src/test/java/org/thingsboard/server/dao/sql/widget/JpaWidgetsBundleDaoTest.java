@@ -31,7 +31,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 /**

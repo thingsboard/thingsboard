@@ -15,66 +15,45 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
-import org.thingsboard.server.common.data.plugin.PluginMetaData;
-import org.thingsboard.server.common.data.rule.RuleMetaData;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.plugin.PluginService;
-import org.thingsboard.server.dao.rule.RuleService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
-
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Service
 @Profile("install")
 @Slf4j
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
-    private static final String JSON_DIR = "json";
-    private static final String SYSTEM_DIR = "system";
-    private static final String DEMO_DIR = "demo";
-    private static final String WIDGET_BUNDLES_DIR = "widget_bundles";
-    private static final String PLUGINS_DIR = "plugins";
-    private static final String RULES_DIR = "rules";
-    private static final String DASHBOARDS_DIR = "dashboards";
-
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    public static final String JSON_EXT = ".json";
     public static final String CUSTOMER_CRED = "customer";
     public static final String DEFAULT_DEVICE_TYPE = "default";
 
-    @Value("${install.data_dir}")
-    private String dataDir;
+    @Autowired
+    private InstallScripts installScripts;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -89,15 +68,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private WidgetsBundleService widgetsBundleService;
 
     @Autowired
-    private WidgetTypeService widgetTypeService;
-
-    @Autowired
-    private PluginService pluginService;
-
-    @Autowired
-    private RuleService ruleService;
-
-    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -108,9 +78,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private DeviceCredentialsService deviceCredentialsService;
-
-    @Autowired
-    private DashboardService dashboardService;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -147,55 +114,12 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
-    public void loadSystemWidgets() throws Exception {
-        Path widgetBundlesDir = Paths.get(dataDir, JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            JsonNode widgetsBundleDescriptorJson = objectMapper.readTree(path.toFile());
-                            JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
-                            WidgetsBundle widgetsBundle = objectMapper.treeToValue(widgetsBundleJson, WidgetsBundle.class);
-                            WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-                            JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
-                            widgetTypesArrayJson.forEach(
-                                    widgetTypeJson -> {
-                                        try {
-                                            WidgetType widgetType = objectMapper.treeToValue(widgetTypeJson, WidgetType.class);
-                                            widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-                                            widgetTypeService.saveWidgetType(widgetType);
-                                        } catch (Exception e) {
-                                            log.error("Unable to load widget type from json: [{}]", path.toString());
-                                            throw new RuntimeException("Unable to load widget type from json", e);
-                                        }
-                                    }
-                            );
-                        } catch (Exception e) {
-                            log.error("Unable to load widgets bundle from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load widgets bundle from json", e);
-                        }
-                    }
-            );
-        }
-    }
-
-    @Override
-    public void loadSystemPlugins() throws Exception {
-        loadPlugins(Paths.get(dataDir, JSON_DIR, SYSTEM_DIR, PLUGINS_DIR), null);
-    }
-
-
-    @Override
-    public void loadSystemRules() throws Exception {
-        loadRules(Paths.get(dataDir, JSON_DIR, SYSTEM_DIR, RULES_DIR), null);
-    }
-
-    @Override
     public void loadDemoData() throws Exception {
         Tenant demoTenant = new Tenant();
         demoTenant.setRegion("Global");
         demoTenant.setTitle("Tenant");
         demoTenant = tenantService.saveTenant(demoTenant);
+        installScripts.createDefaultRuleChains(demoTenant.getId());
         createUser(Authority.TENANT_ADMIN, demoTenant.getId(), null, "tenant@thingsboard.org", "tenant");
 
         Customer customerA = new Customer();
@@ -227,9 +151,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         createDevice(demoTenant.getId(), null, DEFAULT_DEVICE_TYPE, "Raspberry Pi Demo Device", "RASPBERRY_PI_DEMO_TOKEN", "Demo device that is used in " +
                 "Raspberry Pi GPIO control sample application");
 
-        loadPlugins(Paths.get(dataDir, JSON_DIR, DEMO_DIR, PLUGINS_DIR), demoTenant.getId());
-        loadRules(Paths.get(dataDir, JSON_DIR, DEMO_DIR, RULES_DIR), demoTenant.getId());
-        loadDashboards(Paths.get(dataDir, JSON_DIR, DEMO_DIR, DASHBOARDS_DIR), demoTenant.getId(), null);
+        installScripts.loadDashboards(demoTenant.getId(), null);
     }
 
     @Override
@@ -238,6 +160,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         if (widgetsBundle != null) {
             widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getId());
         }
+    }
+
+    @Override
+    public void loadSystemWidgets() throws Exception {
+        installScripts.loadSystemWidgets();
     }
 
     private User createUser(Authority authority,
@@ -282,72 +209,4 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         return device;
     }
 
-    private void loadPlugins(Path pluginsDir, TenantId tenantId) throws Exception{
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pluginsDir, path -> path.toString().endsWith(JSON_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            JsonNode pluginJson = objectMapper.readTree(path.toFile());
-                            PluginMetaData plugin = objectMapper.treeToValue(pluginJson, PluginMetaData.class);
-                            plugin.setTenantId(tenantId);
-                            if (plugin.getState() == ComponentLifecycleState.ACTIVE) {
-                                plugin.setState(ComponentLifecycleState.SUSPENDED);
-                                PluginMetaData savedPlugin = pluginService.savePlugin(plugin);
-                                pluginService.activatePluginById(savedPlugin.getId());
-                            } else {
-                                pluginService.savePlugin(plugin);
-                            }
-                        } catch (Exception e) {
-                            log.error("Unable to load plugin from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load plugin from json", e);
-                        }
-                    }
-            );
-        }
-    }
-
-    private void loadRules(Path rulesDir, TenantId tenantId) throws Exception {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(rulesDir, path -> path.toString().endsWith(JSON_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            JsonNode ruleJson = objectMapper.readTree(path.toFile());
-                            RuleMetaData rule = objectMapper.treeToValue(ruleJson, RuleMetaData.class);
-                            rule.setTenantId(tenantId);
-                            if (rule.getState() == ComponentLifecycleState.ACTIVE) {
-                                rule.setState(ComponentLifecycleState.SUSPENDED);
-                                RuleMetaData savedRule = ruleService.saveRule(rule);
-                                ruleService.activateRuleById(savedRule.getId());
-                            } else {
-                                ruleService.saveRule(rule);
-                            }
-                        } catch (Exception e) {
-                            log.error("Unable to load rule from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load rule from json", e);
-                        }
-                    }
-            );
-        }
-    }
-
-    private void loadDashboards(Path dashboardsDir, TenantId tenantId, CustomerId customerId) throws Exception {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            JsonNode dashboardJson = objectMapper.readTree(path.toFile());
-                            Dashboard dashboard = objectMapper.treeToValue(dashboardJson, Dashboard.class);
-                            dashboard.setTenantId(tenantId);
-                            Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
-                            if (customerId != null && !customerId.isNullUid()) {
-                                dashboardService.assignDashboardToCustomer(savedDashboard.getId(), customerId);
-                            }
-                        } catch (Exception e) {
-                            log.error("Unable to load dashboard from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load dashboard from json", e);
-                        }
-                    }
-            );
-        }
-    }
 }

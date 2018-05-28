@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.alarm;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -102,12 +100,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         }
         String relationType = BaseAlarmService.ALARM_RELATION_PREFIX + searchStatusName;
         ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(affectedEntity, relationType, RelationTypeGroup.ALARM, EntityType.ALARM, query.getPageLink());
-        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<AlarmInfo>>) input -> {
+        return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<AlarmInfo>> alarmFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
                 alarmFutures.add(Futures.transform(
                         findAlarmByIdAsync(relation.getTo().getId()),
-                        (Function<Alarm, AlarmInfo>) AlarmInfo::new));
+                        AlarmInfo::new));
             }
             return Futures.successfulAsList(alarmFutures);
         });

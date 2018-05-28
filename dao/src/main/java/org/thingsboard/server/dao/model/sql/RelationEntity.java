@@ -26,9 +26,20 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+import javax.persistence.Table;
 
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.ADDITIONAL_INFO_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TO_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TO_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_GROUP_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_PROPERTY;
 
 @Data
 @Entity

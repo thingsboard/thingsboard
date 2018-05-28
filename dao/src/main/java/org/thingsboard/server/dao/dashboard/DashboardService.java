@@ -26,8 +26,6 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 
-import java.util.Set;
-
 public interface DashboardService {
     
     Dashboard findDashboardById(DashboardId dashboardId);

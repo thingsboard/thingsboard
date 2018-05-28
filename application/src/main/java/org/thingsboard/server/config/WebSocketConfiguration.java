@@ -15,12 +15,6 @@
  */
 package org.thingsboard.server.config;
 
-import java.util.Map;
-
-import org.thingsboard.server.exception.ThingsboardErrorCode;
-import org.thingsboard.server.exception.ThingsboardException;
-import org.thingsboard.server.controller.plugin.PluginWebSocketHandler;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -35,6 +29,12 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.controller.plugin.TbWebSocketHandler;
+import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.Map;
 
 @Configuration
 @EnableWebSocket
@@ -54,7 +54,7 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(pluginWsHandler(), WS_PLUGIN_MAPPING).setAllowedOrigins("*")
+        registry.addHandler(wsHandler(), WS_PLUGIN_MAPPING).setAllowedOrigins("*")
                 .addInterceptors(new HttpSessionHandshakeInterceptor(), new HandshakeInterceptor() {
 
                     @Override
@@ -82,8 +82,8 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
     }
 
     @Bean
-    public WebSocketHandler pluginWsHandler() {
-        return new PluginWebSocketHandler();
+    public WebSocketHandler wsHandler() {
+        return new TbWebSocketHandler();
     }
 
     protected SecurityUser getCurrentUser() throws ThingsboardException {

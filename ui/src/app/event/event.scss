@@ -24,6 +24,17 @@ md-list.tb-event-table {
     height: 48px;
     padding: 0px;
     overflow: hidden;
+    .tb-cell {
+      text-overflow: ellipsis;
+      &.tb-scroll {
+        white-space: nowrap;
+        overflow-y: hidden;
+        overflow-x: auto;
+      }
+      &.tb-nowrap {
+        white-space: nowrap;
+      }
+    }
   }
 
   .tb-row:hover {
@@ -39,13 +50,19 @@ md-list.tb-event-table {
         color: rgba(0,0,0,.54);
         font-size: 12px;
         font-weight: 700;
-        white-space: nowrap;
         background: none;
+        white-space: nowrap;
       }
   }
 
   .tb-cell {
-      padding: 0 24px;
+      &:first-child {
+        padding-left: 14px;
+      }
+      &:last-child {
+        padding-right: 14px;
+      }
+      padding: 0 6px;
       margin: auto 0;
       color: rgba(0,0,0,.87);
       font-size: 13px;
@@ -53,8 +70,8 @@ md-list.tb-event-table {
       text-align: left;
       overflow: hidden;
       .md-button {
-        padding: 0;
-        margin: 0;
+          padding: 0;
+          margin: 0;
       }
   }
 

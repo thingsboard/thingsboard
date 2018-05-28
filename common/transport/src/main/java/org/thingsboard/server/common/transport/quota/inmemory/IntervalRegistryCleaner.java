@@ -16,10 +16,7 @@
 package org.thingsboard.server.common.transport.quota.inmemory;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PreDestroy;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -28,15 +25,14 @@ import java.util.concurrent.TimeUnit;
  * @author Vitaliy Paromskiy
  * @version 1.0
  */
-@Component
 @Slf4j
-public class IntervalRegistryCleaner {
+public abstract class IntervalRegistryCleaner {
 
-    private final HostRequestIntervalRegistry intervalRegistry;
+    private final KeyBasedIntervalRegistry intervalRegistry;
     private final long cleanPeriodMs;
     private ScheduledExecutorService executor;
 
-    public IntervalRegistryCleaner(HostRequestIntervalRegistry intervalRegistry, @Value("${quota.host.cleanPeriodMs}") long cleanPeriodMs) {
+    public IntervalRegistryCleaner(KeyBasedIntervalRegistry intervalRegistry, long cleanPeriodMs) {
         this.intervalRegistry = intervalRegistry;
         this.cleanPeriodMs = cleanPeriodMs;
     }

@@ -48,13 +48,22 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_BY_CUSTOMER_ID_CF;
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_BY_ENTITY_ID_CF;
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_BY_TENANT_ID_CF;
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_BY_USER_ID_CF;
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_COLUMN_FAMILY_NAME;
 
 @Component
 @Slf4j

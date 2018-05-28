@@ -34,10 +34,16 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.AuditLogId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.TimePageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.audit.sink.AuditLogSink;
 import org.thingsboard.server.dao.entity.EntityService;
@@ -158,11 +164,20 @@ public class AuditLogServiceImpl implements AuditLogService {
         switch(actionType) {
             case ADDED:
             case UPDATED:
-                ObjectNode entityNode = objectMapper.valueToTree(entity);
-                if (entityId.getEntityType() == EntityType.DASHBOARD) {
-                    entityNode.put("configuration", "");
+                if (entity != null) {
+                    ObjectNode entityNode = objectMapper.valueToTree(entity);
+                    if (entityId.getEntityType() == EntityType.DASHBOARD) {
+                        entityNode.put("configuration", "");
+                    }
+                    actionData.set("entity", entityNode);
                 }
-                actionData.set("entity", entityNode);
+                if (entityId.getEntityType() == EntityType.RULE_CHAIN) {
+                    RuleChainMetaData ruleChainMetaData = extractParameter(RuleChainMetaData.class, additionalInfo);
+                    if (ruleChainMetaData != null) {
+                        ObjectNode ruleChainMetaDataNode = objectMapper.valueToTree(ruleChainMetaData);
+                        actionData.set("metadata", ruleChainMetaDataNode);
+                    }
+                }
                 break;
             case DELETED:
             case ACTIVATED:

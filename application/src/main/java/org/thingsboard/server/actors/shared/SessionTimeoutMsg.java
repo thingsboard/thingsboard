@@ -17,13 +17,20 @@ package org.thingsboard.server.actors.shared;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.SessionId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.io.Serializable;
 
 @Data
-public class SessionTimeoutMsg implements Serializable {
+public class SessionTimeoutMsg implements Serializable, TbActorMsg {
 
     private static final long serialVersionUID = 1L;
 
     private final SessionId sessionId;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.SESSION_TIMEOUT_MSG;
+    }
 }

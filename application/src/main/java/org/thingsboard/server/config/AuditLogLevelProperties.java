@@ -17,8 +17,6 @@ package org.thingsboard.server.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
 
 import java.util.HashMap;
 import java.util.Map;

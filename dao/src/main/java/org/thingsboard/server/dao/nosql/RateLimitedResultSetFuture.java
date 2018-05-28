@@ -19,7 +19,6 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,7 +27,11 @@ import org.thingsboard.server.dao.exception.BufferLimitException;
 import org.thingsboard.server.dao.util.AsyncRateLimiter;
 
 import javax.annotation.Nullable;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class RateLimitedResultSetFuture implements ResultSetFuture {
 
@@ -36,14 +39,14 @@ public class RateLimitedResultSetFuture implements ResultSetFuture {
     private final ListenableFuture<Void> rateLimitFuture;
 
     public RateLimitedResultSetFuture(Session session, AsyncRateLimiter rateLimiter, Statement statement) {
-        this.rateLimitFuture = Futures.withFallback(rateLimiter.acquireAsync(), t -> {
+        this.rateLimitFuture = Futures.catchingAsync(rateLimiter.acquireAsync(), Throwable.class, t -> {
             if (!(t instanceof BufferLimitException)) {
                 rateLimiter.release();
             }
             return Futures.immediateFailedFuture(t);
         });
         this.originalFuture = Futures.transform(rateLimitFuture,
-                (Function<Void, ResultSetFuture>) i -> executeAsyncWithRelease(rateLimiter, session, statement));
+                i -> executeAsyncWithRelease(rateLimiter, session, statement));
 
     }
 

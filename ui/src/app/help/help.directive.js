@@ -35,6 +35,10 @@ function Help($compile, $window, helpLinks) {
                 $event.stopPropagation();
             }
             var helpUrl = helpLinks.linksMap[scope.helpLinkId];
+            if (!helpUrl && scope.helpLinkId &&
+                    (scope.helpLinkId.startsWith('http://') || scope.helpLinkId.startsWith('https://'))) {
+                helpUrl = scope.helpLinkId;
+            }
             if (helpUrl) {
                 $window.open(helpUrl, '_blank');
             }

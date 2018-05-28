@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.event;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,12 @@ public class BaseEventService implements EventService {
     public Event save(Event event) {
         eventValidator.validate(event);
         return eventDao.save(event);
+    }
+
+    @Override
+    public ListenableFuture<Event> saveAsync(Event event) {
+        eventValidator.validate(event);
+        return eventDao.saveAsync(event);
     }
 
     @Override
@@ -80,6 +87,11 @@ public class BaseEventService implements EventService {
     public TimePageData<Event> findEvents(TenantId tenantId, EntityId entityId, String eventType, TimePageLink pageLink) {
         List<Event> events = eventDao.findEvents(tenantId.getId(), entityId, eventType, pageLink);
         return new TimePageData<>(events, pageLink);
+    }
+
+    @Override
+    public List<Event> findLatestEvents(TenantId tenantId, EntityId entityId, String eventType, int limit) {
+        return eventDao.findLatestEvents(tenantId.getId(), entityId, eventType, limit);
     }
 
     private DataValidator<Event> eventValidator =

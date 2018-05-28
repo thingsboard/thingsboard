@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>1.4.1-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -35,16 +35,16 @@
         <spring-data-redis.version>1.8.10.RELEASE</spring-data-redis.version>
         <jedis.version>2.9.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
-         <json-path.version>2.2.0</json-path.version>
+        <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>1.9.5</mockito.version>
         <rat.version>0.10</rat.version>
-        <cassandra.version>3.0.7</cassandra.version>
-        <cassandra-unit.version>3.0.0.1</cassandra-unit.version>
+        <cassandra.version>3.5.0</cassandra.version>
+        <cassandra-unit.version>3.3.0.2</cassandra-unit.version>
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version>
-        <guava.version>18.0</guava.version>
+        <guava.version>21.0</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-validator.version>1.5.0</commons-validator.version>
@@ -59,17 +59,15 @@
         <velocity.version>1.7</velocity.version>
         <velocity-tools.version>2.0</velocity-tools.version>
         <mail.version>1.4.3</mail.version>
-        <curator.version>2.11.0</curator.version>
+        <curator.version>4.0.1</curator.version>
         <protobuf.version>3.0.2</protobuf.version>
-        <grpc.version>1.0.0</grpc.version>
+        <grpc.version>1.12.0</grpc.version>
         <lombok.version>1.16.18</lombok.version>
         <paho.client.version>1.1.0</paho.client.version>
         <netty.version>4.1.22.Final</netty.version>
         <os-maven-plugin.version>1.5.0</os-maven-plugin.version>
         <rabbitmq.version>3.6.5</rabbitmq.version>
         <kafka.version>0.9.0.0</kafka.version>
-        <hazelcast.version>3.6.6</hazelcast.version>
-        <hazelcast-zookeeper.version>3.6.1</hazelcast-zookeeper.version>
         <surfire.version>2.19.1</surfire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
@@ -79,16 +77,18 @@
         <dbunit.version>2.5.3</dbunit.version>
         <spring-test-dbunit.version>1.2.1</spring-test-dbunit.version>
         <postgresql.driver.version>9.4.1211</postgresql.driver.version>
-        <sonar.exclusions>org/thingsboard/server/gen/**/*, org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*</sonar.exclusions>
+        <sonar.exclusions>org/thingsboard/server/gen/**/*,
+            org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
+        </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
+        <delight-nashorn-sandbox.version>0.1.14</delight-nashorn-sandbox.version>
     </properties>
 
     <modules>
+        <module>netty-mqtt</module>
         <module>common</module>
+        <module>rule-engine</module>
         <module>dao</module>
-        <module>extensions-api</module>
-        <module>extensions-core</module>
-        <module>extensions</module>
         <module>transport</module>
         <module>ui</module>
         <module>tools</module>
@@ -281,6 +281,7 @@
                             <exclude>src/sh/**</exclude>
                             <exclude>src/main/scripts/control/**</exclude>
                             <exclude>src/main/scripts/windows/**</exclude>
+                            <exclude>src/main/resources/public/static/rulenode/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -321,53 +322,22 @@
         <dependencies>
             <dependency>
                 <groupId>org.thingsboard</groupId>
-                <artifactId>extensions-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard</groupId>
-                <artifactId>extensions-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-rabbitmq</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-rest-api-call</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-kafka</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-mqtt</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-sqs</artifactId>
-                <classifier>extension</classifier>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.thingsboard.extensions</groupId>
-                <artifactId>extension-sns</artifactId>
-                <classifier>extension</classifier>
+                <artifactId>netty-mqtt</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.thingsboard.common</groupId>
                 <artifactId>data</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.rule-engine</groupId>
+                <artifactId>rule-engine-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.thingsboard.rule-engine</groupId>
+                <artifactId>rule-engine-components</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -554,6 +524,11 @@
                 <version>${netty.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-mqtt</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
                 <version>${cassandra.version}</version>
@@ -736,24 +711,9 @@
                 <version>${paho.client.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.hazelcast</groupId>
-                <artifactId>hazelcast-spring</artifactId>
-                <version>${hazelcast.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.curator</groupId>
                 <artifactId>curator-x-discovery</artifactId>
                 <version>${curator.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.hazelcast</groupId>
-                <artifactId>hazelcast-zookeeper</artifactId>
-                <version>${hazelcast-zookeeper.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.hazelcast</groupId>
-                <artifactId>hazelcast</artifactId>
-                <version>${hazelcast.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.springfox</groupId>
@@ -808,6 +768,11 @@
                 <groupId>org.elasticsearch.client</groupId>
                 <artifactId>rest</artifactId>
                 <version>${elasticsearch.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.javadelight</groupId>
+                <artifactId>delight-nashorn-sandbox</artifactId>
+                <version>${delight-nashorn-sandbox.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

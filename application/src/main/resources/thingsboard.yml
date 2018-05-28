@@ -58,11 +58,13 @@ cluster:
   hash_function_name: "${CLUSTER_HASH_FUNCTION_NAME:murmur3_128}"
   # Amount of virtual nodes in consistent hash ring.
   vitrual_nodes_size: "${CLUSTER_VIRTUAL_NODES_SIZE:16}"
+  # Queue partition id for current node
+  partition_id: "${QUEUE_PARTITION_ID:0}"
 
 # Plugins configuration parameters
 plugins:
   # Comma seperated package list used during classpath scanning for plugins
-  scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions}"
+  scan_packages: "${PLUGINS_SCAN_PACKAGES:org.thingsboard.server.extensions,org.thingsboard.rule.engine}"
 
 # JWT Token parameters
 security.jwt:
@@ -106,7 +108,7 @@ mqtt:
 # CoAP server parameters
 coap:
   # Enable/disable coap transport protocol.
-  enabled: "${COAP_ENABLED:true}"
+  enabled: "${COAP_ENABLED:false}"
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   bind_port: "${COAP_BIND_PORT:5683}"
   adaptor:  "${COAP_ADAPTOR_NAME:JsonCoapAdaptor}"
@@ -129,9 +131,28 @@ quota:
     whitelist: "${QUOTA_HOST_WHITELIST:localhost,127.0.0.1}"
     # Array of blacklist hosts
     blacklist: "${QUOTA_HOST_BLACKLIST:}"
-  log:
-    topSize: 10
-    intervalMin: 2
+    log:
+      topSize: 10
+      intervalMin: 2
+  rule:
+    tenant:
+      # Max allowed number of API requests in interval for single tenant
+      limit: "${QUOTA_TENANT_LIMIT:100000}"
+      # Interval duration
+      intervalMs: "${QUOTA_TENANT_INTERVAL_MS:60000}"
+      # Maximum silence duration for tenant after which Tenant removed from QuotaService. Must be bigger than intervalMs
+      ttlMs: "${QUOTA_TENANT_TTL_MS:60000}"
+      # Interval for scheduled task that cleans expired records. TTL is used for expiring
+      cleanPeriodMs: "${QUOTA_TENANT_CLEAN_PERIOD_MS:300000}"
+      # Enable Host API Limits
+      enabled: "${QUOTA_TENANT_ENABLED:false}"
+      # Array of whitelist tenants
+      whitelist: "${QUOTA_TENANT_WHITELIST:}"
+      # Array of blacklist tenants
+      blacklist: "${QUOTA_HOST_BLACKLIST:}"
+      log:
+        topSize: 10
+        intervalMin: 2
 
 database:
   type: "${DATABASE_TYPE:sql}" # cassandra OR sql
@@ -182,10 +203,17 @@ cassandra:
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
     # Specify partitioning size for timestamp key-value storage. Example MINUTES, HOURS, DAYS, MONTHS
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
+    ts_key_value_ttl: "${TS_KV_TTL:0}"
     buffer_size: "${CASSANDRA_QUERY_BUFFER_SIZE:200000}"
     concurrent_limit: "${CASSANDRA_QUERY_CONCURRENT_LIMIT:1000}"
     permit_max_wait_time: "${PERMIT_MAX_WAIT_TIME:120000}"
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:30000}"
+
+  queue:
+    msg.ttl: 604800 # 7 days
+    ack.ttl: 604800 # 7 days
+    partitions.ttl: 604800 # 7 days
+    partitioning: "HOURS"
 
 # SQL configuration parameters
 sql:
@@ -199,25 +227,54 @@ actors:
   tenant:
     create_components_on_init: true
   session:
+    max_concurrent_sessions_per_device: "${ACTORS_MAX_CONCURRENT_SESSION_PER_DEVICE:1}"
     sync:
       # Default timeout for processing request using synchronous session (HTTP, CoAP) in milliseconds
       timeout: "${ACTORS_SESSION_SYNC_TIMEOUT:10000}"
-  plugin:
-    # Default timeout for termination of the plugin actor after it is stopped
-    termination.delay: "${ACTORS_PLUGIN_TERMINATION_DELAY:60000}"
-    # Default timeout for processing of particular message by particular plugin
-    processing.timeout: "${ACTORS_PLUGIN_TIMEOUT:60000}"
-    # Errors for particular actor are persisted once per specified amount of milliseconds
-    error_persist_frequency: "${ACTORS_PLUGIN_ERROR_FREQUENCY:3000}"
   rule:
-    # Default timeout for termination of the rule actor after it is stopped
-    termination.delay: "${ACTORS_RULE_TERMINATION_DELAY:30000}"
-    # Errors for particular actor are persisted once per specified amount of milliseconds
-    error_persist_frequency: "${ACTORS_RULE_ERROR_FREQUENCY:3000}"
+    # Specify thread pool size for database request callbacks executor service
+    db_callback_thread_pool_size: "${ACTORS_RULE_DB_CALLBACK_THREAD_POOL_SIZE:1}"
+    # Specify thread pool size for javascript executor service
+    js_thread_pool_size: "${ACTORS_RULE_JS_THREAD_POOL_SIZE:10}"
+    # Specify thread pool size for mail sender executor service
+    mail_thread_pool_size: "${ACTORS_RULE_MAIL_THREAD_POOL_SIZE:10}"
+    # Whether to allow usage of system mail service for rules
+    allow_system_mail_service: "${ACTORS_RULE_ALLOW_SYSTEM_MAIL_SERVICE:true}"
+    # Specify thread pool size for external call service
+    external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:10}"
+    js_sandbox:
+      # Use Sandboxed (secured) JavaScript environment
+      use_js_sandbox: "${ACTORS_RULE_JS_SANDBOX_USE_JS_SANDBOX:true}"
+      # Specify thread pool size for JavaScript sandbox resource monitor
+      monitor_thread_pool_size: "${ACTORS_RULE_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
+      # Maximum CPU time in milliseconds allowed for script execution
+      max_cpu_time: "${ACTORS_RULE_JS_SANDBOX_MAX_CPU_TIME:100}"
+      # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
+      max_errors: "${ACTORS_RULE_JS_SANDBOX_MAX_ERRORS:3}"
+    chain:
+      # Errors for particular actor are persisted once per specified amount of milliseconds
+      error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
+    node:
+      # Errors for particular actor are persisted once per specified amount of milliseconds
+      error_persist_frequency: "${ACTORS_RULE_NODE_ERROR_FREQUENCY:3000}"
+    queue:
+      # Message queue type
+      type: "${ACTORS_RULE_QUEUE_TYPE:memory}"
+      # Message queue maximum size (per tenant)
+      max_size: "${ACTORS_RULE_QUEUE_MAX_SIZE:100}"
+      # Message queue cleanup period in seconds
+      cleanup_period: "${ACTORS_RULE_QUEUE_CLEANUP_PERIOD:3600}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
+  queue:
+    # Enable/disable persistence of un-processed messages to the queue
+    enabled: "${ACTORS_QUEUE_ENABLED:true}"
+    # Maximum allowed timeout for persistence into the queue
+    timeout: "${ACTORS_QUEUE_PERSISTENCE_TIMEOUT:30000}"
+  client_side_rpc:
+    timeout:  "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
 
 cache:
   # caffeine or redis
@@ -283,17 +340,17 @@ spring:
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false}"
+    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false;hsqldb.log_size=5}"
     username: "${SPRING_DATASOURCE_USERNAME:sa}"
     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
 # PostgreSQL DAO Configuration
 #spring:
 #  data:
-#    jpa:
+#    sql:
 #      repositories:
 #        enabled: "true"
-#  jpa:
+#  sql:
 #    hibernate:
 #      ddl-auto: "validate"
 #    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
@@ -320,8 +377,7 @@ audit_log:
       "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}"
       "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}"
       "user": "${AUDIT_LOG_MASK_USER:W}"
-      "rule": "${AUDIT_LOG_MASK_RULE:W}"
-      "plugin": "${AUDIT_LOG_MASK_PLUGIN:W}"
+      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}"
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -338,3 +394,10 @@ audit_log:
     port: "${AUDIT_LOG_SINK_POST:9200}"
     user_name: "${AUDIT_LOG_SINK_USER_NAME:}"
     password: "${AUDIT_LOG_SINK_PASSWORD:}"
+
+state:
+  defaultInactivityTimeoutInSec: 10
+  defaultStateCheckIntervalInSec: 10
+# TODO in v2.1
+#  defaultStatePersistenceIntervalInSec: 60
+#  defaultStatePersistencePack: 100

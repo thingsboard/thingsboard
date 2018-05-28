@@ -15,61 +15,55 @@
  */
 package org.thingsboard.server.actors.tenant;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
+import akka.actor.ActorRef;
+import akka.actor.OneForOneStrategy;
+import akka.actor.Props;
+import akka.actor.SupervisorStrategy;
+import akka.japi.Function;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.device.DeviceActor;
-import org.thingsboard.server.actors.plugin.PluginTerminationMsg;
-import org.thingsboard.server.actors.rule.ComplexRuleActorChain;
-import org.thingsboard.server.actors.rule.RuleActorChain;
-import org.thingsboard.server.actors.service.ContextAwareActor;
+import org.thingsboard.server.actors.device.DeviceActorToRuleEngineMsg;
+import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
+import org.thingsboard.server.actors.ruleChain.RuleChainToRuleChainMsg;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.actors.shared.plugin.PluginManager;
-import org.thingsboard.server.actors.shared.plugin.TenantPluginManager;
-import org.thingsboard.server.actors.shared.rule.RuleManager;
-import org.thingsboard.server.actors.shared.rule.TenantRuleManager;
+import org.thingsboard.server.actors.shared.rulechain.TenantRuleChainManager;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.PluginId;
-import org.thingsboard.server.common.data.id.RuleId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-
-import akka.actor.ActorRef;
-import akka.actor.Props;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.extensions.api.device.ToDeviceActorNotificationMsg;
-import org.thingsboard.server.extensions.api.plugins.msg.ToPluginActorMsg;
-import org.thingsboard.server.extensions.api.rules.ToRuleActorMsg;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
+import scala.concurrent.duration.Duration;
 
-public class TenantActor extends ContextAwareActor {
+import java.util.HashMap;
+import java.util.Map;
 
-    private final LoggingAdapter logger = Logging.getLogger(getContext().system(), this);
+public class TenantActor extends RuleChainManagerActor {
 
     private final TenantId tenantId;
-    private final RuleManager ruleManager;
-    private final PluginManager pluginManager;
     private final Map<DeviceId, ActorRef> deviceActors;
 
     private TenantActor(ActorSystemContext systemContext, TenantId tenantId) {
-        super(systemContext);
+        super(systemContext, new TenantRuleChainManager(systemContext, tenantId));
         this.tenantId = tenantId;
-        this.ruleManager = new TenantRuleManager(systemContext, tenantId);
-        this.pluginManager = new TenantPluginManager(systemContext, tenantId);
         this.deviceActors = new HashMap<>();
+    }
+
+
+    @Override
+    public SupervisorStrategy supervisorStrategy() {
+        return strategy;
     }
 
     @Override
     public void preStart() {
         logger.info("[{}] Starting tenant actor.", tenantId);
         try {
-            ruleManager.init(this.context());
-            pluginManager.init(this.context());
+            initRuleChains();
             logger.info("[{}] Tenant actor started.", tenantId);
         } catch (Exception e) {
             logger.error(e, "[{}] Unknown failure", tenantId);
@@ -77,87 +71,72 @@ public class TenantActor extends ContextAwareActor {
     }
 
     @Override
-    public void onReceive(Object msg) throws Exception {
-        logger.debug("[{}] Received message: {}", tenantId, msg);
-        if (msg instanceof RuleChainDeviceMsg) {
-            process((RuleChainDeviceMsg) msg);
-        } else if (msg instanceof ToDeviceActorMsg) {
-            onToDeviceActorMsg((ToDeviceActorMsg) msg);
-        } else if (msg instanceof ToPluginActorMsg) {
-            onToPluginMsg((ToPluginActorMsg) msg);
-        } else if (msg instanceof ToRuleActorMsg) {
-            onToRuleMsg((ToRuleActorMsg) msg);
-        } else if (msg instanceof ToDeviceActorNotificationMsg) {
-            onToDeviceActorMsg((ToDeviceActorNotificationMsg) msg);
-        } else if (msg instanceof ClusterEventMsg) {
-            broadcast(msg);
-        } else if (msg instanceof ComponentLifecycleMsg) {
-            onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
-        } else if (msg instanceof PluginTerminationMsg) {
-            onPluginTerminated((PluginTerminationMsg) msg);
-        } else {
-            logger.warning("[{}] Unknown message: {}!", tenantId, msg);
+    protected boolean process(TbActorMsg msg) {
+        switch (msg.getMsgType()) {
+            case CLUSTER_EVENT_MSG:
+                broadcast(msg);
+                break;
+            case COMPONENT_LIFE_CYCLE_MSG:
+                onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
+                break;
+            case SERVICE_TO_RULE_ENGINE_MSG:
+                onServiceToRuleEngineMsg((ServiceToRuleEngineMsg) msg);
+                break;
+            case DEVICE_ACTOR_TO_RULE_ENGINE_MSG:
+                onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);
+                break;
+            case DEVICE_SESSION_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_NAME_OR_TYPE_UPDATE_TO_DEVICE_ACTOR_MSG:
+            case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
+            case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+                onToDeviceActorMsg((DeviceAwareMsg) msg);
+                break;
+            case RULE_CHAIN_TO_RULE_CHAIN_MSG:
+                onRuleChainMsg((RuleChainToRuleChainMsg) msg);
+                break;
+            default:
+                return false;
         }
+        return true;
     }
 
-    private void broadcast(Object msg) {
-        pluginManager.broadcast(msg);
+    @Override
+    protected void broadcast(Object msg) {
+        super.broadcast(msg);
         deviceActors.values().forEach(actorRef -> actorRef.tell(msg, ActorRef.noSender()));
     }
 
-    private void onToDeviceActorMsg(ToDeviceActorMsg msg) {
+    private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
+        ruleChainManager.getRootChainActor().tell(msg, self());
+    }
+
+    private void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg msg) {
+        ruleChainManager.getRootChainActor().tell(msg, self());
+    }
+
+    private void onRuleChainMsg(RuleChainToRuleChainMsg msg) {
+        ruleChainManager.getOrCreateActor(context(), msg.getTarget()).tell(msg, self());
+    }
+
+
+    private void onToDeviceActorMsg(DeviceAwareMsg msg) {
         getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());
-    }
-
-    private void onToDeviceActorMsg(ToDeviceActorNotificationMsg msg) {
-        getOrCreateDeviceActor(msg.getDeviceId()).tell(msg, ActorRef.noSender());
-    }
-
-    private void onToRuleMsg(ToRuleActorMsg msg) {
-        ActorRef target = ruleManager.getOrCreateRuleActor(this.context(), msg.getRuleId());
-        target.tell(msg, ActorRef.noSender());
-    }
-
-    private void onToPluginMsg(ToPluginActorMsg msg) {
-        if (msg.getPluginTenantId().equals(tenantId)) {
-            ActorRef pluginActor = pluginManager.getOrCreatePluginActor(this.context(), msg.getPluginId());
-            pluginActor.tell(msg, ActorRef.noSender());
-        } else {
-            context().parent().tell(msg, ActorRef.noSender());
-        }
     }
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
-        Optional<PluginId> pluginId = msg.getPluginId();
-        Optional<RuleId> ruleId = msg.getRuleId();
-        if (pluginId.isPresent()) {
-            ActorRef pluginActor = pluginManager.getOrCreatePluginActor(this.context(), pluginId.get());
-            pluginActor.tell(msg, ActorRef.noSender());
-        } else if (ruleId.isPresent()) {
-            ActorRef target;
-            Optional<ActorRef> ref = ruleManager.update(this.context(), ruleId.get(), msg.getEvent());
-            if (ref.isPresent()) {
-                target = ref.get();
-            } else {
-                logger.debug("Failed to find actor for rule: [{}]", ruleId);
-                return;
+        ActorRef target = getEntityActorRef(msg.getEntityId());
+        if (target != null) {
+            if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
+                RuleChain ruleChain = systemContext.getRuleChainService().
+                        findRuleChainById(new RuleChainId(msg.getEntityId().getId()));
+                ruleChainManager.visit(ruleChain, target);
             }
             target.tell(msg, ActorRef.noSender());
         } else {
-            logger.debug("[{}] Invalid component lifecycle msg.", tenantId);
+            logger.debug("Invalid component lifecycle msg: {}", msg);
         }
-    }
-
-    private void onPluginTerminated(PluginTerminationMsg msg) {
-        pluginManager.remove(msg.getId());
-    }
-
-    private void process(RuleChainDeviceMsg msg) {
-        ToDeviceActorMsg toDeviceActorMsg = msg.getToDeviceActorMsg();
-        ActorRef deviceActor = getOrCreateDeviceActor(toDeviceActorMsg.getDeviceId());
-        RuleActorChain tenantChain = ruleManager.getRuleChain(this.context());
-        RuleActorChain chain = new ComplexRuleActorChain(msg.getRuleChain(), tenantChain);
-        deviceActor.tell(new RuleChainDeviceMsg(toDeviceActorMsg, chain), context().self());
     }
 
     private ActorRef getOrCreateDeviceActor(DeviceId deviceId) {
@@ -180,5 +159,13 @@ public class TenantActor extends ContextAwareActor {
             return new TenantActor(context, tenantId);
         }
     }
+
+    private final SupervisorStrategy strategy = new OneForOneStrategy(3, Duration.create("1 minute"), new Function<Throwable, SupervisorStrategy.Directive>() {
+        @Override
+        public SupervisorStrategy.Directive apply(Throwable t) {
+            logger.error(t, "Unknown failure");
+            return SupervisorStrategy.resume();
+        }
+    });
 
 }

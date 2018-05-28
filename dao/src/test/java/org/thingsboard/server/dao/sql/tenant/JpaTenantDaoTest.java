@@ -27,7 +27,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by Valerii Sosliuk on 4/30/2017.

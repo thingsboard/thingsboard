@@ -15,7 +15,11 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Function;
@@ -29,8 +33,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.kv.*;
+import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.nosql.CassandraAbstractAsyncDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
@@ -68,6 +81,9 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     @Value("${cassandra.query.ts_key_value_partitioning}")
     private String partitioning;
+
+    @Value("${cassandra.query.ts_key_value_ttl}")
+    private long systemTtl;
 
     private TsPartitionDate tsFormat;
 
@@ -217,7 +233,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
         ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
 
-        ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transform(partitionsListFuture,
+        ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transformAsync(partitionsListFuture,
                 getFetchChunksAsyncFunction(entityId, key, aggregation, startTs, endTs), readResultsProcessingExecutor);
 
         return Futures.transform(aggregationChunks, new AggregatePartitionsFunction(aggregation, key, ts), readResultsProcessingExecutor);
@@ -274,6 +290,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     @Override
     public ListenableFuture<Void> save(EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntry.getTs());
         DataType type = tsKvEntry.getDataType();
         BoundStatement stmt = (ttl == 0 ? getSaveStmt(type) : getSaveTtlStmt(type)).bind();
@@ -291,6 +308,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     @Override
     public ListenableFuture<Void> savePartition(EntityId entityId, long tsKvEntryTs, String key, long ttl) {
+        ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntryTs);
         log.debug("Saving partition {} for the entity [{}-{}] and key {}", partition, entityId.getEntityType(), entityId.getId(), key);
         BoundStatement stmt = (ttl == 0 ? getPartitionInsertStmt() : getPartitionInsertTtlStmt()).bind();
@@ -302,6 +320,17 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             stmt.setInt(4, (int) ttl);
         }
         return getFuture(executeAsyncWrite(stmt), rs -> null);
+    }
+
+    private long computeTtl(long ttl) {
+        if (systemTtl > 0) {
+            if (ttl == 0) {
+                ttl = systemTtl;
+            } else {
+                ttl = Math.min(systemTtl, ttl);
+            }
+        }
+        return ttl;
     }
 
     @Override

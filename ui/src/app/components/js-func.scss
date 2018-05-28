@@ -15,16 +15,37 @@
  */
 tb-js-func {
   position: relative;
+  .tb-disabled {
+    color: rgba(0,0,0,0.38);
+  }
+  .fill-height {
+    height: 100%;
+  }
+}
+
+.tb-js-func-toolbar {
+  .md-button.tidy {
+    color: #7B7B7B;
+    min-width: 32px;
+    min-height: 15px;
+    line-height: 15px;
+    font-size: 0.800rem;
+    margin: 0 5px 0 0;
+    padding: 4px;
+    background: rgba(220, 220, 220, 0.35);
+  }
 }
 
 .tb-js-func-panel {
   margin-left: 15px;
   border: 1px solid #C0C0C0;
-  height: 100%;
+  height: calc(100% - 80px);
   #tb-javascript-input {
     min-width: 200px;
-    min-height: 200px;
     width: 100%;
     height: 100%;
+    &:not(.fill-height) {
+      min-height: 200px;
+    }
   }
 }

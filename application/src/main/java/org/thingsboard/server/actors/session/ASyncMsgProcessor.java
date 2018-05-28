@@ -15,19 +15,26 @@
  */
 package org.thingsboard.server.actors.session;
 
+import akka.actor.ActorContext;
+import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.core.*;
+import org.thingsboard.server.common.msg.core.AttributesSubscribeMsg;
+import org.thingsboard.server.common.msg.core.ResponseMsg;
+import org.thingsboard.server.common.msg.core.RpcSubscribeMsg;
 import org.thingsboard.server.common.msg.core.SessionCloseMsg;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-import org.thingsboard.server.common.msg.session.*;
-
-import akka.actor.ActorContext;
-import akka.event.LoggingAdapter;
-import org.thingsboard.server.common.msg.session.ctrl.*;
+import org.thingsboard.server.common.msg.core.SessionOpenMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
+import org.thingsboard.server.common.msg.session.BasicSessionActorToAdaptorMsg;
+import org.thingsboard.server.common.msg.session.FromDeviceMsg;
+import org.thingsboard.server.common.msg.session.FromDeviceRequestMsg;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionType;
+import org.thingsboard.server.common.msg.session.ToDeviceMsg;
+import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ex.SessionException;
 
 import java.util.HashMap;
@@ -37,7 +44,7 @@ import java.util.Optional;
 class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
 
     private boolean firstMsg = true;
-    private Map<Integer, ToDeviceActorMsg> pendingMap = new HashMap<>();
+    private Map<Integer, DeviceToDeviceActorMsg> pendingMap = new HashMap<>();
     private Optional<ServerAddress> currentTargetServer;
     private boolean subscribedToAttributeUpdates;
     private boolean subscribedToRpcCommands;
@@ -47,14 +54,16 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     }
 
     @Override
-    protected void processToDeviceActorMsg(ActorContext ctx, ToDeviceActorSessionMsg msg) {
+    protected void processToDeviceActorMsg(ActorContext ctx, TransportToDeviceSessionActorMsg msg) {
         updateSessionCtx(msg, SessionType.ASYNC);
+        DeviceToDeviceActorMsg pendingMsg = toDeviceMsg(msg);
+        FromDeviceMsg fromDeviceMsg = pendingMsg.getPayload();
         if (firstMsg) {
-            toDeviceMsg(new SessionOpenMsg()).ifPresent(m -> forwardToAppActor(ctx, m));
+            if (fromDeviceMsg.getMsgType() != SessionMsgType.SESSION_OPEN) {
+                toDeviceMsg(new SessionOpenMsg()).ifPresent(m -> forwardToAppActor(ctx, m));
+            }
             firstMsg = false;
         }
-        ToDeviceActorMsg pendingMsg = toDeviceMsg(msg);
-        FromDeviceMsg fromDeviceMsg = pendingMsg.getPayload();
         switch (fromDeviceMsg.getMsgType()) {
             case POST_TELEMETRY_REQUEST:
             case POST_ATTRIBUTES_REQUEST:
@@ -86,8 +95,8 @@ class ASyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     @Override
     public void processToDeviceMsg(ActorContext context, ToDeviceMsg msg) {
         try {
-            if (msg.getMsgType() != MsgType.SESSION_CLOSE) {
-                switch (msg.getMsgType()) {
+            if (msg.getSessionMsgType() != SessionMsgType.SESSION_CLOSE) {
+                switch (msg.getSessionMsgType()) {
                     case STATUS_CODE_RESPONSE:
                     case GET_ATTRIBUTES_RESPONSE:
                         ResponseMsg responseMsg = (ResponseMsg) msg;

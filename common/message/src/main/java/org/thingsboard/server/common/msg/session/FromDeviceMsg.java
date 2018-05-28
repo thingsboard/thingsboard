@@ -19,6 +19,6 @@ import java.io.Serializable;
 
 public interface FromDeviceMsg extends Serializable {
 
-    MsgType getMsgType();
+    SessionMsgType getMsgType();
 
 }

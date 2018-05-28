@@ -16,6 +16,7 @@
 package org.thingsboard.server.exception;
 
 import org.springframework.http.HttpStatus;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 
 import java.util.Date;
 

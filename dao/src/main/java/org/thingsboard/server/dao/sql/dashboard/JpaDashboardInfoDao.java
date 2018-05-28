@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.dashboard;
 
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +37,6 @@ import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -86,7 +84,7 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
 
         ListenableFuture<List<EntityRelation>> relations = relationDao.findRelations(new CustomerId(customerId), EntityRelation.CONTAINS_TYPE, RelationTypeGroup.DASHBOARD, EntityType.DASHBOARD, pageLink);
 
-        return Futures.transform(relations, (AsyncFunction<List<EntityRelation>, List<DashboardInfo>>) input -> {
+        return Futures.transformAsync(relations, input -> {
             List<ListenableFuture<DashboardInfo>> dashboardFutures = new ArrayList<>(input.size());
             for (EntityRelation relation : input) {
                 dashboardFutures.add(findByIdAsync(relation.getTo().getId()));

@@ -279,28 +279,4 @@ VALUES ( now ( ), minTimeuuid ( 0 ), 'charts', 'basic_timeseries',
 '{"type":"timeseries","sizeX":8,"sizeY":5,"resources":[],"templateHtml":"","templateCss":".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n","controllerScript":"self.onInit = function() {\n    self.ctx.flot = new TbFlot(self.ctx);    \n}\n\nself.onDataUpdated = function() {\n    self.ctx.flot.update();\n}\n\nself.onResize = function() {\n    self.ctx.flot.resize();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.flot.checkMouseEvents();\n}\n\nself.onMobileModeChanged = function() {\n    self.ctx.flot.checkMouseEvents();\n}\n\nself.getSettingsSchema = function() {\n    return TbFlot.settingsSchema;\n}\n\nself.getDataKeySettingsSchema = function() {\n    return TbFlot.datakeySettingsSchema(true);\n}\n\nself.onDestroy = function() {\n    self.ctx.flot.destroy();\n}\n","settingsSchema":"{}","dataKeySettingsSchema":"{}","defaultConfig":"{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"First\",\"color\":\"#2196f3\",\"settings\":{\"showLines\":true,\"fillLines\":true,\"showPoints\":false},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Second\",\"color\":\"#ffc107\",\"settings\":{\"showLines\":true,\"fillLines\":false,\"showPoints\":false},\"_hash\":0.12775350966079668,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"shadowSize\":4,\"fontColor\":\"#545454\",\"fontSize\":10,\"xaxis\":{\"showLabels\":true,\"color\":\"#545454\"},\"yaxis\":{\"showLabels\":true,\"color\":\"#545454\"},\"grid\":{\"color\":\"#545454\",\"tickColor\":\"#DDDDDD\",\"verticalLines\":true,\"horizontalLines\":true,\"outlineWidth\":1},\"legend\":{\"show\":true,\"position\":\"nw\",\"backgroundColor\":\"#f0f0f0\",\"backgroundOpacity\":0.85,\"labelBoxBorderColor\":\"rgba(1, 1, 1, 0.45)\"},\"decimals\":1,\"stack\":false,\"tooltipIndividual\":false},\"title\":\"Timeseries - Flot\",\"dropShadow\":true,\"enableFullscreen\":true,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"mobileHeight\":null}"}',
 'Timeseries - Flot' );
 
-
-/** System plugins and rules **/
-INSERT INTO thingsboard.plugin ( id, tenant_id, name, state, search_text, api_token, plugin_class, public_access,
-configuration )
-VALUES ( minTimeuuid ( '2016-11-01 01:01:01+0000' ), minTimeuuid ( 0 ), 'System Telemetry Plugin', 'ACTIVE',
-'system telemetry plugin', 'telemetry',
-'org.thingsboard.server.extensions.core.plugin.telemetry.TelemetryStoragePlugin', true, '{}' );
-
-INSERT INTO thingsboard.rule ( id, tenant_id, name, plugin_token, state, search_text, weight, filters, processor,
-action )
-VALUES ( minTimeuuid ( '2016-11-01 01:01:02+0000' ), minTimeuuid ( 0 ), 'System Telemetry Rule', 'telemetry', 'ACTIVE',
-'system telemetry rule', 0,
-'[{"clazz":"org.thingsboard.server.extensions.core.filter.MsgTypeFilter", "name":"TelemetryFilter", "configuration": {"messageTypes":["POST_TELEMETRY","POST_ATTRIBUTES","GET_ATTRIBUTES"]}}]',
-null,
-'{"clazz":"org.thingsboard.server.extensions.core.action.telemetry.TelemetryPluginAction", "name":"TelemetryMsgConverterAction", "configuration":{}}'
-);
-
-INSERT INTO thingsboard.plugin ( id, tenant_id, name, state, search_text, api_token, plugin_class, public_access,
-configuration )
-VALUES ( minTimeuuid ( '2016-11-01 01:01:03+0000' ), minTimeuuid ( 0 ), 'System RPC Plugin', 'ACTIVE',
-'system rpc plugin', 'rpc', 'org.thingsboard.server.extensions.core.plugin.rpc.RpcPlugin', true, '{
-       "defaultTimeout": 20000
-     }' );
-
 /** SYSTEM **/

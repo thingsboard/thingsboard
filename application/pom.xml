@@ -20,10 +20,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>1.4.1-SNAPSHOT</version>
+        <version>2.0.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
-    <groupId>org.thingsboard</groupId>
     <artifactId>application</artifactId>
     <packaging>jar</packaging>
 
@@ -50,12 +49,12 @@
             <classifier>linux-x86_64</classifier>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard</groupId>
-            <artifactId>extensions-api</artifactId>
+            <groupId>org.thingsboard.rule-engine</groupId>
+            <artifactId>rule-engine-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.thingsboard</groupId>
-            <artifactId>extensions-core</artifactId>
+            <groupId>org.thingsboard.rule-engine</groupId>
+            <artifactId>rule-engine-components</artifactId>
         </dependency>
         <dependency>
             <groupId>org.thingsboard.common</groupId>
@@ -256,6 +255,10 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.javadelight</groupId>
+            <artifactId>delight-nashorn-sandbox</artifactId>
         </dependency>
     </dependencies>
 
@@ -463,48 +466,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
-                    <execution>
-                        <id>copy-extensions</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/extensions</outputDirectory>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.thingsboard.extensions</groupId>
-                                    <artifactId>extension-rabbitmq</artifactId>
-                                    <classifier>extension</classifier>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.thingsboard.extensions</groupId>
-                                    <artifactId>extension-rest-api-call</artifactId>
-                                    <classifier>extension</classifier>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.thingsboard.extensions</groupId>
-                                    <artifactId>extension-kafka</artifactId>
-                                    <classifier>extension</classifier>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.thingsboard.extensions</groupId>
-                                    <artifactId>extension-mqtt</artifactId>
-                                    <classifier>extension</classifier>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.thingsboard.extensions</groupId>
-                                    <artifactId>extension-sqs</artifactId>
-                                    <classifier>extension</classifier>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.thingsboard.extensions</groupId>
-                                    <artifactId>extension-sns</artifactId>
-                                    <classifier>extension</classifier>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>copy-winsw-service</id>
                         <phase>package</phase>

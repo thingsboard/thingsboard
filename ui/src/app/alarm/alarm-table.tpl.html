@@ -26,6 +26,13 @@
             </md-select>
         </md-input-container>
         <tb-timewindow flex ng-model="timewindow" history-only as-button="true"></tb-timewindow>
+        <md-button ng-disabled="$root.loading"
+                   class="md-icon-button" ng-click="reload()">
+            <md-icon>refresh</md-icon>
+            <md-tooltip md-direction="top">
+                {{ 'action.refresh' | translate }}
+            </md-tooltip>
+        </md-button>
     </section>
     <div flex layout="column" class="tb-alarm-container md-whiteframe-z1">
         <md-list flex layout="column" class="tb-alarm-table">

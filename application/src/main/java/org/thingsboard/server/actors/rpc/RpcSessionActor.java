@@ -23,6 +23,7 @@ import io.grpc.stub.StreamObserver;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.gen.cluster.ClusterRpcServiceGrpc;
@@ -30,6 +31,8 @@ import org.thingsboard.server.service.cluster.rpc.GrpcSession;
 import org.thingsboard.server.service.cluster.rpc.GrpcSessionListener;
 
 import java.util.UUID;
+
+import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CONNECT_RPC_MESSAGE;
 
 /**
  * @author Andrew Shvayka
@@ -48,16 +51,22 @@ public class RpcSessionActor extends ContextAwareActor {
     }
 
     @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg
+        return false;
+    }
+
+    @Override
     public void onReceive(Object msg) throws Exception {
-        if (msg instanceof RpcSessionTellMsg) {
-            tell((RpcSessionTellMsg) msg);
+        if (msg instanceof ClusterAPIProtos.ClusterMessage) {
+            tell((ClusterAPIProtos.ClusterMessage) msg);
         } else if (msg instanceof RpcSessionCreateRequestMsg) {
             initSession((RpcSessionCreateRequestMsg) msg);
         }
     }
 
-    private void tell(RpcSessionTellMsg msg) {
-        session.sendMsg(msg.getMsg());
+    private void tell(ClusterAPIProtos.ClusterMessage msg) {
+        session.sendMsg(msg);
     }
 
     @Override
@@ -69,7 +78,7 @@ public class RpcSessionActor extends ContextAwareActor {
     private void initSession(RpcSessionCreateRequestMsg msg) {
         log.info("[{}] Initializing session", context().self());
         ServerAddress remoteServer = msg.getRemoteAddress();
-        listener = new BasicRpcSessionListener(systemContext, context().parent(), context().self());
+        listener = new BasicRpcSessionListener(systemContext.getActorService(), context().parent(), context().self());
         if (msg.getRemoteAddress() == null) {
             // Server session
             session = new GrpcSession(listener);
@@ -84,7 +93,7 @@ public class RpcSessionActor extends ContextAwareActor {
             session.initInputStream();
 
             ClusterRpcServiceGrpc.ClusterRpcServiceStub stub = ClusterRpcServiceGrpc.newStub(channel);
-            StreamObserver<ClusterAPIProtos.ToRpcServerMessage> outputStream = stub.handlePluginMsgs(session.getInputStream());
+            StreamObserver<ClusterAPIProtos.ClusterMessage> outputStream = stub.handleMsgs(session.getInputStream());
 
             session.setOutputStream(outputStream);
             session.initOutputStream();
@@ -108,11 +117,10 @@ public class RpcSessionActor extends ContextAwareActor {
         }
     }
 
-    private ClusterAPIProtos.ToRpcServerMessage toConnectMsg() {
+    private ClusterAPIProtos.ClusterMessage toConnectMsg() {
         ServerAddress instance = systemContext.getDiscoveryService().getCurrentServer().getServerAddress();
-        return ClusterAPIProtos.ToRpcServerMessage.newBuilder().setConnectMsg(
-                ClusterAPIProtos.ConnectRpcMessage.newBuilder().setServerAddress(
-                        ClusterAPIProtos.ServerAddress.newBuilder().setHost(instance.getHost()).setPort(instance.getPort()).build()).build()).build();
-
+        return ClusterAPIProtos.ClusterMessage.newBuilder().setMessageType(CONNECT_RPC_MESSAGE).setServerAddress(
+                ClusterAPIProtos.ServerAddress.newBuilder().setHost(instance.getHost())
+                        .setPort(instance.getPort()).build()).build();
     }
 }

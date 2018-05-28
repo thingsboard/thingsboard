@@ -23,12 +23,17 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.discovery.ServerInstance;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.UUID;
 
 /**
  * @author Andrew Shvayka
@@ -39,7 +44,7 @@ public class RpcManagerActor extends ContextAwareActor {
 
     private final Map<ServerAddress, SessionActorInfo> sessionActors;
 
-    private final Map<ServerAddress, Queue<ClusterAPIProtos.ToRpcServerMessage>> pendingMsgs;
+    private final Map<ServerAddress, Queue<ClusterAPIProtos.ClusterMessage>> pendingMsgs;
 
     private final ServerAddress instance;
 
@@ -57,9 +62,15 @@ public class RpcManagerActor extends ContextAwareActor {
     }
 
     @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg
+        return false;
+    }
+
+    @Override
     public void onReceive(Object msg) throws Exception {
-        if (msg instanceof RpcSessionTellMsg) {
-            onMsg((RpcSessionTellMsg) msg);
+        if (msg instanceof ClusterAPIProtos.ClusterMessage) {
+            onMsg((ClusterAPIProtos.ClusterMessage) msg);
         } else if (msg instanceof RpcBroadcastMsg) {
             onMsg((RpcBroadcastMsg) msg);
         } else if (msg instanceof RpcSessionCreateRequestMsg) {
@@ -77,24 +88,30 @@ public class RpcManagerActor extends ContextAwareActor {
 
     private void onMsg(RpcBroadcastMsg msg) {
         log.debug("Forwarding msg to session actors {}", msg);
-        sessionActors.keySet().forEach(address -> onMsg(new RpcSessionTellMsg(address, msg.getMsg())));
+        sessionActors.keySet().forEach(address -> onMsg(msg.getMsg()));
         pendingMsgs.values().forEach(queue -> queue.add(msg.getMsg()));
     }
 
-    private void onMsg(RpcSessionTellMsg msg) {
-        ServerAddress address = msg.getServerAddress();
-        SessionActorInfo session = sessionActors.get(address);
-        if (session != null) {
-            log.debug("{} Forwarding msg to session actor", address);
-            session.actor.tell(msg, ActorRef.noSender());
-        } else {
-            log.debug("{} Storing msg to pending queue", address);
-            Queue<ClusterAPIProtos.ToRpcServerMessage> queue = pendingMsgs.get(address);
-            if (queue == null) {
-                queue = new LinkedList<>();
-                pendingMsgs.put(address, queue);
+    private void onMsg(ClusterAPIProtos.ClusterMessage msg) {
+        if (msg.hasServerAddress()) {
+            ServerAddress address = new ServerAddress(msg.getServerAddress().getHost(),
+                    msg.getServerAddress().getPort());
+            SessionActorInfo session = sessionActors.get(address);
+            if (session != null) {
+                log.debug("{} Forwarding msg to session actor", address);
+                session.getActor().tell(msg, ActorRef.noSender());
+            } else {
+                log.debug("{} Storing msg to pending queue", address);
+                Queue<ClusterAPIProtos.ClusterMessage> queue = pendingMsgs.get(address);
+                if (queue == null) {
+                    queue = new LinkedList<>();
+                    pendingMsgs.put(new ServerAddress(
+                            msg.getServerAddress().getHost(), msg.getServerAddress().getPort()), queue);
+                }
+                queue.add(msg);
             }
-            queue.add(msg.getMsg());
+        } else {
+            logger.warning("Cluster msg doesn't have set Server Address [{}]", msg);
         }
     }
 
@@ -141,7 +158,7 @@ public class RpcManagerActor extends ContextAwareActor {
     private void onSessionClose(boolean reconnect, ServerAddress remoteAddress) {
         log.debug("[{}] session closed. Should reconnect: {}", remoteAddress, reconnect);
         SessionActorInfo sessionRef = sessionActors.get(remoteAddress);
-        if (context().sender().equals(sessionRef.actor)) {
+        if (context().sender() != null && context().sender().equals(sessionRef.actor)) {
             sessionActors.remove(remoteAddress);
             pendingMsgs.remove(remoteAddress);
             if (reconnect) {
@@ -160,10 +177,10 @@ public class RpcManagerActor extends ContextAwareActor {
     private void register(ServerAddress remoteAddress, UUID uuid, ActorRef sender) {
         sessionActors.put(remoteAddress, new SessionActorInfo(uuid, sender));
         log.debug("[{}][{}] Registering session actor.", remoteAddress, uuid);
-        Queue<ClusterAPIProtos.ToRpcServerMessage> data = pendingMsgs.remove(remoteAddress);
+        Queue<ClusterAPIProtos.ClusterMessage> data = pendingMsgs.remove(remoteAddress);
         if (data != null) {
             log.debug("[{}][{}] Forwarding {} pending messages.", remoteAddress, uuid, data.size());
-            data.forEach(msg -> sender.tell(new RpcSessionTellMsg(remoteAddress, msg), ActorRef.noSender()));
+            data.forEach(msg -> sender.tell(new RpcSessionTellMsg(msg), ActorRef.noSender()));
         } else {
             log.debug("[{}][{}] No pending messages to forward.", remoteAddress, uuid);
         }

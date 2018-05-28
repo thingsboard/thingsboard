@@ -17,7 +17,8 @@ package org.thingsboard.server.common.msg.core;
 
 import lombok.ToString;
 import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
 
 @ToString
@@ -30,9 +31,8 @@ public class SessionCloseNotification implements ToDeviceMsg {
         return true;
     }
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.SESSION_CLOSE;
+    public SessionMsgType getSessionMsgType() {
+        return SessionMsgType.SESSION_CLOSE;
     }
 
 }

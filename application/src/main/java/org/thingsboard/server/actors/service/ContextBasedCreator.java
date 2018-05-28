@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.actors.service;
 
-import org.thingsboard.server.actors.ActorSystemContext;
-
 import akka.japi.Creator;
+import org.thingsboard.server.actors.ActorSystemContext;
 
 public abstract class ContextBasedCreator<T> implements Creator<T> {
 

@@ -42,7 +42,7 @@ export default function AlarmTableDirective($compile, $templateCache, $rootScope
             history: {
                 timewindowMs: 24 * 60 * 60 * 1000 // 1 day
             }
-        }
+        };
 
         scope.topIndex = 0;
 
@@ -97,6 +97,8 @@ export default function AlarmTableDirective($compile, $templateCache, $rootScope
                 }
             }
         };
+
+        scope.reload = reload;
 
         scope.$watch("entityId", function(newVal, prevVal) {
             if (newVal && !angular.equals(newVal, prevVal)) {

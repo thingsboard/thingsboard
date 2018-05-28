@@ -15,24 +15,26 @@
  */
 package org.thingsboard.server.actors.session;
 
+import akka.actor.ActorContext;
+import akka.event.LoggingAdapter;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.shared.SessionTimeoutMsg;
 import org.thingsboard.server.common.data.id.SessionId;
 import org.thingsboard.server.common.msg.cluster.ClusterEventMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
-import org.thingsboard.server.common.msg.device.ToDeviceActorMsg;
-import org.thingsboard.server.common.msg.session.*;
-import org.thingsboard.server.common.msg.session.ToDeviceActorSessionMsg;
+import org.thingsboard.server.common.msg.device.DeviceToDeviceActorMsg;
+import org.thingsboard.server.common.msg.session.BasicSessionActorToAdaptorMsg;
+import org.thingsboard.server.common.msg.session.SessionContext;
+import org.thingsboard.server.common.msg.session.SessionType;
+import org.thingsboard.server.common.msg.session.ToDeviceMsg;
+import org.thingsboard.server.common.msg.session.TransportToDeviceSessionActorMsg;
 import org.thingsboard.server.common.msg.session.ctrl.SessionCloseMsg;
 import org.thingsboard.server.common.msg.session.ex.SessionException;
-
-import akka.actor.ActorContext;
-import akka.event.LoggingAdapter;
 
 import java.util.Optional;
 
 class SyncMsgProcessor extends AbstractSessionActorMsgProcessor {
-    private ToDeviceActorMsg pendingMsg;
+    private DeviceToDeviceActorMsg pendingMsg;
     private Optional<ServerAddress> currentTargetServer;
     private boolean pendingResponse;
 
@@ -41,7 +43,7 @@ class SyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     }
 
     @Override
-    protected void processToDeviceActorMsg(ActorContext ctx, ToDeviceActorSessionMsg msg) {
+    protected void processToDeviceActorMsg(ActorContext ctx, TransportToDeviceSessionActorMsg msg) {
         updateSessionCtx(msg, SessionType.SYNC);
         pendingMsg = toDeviceMsg(msg);
         pendingResponse = true;
@@ -73,7 +75,7 @@ class SyncMsgProcessor extends AbstractSessionActorMsgProcessor {
     @Override
     public void processClusterEvent(ActorContext context, ClusterEventMsg msg) {
         if (pendingResponse) {
-            Optional<ServerAddress> newTargetServer = forwardToAppActorIfAdressChanged(context, pendingMsg, currentTargetServer);
+            Optional<ServerAddress> newTargetServer = forwardToAppActorIfAddressChanged(context, pendingMsg, currentTargetServer);
             if (logger.isDebugEnabled()) {
                 if (!newTargetServer.equals(currentTargetServer)) {
                     if (newTargetServer.isPresent()) {

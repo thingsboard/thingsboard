@@ -15,15 +15,21 @@
  */
 package org.thingsboard.server.common.msg.core;
 
+import lombok.Data;
+import org.thingsboard.server.common.data.id.SessionId;
+import org.thingsboard.server.common.msg.aware.SessionAwareMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 /**
  * @author Andrew Shvayka
  */
+@Data
 public class SessionOpenMsg implements FromDeviceMsg {
+
     @Override
-    public MsgType getMsgType() {
-        return MsgType.SESSION_OPEN;
+    public SessionMsgType getMsgType() {
+        return SessionMsgType.SESSION_OPEN;
     }
 }

@@ -131,17 +131,11 @@ export default function EntityAutocomplete($compile, $templateCache, $q, $filter
                     scope.noEntitiesMatchingText = 'device.no-devices-matching';
                     scope.entityRequiredText = 'device.device-required';
                     break;
-                case types.entityType.rule:
-                    scope.selectEntityText = 'rule.select-rule';
-                    scope.entityText = 'rule.rule';
-                    scope.noEntitiesMatchingText = 'rule.no-rules-matching';
-                    scope.entityRequiredText = 'rule.rule-required';
-                    break;
-                case types.entityType.plugin:
-                    scope.selectEntityText = 'plugin.select-plugin';
-                    scope.entityText = 'plugin.plugin';
-                    scope.noEntitiesMatchingText = 'plugin.no-plugins-matching';
-                    scope.entityRequiredText = 'plugin.plugin-required';
+                case types.entityType.rulechain:
+                    scope.selectEntityText = 'rulechain.select-rulechain';
+                    scope.entityText = 'rulechain.rulechain';
+                    scope.noEntitiesMatchingText = 'rulechain.no-rulechains-matching';
+                    scope.entityRequiredText = 'rulechain.rulechain-required';
                     break;
                 case types.entityType.tenant:
                     scope.selectEntityText = 'tenant.select-tenant';

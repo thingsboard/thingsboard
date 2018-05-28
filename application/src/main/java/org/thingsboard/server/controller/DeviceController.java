@@ -18,14 +18,22 @@ package org.thingsboard.server.controller;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,8 +43,6 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.exception.ThingsboardErrorCode;
-import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
@@ -90,6 +96,11 @@ public class DeviceController extends BaseController {
                     savedDevice.getCustomerId(),
                     device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
 
+            if (device.getId() == null) {
+                deviceStateService.onDeviceAdded(savedDevice);
+            } else {
+                deviceStateService.onDeviceUpdated(savedDevice);
+            }
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
@@ -112,6 +123,7 @@ public class DeviceController extends BaseController {
                     device.getCustomerId(),
                     ActionType.DELETED, null, strDeviceId);
 
+            deviceStateService.onDeviceDeleted(device);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE),
                     null,

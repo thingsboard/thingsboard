@@ -59,4 +59,14 @@ md-sidenav.tb-sidenav-details {
       background-color: $primary-hue-3;
     }
   }
+
+  md-tab-content.md-active > div {
+    height: 100%;
+    & > *:first-child {
+      height: 100%;
+    }
+    md-content {
+      height: 100%;
+    }
+  }
 }

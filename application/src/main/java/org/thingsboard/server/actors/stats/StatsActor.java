@@ -24,6 +24,7 @@ import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 
 public class StatsActor extends ContextAwareActor {
@@ -33,6 +34,12 @@ public class StatsActor extends ContextAwareActor {
 
     public StatsActor(ActorSystemContext context) {
         super(context);
+    }
+
+    @Override
+    protected boolean process(TbActorMsg msg) {
+        //TODO Move everything here, to work with TbActorMsg\
+        return false;
     }
 
     @Override

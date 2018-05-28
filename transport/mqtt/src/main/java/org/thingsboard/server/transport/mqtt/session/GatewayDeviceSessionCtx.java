@@ -80,13 +80,13 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
 
     private Optional<MqttMessage> getToDeviceMsg(SessionActorToAdaptorMsg sessionMsg) {
         ToDeviceMsg msg = sessionMsg.getMsg();
-        switch (msg.getMsgType()) {
+        switch (msg.getSessionMsgType()) {
             case STATUS_CODE_RESPONSE:
                 ResponseMsg<?> responseMsg = (ResponseMsg) msg;
                 if (responseMsg.isSuccess()) {
-                    MsgType requestMsgType = responseMsg.getRequestMsgType();
+                    SessionMsgType requestMsgType = responseMsg.getRequestMsgType();
                     Integer requestId = responseMsg.getRequestId();
-                    if (requestId >= 0 && requestMsgType == MsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == MsgType.POST_TELEMETRY_REQUEST) {
+                    if (requestId >= 0 && requestMsgType == SessionMsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == SessionMsgType.POST_TELEMETRY_REQUEST) {
                         return Optional.of(MqttTransportHandler.createMqttPubAckMsg(requestId));
                     }
                 }

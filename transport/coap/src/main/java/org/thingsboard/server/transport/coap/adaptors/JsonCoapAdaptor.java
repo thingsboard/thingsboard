@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.kv.AttributesKVMsg;
 import org.thingsboard.server.common.msg.session.AdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.BasicAdaptorToSessionActorMsg;
 import org.thingsboard.server.common.msg.session.FromDeviceMsg;
-import org.thingsboard.server.common.msg.session.MsgType;
+import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.msg.session.SessionActorToAdaptorMsg;
 import org.thingsboard.server.common.msg.session.SessionContext;
 import org.thingsboard.server.common.msg.session.ToDeviceMsg;
@@ -48,7 +48,7 @@ import org.thingsboard.server.transport.coap.session.CoapSessionCtx;
 public class JsonCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
-    public AdaptorToSessionActorMsg convertToActorMsg(CoapSessionCtx ctx, MsgType type, Request inbound) throws AdaptorException {
+    public AdaptorToSessionActorMsg convertToActorMsg(CoapSessionCtx ctx, SessionMsgType type, Request inbound) throws AdaptorException {
         FromDeviceMsg msg = null;
         switch (type) {
             case POST_TELEMETRY_REQUEST:
@@ -104,7 +104,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     @Override
     public Optional<Response> convertToAdaptorMsg(CoapSessionCtx ctx, SessionActorToAdaptorMsg source) throws AdaptorException {
         ToDeviceMsg msg = source.getMsg();
-        switch (msg.getMsgType()) {
+        switch (msg.getSessionMsgType()) {
             case STATUS_CODE_RESPONSE:
             case TO_DEVICE_RPC_RESPONSE_ACK:
                 return Optional.of(convertStatusCodeResponse((StatusCodeResponse) msg));
@@ -119,19 +119,19 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
             case RULE_ENGINE_ERROR:
                 return Optional.of(convertToRuleEngineErrorResponse(ctx, (RuleEngineErrorMsg) msg));
             default:
-                log.warn("[{}] Unsupported msg type: {}!", source.getSessionId(), msg.getMsgType());
-                throw new AdaptorException(new IllegalArgumentException("Unsupported msg type: " + msg.getMsgType() + "!"));
+                log.warn("[{}] Unsupported msg type: {}!", source.getSessionId(), msg.getSessionMsgType());
+                throw new AdaptorException(new IllegalArgumentException("Unsupported msg type: " + msg.getSessionMsgType() + "!"));
         }
     }
 
     private Response convertToRuleEngineErrorResponse(CoapSessionCtx ctx, RuleEngineErrorMsg msg) {
         ResponseCode status = ResponseCode.INTERNAL_SERVER_ERROR;
         switch (msg.getError()) {
-            case PLUGIN_TIMEOUT:
+            case QUEUE_PUT_TIMEOUT:
                 status = ResponseCode.GATEWAY_TIMEOUT;
                 break;
             default:
-                if (msg.getInMsgType() == MsgType.TO_SERVER_RPC_REQUEST) {
+                if (msg.getInSessionMsgType() == SessionMsgType.TO_SERVER_RPC_REQUEST) {
                     status = ResponseCode.BAD_REQUEST;
                 }
                 break;
@@ -156,7 +156,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         return response;
     }
 
-    private UpdateAttributesRequest convertToUpdateAttributesRequest(SessionContext ctx, Request inbound) throws AdaptorException {
+    private AttributesUpdateRequest convertToUpdateAttributesRequest(SessionContext ctx, Request inbound) throws AdaptorException {
         String payload = validatePayload(ctx, inbound);
         try {
             return JsonConverter.convertToAttributes(new JsonParser().parse(payload));

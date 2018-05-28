@@ -29,8 +29,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.in;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_ALIAS_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_BY_TENANT_AND_ALIAS_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY;
 
 @Component
 @Slf4j

@@ -31,7 +31,11 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Table;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromString;
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;

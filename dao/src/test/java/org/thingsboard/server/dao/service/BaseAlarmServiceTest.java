@@ -21,7 +21,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.alarm.*;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TimePageData;
@@ -168,7 +172,7 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
 
-        alarmService.clearAlarm(created.getId(), System.currentTimeMillis()).get();
+        alarmService.clearAlarm(created.getId(), null, System.currentTimeMillis()).get();
         created = alarmService.findAlarmByIdAsync(created.getId()).get();
 
         alarms = alarmService.findAlarms(AlarmQuery.builder()

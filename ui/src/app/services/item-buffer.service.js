@@ -24,10 +24,11 @@ export default angular.module('thingsboard.itembuffer', [angularStorage])
     .name;
 
 /*@ngInject*/
-function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
+function ItemBuffer($q, bufferStore, types, utils, dashboardUtils, ruleChainService) {
 
     const WIDGET_ITEM = "widget_item";
     const WIDGET_REFERENCE = "widget_reference";
+    const RULE_NODES = "rule_nodes";
 
     var service = {
         prepareWidgetItem: prepareWidgetItem,
@@ -37,7 +38,10 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
         canPasteWidgetReference: canPasteWidgetReference,
         pasteWidget: pasteWidget,
         pasteWidgetReference: pasteWidgetReference,
-        addWidgetToDashboard: addWidgetToDashboard
+        addWidgetToDashboard: addWidgetToDashboard,
+        copyRuleNodes: copyRuleNodes,
+        hasRuleNodes: hasRuleNodes,
+        pasteRuleNodes: pasteRuleNodes
     }
 
     return service;
@@ -149,6 +153,81 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils) {
             originalSize: originalSize,
             originalColumns: originalColumns
         };
+    }
+
+    function copyRuleNodes(nodes, connections) {
+        var ruleNodes = {
+            nodes: [],
+            connections: []
+        };
+        var top = -1, left = -1, bottom = -1, right = -1;
+        for (var i=0;i<nodes.length;i++) {
+            var origNode = nodes[i];
+            var node = {
+                additionalInfo: origNode.additionalInfo,
+                configuration: origNode.configuration,
+                debugMode: origNode.debugMode,
+                x: origNode.x,
+                y: origNode.y,
+                name: origNode.name,
+                componentClazz: origNode.component.clazz,
+            };
+            if (origNode.targetRuleChainId) {
+                node.targetRuleChainId = origNode.targetRuleChainId;
+            }
+            if (origNode.error) {
+                node.error = origNode.error;
+            }
+            ruleNodes.nodes.push(node);
+            if (i==0) {
+                top = node.y;
+                left = node.x;
+                bottom = node.y + 50;
+                right = node.x + 170;
+            } else {
+                top = Math.min(top, node.y);
+                left = Math.min(left, node.x);
+                bottom = Math.max(bottom, node.y + 50);
+                right = Math.max(right, node.x + 170);
+            }
+        }
+        ruleNodes.originX = left + (right-left)/2;
+        ruleNodes.originY = top + (bottom-top)/2;
+        for (i=0;i<connections.length;i++) {
+            var connection = connections[i];
+            ruleNodes.connections.push(connection);
+        }
+        bufferStore.set(RULE_NODES, angular.toJson(ruleNodes));
+    }
+
+    function hasRuleNodes() {
+        return bufferStore.get(RULE_NODES);
+    }
+
+    function pasteRuleNodes(x, y) {
+        var ruleNodesJson = bufferStore.get(RULE_NODES);
+        if (ruleNodesJson) {
+            var ruleNodes = angular.fromJson(ruleNodesJson);
+            var deltaX = x - ruleNodes.originX;
+            var deltaY = y - ruleNodes.originY;
+            for (var i=0;i<ruleNodes.nodes.length;i++) {
+                var node = ruleNodes.nodes[i];
+                var component = ruleChainService.getRuleNodeComponentByClazz(node.componentClazz);
+                if (component) {
+                    delete node.componentClazz;
+                    node.component = component;
+                    node.nodeClass = types.ruleNodeType[component.type].nodeClass;
+                    node.icon = types.ruleNodeType[component.type].icon;
+                    node.connectors = [];
+                    node.x = Math.round(node.x + deltaX);
+                    node.y = Math.round(node.y + deltaY);
+                } else {
+                    return null;
+                }
+            }
+            return ruleNodes;
+        }
+        return null;
     }
 
     function copyWidget(dashboard, sourceState, sourceLayout, widget) {

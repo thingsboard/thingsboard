@@ -22,11 +22,17 @@ import thingsboardToast from '../services/toast';
 import thingsboardUtils from '../common/utils.service';
 import thingsboardExpandFullscreen from './expand-fullscreen.directive';
 
+import fixAceEditor from './ace-editor-fix';
+
 /* eslint-disable import/no-unresolved, import/default */
 
 import jsFuncTemplate from './js-func.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
+
+import beautify from 'js-beautify';
+
+const js_beautify = beautify.js;
 
 /* eslint-disable angular/angularelement */
 
@@ -41,12 +47,15 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
         var template = $templateCache.get(jsFuncTemplate);
         element.html(template);
 
+        scope.functionName = attrs.functionName;
         scope.functionArgs = scope.$eval(attrs.functionArgs);
         scope.validationArgs = scope.$eval(attrs.validationArgs);
         scope.resultType = attrs.resultType;
         if (!scope.resultType || scope.resultType.length === 0) {
             scope.resultType = "nocheck";
         }
+
+        scope.validationTriggerArg = attrs.validationTriggerArg;
 
         scope.functionValid = true;
 
@@ -56,7 +65,7 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
 
 
         scope.functionArgsString = '';
-        for (var i in scope.functionArgs) {
+        for (var i = 0; i < scope.functionArgs.length; i++) {
             if (scope.functionArgsString.length > 0) {
                 scope.functionArgsString += ', ';
             }
@@ -64,11 +73,20 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
         }
 
         scope.onFullscreenChanged = function () {
+            updateEditorSize();
+        };
+
+        scope.beautifyJs = function () {
+            var res = js_beautify(scope.functionBody, {indent_size: 4, wrap_line_length: 60});
+            scope.functionBody = res;
+        };
+
+        function updateEditorSize() {
             if (scope.js_editor) {
                 scope.js_editor.resize();
                 scope.js_editor.renderer.updateFull();
             }
-        };
+        }
 
         scope.jsEditorOptions = {
             useWrapMode: true,
@@ -83,6 +101,7 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
                 scope.js_editor.session.on("change", function () {
                     scope.cleanupJsErrors();
                 });
+                fixAceEditor(_ace);
             }
         };
 
@@ -128,6 +147,9 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
         scope.validate = function () {
             try {
                 var toValidate = new Function(scope.functionArgsString, scope.functionBody);
+                if (scope.noValidate) {
+                    return true;
+                }
                 var res;
                 var validationError;
                 for (var i=0;i<scope.validationArgs.length;i++) {
@@ -197,9 +219,19 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
             }
         };
 
-        scope.$on('form-submit', function () {
-            scope.functionValid = scope.validate();
-            scope.updateValidity();
+        scope.$on('form-submit', function (event, args) {
+            if (!args || scope.validationTriggerArg && scope.validationTriggerArg == args) {
+                scope.validationArgs = scope.$eval(attrs.validationArgs);
+                scope.cleanupJsErrors();
+                scope.functionValid = true;
+                scope.updateValidity();
+                scope.functionValid = scope.validate();
+                scope.updateValidity();
+            }
+        });
+
+        scope.$on('update-ace-editor-size', function () {
+            updateEditorSize();
         });
 
         $compile(element.contents())(scope);
@@ -208,7 +240,11 @@ function JsFunc($compile, $templateCache, toast, utils, $translate) {
     return {
         restrict: "E",
         require: "^ngModel",
-        scope: {},
+        scope: {
+            disabled:'=ngDisabled',
+            noValidate: '=?',
+            fillHeight:'=?'
+        },
         link: linker
     };
 }
