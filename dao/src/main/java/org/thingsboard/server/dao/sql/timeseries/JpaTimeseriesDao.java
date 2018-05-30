@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -309,6 +308,11 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
     public ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query) {
         //TODO: implement
         return null;
+    }
+
+    @Override
+    public ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query) {
+        return insertService.submit(() -> null);
     }
 
     @PreDestroy

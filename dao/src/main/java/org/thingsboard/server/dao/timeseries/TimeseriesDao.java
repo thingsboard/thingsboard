@@ -42,4 +42,6 @@ public interface TimeseriesDao {
     ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query);
 
     ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query);
+
+    ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query);
 }

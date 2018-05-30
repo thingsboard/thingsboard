@@ -40,7 +40,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class BaseTimeseriesService implements TimeseriesService {
 
     public static final int INSERTS_PER_ENTRY = 3;
-    public static final int DELETES_PER_ENTRY = 2;
+    public static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
 
     @Autowired
     private TimeseriesDao timeseriesDao;
@@ -110,6 +110,7 @@ public class BaseTimeseriesService implements TimeseriesService {
     private void deleteAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvQuery query) {
         futures.add(timeseriesDao.remove(entityId, query));
         futures.add(timeseriesDao.removeLatest(entityId, query));
+        futures.add(timeseriesDao.removePartition(entityId, query));
     }
 
     private static void validate(EntityId entityId) {
