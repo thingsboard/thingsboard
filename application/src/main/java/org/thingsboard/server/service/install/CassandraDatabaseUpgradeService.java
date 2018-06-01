@@ -211,7 +211,13 @@ public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
 
     private void loadCql(Path cql) throws Exception {
         List<String> statements = new CQLStatementsParser(cql).getStatements();
-        statements.forEach(statement -> installCluster.getSession().execute(statement));
+        statements.forEach(statement -> {
+            installCluster.getSession().execute(statement);
+            try {
+                Thread.sleep(2500);
+            } catch (InterruptedException e) {}
+        });
+        Thread.sleep(5000);
     }
 
 }
