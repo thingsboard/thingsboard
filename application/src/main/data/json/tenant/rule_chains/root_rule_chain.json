@@ -77,7 +77,7 @@
         },
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
         "name": "Test",
-        "debugMode": true,
+        "debugMode": false,
         "configuration": {
           "timeoutInSeconds": 60
         }
