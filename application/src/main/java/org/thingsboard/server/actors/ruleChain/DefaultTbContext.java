@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
@@ -167,6 +168,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public TenantService getTenantService() {
+        return mainCtx.getTenantService();
+    }
+
+    @Override
     public UserService getUserService() {
         return mainCtx.getUserService();
     }
@@ -225,9 +231,12 @@ class DefaultTbContext implements TbContext {
 
             @Override
             public void sendRpcRequest(RuleEngineDeviceRpcRequest src, Consumer<RuleEngineDeviceRpcResponse> consumer) {
-                ToDeviceRpcRequest request = new ToDeviceRpcRequest(UUIDs.timeBased(), nodeCtx.getTenantId(), src.getDeviceId(),
-                        src.isOneway(), System.currentTimeMillis() + src.getTimeout(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
+                ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), nodeCtx.getTenantId(), src.getDeviceId(),
+                        src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
                 mainCtx.getDeviceRpcService().processRpcRequestToDevice(request, response -> {
+                    if (src.isRestApiCall()) {
+                        mainCtx.getDeviceRpcService().processRestAPIRpcResponseFromRuleEngine(response);
+                    }
                     consumer.accept(RuleEngineDeviceRpcResponse.builder()
                             .deviceId(src.getDeviceId())
                             .requestId(src.getRequestId())

@@ -19,6 +19,8 @@ import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 
+import java.util.UUID;
+
 /**
  * Created by ashvayka on 02.04.18.
  */
@@ -28,9 +30,11 @@ public final class RuleEngineDeviceRpcRequest {
 
     private final DeviceId deviceId;
     private final int requestId;
+    private final UUID requestUUID;
     private final boolean oneway;
     private final String method;
     private final String body;
-    private final long timeout;
+    private final long expirationTime;
+    private final boolean restApiCall;
 
 }

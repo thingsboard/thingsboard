@@ -69,6 +69,18 @@
         "configuration": {
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
         }
+      },
+      {
+        "additionalInfo": {
+          "layoutX": 825,
+          "layoutY": 468
+        },
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
+        "name": "Test",
+        "debugMode": true,
+        "configuration": {
+          "timeoutInSeconds": 60
+        }
       }
     ],
     "connections": [
@@ -91,6 +103,11 @@
         "fromIndex": 2,
         "toIndex": 3,
         "type": "RPC Request"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 5,
+        "type": "RPC Request to Device"
       }
     ],
     "ruleChainConnections": null

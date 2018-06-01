@@ -9,6 +9,7 @@
     <env name="SQL_DATA_FOLDER" value="%BASE%\data\sql" />
     <executable>java</executable>
     <startargument>-Dplatform=windows</startargument>
+    <startargument>-Dinstall.data_dir=%BASE%\data</startargument>
     <startargument>-jar</startargument>
     <startargument>%BASE%\lib\${pkg.name}.jar</startargument>
 </service>
