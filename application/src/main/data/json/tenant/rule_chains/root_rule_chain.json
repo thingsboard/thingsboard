@@ -16,7 +16,7 @@
           "layoutY": 156
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
-        "name": "SaveTS",
+        "name": "Save Timeseries",
         "debugMode": false,
         "configuration": {
           "defaultTTL": 0
@@ -28,7 +28,7 @@
           "layoutY": 52
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
-        "name": "save client attributes",
+        "name": "Save Client Attributes",
         "debugMode": false,
         "configuration": {
           "scope": "CLIENT_SCOPE"
@@ -52,7 +52,7 @@
           "layoutY": 266
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
-        "name": "Log RPC",
+        "name": "Log RPC from Device",
         "debugMode": false,
         "configuration": {
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
@@ -76,7 +76,7 @@
           "layoutY": 468
         },
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
-        "name": "Test",
+        "name": "RPC Call Request",
         "debugMode": false,
         "configuration": {
           "timeoutInSeconds": 60
@@ -102,7 +102,7 @@
       {
         "fromIndex": 2,
         "toIndex": 3,
-        "type": "RPC Request"
+        "type": "RPC Request from Device"
       },
       {
         "fromIndex": 2,
