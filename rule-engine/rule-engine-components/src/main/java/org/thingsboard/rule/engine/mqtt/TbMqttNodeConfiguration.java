@@ -30,6 +30,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
     private int connectTimeoutSec;
     private String clientId;
 
+    private boolean cleanSession;
     private boolean ssl;
     private MqttClientCredentials credentials;
 
@@ -40,6 +41,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
         configuration.setHost("localhost");
         configuration.setPort(1883);
         configuration.setConnectTimeoutSec(10);
+        configuration.setCleanSession(true);
         configuration.setSsl(false);
         configuration.setCredentials(new AnonymousCredentials());
         return configuration;
