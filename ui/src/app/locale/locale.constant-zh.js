@@ -1196,7 +1196,7 @@ export default function addLocaleChinese(locales) {
 		"custom-link-label-required": "自定义链接标签必填",
 		"type-filter": "滤波器",
 		"type-filter-details": "使用配置条件过滤传入消息",
-		"type-enrichment": "丰富",
+		"type-enrichment": "改进",
 		"type-enrichment-details": "向消息元数据中添加附加信息",
 		"type-transformation": "变换",
 		"type-transformation-details": "更改消息有效载荷和元数据",
