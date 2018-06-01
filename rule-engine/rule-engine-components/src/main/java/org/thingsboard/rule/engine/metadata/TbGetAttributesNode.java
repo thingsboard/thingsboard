@@ -48,7 +48,7 @@ public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttrib
     }
 
     @Override
-    protected ListenableFuture<EntityId> findEntityAsync(TbContext ctx, EntityId originator) {
+    protected ListenableFuture<EntityId> findEntityIdAsync(TbContext ctx, EntityId originator) {
         return Futures.immediateFuture(originator);
     }
 }
