@@ -38,25 +38,25 @@ public class EntitiesFieldsAsyncLoader {
         switch (original.getEntityType()) {
             case TENANT:
                 return getAsync(ctx.getTenantService().findTenantByIdAsync((TenantId) original),
-                        t -> new EntityFieldsData(t.getId(), t.getName()));
+                        t -> new EntityFieldsData(t));
             case CUSTOMER:
                 return getAsync(ctx.getCustomerService().findCustomerByIdAsync((CustomerId) original),
-                        t -> new EntityFieldsData(t.getId(), t.getName()));
+                        t -> new EntityFieldsData(t));
             case USER:
                 return getAsync(ctx.getUserService().findUserByIdAsync((UserId) original),
-                        t -> new EntityFieldsData(t.getId(), t.getName()));
+                        t -> new EntityFieldsData(t));
             case ASSET:
                 return getAsync(ctx.getAssetService().findAssetByIdAsync((AssetId) original),
-                        t -> new EntityFieldsData(t.getId(), t.getName(), t.getType()));
+                        t -> new EntityFieldsData(t));
             case DEVICE:
                 return getAsync(ctx.getDeviceService().findDeviceByIdAsync((DeviceId) original),
-                        t -> new EntityFieldsData(t.getId(), t.getName(), t.getType()));
+                        t -> new EntityFieldsData(t));
             case ALARM:
                 return getAsync(ctx.getAlarmService().findAlarmByIdAsync((AlarmId) original),
-                        t -> new EntityFieldsData(t.getId(), t.getName(), t.getType()));
+                        t -> new EntityFieldsData(t));
             case RULE_CHAIN:
                 return getAsync(ctx.getRuleChainService().findRuleChainByIdAsync((RuleChainId) original),
-                        t -> new EntityFieldsData(t.getId(), t.getName()));
+                        t -> new EntityFieldsData(t));
             default:
                 return Futures.immediateFailedFuture(new TbNodeException("Unexpected original EntityType " + original));
         }

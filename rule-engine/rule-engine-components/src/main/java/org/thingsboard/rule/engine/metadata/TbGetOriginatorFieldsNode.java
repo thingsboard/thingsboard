@@ -18,11 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.RuleNode;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesFieldsAsyncLoader;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -37,10 +33,12 @@ import static org.thingsboard.rule.engine.api.util.DonAsynchron.withCallback;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "entity fields",
+        name = "originator fields",
         configClazz = TbGetOriginatorFieldsConfiguration.class,
-        nodeDescription = "Add Message Originator Name and Type into Message Metadata",
-        nodeDetails = "If originator is Asset, Device or Alarm, both name and type are added. In all other cases type will always be \"default\"")
+        nodeDescription = "Add Message Originator fields values into Message Metadata",
+        nodeDetails = "Will fetch fields values specified in mapping. If specified field is not part of originator fields it will be ignored.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbEnrichmentNodeOriginatorFieldsConfig")
 public class TbGetOriginatorFieldsNode implements TbNode {
 
     private TbGetOriginatorFieldsConfiguration config;
@@ -61,17 +59,17 @@ public class TbGetOriginatorFieldsNode implements TbNode {
     }
 
     private ListenableFuture<Void> putEntityFields(TbContext ctx, EntityId entityId, TbMsg msg) {
-        if (!config.isFetchName() && !config.isFetchType()) {
+        if (config.getFieldsMapping().isEmpty()) {
             return Futures.immediateFuture(null);
         } else {
             return Futures.transform(EntitiesFieldsAsyncLoader.findAsync(ctx, entityId),
                     data -> {
-                        if (config.isFetchName()) {
-                            msg.getMetaData().putValue(config.getNameMetadataKey(), data.getName());
-                        }
-                        if (config.isFetchType()) {
-                            msg.getMetaData().putValue(config.getTypeMetadataKey(), data.getType());
-                        }
+                        config.getFieldsMapping().forEach((field, metaKey) -> {
+                            String val = data.getFieldValue(field);
+                            if (val != null) {
+                                msg.getMetaData().putValue(metaKey, val);
+                            }
+                        });
                         return null;
                     }
             );
