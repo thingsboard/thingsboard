@@ -225,9 +225,12 @@ class DefaultTbContext implements TbContext {
 
             @Override
             public void sendRpcRequest(RuleEngineDeviceRpcRequest src, Consumer<RuleEngineDeviceRpcResponse> consumer) {
-                ToDeviceRpcRequest request = new ToDeviceRpcRequest(UUIDs.timeBased(), nodeCtx.getTenantId(), src.getDeviceId(),
-                        src.isOneway(), System.currentTimeMillis() + src.getTimeout(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
+                ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), nodeCtx.getTenantId(), src.getDeviceId(),
+                        src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()));
                 mainCtx.getDeviceRpcService().processRpcRequestToDevice(request, response -> {
+                    if (src.isRestApiCall()) {
+                        mainCtx.getDeviceRpcService().processRestAPIRpcResponseFromRuleEngine(response);
+                    }
                     consumer.accept(RuleEngineDeviceRpcResponse.builder()
                             .deviceId(src.getDeviceId())
                             .requestId(src.getRequestId())
