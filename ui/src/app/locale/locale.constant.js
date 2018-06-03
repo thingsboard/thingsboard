@@ -1445,14 +1445,6 @@ export default angular.module('thingsboard.locale', [])
                     "material-icons": "Material icons",
                     "show-all": "Show all icons"
                 },
-                "language": {
-                    "language": "Language",
-                    "en_US": "English",
-                    "ko_KR": "Korean",
-                    "zh_CN": "Chinese",
-                    "ru_RU": "Russian",
-                    "es_ES": "Spanish"
-                },
                 "custom": {
                     "widget-action": {
                         "action-cell-button": "Action cell button",
@@ -1460,6 +1452,14 @@ export default angular.module('thingsboard.locale', [])
                         "marker-click": "On marker click",
                         "tooltip-tag-action": "Tooltip tag action"
                     }
+                },
+                "language": {
+                    "language": "Language",
+                    "en_US": "English",
+                    "ko_KR": "Korean",
+                    "zh_CN": "Chinese",
+                    "ru_RU": "Russian",
+                    "es_ES": "Spanish"
                 }
             }
         }
