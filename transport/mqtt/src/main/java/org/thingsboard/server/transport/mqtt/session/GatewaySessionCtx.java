@@ -92,6 +92,7 @@ public class GatewaySessionCtx {
                 device.setType(deviceType);
                 device = deviceService.saveDevice(device);
                 relationService.saveRelationAsync(new EntityRelation(gateway.getId(), device.getId(), "Created"));
+                processor.onDeviceAdded(device);
             }
             GatewayDeviceSessionCtx ctx = new GatewayDeviceSessionCtx(this, device);
             devices.put(deviceName, ctx);

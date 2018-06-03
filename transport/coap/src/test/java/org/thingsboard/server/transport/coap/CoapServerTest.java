@@ -130,6 +130,13 @@ public class CoapServerTest {
                         }
                     }
                 }
+
+                @Override
+                public void onDeviceAdded(Device device) {
+
+                }
+
+
             };
         }
 
