@@ -294,7 +294,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private void handleGetAttributesRequest(DeviceToDeviceActorMsg src) {
         GetAttributesRequest request = (GetAttributesRequest) src.getPayload();
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.CLIENT_SCOPE, request.getClientAttributeNames());
-        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.SHARED_SCOPE, request.getClientAttributeNames());
+        ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture = getAttributeKvEntries(deviceId, DataConstants.SHARED_SCOPE, request.getSharedAttributeNames());
 
         Futures.addCallback(Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture)), new FutureCallback<List<List<AttributeKvEntry>>>() {
             @Override
