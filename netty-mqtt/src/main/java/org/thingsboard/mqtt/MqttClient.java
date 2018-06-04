@@ -172,23 +172,17 @@ public interface MqttClient {
      */
     MqttClientConfig getClientConfig();
 
-    /**
-     * Construct the MqttClientImpl with default config
-     */
-    static MqttClient create(){
-        return new MqttClientImpl();
-    }
 
     /**
      * Construct the MqttClientImpl with additional config.
      * This config can also be changed using the {@link #getClientConfig()} function
      *
      * @param config The config object to use while looking for settings
+     * @param defaultHandler The handler for incoming messages that do not match any topic subscriptions
      */
-    static MqttClient create(MqttClientConfig config){
-        return new MqttClientImpl(config);
+    static MqttClient create(MqttClientConfig config, MqttHandler defaultHandler){
+        return new MqttClientImpl(config, defaultHandler);
     }
-
 
     /**
      * Send disconnect and close channel

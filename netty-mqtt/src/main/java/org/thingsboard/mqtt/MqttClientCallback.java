@@ -15,6 +15,8 @@
  */
 package org.thingsboard.mqtt;
 
+import io.netty.channel.ChannelId;
+
 /**
  * Created by Valerii Sosliuk on 12/30/2017.
  */
@@ -25,5 +27,11 @@ public interface MqttClientCallback {
      *
      * @param cause the reason behind the loss of connection.
      */
-    public void connectionLost(Throwable cause);
+    void connectionLost(Throwable cause);
+
+    /**
+     * This method is called when the connection to the server is recovered.
+     *
+     */
+    void onSuccessfulReconnect();
 }
