@@ -27,6 +27,10 @@ import java.util.function.Consumer;
  */
 public interface DeviceRpcService {
 
+    void processRestAPIRpcRequestToRuleEngine(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer);
+
+    void processRestAPIRpcResponseFromRuleEngine(FromDeviceRpcResponse response);
+
     void processRpcRequestToDevice(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer);
 
     void processRpcResponseFromDevice(FromDeviceRpcResponse response);

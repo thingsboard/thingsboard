@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.service.rpc;
 
+import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,22 +26,23 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.actors.service.ActorService;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.common.msg.core.ToServerRpcResponseMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
-import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
 import org.thingsboard.server.service.cluster.rpc.ClusterRpcService;
-import org.thingsboard.server.service.encoding.DataDecodingEncodingService;
-import org.thingsboard.server.service.telemetry.sub.Subscription;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,6 +58,8 @@ import java.util.function.Consumer;
 @Slf4j
 public class DefaultDeviceRpcService implements DeviceRpcService {
 
+    private static final ObjectMapper json = new ObjectMapper();
+
     @Autowired
     private ClusterRoutingService routingService;
 
@@ -64,7 +71,8 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
 
     private ScheduledExecutorService rpcCallBackExecutor;
 
-    private final ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> localRpcRequests = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> localToRuleEngineRpcRequests = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> localToDeviceRpcRequests = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void initExecutor() {
@@ -79,28 +87,40 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     }
 
     @Override
-    public void processRpcRequestToDevice(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
-        log.trace("[{}] Processing local rpc call for device [{}]", request.getTenantId(), request.getDeviceId());
-        sendRpcRequest(request);
+    public void processRestAPIRpcRequestToRuleEngine(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
+        log.trace("[{}] Processing local rpc call to rule engine [{}]", request.getTenantId(), request.getDeviceId());
         UUID requestId = request.getId();
-        localRpcRequests.put(requestId, responseConsumer);
-        long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis());
-        log.error("[{}] processing the request: [{}]", this.hashCode(), requestId);
-        rpcCallBackExecutor.schedule(() -> {
-            log.error("[{}] timeout the request: [{}]", this.hashCode(), requestId);
-            Consumer<FromDeviceRpcResponse> consumer = localRpcRequests.remove(requestId);
-            if (consumer != null) {
-                consumer.accept(new FromDeviceRpcResponse(requestId, null, null, RpcError.TIMEOUT));
-            }
-        }, timeout, TimeUnit.MILLISECONDS);
+        localToRuleEngineRpcRequests.put(requestId, responseConsumer);
+        sendRpcRequestToRuleEngine(request);
+        scheduleTimeout(request, requestId, localToRuleEngineRpcRequests);
+    }
+
+    @Override
+    public void processRestAPIRpcResponseFromRuleEngine(FromDeviceRpcResponse response) {
+        UUID requestId = response.getId();
+        Consumer<FromDeviceRpcResponse> consumer = localToRuleEngineRpcRequests.remove(requestId);
+        if (consumer != null) {
+            consumer.accept(response);
+        } else {
+            log.trace("[{}] Unknown or stale rpc response received [{}]", requestId, response);
+        }
+    }
+
+    @Override
+    public void processRpcRequestToDevice(ToDeviceRpcRequest request, Consumer<FromDeviceRpcResponse> responseConsumer) {
+        log.trace("[{}] Processing local rpc call to device [{}]", request.getTenantId(), request.getDeviceId());
+        UUID requestId = request.getId();
+        localToDeviceRpcRequests.put(requestId, responseConsumer);
+        sendRpcRequestToDevice(request);
+        scheduleTimeout(request, requestId, localToDeviceRpcRequests);
     }
 
     @Override
     public void processRpcResponseFromDevice(FromDeviceRpcResponse response) {
-        log.error("[{}] response to request: [{}]", this.hashCode(), response.getId());
+        log.trace("[{}] response to request: [{}]", this.hashCode(), response.getId());
         if (routingService.getCurrentServer().equals(response.getServerAddress())) {
             UUID requestId = response.getId();
-            Consumer<FromDeviceRpcResponse> consumer = localRpcRequests.remove(requestId);
+            Consumer<FromDeviceRpcResponse> consumer = localToDeviceRpcRequests.remove(requestId);
             if (consumer != null) {
                 consumer.accept(response);
             } else {
@@ -140,7 +160,27 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
         forward(deviceId, rpcMsg);
     }
 
-    private void sendRpcRequest(ToDeviceRpcRequest msg) {
+    private void sendRpcRequestToRuleEngine(ToDeviceRpcRequest msg) {
+        ObjectNode entityNode = json.createObjectNode();
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("requestUUID", msg.getId().toString());
+        metaData.putValue("expirationTime", Long.toString(msg.getExpirationTime()));
+        metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
+
+        entityNode.put("method", msg.getBody().getMethod());
+        entityNode.put("params", msg.getBody().getParams());
+
+        try {
+            TbMsg tbMsg = new TbMsg(UUIDs.timeBased(), DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), metaData, TbMsgDataType.JSON
+                    , json.writeValueAsString(entityNode)
+                    , null, null, 0L);
+            actorService.onMsg(new ServiceToRuleEngineMsg(msg.getTenantId(), tbMsg));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sendRpcRequestToDevice(ToDeviceRpcRequest msg) {
         ToDeviceRpcRequestActorMsg rpcMsg = new ToDeviceRpcRequestActorMsg(routingService.getCurrentServer(), msg);
         log.trace("[{}] Forwarding msg {} to device actor!", msg.getDeviceId(), msg);
         forward(msg.getDeviceId(), rpcMsg);
@@ -149,4 +189,18 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     private <T extends ToDeviceActorNotificationMsg> void forward(DeviceId deviceId, T msg) {
         actorService.onMsg(new SendToClusterMsg(deviceId, msg));
     }
+
+    private void scheduleTimeout(ToDeviceRpcRequest request, UUID requestId, ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> requestsMap) {
+        long timeout = Math.max(0, request.getExpirationTime() - System.currentTimeMillis());
+        log.trace("[{}] processing the request: [{}]", this.hashCode(), requestId);
+        rpcCallBackExecutor.schedule(() -> {
+            log.trace("[{}] timeout the request: [{}]", this.hashCode(), requestId);
+            Consumer<FromDeviceRpcResponse> consumer = requestsMap.remove(requestId);
+            if (consumer != null) {
+                consumer.accept(new FromDeviceRpcResponse(requestId, null, null, RpcError.TIMEOUT));
+            }
+        }, timeout, TimeUnit.MILLISECONDS);
+    }
+
+
 }

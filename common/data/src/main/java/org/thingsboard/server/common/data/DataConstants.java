@@ -58,4 +58,6 @@ public class DataConstants {
     public static final String ATTRIBUTES_UPDATED = "ATTRIBUTES_UPDATED";
     public static final String ATTRIBUTES_DELETED = "ATTRIBUTES_DELETED";
 
+    public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+
 }

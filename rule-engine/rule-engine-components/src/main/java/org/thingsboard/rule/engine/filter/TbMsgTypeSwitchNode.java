@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         type = ComponentType.FILTER,
         name = "message type switch",
         configClazz = EmptyNodeConfiguration.class,
-        relationTypes = {"Post attributes", "Post telemetry", "RPC Request", "Activity Event", "Inactivity Event",
+        relationTypes = {"Post attributes", "Post telemetry", "RPC Request from Device", "RPC Request to Device", "Activity Event", "Inactivity Event",
                 "Connect Event", "Disconnect Event", "Entity Created", "Entity Updated", "Entity Deleted", "Entity Assigned",
                 "Entity Unassigned", "Attributes Updated", "Attributes Deleted", "Other"},
         nodeDescription = "Route incoming messages by Message Type",
@@ -52,7 +52,7 @@ public class TbMsgTypeSwitchNode implements TbNode {
         } else if (msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
             relationType = "Post telemetry";
         } else if (msg.getType().equals(SessionMsgType.TO_SERVER_RPC_REQUEST.name())) {
-            relationType = "RPC Request";
+            relationType = "RPC Request from Device";
         } else if (msg.getType().equals(DataConstants.ACTIVITY_EVENT)) {
             relationType = "Activity Event";
         } else if (msg.getType().equals(DataConstants.INACTIVITY_EVENT)) {
@@ -75,6 +75,8 @@ public class TbMsgTypeSwitchNode implements TbNode {
             relationType = "Attributes Updated";
         } else if (msg.getType().equals(DataConstants.ATTRIBUTES_DELETED)) {
             relationType = "Attributes Deleted";
+        } else if (msg.getType().equals(DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE)) {
+            relationType = "RPC Request to Device";
         } else {
             relationType = "Other";
         }

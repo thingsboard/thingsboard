@@ -46,7 +46,7 @@ public class TbGetDeviceAttrNode extends TbAbstractGetAttributesNode<TbGetDevice
     }
 
     @Override
-    protected ListenableFuture<DeviceId> findEntityAsync(TbContext ctx, EntityId originator) {
+    protected ListenableFuture<DeviceId> findEntityIdAsync(TbContext ctx, EntityId originator) {
         return EntitiesRelatedDeviceIdAsyncLoader.findDeviceAsync(ctx, originator, config.getDeviceRelationsQuery());
     }
 }
