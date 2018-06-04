@@ -19,15 +19,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.id.IdBased;
+import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Profile("install")
@@ -59,8 +58,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
             new PaginatedUpdater<String, Tenant>() {
 
                 @Override
-                protected List<Tenant> findEntities(String region, TextPageLink pageLink) {
-                    return tenantService.findTenants(pageLink).getData();
+                protected TextPageData<Tenant> findEntities(String region, TextPageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
                 }
 
                 @Override
@@ -76,7 +75,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
-    public abstract class PaginatedUpdater<I, D extends IdBased<?>> {
+    public abstract class PaginatedUpdater<I, D extends SearchTextBased<? extends UUIDBased>> {
 
         private static final int DEFAULT_LIMIT = 100;
 
@@ -84,20 +83,18 @@ public class DefaultDataUpdateService implements DataUpdateService {
             TextPageLink pageLink = new TextPageLink(DEFAULT_LIMIT);
             boolean hasNext = true;
             while (hasNext) {
-                List<D> entities = findEntities(id, pageLink);
-                for (D entity : entities) {
+                TextPageData<D> entities = findEntities(id, pageLink);
+                for (D entity : entities.getData()) {
                     updateEntity(entity);
                 }
-                hasNext = entities.size() == pageLink.getLimit();
+                hasNext = entities.hasNext();
                 if (hasNext) {
-                    int index = entities.size() - 1;
-                    UUID idOffset = entities.get(index).getUuidId();
-                    pageLink.setIdOffset(idOffset);
+                    pageLink = entities.getNextPageLink();
                 }
             }
         }
 
-        protected abstract List<D> findEntities(I id, TextPageLink pageLink);
+        protected abstract TextPageData<D> findEntities(I id, TextPageLink pageLink);
 
         protected abstract void updateEntity(D entity);
 
