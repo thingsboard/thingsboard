@@ -134,7 +134,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             while (stepTs < query.getEndTs()) {
                 long startTs = stepTs;
                 long endTs = stepTs + step;
-                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation(), query.getOrderBy());
+                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation(), query.getOrderBy(), false);
                 futures.add(findAndAggregateAsync(entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
                 stepTs = endTs;
             }
@@ -400,15 +400,6 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     return Futures.immediateFuture(false);
                 }, readResultsProcessingExecutor);
 
-
-        ListenableFuture<Void> savedLatestFuture = Futures.transform(booleanFuture,
-                (AsyncFunction<Boolean, Void>) isRemove -> {
-                    if (isRemove) {
-                        return getNewLatestEntryFuture(entityId, query);
-                    }
-                    return Futures.immediateFuture(null);
-                }, readResultsProcessingExecutor);
-
         ListenableFuture<Void> removedLatestFuture = Futures.transform(booleanFuture,
                 (AsyncFunction<Boolean, Void>) isRemove -> {
                     if (isRemove) {
@@ -416,15 +407,27 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     }
                     return Futures.immediateFuture(null);
                 }, readResultsProcessingExecutor);
-        return Futures.transform(Futures.allAsList(Arrays.asList(savedLatestFuture, removedLatestFuture)),
-                (AsyncFunction<List<Void>, Void>) list -> Futures.immediateFuture(null), readResultsProcessingExecutor);
+
+        if (query.getRewriteLatestIfDeleted()) {
+            ListenableFuture<Void> savedLatestFuture = Futures.transform(booleanFuture,
+                    (AsyncFunction<Boolean, Void>) isRemove -> {
+                        if (isRemove) {
+                            return getNewLatestEntryFuture(entityId, query);
+                        }
+                        return Futures.immediateFuture(null);
+                    }, readResultsProcessingExecutor);
+
+            return Futures.transform(Futures.allAsList(Arrays.asList(savedLatestFuture, removedLatestFuture)),
+                    (AsyncFunction<List<Void>, Void>) list -> Futures.immediateFuture(null), readResultsProcessingExecutor);
+        }
+        return removedLatestFuture;
     }
 
     private ListenableFuture<Void> getNewLatestEntryFuture(EntityId entityId, TsKvQuery query) {
         long startTs = 0;
         long endTs = query.getStartTs() - 1;
         TsKvQuery findNewLatestQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
-                Aggregation.NONE, DESC_ORDER);
+                Aggregation.NONE, DESC_ORDER, false);
         ListenableFuture<List<TsKvEntry>> future = findAllAsync(entityId, findNewLatestQuery);
 
         return Futures.transform(future, (AsyncFunction<List<TsKvEntry>, Void>) entryList -> {

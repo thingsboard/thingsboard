@@ -27,8 +27,10 @@ public class BaseTsKvQuery implements TsKvQuery {
     private final int limit;
     private final Aggregation aggregation;
     private final String orderBy;
+    private final Boolean rewriteLatestIfDeleted;
 
-    public BaseTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation, String orderBy) {
+    public BaseTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation, String orderBy,
+                         boolean rewriteLatestIfDeleted) {
         this.key = key;
         this.startTs = startTs;
         this.endTs = endTs;
@@ -36,10 +38,11 @@ public class BaseTsKvQuery implements TsKvQuery {
         this.limit = limit;
         this.aggregation = aggregation;
         this.orderBy = orderBy;
+        this.rewriteLatestIfDeleted = rewriteLatestIfDeleted;
     }
 
     public BaseTsKvQuery(String key, long startTs, long endTs) {
-        this(key, startTs, endTs, endTs - startTs, 1, Aggregation.AVG, "DESC");
+        this(key, startTs, endTs, endTs - startTs, 1, Aggregation.AVG, "DESC", false);
     }
 
 }

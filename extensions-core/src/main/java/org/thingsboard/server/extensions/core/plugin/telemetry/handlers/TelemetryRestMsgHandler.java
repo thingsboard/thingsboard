@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -138,9 +137,10 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
 
             // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
             Aggregation agg = (interval.isPresent() && interval.get() == 0) ? Aggregation.valueOf(Aggregation.NONE.name()) :
-                                                                              Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
+                    Aggregation.valueOf(request.getParameter("agg", Aggregation.NONE.name()));
 
-            List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(), interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg, "DESC"))
+            List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs.get(), endTs.get(),
+                    interval.get(), limit.orElse(TelemetryWebsocketMsgHandler.DEFAULT_LIMIT), agg, "DESC", false))
                     .collect(Collectors.toList());
             ctx.loadTimeseries(entityId, queries, getTsKvListCallback(msg));
         } else {
@@ -218,7 +218,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
     }
 
     private boolean handleHttpPostAttributes(PluginContext ctx, PluginRestMsg msg, RestRequest request,
-                                          EntityId entityId, String scope) throws ServletException, IOException {
+                                             EntityId entityId, String scope) throws ServletException, IOException {
         if (DataConstants.SERVER_SCOPE.equals(scope) ||
                 DataConstants.SHARED_SCOPE.equals(scope)) {
             JsonNode jsonNode;
@@ -274,7 +274,7 @@ public class TelemetryRestMsgHandler extends DefaultRestMsgHandler {
                 }
             }
         });
-        return  attributes;
+        return attributes;
     }
 
     private void handleHttpPostTimeseries(PluginContext ctx, PluginRestMsg msg, RestRequest request, EntityId entityId, long ttl) {

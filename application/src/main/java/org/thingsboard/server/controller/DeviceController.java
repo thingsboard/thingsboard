@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
@@ -413,8 +414,10 @@ public class DeviceController extends BaseController {
 
             Device device = deviceService.findDeviceByTenantIdAndName(tenantId, "Test");
 
+            long startTs = 1519561033000L;
+            long endTs = 1528260633000L;
             timeseriesService.remove(device.getId(), Collections.singletonList(new BaseTsKvQuery("test",
-                    1519139033000L, 1524668633000L))).get();
+                    startTs, endTs, endTs - startTs, 0, Aggregation.NONE, "DESC", true))).get();
 
         } catch (Exception e) {
             throw handleException(e);
