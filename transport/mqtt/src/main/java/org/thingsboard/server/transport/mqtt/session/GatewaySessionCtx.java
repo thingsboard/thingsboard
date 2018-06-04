@@ -155,6 +155,7 @@ public class GatewaySessionCtx {
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
             processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
+            ack(mqttMsg);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }
