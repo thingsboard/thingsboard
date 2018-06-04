@@ -158,15 +158,15 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handleSubAck(MqttSubAckMessage message) {
-        MqttPendingSubscribtion pendingSubscription = this.client.getPendingSubscriptions().remove(message.variableHeader().messageId());
+        MqttPendingSubscription pendingSubscription = this.client.getPendingSubscriptions().remove(message.variableHeader().messageId());
         if (pendingSubscription == null) {
             return;
         }
         pendingSubscription.onSubackReceived();
-        for (MqttPendingSubscribtion.MqttPendingHandler handler : pendingSubscription.getHandlers()) {
-            MqttSubscription subscribtion = new MqttSubscription(pendingSubscription.getTopic(), handler.getHandler(), handler.isOnce());
-            this.client.getSubscriptions().put(pendingSubscription.getTopic(), subscribtion);
-            this.client.getHandlerToSubscribtion().put(handler.getHandler(), subscribtion);
+        for (MqttPendingSubscription.MqttPendingHandler handler : pendingSubscription.getHandlers()) {
+            MqttSubscription subscription = new MqttSubscription(pendingSubscription.getTopic(), handler.getHandler(), handler.isOnce());
+            this.client.getSubscriptions().put(pendingSubscription.getTopic(), subscription);
+            this.client.getHandlerToSubscribtion().put(handler.getHandler(), subscription);
         }
         this.client.getPendingSubscribeTopics().remove(pendingSubscription.getTopic());
 
@@ -210,13 +210,13 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handleUnsuback(MqttUnsubAckMessage message) {
-        MqttPendingUnsubscribtion unsubscribtion = this.client.getPendingServerUnsubscribes().get(message.variableHeader().messageId());
-        if (unsubscribtion == null) {
+        MqttPendingUnsubscription unsubscription = this.client.getPendingServerUnsubscribes().get(message.variableHeader().messageId());
+        if (unsubscription == null) {
             return;
         }
-        unsubscribtion.onUnsubackReceived();
-        this.client.getServerSubscriptions().remove(unsubscribtion.getTopic());
-        unsubscribtion.getFuture().setSuccess(null);
+        unsubscription.onUnsubackReceived();
+        this.client.getServerSubscriptions().remove(unsubscription.getTopic());
+        unsubscription.getFuture().setSuccess(null);
         this.client.getPendingServerUnsubscribes().remove(message.variableHeader().messageId());
     }
 
