@@ -67,9 +67,9 @@ public abstract class AbstractCassandraCluster {
     private long initTimeout;
     @Value("${cassandra.init_retry_interval_ms}")
     private long initRetryInterval;
-    @Value("${cassandra.max_requests_per_connection_local:128}")
+    @Value("${cassandra.max_requests_per_connection_local:32768}")
     private int max_requests_local;
-    @Value("${cassandra.max_requests_per_connection_remote:128}")
+    @Value("${cassandra.max_requests_per_connection_remote:32768}")
     private int max_requests_remote;
 
     @Autowired
