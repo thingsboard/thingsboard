@@ -16,7 +16,10 @@
 package org.thingsboard.rule.engine.rpc;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +38,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.io.IOException;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -86,10 +90,18 @@ public class TbSendRPCRequestNode implements TbNode {
             tmp = msg.getMetaData().getValue("expirationTime");
             long expirationTime = !StringUtils.isEmpty(tmp) ? Long.parseLong(tmp) : (System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(config.getTimeoutInSeconds()));
 
+            String params;
+            JsonElement paramsEl = json.get("params");
+            if (paramsEl.isJsonPrimitive()) {
+                params = paramsEl.getAsString();
+            } else {
+                params = gson.toJson(paramsEl);
+            }
+
             RuleEngineDeviceRpcRequest request = RuleEngineDeviceRpcRequest.builder()
                     .oneway(oneway)
                     .method(json.get("method").getAsString())
-                    .body(gson.toJson(json.get("params")))
+                    .body(params)
                     .deviceId(new DeviceId(msg.getOriginator().getId()))
                     .requestId(requestId)
                     .requestUUID(requestUUID)

@@ -111,8 +111,9 @@ public class TbMqttNode implements TbNode {
         if (!StringUtils.isEmpty(this.config.getClientId())) {
             config.setClientId(this.config.getClientId());
         }
+        config.setCleanSession(this.config.isCleanSession());
         this.config.getCredentials().configure(config);
-        MqttClient client = MqttClient.create(config);
+        MqttClient client = MqttClient.create(config, null);
         client.setEventLoop(this.eventLoopGroup);
         Future<MqttConnectResult> connectFuture = client.connect(this.config.getHost(), this.config.getPort());
         MqttConnectResult result;
