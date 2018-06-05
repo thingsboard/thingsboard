@@ -300,14 +300,27 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
 
     @Override
     public ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query) {
-        //TODO: implement
-        return null;
+        return insertService.submit(() -> {
+            tsKvRepository.delete(
+                    fromTimeUUID(entityId.getId()),
+                    entityId.getEntityType(),
+                    query.getKey(),
+                    query.getStartTs(),
+                    query.getEndTs());
+            return null;
+        });
     }
 
     @Override
     public ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query) {
-        //TODO: implement
-        return null;
+        TsKvLatestEntity latestEntity = new TsKvLatestEntity();
+        latestEntity.setEntityType(entityId.getEntityType());
+        latestEntity.setEntityId(fromTimeUUID(entityId.getId()));
+        latestEntity.setKey(query.getKey());
+        return insertService.submit(() -> {
+            tsKvLatestRepository.delete(latestEntity);
+            return null;
+        });
     }
 
     @Override

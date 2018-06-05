@@ -93,24 +93,27 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
     }
 
-    //TODO: sql delete implement
-    /*@Test
+    @Test
     public void testDeleteDeviceTsData() throws Exception {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
 
+        saveEntries(deviceId, TS - 4);
         saveEntries(deviceId, TS - 3);
         saveEntries(deviceId, TS - 2);
         saveEntries(deviceId, TS - 1);
-        saveEntries(deviceId, TS);
 
         tsService.remove(deviceId, Collections.singletonList(
-                new BaseTsKvQuery(STRING_KEY, TS - 4, TS - 2))).get();
+                new BaseTsKvQuery(STRING_KEY, TS - 4, TS, 60000, 0, Aggregation.NONE, DESC_ORDER,
+                        false))).get();
 
         List<TsKvEntry> list = tsService.findAll(deviceId, Collections.singletonList(
-                new BaseTsKvQuery(STRING_KEY, 0, 60000, 60000, 5, Aggregation.NONE, DESC_ORDER))).get();
+                new BaseTsKvQuery(STRING_KEY, 0, 60000, 60000, 5, Aggregation.NONE, DESC_ORDER,
+                        false))).get();
+        Assert.assertEquals(1, list.size());
 
-        Assert.assertEquals(2, list.size());
-    }*/
+        List<TsKvEntry> latest = tsService.findLatest(deviceId, Collections.singletonList(STRING_KEY)).get();
+        Assert.assertEquals(null, latest.get(0).getValueAsString());
+    }
 
     @Test
     public void testFindDeviceTsData() throws Exception {

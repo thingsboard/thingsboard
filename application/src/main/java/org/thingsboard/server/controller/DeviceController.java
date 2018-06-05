@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,32 +28,23 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.exception.ThingsboardErrorCode;
 import org.thingsboard.server.exception.ThingsboardException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
 public class DeviceController extends BaseController {
-
-    @Autowired
-    protected TimeseriesService timeseriesService;
 
     public static final String DEVICE_ID = "deviceId";
 
@@ -373,52 +363,6 @@ public class DeviceController extends BaseController {
             TenantId tenantId = user.getTenantId();
             ListenableFuture<List<EntitySubtype>> deviceTypes = deviceService.findDeviceTypesByTenantId(tenantId);
             return checkNotNull(deviceTypes.get());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/device/testSave", method = RequestMethod.GET)
-    @ResponseBody
-    public void testSave() throws ThingsboardException {
-        try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-
-            Device device = deviceService.findDeviceByTenantIdAndName(tenantId, "Test");
-
-            timeseriesService.save(device.getId(), new BasicTsKvEntry(1516892633000L,
-                    new LongDataEntry("test", 1L))).get();
-            timeseriesService.save(device.getId(), new BasicTsKvEntry(1519571033000L,
-                    new LongDataEntry("test", 2L))).get();
-            timeseriesService.save(device.getId(), new BasicTsKvEntry(1521990233000L,
-                    new LongDataEntry("test", 3L))).get();
-            timeseriesService.save(device.getId(), new BasicTsKvEntry(1524668633000L,
-                    new LongDataEntry("test", 4L))).get();
-            timeseriesService.save(device.getId(), new BasicTsKvEntry(1527260633000L,
-                    new LongDataEntry("test", 5L))).get();
-
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/device/testDelete", method = RequestMethod.GET)
-    @ResponseBody
-    public void testDelete() throws ThingsboardException {
-        try {
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-
-            Device device = deviceService.findDeviceByTenantIdAndName(tenantId, "Test");
-
-            long startTs = 1519561033000L;
-            long endTs = 1528260633000L;
-            timeseriesService.remove(device.getId(), Collections.singletonList(new BaseTsKvQuery("test",
-                    startTs, endTs, endTs - startTs, 0, Aggregation.NONE, "DESC", true))).get();
-
         } catch (Exception e) {
             throw handleException(e);
         }

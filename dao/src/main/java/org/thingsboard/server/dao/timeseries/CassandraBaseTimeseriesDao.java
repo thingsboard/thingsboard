@@ -441,7 +441,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     private ListenableFuture<Void> deleteLatest(EntityId entityId, String key) {
-        Statement delete = QueryBuilder.delete().from(ModelConstants.TS_KV_LATEST_CF)
+        Statement delete = QueryBuilder.delete().all().from(ModelConstants.TS_KV_LATEST_CF)
                 .where(eq(ModelConstants.ENTITY_TYPE_COLUMN, entityId.getEntityType()))
                 .and(eq(ModelConstants.ENTITY_ID_COLUMN, entityId.getId()))
                 .and(eq(ModelConstants.KEY_COLUMN, key));
@@ -453,25 +453,36 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     public ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query) {
         long minPartition = toPartitionTs(query.getStartTs());
         long maxPartition = toPartitionTs(query.getEndTs());
+        if (minPartition == maxPartition) {
+            return Futures.immediateFuture(null);
+        } else {
+            ResultSetFuture partitionsFuture = fetchPartitions(entityId, query.getKey(), minPartition, maxPartition);
 
-        ResultSetFuture partitionsFuture = fetchPartitions(entityId, query.getKey(), minPartition, maxPartition);
+            final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
+            final ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
 
-        final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
-        final ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+            Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
+                @Override
+                public void onSuccess(@Nullable List<Long> partitions) {
+                    int index = 0;
+                    if (minPartition != query.getStartTs()) {
+                        index = 1;
+                    }
+                    List<Long> partitionsToDelete = new ArrayList<>();
+                    for (int i = index; i < partitions.size() - 1; i++) {
+                        partitionsToDelete.add(partitions.get(i));
+                    }
+                    TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
+                    deletePartitionAsync(cursor, resultFuture);
+                }
 
-        Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
-            @Override
-            public void onSuccess(@Nullable List<Long> partitions) {
-                TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitions);
-                deletePartitionAsync(cursor, resultFuture);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), minPartition, maxPartition, t);
-            }
-        }, readResultsProcessingExecutor);
-        return resultFuture;
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), minPartition, maxPartition, t);
+                }
+            }, readResultsProcessingExecutor);
+            return resultFuture;
+        }
     }
 
     private void deletePartitionAsync(final TsKvQueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
