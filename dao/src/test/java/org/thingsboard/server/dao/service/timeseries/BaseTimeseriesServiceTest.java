@@ -97,17 +97,17 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     public void testDeleteDeviceTsData() throws Exception {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
 
-        saveEntries(deviceId, TS - 4);
-        saveEntries(deviceId, TS - 3);
-        saveEntries(deviceId, TS - 2);
-        saveEntries(deviceId, TS - 1);
+        saveEntries(deviceId, 10000);
+        saveEntries(deviceId, 20000);
+        saveEntries(deviceId, 30000);
+        saveEntries(deviceId, 40000);
 
         tsService.remove(deviceId, Collections.singletonList(
-                new BaseTsKvQuery(STRING_KEY, TS - 4, TS, 60000, 0, Aggregation.NONE, DESC_ORDER,
+                new BaseTsKvQuery(STRING_KEY, 15000, 45000, 10000, 0, Aggregation.NONE, DESC_ORDER,
                         false))).get();
 
         List<TsKvEntry> list = tsService.findAll(deviceId, Collections.singletonList(
-                new BaseTsKvQuery(STRING_KEY, 0, 60000, 60000, 5, Aggregation.NONE, DESC_ORDER,
+                new BaseTsKvQuery(STRING_KEY, 5000, 45000, 10000, 10, Aggregation.NONE, DESC_ORDER,
                         false))).get();
         Assert.assertEquals(1, list.size());
 

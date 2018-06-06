@@ -300,7 +300,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
 
     @Override
     public ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query) {
-        return insertService.submit(() -> {
+        return service.submit(() -> {
             tsKvRepository.delete(
                     fromTimeUUID(entityId.getId()),
                     entityId.getEntityType(),
@@ -317,7 +317,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         latestEntity.setEntityType(entityId.getEntityType());
         latestEntity.setEntityId(fromTimeUUID(entityId.getId()));
         latestEntity.setKey(query.getKey());
-        return insertService.submit(() -> {
+        return service.submit(() -> {
             tsKvLatestRepository.delete(latestEntity);
             return null;
         });
@@ -325,7 +325,7 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
 
     @Override
     public ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query) {
-        return insertService.submit(() -> null);
+        return service.submit(() -> null);
     }
 
     @PreDestroy
