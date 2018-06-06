@@ -98,6 +98,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     public boolean updateAssignedCustomer(Customer customer) {
         ShortCustomerInfo customerInfo = customer.toShortCustomerInfo();
         if (this.assignedCustomers != null && this.assignedCustomers.contains(customerInfo)) {
+            this.assignedCustomers.remove(customerInfo);
             this.assignedCustomers.add(customerInfo);
             return true;
         } else {

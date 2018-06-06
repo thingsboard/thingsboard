@@ -17,6 +17,7 @@ package org.thingsboard.server.service.state;
 
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.msg.cluster.ServerAddress;
 
 import java.util.Optional;
 
@@ -39,6 +40,7 @@ public interface DeviceStateService {
 
     void onDeviceInactivityTimeoutUpdate(DeviceId deviceId, long inactivityTimeout);
 
-    Optional<DeviceState> getDeviceState(DeviceId deviceId);
+    void onClusterUpdate();
 
+    void onRemoteMsg(ServerAddress serverAddress, byte[] bytes);
 }

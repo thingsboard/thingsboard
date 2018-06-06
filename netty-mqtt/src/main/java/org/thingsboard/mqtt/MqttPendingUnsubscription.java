@@ -21,14 +21,14 @@ import io.netty.util.concurrent.Promise;
 
 import java.util.function.Consumer;
 
-final class MqttPendingUnsubscribtion {
+final class MqttPendingUnsubscription {
 
     private final Promise<Void> future;
     private final String topic;
 
     private final RetransmissionHandler<MqttUnsubscribeMessage> retransmissionHandler = new RetransmissionHandler<>();
 
-    MqttPendingUnsubscribtion(Promise<Void> future, String topic, MqttUnsubscribeMessage unsubscribeMessage) {
+    MqttPendingUnsubscription(Promise<Void> future, String topic, MqttUnsubscribeMessage unsubscribeMessage) {
         this.future = future;
         this.topic = topic;
 
