@@ -86,7 +86,7 @@ public class GatewayDeviceSessionCtx extends DeviceAwareSessionContext {
                 if (responseMsg.isSuccess()) {
                     SessionMsgType requestMsgType = responseMsg.getRequestMsgType();
                     Integer requestId = responseMsg.getRequestId();
-                    if (requestId >= 0 && requestMsgType == SessionMsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == SessionMsgType.POST_TELEMETRY_REQUEST) {
+                    if (requestId >= 0 && (requestMsgType == SessionMsgType.POST_ATTRIBUTES_REQUEST || requestMsgType == SessionMsgType.POST_TELEMETRY_REQUEST)) {
                         return Optional.of(MqttTransportHandler.createMqttPubAckMsg(requestId));
                     }
                 }
