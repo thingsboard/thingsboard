@@ -10,8 +10,6 @@
     <executable>java</executable>
     <startargument>-Dplatform=windows</startargument>
     <startargument>-Dinstall.data_dir=%BASE%\data</startargument>
-    <startargument>-jar</startargument>
-    <startargument>%BASE%\lib\${pkg.name}.jar</startargument>
     <startargument>-Xloggc:%BASE%\logs\gc.log</startargument>
     <startargument>-XX:+HeapDumpOnOutOfMemoryError</startargument>
     <startargument>-XX:+PrintGCDetails</startargument>
@@ -37,5 +35,7 @@
     <startargument>-XX:+UseCMSInitiatingOccupancyOnly</startargument>
     <startargument>-Xms512m</startargument>
     <startargument>-Xmx1024m</startargument>
+    <startargument>-jar</startargument>
+    <startargument>%BASE%\lib\${pkg.name}.jar</startargument>
 
 </service>
