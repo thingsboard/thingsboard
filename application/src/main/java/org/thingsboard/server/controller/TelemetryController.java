@@ -36,14 +36,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
@@ -55,6 +58,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -72,9 +76,12 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -276,6 +283,7 @@ public class TelemetryController extends BaseController {
             return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
         }
         SecurityUser user = getCurrentUser();
+
         if (DataConstants.SERVER_SCOPE.equals(scope) ||
                 DataConstants.SHARED_SCOPE.equals(scope) ||
                 DataConstants.CLIENT_SCOPE.equals(scope)) {
@@ -285,6 +293,14 @@ public class TelemetryController extends BaseController {
                     @Override
                     public void onSuccess(@Nullable List<Void> tmp) {
                         logAttributesDeleted(user, entityId, scope, keys, null);
+                        if (entityId.getEntityType() == EntityType.DEVICE) {
+                            DeviceId deviceId = new DeviceId(entityId.getId());
+                            Set<AttributeKey> keysToNotify = new HashSet<>();
+                            keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key)));
+                            DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onDelete(
+                                    user.getTenantId(), deviceId, keysToNotify);
+                            actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));
+                        }
                         result.setResult(new ResponseEntity<>(HttpStatus.OK));
                     }
 
@@ -315,6 +331,12 @@ public class TelemetryController extends BaseController {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         logAttributesUpdated(user, entityId, scope, attributes, null);
+                        if (entityId.getEntityType() == EntityType.DEVICE) {
+                            DeviceId deviceId = new DeviceId(entityId.getId());
+                            DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onUpdate(
+                                    user.getTenantId(), deviceId, scope, attributes);
+                            actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));
+                        }
                         result.setResult(new ResponseEntity(HttpStatus.OK));
                     }
 
@@ -494,7 +516,7 @@ public class TelemetryController extends BaseController {
 
     private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
         try {
-            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_DELETED, toException(e),
+            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_DELETED, toException(e),
                     scope, keys);
         } catch (ThingsboardException te) {
             log.warn("Failed to log attributes delete", te);
@@ -503,7 +525,7 @@ public class TelemetryController extends BaseController {
 
     private void logAttributesUpdated(SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) {
         try {
-            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_UPDATED, toException(e),
+            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_UPDATED, toException(e),
                     scope, attributes);
         } catch (ThingsboardException te) {
             log.warn("Failed to log attributes update", te);
@@ -513,7 +535,7 @@ public class TelemetryController extends BaseController {
 
     private void logAttributesRead(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
         try {
-            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_READ, toException(e),
+            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_READ, toException(e),
                     scope, keys);
         } catch (ThingsboardException te) {
             log.warn("Failed to log attributes read", te);
