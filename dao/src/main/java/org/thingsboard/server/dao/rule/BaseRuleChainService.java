@@ -87,12 +87,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         RuleChain ruleChain = ruleChainDao.findById(ruleChainId.getId());
         if (!ruleChain.isRoot()) {
             RuleChain previousRootRuleChain = getRootTenantRuleChain(ruleChain.getTenantId());
-            if (!previousRootRuleChain.getId().equals(ruleChain.getId())) {
+            if (previousRootRuleChain == null || !previousRootRuleChain.getId().equals(ruleChain.getId())) {
                 try {
-                    deleteRelation(new EntityRelation(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
-                            EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
-                    previousRootRuleChain.setRoot(false);
-                    ruleChainDao.save(previousRootRuleChain);
+                    if (previousRootRuleChain != null) {
+                        deleteRelation(new EntityRelation(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
+                                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
+                        previousRootRuleChain.setRoot(false);
+                        ruleChainDao.save(previousRootRuleChain);
+                    }
                     createRelation(new EntityRelation(ruleChain.getTenantId(), ruleChain.getId(),
                             EntityRelation.CONTAINS_TYPE, RelationTypeGroup.RULE_CHAIN));
                     ruleChain.setRoot(true);

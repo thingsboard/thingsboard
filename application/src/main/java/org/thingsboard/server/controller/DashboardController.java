@@ -231,16 +231,18 @@ public class DashboardController extends BaseController {
                 for (CustomerId customerId : addedCustomerIds) {
                     savedDashboard = checkNotNull(dashboardService.assignDashboardToCustomer(dashboardId, customerId));
                     ShortCustomerInfo customerInfo = savedDashboard.getAssignedCustomerInfo(customerId);
+                    String customerTitle = (customerInfo == null) ? "Customer with ID " + customerId.toString() : customerInfo.getTitle();
                     logEntityAction(dashboardId, savedDashboard,
                             customerId,
-                            ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+                            ActionType.ASSIGNED_TO_CUSTOMER, null, strDashboardId, customerId.toString(), customerTitle);
                 }
                 for (CustomerId customerId : removedCustomerIds) {
                     ShortCustomerInfo customerInfo = dashboard.getAssignedCustomerInfo(customerId);
                     savedDashboard = checkNotNull(dashboardService.unassignDashboardFromCustomer(dashboardId, customerId));
+                    String customerTitle = (customerInfo == null) ? "Customer with ID " + customerId.toString() : customerInfo.getTitle();
                     logEntityAction(dashboardId, dashboard,
                             customerId,
-                            ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerInfo.getTitle());
+                            ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDashboardId, customerId.toString(), customerTitle);
 
                 }
                 return savedDashboard;

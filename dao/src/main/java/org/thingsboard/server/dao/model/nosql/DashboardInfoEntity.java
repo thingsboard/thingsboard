@@ -22,6 +22,7 @@ import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kenai.jffi.Array;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY;
@@ -52,6 +54,8 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final JavaType assignedCustomersType =
             objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
+    private static final JavaType assignedCustomersArrayType =
+            objectMapper.getTypeFactory().constructCollectionType(ArrayList.class, ShortCustomerInfo.class);
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
@@ -149,7 +153,14 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
             try {
                 dashboardInfo.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
             } catch (IOException e) {
-                log.warn("Unable to parse assigned customers!", e);
+                log.warn("Unable to parse assigned customers! -- {} ", assignedCustomers);
+                try {
+                    ArrayList<ShortCustomerInfo> a = objectMapper.readValue(assignedCustomers, assignedCustomersArrayType);
+                    HashSet<ShortCustomerInfo> s = new HashSet<ShortCustomerInfo>(a);
+                    dashboardInfo.setAssignedCustomers(s);
+                } catch (Exception ex) {
+                    log.warn("Unable to convert! -- ", ex);
+                }
             }
         }
         return dashboardInfo;

@@ -19,11 +19,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 
 /**
  * Created by igor on 2/27/18.
  */
 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 @AllArgsConstructor
 public class ShortCustomerInfo {
 
@@ -35,6 +39,11 @@ public class ShortCustomerInfo {
 
     @Getter @Setter
     private boolean isPublic;
+
+    public ShortCustomerInfo() {
+        isPublic = false;
+        title = "";
+    }
 
     @Override
     public boolean equals(Object o) {

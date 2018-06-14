@@ -137,15 +137,19 @@ public class RuleChainController extends BaseController {
             RuleChain ruleChain = checkRuleChain(ruleChainId);
             TenantId tenantId = getCurrentUser().getTenantId();
             RuleChain previousRootRuleChain = ruleChainService.getRootTenantRuleChain(tenantId);
+            
             if (ruleChainService.setRootRuleChain(ruleChainId)) {
 
-                previousRootRuleChain = ruleChainService.findRuleChainById(previousRootRuleChain.getId());
+                if (previousRootRuleChain != null) {
+                    previousRootRuleChain = ruleChainService.findRuleChainById(previousRootRuleChain.getId());
 
-                actorService.onEntityStateChange(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
-                        ComponentLifecycleEvent.UPDATED);
+                    actorService.onEntityStateChange(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
+                            ComponentLifecycleEvent.UPDATED);
 
-                logEntityAction(previousRootRuleChain.getId(), previousRootRuleChain,
-                        null, ActionType.UPDATED, null);
+                    logEntityAction(previousRootRuleChain.getId(), previousRootRuleChain,
+                            null, ActionType.UPDATED, null);
+
+                }
 
                 ruleChain = ruleChainService.findRuleChainById(ruleChainId);
 
