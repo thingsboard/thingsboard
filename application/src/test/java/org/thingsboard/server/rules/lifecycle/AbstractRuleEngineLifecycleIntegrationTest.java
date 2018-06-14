@@ -131,7 +131,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         device = doPost("/api/device", device, Device.class);
 
         attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis(),DataConstants.SERVER_SCOPE)));
 
         Thread.sleep(1000);
 
@@ -180,7 +180,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         device = doPost("/api/device", device, Device.class);
 
         attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis(),DataConstants.SERVER_SCOPE)));
 
         // Pushing Message to the system
         TbMsg tbMsg = new TbMsg(UUIDs.timeBased(),

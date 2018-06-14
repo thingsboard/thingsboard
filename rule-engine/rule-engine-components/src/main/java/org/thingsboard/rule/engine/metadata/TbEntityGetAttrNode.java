@@ -71,7 +71,7 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
     }
 
     private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId) {
-        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, SERVER_SCOPE, config.getAttrMapping().keySet());
+        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, SERVER_SCOPE, config.getAttrMapping().keySet(),0);
         return Futures.transform(latest, l ->
                 l.stream().map(i -> (KvEntry) i).collect(Collectors.toList()));
     }

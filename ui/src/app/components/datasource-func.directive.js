@@ -124,7 +124,7 @@ function DatasourceFunc($compile, $templateCache, $mdDialog, $window, $document,
             if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
                 return null;
             } else {
-                return scope.generateDataKey({chip: chip, type: types.dataKeyType.function});
+                return scope.generateDataKey({chip: chip.attributeKey, type: types.dataKeyType.function});
             }
         };
 

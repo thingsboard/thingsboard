@@ -92,7 +92,11 @@
 							md-min-length="0"
 							placeholder="{{'datakey.attributes' | translate }}"
 							md-menu-class="tb-attribute-datakey-autocomplete">
-							<span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item}}</span>
+                            <span ng-show="item.inherited" ng-class="tb-absolute-left"><ng-md-icon size="16" icon="link"></ng-md-icon></span>
+                            <span ng-show="item.scope=='SERVER_SCOPE' && !item.inherited"><ng-md-icon size="16" icon="computer"></ng-md-icon></span>
+                            <span ng-show="item.scope=='SHARED_SCOPE'"><ng-md-icon size="16" icon="share"></ng-md-icon></span>
+                            <span ng-show="item.scope=='CLIENT_SCOPE'"><ng-md-icon size="16" icon="stay_primary_portrait"></ng-md-icon></span>
+							<span md-highlight-text="attributeDataKeySearchText" md-highlight-flags="^i">{{item.attributeKey}}</span>
 						    <md-not-found>
 							  <div class="tb-not-found">
 								  <div class="tb-no-entries" ng-if="!textIsNotEmpty(attributeDataKeySearchText)">

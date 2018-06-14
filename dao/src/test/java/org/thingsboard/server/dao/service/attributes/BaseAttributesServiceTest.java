@@ -49,9 +49,9 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
     public void saveAndFetch() throws Exception {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
         KvEntry attrValue = new StringDataEntry("attribute1", "value1");
-        AttributeKvEntry attr = new BaseAttributeKvEntry(attrValue, 42L);
+        AttributeKvEntry attr = new BaseAttributeKvEntry(attrValue, 42L,DataConstants.CLIENT_SCOPE);
         attributesService.save(deviceId, DataConstants.CLIENT_SCOPE, Collections.singletonList(attr)).get();
-        Optional<AttributeKvEntry> saved = attributesService.find(deviceId, DataConstants.CLIENT_SCOPE, attr.getKey()).get();
+        Optional<AttributeKvEntry> saved = attributesService.find(deviceId, DataConstants.CLIENT_SCOPE, attr.getKey(),0).get();
         Assert.assertTrue(saved.isPresent());
         Assert.assertEquals(attr, saved.get());
     }
@@ -60,19 +60,19 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
     public void saveMultipleTypeAndFetch() throws Exception {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
         KvEntry attrOldValue = new StringDataEntry("attribute1", "value1");
-        AttributeKvEntry attrOld = new BaseAttributeKvEntry(attrOldValue, 42L);
+        AttributeKvEntry attrOld = new BaseAttributeKvEntry(attrOldValue, 42L,DataConstants.CLIENT_SCOPE);
 
         attributesService.save(deviceId, DataConstants.CLIENT_SCOPE, Collections.singletonList(attrOld)).get();
-        Optional<AttributeKvEntry> saved = attributesService.find(deviceId, DataConstants.CLIENT_SCOPE, attrOld.getKey()).get();
+        Optional<AttributeKvEntry> saved = attributesService.find(deviceId, DataConstants.CLIENT_SCOPE, attrOld.getKey(),0).get();
 
         Assert.assertTrue(saved.isPresent());
         Assert.assertEquals(attrOld, saved.get());
 
         KvEntry attrNewValue = new StringDataEntry("attribute1", "value2");
-        AttributeKvEntry attrNew = new BaseAttributeKvEntry(attrNewValue, 73L);
+        AttributeKvEntry attrNew = new BaseAttributeKvEntry(attrNewValue, 73L,DataConstants.CLIENT_SCOPE);
         attributesService.save(deviceId, DataConstants.CLIENT_SCOPE, Collections.singletonList(attrNew)).get();
 
-        saved = attributesService.find(deviceId, DataConstants.CLIENT_SCOPE, attrOld.getKey()).get();
+        saved = attributesService.find(deviceId, DataConstants.CLIENT_SCOPE, attrOld.getKey(),0).get();
         Assert.assertEquals(attrNew, saved.get());
     }
 
@@ -81,17 +81,17 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         DeviceId deviceId = new DeviceId(UUIDs.timeBased());
 
         KvEntry attrAOldValue = new StringDataEntry("A", "value1");
-        AttributeKvEntry attrAOld = new BaseAttributeKvEntry(attrAOldValue, 42L);
+        AttributeKvEntry attrAOld = new BaseAttributeKvEntry(attrAOldValue, 42L,DataConstants.CLIENT_SCOPE);
         KvEntry attrANewValue = new StringDataEntry("A", "value2");
-        AttributeKvEntry attrANew = new BaseAttributeKvEntry(attrANewValue, 73L);
+        AttributeKvEntry attrANew = new BaseAttributeKvEntry(attrANewValue, 73L,DataConstants.CLIENT_SCOPE);
         KvEntry attrBNewValue = new StringDataEntry("B", "value3");
-        AttributeKvEntry attrBNew = new BaseAttributeKvEntry(attrBNewValue, 73L);
+        AttributeKvEntry attrBNew = new BaseAttributeKvEntry(attrBNewValue, 73L,DataConstants.CLIENT_SCOPE);
 
         attributesService.save(deviceId, DataConstants.CLIENT_SCOPE, Collections.singletonList(attrAOld)).get();
         attributesService.save(deviceId, DataConstants.CLIENT_SCOPE, Collections.singletonList(attrANew)).get();
         attributesService.save(deviceId, DataConstants.CLIENT_SCOPE, Collections.singletonList(attrBNew)).get();
 
-        List<AttributeKvEntry> saved = attributesService.findAll(deviceId, DataConstants.CLIENT_SCOPE).get();
+        List<AttributeKvEntry> saved = attributesService.findAll(deviceId, DataConstants.CLIENT_SCOPE,0).get();
 
         Assert.assertNotNull(saved);
         Assert.assertEquals(2, saved.size());

@@ -58,9 +58,13 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.AccessValidator;
@@ -74,14 +78,7 @@ import org.thingsboard.server.service.telemetry.exception.UncheckedApiException;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -96,6 +93,9 @@ public class TelemetryController extends BaseController {
 
     @Autowired
     private AttributesService attributesService;
+   
+    @Autowired
+    private RelationService relationService;
 
     @Autowired
     private TimeseriesService tsService;
@@ -283,7 +283,6 @@ public class TelemetryController extends BaseController {
             return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
         }
         SecurityUser user = getCurrentUser();
-
         if (DataConstants.SERVER_SCOPE.equals(scope) ||
                 DataConstants.SHARED_SCOPE.equals(scope) ||
                 DataConstants.CLIENT_SCOPE.equals(scope)) {
@@ -296,7 +295,7 @@ public class TelemetryController extends BaseController {
                         if (entityId.getEntityType() == EntityType.DEVICE) {
                             DeviceId deviceId = new DeviceId(entityId.getId());
                             Set<AttributeKey> keysToNotify = new HashSet<>();
-                            keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key)));
+                            keys.forEach(key -> keysToNotify.add(new AttributeKey(scope, key,false)));
                             DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onDelete(
                                     user.getTenantId(), deviceId, keysToNotify);
                             actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));
@@ -321,7 +320,9 @@ public class TelemetryController extends BaseController {
             return getImmediateDeferredResult("Invalid scope: " + scope, HttpStatus.BAD_REQUEST);
         }
         if (json.isObject()) {
-            List<AttributeKvEntry> attributes = extractRequestAttributes(json);
+	
+            List<AttributeKvEntry> attributes = extractRequestAttributes(json,scope);
+		
             if (attributes.isEmpty()) {
                 return getImmediateDeferredResult("No attributes data found in request body!", HttpStatus.BAD_REQUEST);
             }
@@ -403,38 +404,74 @@ public class TelemetryController extends BaseController {
     private void getAttributeValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, String scope, String keys) {
         List<String> keyList = toKeysList(keys);
         FutureCallback<List<AttributeKvEntry>> callback = getAttributeValuesToResponseCallback(result, user, scope, entityId, keyList);
-        if (!StringUtils.isEmpty(scope)) {
+
+        List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+        findAttribute(entityId,scope,keyList,futures,0);
+        getRelatedAttribute(entityId,scope,keyList,futures,1);
+        ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
+        Futures.addCallback(future, callback);
+    }
+    
+    private void getRelatedAttribute(final EntityId entityId,String scope,List<String> keyList,List<ListenableFuture<List<AttributeKvEntry>>> futures,int lvl) {
+    	if (scope==null || DataConstants.SERVER_SCOPE.equals(scope)) {
+	    	log.debug("Processing lvl {}",lvl);
+	        if (lvl>10) {
+	            log.error("Sorry max of 10 levels of Inheritance allowed");
+	            return;
+	        }
+	    	List<EntityRelation> relList=relationService.findByTo(entityId, RelationTypeGroup.COMMON);
+	    	relList.forEach(rel->{
+	            log.debug("Processing Relation {} for child {}",rel.getFrom().toString(),entityId.toString());
+	            if (!rel.getAdditionalInfo().has("noinherit") || !rel.getAdditionalInfo().get("noinherit").asBoolean()) {
+	            	findAttribute(rel.getFrom(),DataConstants.SERVER_SCOPE,keyList,futures,lvl);
+	            }
+	            getRelatedAttribute(rel.getFrom(),DataConstants.SERVER_SCOPE,keyList,futures,lvl+1);
+	    	});
+    	} else {
+    		log.trace("No inheritance on [{}] scope",scope);
+    	}
+    }
+    
+    private void findAttribute(final EntityId entityId,String scope,List<String> keyList,List<ListenableFuture<List<AttributeKvEntry>>> futures,long inheritanceLevel) {
+    	log.trace("findAttribute which is {}inherited",inheritanceLevel>0?"":"not ");
+    	if (!StringUtils.isEmpty(scope)) {
             if (keyList != null && !keyList.isEmpty()) {
-                Futures.addCallback(attributesService.find(entityId, scope, keyList), callback);
+            	log.trace("Finding on entity [{}] with supplied scope [{}] and keylist [{}]",entityId,scope,keyList);
+            	futures.add(attributesService.find(entityId, scope, keyList,inheritanceLevel));
             } else {
-                Futures.addCallback(attributesService.findAll(entityId, scope), callback);
+            	log.trace("Finding on entity [{}] with supplied scope [{}]",entityId,scope);
+            	futures.add(attributesService.findAll(entityId, scope,inheritanceLevel));
             }
         } else {
-            List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
             for (String tmpScope : DataConstants.allScopes()) {
                 if (keyList != null && !keyList.isEmpty()) {
-                    futures.add(attributesService.find(entityId, tmpScope, keyList));
+                	log.trace("Finding on entity [{}] with scope [{}] and keylist [{}]",entityId,tmpScope,keyList);
+                    futures.add(attributesService.find(entityId, tmpScope, keyList,inheritanceLevel));
                 } else {
-                    futures.add(attributesService.findAll(entityId, tmpScope));
+                	log.trace("Finding on entity [{}] with scope [{}]",entityId,tmpScope);
+                    futures.add(attributesService.findAll(entityId, tmpScope,inheritanceLevel));
                 }
             }
-
-            ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
-
-            Futures.addCallback(future, callback);
         }
     }
 
     private void getAttributeKeysCallback(@Nullable DeferredResult<ResponseEntity> result, EntityId entityId, String scope) {
-        Futures.addCallback(attributesService.findAll(entityId, scope), getAttributeKeysToResponseCallback(result));
+
+    	List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+    	futures.add(attributesService.findAll(entityId, scope,0));
+    	getRelatedAttribute(entityId, scope, null, futures, 1);
+    	ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
+        Futures.addCallback(future, getAttributeKeysToResponseCallback(result));
+	
     }
 
     private void getAttributeKeysCallback(@Nullable DeferredResult<ResponseEntity> result, EntityId entityId) {
         List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
         for (String scope : DataConstants.allScopes()) {
-            futures.add(attributesService.findAll(entityId, scope));
+	
+            futures.add(attributesService.findAll(entityId, scope,0));
         }
-
+        getRelatedAttribute(entityId, null, null, futures, 1);
         ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
 
         Futures.addCallback(future, getAttributeKeysToResponseCallback(result));
@@ -456,13 +493,38 @@ public class TelemetryController extends BaseController {
         };
     }
 
+    private List<AttributeData> sortKvEntryList(List<AttributeKvEntry> attributes) {
+    	log.trace("getAttributeKeysToResponseCallback processing [{}] attributes",attributes.size());
+    	Map<String, AttributeData> attValues = attributes.stream()
+    			.sorted(Comparator.comparingLong(AttributeKvEntry::getInheritanceLevel))
+    			.collect(Collectors.toMap(AttributeKvEntry::getKey,attribute -> new AttributeData(attribute.getLastUpdateTs(), attribute.getKey(),
+						attribute.getValue(), attribute.getIsInherited()),(oldValue, newValue) -> {if (((AttributeData)newValue).isInherited()) return oldValue; else return newValue;}));
+    	
+    	if (log.isTraceEnabled()) {
+    		attValues.values().forEach(attribute -> log.trace("{} : {}",attribute.getKey(),attribute.getValue()));
+    	}
+    	return new ArrayList<AttributeData>(attValues.values());
+    }
+    
+    private List<AttributeKey> sortKvEntryKeysList(List<AttributeKvEntry> attributes) {
+    	log.trace("getAttributeKeysToResponseCallback processing [{}] attributes",attributes.size());
+    	log.trace("Attributes are [{}]",attributes);
+    	Map<String, AttributeKey> attValues = attributes.stream()
+    			.sorted(Comparator.comparingLong(AttributeKvEntry::getInheritanceLevel))
+    			.collect(Collectors.toMap(AttributeKvEntry::getKey,attribute -> new AttributeKey(attribute.getScope(),attribute.getKey(),attribute.getIsInherited())
+    					                 ,(oldValue, newValue) -> {if (((AttributeKey)newValue).isInherited()) return oldValue; else return newValue;}));
+    	
+    	if (log.isTraceEnabled()) {
+    		attValues.values().forEach(attribute -> log.trace("{} : {} : {}",attribute.getAttributeKey(),attribute.getScope(),attribute.isInherited()));
+    	}
+    	return new ArrayList<AttributeKey>(attValues.values());
+    }
     private FutureCallback<List<AttributeKvEntry>> getAttributeKeysToResponseCallback(final DeferredResult<ResponseEntity> response) {
         return new FutureCallback<List<AttributeKvEntry>>() {
 
             @Override
-            public void onSuccess(List<AttributeKvEntry> attributes) {
-                List<String> keys = attributes.stream().map(KvEntry::getKey).collect(Collectors.toList());
-                response.setResult(new ResponseEntity<>(keys, HttpStatus.OK));
+            public void onSuccess(List<AttributeKvEntry> attributes) {            	
+                response.setResult(new ResponseEntity<>(sortKvEntryKeysList(attributes), HttpStatus.OK));
             }
 
             @Override
@@ -479,10 +541,8 @@ public class TelemetryController extends BaseController {
         return new FutureCallback<List<AttributeKvEntry>>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> attributes) {
-                List<AttributeData> values = attributes.stream().map(attribute -> new AttributeData(attribute.getLastUpdateTs(),
-                        attribute.getKey(), attribute.getValue())).collect(Collectors.toList());
-                logAttributesRead(user, entityId, scope, keyList, null);
-                response.setResult(new ResponseEntity<>(values, HttpStatus.OK));
+                  logAttributesRead(user, entityId, scope, keyList, null);
+                response.setResult(new ResponseEntity<>(sortKvEntryList(attributes), HttpStatus.OK));
             }
 
             @Override
@@ -516,7 +576,7 @@ public class TelemetryController extends BaseController {
 
     private void logAttributesDeleted(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
         try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_DELETED, toException(e),
+            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_DELETED, toException(e),
                     scope, keys);
         } catch (ThingsboardException te) {
             log.warn("Failed to log attributes delete", te);
@@ -525,7 +585,7 @@ public class TelemetryController extends BaseController {
 
     private void logAttributesUpdated(SecurityUser user, EntityId entityId, String scope, List<AttributeKvEntry> attributes, Throwable e) {
         try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_UPDATED, toException(e),
+            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_UPDATED, toException(e),
                     scope, attributes);
         } catch (ThingsboardException te) {
             log.warn("Failed to log attributes update", te);
@@ -535,7 +595,7 @@ public class TelemetryController extends BaseController {
 
     private void logAttributesRead(SecurityUser user, EntityId entityId, String scope, List<String> keys, Throwable e) {
         try {
-            logEntityAction(user, (UUIDBased & EntityId) entityId, null, null, ActionType.ATTRIBUTES_READ, toException(e),
+            logEntityAction(user, (UUIDBased & EntityId)entityId, null, null, ActionType.ATTRIBUTES_READ, toException(e),
                     scope, keys);
         } catch (ThingsboardException te) {
             log.warn("Failed to log attributes read", te);
@@ -566,24 +626,24 @@ public class TelemetryController extends BaseController {
         result.setResult(new ResponseEntity<>(message, status));
         return result;
     }
-
-    private List<AttributeKvEntry> extractRequestAttributes(JsonNode jsonNode) {
+    private List<AttributeKvEntry> extractRequestAttributes(JsonNode jsonNode,String scope) {
         long ts = System.currentTimeMillis();
         List<AttributeKvEntry> attributes = new ArrayList<>();
         jsonNode.fields().forEachRemaining(entry -> {
             String key = entry.getKey();
             JsonNode value = entry.getValue();
             if (entry.getValue().isTextual()) {
-                attributes.add(new BaseAttributeKvEntry(new StringDataEntry(key, value.textValue()), ts));
+                attributes.add(new BaseAttributeKvEntry(new StringDataEntry(key, value.textValue()), ts,scope));
             } else if (entry.getValue().isBoolean()) {
-                attributes.add(new BaseAttributeKvEntry(new BooleanDataEntry(key, value.booleanValue()), ts));
+                attributes.add(new BaseAttributeKvEntry(new BooleanDataEntry(key, value.booleanValue()), ts,scope));
             } else if (entry.getValue().isDouble()) {
-                attributes.add(new BaseAttributeKvEntry(new DoubleDataEntry(key, value.doubleValue()), ts));
+                attributes.add(new BaseAttributeKvEntry(new DoubleDataEntry(key, value.doubleValue()), ts,scope));
             } else if (entry.getValue().isNumber()) {
                 if (entry.getValue().isBigInteger()) {
                     throw new UncheckedApiException(new InvalidParametersException("Big integer values are not supported!"));
                 } else {
-                    attributes.add(new BaseAttributeKvEntry(new LongDataEntry(key, value.longValue()), ts));
+                    attributes.add(new BaseAttributeKvEntry(new LongDataEntry(key, value.longValue()), ts,scope));
+				
                 }
             }
         });

@@ -29,6 +29,10 @@ public class BasicTsKvEntry implements TsKvEntry {
     }
 
     @Override
+    public String getScope() {
+    	return kv.getScope();
+    }
+    @Override
     public String getKey() {
         return kv.getKey();
     }
@@ -94,4 +98,16 @@ public class BasicTsKvEntry implements TsKvEntry {
     public String getValueAsString() {
         return kv.getValueAsString();
     }
+	@Override
+	public boolean getIsInherited() {
+		return kv.getIsInherited();
+	}
+	@Override
+	public long getInheritanceLevel() {
+		return kv.getInheritanceLevel();
+	}
+	@Override
+	public void setInheritanceLevel(long lvl) {
+		kv.setInheritanceLevel(lvl);
+	}
 }

@@ -52,6 +52,21 @@ public abstract class BasicKvEntry implements KvEntry {
     }
 
     @Override
+    public String getScope() {
+    	return null;
+    }
+    @Override
+	public boolean getIsInherited() {
+		return false;
+	}
+	@Override
+	public long getInheritanceLevel() {
+		return 0;
+	}
+	@Override
+	public void setInheritanceLevel(long lvl) {	
+	}
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof BasicKvEntry)) return false;

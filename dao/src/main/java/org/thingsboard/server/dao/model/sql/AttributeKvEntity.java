@@ -95,6 +95,6 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
         } else if (longValue != null) {
             kvEntry = new LongDataEntry(attributeKey, longValue);
         }
-        return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);
+        return new BaseAttributeKvEntry(kvEntry, lastUpdateTs,attributeType);
     }
 }

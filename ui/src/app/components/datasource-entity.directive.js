@@ -171,7 +171,7 @@ function DatasourceEntity($compile, $templateCache, $q, $mdDialog, $window, $doc
             if (scope.maxDataKeys > 0 && ngModelCtrl.$viewValue.dataKeys.length >= scope.maxDataKeys ) {
                 return null;
             } else {
-                return scope.generateDataKey({chip: chip, type: types.dataKeyType.attribute});
+                return scope.generateDataKey({chip: chip.attributeKey, type: types.dataKeyType.attribute});
             }
         };
 

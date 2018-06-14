@@ -40,4 +40,8 @@ public interface KvEntry extends Serializable {
     String getValueAsString();
 
     Object getValue();
+    boolean getIsInherited();
+    long getInheritanceLevel();
+    void setInheritanceLevel(long lvl);
+    String getScope();
 }

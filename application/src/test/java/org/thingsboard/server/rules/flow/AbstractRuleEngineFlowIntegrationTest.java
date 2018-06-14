@@ -142,9 +142,9 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         device = doPost("/api/device", device, Device.class);
 
         attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey1", "serverAttributeValue1"), System.currentTimeMillis())));
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey1", "serverAttributeValue1"), System.currentTimeMillis(),DataConstants.SERVER_SCOPE)));
         attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey2", "serverAttributeValue2"), System.currentTimeMillis())));
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey2", "serverAttributeValue2"), System.currentTimeMillis(),DataConstants.SERVER_SCOPE)));
 
 
         Thread.sleep(1000);
@@ -260,9 +260,9 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         device = doPost("/api/device", device, Device.class);
 
         attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey1", "serverAttributeValue1"), System.currentTimeMillis())));
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey1", "serverAttributeValue1"), System.currentTimeMillis(),DataConstants.SERVER_SCOPE)));
         attributesService.save(device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey2", "serverAttributeValue2"), System.currentTimeMillis())));
+                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey2", "serverAttributeValue2"), System.currentTimeMillis(),DataConstants.SERVER_SCOPE)));
 
 
         Thread.sleep(1000);

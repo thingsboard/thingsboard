@@ -20,12 +20,14 @@ public class AttributeData implements Comparable<AttributeData>{
     private final long lastUpdateTs;
     private final String key;
     private final Object value;
+    private final boolean inherited;
 
-    public AttributeData(long lastUpdateTs, String key, Object value) {
+    public AttributeData(long lastUpdateTs, String key, Object value,boolean inherited) {
         super();
         this.lastUpdateTs = lastUpdateTs;
         this.key = key;
         this.value = value;
+        this.inherited = inherited;
     }
 
     public long getLastUpdateTs() {
@@ -38,6 +40,9 @@ public class AttributeData implements Comparable<AttributeData>{
 
     public Object getValue() {
         return value;
+    }
+    public boolean isInherited() {
+    	return inherited;
     }
 
     @Override

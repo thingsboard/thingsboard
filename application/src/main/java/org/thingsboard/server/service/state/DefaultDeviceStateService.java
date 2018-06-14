@@ -411,7 +411,7 @@ public class DefaultDeviceStateService implements DeviceStateService {
     }
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
-        ListenableFuture<List<AttributeKvEntry>> attributes = attributesService.find(device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
+        ListenableFuture<List<AttributeKvEntry>> attributes = attributesService.find(device.getId(), DataConstants.SERVER_SCOPE, PERSISTENT_ATTRIBUTES,0);
         return Futures.transform(attributes, new Function<List<AttributeKvEntry>, DeviceStateData>() {
             @Nullable
             @Override

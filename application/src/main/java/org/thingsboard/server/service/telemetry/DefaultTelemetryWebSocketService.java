@@ -34,7 +34,10 @@ import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.ValidationResult;
@@ -55,6 +58,7 @@ import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -95,6 +99,8 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     @Autowired
     private AccessValidator accessValidator;
 
+    @Autowired
+    private RelationService relationService;
     @Autowired
     private AttributesService attributesService;
 
@@ -194,12 +200,18 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         FutureCallback<List<AttributeKvEntry>> callback = new FutureCallback<List<AttributeKvEntry>>() {
             @Override
             public void onSuccess(List<AttributeKvEntry> data) {
-                List<TsKvEntry> attributesData = data.stream().map(d -> new BasicTsKvEntry(d.getLastUpdateTs(), d)).collect(Collectors.toList());
-                sendWsMsg(sessionRef, new SubscriptionUpdate(cmd.getCmdId(), attributesData));
+                log.trace("handleWsAttributesSubscriptionByKeys processing [{}] attributes",data.size());
+            	Map<String, TsKvEntry> attValues = data.stream()
+            			.sorted(Comparator.comparingLong(AttributeKvEntry::getInheritanceLevel))
+            			.collect(Collectors.toMap(AttributeKvEntry::getKey,d -> new BasicTsKvEntry(d.getLastUpdateTs(), d),(oldValue, newValue) -> {if (((TsKvEntry)newValue).getIsInherited()) return oldValue; else return newValue;}));
+            	if (log.isTraceEnabled()) {
+            		attValues.values().forEach(attribute -> log.trace("{} : {}",attribute.getKey(),attribute.getValue()));
+            	}
+                sendWsMsg(sessionRef, new SubscriptionUpdate(cmd.getCmdId(), new ArrayList<TsKvEntry>(attValues.values())));
 
                 Map<String, Long> subState = new HashMap<>(keys.size());
                 keys.forEach(key -> subState.put(key, 0L));
-                attributesData.forEach(v -> subState.put(v.getKey(), v.getTs()));
+                attValues.values().forEach(v -> subState.put(v.getKey(), v.getTs()));
 
                 SubscriptionState sub = new SubscriptionState(sessionId, cmd.getCmdId(), entityId, TelemetryFeature.ATTRIBUTES, false, subState, cmd.getScope());
                 subscriptionManager.addLocalWsSubscription(sessionId, entityId, sub);
@@ -467,17 +479,67 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                 }, executor);
     }
 
+    private void getRelatedAttribute(final EntityId entityId,String scope,List<String> keyList,List<ListenableFuture<List<AttributeKvEntry>>> futures,int lvl) {
+    	if (scope==null || DataConstants.SERVER_SCOPE.equals(scope)) {
+	    	log.debug("Processing lvl {}",lvl);
+	        if (lvl>10) {
+	            log.error("Sorry max of 10 levels of Inheritance allowed");
+	            return;
+	        }
+	    	List<EntityRelation> relList=relationService.findByTo(entityId, RelationTypeGroup.COMMON);
+	    	relList.forEach(rel->{
+	            log.debug("Processing Relation {} for child {}",rel.getFrom().toString(),entityId.toString());
+	            if (!rel.getAdditionalInfo().has("noinherit") || !rel.getAdditionalInfo().get("noinherit").asBoolean()) {
+	            	findAttribute(rel.getFrom(),DataConstants.SERVER_SCOPE,keyList,futures,lvl);
+	            }
+	            getRelatedAttribute(rel.getFrom(),DataConstants.SERVER_SCOPE,keyList,futures,lvl+1);
+	    	});
+    	} else {
+    		log.trace("No inheritance on [{}] scope",scope);
+    	}
+    }
+    private void findAttribute(final EntityId entityId,String scope,List<String> keyList,List<ListenableFuture<List<AttributeKvEntry>>> futures,long inheritanceLevel) {
+    	log.trace("findAttribute which is {}inherited",inheritanceLevel>0?"":"not ");
+    	if (!StringUtils.isEmpty(scope)) {
+            if (keyList != null && !keyList.isEmpty()) {
+            	log.trace("Finding on entity [{}] with supplied scope [{}] and keylist [{}]",entityId,scope,keyList);
+            	futures.add(attributesService.find(entityId, scope, keyList,inheritanceLevel));
+            } else {
+            	log.trace("Finding on entity [{}] with supplied scope [{}]",entityId,scope);
+            	futures.add(attributesService.findAll(entityId, scope,inheritanceLevel));
+            }
+        } else {
+        	log.trace("Scope was empty. Looking up all scopes.");
+            for (String tmpScope : DataConstants.allScopes()) {
+                if (keyList != null && !keyList.isEmpty()) {
+                	log.trace("Finding on entity [{}] with scope [{}] and keylist [{}]",entityId,tmpScope,keyList);
+                    futures.add(attributesService.find(entityId, tmpScope, keyList,inheritanceLevel));
+                } else {
+                	log.trace("Finding on entity [{}] with scope [{}]",entityId,tmpScope);
+                    futures.add(attributesService.findAll(entityId, tmpScope,inheritanceLevel));
+                }
+            }
+        }
+    }
+    private void findAndFutureAttribute(final EntityId entityId,final String scope,final List<String> keys,final FutureCallback<List<AttributeKvEntry>> callback) {
+    	log.trace("Finding attribute [{}] with scope [{}] on entity [{}]",keys,scope,entityId);
+    	List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
+        findAttribute(entityId,scope,keys,futures,0);
+        int f=futures.size();
+        log.trace("Found [{}] direct attributes",f);
+        getRelatedAttribute(entityId,scope,keys,futures,1);
+        log.trace("Found [{}] related attributes",futures.size()-f);
+        ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
+        Futures.addCallback(future, callback);
+    }
     private <T> FutureCallback<ValidationResult> getAttributesFetchCallback(final EntityId entityId, final List<String> keys, final FutureCallback<List<AttributeKvEntry>> callback) {
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (String scope : DataConstants.allScopes()) {
-                    futures.add(attributesService.find(entityId, scope, keys));
-                }
+/*S2J Modified 006*/
+            	log.trace("getAttributesFetchCallback success. No scope.");
+            	findAndFutureAttribute(entityId,null,keys,callback); 
 
-                ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
-                Futures.addCallback(future, callback);
             }
 
             @Override
@@ -491,7 +553,8 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.find(entityId, scope, keys), callback);
+            	log.trace("getAttributesFetchCallback success.");
+            	findAndFutureAttribute(entityId,scope,keys,callback); 
             }
 
             @Override
@@ -505,13 +568,10 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (String scope : DataConstants.allScopes()) {
-                    futures.add(attributesService.findAll(entityId, scope));
-                }
 
-                ListenableFuture<List<AttributeKvEntry>> future = mergeAllAttributesFutures(futures);
-                Futures.addCallback(future, callback);
+            	log.trace("getAttributesFetchCallback success. No scope and not keys.");
+            	findAndFutureAttribute(entityId,null,null,callback); 
+
             }
 
             @Override
@@ -525,7 +585,8 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.findAll(entityId, scope), callback);
+            	log.trace("getAttributesFetchCallback success. No keys.");
+            	findAndFutureAttribute(entityId,scope,null,callback); 
             }
 
             @Override

@@ -117,8 +117,8 @@ public class CoapServerTest {
                                 toDeviceMsg = BasicStatusCodeResponse.onSuccess(deviceMsg.getMsgType(), BasicRequest.DEFAULT_REQUEST_ID);
                             } else if (deviceMsg.getMsgType() == SessionMsgType.GET_ATTRIBUTES_REQUEST) {
                                 List<AttributeKvEntry> data = new ArrayList<>();
-                                data.add(new BaseAttributeKvEntry(new StringDataEntry("key1", "value1"), System.currentTimeMillis()));
-                                data.add(new BaseAttributeKvEntry(new LongDataEntry("key2", 42L), System.currentTimeMillis()));
+                                data.add(new BaseAttributeKvEntry(new StringDataEntry("key1", "value1"), System.currentTimeMillis(),null));
+                                data.add(new BaseAttributeKvEntry(new LongDataEntry("key2", 42L), System.currentTimeMillis(),null));
                                 BasicAttributeKVMsg kv = BasicAttributeKVMsg.fromClient(data);
                                 toDeviceMsg = BasicGetAttributesResponse.onSuccess(deviceMsg.getMsgType(), BasicRequest.DEFAULT_REQUEST_ID, kv);
                             }

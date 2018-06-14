@@ -15,11 +15,7 @@
  */
 package org.thingsboard.server.dao.attributes;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Function;
@@ -45,12 +41,7 @@ import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.thingsboard.server.dao.model.ModelConstants.ATTRIBUTES_KV_CF;
-import static org.thingsboard.server.dao.model.ModelConstants.ATTRIBUTE_KEY_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ATTRIBUTE_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.LAST_UPDATE_TS_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.*;
 
 /**
  * @author Andrew Shvayka
@@ -73,7 +64,7 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
     }
 
     @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey) {
+    public ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey,long inheritanceLevel) {
         Select.Where select = select().from(ATTRIBUTES_KV_CF)
                 .where(eq(ENTITY_TYPE_COLUMN, entityId.getEntityType()))
                 .and(eq(ENTITY_ID_COLUMN, entityId.getId()))
@@ -81,14 +72,14 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
                 .and(eq(ATTRIBUTE_KEY_COLUMN, attributeKey));
         log.trace("Generated query [{}] for entityId {} and key {}", select, entityId, attributeKey);
         return Futures.transform(executeAsyncRead(select), (Function<? super ResultSet, ? extends Optional<AttributeKvEntry>>) input ->
-                        Optional.ofNullable(convertResultToAttributesKvEntry(attributeKey, input.one()))
+                        Optional.ofNullable(convertResultToAttributesKvEntry(attributeKey, input.one(),inheritanceLevel,attributeType))
                 , readResultsProcessingExecutor);
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKeys) {
+    public ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKeys,long inheritanceLevel) {
         List<ListenableFuture<Optional<AttributeKvEntry>>> entries = new ArrayList<>();
-        attributeKeys.forEach(attributeKey -> entries.add(find(entityId, attributeType, attributeKey)));
+        attributeKeys.forEach(attributeKey -> entries.add(find(entityId, attributeType, attributeKey,inheritanceLevel)));
         return Futures.transform(Futures.allAsList(entries), (Function<List<Optional<AttributeKvEntry>>, ? extends List<AttributeKvEntry>>) input -> {
             List<AttributeKvEntry> result = new ArrayList<>();
             input.stream().filter(opt -> opt.isPresent()).forEach(opt -> result.add(opt.get()));
@@ -98,14 +89,14 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
 
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType) {
+    public ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType,long inheritanceLevel) {
         Select.Where select = select().from(ATTRIBUTES_KV_CF)
                 .where(eq(ENTITY_TYPE_COLUMN, entityId.getEntityType()))
                 .and(eq(ENTITY_ID_COLUMN, entityId.getId()))
                 .and(eq(ATTRIBUTE_TYPE_COLUMN, attributeType));
         log.trace("Generated query [{}] for entityId {} and attributeType {}", select, entityId, attributeType);
         return Futures.transform(executeAsyncRead(select), (Function<? super ResultSet, ? extends List<AttributeKvEntry>>) input ->
-                        convertResultToAttributesKvEntryList(input)
+                        convertResultToAttributesKvEntryList(input,inheritanceLevel,attributeType)
                 , readResultsProcessingExecutor);
     }
 
@@ -177,22 +168,24 @@ public class CassandraBaseAttributesDao extends CassandraAbstractAsyncDao implem
         return saveStmt;
     }
 
-    private AttributeKvEntry convertResultToAttributesKvEntry(String key, Row row) {
+    private AttributeKvEntry convertResultToAttributesKvEntry(String key, Row row,long inheritanceLevel,String scope) {
         AttributeKvEntry attributeEntry = null;
         if (row != null) {
             long lastUpdateTs = row.get(LAST_UPDATE_TS_COLUMN, Long.class);
-            attributeEntry = new BaseAttributeKvEntry(CassandraBaseTimeseriesDao.toKvEntry(row, key), lastUpdateTs);
+            attributeEntry = new BaseAttributeKvEntry(CassandraBaseTimeseriesDao.toKvEntry(row, key), lastUpdateTs,scope);
+            attributeEntry.setInheritanceLevel(inheritanceLevel);
+            log.trace("Returning [{}]",attributeEntry);
         }
         return attributeEntry;
     }
 
-    private List<AttributeKvEntry> convertResultToAttributesKvEntryList(ResultSet resultSet) {
+    private List<AttributeKvEntry> convertResultToAttributesKvEntryList(ResultSet resultSet,long inheritanceLevel,String scope) {
         List<Row> rows = resultSet.all();
         List<AttributeKvEntry> entries = new ArrayList<>(rows.size());
         if (!rows.isEmpty()) {
             rows.forEach(row -> {
                 String key = row.getString(ModelConstants.ATTRIBUTE_KEY_COLUMN);
-                AttributeKvEntry kvEntry = convertResultToAttributesKvEntry(key, row);
+                AttributeKvEntry kvEntry = convertResultToAttributesKvEntry(key, row, inheritanceLevel,scope);
                 if (kvEntry != null) {
                     entries.add(kvEntry);
                 }

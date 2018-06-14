@@ -106,7 +106,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(userService.findUserByIdAsync(userId)).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(customerId, SERVER_SCOPE, Collections.singleton("temperature")))
+        when(attributesService.find(customerId, SERVER_SCOPE, Collections.singleton("temperature"),0))
                 .thenThrow(new IllegalStateException("something wrong"));
 
         node.onMsg(ctx, msg);
@@ -131,7 +131,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(userService.findUserByIdAsync(userId)).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(customerId, SERVER_SCOPE, Collections.singleton("temperature")))
+        when(attributesService.find(customerId, SERVER_SCOPE, Collections.singleton("temperature"),0))
                 .thenReturn(Futures.immediateFailedFuture(new IllegalStateException("something wrong")));
 
         node.onMsg(ctx, msg);
@@ -249,10 +249,10 @@ public class TbGetCustomerAttributeNodeTest {
     }
 
     private void entityAttributeFetched(CustomerId customerId) {
-        List<AttributeKvEntry> attributes = Lists.newArrayList(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L));
+        List<AttributeKvEntry> attributes = Lists.newArrayList(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L, null));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(customerId, SERVER_SCOPE, Collections.singleton("temperature")))
+        when(attributesService.find(customerId, SERVER_SCOPE, Collections.singleton("temperature"),0))
                 .thenReturn(Futures.immediateFuture(attributes));
 
         node.onMsg(ctx, msg);

@@ -13,18 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
 
-import lombok.Data;
+package org.thingsboard.server.service.telemetry;
 
-import java.io.Serializable;
+public class AttributeKeys implements Comparable<AttributeKeys>{
 
-/**
- * @author Andrew Shvayka
- */
-@Data
-public class AttributeKey implements Serializable {
-    private final String scope;
-    private final String attributeKey;
+    private final String key;
+   
     private final boolean inherited;
+
+    public AttributeKeys(long lastUpdateTs, String key, Object value,boolean inherited) {
+        super();
+        this.key = key;
+        this.inherited = inherited;
+    }
+
+    public String getKey() {
+        return key;
+    }
+   
+    public boolean isInherited() {
+    	return inherited;
+    }
+
+    @Override
+    public int compareTo(AttributeKeys o) {
+        return key.compareTo(o.key);
+    }
+        
 }
+

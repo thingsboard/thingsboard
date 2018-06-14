@@ -28,11 +28,11 @@ import java.util.Optional;
  */
 public interface AttributesDao {
 
-    ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey);
+    ListenableFuture<Optional<AttributeKvEntry>> find(EntityId entityId, String attributeType, String attributeKey,long inheritanceLevel);
 
-    ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKey);
+    ListenableFuture<List<AttributeKvEntry>> find(EntityId entityId, String attributeType, Collection<String> attributeKey,long inheritanceLevel);
 
-    ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType);
+    ListenableFuture<List<AttributeKvEntry>> findAll(EntityId entityId, String attributeType,long inheritanceLevel);
 
     ListenableFuture<Void> save(EntityId entityId, String attributeType, AttributeKvEntry attribute);
 

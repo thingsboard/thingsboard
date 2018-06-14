@@ -189,7 +189,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
         });
 
         scope.editAttribute = function($event, attribute) {
-            if (!scope.attributeScope.clientSide) {
+            if (!scope.attributeScope.clientSide && !attribute.inherited) {
                 $event.stopPropagation();
                 $mdEditDialog.show({
                     controller: EditAttributeValueController,

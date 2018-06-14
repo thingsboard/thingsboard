@@ -77,7 +77,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         if (CollectionUtils.isEmpty(keys)) {
             return Futures.immediateFuture(null);
         }
-        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, scope, keys);
+        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(entityId, scope, keys,0);
         return Futures.transform(latest, l -> {
             l.forEach(r -> {
                 if (r.getValue() != null) {

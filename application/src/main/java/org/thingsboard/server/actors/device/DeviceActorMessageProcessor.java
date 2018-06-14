@@ -319,9 +319,9 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private ListenableFuture<List<AttributeKvEntry>> getAttributeKvEntries(DeviceId deviceId, String scope, Optional<Set<String>> names) {
         if (names.isPresent()) {
             if (!names.get().isEmpty()) {
-                return systemContext.getAttributesService().find(deviceId, scope, names.get());
+                return systemContext.getAttributesService().find(deviceId, scope, names.get(),0);
             } else {
-                return systemContext.getAttributesService().findAll(deviceId, scope);
+                return systemContext.getAttributesService().findAll(deviceId, scope,0);
             }
         } else {
             return Futures.immediateFuture(Collections.emptyList());

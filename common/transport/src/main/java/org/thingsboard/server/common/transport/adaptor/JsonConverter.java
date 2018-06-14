@@ -133,7 +133,7 @@ public class JsonConverter {
         if (element.isJsonObject()) {
             BasicAttributesUpdateRequest request = new BasicAttributesUpdateRequest(requestId);
             long ts = System.currentTimeMillis();
-            request.add(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
+            request.add(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts, kv.getScope())).collect(Collectors.toList()));
             return request;
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + element);

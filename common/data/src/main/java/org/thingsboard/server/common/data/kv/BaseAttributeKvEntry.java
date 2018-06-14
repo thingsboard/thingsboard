@@ -23,11 +23,15 @@ import java.util.Optional;
 public class BaseAttributeKvEntry implements AttributeKvEntry {
 
     private final long lastUpdateTs;
+    private boolean isInherited;
+    private long lvl;
+    private String scope;
     private final KvEntry kv;
 
-    public BaseAttributeKvEntry(KvEntry kv, long lastUpdateTs) {
+    public BaseAttributeKvEntry(KvEntry kv, long lastUpdateTs, String scope) {
         this.kv = kv;
         this.lastUpdateTs = lastUpdateTs;
+        this.scope = scope;
     }
 
     @Override
@@ -76,6 +80,10 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     }
 
     @Override
+    public String getScope() {
+    	return scope;
+    }
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -99,6 +107,20 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
         return "BaseAttributeKvEntry{" +
                 "lastUpdateTs=" + lastUpdateTs +
                 ", kv=" + kv +
-                '}';
+                ", scope=" + scope +
+                ", inheritLvl=" + lvl +
+                "}";
+    }
+    @Override
+    public boolean getIsInherited() {
+        return lvl>0;
+    }
+    @Override
+    public void setInheritanceLevel(long lvl) {
+    	this.lvl = lvl;
+    }
+    @Override
+    public long getInheritanceLevel() {
+    	return lvl;
     }
 }

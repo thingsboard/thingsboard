@@ -60,6 +60,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -182,25 +183,25 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     @Override
     public void saveAttrAndNotify(EntityId entityId, String scope, String key, long value, FutureCallback<Void> callback) {
         saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
+                , System.currentTimeMillis(),scope)), callback);
     }
 
     @Override
     public void saveAttrAndNotify(EntityId entityId, String scope, String key, String value, FutureCallback<Void> callback) {
         saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
+                , System.currentTimeMillis(),scope)), callback);
     }
 
     @Override
     public void saveAttrAndNotify(EntityId entityId, String scope, String key, double value, FutureCallback<Void> callback) {
         saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new DoubleDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
+                , System.currentTimeMillis(),scope)), callback);
     }
 
     @Override
     public void saveAttrAndNotify(EntityId entityId, String scope, String key, boolean value, FutureCallback<Void> callback) {
         saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
+                , System.currentTimeMillis(),scope)), callback);
     }
 
     @Override
@@ -341,7 +342,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
         registerSubscription(sessionId, entityId, subscription);
         if (subscription.getType() == TelemetryFeature.ATTRIBUTES) {
             final Map<String, Long> keyStates = subscription.getKeyStates();
-            DonAsynchron.withCallback(attrService.find(entityId, DataConstants.CLIENT_SCOPE, keyStates.keySet()), values -> {
+            DonAsynchron.withCallback(attrService.find(entityId, DataConstants.CLIENT_SCOPE, keyStates.keySet(),0), values -> {
                         List<TsKvEntry> missedUpdates = new ArrayList<>();
                         values.forEach(latestEntry -> {
                             if (latestEntry.getLastUpdateTs() > keyStates.get(latestEntry.getKey())) {
@@ -654,7 +655,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     }
 
     private AttributeKvEntry toAttribute(ClusterAPIProtos.KeyValueProto proto) {
-        return new BaseAttributeKvEntry(getKvEntry(proto), proto.getTs());
+        return new BaseAttributeKvEntry(getKvEntry(proto), proto.getTs(),null);
     }
 
     private TsKvEntry toTimeseries(ClusterAPIProtos.KeyValueProto proto) {
