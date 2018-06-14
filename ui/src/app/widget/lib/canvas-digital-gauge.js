@@ -70,6 +70,10 @@ export default class TbCanvasDigitalGauge {
             (settings.title && settings.title.length > 0 ?
                 settings.title : dataKey.label) : '');
 
+        if (!this.localSettings.unitTitle && this.localSettings.showTimestamp) {
+            this.localSettings.unitTitle = ' ';
+        }
+
         this.localSettings.titleFont = {};
         var settingsTitleFont = settings.titleFont;
         if (!settingsTitleFont) {
@@ -206,6 +210,7 @@ export default class TbCanvasDigitalGauge {
                 var value = tvPair[1];
                 if(value !== this.gauge.value) {
                     this.gauge.value = value;
+                    this.gauge._value = value;
                 } else if (this.localSettings.showTimestamp && this.gauge.timestamp != timestamp) {
                     this.gauge.timestamp = timestamp;
                 }
