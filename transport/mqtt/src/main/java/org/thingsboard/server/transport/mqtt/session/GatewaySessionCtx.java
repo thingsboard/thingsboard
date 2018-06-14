@@ -175,7 +175,7 @@ public class GatewaySessionCtx {
                 long ts = System.currentTimeMillis();
                 BasicAttributesUpdateRequest request = new BasicAttributesUpdateRequest(requestId);
                 JsonObject deviceData = deviceEntry.getValue().getAsJsonObject();
-                request.add(JsonConverter.parseValues(deviceData).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
+                request.add(JsonConverter.parseValues(deviceData).stream().map(kv -> new BaseAttributeKvEntry(kv, ts,null)).collect(Collectors.toList()));
                 GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
                 processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                         new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
