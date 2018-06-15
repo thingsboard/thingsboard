@@ -432,7 +432,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             deviceSubscriptions.stream().filter(filter).forEach(s -> {
                 String sessionId = s.getWsSessionId();
                 List<TsKvEntry> subscriptionUpdate = f.apply(s);
-                if (subscriptionUpdate == null || !subscriptionUpdate.isEmpty()) {
+                if (subscriptionUpdate != null && !subscriptionUpdate.isEmpty()) {
                     SubscriptionUpdate update = new SubscriptionUpdate(s.getSubscriptionId(), subscriptionUpdate);
                     if (s.isLocal()) {
                         updateSubscriptionState(sessionId, s, update);
