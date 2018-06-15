@@ -109,11 +109,15 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onServiceToRuleEngineMsg(ServiceToRuleEngineMsg msg) {
+    	if (ruleChainManager.getRootChainActor()!=null)
         ruleChainManager.getRootChainActor().tell(msg, self());
+    	else logger.info("[{}] No Root Chain", msg);
     }
 
     private void onDeviceActorToRuleEngineMsg(DeviceActorToRuleEngineMsg msg) {
+    	if (ruleChainManager.getRootChainActor()!=null)
         ruleChainManager.getRootChainActor().tell(msg, self());
+    	else logger.info("[{}] No Root Chain", msg);
     }
 
     private void onRuleChainMsg(RuleChainToRuleChainMsg msg) {
