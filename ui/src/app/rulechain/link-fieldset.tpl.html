@@ -56,23 +56,5 @@
         <div class="tb-error-messages" ng-messages="ngModelCtrl.$error" role="alert">
             <div translate ng-message="linkLabels" class="tb-error-message">rulenode.link-labels-required</div>
         </div>
-        <!--md-input-container class="md-block">
-            <label translate>rulenode.link-label</label>
-            <md-select ng-model="selectedLabel" ng-change="selectedLabelChanged()">
-                <md-option ng-repeat="label in labels" ng-value="label">
-                    {{label.name}}
-                </md-option>
-            </md-select>
-            <div ng-messages="theForm.linkLabel.$error">
-                <div translate ng-message="required">rulenode.link-label-required</div>
-            </div>
-        </md-input-container>
-        <md-input-container ng-if="selectedLabel.custom" class="md-block">
-            <label translate>rulenode.link-label</label>
-            <input required name="customLinkLabel" ng-model="link.label">
-            <div ng-messages="theForm.customLinkLabel.$error">
-                <div translate ng-message="required">rulenode.custom-link-label-required</div>
-            </div>
-        </md-input-container-->
     </fieldset>
 </md-content>

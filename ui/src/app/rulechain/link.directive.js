@@ -35,33 +35,6 @@ export default function LinkDirective($compile, $templateCache, $filter) {
 
         var labelsList = [];
 
-        /*scope.$watch('link', function() {
-            scope.selectedLabel = null;
-             if (scope.link && scope.labels) {
-                 if (scope.link.label) {
-                     var result = $filter('filter')(scope.labels, {name: scope.link.label});
-                     if (result && result.length) {
-                         scope.selectedLabel = result[0];
-                     } else {
-                         result = $filter('filter')(scope.labels, {custom: true});
-                         if (result && result.length && result[0].custom) {
-                             scope.selectedLabel = result[0];
-                         }
-                     }
-                 }
-             }
-        });
-
-        scope.selectedLabelChanged = function() {
-            if (scope.link && scope.selectedLabel) {
-                if (!scope.selectedLabel.custom) {
-                    scope.link.label = scope.selectedLabel.name;
-                } else {
-                    scope.link.label = "";
-                }
-            }
-        };*/
-
         scope.transformLinkLabelChip = function (chip) {
             var res = $filter('filter')(labelsList, {name: chip}, true);
             var result;
