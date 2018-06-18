@@ -669,11 +669,15 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                 }
             } else {
                 if (edge.label) {
+                    if (!edge.labels) {
+                        edge.labels = edge.label.split(' / ');
+                    }
                     deferred.resolve(edge);
                 } else {
                     var labels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+                    var allowCustomLabels = ruleChainService.ruleNodeAllowCustomLinks(sourceNode.component);
                     vm.enableHotKeys = false;
-                    addRuleNodeLink(event, edge, labels).then(
+                    addRuleNodeLink(event, edge, labels, allowCustomLabels).then(
                         (link) => {
                             deferred.resolve(link);
                             vm.enableHotKeys = true;
@@ -713,6 +717,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
             vm.isEditingRuleNode = false;
             vm.editingRuleNode = null;
             vm.editingRuleNodeLinkLabels = ruleChainService.getRuleNodeSupportedLinks(sourceNode.component);
+            vm.editingRuleNodeAllowCustomLabels = ruleChainService.ruleNodeAllowCustomLinks(sourceNode.component);
             vm.isEditingRuleNodeLink = true;
             vm.editingRuleNodeLinkIndex = vm.ruleChainModel.edges.indexOf(edge);
             vm.editingRuleNodeLink = angular.copy(edge);
@@ -744,7 +749,8 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     isInputSource: isInputSource,
                     fromIndex: fromIndex,
                     toIndex: toIndex,
-                    label: edge.label
+                    label: edge.label,
+                    labels: edge.labels
                 };
                 connections.push(connection);
             }
@@ -816,7 +822,8 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                         var edge = {
                             source: source,
                             destination: destination,
-                            label: connection.label
+                            label: connection.label,
+                            labels: connection.labels
                         };
                         vm.ruleChainModel.edges.push(edge);
                         vm.modelservice.edges.select(edge);
@@ -1024,6 +1031,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         }
 
         if (vm.ruleChainMetaData.connections) {
+            var edgeMap = {};
             for (i = 0; i < vm.ruleChainMetaData.connections.length; i++) {
                 var connection = vm.ruleChainMetaData.connections[i];
                 var sourceNode = nodes[connection.fromIndex];
@@ -1032,12 +1040,23 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     var sourceConnectors = vm.modelservice.nodes.getConnectorsByType(sourceNode, flowchartConstants.rightConnectorType);
                     var destConnectors = vm.modelservice.nodes.getConnectorsByType(destNode, flowchartConstants.leftConnectorType);
                     if (sourceConnectors && sourceConnectors.length && destConnectors && destConnectors.length) {
-                        edge = {
-                            source: sourceConnectors[0].id,
-                            destination: destConnectors[0].id,
-                            label: connection.type
-                        };
-                        vm.ruleChainModel.edges.push(edge);
+                        var sourceId = sourceConnectors[0].id;
+                        var destId = destConnectors[0].id;
+                        var edgeKey = sourceId + '_' + destId;
+                        edge = edgeMap[edgeKey];
+                        if (!edge) {
+                            edge = {
+                                source: sourceId,
+                                destination: destId,
+                                label: connection.type,
+                                labels: [connection.type]
+                            };
+                            edgeMap[edgeKey] = edge;
+                            vm.ruleChainModel.edges.push(edge);
+                        } else {
+                            edge.label += ' / ' +connection.type;
+                            edge.labels.push(connection.type);
+                        }
                     }
                 }
             }
@@ -1045,6 +1064,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
 
         if (vm.ruleChainMetaData.ruleChainConnections) {
             var ruleChainNodesMap = {};
+            var ruleChainEdgeMap = {};
             for (i = 0; i < vm.ruleChainMetaData.ruleChainConnections.length; i++) {
                 var ruleChainConnection = vm.ruleChainMetaData.ruleChainConnections[i];
                 var ruleChain = ruleChainsMap[ruleChainConnection.targetRuleChainId.id];
@@ -1081,12 +1101,23 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                     if (sourceNode) {
                         connectors = vm.modelservice.nodes.getConnectorsByType(sourceNode, flowchartConstants.rightConnectorType);
                         if (connectors && connectors.length) {
-                            var ruleChainEdge = {
-                                source: connectors[0].id,
-                                destination: ruleChainNode.connectors[0].id,
-                                label: ruleChainConnection.type
-                            };
-                            vm.ruleChainModel.edges.push(ruleChainEdge);
+                            sourceId = connectors[0].id;
+                            destId = ruleChainNode.connectors[0].id;
+                            edgeKey = sourceId + '_' + destId;
+                            var ruleChainEdge = ruleChainEdgeMap[edgeKey];
+                            if (!ruleChainEdge) {
+                                ruleChainEdge = {
+                                    source: sourceId,
+                                    destination: destId,
+                                    label: ruleChainConnection.type,
+                                    labels: [ruleChainConnection.type]
+                                };
+                                ruleChainEdgeMap[edgeKey] = ruleChainEdge;
+                                vm.ruleChainModel.edges.push(ruleChainEdge);
+                            } else {
+                                ruleChainEdge.label += ' / ' +ruleChainConnection.type;
+                                ruleChainEdge.labels.push(ruleChainConnection.type);
+                            }
                         }
                     }
                 }
@@ -1199,8 +1230,7 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                             var ruleChainConnection = {
                                 fromIndex: fromIndex,
                                 targetRuleChainId: {entityType: vm.types.entityType.rulechain, id: destNode.targetRuleChainId},
-                                additionalInfo: destNode.additionalInfo,
-                                type: edge.label
+                                additionalInfo: destNode.additionalInfo
                             };
                             if (!ruleChainConnection.additionalInfo) {
                                 ruleChainConnection.additionalInfo = {};
@@ -1208,15 +1238,22 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
                             ruleChainConnection.additionalInfo.layoutX = Math.round(destNode.x);
                             ruleChainConnection.additionalInfo.layoutY = Math.round(destNode.y);
                             ruleChainConnection.additionalInfo.ruleChainNodeId = destNode.id;
-                            ruleChainMetaData.ruleChainConnections.push(ruleChainConnection);
+                            for (var rcIndex=0;rcIndex<edge.labels.length;rcIndex++) {
+                                var newRuleChainConnection = angular.copy(ruleChainConnection);
+                                newRuleChainConnection.type = edge.labels[rcIndex];
+                                ruleChainMetaData.ruleChainConnections.push(newRuleChainConnection);
+                            }
                         } else {
                             var toIndex = nodes.indexOf(destNode);
                             var nodeConnection = {
                                 fromIndex: fromIndex,
-                                toIndex: toIndex,
-                                type: edge.label
+                                toIndex: toIndex
                             };
-                            ruleChainMetaData.connections.push(nodeConnection);
+                            for (var cIndex=0;cIndex<edge.labels.length;cIndex++) {
+                                var newNodeConnection = angular.copy(nodeConnection);
+                                newNodeConnection.type = edge.labels[cIndex];
+                                ruleChainMetaData.connections.push(newNodeConnection);
+                            }
                         }
                     }
                 }
@@ -1285,13 +1322,13 @@ export function RuleChainController($state, $scope, $compile, $q, $mdUtil, $time
         });
     }
 
-    function addRuleNodeLink($event, link, labels) {
+    function addRuleNodeLink($event, link, labels, allowCustomLabels) {
         return $mdDialog.show({
             controller: 'AddRuleNodeLinkController',
             controllerAs: 'vm',
             templateUrl: addRuleNodeLinkTemplate,
             parent: angular.element($document[0].body),
-            locals: {link: link, labels: labels},
+            locals: {link: link, labels: labels, allowCustomLabels: allowCustomLabels},
             fullscreen: true,
             targetEvent: $event
         });
@@ -1335,13 +1372,14 @@ export function AddRuleNodeController($scope, $mdDialog, ruleNode, ruleChainId, 
 }
 
 /*@ngInject*/
-export function AddRuleNodeLinkController($scope, $mdDialog, link, labels, helpLinks) {
+export function AddRuleNodeLinkController($scope, $mdDialog, link, labels, allowCustomLabels, helpLinks) {
 
     var vm = this;
 
     vm.helpLinks = helpLinks;
     vm.link = link;
     vm.labels = labels;
+    vm.allowCustomLabels = allowCustomLabels;
 
     vm.add = add;
     vm.cancel = cancel;

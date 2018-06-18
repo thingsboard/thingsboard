@@ -16,8 +16,8 @@
 
 -->
 <div flex layout="column" style="margin-top: -10px;">
-	<div flex>{{vm.item.additionalInfo.description}}</div>
-    <div flex style="text-transform: uppercase; padding-bottom: 10px;">{{vm.item.type}}</div>
-    <div class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'device.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
-    <div class="tb-small" ng-show="vm.isPublic()">{{'device.public' | translate}}</div>
+    <div style="text-transform: uppercase; padding-bottom: 5px;">{{vm.item.type}}</div>
+    <div class="tb-card-description">{{vm.item.additionalInfo.description}}</div>
+    <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'device.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
+    <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isPublic()">{{'device.public' | translate}}</div>
 </div>

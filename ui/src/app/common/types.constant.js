@@ -510,6 +510,22 @@ export default angular.module('thingsboard.types', [])
                     }
                 }
             },
+            unknownNodeComponent: {
+                type: 'UNKNOWN',
+                name: 'unknown',
+                clazz: 'tb.internal.Unknown',
+                configurationDescriptor: {
+                    nodeDefinition: {
+                        description: "",
+                        details: "",
+                        inEnabled: true,
+                        outEnabled: true,
+                        relationTypes: [],
+                        customRelations: false,
+                        defaultConfiguration: {}
+                    }
+                }
+            },
             inputNodeComponent: {
                 type: 'INPUT',
                 name: 'Input',
@@ -565,6 +581,13 @@ export default angular.module('thingsboard.types', [])
                     nodeClass: "tb-input-type",
                     icon: "input",
                     special: true
+                },
+                UNKNOWN: {
+                    value: "UNKNOWN",
+                    name: "rulenode.type-unknown",
+                    details: "rulenode.type-unknown-details",
+                    nodeClass: "tb-unknown-type",
+                    icon: "help_outline"
                 }
             },
             valueType: {
