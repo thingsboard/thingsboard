@@ -36,7 +36,8 @@ import java.sql.DriverManager;
 public class SqlDatabaseSchemaService implements DatabaseSchemaService {
 
     private static final String SQL_DIR = "sql";
-    private static final String SCHEMA_SQL = "schema.sql";
+//    private static final String SCHEMA_SQL = "schema.sql";
+    private static final String SCHEMA_SQL = "schema-mysql.sql";
 
     @Value("${spring.datasource.url}")
     private String dbUrl;

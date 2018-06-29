@@ -92,7 +92,7 @@ public final class TsKvEntity implements ToData<TsKvEntry> {
     private String entityId;
 
     @Id
-    @Column(name = KEY_COLUMN)
+    @Column(name = "`" + KEY_COLUMN + "`")
     private String key;
 
     @Id
