@@ -43,7 +43,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ADMIN_SETTINGS_KEY
 @Table(name = ADMIN_SETTINGS_COLUMN_FAMILY_NAME)
 public final class AdminSettingsEntity extends BaseSqlEntity<AdminSettings> implements BaseEntity<AdminSettings> {
 
-    @Column(name = "`" + ADMIN_SETTINGS_KEY_PROPERTY + "`")
+    @Column(name = ADMIN_SETTINGS_KEY_PROPERTY)
     private String key;
 
     @Type(type = "json")

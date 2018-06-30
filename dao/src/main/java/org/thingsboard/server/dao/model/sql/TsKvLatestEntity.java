@@ -61,7 +61,7 @@ public final class TsKvLatestEntity implements ToData<TsKvEntry> {
     private String entityId;
 
     @Id
-    @Column(name = "`" + KEY_COLUMN + "`")
+    @Column(name = KEY_COLUMN)
     private String key;
 
     @Column(name = TS_COLUMN)

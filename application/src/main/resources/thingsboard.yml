@@ -370,6 +370,10 @@ spring:
     hibernate:
       ddl-auto: "validate"
     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.MySQL57InnoDBDialect}"
+  jpa:
+    properties:
+      hibernate:
+        globally_quoted_identifiers: "true"
   datasource:
     driverClassName: "${SPRING_DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}"
     url: "${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/thingsboard?profileSQL=false&allowMultiQueries=true&useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&dumpQueriesOnException=true}"
