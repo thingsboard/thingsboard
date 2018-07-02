@@ -36,8 +36,6 @@ import java.sql.DriverManager;
 public class SqlDatabaseSchemaService implements DatabaseSchemaService {
 
     private static final String SQL_DIR = "sql";
-//    private static final String SCHEMA_SQL = "schema.sql";
-    private static final String SCHEMA_SQL = "schema-mysql.sql";
 
     @Value("${spring.datasource.url}")
     private String dbUrl;
@@ -48,6 +46,9 @@ public class SqlDatabaseSchemaService implements DatabaseSchemaService {
     @Value("${spring.datasource.password}")
     private String dbPassword;
 
+    @Value("${spring.datasource.schemaDump:schema.sql}")
+    private String dbSchemaDump;
+
     @Autowired
     private InstallScripts installScripts;
 
@@ -56,7 +57,7 @@ public class SqlDatabaseSchemaService implements DatabaseSchemaService {
 
         log.info("Installing SQL DataBase schema...");
 
-        Path schemaFile = Paths.get(installScripts.getDataDir(), SQL_DIR, SCHEMA_SQL);
+        Path schemaFile = Paths.get(installScripts.getDataDir(), SQL_DIR, dbSchemaDump);
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
             String sql = new String(Files.readAllBytes(schemaFile), Charset.forName("UTF-8"));
             conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to load initial thingsboard database schema

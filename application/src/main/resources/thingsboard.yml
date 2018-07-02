@@ -379,6 +379,7 @@ spring:
     url: "${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/thingsboard?profileSQL=false&allowMultiQueries=true&useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&dumpQueriesOnException=true}"
     username: "${SPRING_DATASOURCE_USERNAME:root}"
     password: "${SPRING_DATASOURCE_PASSWORD:root}"
+    schemaDump: "schema-mysql.sql"
 
 # Audit log parameters
 audit_log:
