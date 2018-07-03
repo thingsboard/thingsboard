@@ -591,10 +591,6 @@ export default angular.module('thingsboard.types', [])
                 }
             },
             messageType: {
-                'HUI': {
-                    name: 'hui',
-                    value: 'HUI'
-                },
                 'POST_ATTRIBUTES_REQUEST': {
                     name: 'Post attributes',
                     value: 'POST_ATTRIBUTES_REQUEST'
