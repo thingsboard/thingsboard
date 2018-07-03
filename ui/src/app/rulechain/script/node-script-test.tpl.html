@@ -38,13 +38,12 @@
                             <ng-form name="payloadForm">
                                 <div layout="column" style="height: 100%;">
                                     <div layout="row">
-                                        <md-input-container class="md-block" style="margin-bottom: 0px; min-width: 300px;">
-                                            <label translate>rulenode.message-type</label>
-                                            <input required name="msgType" ng-model="vm.inputParams.msgType">
-                                            <div ng-messages="payloadForm.msgType.$error">
-                                                <div translate ng-message="required">rulenode.message-type-required</div>
-                                            </div>
-                                        </md-input-container>
+                                        <tb-message-type-autocomplete
+                                                style="margin-bottom: 0px; min-width: 300px;"
+                                                ng-required="true"
+                                                ng-model="vm.inputParams.msgType"
+                                                the-form="payloadForm">
+                                        </tb-message-type-autocomplete>
                                     </div>
                                     <tb-json-content flex
                                                      ng-model="vm.inputParams.msg"
@@ -99,14 +98,14 @@
                                              validate-content="false"
                                              ng-readonly="true"
                                              fill-height="true">
-                            </tb-json-content>
+                            </tb-json-content>generateReport
                         </div>
                     </div>
                 </div>
             </div>
         </md-dialog-content>
         <md-dialog-actions layout="row">
-            <md-button ng-disabled="$root.loading" ng-click="vm.test()" class="md-raised md-primary">
+            <md-button ng-disabled="$root.loading || theForm.$invalid" ng-click="vm.test()" class="md-raised md-primary">
                 {{ 'rulenode.test' | translate }}
             </md-button>
             <span flex></span>

@@ -1184,6 +1184,7 @@ export default angular.module('thingsboard.locale', [])
                     "test-script-function": "Test script function",
                     "message": "Message",
                     "message-type": "Message type",
+                    "select-message-type": "Select message type",
                     "message-type-required": "Message type is required",
                     "metadata": "Metadata",
                     "metadata-required": "Metadata entries can't be empty.",
