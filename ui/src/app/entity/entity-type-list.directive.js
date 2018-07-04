@@ -62,28 +62,43 @@ export default function EntityTypeListDirective($compile, $templateCache, $q, $m
         }
 
         ngModelCtrl.$render = function () {
-            scope.entityTypeList = [];
+            if (scope.entityTypeListWatch) {
+                scope.entityTypeListWatch();
+                scope.entityTypeListWatch = null;
+            }
+            var entityTypeList = [];
             var value = ngModelCtrl.$viewValue;
             if (value && value.length) {
                 value.forEach(function(type) {
                     var entityTypeInfo = {};
                     entityTypeInfo.value = type;
                     entityTypeInfo.name = $translate.instant(types.entityTypeTranslations[entityTypeInfo.value].type) + '';
-                    scope.entityTypeList.push(entityTypeInfo);
+                    entityTypeList.push(entityTypeInfo);
                 });
             }
+            scope.entityTypeList = entityTypeList;
+            scope.entityTypeListWatch = scope.$watch('entityTypeList', function (newVal, prevVal) {
+                if (!angular.equals(newVal, prevVal)) {
+                    updateEntityTypeList();
+                }
+            }, true);
         }
 
-        scope.$watch('entityTypeList', function () {
-            var values = [];
+        function updateEntityTypeList() {
+            var values = ngModelCtrl.$viewValue;
+            if (!values) {
+                values = [];
+                ngModelCtrl.$setViewValue(values);
+            } else {
+                values.length = 0;
+            }
             if (scope.entityTypeList && scope.entityTypeList.length) {
-                scope.entityTypeList.forEach(function(entityType) {
+                scope.entityTypeList.forEach(function (entityType) {
                     values.push(entityType.value);
                 });
             }
-            ngModelCtrl.$setViewValue(values);
             scope.updateValidity();
-        }, true);
+        }
 
         $compile(element.contents())(scope);
 
