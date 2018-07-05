@@ -366,6 +366,12 @@ export default angular.module('thingsboard.types', [])
                     list: 'entity.list-of-rulechains',
                     nameStartsWith: 'entity.rulechain-name-starts-with'
                 },
+                "RULE_NODE": {
+                    type: 'entity.type-rulenode',
+                    typePlural: 'entity.type-rulenodes',
+                    list: 'entity.list-of-rulenodes',
+                    nameStartsWith: 'entity.rulenode-name-starts-with'
+                },
                 "CURRENT_CUSTOMER": {
                     type: 'entity.type-current-customer',
                     list: 'entity.type-current-customer'

@@ -35,7 +35,30 @@ export default function EntityTypeListDirective($compile, $templateCache, $q, $m
                                 : $translate.instant('entity.any-entity');
         scope.secondaryPlaceholder = '+' + $translate.instant('entity.entity-type');
 
-        var entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes);
+        var entityTypes;
+
+        if (scope.ignoreAuthorityFilter && scope.allowedEntityTypes
+            && scope.allowedEntityTypes.length) {
+            entityTypes = {};
+            scope.allowedEntityTypes.forEach((entityTypeValue) => {
+                var entityType = entityTypeFromValue(entityTypeValue);
+                if (entityType) {
+                    entityTypes[entityType] = entityTypeValue;
+                }
+            });
+        } else {
+            entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes);
+        }
+
+        function entityTypeFromValue(entityTypeValue) {
+            for (var entityType in types.entityType) {
+                if (types.entityType[entityType] === entityTypeValue) {
+                    return entityType;
+                }
+            }
+            return null;
+        }
+
         scope.entityTypesList = [];
         for (var type in entityTypes) {
             var entityTypeInfo = {};
@@ -118,7 +141,8 @@ export default function EntityTypeListDirective($compile, $templateCache, $q, $m
         scope: {
             disabled:'=ngDisabled',
             tbRequired: '=?',
-            allowedEntityTypes: '=?'
+            allowedEntityTypes: '=?',
+            ignoreAuthorityFilter: '=?'
         }
     };
 
