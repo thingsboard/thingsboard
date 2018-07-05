@@ -32,9 +32,11 @@ export default function EntitySelect($compile, $templateCache, entityService) {
 
         var entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes, scope.useAliasEntityTypes);
 
-        if (entityTypes.length === 1) {
+        var entityTypeKeys = Object.keys(entityTypes);
+
+        if (entityTypeKeys.length === 1) {
             scope.displayEntityTypeSelect = false;
-            scope.defaultEntityType = entityTypes[0];
+            scope.defaultEntityType = entityTypes[entityTypeKeys[0]];
         } else {
             scope.displayEntityTypeSelect = true;
         }
