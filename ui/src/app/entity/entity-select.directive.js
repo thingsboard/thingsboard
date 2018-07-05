@@ -22,14 +22,26 @@ import entitySelectTemplate from './entity-select.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntitySelect($compile, $templateCache) {
+export default function EntitySelect($compile, $templateCache, entityService) {
 
     var linker = function (scope, element, attrs, ngModelCtrl) {
         var template = $templateCache.get(entitySelectTemplate);
         element.html(template);
 
         scope.tbRequired = angular.isDefined(scope.tbRequired) ? scope.tbRequired : false;
-        scope.model = {};
+
+        var entityTypes = entityService.prepareAllowedEntityTypesList(scope.allowedEntityTypes, scope.useAliasEntityTypes);
+
+        if (entityTypes.length === 1) {
+            scope.displayEntityTypeSelect = false;
+            scope.defaultEntityType = entityTypes[0];
+        } else {
+            scope.displayEntityTypeSelect = true;
+        }
+
+        scope.model = {
+            entityType: scope.defaultEntityType
+        };
 
         scope.updateView = function () {
             if (!scope.disabled) {
@@ -54,7 +66,7 @@ export default function EntitySelect($compile, $templateCache) {
                 scope.model.entityType = value.entityType;
                 scope.model.entityId = value.id;
             } else {
-                scope.model.entityType = null;
+                scope.model.entityType = scope.defaultEntityType;
                 scope.model.entityId = null;
             }
             initWatchers();
@@ -106,6 +118,7 @@ export default function EntitySelect($compile, $templateCache) {
             theForm: '=?',
             tbRequired: '=?',
             disabled:'=ngDisabled',
+            allowedEntityTypes: "=?",
             useAliasEntityTypes: "=?"
         }
     };
