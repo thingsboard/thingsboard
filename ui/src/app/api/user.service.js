@@ -488,7 +488,8 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
                         } else {
                             return true;
                         }
-                    } else if (to.name === 'home.dashboards.dashboard' && allowedDashboardIds.indexOf(params.dashboardId) > -1) {
+                    } else if ((to.name === 'home.dashboards.dashboard' || to.name === 'dashboard')
+                        && allowedDashboardIds.indexOf(params.dashboardId) > -1) {
                         return false;
                     } else {
                         return true;
@@ -504,10 +505,10 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
             var place = 'home.links';
             if (currentUser.authority === 'TENANT_ADMIN' || currentUser.authority === 'CUSTOMER_USER') {
                 if (userHasDefaultDashboard()) {
-                    place = 'home.dashboards.dashboard';
+                    place = $rootScope.forceFullscreen ? 'dashboard' : 'home.dashboards.dashboard';
                     params = {dashboardId: currentUserDetails.additionalInfo.defaultDashboardId};
                 } else if (isPublic()) {
-                    place = 'home.dashboards.dashboard';
+                    place = 'dashboard';
                     params = {dashboardId: lastPublicDashboardId};
                 }
             } else if (currentUser.authority === 'SYS_ADMIN') {
