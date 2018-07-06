@@ -328,6 +328,13 @@ spring.mvc.cors:
          max-age: "1800"
          allow-credentials: "true"
 
+# spring serve gzip compressed static resources
+spring.resources.chain:
+  gzipped: "true"
+  strategy:
+    content:
+      enabled: "true"
+
 # HSQLDB DAO Configuration
 spring:
   data:
