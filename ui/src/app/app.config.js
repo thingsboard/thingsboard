@@ -15,10 +15,6 @@
  */
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import UrlHandler from './url.handler';
-import addLocaleKorean from './locale/locale.constant-ko';
-import addLocaleChinese from './locale/locale.constant-zh';
-import addLocaleRussian from './locale/locale.constant-ru';
-import addLocaleSpanish from './locale/locale.constant-es';
 
 /* eslint-disable import/no-unresolved, import/default */
 
@@ -38,46 +34,32 @@ export default function AppConfig($provide,
                                   $mdThemingProvider,
                                   $httpProvider,
                                   $translateProvider,
-                                  storeProvider,
-                                  locales) {
+                                  storeProvider) {
 
     injectTapEventPlugin();
     $locationProvider.html5Mode(true);
     $urlRouterProvider.otherwise(UrlHandler);
     storeProvider.setCaching(false);
-
-    $translateProvider.useSanitizeValueStrategy(null);
-    $translateProvider.useMissingTranslationHandler('tbMissingTranslationHandler');
-    $translateProvider.addInterpolation('$translateMessageFormatInterpolation');
-    $translateProvider.fallbackLanguage('en_US');
-
-    addLocaleKorean(locales);
-    addLocaleChinese(locales);
-    addLocaleRussian(locales);
-    addLocaleSpanish(locales);
-
-    for (var langKey in locales) {
-        var translationTable = locales[langKey];
-        $translateProvider.translations(langKey, translationTable);
-    }
-
-    var lang = $translateProvider.resolveClientLocale();
-    if (lang) {
-        lang = lang.toLowerCase();
-        if (lang.startsWith('ko')) {
-            $translateProvider.preferredLanguage('ko_KR');
-        } else if (lang.startsWith('zh')) {
-            $translateProvider.preferredLanguage('zh_CN');
-        } else if (lang.startsWith('es')) {
-            $translateProvider.preferredLanguage('es_ES');
-        } else if (lang.startsWith('ru')) {
-            $translateProvider.preferredLanguage('ru_RU');
-        } else {
-            $translateProvider.preferredLanguage('en_US');
-        }
-    } else {
-        $translateProvider.preferredLanguage('en_US');
-    }
+    
+    $translateProvider.useSanitizeValueStrategy(null)
+                      .useMissingTranslationHandler('tbMissingTranslationHandler')
+                     /* .useMissingTranslationHandlerLog() */
+                      .addInterpolation('$translateMessageFormatInterpolation')
+                      .useStaticFilesLoader({
+                          prefix: PUBLIC_PATH + 'locale/locale.constant-', //eslint-disable-line
+                          suffix: '.json'
+                      })
+                      .registerAvailableLanguageKeys(['en', 'es', 'it', 'ko', 'ru', 'zh'], {
+                        'en_*': 'en',
+                        'es_*': 'es',
+                        'it_*': 'it',
+                        'ko_*': 'ko',
+                        'ru_*': 'ru',
+                        'zh_*': 'zh'
+                      })
+                      .fallbackLanguage('en') // must be before determinePreferredLanguage   
+                      .uniformLanguageTag('java')  // must be before determinePreferredLanguage
+                      .determinePreferredLanguage();                
 
     $httpProvider.interceptors.push('globalInterceptor');
 

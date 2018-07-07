@@ -21,6 +21,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 const path = require('path');
 
+const PUBLIC_RESOURCE_PATH = '/static/';
+
 module.exports = {
     devtool: 'source-map',
     entry: [
@@ -29,7 +31,7 @@ module.exports = {
     ],
     output: {
         path: path.resolve(__dirname, 'target/generated-resources/public/static'),
-        publicPath: '/static/',
+        publicPath: PUBLIC_RESOURCE_PATH,
         filename: 'bundle.[hash].js',
     },
     plugins: [
@@ -42,7 +44,8 @@ module.exports = {
             moment: "moment"
         }),
         new CopyWebpackPlugin([
-            {from: './src/thingsboard.ico', to: 'thingsboard.ico'}
+            { from: './src/thingsboard.ico', to: 'thingsboard.ico'},
+            { from: './src/app/locale', to: 'locale' }
         ]),
         new HtmlWebpackPlugin({
             template: './src/index.html',
@@ -63,6 +66,7 @@ module.exports = {
             'process.env': {
                 NODE_ENV: JSON.stringify('production'),
             },
+            PUBLIC_PATH: PUBLIC_RESOURCE_PATH
         }),
     ],
     node: {
@@ -116,6 +120,10 @@ module.exports = {
                     'img?minimize'
                 ]
             },
+            {
+                test: /\.json$/,
+                loader: 'json-loader'
+            }
         ],
     },
     'html-minifier-loader': {
