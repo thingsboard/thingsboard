@@ -17,7 +17,7 @@ import './json-object-edit.scss';
 
 import 'brace/ext/language_tools';
 import 'brace/mode/json';
-import 'ace-builds/src-min-noconflict/snippets/json';
+import 'brace/snippets/json';
 
 import fixAceEditor from './ace-editor-fix';
 

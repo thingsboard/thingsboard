@@ -18,8 +18,8 @@ import './json-content.scss';
 import 'brace/ext/language_tools';
 import 'brace/mode/json';
 import 'brace/mode/text';
-import 'ace-builds/src-min-noconflict/snippets/json';
-import 'ace-builds/src-min-noconflict/snippets/text';
+import 'brace/snippets/json';
+import 'brace/snippets/text';
 
 import fixAceEditor from './ace-editor-fix';
 

@@ -20,12 +20,11 @@ import 'brace/mode/javascript';
 import 'brace/mode/html';
 import 'brace/mode/css';
 import 'brace/mode/json';
-import 'ace-builds/src-min-noconflict/ace';
-import 'ace-builds/src-min-noconflict/snippets/javascript';
-import 'ace-builds/src-min-noconflict/snippets/text';
-import 'ace-builds/src-min-noconflict/snippets/html';
-import 'ace-builds/src-min-noconflict/snippets/css';
-import 'ace-builds/src-min-noconflict/snippets/json';
+import 'brace/snippets/javascript';
+import 'brace/snippets/text';
+import 'brace/snippets/html';
+import 'brace/snippets/css';
+import 'brace/snippets/json';
 
 /* eslint-disable import/no-unresolved, import/default */
 
