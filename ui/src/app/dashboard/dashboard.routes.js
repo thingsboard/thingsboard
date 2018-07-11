@@ -86,6 +86,24 @@ export default function DashboardRoutes($stateProvider) {
                 label: '{"icon": "dashboard", "label": "{{ vm.dashboard.title }}", "translate": "false"}'
             }
         })
+        .state('dashboard', {
+            url: '/dashboard/:dashboardId?state',
+            reloadOnSearch: false,
+            module: 'private',
+            auth: ['TENANT_ADMIN', 'CUSTOMER_USER'],
+            views: {
+                "@": {
+                    templateUrl: dashboardTemplate,
+                    controller: 'DashboardController',
+                    controllerAs: 'vm'
+                }
+            },
+            data: {
+                widgetEditMode: false,
+                searchEnabled: false,
+                pageTitle: 'dashboard.dashboard'
+            }
+        })
         .state('home.customers.dashboards.dashboard', {
             url: '/:dashboardId?state',
             reloadOnSearch: false,

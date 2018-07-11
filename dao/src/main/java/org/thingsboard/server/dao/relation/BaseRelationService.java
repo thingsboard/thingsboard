@@ -555,6 +555,9 @@ public class BaseRelationService implements RelationService {
 
     private ListenableFuture<List<EntityRelation>> findRelations(final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
         ListenableFuture<List<EntityRelation>> relations;
+        if (relationTypeGroup == null) {
+            relationTypeGroup = RelationTypeGroup.COMMON;
+        }
         if (direction == EntitySearchDirection.FROM) {
             relations = findByFromAsync(rootId, relationTypeGroup);
         } else {
