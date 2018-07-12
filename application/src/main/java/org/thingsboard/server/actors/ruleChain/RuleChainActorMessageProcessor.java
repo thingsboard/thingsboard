@@ -248,7 +248,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         int relationsCount = relations.size();
         EntityId ackId = msg.getRuleNodeId() != null ? msg.getRuleNodeId() : msg.getRuleChainId();
         if (relationsCount == 0) {
-            queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
+            if (ackId != null) {
+                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
+            }
         } else if (relationsCount == 1) {
             for (RuleNodeRelation relation : relations) {
                 pushToTarget(msg, relation.getOut(), relation.getType());
@@ -266,7 +268,9 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 }
             }
             //TODO: Ideally this should happen in async way when all targets confirm that the copied messages are successfully written to corresponding target queues.
-            queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
+            if (ackId != null) {
+                queue.ack(tenantId, msg, ackId.getId(), msg.getClusterPartition());
+            }
         }
     }
 
