@@ -49,6 +49,7 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
                 processor.onDeviceActorToRuleEngineMsg((DeviceActorToRuleEngineMsg) msg);
                 break;
             case RULE_TO_RULE_CHAIN_TELL_NEXT_MSG:
+            case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
                 processor.onTellNext((RuleNodeToRuleChainTellNextMsg) msg);
                 break;
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:

@@ -20,18 +20,24 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 
 /**
  * Created by ashvayka on 19.03.18.
  */
 @Data
-public final class RuleChainToRuleChainMsg implements TbActorMsg {
+public final class RuleChainToRuleChainMsg implements TbActorMsg, RuleChainAwareMsg {
 
     private final RuleChainId target;
     private final RuleChainId source;
     private final TbMsg msg;
     private final String fromRelationType;
     private final boolean enqueue;
+
+    @Override
+    public RuleChainId getRuleChainId() {
+        return target;
+    }
 
     @Override
     public MsgType getMsgType() {

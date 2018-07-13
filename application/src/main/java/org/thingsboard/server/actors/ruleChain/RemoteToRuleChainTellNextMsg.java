@@ -16,26 +16,30 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.TbMsg;
-
-import java.util.Set;
+import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
+import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 
 /**
  * Created by ashvayka on 19.03.18.
  */
 @Data
-class RuleNodeToRuleChainTellNextMsg implements TbActorMsg {
+final class RemoteToRuleChainTellNextMsg extends RuleNodeToRuleChainTellNextMsg implements TenantAwareMsg, RuleChainAwareMsg {
 
-    private final RuleNodeId originator;
-    private final Set<String> relationTypes;
-    private final TbMsg msg;
+    private final TenantId tenantId;
+    private final RuleChainId ruleChainId;
+
+    public RemoteToRuleChainTellNextMsg(RuleNodeToRuleChainTellNextMsg original, TenantId tenantId, RuleChainId ruleChainId) {
+        super(original.getOriginator(), original.getRelationTypes(), original.getMsg());
+        this.tenantId = tenantId;
+        this.ruleChainId = ruleChainId;
+    }
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.RULE_TO_RULE_CHAIN_TELL_NEXT_MSG;
+        return MsgType.REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG;
     }
 
 }
