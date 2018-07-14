@@ -43,20 +43,12 @@ export default function AppConfig($provide,
     
     $translateProvider.useSanitizeValueStrategy(null)
                       .useMissingTranslationHandler('tbMissingTranslationHandler')
-                     /* .useMissingTranslationHandlerLog() */
                       .addInterpolation('$translateMessageFormatInterpolation')
                       .useStaticFilesLoader({
                           prefix: PUBLIC_PATH + 'locale/locale.constant-', //eslint-disable-line
                           suffix: '.json'
                       })
-                      .registerAvailableLanguageKeys(['en', 'es', 'it', 'ko', 'ru', 'zh'], {
-                        'en_*': 'en',
-                        'es_*': 'es',
-                        'it_*': 'it',
-                        'ko_*': 'ko',
-                        'ru_*': 'ru',
-                        'zh_*': 'zh'
-                      })
+                      .registerAvailableLanguageKeys(SUPPORTED_LANGS, getLanguageAliases(SUPPORTED_LANGS)) //eslint-disable-line
                       .fallbackLanguage('en') // must be before determinePreferredLanguage   
                       .uniformLanguageTag('java')  // must be before determinePreferredLanguage
                       .determinePreferredLanguage();                
@@ -150,4 +142,22 @@ export default function AppConfig($provide,
         //$mdThemingProvider.alwaysWatchTheme(true);
     }
 
+    function getLanguageAliases(supportedLangs) {
+        var aliases = {};
+
+        supportedLangs.sort().forEach(function(item, index, array) {
+            if (item.length === 2) { 
+                aliases[item + '_*'] = item;
+            } else {
+                var key = item.slice(0, 2);
+                if (index === 0 || key !== array[index - 1].slice(0, 2)) {
+                    aliases[key + '_*'] = item;
+                } else {
+                    aliases[item] = item;
+                }
+            }
+        });
+        
+        return aliases;
+    }
 }

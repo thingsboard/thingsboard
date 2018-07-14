@@ -24,16 +24,9 @@ export default function ProfileController(userService, $scope, $document, $mdDia
     var vm = this;
 
     vm.profileUser = {};
-
     vm.save = save;
     vm.changePassword = changePassword;
-    vm.languageList = {
-        en_US: {value : "en_US", name: "language.en_US"}, 
-        ko_KR: {value : "ko_KR", name: "language.ko_KR"},
-        zh_CN: {value : "zh_CN", name: "language.zh_CN"},
-        ru_RU: {value : "ru_RU", name: "language.ru_RU"},
-        es_ES: {value : "es_ES", name: "language.es_ES"},
-    };
+    vm.languageList = SUPPORTED_LANGS; //eslint-disable-line
 
     loadProfile();
 

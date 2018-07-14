@@ -1445,12 +1445,13 @@
     },
     "language": {
         "language": "Language",
-        "zh_CN": "Chinese",
-        "en_US": "English",
-        "it_IT": "Italian",
-        "ko_KR": "Korean",
-        "ru_RU": "Russian",
-        "es_ES": "Spanish"
-
+        "locales": {
+            "zh_CN": "Chinese",
+            "en_US": "English",
+            "it_IT": "Italian",
+            "ko_KR": "Korean",
+            "ru_RU": "Russian",
+            "es_ES": "Spanish"
+        }
     }
 }

@@ -99,7 +99,7 @@
             "ACK": "Riconosciuto",
             "UNACK": "Non riconosciuto"
         },
-        "display-status": { //TODO
+        "display-status": {
             "ACTIVE_UNACK": "Active Unacknowledged", 
             "ACTIVE_ACK": "Active Acknowledged",
             "CLEARED_UNACK": "Cleared Unacknowledged",
@@ -145,7 +145,7 @@
         "filter-type-single-entity": "Singola entità",
         "filter-type-entity-list": "Lista Entità",
         "filter-type-entity-name": "Nome Entità",
-        "filter-type-state-entity": "Entity from dashboard state", //TODO
+        "filter-type-state-entity": "Entity from dashboard state",
         "filter-type-state-entity-description": "Entità prelevata dai parametri di stato della dashboard",
         "filter-type-asset-type": "Tipo di Asset",
         "filter-type-asset-type-description": "Asset di tipo '{{assetType}}'",
@@ -1433,11 +1433,13 @@
     },
     "language": {
         "language": "Lingua",
-        "zh_CN": "Cinese",
-        "ko_KR": "Coreano",
-        "en_US": "Inglese",
-        "it_IT": "Italiano",
-        "ru_RU": "Russo",
-        "es_ES": "Spagnolo"
+        "locales": {
+            "zh_CN": "Cinese",
+            "ko_KR": "Coreano",
+            "en_US": "Inglese",
+            "it_IT": "Italiano",
+            "ru_RU": "Russo",
+            "es_ES": "Spagnolo"
+        }
     }
 }

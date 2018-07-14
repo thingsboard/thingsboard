@@ -82,7 +82,7 @@
         "enable-tls": "Habilitar TLS",
         "send-test-mail": "Enviar mail de prueba"
     },
-    "alarm": { // TODO
+    "alarm": {
         "alarm": "Alarm",
         "alarms": "Alarms",
         "select-alarm": "Select alarm",
@@ -133,7 +133,7 @@
         "clear-alarms-title": "Clear { count, select, 1 {1 alarm} other {# alarms} }",
         "clear-alarms-text": "Are you sure you want to clear { count, select, 1 {1 alarm} other {# alarms} }?"
     },
-    "alias": { // TODO
+    "alias": {
         "add": "Add alias",
         "edit": "Edit alias",
         "name": "Alias name",
@@ -173,7 +173,7 @@
         "all-entities": "All entities",
         "any-relation": "any"
     },
-    "asset": { // TODO
+    "asset": {
         "asset": "Asset",
         "assets": "Assets",
         "management": "Asset management",
@@ -261,7 +261,7 @@
         "selected-attributes": "{ count, select, 1 {1 atributo} other {# atributos} } seleccionados",
         "selected-telemetry": "{ count, select, 1 {1 unidad de telemetría } other {# unidades de telemetría} } seleccionadas."
     },
-    "audit-log": { // TODO
+    "audit-log": {
         "audit": "Audit",
         "audit-logs": "Audit Logs",
         "timestamp": "Timestamp",
@@ -317,7 +317,7 @@
         "enter-password": "Ingresa la contraseña",
         "enter-search": "Ingresa búsqueda"
     },
-    "content-type": { // TODO
+    "content-type": {
         "json": "Json",
         "text": "Text",
         "binary": "Binary (Base64)"
@@ -581,7 +581,7 @@
         "unhandled-error-code": "Código de error no manejado: {{errorCode}}",
         "unknown-error": "Error desconocido"
     },
-    "entity": { // TODO
+    "entity": {
         "entity": "Entity",
         "entities": "Entities",
         "aliases": "Entity aliases",
@@ -688,7 +688,7 @@
         "messages-processed": "Mensajes procesados",
         "errors-occurred": "Ocurrieron errores"
     },
-    "extension": { // TODO
+    "extension": {
         "extensions": "Extensions",
         "selected-extensions": "{ count, select, 1 {1 extension} other {# extensions} } selected",
         "type": "Type",
@@ -889,14 +889,14 @@
         "no-return-error": "La función debe retornar un valor!",
         "return-type-mismatch": "La función debe retornar un valor de tipo: '{{type}}'!"
     },
-    "key-val": { // TODO
+    "key-val": {
         "key": "Key",
         "value": "Value",
         "remove-entry": "Remove entry",
         "add-entry": "Add entry",
         "no-data": "No entries"
     },
-    "layout": { // TODO
+    "layout": {
         "layout": "Layout",
         "manage": "Manage layouts",
         "settings": "Layout settings",
@@ -945,7 +945,7 @@
         "change-password": "Cambiar contraseña",
         "current-password": "Contraseña actual"
     },
-    "relation": { // TODO
+    "relation": {
         "relations": "Relations",
         "direction": "Direction",
         "search-direction": {
@@ -987,7 +987,7 @@
         "additional-info": "Additional info (JSON)",
         "invalid-additional-info": "Unable to parse additional info json."
     },
-    "rulechain": { // TODO
+    "rulechain": {
         "rulechain": "Rule chain",
         "rulechains": "Rule chains",
         "root": "Root",
@@ -1024,7 +1024,7 @@
         "management": "Rules management",
         "debug-mode": "Debug mode"
     },
-    "rulenode": { // TODO
+    "rulenode": {
         "details": "Details",
         "events": "Events",
         "search": "Search nodes",
@@ -1214,7 +1214,7 @@
         "undo": "Deshacer cambios",
         "export": "Exportar widget"
     },
-    "widget-action": { // TODO
+    "widget-action": {
         "header-button": "Widget header button",
         "open-dashboard-state": "Navigate to new dashboard state",
         "update-dashboard-state": "Update current dashboard state",
@@ -1289,13 +1289,13 @@
         "widget-type-file": "Tipo de archivo del widget",
         "invalid-widget-type-file-error": "Imposible de importar tipo de widget: Estructura de datos inválida."
     },
-    "icon": { // TODO
+    "icon": {
         "icon": "Icon",
         "select-icon": "Select icon",
         "material-icons": "Material icons",
         "show-all": "Show all icons"
     },
-    "custom": { // TODO
+    "custom": {
         "widget-action": {
             "action-cell-button": "Action cell button",
             "row-click": "On row click",
@@ -1305,11 +1305,13 @@
     },
     "language": {
         "language": "Lenguaje",
-        "en_US": "Inglés",
-        "ko_KR": "Coreano",
-        "zh_CN": "Chino",
-        "ru_RU": "Ruso",
-        "es_ES": "Español",
-        "it_IT": "Italiano"
+        "locales": {
+            "en_US": "Inglés",
+            "ko_KR": "Coreano",
+            "zh_CN": "Chino",
+            "ru_RU": "Ruso",
+            "es_ES": "Español",
+            "it_IT": "Italiano"
+        }
     }
 }

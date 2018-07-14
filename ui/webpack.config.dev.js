@@ -20,8 +20,16 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 const path = require('path');
+const dirTree = require('directory-tree');
 
 const PUBLIC_RESOURCE_PATH = '/';
+
+var langs = [];
+dirTree('./src/app/locale/', {extensions:/\.json$/}, (item) => {
+    /* It is expected what the name of a locale file has the following format: */
+    /* 'locale.constant-LANG_CODE[_REGION_CODE].json', e.g. locale.constant-es.json or locale.constant-zh_CN.json*/
+    langs.push(item.name.slice(item.name.lastIndexOf('-') + 1, -5));
+});
 
 /* devtool: 'cheap-module-eval-source-map', */
 
@@ -68,7 +76,8 @@ module.exports = {
             'process.env': {
                 NODE_ENV: JSON.stringify('development'),
             },
-            PUBLIC_PATH: PUBLIC_RESOURCE_PATH
+            PUBLIC_PATH: PUBLIC_RESOURCE_PATH,
+            SUPPORTED_LANGS: JSON.stringify(langs)
         }),
     ],
     node: {
@@ -121,10 +130,6 @@ module.exports = {
                     'url?limit=8192',
                     'img?minimize'
                 ]
-            },
-            {
-                test: /\.json$/,
-                loader: 'json-loader'
             }
         ],
     },

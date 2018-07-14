@@ -22,11 +22,11 @@
         "update": "업데이트",
         "remove": "제거",
         "search": "검색",
-        "clear-search": "Clear search", // TODO
+        "clear-search": "Clear search",
         "assign": "할당",
         "unassign": "비할당",
-        "share": "Share", // TODO
-        "make-private": "Make private", // TODO
+        "share": "Share",
+        "make-private": "Make private",
         "apply": "적용",
         "apply-changes": "변경사항 적용",
         "edit-mode": "수정 모드",
@@ -44,11 +44,11 @@
         "undo": "취소",
         "copy": "복사",
         "paste": "붙여넣기",
-        "copy-reference": "Copy reference", // TODO
-        "paste-reference": "Paste reference", // TODO
+        "copy-reference": "Copy reference",
+        "paste-reference": "Paste reference",
         "import": "가져오기",
         "export": "내보내기",
-        "share-via": "Share via {{provider}}" // TODO
+        "share-via": "Share via {{provider}}"
     },
     "aggregation": {
         "aggregation": "집합",
@@ -86,7 +86,7 @@
         "send-test-mail": "테스트 메일 보내기"
     },
 
-    "alarm": { // TODO
+    "alarm": {
         "alarm": "Alarm",
         "alarms": "Alarms",
         "select-alarm": "Select alarm",
@@ -137,7 +137,7 @@
         "clear-alarms-title": "Clear { count, select, 1 {1 alarm} other {# alarms} }",
         "clear-alarms-text": "Are you sure you want to clear { count, select, 1 {1 alarm} other {# alarms} }?"
     },
-    "alias": { // TODO
+    "alias": {
         "add": "Add alias",
         "edit": "Edit alias",
         "name": "Alias name",
@@ -177,7 +177,7 @@
         "all-entities": "All entities",
         "any-relation": "any"
     },
-    "asset": { // TODO
+    "asset": {
         "asset": "Asset",
         "assets": "Assets",
         "management": "Asset management",
@@ -248,9 +248,9 @@
         "scope-server": "서버 속성",
         "scope-shared": "공유 속성",
         "add": "속성 추가",
-        "key": "Key", // TODO
+        "key": "Key",
         "key-required": "속성 key를 입력하세요.",
-        "value": "Value", // TODO
+        "value": "Value",
         "value-required": "속성 value를 입력하세요.",
         "delete-attributes-title": "{ count, select, 1 {속성} other {여러 속성들을} } 삭제하시겠습니까??",
         "delete-attributes-text": "모든 선택된 속성들이 제거 될 것이므로 주의하십시오.",
@@ -265,7 +265,7 @@
         "selected-attributes": "{ count, select, 1 {속성 1개} other {속성 #개} } 선택됨",
         "selected-telemetry": "{ count, select, 1 {최근 데이터 1개} other {최근 데이터 #개} } 선택됨"
     },
-    "audit-log": { // TODO
+    "audit-log": {
         "audit": "Audit",
         "audit-logs": "Audit Logs",
         "timestamp": "Timestamp",
@@ -321,7 +321,7 @@
         "enter-password": "비밀번호를 입력하세요.",
         "enter-search": "검색어 입력"
     },
-    "content-type": { // TODO
+    "content-type": {
         "json": "Json",
         "text": "Text",
         "binary": "Binary (Base64)"
@@ -337,10 +337,10 @@
         "manage-customer-users": "커스터머 사용자 관리",
         "manage-customer-devices": "커스터머 디바이스 관리",
         "manage-customer-dashboards": "커스터머 대시보드 관리",
-        "manage-public-devices": "Manage public devices", // TODO
-        "manage-public-dashboards": "Manage public dashboards", // TODO
-        "manage-customer-assets": "Manage customer assets", // TODO
-        "manage-public-assets": "Manage public assets", // TODO
+        "manage-public-devices": "Manage public devices",
+        "manage-public-dashboards": "Manage public dashboards",
+        "manage-customer-assets": "Manage customer assets",
+        "manage-public-assets": "Manage public assets",
         "add-customer-text": "커스터머 추가",
         "no-customers-text": "커스터머가 없습니다.",
         "customer-details": "커스터머 상세정보",
@@ -472,15 +472,15 @@
         "attributes": "Attributes",
         "timeseries-required": "디바이스 timeseries 를 입력하세요.",
         "timeseries-or-attributes-required": "디바이스 timeseries/attributes 를 입력하세요.",
-        "maximum-timeseries-or-attributes": "Maximum { count, select, 1 {1 timeseries/attribute is allowed.} other {# timeseries/attributes are allowed} }", // TODO
-        "alarm-fields-required": "Alarm fields are required.", // TODO
+        "maximum-timeseries-or-attributes": "Maximum { count, select, 1 {1 timeseries/attribute is allowed.} other {# timeseries/attributes are allowed} }",
+        "alarm-fields-required": "Alarm fields are required.",
         "function-types": "함수 유형",
         "function-types-required": "함수 유형을 입력하세요.",
-        "maximum-function-types": "Maximum { count, select, 1 {1 function type is allowed.} other {# function types are allowed} }" // TODO
+        "maximum-function-types": "Maximum { count, select, 1 {1 function type is allowed.} other {# function types are allowed} }"
     },
     "datasource": {
         "type": "데이터소스 유형",
-        "name": "Name", // TODO
+        "name": "Name",
         "add-datasource-prompt": "데이터소스를 추가하세요."
     },
     "details": {
@@ -574,7 +574,7 @@
         "unhandled-error-code": "처리되지 않은 오류 코드: {{errorCode}}",
         "unknown-error": "알 수 없는 오류"
     },
-    "entity": { // TODO
+    "entity": {
         "entity": "Entity",
         "entities": "Entities",
         "aliases": "Entity aliases",
@@ -667,8 +667,8 @@
         "type-error": "에러",
         "type-lc-event": "주기적 이벤트",
         "type-stats": "통계",
-        "type-debug-rule-node": "Debug", // TODO
-        "type-debug-rule-chain": "Debug", // TODO
+        "type-debug-rule-node": "Debug",
+        "type-debug-rule-chain": "Debug",
         "no-events-prompt": "이벤트 없음",
         "error": "에러",
         "alarm": "알람",
@@ -676,14 +676,14 @@
         "server": "서버",
         "body": "Body",
         "method": "Method",
-        "type": "Type", // TODO
-        "entity": "Entity", // TODO
-        "message-id": "Message Id", // TODO
-        "message-type": "Message Type", // TODO
-        "data-type": "Data Type", // TODO
-        "relation-type": "Relation Type", // TODO
-        "metadata": "Metadata", // TODO
-        "data": "Data", // TODO
+        "type": "Type",
+        "entity": "Entity",
+        "message-id": "Message Id",
+        "message-type": "Message Type",
+        "data-type": "Data Type",
+        "relation-type": "Relation Type",
+        "metadata": "Metadata",
+        "data": "Data",
         "event": "이벤트",
         "status": "상태",
         "success": "성공",
@@ -691,7 +691,7 @@
         "messages-processed": "처리된 메시지",
         "errors-occurred": "오류가 발생했습니다"
     },
-    "extension": { // TODO
+    "extension": {
         "extensions": "Extensions",
         "selected-extensions": "{ count, select, 1 {1 extension} other {# extensions} } selected",
         "type": "Type",
@@ -891,16 +891,16 @@
     "js-func": {
         "no-return-error": "함수는 값을 반환해야 합니다!",
         "return-type-mismatch": "함수는 '{{type}}' 유형의 값을 반환해야 합니다!",
-        "tidy": "Tidy" // TODO
+        "tidy": "Tidy"
     },
-    "key-val": { // TODO
+    "key-val": {
         "key": "Key",
         "value": "Value",
         "remove-entry": "Remove entry",
         "add-entry": "Add entry",
         "no-data": "No entries"
     },
-    "layout": { // TODO
+    "layout": {
         "layout": "Layout",
         "manage": "Manage layouts",
         "settings": "Layout settings",
@@ -949,7 +949,7 @@
         "change-password": "비밀번호 변경",
         "current-password": "현재 비밀번호"
     },
-    "relation": { // TODO
+    "relation": {
         "relations": "Relations",
         "direction": "Direction",
         "search-direction": {
@@ -991,7 +991,7 @@
         "additional-info": "Additional info (JSON)",
         "invalid-additional-info": "Unable to parse additional info json."
     },
-    "rulechain": { // TODO
+    "rulechain": {
         "rulechain": "Rule chain",
         "rulechains": "Rule chains",
         "root": "Root",
@@ -1028,7 +1028,7 @@
         "management": "Rules management",
         "debug-mode": "Debug mode"
     },
-    "rulenode": { // TODO
+    "rulenode": {
         "details": "Details",
         "events": "Events",
         "search": "Search nodes",
@@ -1101,13 +1101,13 @@
         "title": "타이틀",
         "title-required": "타이틀을 입력하세요.",
         "description": "설명",
-        "details": "Details", // TODO
-        "events": "Events", // TODO
-        "copyId": "Copy tenant Id", // TODO
-        "idCopiedMessage": "Tenant Id has been copied to clipboard", // TODO
-        "select-tenant": "Select tenant", // TODO
+        "details": "Details",
+        "events": "Events",
+        "copyId": "Copy tenant Id",
+        "idCopiedMessage": "Tenant Id has been copied to clipboard",
+        "select-tenant": "Select tenant",
         "no-tenants-matching": "No tenants matching '{{entity}}' were found.",
-        "tenant-required": "Tenant is required" // TODO
+        "tenant-required": "Tenant is required"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, select, 1 {1 second} other {# seconds} }",
@@ -1161,17 +1161,17 @@
         "description": "설명",
         "default-dashboard": "기본 대시보드",
         "always-fullscreen": "항상 전체화면",
-        "select-user": "Select user", // TODO
-        "no-users-matching": "No users matching '{{entity}}' were found.", // TODO
-        "user-required": "User is required", // TODO
-        "activation-method": "Activation method", // TODO
-        "display-activation-link": "Display activation link", // TODO
-        "send-activation-mail": "Send activation mail", // TODO
-        "activation-link": "User activation link", // TODO
-        "activation-link-text": "In order to activate user use the following <a href='{{activationLink}}' target='_blank'>activation link</a> :", // TODO
-        "copy-activation-link": "Copy activation link", // TODO
-        "activation-link-copied-message": "User activation link has been copied to clipboard", // TODO
-        "details": "Details" // TODO
+        "select-user": "Select user",
+        "no-users-matching": "No users matching '{{entity}}' were found.",
+        "user-required": "User is required",
+        "activation-method": "Activation method",
+        "display-activation-link": "Display activation link",
+        "send-activation-mail": "Send activation mail",
+        "activation-link": "User activation link",
+        "activation-link-text": "In order to activate user use the following <a href='{{activationLink}}' target='_blank'>activation link</a> :",
+        "copy-activation-link": "Copy activation link",
+        "activation-link-copied-message": "User activation link has been copied to clipboard",
+        "details": "Details"
     },
     "value": {
         "type": "Value type",
@@ -1236,7 +1236,7 @@
         "undo": "위젯 변경사항 취소",
         "export": "위젯 내보내기"
     },
-    "widget-action": { // TODO
+    "widget-action": {
         "header-button": "Widget header button",
         "open-dashboard-state": "Navigate to new dashboard state",
         "update-dashboard-state": "Update current dashboard state",
@@ -1311,7 +1311,7 @@
         "widget-type-file": "위젯 타입 파일",
         "invalid-widget-type-file-error": "위젯 타입을 가져오기 할 수 없습니다.: 잘못된 위젯 타입 데이터 구조입니다."
     },
-    "icon": { // TODO
+    "icon": {
         "icon": "Icon",
         "select-icon": "Select icon",
         "material-icons": "Material icons",
@@ -1327,11 +1327,13 @@
     },
     "language": {
         "language": "언어",
-        "en_US": "영어",
-        "ko_KR": "한글",
-        "zh_CN": "중국어",
-        "ru_RU": "러시아어",
-        "es_ES": "스페인어",
-        "it_IT": "이탈리아 사람"
+        "locales": {
+            "en_US": "영어",
+            "ko_KR": "한글",
+            "zh_CN": "중국어",
+            "ru_RU": "러시아어",
+            "es_ES": "스페인어",
+            "it_IT": "이탈리아 사람"
+        }
     }
 }
