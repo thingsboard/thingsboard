@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
+import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.system.ServiceToRuleEngineMsg;
 import scala.concurrent.duration.Duration;
@@ -94,7 +95,8 @@ public class TenantActor extends RuleChainManagerActor {
                 onToDeviceActorMsg((DeviceAwareMsg) msg);
                 break;
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
-                onRuleChainMsg((RuleChainToRuleChainMsg) msg);
+            case REMOTE_TO_RULE_CHAIN_TELL_NEXT_MSG:
+                onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
             default:
                 return false;
@@ -120,8 +122,8 @@ public class TenantActor extends RuleChainManagerActor {
     	else logger.info("[{}] No Root Chain", msg);
     }
 
-    private void onRuleChainMsg(RuleChainToRuleChainMsg msg) {
-        ruleChainManager.getOrCreateActor(context(), msg.getTarget()).tell(msg, self());
+    private void onRuleChainMsg(RuleChainAwareMsg msg) {
+        ruleChainManager.getOrCreateActor(context(), msg.getRuleChainId()).tell(msg, self());
     }
 
 
