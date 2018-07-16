@@ -49,7 +49,7 @@ export default function AppConfig($provide,
                           suffix: '.json'
                       })
                       .registerAvailableLanguageKeys(SUPPORTED_LANGS, getLanguageAliases(SUPPORTED_LANGS)) //eslint-disable-line
-                      .fallbackLanguage('en') // must be before determinePreferredLanguage   
+                      .fallbackLanguage('en_US') // must be before determinePreferredLanguage   
                       .uniformLanguageTag('java')  // must be before determinePreferredLanguage
                       .determinePreferredLanguage();                
 
@@ -147,10 +147,12 @@ export default function AppConfig($provide,
 
         supportedLangs.sort().forEach(function(item, index, array) {
             if (item.length === 2) { 
+                aliases[item] = item;
                 aliases[item + '_*'] = item;
             } else {
                 var key = item.slice(0, 2);
                 if (index === 0 || key !== array[index - 1].slice(0, 2)) {
+                    aliases[key] = item;
                     aliases[key + '_*'] = item;
                 } else {
                     aliases[item] = item;
