@@ -44,7 +44,7 @@
                         <label translate>language.language</label>
                         <md-select name="language" ng-model="vm.profileUser.additionalInfo.lang">
                             <md-option ng-repeat="lang in vm.languageList" ng-value="lang">
-                                {{ 'language.locales.' + lang | translate}}
+                                {{ lang ? ('language.locales.' + lang | translate) : ''}}
                             </md-option>
                         </md-select>
                     </md-input-container>

@@ -45,8 +45,12 @@ export default function AppConfig($provide,
                       .useMissingTranslationHandler('tbMissingTranslationHandler')
                       .addInterpolation('$translateMessageFormatInterpolation')
                       .useStaticFilesLoader({
-                          prefix: PUBLIC_PATH + 'locale/locale.constant-', //eslint-disable-line
-                          suffix: '.json'
+                          files: [
+                              {
+                                  prefix: PUBLIC_PATH + 'locale/locale.constant-', //eslint-disable-line
+                                  suffix: '.json'
+                              }
+                          ]
                       })
                       .registerAvailableLanguageKeys(SUPPORTED_LANGS, getLanguageAliases(SUPPORTED_LANGS)) //eslint-disable-line
                       .fallbackLanguage('en_US') // must be before determinePreferredLanguage   

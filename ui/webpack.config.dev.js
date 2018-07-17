@@ -87,7 +87,7 @@ module.exports = {
             'process.env': {
                 NODE_ENV: JSON.stringify('development'),
             },
-            PUBLIC_PATH: PUBLIC_RESOURCE_PATH,
+            PUBLIC_PATH: JSON.stringify(PUBLIC_RESOURCE_PATH),
             SUPPORTED_LANGS: JSON.stringify(langs)
         }),
     ],
