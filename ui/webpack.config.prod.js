@@ -21,6 +21,17 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const webpack = require('webpack');
 const path = require('path');
+const dirTree = require('directory-tree');
+const jsonminify = require("jsonminify");
+
+const PUBLIC_RESOURCE_PATH = '/static/';
+
+var langs = [];
+dirTree('./src/app/locale/', {extensions:/\.json$/}, (item) => {
+    /* It is expected what the name of a locale file has the following format: */
+    /* 'locale.constant-LANG_CODE[_REGION_CODE].json', e.g. locale.constant-es.json or locale.constant-zh_CN.json*/
+    langs.push(item.name.slice(item.name.lastIndexOf('-') + 1, -5));
+});
 
 module.exports = {
     devtool: 'source-map',
@@ -30,7 +41,7 @@ module.exports = {
     ],
     output: {
         path: path.resolve(__dirname, 'target/generated-resources/public/static'),
-        publicPath: '/static/',
+        publicPath: PUBLIC_RESOURCE_PATH,
         filename: 'bundle.[hash].js',
     },
     plugins: [
@@ -43,7 +54,18 @@ module.exports = {
             moment: "moment"
         }),
         new CopyWebpackPlugin([
-            {from: './src/thingsboard.ico', to: 'thingsboard.ico'}
+            {
+                from: './src/thingsboard.ico',
+                to: 'thingsboard.ico'
+            },
+            {
+                from: './src/app/locale',
+                to: 'locale',
+                ignore: [ '*.js' ],
+                transform: function(content, path) {
+                    return Buffer.from(jsonminify(content.toString()));
+                }
+            }
         ]),
         new HtmlWebpackPlugin({
             template: './src/index.html',
@@ -64,11 +86,13 @@ module.exports = {
             'process.env': {
                 NODE_ENV: JSON.stringify('production'),
             },
+            PUBLIC_PATH: PUBLIC_RESOURCE_PATH,
+            SUPPORTED_LANGS: JSON.stringify(langs)
         }),
         new CompressionPlugin({
             asset: "[path].gz[query]",
             algorithm: "gzip",
-            test: /\.js$|\.css$|\.svg$|\.ttf$|\.woff$|\.woff2|\.eot$/,
+            test: /\.js$|\.css$|\.svg$|\.ttf$|\.woff$|\.woff2|\.eot$\.json$/,
             threshold: 10240,
             minRatio: 0.8
         })
@@ -123,7 +147,7 @@ module.exports = {
                     'url?limit=8192',
                     'img?minimize'
                 ]
-            },
+            }
         ],
     },
     'html-minifier-loader': {
