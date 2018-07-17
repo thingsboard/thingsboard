@@ -128,7 +128,8 @@
     "webpack-dev-server": "^1.15.1",
     "webpack-hot-middleware": "^2.12.2",
     "webpack-material-design-icons": "^0.1.0",
-    "directory-tree": "^2.1.0"
+    "directory-tree": "^2.1.0",
+    "jsonminify": "^0.4.1"
   },
   "engine": "node >= 5.9.0",
   "nyc": {

@@ -21,6 +21,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 const path = require('path');
 const dirTree = require('directory-tree');
+const jsonminify = require("jsonminify");
 
 const PUBLIC_RESOURCE_PATH = '/';
 
@@ -55,8 +56,18 @@ module.exports = {
             moment: "moment"
         }),
         new CopyWebpackPlugin([
-            { from: './src/thingsboard.ico', to: 'thingsboard.ico' },
-            { from: './src/app/locale', to: 'locale' }
+            {
+                from: './src/thingsboard.ico',
+                to: 'thingsboard.ico'
+            },
+            {
+                from: './src/app/locale',
+                to: 'locale',
+                ignore: [ '*.js' ],
+                transform: function(content, path) {
+                    return Buffer.from(jsonminify(content.toString()));
+                }
+            }
         ]),
         new webpack.HotModuleReplacementPlugin(),
         new HtmlWebpackPlugin({
