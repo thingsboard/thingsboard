@@ -32,84 +32,7 @@ const MAX_LIMIT = 500;
 /*@ngInject*/
 function TimeService($translate, types) {
 
-    var predefIntervals = [
-        {
-            name: $translate.instant('timeinterval.seconds-interval', {seconds: 1}, 'messageformat'),
-            value: 1 * SECOND
-        },
-        {
-            name: $translate.instant('timeinterval.seconds-interval', {seconds: 5}, 'messageformat'),
-            value: 5 * SECOND
-        },
-        {
-            name: $translate.instant('timeinterval.seconds-interval', {seconds: 10}, 'messageformat'),
-            value: 10 * SECOND
-        },
-        {
-            name: $translate.instant('timeinterval.seconds-interval', {seconds: 15}, 'messageformat'),
-            value: 15 * SECOND
-        },
-        {
-            name: $translate.instant('timeinterval.seconds-interval', {seconds: 30}, 'messageformat'),
-            value: 30 * SECOND
-        },
-        {
-            name: $translate.instant('timeinterval.minutes-interval', {minutes: 1}, 'messageformat'),
-            value: 1 * MINUTE
-        },
-        {
-            name: $translate.instant('timeinterval.minutes-interval', {minutes: 2}, 'messageformat'),
-            value: 2 * MINUTE
-        },
-        {
-            name: $translate.instant('timeinterval.minutes-interval', {minutes: 5}, 'messageformat'),
-            value: 5 * MINUTE
-        },
-        {
-            name: $translate.instant('timeinterval.minutes-interval', {minutes: 10}, 'messageformat'),
-            value: 10 * MINUTE
-        },
-        {
-            name: $translate.instant('timeinterval.minutes-interval', {minutes: 15}, 'messageformat'),
-            value: 15 * MINUTE
-        },
-        {
-            name: $translate.instant('timeinterval.minutes-interval', {minutes: 30}, 'messageformat'),
-            value: 30 * MINUTE
-        },
-        {
-            name: $translate.instant('timeinterval.hours-interval', {hours: 1}, 'messageformat'),
-            value: 1 * HOUR
-        },
-        {
-            name: $translate.instant('timeinterval.hours-interval', {hours: 2}, 'messageformat'),
-            value: 2 * HOUR
-        },
-        {
-            name: $translate.instant('timeinterval.hours-interval', {hours: 5}, 'messageformat'),
-            value: 5 * HOUR
-        },
-        {
-            name: $translate.instant('timeinterval.hours-interval', {hours: 10}, 'messageformat'),
-            value: 10 * HOUR
-        },
-        {
-            name: $translate.instant('timeinterval.hours-interval', {hours: 12}, 'messageformat'),
-            value: 12 * HOUR
-        },
-        {
-            name: $translate.instant('timeinterval.days-interval', {days: 1}, 'messageformat'),
-            value: 1 * DAY
-        },
-        {
-            name: $translate.instant('timeinterval.days-interval', {days: 7}, 'messageformat'),
-            value: 7 * DAY
-        },
-        {
-            name: $translate.instant('timeinterval.days-interval', {days: 30}, 'messageformat'),
-            value: 30 * DAY
-        }
-    ];
+    var predefIntervals;
 
     var service = {
         minIntervalLimit: minIntervalLimit,
@@ -166,6 +89,7 @@ function TimeService($translate, types) {
         min = boundMinInterval(min);
         max = boundMaxInterval(max);
         var intervals = [];
+        initPredefIntervals();
         for (var i in predefIntervals) {
             var interval = predefIntervals[i];
             if (interval.value >= min && interval.value <= max) {
@@ -173,6 +97,89 @@ function TimeService($translate, types) {
             }
         }
         return intervals;
+    }
+
+    function initPredefIntervals() {
+        if (!predefIntervals) {
+            predefIntervals = [
+                {
+                    name: $translate.instant('timeinterval.seconds-interval', {seconds: 1}, 'messageformat'),
+                    value: 1 * SECOND
+                },
+                {
+                    name: $translate.instant('timeinterval.seconds-interval', {seconds: 5}, 'messageformat'),
+                    value: 5 * SECOND
+                },
+                {
+                    name: $translate.instant('timeinterval.seconds-interval', {seconds: 10}, 'messageformat'),
+                    value: 10 * SECOND
+                },
+                {
+                    name: $translate.instant('timeinterval.seconds-interval', {seconds: 15}, 'messageformat'),
+                    value: 15 * SECOND
+                },
+                {
+                    name: $translate.instant('timeinterval.seconds-interval', {seconds: 30}, 'messageformat'),
+                    value: 30 * SECOND
+                },
+                {
+                    name: $translate.instant('timeinterval.minutes-interval', {minutes: 1}, 'messageformat'),
+                    value: 1 * MINUTE
+                },
+                {
+                    name: $translate.instant('timeinterval.minutes-interval', {minutes: 2}, 'messageformat'),
+                    value: 2 * MINUTE
+                },
+                {
+                    name: $translate.instant('timeinterval.minutes-interval', {minutes: 5}, 'messageformat'),
+                    value: 5 * MINUTE
+                },
+                {
+                    name: $translate.instant('timeinterval.minutes-interval', {minutes: 10}, 'messageformat'),
+                    value: 10 * MINUTE
+                },
+                {
+                    name: $translate.instant('timeinterval.minutes-interval', {minutes: 15}, 'messageformat'),
+                    value: 15 * MINUTE
+                },
+                {
+                    name: $translate.instant('timeinterval.minutes-interval', {minutes: 30}, 'messageformat'),
+                    value: 30 * MINUTE
+                },
+                {
+                    name: $translate.instant('timeinterval.hours-interval', {hours: 1}, 'messageformat'),
+                    value: 1 * HOUR
+                },
+                {
+                    name: $translate.instant('timeinterval.hours-interval', {hours: 2}, 'messageformat'),
+                    value: 2 * HOUR
+                },
+                {
+                    name: $translate.instant('timeinterval.hours-interval', {hours: 5}, 'messageformat'),
+                    value: 5 * HOUR
+                },
+                {
+                    name: $translate.instant('timeinterval.hours-interval', {hours: 10}, 'messageformat'),
+                    value: 10 * HOUR
+                },
+                {
+                    name: $translate.instant('timeinterval.hours-interval', {hours: 12}, 'messageformat'),
+                    value: 12 * HOUR
+                },
+                {
+                    name: $translate.instant('timeinterval.days-interval', {days: 1}, 'messageformat'),
+                    value: 1 * DAY
+                },
+                {
+                    name: $translate.instant('timeinterval.days-interval', {days: 7}, 'messageformat'),
+                    value: 7 * DAY
+                },
+                {
+                    name: $translate.instant('timeinterval.days-interval', {days: 30}, 'messageformat'),
+                    value: 30 * DAY
+                }
+            ];
+        }
     }
 
     function matchesExistingInterval(min, max, intervalMs) {
