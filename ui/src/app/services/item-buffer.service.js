@@ -214,10 +214,19 @@ function ItemBuffer($q, bufferStore, types, utils, dashboardUtils, ruleChainServ
                 var node = ruleNodes.nodes[i];
                 var component = ruleChainService.getRuleNodeComponentByClazz(node.componentClazz);
                 if (component) {
+                    var icon = types.ruleNodeType[component.type].icon;
+                    var iconUrl = null;
+                    if (component.configurationDescriptor.nodeDefinition.icon) {
+                        icon = component.configurationDescriptor.nodeDefinition.icon;
+                    }
+                    if (component.configurationDescriptor.nodeDefinition.iconUrl) {
+                        iconUrl = component.configurationDescriptor.nodeDefinition.iconUrl;
+                    }
                     delete node.componentClazz;
                     node.component = component;
                     node.nodeClass = types.ruleNodeType[component.type].nodeClass;
-                    node.icon = types.ruleNodeType[component.type].icon;
+                    node.icon = icon;
+                    node.iconUrl = iconUrl;
                     node.connectors = [];
                     node.x = Math.round(node.x + deltaX);
                     node.y = Math.round(node.y + deltaY);
