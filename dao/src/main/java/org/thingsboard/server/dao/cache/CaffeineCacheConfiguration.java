@@ -16,8 +16,10 @@
 package org.thingsboard.server.dao.cache;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Ticker;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -28,6 +30,7 @@ import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -38,12 +41,14 @@ import java.util.stream.Collectors;
 @ConfigurationProperties(prefix = "caffeine")
 @EnableCaching
 @Data
+@Slf4j
 public class CaffeineCacheConfiguration {
 
     private Map<String, CacheSpecs> specs;
 
     @Bean
     public CacheManager cacheManager() {
+        log.trace("Initializing cache: {}", Arrays.toString(RemovalCause.values()));
         SimpleCacheManager manager = new SimpleCacheManager();
         if (specs != null) {
             List<CaffeineCache> caches =

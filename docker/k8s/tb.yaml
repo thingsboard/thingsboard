@@ -84,7 +84,7 @@ spec:
       containers:
       - name: tb
         imagePullPolicy: Always
-        image: thingsboard/application:2.0.3
+        image: thingsboard/application:2.1.0
         ports:
         - containerPort: 8080
           name: ui

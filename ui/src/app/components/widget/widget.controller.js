@@ -479,7 +479,11 @@ export default function WidgetController($scope, $state, $timeout, $window, $ele
                     dashboardId: targetDashboardId,
                     state: utils.objToBase64([ stateObject ])
                 }
-                $state.go('home.dashboards.dashboard', stateParams);
+                if ($state.current.name === 'dashboard') {
+                    $state.go('dashboard', stateParams);
+                } else {
+                    $state.go('home.dashboards.dashboard', stateParams);
+                }
                 break;
             case types.widgetActionTypes.custom.value:
                 var customFunction = descriptor.customFunction;

@@ -31,7 +31,7 @@
         <span style="min-height: 5px;" flex="" ng-show="!$root.loading"></span>
         <md-dialog-content>
             <div class="md-dialog-content">
-                <tb-rule-node-link link="vm.link" labels="vm.labels" is-edit="true" the-form="theForm"></tb-rule-node-link>
+                <tb-rule-node-link ng-model="vm.link" allowed-labels="vm.labels" is-edit="true" allow-custom="vm.allowCustomLabels"></tb-rule-node-link>
             </div>
         </md-dialog-content>
         <md-dialog-actions layout="row">

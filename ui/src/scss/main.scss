@@ -16,6 +16,7 @@
 @import "~compass-sass-mixins/lib/compass";
 @import "constants";
 @import "animations";
+@import "mixins";
 @import "fonts";
 
 /***************
@@ -435,6 +436,12 @@ pre.tb-highlight {
   &.tb-indeterminate {
     color: green !important;
   }
+}
+
+.tb-card-description {
+  color: rgba(0,0,0,0.54);
+  font-size: 13px;
+  @include line-clamp(2, 1.1);
 }
 
 /***********************

@@ -529,18 +529,16 @@ public abstract class BaseController {
         return baseUrl;
     }
 
-    protected <I extends UUIDBased & EntityId> I emptyId(EntityType entityType) {
+    protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I)EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
 
-    protected <E extends BaseData<I> & HasName,
-            I extends UUIDBased & EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
+    protected <E extends HasName, I extends EntityId> void logEntityAction(I entityId, E entity, CustomerId customerId,
                                                                  ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         logEntityAction(getCurrentUser(), entityId, entity, customerId, actionType, e, additionalInfo);
     }
 
-    protected <E extends BaseData<I> & HasName,
-            I extends UUIDBased & EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
+    protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
                                                                  ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
         if (customerId == null || customerId.isNullUid()) {
             customerId = user.getCustomerId();
@@ -556,8 +554,7 @@ public abstract class BaseController {
         return error != null ? (Exception.class.isInstance(error) ? (Exception) error : new Exception(error)) : null;
     }
 
-    private <E extends BaseData<I> & HasName,
-            I extends UUIDBased & EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
+    private <E extends HasName, I extends EntityId> void pushEntityActionToRuleEngine(I entityId, E entity, User user, CustomerId customerId,
                                                                          ActionType actionType, Object... additionalInfo) {
         String msgType = null;
         switch (actionType) {

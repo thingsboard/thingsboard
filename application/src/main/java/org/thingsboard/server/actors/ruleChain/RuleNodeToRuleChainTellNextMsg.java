@@ -27,7 +27,7 @@ import java.util.Set;
  * Created by ashvayka on 19.03.18.
  */
 @Data
-final class RuleNodeToRuleChainTellNextMsg implements TbActorMsg {
+class RuleNodeToRuleChainTellNextMsg implements TbActorMsg {
 
     private final RuleNodeId originator;
     private final Set<String> relationTypes;

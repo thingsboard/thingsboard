@@ -1,7 +1,7 @@
 {
   "name": "thingsboard",
   "private": true,
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "Thingsboard UI",
   "licenses": [
     {
@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@flowjs/ng-flow": "^2.7.1",
-    "ace-builds": "1.3.1",
     "angular": "1.5.8",
     "angular-animate": "1.5.8",
     "angular-aria": "1.5.8",
@@ -37,17 +36,17 @@
     "angular-socialshare": "^2.3.8",
     "angular-storage": "0.0.15",
     "angular-touch": "1.5.8",
-    "angular-translate": "2.13.1",
-    "angular-translate-handler-log": "2.13.1",
-    "angular-translate-interpolation-messageformat": "2.13.1",
-    "angular-translate-loader-static-files": "2.13.1",
-    "angular-translate-storage-cookie": "2.13.1",
-    "angular-translate-storage-local": "2.13.1",
+    "angular-translate": "2.18.1",
+    "angular-translate-handler-log": "2.18.1",
+    "angular-translate-interpolation-messageformat": "2.18.1",
+    "angular-translate-loader-static-files": "2.18.1",
+    "angular-translate-storage-cookie": "2.18.1",
+    "angular-translate-storage-local": "2.18.1",
     "angular-ui-ace": "^0.2.3",
     "angular-ui-router": "^0.3.1",
     "angular-websocket": "^2.0.1",
     "base64-js": "^1.2.1",
-    "brace": "^0.8.0",
+    "brace": "^0.10.0",
     "canvas-gauges": "^2.0.9",
     "clipboard": "^1.5.15",
     "compass-sass-mixins": "^0.12.7",
@@ -96,6 +95,7 @@
     "babel-loader": "^6.2.5",
     "babel-preset-es2015": "^6.14.0",
     "babel-preset-react": "^6.16.0",
+    "compression-webpack-plugin": "^1.1.11",
     "connect-history-api-fallback": "^1.3.0",
     "copy-webpack-plugin": "^3.0.1",
     "cross-env": "^3.2.4",
@@ -127,7 +127,9 @@
     "webpack-dev-middleware": "^1.6.1",
     "webpack-dev-server": "^1.15.1",
     "webpack-hot-middleware": "^2.12.2",
-    "webpack-material-design-icons": "^0.1.0"
+    "webpack-material-design-icons": "^0.1.0",
+    "directory-tree": "^2.1.0",
+    "jsonminify": "^0.4.1"
   },
   "engine": "node >= 5.9.0",
   "nyc": {

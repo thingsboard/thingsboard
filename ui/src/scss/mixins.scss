@@ -32,3 +32,28 @@
     @content;
   }
 }
+
+@mixin line-clamp($numLines: 1, $lineHeight: 1.412) {
+  overflow: hidden;
+  position: relative;
+  line-height: $lineHeight;
+  text-align: justify;
+  margin-right: -1em;
+  padding-right: 2em;
+  max-height: ($numLines*$lineHeight)+em;
+  &:before {
+    content: '...';
+    position: absolute;
+    right: 1em;
+    bottom: 0;
+  }
+  &:after {
+    content: '';
+    position: absolute;
+    right: 1em;
+    width: 1em;
+    height: 1em;
+    margin-top: 0.2em;
+    background: white;
+  }
+}

@@ -207,11 +207,11 @@
             </details-buttons>
             <form name="vm.ruleNodeLinkForm" ng-if="vm.isEditingRuleNodeLink">
                 <tb-rule-node-link
-                        link="vm.editingRuleNodeLink"
-                        labels="vm.editingRuleNodeLinkLabels"
+                        ng-model="vm.editingRuleNodeLink"
+                        allowed-labels="vm.editingRuleNodeLinkLabels"
+                        allow-custom="vm.editingRuleNodeAllowCustomLabels"
                         is-edit="true"
-                        is-read-only="false"
-                        the-form="vm.ruleNodeLinkForm">
+                        is-read-only="false">
                 </tb-rule-node-link>
             </form>
         </tb-details-sidenav>

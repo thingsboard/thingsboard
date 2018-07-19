@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RpcError;
 import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
@@ -67,6 +68,7 @@ public class DefaultDeviceRpcService implements DeviceRpcService {
     private ClusterRpcService rpcService;
 
     @Autowired
+    @Lazy
     private ActorService actorService;
 
     private ScheduledExecutorService rpcCallBackExecutor;

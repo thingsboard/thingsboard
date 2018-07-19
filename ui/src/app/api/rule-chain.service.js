@@ -32,6 +32,7 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         getRuleNodeComponents: getRuleNodeComponents,
         getRuleNodeComponentByClazz: getRuleNodeComponentByClazz,
         getRuleNodeSupportedLinks: getRuleNodeSupportedLinks,
+        ruleNodeAllowCustomLinks: ruleNodeAllowCustomLinks,
         resolveTargetRuleChains: resolveTargetRuleChains,
         testScript: testScript,
         getLatestRuleNodeDebugInput: getLatestRuleNodeDebugInput
@@ -127,19 +128,19 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
 
     function getRuleNodeSupportedLinks(component) {
         var relationTypes = component.configurationDescriptor.nodeDefinition.relationTypes;
-        var customRelations = component.configurationDescriptor.nodeDefinition.customRelations;
-        var linkLabels = [];
+        var linkLabels = {};
         for (var i=0;i<relationTypes.length;i++) {
-            linkLabels.push({
-                name: relationTypes[i], custom: false
-            });
-        }
-        if (customRelations) {
-            linkLabels.push(
-                { name: 'Custom', custom: true }
-            );
+            var label = relationTypes[i];
+            linkLabels[label] = {
+                name: label,
+                value: label
+            };
         }
         return linkLabels;
+    }
+
+    function ruleNodeAllowCustomLinks(component) {
+        return component.configurationDescriptor.nodeDefinition.customRelations;
     }
 
     function getRuleNodeComponents() {
@@ -226,7 +227,10 @@ function RuleChainService($http, $q, $filter, $ocLazyLoad, $translate, types, co
         if (res && res.length) {
             return res[0];
         }
-        return null;
+        var unknownComponent = angular.copy(types.unknownNodeComponent);
+        unknownComponent.clazz = clazz;
+        unknownComponent.configurationDescriptor.nodeDefinition.details = "Unknown Rule Node class: " + clazz;
+        return unknownComponent;
     }
 
     function resolveTargetRuleChains(ruleChainConnections) {

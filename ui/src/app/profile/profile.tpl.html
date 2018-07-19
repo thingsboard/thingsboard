@@ -43,8 +43,8 @@
                     <md-input-container class="md-block">
                         <label translate>language.language</label>
                         <md-select name="language" ng-model="vm.profileUser.additionalInfo.lang">
-                            <md-option ng-repeat="lang in vm.languageList" ng-value="lang.value">
-                                {{lang.name | translate}}
+                            <md-option ng-repeat="lang in vm.languageList" ng-value="lang">
+                                {{ lang ? ('language.locales.' + lang | translate) : ''}}
                             </md-option>
                         </md-select>
                     </md-input-container>

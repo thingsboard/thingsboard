@@ -54,7 +54,7 @@ spec:
               topologyKey: "kubernetes.io/hostname"
       containers:
       - name: cassandra
-        image: thingsboard/cassandra:2.0.3
+        image: thingsboard/cassandra:2.1.0
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
