@@ -22,12 +22,15 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 
+import java.io.Serializable;
+
 /**
  * Created by ashvayka on 19.03.18.
  */
 @Data
-final class RemoteToRuleChainTellNextMsg extends RuleNodeToRuleChainTellNextMsg implements TenantAwareMsg, RuleChainAwareMsg {
+final class RemoteToRuleChainTellNextMsg extends RuleNodeToRuleChainTellNextMsg implements TenantAwareMsg, RuleChainAwareMsg, Serializable {
 
+    private static final long serialVersionUID = 2459605482321657447L;
     private final TenantId tenantId;
     private final RuleChainId ruleChainId;
 
