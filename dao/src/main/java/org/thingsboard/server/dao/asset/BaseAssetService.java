@@ -21,6 +21,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
@@ -48,15 +52,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
-import static org.thingsboard.server.dao.service.Validator.validateId;
-import static org.thingsboard.server.dao.service.Validator.validateIds;
-import static org.thingsboard.server.dao.service.Validator.validatePageLink;
-import static org.thingsboard.server.dao.service.Validator.validateString;
+import static org.thingsboard.server.dao.service.Validator.*;
 
 @Service
 @Slf4j
@@ -75,6 +76,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     @Autowired
     private CustomerDao customerDao;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     @Override
     public Asset findAssetById(AssetId assetId) {
         log.trace("Executing findAssetById [{}]", assetId);
@@ -89,13 +93,16 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         return assetDao.findByIdAsync(assetId.getId());
     }
 
+    @Cacheable(cacheNames = ASSET_CACHE, key = "{#tenantId, #name}")
     @Override
-    public Optional<Asset> findAssetByTenantIdAndName(TenantId tenantId, String name) {
+    public Asset findAssetByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findAssetByTenantIdAndName [{}][{}]", tenantId, name);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return assetDao.findAssetsByTenantIdAndName(tenantId.getId(), name);
+        return assetDao.findAssetsByTenantIdAndName(tenantId.getId(), name)
+                .orElse(null);
     }
 
+    @CacheEvict(cacheNames = ASSET_CACHE, key = "{#asset.tenantId, #asset.name}")
     @Override
     public Asset saveAsset(Asset asset) {
         log.trace("Executing saveAsset [{}]", asset);
@@ -122,6 +129,14 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         log.trace("Executing deleteAsset [{}]", assetId);
         validateId(assetId, INCORRECT_ASSET_ID + assetId);
         deleteEntityRelations(assetId);
+
+        Cache cache = cacheManager.getCache(ASSET_CACHE);
+        Asset asset = assetDao.findById(assetId.getId());
+        List<Object> list = new ArrayList<>();
+        list.add(asset.getTenantId());
+        list.add(asset.getName());
+        cache.evict(list);
+
         assetDao.removeById(assetId.getId());
     }
 
