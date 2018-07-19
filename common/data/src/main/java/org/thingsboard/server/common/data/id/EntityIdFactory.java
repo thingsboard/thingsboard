@@ -60,4 +60,5 @@ public class EntityIdFactory {
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }
+
 }

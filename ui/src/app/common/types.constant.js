@@ -195,6 +195,21 @@ export default angular.module('thingsboard.types', [])
                 },
                 "ATTRIBUTES_READ": {
                     name: "audit-log.type-attributes-read"
+                },
+                "RELATION_ADD_OR_UPDATE": {
+                    name: "audit-log.type-relation-add-or-update"
+                },
+                "RELATION_DELETED": {
+                    name: "audit-log.type-relation-delete"
+                },
+                "RELATIONS_DELETED": {
+                    name: "audit-log.type-relations-delete"
+                },
+                "ALARM_ACK": {
+                    name: "audit-log.type-alarm-ack"
+                },
+                "ALARM_CLEAR": {
+                    name: "audit-log.type-alarm-clear"
                 }
             },
             auditLogActionStatus: {
