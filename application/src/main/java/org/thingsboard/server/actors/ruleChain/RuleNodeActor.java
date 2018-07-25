@@ -50,6 +50,9 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
             case RULE_TO_SELF_MSG:
                 onRuleNodeToSelfMsg((RuleNodeToSelfMsg) msg);
                 break;
+            case STATS_PERSIST_TICK_MSG:
+                onStatsPersistTick(id);
+                break;
             default:
                 return false;
         }

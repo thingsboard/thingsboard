@@ -34,7 +34,7 @@ public class LongDataEntry extends BasicKvEntry {
 
     @Override
     public Optional<Long> getLongValue() {
-        return Optional.of(value);
+        return Optional.ofNullable(value);
     }
 
     @Override
