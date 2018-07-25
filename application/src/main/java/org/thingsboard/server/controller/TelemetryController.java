@@ -201,7 +201,7 @@ public class TelemetryController extends BaseController {
                 (result, entityId) -> {
                     // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
                     Aggregation agg = interval == 0L ? Aggregation.valueOf(Aggregation.NONE.name()) : Aggregation.valueOf(aggStr);
-                    List<TsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseTsKvQuery(key, startTs, endTs, interval, limit, agg))
+                    List<TsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseTsKvQuery(key, startTs, endTs, interval, limit, agg, "DESC", false))
                             .collect(Collectors.toList());
 
                     Futures.addCallback(tsService.findAll(entityId, queries), getTsKvListCallback(result));

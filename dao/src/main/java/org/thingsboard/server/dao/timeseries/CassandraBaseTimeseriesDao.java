@@ -15,11 +15,7 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Row;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Function;
@@ -54,10 +50,7 @@ import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -75,6 +68,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     public static final String GENERATED_QUERY_FOR_ENTITY_TYPE_AND_ENTITY_ID = "Generated query [{}] for entityType {} and entityId {}";
     public static final String SELECT_PREFIX = "SELECT ";
     public static final String EQUALS_PARAM = " = ? ";
+    public static final String ASC_ORDER = "ASC";
+    public static final String DESC_ORDER = "DESC";
 
     @Autowired
     private Environment environment;
@@ -92,9 +87,12 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     private PreparedStatement latestInsertStmt;
     private PreparedStatement[] saveStmts;
     private PreparedStatement[] saveTtlStmts;
-    private PreparedStatement[] fetchStmts;
+    private PreparedStatement[] fetchStmtsAsc;
+    private PreparedStatement[] fetchStmtsDesc;
     private PreparedStatement findLatestStmt;
     private PreparedStatement findAllLatestStmt;
+    private PreparedStatement deleteStmt;
+    private PreparedStatement deletePartitionStmt;
 
     private boolean isInstall() {
         return environment.acceptsProfiles("install");
@@ -104,7 +102,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     public void init() {
         super.startExecutor();
         if (!isInstall()) {
-            getFetchStmt(Aggregation.NONE);
+            getFetchStmt(Aggregation.NONE, DESC_ORDER);
             Optional<TsPartitionDate> partition = TsPartitionDate.parse(partitioning);
             if (partition.isPresent()) {
                 tsFormat = partition.get();
@@ -148,7 +146,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             while (stepTs < query.getEndTs()) {
                 long startTs = stepTs;
                 long endTs = stepTs + step;
-                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation());
+                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation(), query.getOrderBy(), false);
                 futures.add(findAndAggregateAsync(entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
                 stepTs = endTs;
             }
@@ -197,7 +195,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         if (cursor.isFull() || !cursor.hasNextPartition()) {
             resultFuture.set(cursor.getData());
         } else {
-            PreparedStatement proto = getFetchStmt(Aggregation.NONE);
+            PreparedStatement proto = getFetchStmt(Aggregation.NONE, cursor.getOrderBy());
             BoundStatement stmt = proto.bind();
             stmt.setString(0, cursor.getEntityType());
             stmt.setUUID(1, cursor.getEntityId());
@@ -247,7 +245,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     private AsyncFunction<List<Long>, List<ResultSet>> getFetchChunksAsyncFunction(EntityId entityId, String key, Aggregation aggregation, long startTs, long endTs) {
         return partitions -> {
             try {
-                PreparedStatement proto = getFetchStmt(aggregation);
+                PreparedStatement proto = getFetchStmt(aggregation, DESC_ORDER);
                 List<ResultSetFuture> futures = new ArrayList<>(partitions.size());
                 for (Long partition : partitions) {
                     log.trace("Fetching data for partition [{}] for entityType {} and entityId {}", partition, entityId.getEntityType(), entityId.getId());
@@ -347,6 +345,204 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         return getFuture(executeAsyncWrite(stmt), rs -> null);
     }
 
+    @Override
+    public ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query) {
+        long minPartition = toPartitionTs(query.getStartTs());
+        long maxPartition = toPartitionTs(query.getEndTs());
+
+        ResultSetFuture partitionsFuture = fetchPartitions(entityId, query.getKey(), minPartition, maxPartition);
+
+        final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
+        final ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+
+        Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
+            @Override
+            public void onSuccess(@Nullable List<Long> partitions) {
+                TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitions);
+                deleteAsync(cursor, resultFuture);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), minPartition, maxPartition, t);
+            }
+        }, readResultsProcessingExecutor);
+        return resultFuture;
+    }
+
+    private void deleteAsync(final TsKvQueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
+        if (!cursor.hasNextPartition()) {
+            resultFuture.set(null);
+        } else {
+            PreparedStatement proto = getDeleteStmt();
+            BoundStatement stmt = proto.bind();
+            stmt.setString(0, cursor.getEntityType());
+            stmt.setUUID(1, cursor.getEntityId());
+            stmt.setString(2, cursor.getKey());
+            stmt.setLong(3, cursor.getNextPartition());
+            stmt.setLong(4, cursor.getStartTs());
+            stmt.setLong(5, cursor.getEndTs());
+
+            Futures.addCallback(executeAsyncWrite(stmt), new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(@Nullable ResultSet result) {
+                    deleteAsync(cursor, resultFuture);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("[{}][{}] Failed to delete data for query {}-{}", stmt, t);
+                }
+            }, readResultsProcessingExecutor);
+        }
+    }
+
+    private PreparedStatement getDeleteStmt() {
+        if (deleteStmt == null) {
+            deleteStmt = prepare("DELETE FROM " + ModelConstants.TS_KV_CF +
+                    " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
+                    + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
+                    + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
+                    + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
+                    + "AND " + ModelConstants.TS_COLUMN + " > ? "
+                    + "AND " + ModelConstants.TS_COLUMN + " <= ?");
+        }
+        return deleteStmt;
+    }
+
+    @Override
+    public ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query) {
+        ListenableFuture<TsKvEntry> latestEntryFuture = findLatest(entityId, query.getKey());
+
+        ListenableFuture<Boolean> booleanFuture = Futures.transformAsync(latestEntryFuture, latestEntry -> {
+            long ts = latestEntry.getTs();
+            if (ts >= query.getStartTs() && ts <= query.getEndTs()) {
+                return Futures.immediateFuture(true);
+            } else {
+                log.trace("Won't be deleted latest value for [{}], key - {}", entityId, query.getKey());
+            }
+            return Futures.immediateFuture(false);
+        }, readResultsProcessingExecutor);
+
+        ListenableFuture<Void> removedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
+            if (isRemove) {
+                return deleteLatest(entityId, query.getKey());
+            }
+            return Futures.immediateFuture(null);
+        }, readResultsProcessingExecutor);
+
+        if (query.getRewriteLatestIfDeleted()) {
+            ListenableFuture<Void> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
+                if (isRemove) {
+                    return getNewLatestEntryFuture(entityId, query);
+                }
+                return Futures.immediateFuture(null);
+            }, readResultsProcessingExecutor);
+
+            return Futures.transformAsync(Futures.allAsList(Arrays.asList(savedLatestFuture, removedLatestFuture)),
+                    list -> Futures.immediateFuture(null), readResultsProcessingExecutor);
+        }
+        return removedLatestFuture;
+    }
+
+    private ListenableFuture<Void> getNewLatestEntryFuture(EntityId entityId, TsKvQuery query) {
+        long startTs = 0;
+        long endTs = query.getStartTs() - 1;
+        TsKvQuery findNewLatestQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
+                Aggregation.NONE, DESC_ORDER, false);
+        ListenableFuture<List<TsKvEntry>> future = findAllAsync(entityId, findNewLatestQuery);
+
+        return Futures.transformAsync(future, entryList -> {
+            if (entryList.size() == 1) {
+                return saveLatest(entityId, entryList.get(0));
+            } else {
+                log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
+            }
+            return Futures.immediateFuture(null);
+        }, readResultsProcessingExecutor);
+    }
+
+    private ListenableFuture<Void> deleteLatest(EntityId entityId, String key) {
+        Statement delete = QueryBuilder.delete().all().from(ModelConstants.TS_KV_LATEST_CF)
+                .where(eq(ModelConstants.ENTITY_TYPE_COLUMN, entityId.getEntityType()))
+                .and(eq(ModelConstants.ENTITY_ID_COLUMN, entityId.getId()))
+                .and(eq(ModelConstants.KEY_COLUMN, key));
+        log.debug("Remove request: {}", delete.toString());
+        return getFuture(executeAsyncWrite(delete), rs -> null);
+    }
+
+    @Override
+    public ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query) {
+        long minPartition = toPartitionTs(query.getStartTs());
+        long maxPartition = toPartitionTs(query.getEndTs());
+        if (minPartition == maxPartition) {
+            return Futures.immediateFuture(null);
+        } else {
+            ResultSetFuture partitionsFuture = fetchPartitions(entityId, query.getKey(), minPartition, maxPartition);
+
+            final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
+            final ListenableFuture<List<Long>> partitionsListFuture = Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+
+            Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
+                @Override
+                public void onSuccess(@Nullable List<Long> partitions) {
+                    int index = 0;
+                    if (minPartition != query.getStartTs()) {
+                        index = 1;
+                    }
+                    List<Long> partitionsToDelete = new ArrayList<>();
+                    for (int i = index; i < partitions.size() - 1; i++) {
+                        partitionsToDelete.add(partitions.get(i));
+                    }
+                    TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
+                    deletePartitionAsync(cursor, resultFuture);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), minPartition, maxPartition, t);
+                }
+            }, readResultsProcessingExecutor);
+            return resultFuture;
+        }
+    }
+
+    private void deletePartitionAsync(final TsKvQueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
+        if (!cursor.hasNextPartition()) {
+            resultFuture.set(null);
+        } else {
+            PreparedStatement proto = getDeletePartitionStmt();
+            BoundStatement stmt = proto.bind();
+            stmt.setString(0, cursor.getEntityType());
+            stmt.setUUID(1, cursor.getEntityId());
+            stmt.setLong(2, cursor.getNextPartition());
+            stmt.setString(3, cursor.getKey());
+
+            Futures.addCallback(executeAsyncWrite(stmt), new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(@Nullable ResultSet result) {
+                    deletePartitionAsync(cursor, resultFuture);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("[{}][{}] Failed to delete data for query {}-{}", stmt, t);
+                }
+            }, readResultsProcessingExecutor);
+        }
+    }
+
+    private PreparedStatement getDeletePartitionStmt() {
+        if (deletePartitionStmt == null) {
+            deletePartitionStmt = prepare("DELETE FROM " + ModelConstants.TS_KV_PARTITIONS_CF +
+                    " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
+                    + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
+                    + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
+                    + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM);
+        }
+        return deletePartitionStmt;
+    }
+
     private List<TsKvEntry> convertResultToTsKvEntryList(List<Row> rows) {
         List<TsKvEntry> entries = new ArrayList<>(rows.size());
         if (!rows.isEmpty()) {
@@ -442,28 +638,43 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         return saveTtlStmts[dataType.ordinal()];
     }
 
-    private PreparedStatement getFetchStmt(Aggregation aggType) {
-        if (fetchStmts == null) {
-            fetchStmts = new PreparedStatement[Aggregation.values().length];
-            for (Aggregation type : Aggregation.values()) {
-                if (type == Aggregation.SUM && fetchStmts[Aggregation.AVG.ordinal()] != null) {
-                    fetchStmts[type.ordinal()] = fetchStmts[Aggregation.AVG.ordinal()];
-                } else if (type == Aggregation.AVG && fetchStmts[Aggregation.SUM.ordinal()] != null) {
-                    fetchStmts[type.ordinal()] = fetchStmts[Aggregation.SUM.ordinal()];
-                } else {
-                    fetchStmts[type.ordinal()] = prepare(SELECT_PREFIX +
-                            String.join(", ", ModelConstants.getFetchColumnNames(type)) + " FROM " + ModelConstants.TS_KV_CF
-                            + " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
-                            + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
-                            + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
-                            + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
-                            + "AND " + ModelConstants.TS_COLUMN + " > ? "
-                            + "AND " + ModelConstants.TS_COLUMN + " <= ?"
-                            + (type == Aggregation.NONE ? " ORDER BY " + ModelConstants.TS_COLUMN + " DESC LIMIT ?" : ""));
+    private PreparedStatement getFetchStmt(Aggregation aggType, String orderBy) {
+        switch (orderBy) {
+            case ASC_ORDER:
+                if (fetchStmtsAsc == null) {
+                    fetchStmtsAsc = initFetchStmt(orderBy);
                 }
+                return fetchStmtsAsc[aggType.ordinal()];
+            case DESC_ORDER:
+                if (fetchStmtsDesc == null) {
+                    fetchStmtsDesc = initFetchStmt(orderBy);
+                }
+                return fetchStmtsDesc[aggType.ordinal()];
+            default:
+                throw new RuntimeException("Not supported" + orderBy + "order!");
+        }
+    }
+
+    private PreparedStatement[] initFetchStmt(String orderBy) {
+        PreparedStatement[] fetchStmts = new PreparedStatement[Aggregation.values().length];
+        for (Aggregation type : Aggregation.values()) {
+            if (type == Aggregation.SUM && fetchStmts[Aggregation.AVG.ordinal()] != null) {
+                fetchStmts[type.ordinal()] = fetchStmts[Aggregation.AVG.ordinal()];
+            } else if (type == Aggregation.AVG && fetchStmts[Aggregation.SUM.ordinal()] != null) {
+                fetchStmts[type.ordinal()] = fetchStmts[Aggregation.SUM.ordinal()];
+            } else {
+                fetchStmts[type.ordinal()] = prepare(SELECT_PREFIX +
+                        String.join(", ", ModelConstants.getFetchColumnNames(type)) + " FROM " + ModelConstants.TS_KV_CF
+                        + " WHERE " + ModelConstants.ENTITY_TYPE_COLUMN + EQUALS_PARAM
+                        + "AND " + ModelConstants.ENTITY_ID_COLUMN + EQUALS_PARAM
+                        + "AND " + ModelConstants.KEY_COLUMN + EQUALS_PARAM
+                        + "AND " + ModelConstants.PARTITION_COLUMN + EQUALS_PARAM
+                        + "AND " + ModelConstants.TS_COLUMN + " > ? "
+                        + "AND " + ModelConstants.TS_COLUMN + " <= ?"
+                        + (type == Aggregation.NONE ? " ORDER BY " + ModelConstants.TS_COLUMN + " " + orderBy + " LIMIT ?" : ""));
             }
         }
-        return fetchStmts[aggType.ordinal()];
+        return fetchStmts;
     }
 
     private PreparedStatement getLatestStmt() {

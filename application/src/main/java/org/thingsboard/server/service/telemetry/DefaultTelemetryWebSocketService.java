@@ -251,7 +251,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         }
         EntityId entityId = EntityIdFactory.getByTypeAndId(cmd.getEntityType(), cmd.getEntityId());
         List<String> keys = new ArrayList<>(getKeys(cmd).orElse(Collections.emptySet()));
-        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), getAggregation(cmd.getAgg())))
+        List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()), "DESC", false))
                 .collect(Collectors.toList());
 
         FutureCallback<List<TsKvEntry>> callback = new FutureCallback<List<TsKvEntry>>() {
@@ -338,7 +338,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             startTs = cmd.getStartTs();
             long endTs = cmd.getStartTs() + cmd.getTimeWindow();
             List<TsKvQuery> queries = keys.stream().map(key -> new BaseTsKvQuery(key, startTs, endTs, cmd.getInterval(),
-                    getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()))).collect(Collectors.toList());
+                    getLimit(cmd.getLimit()), getAggregation(cmd.getAgg()), "DESC", false)).collect(Collectors.toList());
 
             final FutureCallback<List<TsKvEntry>> callback = getSubscriptionCallback(sessionRef, cmd, sessionId, entityId, startTs, keys);
             accessValidator.validate(sessionRef.getSecurityCtx(), entityId,

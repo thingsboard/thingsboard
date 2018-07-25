@@ -306,6 +306,36 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
         });
     }
 
+    @Override
+    public ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query) {
+        return service.submit(() -> {
+            tsKvRepository.delete(
+                    fromTimeUUID(entityId.getId()),
+                    entityId.getEntityType(),
+                    query.getKey(),
+                    query.getStartTs(),
+                    query.getEndTs());
+            return null;
+        });
+    }
+
+    @Override
+    public ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query) {
+        TsKvLatestEntity latestEntity = new TsKvLatestEntity();
+        latestEntity.setEntityType(entityId.getEntityType());
+        latestEntity.setEntityId(fromTimeUUID(entityId.getId()));
+        latestEntity.setKey(query.getKey());
+        return service.submit(() -> {
+            tsKvLatestRepository.delete(latestEntity);
+            return null;
+        });
+    }
+
+    @Override
+    public ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query) {
+        return service.submit(() -> null);
+    }
+
     @PreDestroy
     void onDestroy() {
         if (insertService != null) {
