@@ -20,6 +20,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -62,6 +63,9 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
 
     @Column(name = WIDGETS_BUNDLE_IMAGE_PROPERTY)
     private ByteBuffer image;
+
+    @Transient
+    private String searchTextSource;
 
     public WidgetsBundleEntity() {
         super();
@@ -126,6 +130,9 @@ public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle
     @Override
     public String getSearchTextSource() {
         return getTitle();
+    }
+
+    public void setSearchTextSource(String searchTextSource) {
     }
 
     @Override

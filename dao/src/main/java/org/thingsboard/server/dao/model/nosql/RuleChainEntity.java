@@ -20,6 +20,7 @@ import com.datastax.driver.mapping.annotations.ClusteringColumn;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -74,6 +75,9 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
     @Column(name = ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
 
+    @Transient
+    private String searchTextSource;
+
     public RuleChainEntity() {
     }
 
@@ -94,6 +98,9 @@ public class RuleChainEntity implements SearchTextEntity<RuleChain> {
     @Override
     public String getSearchTextSource() {
         return getSearchText();
+    }
+
+    public void setSearchTextSource(String searchTextSource) {
     }
 
     @Override
