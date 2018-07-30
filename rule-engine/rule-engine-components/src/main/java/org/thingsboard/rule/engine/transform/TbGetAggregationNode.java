@@ -20,25 +20,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.core.TelemetryUploadRequest;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 
 @RuleNode(
@@ -57,7 +48,7 @@ public class TbGetAggregationNode implements TbNode {
     private String prefix;
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException{
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetAggregationNodeConfiguration.class);
         prefix = config.getPrefixTsKeyNames();
 
@@ -66,6 +57,7 @@ public class TbGetAggregationNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         String data = msg.getData();
+        boolean flag = false;
         JsonNode json = null;
         ObjectNode outNode = null;
         String field = null;
@@ -93,24 +85,30 @@ public class TbGetAggregationNode implements TbNode {
                         }
                     }
                 }
+                outNode = mapper.createObjectNode();
+                if (avg != null) {
+                    outNode.put(prefix + " min", min);
+                    outNode.put(prefix + " max", max);
+                    outNode.put(prefix + " avg", avg);
+                } else {
+                    flag = true;
+                }
             }
         } catch (IOException e) {
             ctx.tellFailure(msg, e);
         }
         try {
-            outNode = mapper.createObjectNode();
-            outNode.put("min", min);
-            outNode.put("max", max);
-            outNode.put("avg", avg);
             data = mapper.writeValueAsString(outNode);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            ctx.tellFailure(msg, e);
         }
         TbMsg newMsg = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), data);
-        ctx.tellNext(newMsg, SUCCESS);
-
+        if (flag) {
+            ctx.tellNext(newMsg, FAILURE);
+        } else {
+            ctx.tellNext(newMsg, SUCCESS);
+        }
     }
-
 
     @Override
     public void destroy() {
