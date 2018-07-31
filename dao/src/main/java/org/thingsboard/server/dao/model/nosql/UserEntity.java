@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -79,6 +80,9 @@ public final class UserEntity implements SearchTextEntity<User> {
 
     @Column(name = USER_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
+
+    @Transient
+    private String searchTextSource;
 
     public UserEntity() {
         super();
@@ -168,6 +172,9 @@ public final class UserEntity implements SearchTextEntity<User> {
     @Override
     public String getSearchTextSource() {
         return getEmail();
+    }
+
+    public void setSearchTextSource(String searchTextSource) {
     }
 
     @Override

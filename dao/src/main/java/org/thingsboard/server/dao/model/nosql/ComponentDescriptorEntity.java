@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.model.nosql;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
@@ -68,6 +69,9 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
 
     @Column(name = SEARCH_TEXT_PROPERTY)
     private String searchText;
+
+    @Transient
+    private String searchTextSource;
 
     public ComponentDescriptorEntity() {
     }
@@ -167,5 +171,8 @@ public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDesc
     @Override
     public String getSearchTextSource() {
         return getSearchText();
+    }
+
+    public void setSearchTextSource(String searchTextSource) {
     }
 }

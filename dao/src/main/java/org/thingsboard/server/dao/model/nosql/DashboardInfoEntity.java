@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,6 +70,9 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
 
     @Column(name = DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
     private String assignedCustomers;
+
+    @Transient
+    private String searchTextSource;
 
     public DashboardInfoEntity() {
         super();
@@ -126,6 +130,9 @@ public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
     @Override
     public String getSearchTextSource() {
         return getTitle();
+    }
+
+    public void setSearchTextSource(String searchTextSource) {
     }
 
     @Override

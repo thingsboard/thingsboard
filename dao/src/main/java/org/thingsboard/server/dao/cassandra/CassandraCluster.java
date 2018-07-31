@@ -21,7 +21,7 @@ import org.thingsboard.server.dao.util.NoSqlDao;
 
 import javax.annotation.PostConstruct;
 
-@Component
+@Component("CassandraCluster")
 @NoSqlDao
 public class CassandraCluster extends AbstractCassandraCluster {
 

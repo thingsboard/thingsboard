@@ -19,6 +19,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.Transient;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -69,6 +70,9 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     
     @Column(name = DEVICE_ADDITIONAL_INFO_PROPERTY, codec = JsonCodec.class)
     private JsonNode additionalInfo;
+
+    @Transient
+    private String searchTextSource;
 
     public DeviceEntity() {
         super();
@@ -140,6 +144,9 @@ public final class DeviceEntity implements SearchTextEntity<Device> {
     @Override
     public String getSearchTextSource() {
         return getName();
+    }
+
+    public void setSearchTextSource(String searchTextSource) {
     }
 
     @Override
