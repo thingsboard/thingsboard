@@ -28,7 +28,7 @@ import java.io.Serializable;
  * Created by ashvayka on 19.03.18.
  */
 @Data
-final class RemoteToRuleChainTellNextMsg extends RuleNodeToRuleChainTellNextMsg implements TenantAwareMsg, RuleChainAwareMsg, Serializable {
+final class RemoteToRuleChainTellNextMsg extends RuleNodeToRuleChainTellNextMsg implements TenantAwareMsg, RuleChainAwareMsg {
 
     private static final long serialVersionUID = 2459605482321657447L;
     private final TenantId tenantId;
