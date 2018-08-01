@@ -22,15 +22,18 @@ package org.thingsboard.rule.engine.transform;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
+import java.util.Collections;
+import java.util.List;
+
 @Data
 public class TbGetAggregationNodeConfiguration implements NodeConfiguration<TbGetAggregationNodeConfiguration> {
 
-    private String prefixTsKeyNames;
+    private List<String> prefixesTsKeyNames;
 
     @Override
     public TbGetAggregationNodeConfiguration defaultConfiguration() {
         TbGetAggregationNodeConfiguration configuration = new TbGetAggregationNodeConfiguration();
-        configuration.setPrefixTsKeyNames(null);
+        configuration.setPrefixesTsKeyNames(Collections.emptyList());
         return configuration;
     }
 
