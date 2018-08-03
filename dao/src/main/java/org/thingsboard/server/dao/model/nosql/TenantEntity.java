@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
@@ -47,7 +47,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ZIP_PROPERTY;
 @Table(name = TENANT_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
-public final class TenantEntity implements SearchTextEntity<Tenant> {
+public final class TenantEntity extends SearchTextSourceEntity<Tenant> {
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)

@@ -25,7 +25,7 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -41,7 +41,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.WIDGETS_BUNDLE_TIT
 @Table(name = WIDGETS_BUNDLE_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
-public final class WidgetsBundleEntity implements SearchTextEntity<WidgetsBundle> {
+public final class WidgetsBundleEntity extends SearchTextSourceEntity<WidgetsBundle> {
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)

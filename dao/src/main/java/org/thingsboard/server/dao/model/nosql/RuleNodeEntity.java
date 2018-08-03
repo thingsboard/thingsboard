@@ -27,7 +27,7 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
@@ -45,7 +45,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @Table(name = RULE_NODE_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
-public class RuleNodeEntity implements SearchTextEntity<RuleNode> {
+public class RuleNodeEntity extends SearchTextSourceEntity<RuleNode> {
 
     @PartitionKey
     @Column(name = ID_PROPERTY)

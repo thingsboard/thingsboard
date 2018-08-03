@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.ComponentDescriptorId;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentScope;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
@@ -42,7 +42,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
  * @author Andrew Shvayka
  */
 @Table(name = COMPONENT_DESCRIPTOR_COLUMN_FAMILY_NAME)
-public class ComponentDescriptorEntity implements SearchTextEntity<ComponentDescriptor> {
+public class ComponentDescriptorEntity extends SearchTextSourceEntity<ComponentDescriptor> {
 
     @PartitionKey
     @Column(name = ID_PROPERTY)

@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
@@ -49,7 +49,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @Table(name = RULE_CHAIN_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
-public class RuleChainEntity implements SearchTextEntity<RuleChain> {
+public class RuleChainEntity extends SearchTextSourceEntity<RuleChain> {
 
     @PartitionKey
     @Column(name = ID_PROPERTY)

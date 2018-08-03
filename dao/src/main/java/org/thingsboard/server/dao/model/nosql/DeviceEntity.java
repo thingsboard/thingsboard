@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
@@ -43,7 +43,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @Table(name = DEVICE_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
-public final class DeviceEntity implements SearchTextEntity<Device> {
+public final class DeviceEntity extends SearchTextSourceEntity<Device> {
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)

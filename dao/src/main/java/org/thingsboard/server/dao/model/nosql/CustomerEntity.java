@@ -25,7 +25,7 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
 import java.util.UUID;
@@ -48,7 +48,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ZIP_PROPERTY;
 @Table(name = CUSTOMER_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
-public final class CustomerEntity implements SearchTextEntity<Customer> {
+public final class CustomerEntity extends SearchTextSourceEntity<Customer> {
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)

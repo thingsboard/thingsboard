@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -47,7 +47,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.SEARCH_TEXT_PROPER
 @EqualsAndHashCode
 @ToString
 @Slf4j
-public class DashboardInfoEntity implements SearchTextEntity<DashboardInfo> {
+public class DashboardInfoEntity extends SearchTextSourceEntity<DashboardInfo> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final JavaType assignedCustomersType =

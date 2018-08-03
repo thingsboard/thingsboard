@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.model.SearchTextEntity;
+import org.thingsboard.server.dao.model.SearchTextSourceEntity;
 import org.thingsboard.server.dao.model.type.AuthorityCodec;
 import org.thingsboard.server.dao.model.type.JsonCodec;
 
@@ -47,7 +47,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.USER_TENANT_ID_PRO
 @Table(name = USER_COLUMN_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
-public final class UserEntity implements SearchTextEntity<User> {
+public final class UserEntity extends SearchTextSourceEntity<User> {
 
     @PartitionKey(value = 0)
     @Column(name = ID_PROPERTY)
