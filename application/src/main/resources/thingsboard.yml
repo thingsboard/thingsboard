@@ -291,6 +291,9 @@ caffeine:
     devices:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    assets:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster
