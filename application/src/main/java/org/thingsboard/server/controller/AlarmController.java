@@ -86,7 +86,7 @@ public class AlarmController extends BaseController {
                     savedAlarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
             return savedAlarm;
         } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.ASSET), alarm,
+            logEntityAction(emptyId(EntityType.ALARM), alarm,
                     null, alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
