@@ -1003,13 +1003,13 @@
 "language":{
 	"language": "Language",
 	"locales":{
-	"en_US": "anglais",
-	"fr_FR": "français",
-	"es_ES": "espagnol",
-	"it_IT": "italien",
-	"ko_KR": "coréen",
-	"ru_RU": "russe",
-	"zh_CN": "chinois"
+	"en_US": "Anglais",
+	"fr_FR": "Français",
+	"es_ES": "Espagnol",
+	"it_IT": "Italien",
+	"ko_KR": "Coréen",
+	"ru_RU": "Russe",
+	"zh_CN": "Chinois"
 	}
 	},
 "layout":{
