@@ -279,7 +279,7 @@ public class DeviceController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenant/device", params = {"deviceName"}, method = RequestMethod.GET)
     @ResponseBody
     public Device getTenantDevice(
             @RequestParam String deviceName) throws ThingsboardException {

@@ -230,7 +230,7 @@ public class AssetController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/assets", params = {"assetName"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenant/asset", params = {"assetName"}, method = RequestMethod.GET)
     @ResponseBody
     public Asset getTenantAsset(
             @RequestParam String assetName) throws ThingsboardException {
