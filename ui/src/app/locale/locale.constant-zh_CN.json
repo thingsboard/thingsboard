@@ -1438,6 +1438,7 @@
         "language": "语言",
         "locales": {
             "en_US": "英语",
+			"fr_FR": "法国",
             "ko_KR": "韩语",
             "zh_CN": "汉语",
             "ru_RU": "俄语",
