@@ -78,7 +78,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     public static final String EQUALS_PARAM = " = ? ";
 
 
-    private static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0l});
+    private static List<Long> FIXED_PARTITION = Arrays.asList(new Long[]{0L});
 
     @Autowired
     private Environment environment;
@@ -172,14 +172,11 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     private ListenableFuture<List<Long>> getPartitionsFuture(TsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
-
         if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
         ResultSetFuture partitionsFuture = fetchPartitions(entityId, query.getKey(), minPartition, maxPartition);
-
         return Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
-
     }
 
     private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, TsKvQuery query) {
