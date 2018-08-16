@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2018 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,18 +163,18 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         }
     }
 
-    public boolean isFixedPartitioning(){
-        return  tsFormat.getTruncateUnit().equals(TsPartitionDate.FIXED_PARTITION);
+    public boolean isFixedPartitioning() {
+        return tsFormat.getTruncateUnit().equals(TsPartitionDate.FIXED_PARTITION);
     }
 
-    private ListenableFuture<List<Long>> getPartitionsFuture(TsKvQuery query, EntityId entityId, long minPartition, long maxPartition){
+    private ListenableFuture<List<Long>> getPartitionsFuture(TsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
 
-        if(isFixedPartitioning()){ //no need to fetch partitions from DB
+        if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
         ResultSetFuture partitionsFuture = fetchPartitions(entityId, query.getKey(), minPartition, maxPartition);
 
-        return  Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
+        return Futures.transform(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
 
     }
 
@@ -183,7 +183,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         long minPartition = toPartitionTs(query.getStartTs());
         long maxPartition = toPartitionTs(query.getEndTs());
 
-        final ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(query,entityId,minPartition,maxPartition);
+        final ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(query, entityId, minPartition, maxPartition);
         final SimpleListenableFuture<List<TsKvEntry>> resultFuture = new SimpleListenableFuture<>();
 
         Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
@@ -244,7 +244,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         final long ts = startTs + (endTs - startTs) / 2;
 
 
-        ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(query,entityId, minPartition, maxPartition);
+        ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(query, entityId, minPartition, maxPartition);
         ListenableFuture<List<ResultSet>> aggregationChunks = Futures.transformAsync(partitionsListFuture,
                 getFetchChunksAsyncFunction(entityId, key, aggregation, startTs, endTs), readResultsProcessingExecutor);
 
@@ -320,8 +320,8 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
 
     @Override
     public ListenableFuture<Void> savePartition(EntityId entityId, long tsKvEntryTs, String key, long ttl) {
-        if(isFixedPartitioning()){
-            return getFuture(null, rs -> null);
+        if (isFixedPartitioning()) {
+            return Futures.immediateFuture(null);
         }
         ttl = computeTtl(ttl);
         long partition = toPartitionTs(tsKvEntryTs);
