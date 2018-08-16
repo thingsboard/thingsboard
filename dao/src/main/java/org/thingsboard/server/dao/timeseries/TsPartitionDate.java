@@ -27,7 +27,7 @@ public enum TsPartitionDate {
 
     private final String pattern;
     private final transient TemporalUnit truncateUnit;
-    public final static LocalDateTime FIXED_PARTITION = LocalDateTime.ofEpochSecond(0,0, ZoneOffset.UTC);
+    public final static LocalDateTime EPOCH_START = LocalDateTime.ofEpochSecond(0,0, ZoneOffset.UTC);
 
     TsPartitionDate(String pattern, TemporalUnit truncateUnit) {
         this.pattern = pattern;
@@ -50,7 +50,7 @@ public enum TsPartitionDate {
             case YEARS:
                 return time.truncatedTo(ChronoUnit.DAYS).withDayOfYear(1);
             case INDEFINITE:
-                 return FIXED_PARTITION;
+                 return EPOCH_START;
             default:
                 return time.truncatedTo(truncateUnit);
         }
