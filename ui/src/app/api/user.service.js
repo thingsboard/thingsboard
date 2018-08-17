@@ -27,6 +27,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         currentUserDetails = null,
         lastPublicDashboardId = null,
         allowedDashboardIds = [],
+        userTokenAccessEnabled = false,
         userLoaded = false;
 
     var refreshTokenQueue = [];
@@ -59,7 +60,9 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         forceDefaultPlace: forceDefaultPlace,
         updateLastPublicDashboardId: updateLastPublicDashboardId,
         logout: logout,
-        reloadUser: reloadUser
+        reloadUser: reloadUser,
+        isUserTokenAccessEnabled: isUserTokenAccessEnabled,
+        loginAsUser: loginAsUser
     }
 
     reloadUser();
@@ -105,6 +108,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         currentUser = null;
         currentUserDetails = null;
         lastPublicDashboardId = null;
+        userTokenAccessEnabled = false;
         allowedDashboardIds = [];
         if (!jwtToken) {
             clearTokenData();
@@ -299,24 +303,36 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
                 } else if (currentUser) {
                     currentUser.authority = "ANONYMOUS";
                 }
+                var sysParamsPromise = loadSystemParams();
                 if (currentUser.isPublic) {
                     $rootScope.forceFullscreen = true;
-                    fetchAllowedDashboardIds();
+                    sysParamsPromise.then(
+                        () => { fetchAllowedDashboardIds(); },
+                        () => { deferred.reject(); }
+                    );
                 } else if (currentUser.userId) {
                     getUser(currentUser.userId, true).then(
                         function success(user) {
-                            currentUserDetails = user;
-                            updateUserLang();
-                            $rootScope.forceFullscreen = false;
-                            if (userForceFullscreen()) {
-                                $rootScope.forceFullscreen = true;
-                            }
-                            if ($rootScope.forceFullscreen && (currentUser.authority === 'TENANT_ADMIN' ||
-                                currentUser.authority === 'CUSTOMER_USER')) {
-                                fetchAllowedDashboardIds();
-                            } else {
-                                deferred.resolve();
-                            }
+                            sysParamsPromise.then(
+                                () => {
+                                    currentUserDetails = user;
+                                    updateUserLang();
+                                    $rootScope.forceFullscreen = false;
+                                    if (userForceFullscreen()) {
+                                        $rootScope.forceFullscreen = true;
+                                    }
+                                    if ($rootScope.forceFullscreen && (currentUser.authority === 'TENANT_ADMIN' ||
+                                        currentUser.authority === 'CUSTOMER_USER')) {
+                                        fetchAllowedDashboardIds();
+                                    } else {
+                                        deferred.resolve();
+                                    }
+                                },
+                                () => {
+                                    deferred.reject();
+                                    logout();
+                                }
+                            );
                         },
                         function fail() {
                             deferred.reject();
@@ -351,6 +367,30 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
             deferred.resolve();
         }
         return deferred.promise;
+    }
+
+    function loadIsUserTokenAccessEnabled() {
+        var deferred = $q.defer();
+        if (currentUser.authority === 'SYS_ADMIN' || currentUser.authority === 'TENANT_ADMIN') {
+            var url = '/api/user/tokenAccessEnabled';
+            $http.get(url).then(function success(response) {
+                userTokenAccessEnabled = response.data;
+                deferred.resolve(response.data);
+            }, function fail() {
+                userTokenAccessEnabled = false;
+                deferred.reject();
+            });
+        } else {
+            userTokenAccessEnabled = false;
+            deferred.resolve(false);
+        }
+        return deferred.promise;
+    }
+
+    function loadSystemParams() {
+        var promises = [];
+        promises.push(loadIsUserTokenAccessEnabled());
+        return $q.all(promises);
     }
 
     function notifyUserLoaded() {
@@ -520,7 +560,7 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
                     }
                 );
             }
-            $state.go(place, params);
+            $state.go(place, params, {reload: true});
         } else {
             $state.go('login', params);
         }
@@ -547,6 +587,20 @@ function UserService($http, $q, $rootScope, adminService, dashboardService, logi
         if (isPublic()) {
             lastPublicDashboardId = dashboardId;
         }
+    }
+
+    function isUserTokenAccessEnabled() {
+        return userTokenAccessEnabled;
+    }
+
+    function loginAsUser(userId) {
+        var url = '/api/user/' + userId + '/token';
+        $http.get(url).then(function success(response) {
+            var token = response.data.token;
+            var refreshToken = response.data.refreshToken;
+            setUserFromJwtToken(token, refreshToken, true);
+        }, function fail() {
+        });
     }
 
 }
