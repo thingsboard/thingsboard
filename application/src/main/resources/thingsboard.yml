@@ -164,7 +164,8 @@ database:
   entities:
     type: "${DATABASE_TYPE:sql}" # cassandra OR sql
   ts:
-    type: "${DATABASE_TYPE:cassandra}" # cassandra OR sql
+    type: "${DATABASE_TYPE:sql}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
+
 
 # Cassandra driver configuration parameters
 cassandra:

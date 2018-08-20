@@ -116,7 +116,7 @@ public class ThingsboardInstallService {
 
                 log.info("Installing DataBase schema...");
 
-                databaseSchemaService.createDatabaseSchema();//TODO
+                databaseSchemaService.createDatabaseSchema();//TODO issue 1005 - create both SQL and C* schemas in hybrid mode
 
                 log.info("Loading system data...");
 
