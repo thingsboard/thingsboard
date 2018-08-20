@@ -1434,6 +1434,7 @@
     "language": {
         "language": "Lingua",
         "locales": {
+			"fr_FR": "Francese",
             "zh_CN": "Cinese",
             "ko_KR": "Coreano",
             "en_US": "Inglese",
