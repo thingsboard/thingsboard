@@ -116,7 +116,7 @@ public class ThingsboardInstallService {
 
                 log.info("Installing DataBase schema...");
 
-                databaseSchemaService.createDatabaseSchema();
+                databaseSchemaService.createDatabaseSchema();//TODO
 
                 log.info("Loading system data...");
 

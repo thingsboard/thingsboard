@@ -20,14 +20,14 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.util.NoSqlDao;
+import org.thingsboard.server.dao.util.NoSqlAnyDao;
 
 import javax.annotation.PostConstruct;
 
 @Component
 @Configuration
 @Data
-@NoSqlDao
+@NoSqlAnyDao
 public class CassandraSocketOptions {
 
     @Value("${cassandra.socket.connect_timeout}")
