@@ -19,16 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.dao.util.NoSqlDao;
+import org.thingsboard.server.dao.util.HybridDao;
 
 @Service
-@NoSqlDao
 @Profile("install")
 @Slf4j
-public class CassandraDatabaseSchemaService implements DatabaseSchemaService {
+@HybridDao
+public class HybridDatabaseSchemaService implements DatabaseSchemaService {
 
     @Autowired
-    private CassandraEntityDatabaseSchemaService cassandraEntityDatabaseSchemaService;
+    private SqlEntityDatabaseSchemaService sqlEntityDatabaseSchemaService;
 
     @Autowired
     private CassandraTsDatabaseSchemaService cassandraTsDatabaseSchemaService;
@@ -36,8 +36,9 @@ public class CassandraDatabaseSchemaService implements DatabaseSchemaService {
 
     @Override
     public void createDatabaseSchema() throws Exception {
-        log.info("Installing Cassandra DataBase schema...");
-        cassandraEntityDatabaseSchemaService.createDatabaseSchema();
+        log.info("Installing Hybrid SQL/Cassandra DataBase schema...");
+        sqlEntityDatabaseSchemaService.createDatabaseSchema();
         cassandraTsDatabaseSchemaService.createDatabaseSchema();
     }
+
 }
