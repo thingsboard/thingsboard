@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cassandra.CassandraInstallCluster;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.util.NoSqlAnyDao;
+import org.thingsboard.server.dao.util.NoSqlDao;
 import org.thingsboard.server.service.install.cql.CQLStatementsParser;
 import org.thingsboard.server.service.install.cql.CassandraDbHelper;
 
@@ -45,7 +45,7 @@ import static org.thingsboard.server.service.install.DatabaseHelper.TENANT_ID;
 import static org.thingsboard.server.service.install.DatabaseHelper.TITLE;
 
 @Service
-@NoSqlAnyDao
+@NoSqlDao
 @Profile("install")
 @Slf4j
 public class CassandraDatabaseUpgradeService implements DatabaseUpgradeService {
