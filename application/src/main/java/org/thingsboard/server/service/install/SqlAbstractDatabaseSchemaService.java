@@ -27,7 +27,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 
 @Slf4j
-public abstract class SqlAbstractDatabaseSchemaService /*implements DatabaseSchemaService*/ {
+public abstract class SqlAbstractDatabaseSchemaService implements DatabaseSchemaService {
 
     private static final String SQL_DIR = "sql";
 
@@ -49,7 +49,7 @@ public abstract class SqlAbstractDatabaseSchemaService /*implements DatabaseSche
         this.schemaSql = schemaSql;
     }
 
-    //@Override
+    @Override
     public void createDatabaseSchema() throws Exception {
 
         log.info("Installing SQL DataBase schema part: " + schemaSql);

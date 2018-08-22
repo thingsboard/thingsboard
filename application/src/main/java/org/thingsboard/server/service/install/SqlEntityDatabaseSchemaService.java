@@ -16,9 +16,12 @@
 package org.thingsboard.server.service.install;
 
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.dao.util.SqlDao;
 
 @Service
-public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaService {
+@SqlDao
+public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
+        implements EntityDatabaseSchemaService {
     public SqlEntityDatabaseSchemaService() {
         super("schema-entities.sql");
     }

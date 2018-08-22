@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @Slf4j
-public abstract class CassandraAbstractDatabaseSchemaService /*implements DatabaseSchemaService*/ {
+public abstract class CassandraAbstractDatabaseSchemaService implements DatabaseSchemaService {
 
     private static final String CASSANDRA_DIR = "cassandra";
 
@@ -41,7 +41,7 @@ public abstract class CassandraAbstractDatabaseSchemaService /*implements Databa
         this.schemaCql = schemaCql;
     }
 
-    //@Override
+    @Override
     public void createDatabaseSchema() throws Exception {
         log.info("Installing Cassandra DataBase schema part: " + schemaCql);
         Path schemaFile = Paths.get(installScripts.getDataDir(), CASSANDRA_DIR, schemaCql);

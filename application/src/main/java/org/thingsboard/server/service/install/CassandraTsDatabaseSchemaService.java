@@ -16,9 +16,12 @@
 package org.thingsboard.server.service.install;
 
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.dao.util.NoSqlTsDao;
 
 @Service
-public class CassandraTsDatabaseSchemaService extends CassandraAbstractDatabaseSchemaService {
+@NoSqlTsDao
+public class CassandraTsDatabaseSchemaService extends CassandraAbstractDatabaseSchemaService
+        implements TsDatabaseSchemaService {
     public CassandraTsDatabaseSchemaService() {
         super("schema-ts.cql");
     }
