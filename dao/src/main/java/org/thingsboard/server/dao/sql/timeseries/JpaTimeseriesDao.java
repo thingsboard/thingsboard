@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.timeseries.TsInsertExecutorType;
 import org.thingsboard.server.dao.util.SqlDao;
+import org.thingsboard.server.dao.util.SqlTsDao;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -58,7 +59,7 @@ import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
 
 @Component
 @Slf4j
-@SqlDao
+@SqlTsDao
 public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService implements TimeseriesDao {
 
     @Value("${sql.ts_inserts_executor_type}")
