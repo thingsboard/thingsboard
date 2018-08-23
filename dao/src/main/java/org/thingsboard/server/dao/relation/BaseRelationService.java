@@ -16,9 +16,7 @@
 package org.thingsboard.server.dao.relation;
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -272,8 +270,10 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup}")
     @Override
     public List<EntityRelation> findByFrom(EntityId from, RelationTypeGroup typeGroup) {
+        validate(from);
+        validateTypeGroup(typeGroup);
         try {
-            return findByFromAsync(from, typeGroup).get();
+            return relationDao.findAllByFrom(from, typeGroup).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -284,7 +284,28 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing findByFrom [{}][{}]", from, typeGroup);
         validate(from);
         validateTypeGroup(typeGroup);
-        return relationDao.findAllByFrom(from, typeGroup);
+
+        List<Object> fromAndTypeGroup = new ArrayList<>();
+        fromAndTypeGroup.add(from);
+        fromAndTypeGroup.add(typeGroup);
+
+        Cache cache = cacheManager.getCache(RELATIONS_CACHE);
+        List<EntityRelation> fromCache = cache.get(fromAndTypeGroup, List.class);
+        if (fromCache != null) {
+            return Futures.immediateFuture(fromCache);
+        } else {
+            ListenableFuture<List<EntityRelation>> relationsFuture = relationDao.findAllByFrom(from, typeGroup);
+            Futures.addCallback(relationsFuture,
+                    new FutureCallback<List<EntityRelation>>() {
+                        @Override
+                        public void onSuccess(@Nullable List<EntityRelation> result) {
+                            cache.putIfAbsent(fromAndTypeGroup, result);
+                        }
+                        @Override
+                        public void onFailure(Throwable t) {}
+             });
+            return relationsFuture;
+        }
     }
 
     @Override
@@ -327,8 +348,10 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#to, #typeGroup}")
     @Override
     public List<EntityRelation> findByTo(EntityId to, RelationTypeGroup typeGroup) {
+        validate(to);
+        validateTypeGroup(typeGroup);
         try {
-            return findByToAsync(to, typeGroup).get();
+            return relationDao.findAllByTo(to, typeGroup).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -339,7 +362,28 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing findByTo [{}][{}]", to, typeGroup);
         validate(to);
         validateTypeGroup(typeGroup);
-        return relationDao.findAllByTo(to, typeGroup);
+
+        List<Object> toAndTypeGroup = new ArrayList<>();
+        toAndTypeGroup.add(to);
+        toAndTypeGroup.add(typeGroup);
+
+        Cache cache = cacheManager.getCache(RELATIONS_CACHE);
+        List<EntityRelation> fromCache = cache.get(toAndTypeGroup, List.class);
+        if (fromCache != null) {
+            return Futures.immediateFuture(fromCache);
+        } else {
+            ListenableFuture<List<EntityRelation>> relationsFuture = relationDao.findAllByTo(to, typeGroup);
+            Futures.addCallback(relationsFuture,
+                    new FutureCallback<List<EntityRelation>>() {
+                        @Override
+                        public void onSuccess(@Nullable List<EntityRelation> result) {
+                            cache.putIfAbsent(toAndTypeGroup, result);
+                        }
+                        @Override
+                        public void onFailure(Throwable t) {}
+                    });
+            return relationsFuture;
+        }
     }
 
     @Override
