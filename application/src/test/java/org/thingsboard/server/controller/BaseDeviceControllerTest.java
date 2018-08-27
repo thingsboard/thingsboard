@@ -41,7 +41,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-
+/**
+ * Created by Victor Basanets on 8/27/2017.
+ */
 public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     
     private IdComparator<Device> idComparator = new IdComparator<>();
