@@ -343,36 +343,36 @@ spring.resources.chain:
       enabled: "true"
 
 # HSQLDB DAO Configuration
-spring:
-  data:
-    jpa:
-      repositories:
-        enabled: "true"
-  jpa:
-    hibernate:
-      ddl-auto: "validate"
-    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
-  datasource:
-    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
-    url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false;hsqldb.log_size=5}"
-    username: "${SPRING_DATASOURCE_USERNAME:sa}"
-    password: "${SPRING_DATASOURCE_PASSWORD:}"
+# spring:
+#   data:
+#     jpa:
+#       repositories:
+#         enabled: "true"
+#   jpa:
+#     hibernate:
+#       ddl-auto: "validate"
+#     database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.HSQLDialect}"
+#   datasource:
+#     driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.hsqldb.jdbc.JDBCDriver}"
+#     url: "${SPRING_DATASOURCE_URL:jdbc:hsqldb:file:${SQL_DATA_FOLDER:/tmp}/thingsboardDb;sql.enforce_size=false;hsqldb.log_size=5}"
+#     username: "${SPRING_DATASOURCE_USERNAME:sa}"
+#     password: "${SPRING_DATASOURCE_PASSWORD:}"
 
 # PostgreSQL DAO Configuration
-#spring:
-#  data:
-#    sql:
-#      repositories:
-#        enabled: "true"
-#  sql:
-#    hibernate:
-#      ddl-auto: "validate"
-#    database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
-#  datasource:
-#    driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
-#    url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
-#    username: "${SPRING_DATASOURCE_USERNAME:postgres}"
-#    password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
+spring:
+ data:
+   sql:
+     repositories:
+       enabled: "true"
+ sql:
+   hibernate:
+     ddl-auto: "validate"
+   database-platform: "${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}"
+ datasource:
+   driverClassName: "${SPRING_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+   url: "${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard}"
+   username: "${SPRING_DATASOURCE_USERNAME:postgres}"
+   password: "${SPRING_DATASOURCE_PASSWORD:postgres}"
 
 # Audit log parameters
 audit_log:
