@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller.nosql;
 
 import org.thingsboard.server.controller.BaseEntityViewControllerTest;
+
 /**
  * Created by Victor Basanets on 8/27/2017.
  */
