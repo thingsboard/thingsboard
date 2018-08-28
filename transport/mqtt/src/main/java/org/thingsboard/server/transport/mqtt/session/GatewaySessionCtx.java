@@ -80,7 +80,6 @@ public class GatewaySessionCtx {
         String deviceName = checkDeviceName(getDeviceName(json));
         String deviceType = getDeviceType(json);
         onDeviceConnect(deviceName, deviceType);
-        ack(msg);
     }
 
     private void onDeviceConnect(String deviceName, String deviceType) {
@@ -114,7 +113,6 @@ public class GatewaySessionCtx {
         } else {
             log.debug("[{}] Device [{}] was already removed from the gateway session", gatewaySessionId, deviceName);
         }
-        ack(msg);
     }
 
     public void onGatewayDisconnect() {
@@ -157,7 +155,6 @@ public class GatewaySessionCtx {
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
             processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, new ToDeviceRpcResponseMsg(requestId, data))));
-            ack(mqttMsg);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }
@@ -213,7 +210,6 @@ public class GatewaySessionCtx {
             GatewayDeviceSessionCtx deviceSessionCtx = devices.get(deviceName);
             processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(),
                     new BasicAdaptorToSessionActorMsg(deviceSessionCtx, request)));
-            ack(msg);
         } else {
             throw new JsonSyntaxException(CAN_T_PARSE_VALUE + json);
         }
@@ -258,12 +254,6 @@ public class GatewaySessionCtx {
 
     public void setChannel(ChannelHandlerContext channel) {
         this.channel = channel;
-    }
-
-    private void ack(MqttPublishMessage msg) {
-        if (msg.variableHeader().messageId() > 0) {
-            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(msg.variableHeader().messageId()));
-        }
     }
 
     void writeAndFlush(MqttMessage mqttMessage) {

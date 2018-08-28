@@ -154,6 +154,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         int msgId = mqttMsg.variableHeader().messageId();
         log.trace("[{}] Processing publish msg [{}][{}]!", sessionId, topicName, msgId);
 
+        if (msgId > 0) {
+            ctx.writeAndFlush(createMqttPubAckMsg(msgId));
+        }
         if (topicName.startsWith(BASE_GATEWAY_API_TOPIC)) {
             if (gatewaySessionCtx != null) {
                 gatewaySessionCtx.setChannel(ctx);
@@ -193,19 +196,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, POST_ATTRIBUTES_REQUEST, mqttMsg);
             } else if (topicName.startsWith(DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, GET_ATTRIBUTES_REQUEST, mqttMsg);
-                if (msgId >= 0) {
-                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-                }
             } else if (topicName.startsWith(DEVICE_RPC_RESPONSE_TOPIC)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, TO_DEVICE_RPC_RESPONSE, mqttMsg);
-                if (msgId >= 0) {
-                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-                }
             } else if (topicName.startsWith(DEVICE_RPC_REQUESTS_TOPIC)) {
                 msg = adaptor.convertToActorMsg(deviceSessionCtx, TO_SERVER_RPC_REQUEST, mqttMsg);
-                if (msgId >= 0) {
-                    ctx.writeAndFlush(createMqttPubAckMsg(msgId));
-                }
             }
         } catch (AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
