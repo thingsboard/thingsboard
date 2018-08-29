@@ -30,9 +30,6 @@ import java.util.Arrays;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-/**
- * Created by Victor Basanets on 8/27/2017.
- */
 public abstract class BaseEntityViewControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
