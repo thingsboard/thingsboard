@@ -35,6 +35,8 @@ public interface EntityViewService {
 
     EntityView assignEntityViewToCustomer(EntityViewId entityViewId, CustomerId customerId);
 
+    EntityView unassignEntityViewFromCustomer(EntityViewId entityViewId);
+
     void deleteEntityView(EntityViewId entityViewId);
 
     TextPageData<EntityView> findEntityViewByTenantId(TenantId tenantId, TextPageLink pageLink);
@@ -43,7 +45,11 @@ public interface EntityViewService {
 
     void deleteEntityViewByTenantId(TenantId tenantId);
 
-    TextPageData<EntityView> findEntityViewByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, TextPageLink pageLink);
+    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId,
+                                                                    TextPageLink pageLink);
 
-    TextPageData<EntityView> findEntityViewByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, TextPageLink pageLink);
+    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId,
+                                                                           String type, TextPageLink pageLink);
+
+    void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId);
 }
