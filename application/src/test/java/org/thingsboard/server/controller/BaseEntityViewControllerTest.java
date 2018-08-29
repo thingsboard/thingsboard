@@ -73,10 +73,23 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     }
 
     @Test
+    public void testFindEntityViewById() throws Exception {
+        EntityView view = new EntityView();
+        view.setName("Test entity view");
+        view.setEntityId(testDevice.getId());
+        view.setKeys(Arrays.asList("key1", "key2", "key3"));
+        EntityView savedView = doPost("/api/entity-view", view, EntityView.class);
+        EntityView foundView = doGet("/api/entity-view/" + savedView.getId().getId().toString(), EntityView.class);
+        Assert.assertNotNull(foundView);
+        Assert.assertEquals(savedView, foundView);
+    }
+
+    @Test
     public void testSaveEntityViewWithIdOfDevice() throws Exception {
         EntityView view = new EntityView();
         view.setEntityId(testDevice.getId());
         view.setName("Test entity view");
+        view.setTenantId(savedTenant.getId());
         view.setKeys(Arrays.asList("key1", "key2", "key3"));
         EntityView savedView = doPost("/api/entity-view", view, EntityView.class);
 
@@ -91,9 +104,24 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         savedView.setName("New test entity view");
         doPost("/api/entity-view", savedView, EntityView.class);
 
-        EntityView foundEntityView = doGet("/api/device/"
+        EntityView foundEntityView = doGet("/api/entity-view/"
                 + savedView.getId().getId().toString(), EntityView.class);
 
         Assert.assertEquals(foundEntityView.getName(), savedView.getName());
+    }
+
+    @Test
+    public void testDeleteEntityView() throws Exception {
+        EntityView view = new EntityView();
+        view.setName("Test entity view");
+        view.setEntityId(testDevice.getId());
+        view.setKeys(Arrays.asList("key1", "key2", "key3"));
+        EntityView savedView = doPost("/api/entity-view", view, EntityView.class);
+
+        doDelete("/api/entity-view/" + savedView.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        doGet("/api/entity-view/" + savedView.getId().getId().toString())
+                .andExpect(status().isNotFound());
     }
 }
