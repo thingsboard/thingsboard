@@ -38,9 +38,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-import static org.thingsboard.server.common.data.CacheConstants.ENTITY_VIEW_CACHE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -67,9 +65,6 @@ public class EntityViewServiceImpl extends AbstractEntityService
 
     @Autowired
     private CustomerDao customerDao;
-
-    @Autowired
-    private CacheManager cacheManager;
 
     @Override
     public EntityView findEntityViewById(EntityViewId entityViewId) {
@@ -110,14 +105,12 @@ public class EntityViewServiceImpl extends AbstractEntityService
     @Override
     public void deleteEntityView(EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
-        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
         deleteEntityRelations(entityViewId);
         EntityView entityView = entityViewDao.findById(entityViewId.getId());
         List<Object> list = new ArrayList<>();
         list.add(entityView.getTenantId());
         list.add(entityView.getName());
-        cache.evict(list);
         entityViewDao.removeById(entityViewId.getId());
     }
 
