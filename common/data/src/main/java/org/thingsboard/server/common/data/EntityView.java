@@ -41,6 +41,7 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private Long tsEnd;
 
     public EntityView() {
+        super();
     }
 
     public EntityView(EntityViewId id) {
