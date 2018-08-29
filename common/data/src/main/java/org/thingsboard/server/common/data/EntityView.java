@@ -15,17 +15,22 @@
  */
 package org.thingsboard.server.common.data;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.beans.ConstructorProperties;
 import java.util.List;
 
 /**
  * Created by Victor Basanets on 8/27/2017.
  */
+@Data
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
         implements HasName, HasTenantId, HasCustomerId {
@@ -48,69 +53,8 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
         super(id);
     }
 
-    public EntityView(EntityId entityId,
-                      TenantId tenantId,
-                      CustomerId customerId,
-                      String name,
-                      List<String> keys,
-                      Long tsStart,
-                      Long tsEnd) {
-
-        this.entityId = entityId;
-        this.tenantId = tenantId;
-        this.customerId = customerId;
-        this.name = name;
-        this.keys = keys;
-        this.tsStart = tsStart;
-        this.tsEnd = tsEnd;
-    }
-
     public EntityView(EntityView entityView) {
         super(entityView);
-    }
-
-    public EntityId getEntityId() {
-        return entityId;
-    }
-
-    public void setEntityId(EntityId entityId) {
-        this.entityId = entityId;
-    }
-
-    public void setTenantId(TenantId tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public void setCustomerId(CustomerId customerId) {
-        this.customerId = customerId;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<String> getKeys() {
-        return keys;
-    }
-
-    public void setKeys(List<String> keys) {
-        this.keys = keys;
-    }
-
-    public Long getTsStart() {
-        return tsStart;
-    }
-
-    public void setTsStart(Long tsStart) {
-        this.tsStart = tsStart;
-    }
-
-    public Long getTsEnd() {
-        return tsEnd;
-    }
-
-    public void setTsEnd(Long tsEnd) {
-        this.tsEnd = tsEnd;
     }
 
     @Override
@@ -131,16 +75,5 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     @Override
     public TenantId getTenantId() {
         return tenantId;
-    }
-
-    @Override
-    public String toString() {
-        return "EntityView{entityId=" + entityId.getId() +
-                ", tenantId=" + tenantId +
-                ", customerId=" + customerId +
-                ", name='" + name + "\'" +
-                ", keys=" + String.join(",", keys) +
-                ", tsStart=" + tsStart +
-                ", tsEnd=" + tsEnd + "}";
     }
 }
