@@ -51,6 +51,8 @@ import javax.security.cert.X509Certificate;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
 import static io.netty.handler.codec.mqtt.MqttMessageType.*;
@@ -78,6 +80,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private volatile boolean connected;
     private volatile InetSocketAddress address;
     private volatile GatewaySessionCtx gatewaySessionCtx;
+
+    private Map<String,MqttQoS> mqttQoSMap = new ConcurrentHashMap<>();
 
     public MqttTransportHandler(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService,
                                 MqttTransportAdaptor adaptor, SslHandler sslHandler, QuotaService quotaService) {
@@ -228,6 +232,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             String topicName = subscription.topicName();
             //TODO: handle this qos level.
             MqttQoS reqQoS = subscription.qualityOfService();
+            mqttQoSMap.put(topicName, reqQoS);
             try {
                 if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
                     AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, SUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
@@ -243,6 +248,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     deviceSessionCtx.setAllowAttributeResponses();
                     grantedQoSList.add(getMinSupportedQos(reqQoS));
                 } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
+                    grantedQoSList.add(getMinSupportedQos(reqQoS));
+                }else if (topicName.equals(GATEWAY_RPC_TOPIC)) {
                     grantedQoSList.add(getMinSupportedQos(reqQoS));
                 } else {
                     log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topicName, reqQoS);
@@ -262,6 +269,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
         for (String topicName : mqttMsg.payload().topics()) {
+            mqttQoSMap.remove(topicName);
             try {
                 if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
                     AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, UNSUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
