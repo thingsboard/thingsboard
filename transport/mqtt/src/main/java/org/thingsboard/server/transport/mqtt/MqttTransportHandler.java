@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static io.netty.handler.codec.mqtt.MqttConnectReturnCode.*;
 import static io.netty.handler.codec.mqtt.MqttMessageType.*;
@@ -77,11 +78,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final RelationService relationService;
     private final QuotaService quotaService;
     private final SslHandler sslHandler;
+    private final ConcurrentMap<String, Integer> mqttQoSMap;
+
     private volatile boolean connected;
     private volatile InetSocketAddress address;
     private volatile GatewaySessionCtx gatewaySessionCtx;
-
-    private Map<String,MqttQoS> mqttQoSMap = new ConcurrentHashMap<>();
 
     public MqttTransportHandler(SessionMsgProcessor processor, DeviceService deviceService, DeviceAuthService authService, RelationService relationService,
                                 MqttTransportAdaptor adaptor, SslHandler sslHandler, QuotaService quotaService) {
@@ -90,7 +91,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.relationService = relationService;
         this.authService = authService;
         this.adaptor = adaptor;
-        this.deviceSessionCtx = new DeviceSessionCtx(processor, authService, adaptor);
+        this.mqttQoSMap = new ConcurrentHashMap<>();
+        this.deviceSessionCtx = new DeviceSessionCtx(processor, authService, adaptor, mqttQoSMap);
         this.sessionId = deviceSessionCtx.getSessionId().toUidStr();
         this.sslHandler = sslHandler;
         this.quotaService = quotaService;
@@ -170,18 +172,25 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void handleMqttPublishMsg(String topicName, int msgId, MqttPublishMessage mqttMsg) {
         try {
-            if (topicName.equals(GATEWAY_TELEMETRY_TOPIC)) {
-                gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
-            } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
-                gatewaySessionCtx.onDeviceAttributes(mqttMsg);
-            } else if (topicName.equals(GATEWAY_ATTRIBUTES_REQUEST_TOPIC)) {
-                gatewaySessionCtx.onDeviceAttributesRequest(mqttMsg);
-            } else if (topicName.equals(GATEWAY_RPC_TOPIC)) {
-                gatewaySessionCtx.onDeviceRpcResponse(mqttMsg);
-            } else if (topicName.equals(GATEWAY_CONNECT_TOPIC)) {
-                gatewaySessionCtx.onDeviceConnect(mqttMsg);
-            } else if (topicName.equals(GATEWAY_DISCONNECT_TOPIC)) {
-                gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
+            switch (topicName) {
+                case GATEWAY_TELEMETRY_TOPIC:
+                    gatewaySessionCtx.onDeviceTelemetry(mqttMsg);
+                    break;
+                case GATEWAY_ATTRIBUTES_TOPIC:
+                    gatewaySessionCtx.onDeviceAttributes(mqttMsg);
+                    break;
+                case GATEWAY_ATTRIBUTES_REQUEST_TOPIC:
+                    gatewaySessionCtx.onDeviceAttributesRequest(mqttMsg);
+                    break;
+                case GATEWAY_RPC_TOPIC:
+                    gatewaySessionCtx.onDeviceRpcResponse(mqttMsg);
+                    break;
+                case GATEWAY_CONNECT_TOPIC:
+                    gatewaySessionCtx.onDeviceConnect(mqttMsg);
+                    break;
+                case GATEWAY_DISCONNECT_TOPIC:
+                    gatewaySessionCtx.onDeviceDisconnect(mqttMsg);
+                    break;
             }
         } catch (RuntimeException | AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
@@ -229,38 +238,51 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
         List<Integer> grantedQoSList = new ArrayList<>();
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
-            String topicName = subscription.topicName();
-            //TODO: handle this qos level.
+            String topic = subscription.topicName();
             MqttQoS reqQoS = subscription.qualityOfService();
-            mqttQoSMap.put(topicName, reqQoS);
             try {
-                if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
-                    AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, SUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
-                    processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-                    grantedQoSList.add(getMinSupportedQos(reqQoS));
-                } else if (topicName.equals(DEVICE_RPC_REQUESTS_SUB_TOPIC)) {
-                    AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, SUBSCRIBE_RPC_COMMANDS_REQUEST, mqttMsg);
-                    processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-                    grantedQoSList.add(getMinSupportedQos(reqQoS));
-                } else if (topicName.equals(DEVICE_RPC_RESPONSE_SUB_TOPIC)) {
-                    grantedQoSList.add(getMinSupportedQos(reqQoS));
-                } else if (topicName.equals(DEVICE_ATTRIBUTES_RESPONSES_TOPIC)) {
-                    deviceSessionCtx.setAllowAttributeResponses();
-                    grantedQoSList.add(getMinSupportedQos(reqQoS));
-                } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
-                    grantedQoSList.add(getMinSupportedQos(reqQoS));
-                }else if (topicName.equals(GATEWAY_RPC_TOPIC)) {
-                    grantedQoSList.add(getMinSupportedQos(reqQoS));
-                } else {
-                    log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topicName, reqQoS);
-                    grantedQoSList.add(FAILURE.value());
+                switch (topic) {
+                    case DEVICE_ATTRIBUTES_TOPIC: {
+                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, SUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
+                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    }
+                    case DEVICE_RPC_REQUESTS_SUB_TOPIC: {
+                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, SUBSCRIBE_RPC_COMMANDS_REQUEST, mqttMsg);
+                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    }
+                    case DEVICE_RPC_RESPONSE_SUB_TOPIC:
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    case DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
+                        deviceSessionCtx.setAllowAttributeResponses();
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    case GATEWAY_ATTRIBUTES_TOPIC:
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    case GATEWAY_RPC_TOPIC:
+                        registerSubQoS(topic, grantedQoSList, reqQoS);
+                        break;
+                    default:
+                        log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                        grantedQoSList.add(FAILURE.value());
+                        break;
                 }
             } catch (AdaptorException e) {
-                log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topicName, reqQoS);
+                log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
                 grantedQoSList.add(FAILURE.value());
             }
         }
         ctx.writeAndFlush(createSubAckMessage(mqttMsg.variableHeader().messageId(), grantedQoSList));
+    }
+
+    private void registerSubQoS(String topic, List<Integer> grantedQoSList, MqttQoS reqQoS) {
+        grantedQoSList.add(getMinSupportedQos(reqQoS));
+        mqttQoSMap.put(topic, getMinSupportedQos(reqQoS));
     }
 
     private void processUnsubscribe(ChannelHandlerContext ctx, MqttUnsubscribeMessage mqttMsg) {
@@ -271,14 +293,20 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         for (String topicName : mqttMsg.payload().topics()) {
             mqttQoSMap.remove(topicName);
             try {
-                if (topicName.equals(DEVICE_ATTRIBUTES_TOPIC)) {
-                    AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, UNSUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
-                    processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-                } else if (topicName.equals(DEVICE_RPC_REQUESTS_SUB_TOPIC)) {
-                    AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, UNSUBSCRIBE_RPC_COMMANDS_REQUEST, mqttMsg);
-                    processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
-                } else if (topicName.equals(DEVICE_ATTRIBUTES_RESPONSES_TOPIC)) {
-                    deviceSessionCtx.setDisallowAttributeResponses();
+                switch (topicName) {
+                    case DEVICE_ATTRIBUTES_TOPIC: {
+                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, UNSUBSCRIBE_ATTRIBUTES_REQUEST, mqttMsg);
+                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
+                        break;
+                    }
+                    case DEVICE_RPC_REQUESTS_SUB_TOPIC: {
+                        AdaptorToSessionActorMsg msg = adaptor.convertToActorMsg(deviceSessionCtx, UNSUBSCRIBE_RPC_COMMANDS_REQUEST, mqttMsg);
+                        processor.process(new BasicTransportToDeviceSessionActorMsg(deviceSessionCtx.getDevice(), msg));
+                        break;
+                    }
+                    case DEVICE_ATTRIBUTES_RESPONSES_TOPIC:
+                        deviceSessionCtx.setDisallowAttributeResponses();
+                        break;
                 }
             } catch (AdaptorException e) {
                 log.warn("[{}] Failed to process unsubscription [{}] to [{}]", sessionId, mqttMsg.variableHeader().messageId(), topicName);
