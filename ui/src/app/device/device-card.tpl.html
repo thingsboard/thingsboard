@@ -15,9 +15,13 @@
     limitations under the License.
 
 -->
-<div flex layout="column" style="margin-top: -10px;">
-    <div style="text-transform: uppercase; padding-bottom: 5px;">{{vm.item.type}}</div>
-    <div class="tb-card-description">{{vm.item.additionalInfo.description}}</div>
-    <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'device.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
-    <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isPublic()">{{'device.public' | translate}}</div>
+<div flex layout="row" style="margin-top: -10px;}} ">
+    <div flex=15><ng-md-icon icon="{{vm.item.additionalInfo.gateway?'device_hub':'memory'}}" style="fill:{{vm.item.additionalInfo.gateway?'#ff6e40':'#305680'}}" size="{{vm.item.additionalInfo.gateway?64:48}}" ></ng-md-icon></div>
+    <div flex layout="column" style="margin-top: 10px;">
+        <div style="text-transform: uppercase; padding-bottom: 5px;">{{vm.item.type}}</div>
+        <div class="tb-card-description">{{vm.item.additionalInfo.description}}</div>
+        <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isAssignedToCustomer()">{{'device.assignedToCustomer' | translate}} '{{vm.item.assignedCustomer.title}}'</div>
+        <div style="padding-top: 5px;" class="tb-small" ng-show="vm.isPublic()">{{'device.public' | translate}}</div>
+    </div>
 </div>
+
