@@ -116,6 +116,7 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         }
         this.tsBegin = String.valueOf(entityView.getTsBegin());
         this.tsEnd = String.valueOf(entityView.getTsEnd());
+        this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
 

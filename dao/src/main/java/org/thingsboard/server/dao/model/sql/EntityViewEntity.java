@@ -39,7 +39,6 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -110,6 +109,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         }
         this.tsBegin = String.valueOf(entityView.getTsBegin());
         this.tsEnd = String.valueOf(entityView.getTsEnd());
+        this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
 
