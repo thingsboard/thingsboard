@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -29,6 +27,7 @@ import java.util.List;
 /**
  * Created by Victor Basanets on 8/27/2017.
  */
+
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
@@ -42,7 +41,7 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private CustomerId customerId;
     private String name;
     private List<String> keys;
-    private Long tsStart;
+    private Long tsBegin;
     private Long tsEnd;
 
     public EntityView() {
