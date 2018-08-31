@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -124,17 +125,17 @@ public class EntityViewServiceImpl extends AbstractEntityService
     }
 
     @Override
-    public TextPageData<EntityView> findEntityViewByTenantIdAndType(TenantId tenantId, String type,
+    public TextPageData<EntityView> findEntityViewByTenantIdAndEntityId(TenantId tenantId, EntityId entityId,
                                                                     TextPageLink pageLink) {
 
-        log.trace("Executing findEntityViewByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]",
-                tenantId, type, pageLink);
+        log.trace("Executing findEntityViewByTenantIdAndType, tenantId [{}], entityId [{}], pageLink [{}]",
+                tenantId, entityId, pageLink);
 
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateString(type, "Incorrect type " + type);
+        validateString(entityId.toString(), "Incorrect entityId " + entityId.toString());
         validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
-        List<EntityView> entityViews = entityViewDao.findEntityViewByTenantIdAndType(tenantId.getId(),
-                type, pageLink);
+        List<EntityView> entityViews = entityViewDao.findEntityViewByTenantIdAndEntityId(tenantId.getId(),
+                entityId, pageLink);
 
         return new TextPageData<>(entityViews, pageLink);
     }
@@ -150,8 +151,8 @@ public class EntityViewServiceImpl extends AbstractEntityService
     public TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId,
                                                                           TextPageLink pageLink) {
 
-        log.trace("Executing findEntityViewByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]",
-                tenantId, customerId, pageLink);
+        log.trace("Executing findEntityViewByTenantIdAndCustomerId, tenantId [{}], customerId [{}]," +
+                        " pageLink [{}]", tenantId, customerId, pageLink);
 
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
@@ -163,18 +164,20 @@ public class EntityViewServiceImpl extends AbstractEntityService
     }
 
     @Override
-    public TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId,
-                                                                                  String type, TextPageLink pageLink) {
+    public TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(TenantId tenantId,
+                                                                                      CustomerId customerId,
+                                                                                      EntityId entityId,
+                                                                                      TextPageLink pageLink) {
 
-        log.trace("Executing findEntityViewsByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}], type [{}]," +
-                " pageLink [{}]", tenantId, customerId, type, pageLink);
+        log.trace("Executing findEntityViewsByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}]," +
+                " entityId [{}], pageLink [{}]", tenantId, customerId, entityId, pageLink);
 
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        validateString(type, "Incorrect type " + type);
+        validateString(entityId.toString(), "Incorrect entityId " + entityId.toString());
         validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
-        List<EntityView> entityViews = entityViewDao.findEntityViewsByTenantIdAndCustomerIdAndType(tenantId.getId(),
-                customerId.getId(), type, pageLink);
+        List<EntityView> entityViews = entityViewDao.findEntityViewsByTenantIdAndCustomerIdAndEntityId(
+                tenantId.getId(), customerId.getId(), entityId, pageLink);
 
         return new TextPageData<>(entityViews, pageLink);
     }

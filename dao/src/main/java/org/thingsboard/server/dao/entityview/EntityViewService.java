@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.entityview;
 
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
@@ -41,15 +43,18 @@ public interface EntityViewService {
 
     TextPageData<EntityView> findEntityViewByTenantId(TenantId tenantId, TextPageLink pageLink);
 
-    TextPageData<EntityView> findEntityViewByTenantIdAndType(TenantId tenantId, String type, TextPageLink pageLink);
+    TextPageData<EntityView> findEntityViewByTenantIdAndEntityId(TenantId tenantId, EntityId entityId,
+                                                                 TextPageLink pageLink);
 
     void deleteEntityViewByTenantId(TenantId tenantId);
 
     TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId,
                                                                     TextPageLink pageLink);
 
-    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId,
-                                                                           String type, TextPageLink pageLink);
+    TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(TenantId tenantId,
+                                                                               CustomerId customerId,
+                                                                               EntityId entityId,
+                                                                               TextPageLink pageLink);
 
     void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId);
 }

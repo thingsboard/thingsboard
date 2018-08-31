@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.entityview;
 
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -47,14 +48,16 @@ public interface EntityViewDao extends Dao<EntityView> {
     Optional<EntityView> findEntityViewByTenantIdAndName(UUID tenantId, String name);
 
     /**
-     * Find entity views by tenantId, type and page link.
+     * Find entity views by tenantId, entityId and page link.
      *
      * @param tenantId the tenantId
-     * @param type the type
+     * @param entityId the entityId
      * @param pageLink the page link
      * @return the list of entity view objects
      */
-    List<EntityView> findEntityViewByTenantIdAndType(UUID tenantId, String type, TextPageLink pageLink);
+    List<EntityView> findEntityViewByTenantIdAndEntityId(UUID tenantId,
+                                                         EntityId entityId,
+                                                         TextPageLink pageLink);
 
     /**
      * Find entity views by tenantId, customerId and page link.
@@ -64,18 +67,22 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @param pageLink the page link
      * @return the list of entity view objects
      */
-    List<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink);
+    List<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId,
+                                                            UUID customerId,
+                                                            TextPageLink pageLink);
 
     /**
-     * Find entity views by tenantId, customerId, type and page link.
+     * Find entity views by tenantId, customerId, entityId and page link.
      *
      * @param tenantId the tenantId
      * @param customerId the customerId
-     * @param type the type
+     * @param entityId the entityId
      * @param pageLink the page link
      * @return the list of entity view objects
      */
-    List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndType(UUID tenantId, UUID customerId, String type,
-                                                                   TextPageLink pageLink);
+    List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId,
+                                                                       UUID customerId,
+                                                                       EntityId entityId,
+                                                                       TextPageLink pageLink);
 
 }
