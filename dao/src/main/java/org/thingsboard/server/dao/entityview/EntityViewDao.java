@@ -56,7 +56,7 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @return the list of entity view objects
      */
     List<EntityView> findEntityViewByTenantIdAndEntityId(UUID tenantId,
-                                                         EntityId entityId,
+                                                         UUID entityId,
                                                          TextPageLink pageLink);
 
     /**
@@ -82,7 +82,7 @@ public interface EntityViewDao extends Dao<EntityView> {
      */
     List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId,
                                                                        UUID customerId,
-                                                                       EntityId entityId,
+                                                                       UUID entityId,
                                                                        TextPageLink pageLink);
 
 }

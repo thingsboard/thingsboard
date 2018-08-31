@@ -135,7 +135,7 @@ public class EntityViewServiceImpl extends AbstractEntityService
         validateString(entityId.toString(), "Incorrect entityId " + entityId.toString());
         validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         List<EntityView> entityViews = entityViewDao.findEntityViewByTenantIdAndEntityId(tenantId.getId(),
-                entityId, pageLink);
+                entityId.getId(), pageLink);
 
         return new TextPageData<>(entityViews, pageLink);
     }
@@ -177,7 +177,7 @@ public class EntityViewServiceImpl extends AbstractEntityService
         validateString(entityId.toString(), "Incorrect entityId " + entityId.toString());
         validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
         List<EntityView> entityViews = entityViewDao.findEntityViewsByTenantIdAndCustomerIdAndEntityId(
-                tenantId.getId(), customerId.getId(), entityId, pageLink);
+                tenantId.getId(), customerId.getId(), entityId.getId(), pageLink);
 
         return new TextPageData<>(entityViews, pageLink);
     }
