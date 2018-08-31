@@ -13,54 +13,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.dao.model.nosql;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
+
 /**
- * Created by Victor Basanets on 8/30/2017.
+ * Created by Victor Basanets on 8/31/2017.
  */
-
 @Data
-@EqualsAndHashCode(callSuper = true)
-@Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
-@Table(name = ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME)
-public class EntityViewEntity extends BaseSqlEntity<EntityView> implements SearchTextEntity<EntityView> {
+@Table(name = ENTITY_VIEW_TABLE_FAMILY_NAME)
+@EqualsAndHashCode
+@ToString
+public class EntityViewEntity implements SearchTextEntity<EntityView> {
 
+    @PartitionKey(value = 0)
+    @Column(name = ID_PROPERTY)
+    private UUID id;
+
+    @PartitionKey(value = 1)
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
-    private String entityId;
+    private UUID entityId;
 
+    @PartitionKey(value = 2)
     @Column(name = ModelConstants.ENTITY_VIEW_TENANT_ID_PROPERTY)
-    private String tenantId;
+    private UUID tenantId;
 
+    @PartitionKey(value = 3)
     @Column(name = ModelConstants.ENTITY_VIEW_CUSTOMER_ID_PROPERTY)
-    private String customerId;
+    private UUID customerId;
 
     @Column(name = ModelConstants.ENTITY_VIEW_NAME_PROPERTY)
     private String name;
@@ -88,16 +94,16 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
 
     public EntityViewEntity(EntityView entityView) {
         if (entityView.getId() != null) {
-            this.setId(entityView.getId().getId());
+            this.id = entityView.getId().getId();
         }
         if (entityView.getEntityId() != null) {
-            this.entityId = toString(entityView.getEntityId().getId());
+            this.entityId = entityView.getEntityId().getId();
         }
         if (entityView.getTenantId() != null) {
-            this.tenantId = toString(entityView.getTenantId().getId());
+            this.tenantId = entityView.getTenantId().getId();
         }
         if (entityView.getCustomerId() != null) {
-            this.customerId = toString(entityView.getCustomerId().getId());
+            this.customerId = entityView.getCustomerId().getId();
         }
         this.name = entityView.getName();
         try {
@@ -119,24 +125,17 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
     }
 
     @Override
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    @Override
     public EntityView toData() {
-        EntityView entityView = new EntityView(new EntityViewId(getId()));
-        entityView.setCreatedTime(UUIDs.unixTimestamp(getId()));
-
-        /*Ned to refactor and replace DeviceId to Class<> instance*/
+        EntityView entityView = new EntityView(new EntityViewId(id));
+        entityView.setCreatedTime(UUIDs.unixTimestamp(id));
         if (entityId != null) {
-            entityView.setEntityId(new DeviceId(toUUID(entityId)));
+            entityView.setEntityId(new DeviceId(entityId));
         }
         if (tenantId != null) {
-            entityView.setTenantId(new TenantId(toUUID(tenantId)));
+            entityView.setTenantId(new TenantId(tenantId));
         }
         if (customerId != null) {
-            entityView.setCustomerId(new CustomerId(toUUID(customerId)));
+            entityView.setCustomerId(new CustomerId(customerId));
         }
         entityView.setName(name);
         try {
