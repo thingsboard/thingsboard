@@ -251,3 +251,16 @@ CREATE TABLE IF NOT EXISTS rule_node (
     debug_mode boolean,
     search_text varchar(255)
 );
+
+CREATE TABLE IF NOT EXISTS entity_views (
+    id varchar(31) NOT NULL CONSTRAINT entity_view_pkey PRIMARY KEY,
+    additional_info varchar,
+    customer_id varchar(31),
+    keys varchar(255),
+    ts_begin varchar(255),
+    ts_end varchar(255),
+    name varchar(255),
+    search_text varchar(255),
+    entity_id varchar(31),
+    tenant_id varchar(31)
+);
