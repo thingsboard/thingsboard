@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.mqtt;
 
-import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
-import org.thingsboard.server.dao.CustomCassandraCQLUnit;
 import org.thingsboard.server.dao.CustomSqlUnit;
 
 import java.util.Arrays;
