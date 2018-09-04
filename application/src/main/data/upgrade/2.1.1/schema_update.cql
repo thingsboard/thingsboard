@@ -1,4 +1,4 @@
-/*--
+--
 -- Copyright © 2016-2018 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,8 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
---*/
+--
+
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_views_by_tenant_and_name;
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_views_by_tenant_and_entity;
 DROP MATERIALIZED VIEW IF EXISTS thingsboard.entity_views_by_tenant_and_customer;
