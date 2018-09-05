@@ -26,5 +26,6 @@ CREATE TABLE IF NOT EXISTS entity_views (
     name varchar(255),
     search_text varchar(255),
     entity_id varchar(31),
+    entity_type varchar(255),
     tenant_id varchar(31)
 );

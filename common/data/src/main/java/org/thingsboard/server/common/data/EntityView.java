@@ -20,9 +20,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import java.beans.ConstructorProperties;
-import java.util.List;
+import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 
 /**
  * Created by Victor Basanets on 8/27/2017.
@@ -40,7 +38,7 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private TenantId tenantId;
     private CustomerId customerId;
     private String name;
-    private List<String> keys;
+    private TelemetryEntityView keys; //To Do: Changed from all code
     private Long tsBegin;
     private Long tsEnd;
 
