@@ -152,6 +152,7 @@ public class ModelConstants {
     public static final String ENTITY_VIEW_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ENTITY_VIEW_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ENTITY_VIEW_NAME_PROPERTY = DEVICE_NAME_PROPERTY;
+    public static final String ENTITY_VIEW_TYPE_PROPERTY = "type_entity";
     public static final String ENTITY_VIEW_KEYS_PROPERTY = "keys";
     public static final String ENTITY_VIEW_TS_BEGIN_PROPERTY = "ts_begin";
     public static final String ENTITY_VIEW_TS_END_PROPERTY = "ts_end";

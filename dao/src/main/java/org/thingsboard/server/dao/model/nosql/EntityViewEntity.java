@@ -18,9 +18,7 @@ package org.thingsboard.server.dao.model.nosql;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -30,15 +28,14 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import javax.persistence.Column;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
@@ -106,16 +103,13 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
             this.customerId = entityView.getCustomerId().getId();
         }
         this.name = entityView.getName();
-        try {
-            this.keys = new ObjectMapper().readTree("{\"" + entityView.getName() + "\" : [" +
-                    entityView.getKeys().stream()
-                            .map(k -> "\"" + k + "\"")
-                            .collect(Collectors.joining(", ")) + "]}");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        this.tsBegin = String.valueOf(entityView.getTsBegin());
-        this.tsEnd = String.valueOf(entityView.getTsEnd());
+//        try {
+//            this.keys = entityView.getKeys();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        this.tsBegin = entityView.getTsBegin() != null ? String.valueOf(entityView.getTsBegin()) : "0";
+        this.tsEnd = entityView.getTsEnd() != null ? String.valueOf(entityView.getTsEnd()) : "0";
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
@@ -139,11 +133,11 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
             entityView.setCustomerId(new CustomerId(customerId));
         }
         entityView.setName(name);
-        try {
-            entityView.setKeys(new ObjectMapper().readValue(keys.toString(), new TypeReference<List<String>>(){}));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            entityView.setKeys((TelemetryEntityView) entityView.getKeys().toObject(keys));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         entityView.setTsBegin(Long.parseLong(tsBegin));
         entityView.setTsEnd(Long.parseLong(tsEnd));
         entityView.setAdditionalInfo(additionalInfo);

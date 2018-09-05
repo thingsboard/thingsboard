@@ -260,6 +260,7 @@ CREATE TABLE IF NOT EXISTS entity_views (
     ts_begin varchar(255),
     ts_end varchar(255),
     name varchar(255),
+    entity_type varchar(255),
     search_text varchar(255),
     entity_id varchar(31),
     tenant_id varchar(31)

@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.datastax.driver.core.utils.UUIDs;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -25,21 +24,18 @@ import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_ENTITY_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
 
 /**
  * Created by Victor Basanets on 8/30/2017.
@@ -64,9 +60,12 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
     @Column(name = ModelConstants.ENTITY_VIEW_NAME_PROPERTY)
     private String name;
 
-    @Type(type = "json")
+    @Enumerated(EnumType.STRING)
+    @Column(name = ENTITY_TYPE_PROPERTY)
+    private EntityType entityType;
+
     @Column(name = ModelConstants.ENTITY_VIEW_KEYS_PROPERTY)
-    private JsonNode keys;
+    private String keys;
 
     @Column(name = ModelConstants.ENTITY_VIEW_TS_BEGIN_PROPERTY)
     private String tsBegin;
@@ -81,6 +80,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     public EntityViewEntity() {
         super();
     }
@@ -91,6 +92,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         }
         if (entityView.getEntityId() != null) {
             this.entityId = toString(entityView.getEntityId().getId());
+            this.entityType = entityView.getEntityId().getEntityType();
         }
         if (entityView.getTenantId() != null) {
             this.tenantId = toString(entityView.getTenantId().getId());
@@ -100,15 +102,12 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         }
         this.name = entityView.getName();
         try {
-            this.keys = new ObjectMapper().readTree("{\"" + entityView.getName() + "\" : [" +
-                    entityView.getKeys().stream()
-                            .map(k -> "\"" + k + "\"")
-                            .collect(Collectors.joining(", ")) + "]}");
+            this.keys = mapper.writeValueAsString(entityView.getKeys());
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.tsBegin = String.valueOf(entityView.getTsBegin());
-        this.tsEnd = String.valueOf(entityView.getTsEnd());
+        this.tsBegin = entityView.getTsBegin() != null ? String.valueOf(entityView.getTsBegin()) : "";
+        this.tsEnd = entityView.getTsEnd() != null ? String.valueOf(entityView.getTsEnd()) : "";
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
@@ -128,9 +127,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         EntityView entityView = new EntityView(new EntityViewId(getId()));
         entityView.setCreatedTime(UUIDs.unixTimestamp(getId()));
 
-        /*Ned to refactor and replace DeviceId to Class<> instance*/
         if (entityId != null) {
-            entityView.setEntityId(new DeviceId(toUUID(entityId)));
+            entityView.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), toUUID(entityId).toString()));
         }
         if (tenantId != null) {
             entityView.setTenantId(new TenantId(toUUID(tenantId)));
@@ -140,7 +138,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         }
         entityView.setName(name);
         try {
-            entityView.setKeys(new ObjectMapper().readValue(keys.toString(), new TypeReference<List<String>>(){}));
+            entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));
         } catch (IOException e) {
             e.printStackTrace();
         }
