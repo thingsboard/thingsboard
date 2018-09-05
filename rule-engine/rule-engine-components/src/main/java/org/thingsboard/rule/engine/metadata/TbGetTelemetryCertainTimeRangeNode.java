@@ -28,7 +28,7 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "huy",
+        name = "Get Telemtry from DataBase",
         configClazz = TbGetTelemetryCertainTimeRangeNodeConfiguration.class,
         nodeDescription = "",
         nodeDetails = "",
