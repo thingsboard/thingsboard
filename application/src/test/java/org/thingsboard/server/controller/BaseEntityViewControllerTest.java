@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.objects.AttributesEntityView;
+import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.common.data.security.Authority;
 
 import java.util.Arrays;
@@ -35,15 +37,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     private Tenant savedTenant;
     private User tenantAdmin;
     private Device testDevice;
+    private TelemetryEntityView obj;
 
     @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
-
-        Device device = new Device();
-        device.setName("Test device");
-        device.setType("default");
-        testDevice = doPost("/api/device", device, Device.class);
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
@@ -59,6 +57,18 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         tenantAdmin.setLastName("Downs");
 
         tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
+
+        Device device = new Device();
+        device.setName("Test device");
+        device.setType("default");
+        testDevice = doPost("/api/device", device, Device.class);
+
+        obj = new TelemetryEntityView(
+                Arrays.asList("109L", "209L"),
+                new AttributesEntityView(
+                        Arrays.asList("caKey1", "caKey2", "caKey3"),
+                        Arrays.asList("saKey1", "saKey2", "saKey3", "saKey4"),
+                        Arrays.asList("shKey1", "shKey2", "shKey3", "shKey4", "shKey5")));
     }
 
     @After
@@ -74,7 +84,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         EntityView view = new EntityView();
         view.setName("Test entity view");
         view.setEntityId(testDevice.getId());
-        view.setKeys(Arrays.asList("key1", "key2", "key3"));
+        view.setKeys(new TelemetryEntityView(obj));
         EntityView savedView = doPost("/api/entity-view", view, EntityView.class);
         EntityView foundView = doGet("/api/entity-view/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertNotNull(foundView);
@@ -87,7 +97,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setEntityId(testDevice.getId());
         view.setName("Test entity view");
         view.setTenantId(savedTenant.getId());
-        view.setKeys(Arrays.asList("key1", "key2", "key3"));
+        view.setKeys(new TelemetryEntityView(obj));
         EntityView savedView = doPost("/api/entity-view", view, EntityView.class);
 
         Assert.assertNotNull(savedView);
@@ -112,7 +122,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         EntityView view = new EntityView();
         view.setName("Test entity view");
         view.setEntityId(testDevice.getId());
-        view.setKeys(Arrays.asList("key1", "key2", "key3"));
+        view.setKeys(new TelemetryEntityView((TelemetryEntityView) obj));
         EntityView savedView = doPost("/api/entity-view", view, EntityView.class);
 
         doDelete("/api/entity-view/" + savedView.getId().getId().toString())

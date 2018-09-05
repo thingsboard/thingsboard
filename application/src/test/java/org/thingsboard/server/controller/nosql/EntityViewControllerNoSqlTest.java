@@ -20,6 +20,5 @@ import org.thingsboard.server.controller.BaseEntityViewControllerTest;
 /**
  * Created by Victor Basanets on 8/27/2017.
  */
-public class EntityViewControllerNoSqlTest
-        extends BaseEntityViewControllerTest {
+public class EntityViewControllerNoSqlTest extends BaseEntityViewControllerTest {
 }

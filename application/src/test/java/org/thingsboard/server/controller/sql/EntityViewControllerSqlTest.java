@@ -27,18 +27,5 @@ import java.util.Arrays;
  * Created by Victor Basanets on 8/27/2017.
  */
 @DaoSqlTest
-public class EntityViewControllerSqlTest
-        extends BaseEntityViewControllerTest {
-
-    @Test
-    public void testSaveEntityViewWithIdOfDevice() throws Exception {
-        super.testSaveEntityViewWithIdOfDevice();
-    }
-
-    @Test
-    public void testFindEntityViewById() throws Exception {
-        super.testFindEntityViewById();
-    }
-
-
+public class EntityViewControllerSqlTest extends BaseEntityViewControllerTest {
 }
