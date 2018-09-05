@@ -51,6 +51,10 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
     private String entityId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ENTITY_TYPE_PROPERTY)
+    private EntityType entityType;
+
     @Column(name = ModelConstants.ENTITY_VIEW_TENANT_ID_PROPERTY)
     private String tenantId;
 
@@ -59,10 +63,6 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
 
     @Column(name = ModelConstants.ENTITY_VIEW_NAME_PROPERTY)
     private String name;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = ENTITY_TYPE_PROPERTY)
-    private EntityType entityType;
 
     @Column(name = ModelConstants.ENTITY_VIEW_KEYS_PROPERTY)
     private String keys;

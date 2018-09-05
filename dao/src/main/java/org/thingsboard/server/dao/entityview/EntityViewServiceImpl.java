@@ -213,7 +213,7 @@ public class EntityViewServiceImpl extends AbstractEntityService
 
                 @Override
                 protected void validateDataImpl(EntityView entityView) {
-                    if (StringUtils.isEmpty(String.join("", entityView.getKeys()))) {
+                    if (StringUtils.isEmpty(entityView.getKeys().toString())) {
                         throw new DataValidationException("Entity view type should be specified!");
                     }
                     if (StringUtils.isEmpty(entityView.getName())) {
@@ -272,6 +272,5 @@ public class EntityViewServiceImpl extends AbstractEntityService
         protected void removeEntity(EntityView entity) {
             unassignEntityViewFromCustomer(new EntityViewId(entity.getUuidId()));
         }
-
     }
 }
