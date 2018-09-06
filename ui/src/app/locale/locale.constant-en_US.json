@@ -1270,7 +1270,9 @@
         "activation-link-text": "In order to activate user use the following <a href='{{activationLink}}' target='_blank'>activation link</a> :",
         "copy-activation-link": "Copy activation link",
         "activation-link-copied-message": "User activation link has been copied to clipboard",
-        "details": "Details"
+        "details": "Details",
+        "login-as-tenant-admin": "Login as Tenant Admin",
+        "login-as-customer-user": "Login as Customer User"
     },
     "value": {
         "type": "Value type",
@@ -1451,12 +1453,14 @@
     "language": {
         "language": "Language",
         "locales": {
+			"fr_FR": "French",
             "zh_CN": "Chinese",
             "en_US": "English",
             "it_IT": "Italian",
             "ko_KR": "Korean",
             "ru_RU": "Russian",
-            "es_ES": "Spanish"
+            "es_ES": "Spanish",
+            "ja_JA": "Japanese"
         }
     }
 }

@@ -22,18 +22,20 @@ import userFieldsetTemplate from './user-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function UserDirective($compile, $templateCache/*, dashboardService*/) {
+export default function UserDirective($compile, $templateCache, userService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(userFieldsetTemplate);
         element.html(template);
 
         scope.isTenantAdmin = function() {
             return scope.user && scope.user.authority === 'TENANT_ADMIN';
-        }
+        };
 
         scope.isCustomerUser = function() {
             return scope.user && scope.user.authority === 'CUSTOMER_USER';
-        }
+        };
+
+        scope.loginAsUserEnabled = userService.isUserTokenAccessEnabled();
 
         $compile(element.contents())(scope);
     }
@@ -46,6 +48,7 @@ export default function UserDirective($compile, $templateCache/*, dashboardServi
             theForm: '=',
             onDisplayActivationLink: '&',
             onResendActivation: '&',
+            onLoginAsUser: '&',
             onDeleteUser: '&'
         }
     };

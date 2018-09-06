@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.tenant;
 
+import akka.actor.ActorInitializationException;
 import akka.actor.ActorRef;
 import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
@@ -170,7 +171,11 @@ public class TenantActor extends RuleChainManagerActor {
         @Override
         public SupervisorStrategy.Directive apply(Throwable t) {
             logger.error(t, "Unknown failure");
-            return SupervisorStrategy.resume();
+            if(t instanceof ActorInitializationException){
+                return SupervisorStrategy.stop();
+            } else {
+                return SupervisorStrategy.resume();
+            }
         }
     });
 
