@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.dao.entityview;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 
@@ -57,4 +55,6 @@ public interface EntityViewService {
                                                                                TextPageLink pageLink);
 
     void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId);
+
+    ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId);
 }

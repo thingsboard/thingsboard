@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.entityview;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,6 +189,13 @@ public class EntityViewServiceImpl extends AbstractEntityService
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         new CustomerEntityViewsUnAssigner(tenantId).removeEntities(customerId);
+    }
+
+    @Override
+    public ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId) {
+        log.trace("Executing findDeviceById [{}]", entityViewId);
+        validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
+        return entityViewDao.findByIdAsync(entityViewId.getId());
     }
 
     private DataValidator<EntityView> entityViewValidator =
