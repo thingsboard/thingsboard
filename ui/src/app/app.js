@@ -67,6 +67,7 @@ import thingsboardClipboard from './services/clipboard.service';
 import thingsboardHome from './layout';
 import thingsboardApiLogin from './api/login.service';
 import thingsboardApiDevice from './api/device.service';
+import thingsboardApiEntityView from './api/entity-view.service';
 import thingsboardApiUser from './api/user.service';
 import thingsboardApiEntityRelation from './api/entity-relation.service';
 import thingsboardApiAsset from './api/asset.service';
@@ -133,6 +134,7 @@ angular.module('thingsboard', [
     thingsboardHome,
     thingsboardApiLogin,
     thingsboardApiDevice,
+    thingsboardApiEntityView,
     thingsboardApiUser,
     thingsboardApiEntityRelation,
     thingsboardApiAsset,
