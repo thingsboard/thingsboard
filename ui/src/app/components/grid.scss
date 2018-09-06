@@ -21,15 +21,19 @@
 
 .tb-card-item {
   @include transition(all .2s ease-in-out);
+
   md-card-content {
-    padding-top: 0px;
     max-height: 53px;
+    padding-top: 0;
   }
+
   md-card-title {
     width: 100%;
+
     md-card-title-text {
-      max-height: 32px;
       min-width: 50%;
+      max-height: 32px;
+
       .md-headline {
         overflow: hidden;
         text-overflow: ellipsis;
@@ -40,14 +44,15 @@
 }
 
 .tb-current-item {
-  opacity: 0.5;
+  opacity: .5;
+
   @include transform(scale(1.05));
 }
 
 #tb-vertical-container {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
 }

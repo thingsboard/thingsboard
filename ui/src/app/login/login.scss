@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../scss/constants';
+@import "../../scss/constants";
 
 md-card.tb-login-card {
   width: 330px !important;
+
   @media (min-width: $layout-breakpoint-sm) {
     width: 450px !important;
   }
+
   md-card-title {
     img.tb-login-logo {
       height: 50px;
     }
   }
+
   md-card-content {
     margin-top: -50px;
   }

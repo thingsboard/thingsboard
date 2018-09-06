@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 tb-extension-table {
   md-content {
     background-color: #fff;
   }
 }
+
 md-tabs.hide-tabs-menu {
   md-tabs-wrapper {
     display: none;
   }
+
   md-tabs-content-wrapper {
     top: 0 !important;
   }

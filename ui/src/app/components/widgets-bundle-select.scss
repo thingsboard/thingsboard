@@ -17,9 +17,10 @@
 
 tb-widgets-bundle-select {
   md-select {
-    margin: 0;
     padding: 5px 20px;
+    margin: 0;
   }
+
   .tb-bundle-item {
     height: 24px;
     line-height: 24px;
@@ -33,24 +34,29 @@ tb-widgets-bundle-select {
   }
 }
 
-tb-widgets-bundle-select, .tb-widgets-bundle-select {
+tb-widgets-bundle-select,
+.tb-widgets-bundle-select {
   .md-text {
     display: block;
     width: 100%;
   }
+
   .tb-bundle-item {
     display: inline-block;
     width: 100%;
+
     span {
       display: inline-block;
       vertical-align: middle;
     }
+
     .tb-bundle-system {
-      font-size: 0.8rem;
-      opacity: 0.8;
       float: right;
+      font-size: .8rem;
+      opacity: .8;
     }
   }
+
   md-option {
     height: auto !important;
     white-space: normal !important;
@@ -60,19 +66,23 @@ tb-widgets-bundle-select, .tb-widgets-bundle-select {
 md-toolbar {
   tb-widgets-bundle-select {
     md-select {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, .2);
+
       .md-select-value {
-        color: #fff;
         font-size: 1.2rem;
-        span:first-child:after {
-            color: #fff;
+        color: #fff;
+
+        span:first-child::after {
+          color: #fff;
         }
       }
+
       .md-select-value.md-select-placeholder {
         color: #fff;
-        opacity: 0.8;
+        opacity: .8;
       }
     }
+
     md-select.ng-invalid.ng-touched {
       .md-select-value {
         color: #fff !important;
