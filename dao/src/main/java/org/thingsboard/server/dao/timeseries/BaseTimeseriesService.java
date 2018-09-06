@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -48,7 +49,7 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<TsKvQuery> queries) {
         validate(entityId);
-        queries.forEach(query -> validate(query));
+        queries.forEach(BaseTimeseriesService::validate);
         return timeseriesDao.findAllAsync(entityId, queries);
     }
 
@@ -97,17 +98,17 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> remove(EntityId entityId, List<TsKvQuery> tsKvQueries) {
+    public ListenableFuture<List<Void>> remove(EntityId entityId, List<DeleteTsKvQuery> deleteTsKvQueries) {
         validate(entityId);
-        tsKvQueries.forEach(BaseTimeseriesService::validate);
-        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvQueries.size() * DELETES_PER_ENTRY);
-        for (TsKvQuery tsKvQuery : tsKvQueries) {
+        deleteTsKvQueries.forEach(BaseTimeseriesService::validate);
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(deleteTsKvQueries.size() * DELETES_PER_ENTRY);
+        for (DeleteTsKvQuery tsKvQuery : deleteTsKvQueries) {
             deleteAndRegisterFutures(futures, entityId, tsKvQuery);
         }
         return Futures.allAsList(futures);
     }
 
-    private void deleteAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvQuery query) {
+    private void deleteAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, DeleteTsKvQuery query) {
         futures.add(timeseriesDao.remove(entityId, query));
         futures.add(timeseriesDao.removeLatest(entityId, query));
         futures.add(timeseriesDao.removePartition(entityId, query));
@@ -124,6 +125,14 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Key can't be empty");
         } else if (query.getAggregation() == null) {
             throw new IncorrectParameterException("Incorrect TsKvQuery. Aggregation can't be empty");
+        }
+    }
+
+    private static void validate(DeleteTsKvQuery query) {
+        if (query == null) {
+            throw new IncorrectParameterException("DeleteTsKvQuery can't be null");
+        } else if (isBlank(query.getKey())) {
+            throw new IncorrectParameterException("Incorrect DeleteTsKvQuery. Key can't be empty");
         }
     }
 }

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.timeseries;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 
@@ -39,9 +40,9 @@ public interface TimeseriesDao {
 
     ListenableFuture<Void> saveLatest(EntityId entityId, TsKvEntry tsKvEntry);
 
-    ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query);
+    ListenableFuture<Void> remove(EntityId entityId, DeleteTsKvQuery query);
 
-    ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query);
+    ListenableFuture<Void> removeLatest(EntityId entityId, DeleteTsKvQuery query);
 
-    ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query);
+    ListenableFuture<Void> removePartition(EntityId entityId, DeleteTsKvQuery query);
 }

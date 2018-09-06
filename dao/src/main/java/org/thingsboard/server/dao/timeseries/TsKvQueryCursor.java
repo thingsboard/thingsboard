@@ -28,18 +28,8 @@ import static org.thingsboard.server.dao.timeseries.CassandraBaseTimeseriesDao.D
 /**
  * Created by ashvayka on 21.02.17.
  */
-public class TsKvQueryCursor {
-    @Getter
-    private final String entityType;
-    @Getter
-    private final UUID entityId;
-    @Getter
-    private final String key;
-    @Getter
-    private final long startTs;
-    @Getter
-    private final long endTs;
-    private final List<Long> partitions;
+public class TsKvQueryCursor extends QueryCursor {
+
     @Getter
     private final List<TsKvEntry> data;
     @Getter
@@ -49,18 +39,14 @@ public class TsKvQueryCursor {
     private int currentLimit;
 
     public TsKvQueryCursor(String entityType, UUID entityId, TsKvQuery baseQuery, List<Long> partitions) {
-        this.entityType = entityType;
-        this.entityId = entityId;
-        this.key = baseQuery.getKey();
-        this.startTs = baseQuery.getStartTs();
-        this.endTs = baseQuery.getEndTs();
-        this.partitions = partitions;
+        super(entityType, entityId, baseQuery, partitions);
         this.orderBy = baseQuery.getOrderBy();
         this.partitionIndex = isDesc() ? partitions.size() - 1 : 0;
         this.data = new ArrayList<>();
         this.currentLimit = baseQuery.getLimit();
     }
 
+    @Override
     public boolean hasNextPartition() {
         return isDesc() ? partitionIndex >= 0 : partitionIndex <= partitions.size() - 1;
     }
@@ -69,6 +55,7 @@ public class TsKvQueryCursor {
         return currentLimit <= 0;
     }
 
+    @Override
     public long getNextPartition() {
         long partition = partitions.get(partitionIndex);
         if (isDesc()) {

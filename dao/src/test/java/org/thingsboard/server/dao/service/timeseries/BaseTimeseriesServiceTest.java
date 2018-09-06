@@ -20,15 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.util.ArrayList;
@@ -111,12 +103,10 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         saveEntries(deviceId, 40000);
 
         tsService.remove(deviceId, Collections.singletonList(
-                new BaseTsKvQuery(STRING_KEY, 15000, 45000, 10000, 0, Aggregation.NONE, DESC_ORDER,
-                        false))).get();
+                new BaseDeleteTsKvQuery(STRING_KEY, 15000, 45000))).get();
 
         List<TsKvEntry> list = tsService.findAll(deviceId, Collections.singletonList(
-                new BaseTsKvQuery(STRING_KEY, 5000, 45000, 10000, 10, Aggregation.NONE, DESC_ORDER,
-                        false))).get();
+                new BaseTsKvQuery(STRING_KEY, 5000, 45000, 10000, 10, Aggregation.NONE, DESC_ORDER))).get();
         Assert.assertEquals(1, list.size());
 
         List<TsKvEntry> latest = tsService.findLatest(deviceId, Collections.singletonList(STRING_KEY)).get();
@@ -138,7 +128,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         entries.add(save(deviceId, 55000, 600));
 
         List<TsKvEntry> list = tsService.findAll(deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
-                60000, 20000, 3, Aggregation.NONE, DESC_ORDER, false))).get();
+                60000, 20000, 3, Aggregation.NONE, DESC_ORDER))).get();
         assertEquals(3, list.size());
         assertEquals(55000, list.get(0).getTs());
         assertEquals(java.util.Optional.of(600L), list.get(0).getLongValue());
@@ -150,7 +140,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         assertEquals(java.util.Optional.of(400L), list.get(2).getLongValue());
 
         list = tsService.findAll(deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
-                60000, 20000, 3, Aggregation.AVG, DESC_ORDER, false))).get();
+                60000, 20000, 3, Aggregation.AVG, DESC_ORDER))).get();
         assertEquals(3, list.size());
         assertEquals(10000, list.get(0).getTs());
         assertEquals(java.util.Optional.of(150L), list.get(0).getLongValue());
@@ -162,7 +152,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         assertEquals(java.util.Optional.of(550L), list.get(2).getLongValue());
 
         list = tsService.findAll(deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
-                60000, 20000, 3, Aggregation.SUM, DESC_ORDER, false))).get();
+                60000, 20000, 3, Aggregation.SUM, DESC_ORDER))).get();
 
         assertEquals(3, list.size());
         assertEquals(10000, list.get(0).getTs());
@@ -175,7 +165,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         assertEquals(java.util.Optional.of(1100L), list.get(2).getLongValue());
 
         list = tsService.findAll(deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
-                60000, 20000, 3, Aggregation.MIN, DESC_ORDER, false))).get();
+                60000, 20000, 3, Aggregation.MIN, DESC_ORDER))).get();
 
         assertEquals(3, list.size());
         assertEquals(10000, list.get(0).getTs());
@@ -188,7 +178,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         assertEquals(java.util.Optional.of(500L), list.get(2).getLongValue());
 
         list = tsService.findAll(deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
-                60000, 20000, 3, Aggregation.MAX, DESC_ORDER, false))).get();
+                60000, 20000, 3, Aggregation.MAX, DESC_ORDER))).get();
 
         assertEquals(3, list.size());
         assertEquals(10000, list.get(0).getTs());
@@ -201,7 +191,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         assertEquals(java.util.Optional.of(600L), list.get(2).getLongValue());
 
         list = tsService.findAll(deviceId, Collections.singletonList(new BaseTsKvQuery(LONG_KEY, 0,
-                60000, 20000, 3, Aggregation.COUNT, DESC_ORDER, false))).get();
+                60000, 20000, 3, Aggregation.COUNT, DESC_ORDER))).get();
 
         assertEquals(3, list.size());
         assertEquals(10000, list.get(0).getTs());

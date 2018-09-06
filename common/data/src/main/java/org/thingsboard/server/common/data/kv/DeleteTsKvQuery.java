@@ -15,14 +15,8 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-public interface TsKvQuery extends Query {
+public interface DeleteTsKvQuery extends Query {
 
-    long getInterval();
-
-    int getLimit();
-
-    Aggregation getAggregation();
-
-    String getOrderBy();
+    Boolean getRewriteLatestIfDeleted();
 
 }

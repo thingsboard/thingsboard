@@ -138,7 +138,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
             while (stepTs < query.getEndTs()) {
                 long startTs = stepTs;
                 long endTs = stepTs + step;
-                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation(), query.getOrderBy(), false);
+                TsKvQuery subQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, step, 1, query.getAggregation(), query.getOrderBy());
                 futures.add(findAndAggregateAsync(entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
                 stepTs = endTs;
             }
@@ -346,7 +346,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     @Override
-    public ListenableFuture<Void> remove(EntityId entityId, TsKvQuery query) {
+    public ListenableFuture<Void> remove(EntityId entityId, DeleteTsKvQuery query) {
         long minPartition = toPartitionTs(query.getStartTs());
         long maxPartition = toPartitionTs(query.getEndTs());
 
@@ -358,7 +358,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         Futures.addCallback(partitionsListFuture, new FutureCallback<List<Long>>() {
             @Override
             public void onSuccess(@Nullable List<Long> partitions) {
-                TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitions);
+                QueryCursor cursor = new QueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitions);
                 deleteAsync(cursor, resultFuture);
             }
 
@@ -370,7 +370,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         return resultFuture;
     }
 
-    private void deleteAsync(final TsKvQueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
+    private void deleteAsync(final QueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
         if (!cursor.hasNextPartition()) {
             resultFuture.set(null);
         } else {
@@ -411,7 +411,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     @Override
-    public ListenableFuture<Void> removeLatest(EntityId entityId, TsKvQuery query) {
+    public ListenableFuture<Void> removeLatest(EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<TsKvEntry> latestEntryFuture = findLatest(entityId, query.getKey());
 
         ListenableFuture<Boolean> booleanFuture = Futures.transformAsync(latestEntryFuture, latestEntry -> {
@@ -445,11 +445,11 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         return removedLatestFuture;
     }
 
-    private ListenableFuture<Void> getNewLatestEntryFuture(EntityId entityId, TsKvQuery query) {
+    private ListenableFuture<Void> getNewLatestEntryFuture(EntityId entityId, DeleteTsKvQuery query) {
         long startTs = 0;
         long endTs = query.getStartTs() - 1;
         TsKvQuery findNewLatestQuery = new BaseTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
-                Aggregation.NONE, DESC_ORDER, false);
+                Aggregation.NONE, DESC_ORDER);
         ListenableFuture<List<TsKvEntry>> future = findAllAsync(entityId, findNewLatestQuery);
 
         return Futures.transformAsync(future, entryList -> {
@@ -472,7 +472,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
     }
 
     @Override
-    public ListenableFuture<Void> removePartition(EntityId entityId, TsKvQuery query) {
+    public ListenableFuture<Void> removePartition(EntityId entityId, DeleteTsKvQuery query) {
         long minPartition = toPartitionTs(query.getStartTs());
         long maxPartition = toPartitionTs(query.getEndTs());
         if (minPartition == maxPartition) {
@@ -494,7 +494,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
                     for (int i = index; i < partitions.size() - 1; i++) {
                         partitionsToDelete.add(partitions.get(i));
                     }
-                    TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
+                    QueryCursor cursor = new QueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitionsToDelete);
                     deletePartitionAsync(cursor, resultFuture);
                 }
 
@@ -507,7 +507,7 @@ public class CassandraBaseTimeseriesDao extends CassandraAbstractAsyncDao implem
         }
     }
 
-    private void deletePartitionAsync(final TsKvQueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
+    private void deletePartitionAsync(final QueryCursor cursor, final SimpleListenableFuture<Void> resultFuture) {
         if (!cursor.hasNextPartition()) {
             resultFuture.set(null);
         } else {
