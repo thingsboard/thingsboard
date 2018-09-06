@@ -642,6 +642,7 @@ CREATE TABLE IF NOT EXISTS  thingsboard.rule_node (
 CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
     id timeuuid,
     entity_id timeuuid,
+    entity_type text,
     tenant_id timeuuid,
     customer_id timeuuid,
     name text,
