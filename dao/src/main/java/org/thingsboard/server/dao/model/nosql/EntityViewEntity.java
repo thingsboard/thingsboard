@@ -19,24 +19,26 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.Type;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
 import javax.persistence.Column;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 
@@ -57,6 +59,10 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
     private UUID entityId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = ENTITY_TYPE_PROPERTY)
+    private EntityType entityType;
+
     @PartitionKey(value = 2)
     @Column(name = ModelConstants.ENTITY_VIEW_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -68,9 +74,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @Column(name = ModelConstants.ENTITY_VIEW_NAME_PROPERTY)
     private String name;
 
-    @Type(type = "json")
     @Column(name = ModelConstants.ENTITY_VIEW_KEYS_PROPERTY)
-    private JsonNode keys;
+    private String keys;
 
     @Column(name = ModelConstants.ENTITY_VIEW_TS_BEGIN_PROPERTY)
     private String tsBegin;
@@ -85,6 +90,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     public EntityViewEntity() {
         super();
     }
@@ -95,6 +102,7 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         }
         if (entityView.getEntityId() != null) {
             this.entityId = entityView.getEntityId().getId();
+            this.entityType = entityView.getEntityId().getEntityType();
         }
         if (entityView.getTenantId() != null) {
             this.tenantId = entityView.getTenantId().getId();
@@ -103,11 +111,11 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
             this.customerId = entityView.getCustomerId().getId();
         }
         this.name = entityView.getName();
-//        try {
-//            this.keys = entityView.getKeys();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            this.keys = mapper.writeValueAsString(entityView.getKeys());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         this.tsBegin = entityView.getTsBegin() != null ? String.valueOf(entityView.getTsBegin()) : "0";
         this.tsEnd = entityView.getTsEnd() != null ? String.valueOf(entityView.getTsEnd()) : "0";
         this.searchText = entityView.getSearchText();
@@ -124,7 +132,7 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         EntityView entityView = new EntityView(new EntityViewId(id));
         entityView.setCreatedTime(UUIDs.unixTimestamp(id));
         if (entityId != null) {
-            entityView.setEntityId(new DeviceId(entityId));
+            entityView.setEntityId(EntityIdFactory.getByTypeAndId(entityType.name(), entityId.toString()));
         }
         if (tenantId != null) {
             entityView.setTenantId(new TenantId(tenantId));
@@ -133,11 +141,11 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
             entityView.setCustomerId(new CustomerId(customerId));
         }
         entityView.setName(name);
-//        try {
-//            entityView.setKeys((TelemetryEntityView) entityView.getKeys().toObject(keys));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         entityView.setTsBegin(Long.parseLong(tsBegin));
         entityView.setTsEnd(Long.parseLong(tsEnd));
         entityView.setAdditionalInfo(additionalInfo);
