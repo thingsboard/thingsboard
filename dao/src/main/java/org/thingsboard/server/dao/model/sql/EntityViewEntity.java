@@ -106,8 +106,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.tsBegin = entityView.getTsBegin() != null ? String.valueOf(entityView.getTsBegin()) : "";
-        this.tsEnd = entityView.getTsEnd() != null ? String.valueOf(entityView.getTsEnd()) : "";
+        this.tsBegin = entityView.getTsBegin() != null ? String.valueOf(entityView.getTsBegin()) : "0";
+        this.tsEnd = entityView.getTsEnd() != null ? String.valueOf(entityView.getTsEnd()) : "0";
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
