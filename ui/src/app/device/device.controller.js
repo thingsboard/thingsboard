@@ -24,11 +24,13 @@ import deviceCredentialsTemplate from './device-credentials.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export function DeviceCardController(types) {
+export function DeviceCardController(types, $state, $stateParams, $log,deviceService ,attributeService,$q) {
 
     var vm = this;
 
     vm.types = types;
+
+    $log.log(vm);
 
     vm.isAssignedToCustomer = function() {
         if (vm.item && vm.item.customerId && vm.parentCtl.devicesScope === 'tenant' &&
@@ -36,6 +38,55 @@ export function DeviceCardController(types) {
             return true;
         }
         return false;
+    }
+
+    vm.isActive2 = function () {
+        var id = "";
+        var keys = ["active"];
+        var deferred = $q.defer();
+        $log.log(deferred);
+        $log.log($q);
+        if (vm.item && vm.item.id) {
+            id = vm.item.id;
+
+            deviceService.getDeviceAttributes(id.id, types.attributesScope.server.value, keys.join(','), function (attributes){
+                $log.log(attributes);
+                if (attributes && attributes.length > 0) {
+                    for (var i = 0; i < keys.length; i++) {
+                        //var key = keys[i];
+                        //entity[key] = getAttributeValue(attributes, key);
+                        $log.log(attributes);
+                    }
+                }
+            }, { ignoreLoading: true });
+        }
+    }
+
+
+    vm.isActive = function(){
+        var id="";
+        var keys=["active"];
+        var deferred = $q.defer();
+        if (vm.item && vm.item.id) {
+            id = vm.item.id;
+            attributeService.getEntityAttributesValues(id.entityType, id.id,
+                types.attributesScope.server.value, keys.join(','),
+                { ignoreLoading: true }).then(
+                function success(attributes) {
+                    if (attributes && attributes.length > 0) {
+                        for (var i = 0; i < keys.length; i++) {
+                            //var key = keys[i];
+                            //entity[key] = getAttributeValue(attributes, key);
+                            $log.log(attributes);
+                        }
+                    }
+                    deferred.resolve(vm.item);
+                },
+                function fail() {
+                    deferred.reject();
+                }
+            );
+        } 
     }
 
     vm.isPublic = function() {

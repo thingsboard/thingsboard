@@ -73,7 +73,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: './src/index.html',
             filename: 'index.html',
-            title: 'ThingsBoard',
+            title: '天融物联',
             inject: 'body',
         }),
         new webpack.optimize.OccurrenceOrderPlugin(),
