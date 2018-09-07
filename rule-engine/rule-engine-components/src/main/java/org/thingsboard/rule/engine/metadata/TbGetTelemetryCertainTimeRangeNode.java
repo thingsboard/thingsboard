@@ -1,6 +1,20 @@
+/**
+ * Copyright © 2016-2018 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -28,12 +42,14 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "Get Telemtry from DataBase",
+        name = "get telemetry from certain time range",
         configClazz = TbGetTelemetryCertainTimeRangeNodeConfiguration.class,
-        nodeDescription = "",
-        nodeDetails = "",
-        uiResources = "", //{"static/rulenode/rulenode-core-config.js"},
-        configDirective = "")
+        nodeDescription = "Fetch telemetry of certain time range based on the certain delay in the Message Metadata.\n",
+        nodeDetails = "The node allows you to select fetch mode <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
+                "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry. " +
+                "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryCertainTimeRangeNode implements TbNode {
 
     private TbGetTelemetryCertainTimeRangeNodeConfiguration config;
@@ -62,32 +78,34 @@ public class TbGetTelemetryCertainTimeRangeNode implements TbNode {
         long startTs = ts - startTsOffset;
         long endTs = ts - endTsOffset;
         if (tsKeyNames.isEmpty()) {
-            ctx.tellFailure(msg, new Exception("Telemetry not found"));
+            ctx.tellFailure(msg, new Exception("Telemetry are not selected!"));
         } else {
             for (String key : tsKeyNames) {
                 //TODO: handle direction;
                 queries.add(new BaseTsKvQuery(key, startTs, endTs, 1, limit, NONE));
-                if (limit == TbGetTelemetryCertainTimeRangeNodeConfiguration.MAX_FETCH_SIZE) {
-                    resultNode.set(key, mapper.createArrayNode());
-                } else {
-                    resultNode.putObject(key);
-                }
             }
             try {
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(msg.getOriginator(), queries);
                 DonAsynchron.withCallback(list, data -> {
                     for (TsKvEntry tsKvEntry : data) {
-                        JsonNode node = resultNode.get(tsKvEntry.getKey());
-                        if (node.isArray()) {
-                            ArrayNode arrayNode = (ArrayNode) node;
-                            arrayNode.add(mapper.createObjectNode().put(String.valueOf(tsKvEntry.getTs()), tsKvEntry.getValueAsString()));
+                        if (limit == TbGetTelemetryCertainTimeRangeNodeConfiguration.MAX_FETCH_SIZE) {
+                            ArrayNode arrayNode;
+                            if(resultNode.has(tsKvEntry.getKey())){
+                                arrayNode = (ArrayNode) resultNode.get(tsKvEntry.getKey());
+                                arrayNode.add(mapper.createObjectNode().put(String.valueOf(tsKvEntry.getTs()), tsKvEntry.getValueAsString()));
+                            }else {
+                                arrayNode =  mapper.createArrayNode();
+                                arrayNode.add((mapper.createObjectNode().put(String.valueOf(tsKvEntry.getTs()), tsKvEntry.getValueAsString())));
+                                resultNode.set(tsKvEntry.getKey(), arrayNode);
+                            }
                         } else {
-                            ObjectNode object = mapper.createObjectNode().put(String.valueOf(tsKvEntry.getTs()), tsKvEntry.getValueAsString());
-                            resultNode.set(tsKvEntry.getKey(), object);
+                            resultNode.put(tsKvEntry.getKey(), tsKvEntry.getValueAsString());
                         }
                     }
                     for (String key : tsKeyNames) {
-                        msg.getMetaData().putValue(key, resultNode.get(key).toString());
+                        if(resultNode.has(key)){
+                            msg.getMetaData().putValue(key, resultNode.get(key).toString());
+                        }
                     }
                     TbMsg newMsg = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
                     ctx.tellNext(newMsg, SUCCESS);
