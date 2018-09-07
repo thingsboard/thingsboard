@@ -193,7 +193,7 @@ public class EntityViewServiceImpl extends AbstractEntityService
 
     @Override
     public ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId) {
-        log.trace("Executing findDeviceById [{}]", entityViewId);
+        log.trace("Executing findEntityViewById [{}]", entityViewId);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
         return entityViewDao.findByIdAsync(entityViewId.getId());
     }
