@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 tb-timeseries-table-widget {
-    table.md-table thead.md-head>tr.md-row {
-        height: 40px;
-    }
+  table.md-table thead.md-head > tr.md-row {
+    height: 40px;
+  }
 
-    table.md-table tbody.md-body>tr.md-row, table.md-table tfoot.md-foot>tr.md-row {
-        height: 38px;
-    }
+  table.md-table tbody.md-body > tr.md-row,
+  table.md-table tfoot.md-foot > tr.md-row {
+    height: 38px;
+  }
 
-    .md-table-pagination>* {
-        height: 46px;
-    }
+  .md-table-pagination > * {
+    height: 46px;
+  }
 
-    .tb-data-table md-toolbar {
-        z-index: 10;
-    }
+  .tb-data-table md-toolbar {
+    z-index: 10;
+  }
 }

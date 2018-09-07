@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#tb-audit-log-action-data, #tb-audit-log-failure-details {
-  min-width: 400px;
-  min-height: 50px;
+
+#tb-audit-log-action-data,
+#tb-audit-log-failure-details {
   width: 100%;
+  min-width: 400px;
   height: 100%;
-  border: 1px solid #C0C0C0;
+  min-height: 50px;
+  border: 1px solid #c0c0c0;
 }

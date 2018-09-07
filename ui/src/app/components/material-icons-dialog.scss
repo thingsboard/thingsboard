@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-material-icons-dialog {
   button.md-icon-button.tb-select-icon-button {
-    border: solid 1px orange;
-    border-radius: 0%;
-    padding: 16px;
-    height: 56px;
     width: 56px;
+    height: 56px;
+    padding: 16px;
     margin: 10px;
+    border: solid 1px #ffa500;
+    border-radius: 0%;
   }
+
   .tb-icons-load {
     top: 64px;
-    background: rgba(255,255,255,0.75);
     z-index: 3;
+    background: rgba(255, 255, 255, .75);
   }
 }

@@ -13,21 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 tb-json-object-edit {
   position: relative;
+
   .fill-height {
     height: 100%;
   }
 }
 
 .tb-json-object-panel {
-  margin-left: 15px;
-  border: 1px solid #C0C0C0;
   height: 100%;
+  margin-left: 15px;
+  border: 1px solid #c0c0c0;
+
   #tb-json-input {
-    min-width: 200px;
     width: 100%;
+    min-width: 200px;
     height: 100%;
+
     &:not(.fill-height) {
       min-height: 200px;
     }

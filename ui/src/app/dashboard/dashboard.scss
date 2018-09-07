@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 @import "~compass-sass-mixins/lib/compass";
-@import '../../scss/constants';
 
-$toolbar-height: 50px;
-$fullscreen-toolbar-height: 64px;
-$mobile-toolbar-height: 84px;
+@import "../../scss/constants";
+
+$toolbar-height: 50px !default;
+$fullscreen-toolbar-height: 64px !default;
+$mobile-toolbar-height: 84px !default;
 
 section.tb-dashboard-title {
   position: absolute;
@@ -27,10 +28,10 @@ section.tb-dashboard-title {
 }
 
 input.tb-dashboard-title {
-  font-size: 2.000rem;
-  font-weight: 500;
-  letter-spacing: 0.005em;
   height: 38px;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: .005em;
 }
 
 div.tb-padded {
@@ -50,9 +51,11 @@ tb-details-sidenav.tb-widget-details-sidenav {
     @media (min-width: $layout-breakpoint-sm) {
       width: 85% !important;
     }
+
     @media (min-width: $layout-breakpoint-md) {
       width: 75% !important;
     }
+
     @media (min-width: $layout-breakpoint-lg) {
       width: 60% !important;
     }
@@ -65,47 +68,55 @@ tb-details-sidenav.tb-widget-details-sidenav {
 
 section.tb-dashboard-toolbar {
   position: absolute;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   z-index: 13;
   pointer-events: none;
+
   &.tb-dashboard-toolbar-opened {
-    right: 0px;
-   // @include transition(right .3s cubic-bezier(.55,0,.55,.2));
+    right: 0;
+    // @include transition(right .3s cubic-bezier(.55,0,.55,.2));
   }
+
   &.tb-dashboard-toolbar-closed {
     right: 18px;
+
     @include transition(right .3s cubic-bezier(.55,0,.55,.2) .2s);
   }
 }
 
 .tb-dashboard-container {
-   &.tb-dashboard-toolbar-opened {
-     &.is-fullscreen {
-       margin-top: $mobile-toolbar-height;
-       @media (min-width: $layout-breakpoint-sm) {
-         margin-top: $fullscreen-toolbar-height;
-       }
-     }
-     &:not(.is-fullscreen) {
-       margin-top: $mobile-toolbar-height;
-       @media (min-width: $layout-breakpoint-sm) {
-         margin-top: $toolbar-height;
-       }
-       @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2));
-     }
-   }
-   &.tb-dashboard-toolbar-closed {
-     margin-top: 0px;
-     @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2) .2s);
+  &.tb-dashboard-toolbar-opened {
+    &.is-fullscreen {
+      margin-top: $mobile-toolbar-height;
+
+      @media (min-width: $layout-breakpoint-sm) {
+        margin-top: $fullscreen-toolbar-height;
+      }
+    }
+
+    &:not(.is-fullscreen) {
+      margin-top: $mobile-toolbar-height;
+
+      @media (min-width: $layout-breakpoint-sm) {
+        margin-top: $toolbar-height;
+      }
+
+      @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2));
+    }
   }
+
+  &.tb-dashboard-toolbar-closed {
+    margin-top: 0;
+
+    @include transition(margin-top .3s cubic-bezier(.55,0,.55,.2) .2s);
+  }
+
   .tb-dashboard-layouts {
     md-backdrop {
       z-index: 1;
     }
-    #tb-main-layout {
 
-    }
     #tb-right-layout {
       md-sidenav {
         z-index: 1;
@@ -124,13 +135,15 @@ section.tb-powered-by-footer {
   bottom: 5px;
   z-index: 3;
   pointer-events: none;
+
   span {
     font-size: 12px;
+
     a {
-      font-weight: bold;
+      font-weight: 700;
       text-decoration: none;
-      border: none;
       pointer-events: all;
+      border: none;
     }
   }
 }

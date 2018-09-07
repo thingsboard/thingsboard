@@ -13,50 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$previewSize: 100px;
+$previewSize: 100px !default;
 
 .tb-image-select-container {
   position: relative;
-  height: $previewSize;
   width: 100%;
+  height: $previewSize;
 }
 
 .tb-image-preview {
-  max-width: $previewSize;
-  max-height: $previewSize;
   width: auto;
+  max-width: $previewSize;
   height: auto;
+  max-height: $previewSize;
 }
 
 .tb-image-preview-container {
   position: relative;
+  float: left;
   width: $previewSize;
   height: $previewSize;
   margin-right: 12px;
-  border: solid 1px;
   vertical-align: top;
-  float: left;
+  border: solid 1px;
+
   div {
     width: 100%;
     font-size: 18px;
     text-align: center;
   }
-  div, .tb-image-preview {
+
+  div,
+  .tb-image-preview {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%,-50%);
+    transform: translate(-50%, -50%);
   }
 }
 
 .tb-image-clear-container {
-  width: 48px;
-  height: $previewSize;
   position: relative;
   float: right;
+  width: 48px;
+  height: $previewSize;
 }
+
 .tb-image-clear-btn {
   position: absolute !important;
   top: 50%;
-  transform: translate(0%,-50%) !important;
+  transform: translate(0%, -50%) !important;
 }
