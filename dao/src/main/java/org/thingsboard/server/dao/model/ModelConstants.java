@@ -136,7 +136,6 @@ public class ModelConstants {
     public static final String DEVICE_NAME_PROPERTY = "name";
     public static final String DEVICE_TYPE_PROPERTY = "type";
     public static final String DEVICE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
-
     public static final String DEVICE_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_and_search_text";
     public static final String DEVICE_BY_TENANT_BY_TYPE_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_tenant_by_type_and_search_text";
     public static final String DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "device_by_customer_and_search_text";
@@ -152,11 +151,12 @@ public class ModelConstants {
     public static final String ENTITY_VIEW_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ENTITY_VIEW_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ENTITY_VIEW_NAME_PROPERTY = DEVICE_NAME_PROPERTY;
-    public static final String ENTITY_VIEW_TYPE_PROPERTY = "type_entity";
+    public static final String ENTITY_VIEW_TENANT_AND_NAME_VIEW_NAME = "entity_view_by_tenant_and_name";
     public static final String ENTITY_VIEW_KEYS_PROPERTY = "keys";
     public static final String ENTITY_VIEW_TS_BEGIN_PROPERTY = "ts_begin";
     public static final String ENTITY_VIEW_TS_END_PROPERTY = "ts_end";
     public static final String ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "entity_view_by_tenant_and_search_text";
 
     /**
      * Cassandra audit log constants.

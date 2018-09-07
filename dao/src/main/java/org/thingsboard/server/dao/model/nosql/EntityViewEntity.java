@@ -116,8 +116,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.tsBegin = entityView.getTsBegin() != null ? String.valueOf(entityView.getTsBegin()) : "0";
-        this.tsEnd = entityView.getTsEnd() != null ? String.valueOf(entityView.getTsEnd()) : "0";
+        this.tsBegin = entityView.getStartTs() != null ? String.valueOf(entityView.getStartTs()) : "0";
+        this.tsEnd = entityView.getEndTs() != null ? String.valueOf(entityView.getEndTs()) : "0";
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
@@ -146,8 +146,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        entityView.setTsBegin(Long.parseLong(tsBegin));
-        entityView.setTsEnd(Long.parseLong(tsEnd));
+        entityView.setStartTs(Long.parseLong(tsBegin));
+        entityView.setEndTs(Long.parseLong(tsEnd));
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }
