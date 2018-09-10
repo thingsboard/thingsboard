@@ -47,8 +47,8 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
                     scope.isPublic = false;
                     scope.assignedCustomer = null;
                 }
-                scope.startTs = $filter('date')(scope.entityView.endTs, 'yyyy-MM-dd HH:mm:ss');
-                scope.endTs = $filter('date')(scope.entityView.startTs, 'yyyy-MM-dd HH:mm:ss');
+                scope.startTs = new Date(scope.entityView.startTs);
+                scope.endTs = new Date(scope.entityView.endTs);
             }
         });
 

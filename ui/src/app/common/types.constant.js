@@ -346,6 +346,12 @@ export default angular.module('thingsboard.types', [])
                     list: 'entity.list-of-assets',
                     nameStartsWith: 'entity.asset-name-starts-with'
                 },
+                "ENTITY_VIEW": {
+                    type: 'entity.type-entity-view',
+                    typePlural: 'entity.type-entity-views',
+                    list: 'entity.list-of-entity-views',
+                    nameStartsWith: 'entity.entity-view-name-starts-with'
+                },
                 "TENANT": {
                     type: 'entity.type-tenant',
                     typePlural: 'entity.type-tenants',
