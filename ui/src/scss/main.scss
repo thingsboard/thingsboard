@@ -14,77 +14,92 @@
  * limitations under the License.
  */
 @import "~compass-sass-mixins/lib/compass";
+
 @import "constants";
+
 @import "animations";
+
 @import "mixins";
+
 @import "fonts";
 
 /***************
  * TYPE DEFAULTS
  ***************/
 
-button, html, input, select, textarea {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
+button,
+html,
+input,
+select,
+textarea {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 .mdi-set {
   line-height: 1;
-  letter-spacing: normal;
   text-transform: none;
-  white-space: nowrap;
+  letter-spacing: normal;
   word-wrap: normal;
+  white-space: nowrap;
   direction: ltr;
-  -webkit-font-feature-settings: 'liga';
+  -webkit-font-feature-settings: "liga";
 }
 
 a {
-  color: #106CC8;
-  text-decoration: none;
   font-weight: 400;
-  border-bottom: 1px solid rgba(64, 84, 178, 0.25);
-  @include transition(border-bottom 0.35s);
+  color: #106cc8;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(64, 84, 178, .25);
+
+  @include transition(border-bottom .35s);
 }
 
-a:hover, a:focus {
-  border-bottom: 1px solid #4054B2;
+a:hover,
+a:focus {
+  border-bottom: 1px solid #4054b2;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  margin-bottom: 1rem;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 h1 {
-  font-size: 3.400rem;
+  font-size: 3.4rem;
   font-weight: 400;
   line-height: 4rem;
 }
 
 h2 {
-  font-size: 2.400rem;
+  font-size: 2.4rem;
   font-weight: 400;
   line-height: 3.2rem;
 }
 
 h3 {
-  font-size: 2.000rem;
+  font-size: 2rem;
   font-weight: 500;
-  letter-spacing: 0.005em;
+  letter-spacing: .005em;
 }
 
 h4 {
-  font-size: 1.600rem;
+  font-size: 1.6rem;
   font-weight: 400;
-  letter-spacing: 0.010em;
   line-height: 2.4rem;
+  letter-spacing: .01em;
 }
 
 p {
+  margin: .8em 0 1.6em;
   font-size: 1.6rem;
   font-weight: 400;
-  letter-spacing: 0.010em;
   line-height: 1.6em;
-  margin: 0.8em 0 1.6em;
+  letter-spacing: .01em;
 }
 
 strong {
@@ -92,16 +107,16 @@ strong {
 }
 
 blockquote {
-  border-left: 3px solid rgba(0, 0, 0, 0.12);
-  font-style: italic;
-  margin-left: 0;
   padding-left: 16px;
+  margin-left: 0;
+  font-style: italic;
+  border-left: 3px solid rgba(0, 0, 0, .12);
 }
 
 fieldset {
-  border: none;
   padding: 0;
   margin: 0;
+  border: none;
 }
 
 /*********************************
@@ -119,26 +134,28 @@ form {
 }
 
 md-bottom-sheet .md-subheader {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 .md-chips {
-  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
-md-content.md-default-theme, md-content {
+md-content.md-default-theme,
+md-content {
   background-color: $gray;
 }
 
 md-card {
   background-color: #fff;
+
   h2:first-of-type {
     margin-top: 0;
   }
 }
 
 .md-button:not([disabled]).md-icon-button:hover {
-  background-color: rgba(158, 158, 158, 0.2);
+  background-color: rgba(158, 158, 158, .2);
 }
 
 md-toolbar:not(.md-hue-1),
@@ -147,11 +164,12 @@ md-toolbar:not(.md-hue-1),
 }
 
 md-toolbar md-input-container .md-errors-spacer {
-  min-height: 0px;
+  min-height: 0;
 }
 
 md-toolbar {
-  md-select.md-default-theme:not([disabled]):focus .md-select-value, md-select:not([disabled]):focus .md-select-value {
+  md-select.md-default-theme:not([disabled]):focus .md-select-value,
+  md-select:not([disabled]):focus .md-select-value {
     color: #fff;
   }
 }
@@ -159,11 +177,10 @@ md-toolbar {
 md-menu-item {
   overflow: hidden;
   fill: #737373;
-}
 
-md-menu-item {
   .md-button {
     display: block;
+
     .tb-alt-text {
       float: right;
     }
@@ -190,13 +207,14 @@ md-sidenav {
   overflow-y: auto;
 }
 
-.md-radio-interactive input, button {
+.md-radio-interactive input,
+button {
   pointer-events: all;
 }
 
 .md-color-picker-input-container {
   md-input-container {
-    margin-bottom: 0px;
+    margin-bottom: 0;
   }
 }
 
@@ -204,32 +222,36 @@ md-sidenav {
  * THINGSBOARD SPECIFIC
  ***********************/
 
-$swift-ease-out-duration: 0.4s !default;
-$swift-ease-out-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
+$swift-ease-out-duration: .4s !default;
+$swift-ease-out-timing-function: cubic-bezier(.25, .8, .25, 1) !default;
 
 $input-label-float-offset: 6px !default;
-$input-label-float-scale: 0.75 !default;
+$input-label-float-scale: .75 !default;
 
 label {
   &.tb-title {
-    pointer-events: none;
-    color: #666;
+    padding-bottom: 15px;
     font-size: 13px;
     font-weight: 400;
-    padding-bottom: 15px;
+    color: #666;
+    pointer-events: none;
+
     &.no-padding {
-      padding-bottom: 0px;
+      padding-bottom: 0;
     }
-    &.tb-required:after {
-      content: ' *';
+
+    &.tb-required::after {
       font-size: 13px;
+      color: rgba(0, 0, 0, .54);
       vertical-align: top;
-      color: rgba(0,0,0,0.54);
+      content: " *";
     }
+
     &.tb-error {
-      color: rgb(221,44,0);
-      &.tb-required:after {
-        color: rgb(221,44,0);
+      color: rgb(221, 44, 0);
+
+      &.tb-required::after {
+        color: rgb(221, 44, 0);
       }
     }
   }
@@ -246,96 +268,107 @@ label {
 }
 
 .tb-readonly-label {
-  color: rgba(0,0,0,0.54);
+  color: rgba(0, 0, 0, .54);
 }
 
 .tb-disabled-label {
-  color: rgba(0,0,0,0.44);
+  color: rgba(0, 0, 0, .44);
 }
 
+/* stylelint-disable-next-line no-duplicate-selectors */
 label {
   &.tb-small {
-    pointer-events: none;
-    color: rgba(0,0,0,0.54);
     font-size: 12px;
+    color: rgba(0, 0, 0, .54);
+    pointer-events: none;
   }
 }
 
 div {
   &.tb-small {
-    color: rgba(0,0,0,0.54);
     font-size: 14px;
+    color: rgba(0, 0, 0, .54);
   }
 }
 
 .tb-hint {
+  padding-bottom: 15px;
   font-size: 12px;
   line-height: 14px;
-  transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
-  color: grey;
-  padding-bottom: 15px;
-  &.ng-hide, &.ng-enter, &.ng-leave.ng-leave-active {
+  color: #808080;
+  transition: all .3s cubic-bezier(.55, 0, .55, .2);
+
+  &.ng-hide,
+  &.ng-enter,
+  &.ng-leave.ng-leave-active {
     bottom: 26px;
     opacity: 0;
   }
-  &.ng-leave, &.ng-enter.ng-enter-active {
+
+  &.ng-leave,
+  &.ng-enter.ng-enter-active {
     bottom: 7px;
     opacity: 1;
   }
 }
 
 .md-caption {
-  &.tb-required:after {
-    content: ' *';
+  &.tb-required::after {
     font-size: 10px;
+    color: rgba(0, 0, 0, .54);
     vertical-align: top;
-    color: rgba(0,0,0,0.54);
+    content: " *";
   }
 }
 
 pre.tb-highlight {
-  background-color: #f7f7f7;
   display: block;
-  margin: 20px 0;
   padding: 15px;
+  margin: 20px 0;
   overflow-x: auto;
+  background-color: #f7f7f7;
+
   code {
-    padding: 0;
-    color: #303030;
-    font-family: monospace;
-    display: inline-block;
     box-sizing: border-box;
-    vertical-align: bottom;
+    display: inline-block;
+    padding: 0;
+    font-family: monospace;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 700;
+    color: #303030;
+    vertical-align: bottom;
   }
 }
 
 .tb-notice {
-  background-color: #f7f7f7;
   padding: 15px;
-  border: 1px solid #ccc;
   font-size: 16px;
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
 }
 
 .tb-data-table {
   md-toolbar {
     z-index: 0;
   }
+
   md-toolbar.md-table-toolbar.md-default-theme:not(.md-menu-toolbar).md-default .md-button[disabled],
   md-toolbar.md-table-toolbar:not(.md-menu-toolbar).md-default .md-button[disabled] {
-    color: rgba(0,0,0,0.38);
+    color: rgba(0, 0, 0, .38);
   }
+
   md-toolbar.md-default-theme:not(.md-menu-toolbar) .md-button[disabled] md-icon,
   md-toolbar:not(.md-menu-toolbar) .md-button[disabled] md-icon {
-    color: rgba(0,0,0,.28);
+    color: rgba(0, 0, 0, .28);
   }
+
   span.no-data-found {
     position: relative;
+    display: flex;
     height: calc(100% - 57px);
     text-transform: uppercase;
-    display: flex;
   }
+
   table.md-table {
     &.md-row-select td.md-cell,
     &.md-row-select th.md-column {
@@ -366,49 +399,55 @@ pre.tb-highlight {
 
     td.md-cell,
     th.md-column {
-
       &:last-child {
         padding: 0 12px 0 0;
       }
-
     }
   }
 
-  table.md-table, table.md-table.md-row-select {
+  table.md-table,
+  table.md-table.md-row-select {
     tbody {
       &.md-body {
         tr {
           &.md-row:not([disabled]) {
             outline: none;
+
             &:hover {
-              background-color: rgba(221, 221, 221, 0.3) !important;
+              background-color: rgba(221, 221, 221, .3) !important;
             }
+
             &.md-selected {
-              background-color: rgba(221, 221, 221, 0.5) !important;
+              background-color: rgba(221, 221, 221, .5) !important;
             }
-            &.tb-current, &.tb-current:hover{
-              background-color: rgba(221, 221, 221, 0.65) !important;
+
+            &.tb-current,
+            &.tb-current:hover{
+              background-color: rgba(221, 221, 221, .65) !important;
             }
           }
         }
       }
+
       tr {
         td {
           &.tb-action-cell {
+            width: 72px;
+            min-width: 72px;
+            max-width: 72px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            min-width: 72px;
-            max-width: 72px;
-            width: 72px;
+
             .md-button {
               &.md-icon-button {
-                margin: 0;
-                padding: 6px;
                 width: 36px;
                 height: 36px;
+                padding: 6px;
+                margin: 0;
               }
             }
+
             .tb-spacer {
               padding-left: 38px;
             }
@@ -420,34 +459,40 @@ pre.tb-highlight {
 }
 
 .tb-severity {
-  font-weight: bold;
+  font-weight: 700;
+
   &.tb-critical {
-    color: red !important;
+    color: #f00 !important;
   }
+
   &.tb-major {
-    color: orange !important;
+    color: #ffa500 !important;
   }
+
   &.tb-minor {
     color: #ffca3d !important;
   }
+
   &.tb-warning {
     color: #abab00 !important;
   }
+
   &.tb-indeterminate {
-    color: green !important;
+    color: #008000 !important;
   }
 }
 
 .tb-card-description {
-  color: rgba(0,0,0,0.54);
   font-size: 13px;
+  color: rgba(0, 0, 0, .54);
+
   @include line-clamp(2, 1.1);
 }
 
 /***********************
  * Flow
  ***********************/
-$previewSize: 100px;
+$previewSize: 100px !default;
 
 .file-input {
   display: none;
@@ -455,17 +500,19 @@ $previewSize: 100px;
 
 .tb-flow-drop {
   position: relative;
-  border: dashed 2px;
   height: $previewSize;
   overflow: hidden;
+  border: dashed 2px;
+
   label {
-    width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    width: 100%;
+    height: 100%;
     font-size: 16px;
     text-align: center;
+
     @media (min-width: $layout-breakpoint-sm) {
       font-size: 24px;
     }
@@ -474,8 +521,8 @@ $previewSize: 100px;
 
 .tb-container {
   position: relative;
-  margin-top: 32px;
   padding: 10px 0;
+  margin-top: 32px;
 }
 
 /***********************
@@ -483,12 +530,12 @@ $previewSize: 100px;
  ***********************/
 
 .tb-prompt {
-  color: rgba(0,0,0,0.38);
-  text-transform: uppercase;
   display: flex;
   font-size: 18px;
   font-weight: 400;
   line-height: 18px;
+  color: rgba(0, 0, 0, .38);
+  text-transform: uppercase;
 }
 
 /***********************
@@ -500,35 +547,37 @@ $previewSize: 100px;
 }
 
 .tb-error-message {
+  padding: 10px 0 0 10px;
+  margin-top: -6px;
+  overflow: hidden;
   font-size: 12px;
   line-height: 14px;
-  overflow: hidden;
-  padding: 10px 0px 0px 10px;
-  color: rgb(221,44,0);
-  margin-top: -6px;
+  color: rgb(221, 44, 0);
 }
 
 .tb-error-message.ng-animate {
-  @include transition(all .3s cubic-bezier(.55,0,.55,.2));
+  @include transition(all .3s cubic-bezier(.55, 0, .55, .2));
 }
 
-.tb-error-message.ng-enter-prepare, .tb-error-message.ng-enter {
-  opacity:0;
+.tb-error-message.ng-enter-prepare,
+.tb-error-message.ng-enter {
   margin-top: -24px;
+  opacity: 0;
 }
 
 .tb-error-message.ng-enter.ng-enter-active {
-  opacity:1;
   margin-top: -6px;
+  opacity: 1;
 }
 
 .tb-error-message.ng-leave {
-  opacity:1;
   margin-top: -6px;
+  opacity: 1;
 }
+
 .tb-error-message.ng-leave.ng-leave-active {
-  opacity:0;
   margin-top: -24px;
+  opacity: 0;
 }
 
 /***********************
@@ -545,39 +594,41 @@ md-tabs.tb-headless {
 
 .md-button.tb-card-button {
   width: 100%;
-  height: 100%;
   max-width: 240px;
+  height: 100%;
+
   span {
+    height: 18px;
+    min-height: 18px;
+    max-height: 18px;
     padding: 0 0 20px 0;
+    margin: auto;
     font-size: 18px;
     font-weight: 400;
-    white-space: normal;
     line-height: 18px;
-    max-height: 18px;
-    min-height: 18px;
-    height: 18px;
-    margin: auto;
+    white-space: normal;
   }
 }
 
 .md-button.tb-layout-button {
   width: 100%;
-  height: 100%;
   max-width: 240px;
+  height: 100%;
+
   span {
     padding: 40px;
     font-size: 18px;
     font-weight: 400;
-    white-space: normal;
     line-height: 18px;
+    white-space: normal;
   }
 }
 
 .md-button.tb-add-new-widget {
+  padding-right: 12px;
+  font-size: 24px;
   border-style: dashed;
   border-width: 2px;
-  font-size: 24px;
-  padding-right: 12px;
 }
 
 /***********************
@@ -585,11 +636,12 @@ md-tabs.tb-headless {
  ***********************/
 
 section.tb-header-buttons {
-  pointer-events: none;
   position: absolute;
-  right: 0px;
   top: 86px;
+  right: 0;
   z-index: 3;
+  pointer-events: none;
+
   @media (min-width: $layout-breakpoint-sm) {
     top: 86px;
   }
@@ -633,6 +685,7 @@ section.tb-footer-buttons {
 
 ._md-toast-open-bottom .tb-footer-buttons {
   @include transition(all .4s cubic-bezier(.25, .8, .25, 1));
+
   @include transform(translate3d(0, -42px, 0));
 }
 
@@ -641,27 +694,27 @@ section.tb-footer-buttons {
  ***********************/
 
 .md-icon-button.tb-md-32 {
-  vertical-align: middle;
   width: 32px;
-  height: 32px;
   min-width: 32px;
+  height: 32px;
   min-height: 32px;
-  margin: 0px !important;
-  padding: 0px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  vertical-align: middle;
 }
 
 .material-icons.tb-md-20 {
-  font-size: 20px;
   width: 20px;
-  height: 20px;
   min-width: 20px;
+  height: 20px;
   min-height: 20px;
+  font-size: 20px;
 }
 
 .material-icons.tb-md-96 {
-  font-size: 96px;
   width: 96px;
   height: 96px;
+  font-size: 96px;
 }
 
 /***********************
@@ -671,17 +724,17 @@ section.tb-footer-buttons {
 .tb-absolute-fill {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
 }
 
 .tb-progress-cover {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
   z-index: 6;
   opacity: 1;
 }

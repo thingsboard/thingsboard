@@ -24,24 +24,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.rule.engine.api.util.DonAsynchron;
+import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
+import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -100,6 +104,10 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     @Autowired
     @Lazy
     private DeviceStateService stateService;
+
+    @Autowired
+    @Lazy
+    private ActorService actorService;
 
     private ExecutorService tsCallBackExecutor;
     private ExecutorService wsCallBackExecutor;
@@ -201,6 +209,13 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     public void saveAttrAndNotify(EntityId entityId, String scope, String key, boolean value, FutureCallback<Void> callback) {
         saveAndNotify(entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
+    }
+
+    @Override
+    public void onSharedAttributesUpdate(TenantId tenantId, DeviceId deviceId, Set<AttributeKvEntry> attributes) {
+        DeviceAttributesEventNotificationMsg notificationMsg = DeviceAttributesEventNotificationMsg.onUpdate(tenantId,
+                deviceId, DataConstants.SHARED_SCOPE, new ArrayList<>(attributes));
+        actorService.onMsg(new SendToClusterMsg(deviceId, notificationMsg));
     }
 
     @Override
@@ -355,9 +370,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                     e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);
         } else if (subscription.getType() == TelemetryFeature.TIMESERIES) {
             long curTs = System.currentTimeMillis();
-            List<TsKvQuery> queries = new ArrayList<>();
+            List<ReadTsKvQuery> queries = new ArrayList<>();
             subscription.getKeyStates().entrySet().forEach(e -> {
-                queries.add(new BaseTsKvQuery(e.getKey(), e.getValue() + 1L, curTs));
+                queries.add(new BaseReadTsKvQuery(e.getKey(), e.getValue() + 1L, curTs));
             });
 
             DonAsynchron.withCallback(tsService.findAll(entityId, queries),

@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.common.data.kv;
 
-/*
-.tb-entity-subtype-list {
-  #entity_subtype_list_chips {
-    .md-chips {
-      padding-bottom: 1px;
+import lombok.Data;
+
+@Data
+public class BaseDeleteTsKvQuery extends BaseTsKvQuery implements DeleteTsKvQuery {
+
+    private final Boolean rewriteLatestIfDeleted;
+
+    public BaseDeleteTsKvQuery(String key, long startTs, long endTs, boolean rewriteLatestIfDeleted) {
+        super(key, startTs, endTs);
+        this.rewriteLatestIfDeleted = rewriteLatestIfDeleted;
     }
-  }
-  .tb-error-messages {
-    margin-top: -11px;
-    height: 35px;
-    .tb-error-message {
-      padding-left: 1px;
+
+    public BaseDeleteTsKvQuery(String key, long startTs, long endTs) {
+        this(key, startTs, endTs, false);
     }
-  }
+
+
 }
-*/

@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$previewSize: 100px;
+$previewSize: 100px !default;
 
 .tb-file-select-container {
   position: relative;
-  height: $previewSize;
   width: 100%;
+  height: $previewSize;
 }
 
 .tb-file-preview {
-  max-width: $previewSize;
-  max-height: $previewSize;
   width: auto;
+  max-width: $previewSize;
   height: auto;
+  max-height: $previewSize;
 }
 
 .tb-file-clear-container {
-  width: 48px;
-  height: $previewSize;
   position: relative;
   float: right;
+  width: 48px;
+  height: $previewSize;
 }
+
 .tb-file-clear-btn {
   position: absolute !important;
   top: 50%;
-  transform: translate(0%,-50%) !important;
+  transform: translate(0%, -50%) !important;
 }

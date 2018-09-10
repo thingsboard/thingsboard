@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-widget {
   .tb-widget-error {
     display: flex;
-    justify-content: center;
     align-items: center;
-    background: rgba(255,255,255,0.5);
+    justify-content: center;
+    background: rgba(255, 255, 255, .5);
+
     span {
-       color: red;
+      color: #f00;
     }
   }
+
   .tb-widget-loading {
-    background: rgba(255,255,255,0.15);
     z-index: 3;
+    background: rgba(255, 255, 255, .15);
   }
 }
