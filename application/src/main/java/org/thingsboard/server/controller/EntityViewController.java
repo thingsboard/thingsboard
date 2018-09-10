@@ -19,16 +19,22 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.ArrayList;
@@ -96,6 +102,84 @@ public class EntityViewController extends BaseController {
                     null,
                     null,
                     ActionType.DELETED, e, strEntityViewId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/{customerId}/entityView/{entityViewId}", method = RequestMethod.POST)
+    @ResponseBody
+    public EntityView assignEntityViewToCustomer(@PathVariable("customerId") String strCustomerId,
+                                             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+        checkParameter("customerId", strCustomerId);
+        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            Customer customer = checkCustomerId(customerId);
+
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            checkEntityViewId(entityViewId);
+
+            EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToCustomer(entityViewId, customerId));
+
+            logEntityAction(entityViewId, savedEntityView,
+                    savedEntityView.getCustomerId(),
+                    ActionType.ASSIGNED_TO_CUSTOMER, null, strEntityViewId, strCustomerId, customer.getName());
+
+            return savedEntityView;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
+                    null,
+                    ActionType.ASSIGNED_TO_CUSTOMER, e, strEntityViewId, strCustomerId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/customer/entityView/{entityViewId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public EntityView unassignEntityViewFromCustomer(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
+        checkParameter(ENTITY_VIEW_ID, strEntityViewId);
+        try {
+            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
+            EntityView entityView = checkEntityViewId(entityViewId);
+            if (entityView.getCustomerId() == null || entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                throw new IncorrectParameterException("Entity View isn't assigned to any customer!");
+            }
+            Customer customer = checkCustomerId(entityView.getCustomerId());
+
+            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(entityViewId));
+
+            logEntityAction(entityViewId, entityView,
+                    entityView.getCustomerId(),
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEntityViewId, customer.getId().toString(), customer.getName());
+
+            return savedEntityView;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
+                    null,
+                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strEntityViewId);
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/customer/{customerId}/entityViews", params = {"limit"}, method = RequestMethod.GET)
+    @ResponseBody
+    public TextPageData<EntityView> getCustomerEntityViews(
+            @PathVariable("customerId") String strCustomerId,
+            @RequestParam int limit,
+            @RequestParam(required = false) String textSearch,
+            @RequestParam(required = false) String idOffset,
+            @RequestParam(required = false) String textOffset) throws ThingsboardException {
+        checkParameter("customerId", strCustomerId);
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            CustomerId customerId = new CustomerId(toUUID(strCustomerId));
+            checkCustomerId(customerId);
+            TextPageLink pageLink = createPageLink(limit, textSearch, idOffset, textOffset);
+            return checkNotNull(entityViewService.findEntityViewsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+        } catch (Exception e) {
             throw handleException(e);
         }
     }

@@ -38,7 +38,7 @@ export default function EntityViewRoutes($stateProvider, types) {
                 entityViewsType: 'tenant',
                 searchEnabled: true,
                 searchByEntitySubtype: true,
-                searchEntityType: types.entityType.entityview,
+                searchEntityType: types.entityType.entityView,
                 pageTitle: 'entity-view.entity-views'
             },
             ncyBreadcrumb: {
@@ -61,7 +61,7 @@ export default function EntityViewRoutes($stateProvider, types) {
                 entityViewsType: 'customer',
                 searchEnabled: true,
                 searchByEntitySubtype: true,
-                searchEntityType: types.entityType.entityview,
+                searchEntityType: types.entityType.entityView,
                 pageTitle: 'customer.entity-views'
             },
             ncyBreadcrumb: {

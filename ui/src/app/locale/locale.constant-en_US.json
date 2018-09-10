@@ -822,7 +822,9 @@
         "unable-entity-view-device-alias-title": "Unable to delete entity view alias",
         "unable-entity-view-device-alias-text": "Device alias '{{entityViewAlias}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "select-entity-view": "Select entity view",
-        "make-public": "Make entity view public"
+        "make-public": "Make entity view public",
+        "start-ts": "Start ts",
+        "end-ts": "End ts"
     },
     "event": {
         "event-type": "Event type",

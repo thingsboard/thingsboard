@@ -52,9 +52,33 @@
 	      		<div translate ng-message="required">entity-view.name-required</div>
 	    	</div>				
 		</md-input-container>
+        <tb-entity-select flex ng-disabled="!isEdit"
+                          the-form="theForm"
+                          tb-required="true"
+                          allowed-entity-types="allowedEntityTypes"
+                          ng-model="entityView.entityId">
+        </tb-entity-select>
         <md-input-container class="md-block">
             <label translate>entity-view.description</label>
             <textarea ng-model="entityView.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
+        <section layout="row" layout-align="start start">
+            <mdp-date-picker ng-model="startTs"
+                             mdp-max-date="maxStartTs"
+                             mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"></mdp-date-picker>
+            <mdp-time-picker ng-model="startTs"
+                             mdp-max-date="maxStartTs"
+                             mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"
+                             mdp-auto-switch="true"></mdp-time-picker>
+        </section>
+        <section layout="row" layout-align="start start">
+            <mdp-date-picker ng-model="endTs"
+                             mdp-min-date="minEndTs"
+                             mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"></mdp-date-picker>
+            <mdp-time-picker ng-model="endTs"
+                             mdp-min-date="minEndTs"
+                             mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"
+                             mdp-auto-switch="true"></mdp-time-picker>
+        </section>
 	</fieldset>
 </md-content>

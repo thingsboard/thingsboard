@@ -20,7 +20,7 @@ import entityViewFieldsetTemplate from './entity-view-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntityViewDirective($compile, $templateCache, toast, $translate, types, clipboardService, entityViewService, customerService) {
+export default function EntityViewDirective($compile, $templateCache, $filter, toast, $translate, types, clipboardService, entityViewService, customerService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(entityViewFieldsetTemplate);
         element.html(template);
@@ -29,6 +29,8 @@ export default function EntityViewDirective($compile, $templateCache, toast, $tr
         scope.isAssignedToCustomer = false;
         scope.isPublic = false;
         scope.assignedCustomer = null;
+
+        scope.allowedEntityTypes = [types.entityType.device, types.entityType.asset];
 
         scope.$watch('entityView', function(newVal) {
             if (newVal) {
@@ -45,8 +47,40 @@ export default function EntityViewDirective($compile, $templateCache, toast, $tr
                     scope.isPublic = false;
                     scope.assignedCustomer = null;
                 }
+                scope.startTs = $filter('date')(scope.entityView.endTs, 'yyyy-MM-dd HH:mm:ss');
+                scope.endTs = $filter('date')(scope.entityView.startTs, 'yyyy-MM-dd HH:mm:ss');
             }
         });
+
+
+        scope.$watch('startTs', function (newDate) {
+            if (newDate) {
+                if (newDate.getTime() > scope.maxStartTs) {
+                    scope.startTs = angular.copy(scope.maxStartTs);
+                }
+                updateMinMaxDates();
+            }
+        });
+
+        scope.$watch('endTs', function (newDate) {
+            if (newDate) {
+                if (newDate.getTime() < scope.minEndTs) {
+                    scope.endTs = angular.copy(scope.minEndTs);
+                }
+                updateMinMaxDates();
+            }
+        });
+
+        function updateMinMaxDates() {
+            if (scope.endTs) {
+                scope.maxStartTs = angular.copy(new Date(scope.endTs.getTime() - 1000));
+                scope.entityView.endTs = $filter('date')(scope.endTs, 'yyyy-MM-dd HH:mm:ss');
+            }
+            if (scope.startTs) {
+                scope.minEndTs = angular.copy(new Date(scope.startTs.getTime() + 1000));
+                scope.entityView.startTs = $filter('date')(scope.startTs, 'yyyy-MM-dd HH:mm:ss');
+            }
+        }
 
         scope.onEntityViewIdCopied = function() {
             toast.showSuccess($translate.instant('entity-view.idCopiedMessage'), 750, angular.element(element).parent().parent(), 'bottom left');
