@@ -131,6 +131,7 @@ public class ModelConstants {
      * Cassandra device constants.
      */
     public static final String DEVICE_COLUMN_FAMILY_NAME = "device";
+    public static final String DEVICE_FAMILY_NAME = "device";
     public static final String DEVICE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String DEVICE_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String DEVICE_NAME_PROPERTY = "name";
@@ -147,6 +148,7 @@ public class ModelConstants {
      * Cassandra entityView constants.
      */
     public static final String ENTITY_VIEW_TABLE_FAMILY_NAME = "entity_views";
+    public static final String ENTITY_VIEW_FAMILY_NAME = "entity-view";
     public static final String ENTITY_VIEW_ENTITY_ID_PROPERTY = ENTITY_ID_COLUMN;
     public static final String ENTITY_VIEW_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ENTITY_VIEW_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
