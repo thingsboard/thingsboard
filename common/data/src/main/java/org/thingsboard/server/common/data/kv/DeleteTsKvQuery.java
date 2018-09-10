@@ -15,12 +15,8 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-public interface TsKvQuery {
+public interface DeleteTsKvQuery extends TsKvQuery {
 
-    String getKey();
-
-    long getStartTs();
-
-    long getEndTs();
+    Boolean getRewriteLatestIfDeleted();
 
 }

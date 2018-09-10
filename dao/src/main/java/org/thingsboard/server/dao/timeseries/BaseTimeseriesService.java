@@ -22,8 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -40,14 +41,15 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class BaseTimeseriesService implements TimeseriesService {
 
     public static final int INSERTS_PER_ENTRY = 3;
+    public static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
 
     @Autowired
     private TimeseriesDao timeseriesDao;
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<TsKvQuery> queries) {
+    public ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<ReadTsKvQuery> queries) {
         validate(entityId);
-        queries.forEach(query -> validate(query));
+        queries.forEach(BaseTimeseriesService::validate);
         return timeseriesDao.findAllAsync(entityId, queries);
     }
 
@@ -95,17 +97,42 @@ public class BaseTimeseriesService implements TimeseriesService {
         futures.add(timeseriesDao.save(entityId, tsKvEntry, ttl));
     }
 
+    @Override
+    public ListenableFuture<List<Void>> remove(EntityId entityId, List<DeleteTsKvQuery> deleteTsKvQueries) {
+        validate(entityId);
+        deleteTsKvQueries.forEach(BaseTimeseriesService::validate);
+        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(deleteTsKvQueries.size() * DELETES_PER_ENTRY);
+        for (DeleteTsKvQuery tsKvQuery : deleteTsKvQueries) {
+            deleteAndRegisterFutures(futures, entityId, tsKvQuery);
+        }
+        return Futures.allAsList(futures);
+    }
+
+    private void deleteAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, DeleteTsKvQuery query) {
+        futures.add(timeseriesDao.remove(entityId, query));
+        futures.add(timeseriesDao.removeLatest(entityId, query));
+        futures.add(timeseriesDao.removePartition(entityId, query));
+    }
+
     private static void validate(EntityId entityId) {
         Validator.validateEntityId(entityId, "Incorrect entityId " + entityId);
     }
 
-    private static void validate(TsKvQuery query) {
+    private static void validate(ReadTsKvQuery query) {
         if (query == null) {
-            throw new IncorrectParameterException("TsKvQuery can't be null");
+            throw new IncorrectParameterException("ReadTsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
-            throw new IncorrectParameterException("Incorrect TsKvQuery. Key can't be empty");
+            throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Key can't be empty");
         } else if (query.getAggregation() == null) {
-            throw new IncorrectParameterException("Incorrect TsKvQuery. Aggregation can't be empty");
+            throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Aggregation can't be empty");
+        }
+    }
+
+    private static void validate(DeleteTsKvQuery query) {
+        if (query == null) {
+            throw new IncorrectParameterException("DeleteTsKvQuery can't be null");
+        } else if (isBlank(query.getKey())) {
+            throw new IncorrectParameterException("Incorrect DeleteTsKvQuery. Key can't be empty");
         }
     }
 }
