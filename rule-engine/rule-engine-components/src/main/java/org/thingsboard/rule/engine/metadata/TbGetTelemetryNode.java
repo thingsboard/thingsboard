@@ -37,8 +37,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryCertainTimeRangeNodeConfiguration.FETCH_MODE_ALL;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryCertainTimeRangeNodeConfiguration.MAX_FETCH_SIZE;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
 import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
 
 /**
@@ -46,17 +46,17 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
  */
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "get telemetry from certain time range",
-        configClazz = TbGetTelemetryCertainTimeRangeNodeConfiguration.class,
-        nodeDescription = "Fetch telemetry of certain time range based on the certain delay in the Message Metadata.\n",
+        name = "originator telemetry",
+        configClazz = TbGetTelemetryNodeConfiguration.class,
+        nodeDescription = "Add Message Originator Telemetry for selected time range into Message Metadata\n",
         nodeDetails = "The node allows you to select fetch mode <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
                 "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry. " +
                 "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
-public class TbGetTelemetryCertainTimeRangeNode implements TbNode {
+public class TbGetTelemetryNode implements TbNode {
 
-    private TbGetTelemetryCertainTimeRangeNodeConfiguration config;
+    private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private long startTsOffset;
     private long endTsOffset;
@@ -65,7 +65,7 @@ public class TbGetTelemetryCertainTimeRangeNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbGetTelemetryCertainTimeRangeNodeConfiguration.class);
+        this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
         startTsOffset = TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
         endTsOffset = TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());

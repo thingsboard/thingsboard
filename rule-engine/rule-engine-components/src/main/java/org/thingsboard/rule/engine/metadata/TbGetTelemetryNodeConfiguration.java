@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * Created by mshvayka on 04.09.18.
  */
 @Data
-public class TbGetTelemetryCertainTimeRangeNodeConfiguration implements NodeConfiguration<TbGetTelemetryCertainTimeRangeNodeConfiguration> {
+public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetTelemetryNodeConfiguration> {
 
     public static final String FETCH_MODE_FIRST = "FIRST";
     public static final String FETCH_MODE_LAST = "LAST";
@@ -44,8 +44,8 @@ public class TbGetTelemetryCertainTimeRangeNodeConfiguration implements NodeConf
 
 
     @Override
-    public TbGetTelemetryCertainTimeRangeNodeConfiguration defaultConfiguration() {
-        TbGetTelemetryCertainTimeRangeNodeConfiguration configuration = new TbGetTelemetryCertainTimeRangeNodeConfiguration();
+    public TbGetTelemetryNodeConfiguration defaultConfiguration() {
+        TbGetTelemetryNodeConfiguration configuration = new TbGetTelemetryNodeConfiguration();
         configuration.setLatestTsKeyNames(Collections.emptyList());
         configuration.setFetchMode("FIRST");
         configuration.setStartIntervalTimeUnit(TimeUnit.MINUTES.name());
