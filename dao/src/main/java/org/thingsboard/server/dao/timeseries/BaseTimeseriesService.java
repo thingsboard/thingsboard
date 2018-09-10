@@ -23,8 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -47,7 +47,7 @@ public class BaseTimeseriesService implements TimeseriesService {
     private TimeseriesDao timeseriesDao;
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<TsKvQuery> queries) {
+    public ListenableFuture<List<TsKvEntry>> findAll(EntityId entityId, List<ReadTsKvQuery> queries) {
         validate(entityId);
         queries.forEach(BaseTimeseriesService::validate);
         return timeseriesDao.findAllAsync(entityId, queries);
@@ -118,13 +118,13 @@ public class BaseTimeseriesService implements TimeseriesService {
         Validator.validateEntityId(entityId, "Incorrect entityId " + entityId);
     }
 
-    private static void validate(TsKvQuery query) {
+    private static void validate(ReadTsKvQuery query) {
         if (query == null) {
-            throw new IncorrectParameterException("TsKvQuery can't be null");
+            throw new IncorrectParameterException("ReadTsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
-            throw new IncorrectParameterException("Incorrect TsKvQuery. Key can't be empty");
+            throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Key can't be empty");
         } else if (query.getAggregation() == null) {
-            throw new IncorrectParameterException("Incorrect TsKvQuery. Aggregation can't be empty");
+            throw new IncorrectParameterException("Incorrect ReadTsKvQuery. Aggregation can't be empty");
         }
     }
 

@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.kv;
 import lombok.Data;
 
 @Data
-public class BaseDeleteTsKvQuery extends BaseQuery implements DeleteTsKvQuery {
+public class BaseDeleteTsKvQuery extends BaseTsKvQuery implements DeleteTsKvQuery {
 
     private final Boolean rewriteLatestIfDeleted;
 

@@ -35,16 +35,16 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -370,9 +370,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                     e -> log.error("Failed to fetch missed updates.", e), tsCallBackExecutor);
         } else if (subscription.getType() == TelemetryFeature.TIMESERIES) {
             long curTs = System.currentTimeMillis();
-            List<TsKvQuery> queries = new ArrayList<>();
+            List<ReadTsKvQuery> queries = new ArrayList<>();
             subscription.getKeyStates().entrySet().forEach(e -> {
-                queries.add(new BaseTsKvQuery(e.getKey(), e.getValue() + 1L, curTs));
+                queries.add(new BaseReadTsKvQuery(e.getKey(), e.getValue() + 1L, curTs));
             });
 
             DonAsynchron.withCallback(tsService.findAll(entityId, queries),

@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-public interface Query {
+public interface ReadTsKvQuery extends TsKvQuery {
 
-    String getKey();
+    long getInterval();
 
-    long getStartTs();
+    int getLimit();
 
-    long getEndTs();
+    Aggregation getAggregation();
+
+    String getOrderBy();
 
 }

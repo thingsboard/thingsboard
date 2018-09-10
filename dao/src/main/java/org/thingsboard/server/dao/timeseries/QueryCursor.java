@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.timeseries;
 
 import lombok.Getter;
-import org.thingsboard.server.common.data.kv.Query;
+import org.thingsboard.server.common.data.kv.TsKvQuery;
 
 import java.util.List;
 import java.util.UUID;
@@ -37,7 +37,7 @@ public class QueryCursor {
     final List<Long> partitions;
     private int partitionIndex;
 
-    public QueryCursor(String entityType, UUID entityId, Query baseQuery, List<Long> partitions) {
+    public QueryCursor(String entityType, UUID entityId, TsKvQuery baseQuery, List<Long> partitions) {
         this.entityType = entityType;
         this.entityId = entityId;
         this.key = baseQuery.getKey();
