@@ -20,7 +20,7 @@ import thingsboardApiEntityView from '../api/entity-view.service';
 import thingsboardApiCustomer from '../api/customer.service';
 
 import EntityViewRoutes from './entity-view.routes';
-import EntityViewCardController from './entity-view.controller';
+import {EntityViewController, EntityViewCardController} from './entity-view.controller';
 import AssignEntityViewToCustomerController from './assign-to-customer.controller';
 import AddEntityViewsToCustomerController from './add-entity-views-to-customer.controller';
 import EntityViewDirective from './entity-view.directive';
@@ -33,7 +33,7 @@ export default angular.module('thingsboard.entityView', [
     thingsboardApiCustomer
 ])
     .config(EntityViewRoutes)
-    .controller('EntityViewController', EntityViewCardController)
+    .controller('EntityViewController', EntityViewController)
     .controller('EntityViewCardController', EntityViewCardController)
     .controller('AssignEntityViewToCustomerController', AssignEntityViewToCustomerController)
     .controller('AddEntityViewsToCustomerController', AddEntityViewsToCustomerController)

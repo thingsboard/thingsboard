@@ -15,6 +15,9 @@
     limitations under the License.
 
 -->
+<md-button ng-click="onMakePublic({event: $event})"
+           ng-show="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer && !isPublic"
+           class="md-raised md-primary">{{ 'entity-view.make-public' | translate }}</md-button>
 <md-button ng-click="onAssignToCustomer({event: $event})"
            ng-show="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer"
            class="md-raised md-primary">{{ 'entity-view.assign-to-customer' | translate }}</md-button>
@@ -49,13 +52,6 @@
 	      		<div translate ng-message="required">entity-view.name-required</div>
 	    	</div>				
 		</md-input-container>
-        <tb-entity-subtype-autocomplete
-                ng-disabled="$root.loading || !isEdit"
-                tb-required="true"
-                the-form="theForm"
-                ng-model="entityView.type"
-                entity-type="types.entityType.entityview">
-        </tb-entity-subtype-autocomplete>
         <md-input-container class="md-block">
             <label translate>entity-view.description</label>
             <textarea ng-model="entityView.additionalInfo.description" rows="2"></textarea>

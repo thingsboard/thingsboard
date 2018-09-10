@@ -35,14 +35,14 @@ export default function EntityViewRoutes($stateProvider, types) {
                 }
             },
             data: {
-                entityViewsTypes: 'tenant',
+                entityViewsType: 'tenant',
                 searchEnabled: true,
                 searchByEntitySubtype: true,
                 searchEntityType: types.entityType.entityview,
-                pageTitle: 'entity-views.entity-views'
+                pageTitle: 'entity-view.entity-views'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "devices_other", "label": "entity-view.entity-views"}'
+                label: '{"icon": "view_stream", "label": "entity-view.entity-views"}'
             }
         })
         .state('home.customers.entityViews', {
@@ -58,14 +58,14 @@ export default function EntityViewRoutes($stateProvider, types) {
                 }
             },
             data: {
-                entityViewsTypes: 'customer',
+                entityViewsType: 'customer',
                 searchEnabled: true,
                 searchByEntitySubtype: true,
                 searchEntityType: types.entityType.entityview,
                 pageTitle: 'customer.entity-views'
             },
             ncyBreadcrumb: {
-                label: '{"icon": "devices_other", "label": "{{ vm.customerEntityViewsTitle }}", "translate": "false"}'
+                label: '{"icon": "view_stream", "label": "{{ vm.customerEntityViewsTitle }}", "translate": "false"}'
             }
         });
 

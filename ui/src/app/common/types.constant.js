@@ -328,7 +328,7 @@ export default angular.module('thingsboard.types', [])
                 alarm: "ALARM",
                 rulechain: "RULE_CHAIN",
                 rulenode: "RULE_NODE",
-                entityview: "ENTITY_VIEW"
+                entityView: "ENTITY_VIEW"
             },
             aliasEntityType: {
                 current_customer: "CURRENT_CUSTOMER"

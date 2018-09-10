@@ -27,6 +27,7 @@ export default function EntityViewDirective($compile, $templateCache, toast, $tr
 
         scope.types = types;
         scope.isAssignedToCustomer = false;
+        scope.isPublic = false;
         scope.assignedCustomer = null;
 
         scope.$watch('entityView', function(newVal) {
@@ -36,10 +37,12 @@ export default function EntityViewDirective($compile, $templateCache, toast, $tr
                     customerService.getShortCustomerInfo(scope.entityView.customerId.id).then(
                         function success(customer) {
                             scope.assignedCustomer = customer;
+                            scope.isPublic = customer.isPublic;
                         }
                     );
                 } else {
                     scope.isAssignedToCustomer = false;
+                    scope.isPublic = false;
                     scope.assignedCustomer = null;
                 }
             }
@@ -60,6 +63,7 @@ export default function EntityViewDirective($compile, $templateCache, toast, $tr
             entityViewScope: '=',
             theForm: '=',
             onAssignToCustomer: '&',
+            onMakePublic: '&',
             onUnassignFromCustomer: '&',
             onDeleteEntityView: '&'
         }

@@ -16,11 +16,17 @@
 package org.thingsboard.server.dao.entityview;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
+
+import java.util.List;
 
 /**
  * Created by Victor Basanets on 8/27/2017.
@@ -57,4 +63,6 @@ public interface EntityViewService {
     void unassignCustomerEntityViews(TenantId tenantId, CustomerId customerId);
 
     ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId);
+
+    ListenableFuture<List<EntityView>> findEntityViewsByQuery(EntityViewSearchQuery query);
 }

@@ -194,7 +194,7 @@ export function EntityViewController($rootScope, userService, entityViewService,
             entityViewGroupActionsList.push(
                 {
                     onAction: function ($event, items) {
-                        assignEntiyViewsToCustomer($event, items);
+                        assignEntityViewsToCustomer($event, items);
                     },
                     name: function() { return $translate.instant('entity-view.assign-entity-views') },
                     details: function(selectedCount) {
@@ -221,10 +221,10 @@ export function EntityViewController($rootScope, userService, entityViewService,
             fetchEntityViewsFunction = function (pageLink, entityViewType) {
                 return entityViewService.getCustomerEntityViews(customerId, pageLink, true, null, entityViewType);
             };
-            deleteentityViewFunction = function (entityViewId) {
+            deleteEntityViewFunction = function (entityViewId) {
                 return entityViewService.unassignEntityViewFromCustomer(entityViewId);
             };
-            refreshentityViewsParamsFunction = function () {
+            refreshEntityViewsParamsFunction = function () {
                 return {"customerId": customerId, "topIndex": vm.topIndex};
             };
 
@@ -271,9 +271,9 @@ export function EntityViewController($rootScope, userService, entityViewService,
             }
         }
 
-        vm.entityViewGridConfig.refreshParamsFunc = refreshentityViewsParamsFunction;
-        vm.entityViewGridConfig.fetchItemsFunc = fetchentityViewsFunction;
-        vm.entityViewGridConfig.deleteItemFunc = deleteentityViewFunction;
+        vm.entityViewGridConfig.refreshParamsFunc = refreshEntityViewsParamsFunction;
+        vm.entityViewGridConfig.fetchItemsFunc = fetchEntityViewsFunction;
+        vm.entityViewGridConfig.deleteItemFunc = deleteEntityViewFunction;
 
     }
 

@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.model.nosql;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,10 +32,8 @@ import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 
-import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-
 import java.io.IOException;
 import java.util.UUID;
 
@@ -55,21 +54,20 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @Column(name = ID_PROPERTY)
     private UUID id;
 
-    @PartitionKey(value = 1)
-    @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
-    private UUID entityId;
-
     @Enumerated(EnumType.STRING)
     @Column(name = ENTITY_TYPE_PROPERTY)
     private EntityType entityType;
 
-    @PartitionKey(value = 2)
+    @PartitionKey(value = 1)
     @Column(name = ModelConstants.ENTITY_VIEW_TENANT_ID_PROPERTY)
     private UUID tenantId;
 
-    @PartitionKey(value = 3)
+    @PartitionKey(value = 2)
     @Column(name = ModelConstants.ENTITY_VIEW_CUSTOMER_ID_PROPERTY)
     private UUID customerId;
+
+    @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
+    private UUID entityId;
 
     @Column(name = ModelConstants.ENTITY_VIEW_NAME_PROPERTY)
     private String name;

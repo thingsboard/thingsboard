@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.entityview;
 
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
 
@@ -92,5 +91,4 @@ public interface EntityViewDao extends Dao<EntityView> {
                                                                        UUID customerId,
                                                                        UUID entityId,
                                                                        TextPageLink pageLink);
-
 }

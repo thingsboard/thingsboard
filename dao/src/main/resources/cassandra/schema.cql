@@ -651,7 +651,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
     ts_end bigint,
     search_text text,
     additional_info text,
-    PRIMARY KEY (id, entity_id, tenant_id, customer_id)
+    PRIMARY KEY (id, tenant_id, customer_id)
 );
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_name AS

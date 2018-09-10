@@ -155,6 +155,10 @@ function EntityViewService($http, $q, $window, userService, attributeService, cu
     function saveEntityView(entityView) {
         var deferred = $q.defer();
         var url = '/api/entityView';
+
+        entityView.keys = {};
+        entityView.keys.timeseries = ['a', 'b'];
+
         $http.post(url, entityView).then(function success(response) {
             deferred.resolve(response.data);
         }, function fail() {
