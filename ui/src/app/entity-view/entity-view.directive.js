@@ -74,11 +74,11 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
         function updateMinMaxDates() {
             if (scope.endTs) {
                 scope.maxStartTs = angular.copy(new Date(scope.endTs.getTime() - 1000));
-                scope.entityView.endTs = $filter('date')(scope.endTs, 'yyyy-MM-dd HH:mm:ss');
+                scope.entityView.endTs = scope.endTs.getTime();
             }
             if (scope.startTs) {
                 scope.minEndTs = angular.copy(new Date(scope.startTs.getTime() + 1000));
-                scope.entityView.startTs = $filter('date')(scope.startTs, 'yyyy-MM-dd HH:mm:ss');
+                scope.entityView.startTs = scope.startTs.getTime();
             }
         }
 

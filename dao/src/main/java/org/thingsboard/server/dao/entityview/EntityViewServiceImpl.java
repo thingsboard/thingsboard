@@ -136,7 +136,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         List<Object> list = new ArrayList<>();
         list.add(entityView.getTenantId());
         list.add(entityView.getName());
-        cache.evict(list);
+//        cache.evict(list);
         entityViewDao.removeById(entityViewId.getId());
     }
 
