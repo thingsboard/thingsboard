@@ -44,9 +44,4 @@ public class AttributesEntityView {
     public AttributesEntityView(AttributesEntityView obj) {
         this(obj.getCs(), obj.getSs(), obj.getSh());
     }
-
-    @Override
-    public String toString() {
-        return "{cs=" + cs + ", ss=" + ss + ", sh=" + sh + '}';
-    }
 }

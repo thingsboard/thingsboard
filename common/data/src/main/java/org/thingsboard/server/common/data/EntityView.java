@@ -39,8 +39,8 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private CustomerId customerId;
     private String name;
     private TelemetryEntityView keys;
-    private Long tsBegin;
-    private Long tsEnd;
+    private long startTs;
+    private long endTs;
 
     public EntityView() {
         super();

@@ -40,9 +40,4 @@ public class TelemetryEntityView {
     public TelemetryEntityView(TelemetryEntityView obj) {
         this(obj.getTimeseries(), obj.getAttributes());
     }
-
-    @Override
-    public String toString() {
-        return "{timeseries=" + timeseries + ", attributes=" + attributes + '}';
-    }
 }

@@ -34,7 +34,6 @@ import org.thingsboard.server.dao.util.mapping.JsonStringType;
 import javax.persistence.*;
 import java.io.IOException;
 
-import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_ENTITY_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
 
 /**
@@ -106,8 +105,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.tsBegin = entityView.getTsBegin() != null ? String.valueOf(entityView.getTsBegin()) : "0";
-        this.tsEnd = entityView.getTsEnd() != null ? String.valueOf(entityView.getTsEnd()) : "0";
+        this.tsBegin = entityView.getStartTs() != 0L ? String.valueOf(entityView.getStartTs()) : "0";
+        this.tsEnd = entityView.getEndTs() != 0L ? String.valueOf(entityView.getEndTs()) : "0";
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
@@ -142,8 +141,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         } catch (IOException e) {
             e.printStackTrace();
         }
-        entityView.setTsBegin(Long.parseLong(tsBegin));
-        entityView.setTsEnd(Long.parseLong(tsEnd));
+        entityView.setStartTs(Long.parseLong(tsBegin));
+        entityView.setEndTs(Long.parseLong(tsEnd));
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }

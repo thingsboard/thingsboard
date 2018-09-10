@@ -30,6 +30,14 @@ import java.util.UUID;
 public interface EntityViewDao extends Dao<EntityView> {
 
     /**
+     * Save or update device object
+     *
+     * @param entityView the entity-view object
+     * @return saved entity-view object
+     */
+    EntityView save(EntityView entityView);
+
+    /**
      * Find entity views by tenantId and page link.
      *
      * @param tenantId the tenantId
