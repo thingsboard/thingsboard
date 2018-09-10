@@ -132,14 +132,8 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     @Override
     public void addLocalWsSubscription(String sessionId, EntityId entityId, SubscriptionState sub) {
-        String familyName = ModelConstants.DEVICE_FAMILY_NAME;
-
-        //To do
-        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
-            familyName = ModelConstants.ENTITY_VIEW_FAMILY_NAME;
-            //EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId)
-        }
-
+        String familyName = entityId.getEntityType().equals(EntityType.ENTITY_VIEW)
+                ? ModelConstants.ENTITY_VIEW_FAMILY_NAME : ModelConstants.DEVICE_FAMILY_NAME;
         Optional<ServerAddress> server = routingService.resolveById(entityId);
         Subscription subscription;
         if (server.isPresent()) {
@@ -151,10 +145,6 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
             log.trace("[{}] Registering local subscription [{}] for " + familyName + " [{}]", sessionId, sub.getSubscriptionId(), entityId);
             subscription = new Subscription(sub, true);
         }
-
-        /*if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
-            registerSubscription(sessionId, entityId, subscription);
-        }*/
         registerSubscription(sessionId, entityId, subscription);
     }
 
