@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -29,12 +31,14 @@ import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryCertainTimeRangeNodeConfiguration.FETCH_MODE_ALL;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryCertainTimeRangeNodeConfiguration.MAX_FETCH_SIZE;
 import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
 
 /**
@@ -65,55 +69,92 @@ public class TbGetTelemetryCertainTimeRangeNode implements TbNode {
         tsKeyNames = config.getLatestTsKeyNames();
         startTsOffset = TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
         endTsOffset = TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
-        limit = config.getFetchMode().equals(TbGetTelemetryCertainTimeRangeNodeConfiguration.FETCH_MODE_ALL)
-                ? TbGetTelemetryCertainTimeRangeNodeConfiguration.MAX_FETCH_SIZE : 1;
+        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
         mapper = new ObjectMapper();
+        mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
+        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        ObjectNode resultNode = mapper.createObjectNode();
-        List<TsKvQuery> queries = new ArrayList<>();
-        long ts = System.currentTimeMillis();
-        long startTs = ts - startTsOffset;
-        long endTs = ts - endTsOffset;
         if (tsKeyNames.isEmpty()) {
-            ctx.tellFailure(msg, new Exception("Telemetry are not selected!"));
+            ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
         } else {
-            for (String key : tsKeyNames) {
-                //TODO: handle direction;
-                queries.add(new BaseTsKvQuery(key, startTs, endTs, 1, limit, NONE));
-            }
             try {
+                List<TsKvQuery> queries = buildQueries();
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(msg.getOriginator(), queries);
                 DonAsynchron.withCallback(list, data -> {
-                    for (TsKvEntry tsKvEntry : data) {
-                        if (limit == TbGetTelemetryCertainTimeRangeNodeConfiguration.MAX_FETCH_SIZE) {
-                            ArrayNode arrayNode;
-                            if(resultNode.has(tsKvEntry.getKey())){
-                                arrayNode = (ArrayNode) resultNode.get(tsKvEntry.getKey());
-                                arrayNode.add(mapper.createObjectNode().put(String.valueOf(tsKvEntry.getTs()), tsKvEntry.getValueAsString()));
-                            }else {
-                                arrayNode =  mapper.createArrayNode();
-                                arrayNode.add((mapper.createObjectNode().put(String.valueOf(tsKvEntry.getTs()), tsKvEntry.getValueAsString())));
-                                resultNode.set(tsKvEntry.getKey(), arrayNode);
-                            }
-                        } else {
-                            resultNode.put(tsKvEntry.getKey(), tsKvEntry.getValueAsString());
-                        }
-                    }
-                    for (String key : tsKeyNames) {
-                        if(resultNode.has(key)){
-                            msg.getMetaData().putValue(key, resultNode.get(key).toString());
-                        }
-                    }
+                    process(data, msg);
                     TbMsg newMsg = ctx.newMsg(msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData());
                     ctx.tellNext(newMsg, SUCCESS);
-                }, error -> ctx.tellFailure(msg, error));
+                }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
             }
         }
+    }
+
+    //TODO: handle direction;
+    private List<TsKvQuery> buildQueries() {
+        long ts = System.currentTimeMillis();
+        long startTs = ts - startTsOffset;
+        long endTs = ts - endTsOffset;
+
+        return tsKeyNames.stream()
+                .map(key -> new BaseTsKvQuery(key, startTs, endTs, 1, limit, NONE))
+                .collect(Collectors.toList());
+    }
+
+    private void process(List<TsKvEntry> entries, TbMsg msg) {
+        ObjectNode resultNode = mapper.createObjectNode();
+        if (limit == MAX_FETCH_SIZE) {
+            entries.forEach(entry -> processArray(resultNode, entry));
+        } else {
+            entries.forEach(entry -> processSingle(resultNode, entry));
+        }
+
+        for (String key : tsKeyNames) {
+            if(resultNode.has(key)){
+                msg.getMetaData().putValue(key, resultNode.get(key).toString());
+            }
+        }
+    }
+
+    private void processSingle(ObjectNode node, TsKvEntry entry) {
+        node.put(entry.getKey(), entry.getValueAsString());
+    }
+
+    private void processArray(ObjectNode node, TsKvEntry entry) {
+        if(node.has(entry.getKey())){
+            ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
+            ObjectNode obj = buildNode(entry);
+            arrayNode.add(obj);
+        }else {
+            ArrayNode arrayNode = mapper.createArrayNode();
+            ObjectNode obj = buildNode(entry);
+            arrayNode.add(obj);
+            node.set(entry.getKey(), arrayNode);
+        }
+    }
+
+    private ObjectNode buildNode(TsKvEntry entry) {
+        ObjectNode obj = mapper.createObjectNode()
+                .put("ts", entry.getTs());
+        switch (entry.getDataType()) {
+            case STRING:
+                obj.put("value", entry.getValueAsString());
+                break;
+            case LONG:
+                obj.put("value", entry.getLongValue().get());
+                break;
+            case BOOLEAN:
+                obj.put("value", entry.getBooleanValue().get());
+                break;
+            case DOUBLE:
+                obj.put("value", entry.getDoubleValue().get());
+                break;
+        }
+        return obj;
     }
 
     @Override

@@ -49,9 +49,9 @@ public class TbGetTelemetryCertainTimeRangeNodeConfiguration implements NodeConf
         configuration.setLatestTsKeyNames(Collections.emptyList());
         configuration.setFetchMode("FIRST");
         configuration.setStartIntervalTimeUnit(TimeUnit.MINUTES.name());
-        configuration.setStartInterval(1);
+        configuration.setStartInterval(2);
         configuration.setEndIntervalTimeUnit(TimeUnit.MINUTES.name());
-        configuration.setEndInterval(2);
+        configuration.setEndInterval(1);
         return configuration;
     }
 }
