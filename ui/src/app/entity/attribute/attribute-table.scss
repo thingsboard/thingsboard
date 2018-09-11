@@ -13,42 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../scss/constants';
+@import "../../../scss/constants";
 
-$md-light: rgba(255, 255, 255, 100%);
-$md-edit-icon-fill: #757575;
+$md-light: rgba(255, 255, 255, 100%) !default;
+$md-edit-icon-fill: #757575 !default;
 
 md-toolbar.md-table-toolbar.alternate {
   .md-toolbar-tools {
-      md-icon {
-        color: $md-light;
-      }
+    md-icon {
+      color: $md-light;
+    }
   }
 }
 
 .md-table {
   &.tb-attribute-table {
-      table-layout: fixed;
-      td.md-cell {
-          &.tb-value-cell {
-            overflow: auto;
-          }
+    table-layout: fixed;
+
+    td.md-cell {
+      &.tb-value-cell {
+        overflow: auto;
       }
+    }
   }
+
   .md-cell {
     ng-md-icon {
-      fill: $md-edit-icon-fill;
       float: right;
       height: 16px;
+      fill: $md-edit-icon-fill;
     }
   }
 }
 
 .widgets-carousel {
   position: relative;
-  margin: 0px;
   height: calc(100% - 100px);
   min-height: 150px !important;
+  margin: 0;
 
   tb-dashboard {
     #gridster-parent {

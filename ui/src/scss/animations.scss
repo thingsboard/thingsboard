@@ -18,6 +18,7 @@
 @include keyframes(tbMoveFromTopFade) {
   from {
     opacity: 0;
+
     @include transform(translate(0, -100%));
   }
 }
@@ -25,6 +26,7 @@
 @include keyframes(tbMoveToTopFade) {
   to {
     opacity: 0;
+
     @include transform(translate(0, -100%));
   }
 }
@@ -32,6 +34,7 @@
 @include keyframes(tbMoveFromBottomFade) {
   from {
     opacity: 0;
+
     @include transform(translate(0, 100%));
   }
 }
@@ -39,6 +42,7 @@
 @include keyframes(tbMoveToBottomFade) {
   to {
     opacity: 0;
+
     @include transform(translate(0, 150%));
   }
 }

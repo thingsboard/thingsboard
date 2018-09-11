@@ -13,32 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-relation-filters {
   .header {
-    padding-left: 5px;
     padding-right: 5px;
     padding-bottom: 5px;
+    padding-left: 5px;
+
     .cell {
-      padding-left: 5px;
       padding-right: 5px;
-      color: rgba(0,0,0,.54);
+      padding-left: 5px;
       font-size: 12px;
       font-weight: 700;
+      color: rgba(0, 0, 0, .54);
       white-space: nowrap;
     }
   }
+
   .body {
-    padding-left: 5px;
-    padding-right: 5px;
     max-height: 300px;
-    overflow: auto;
+    padding-right: 5px;
     padding-bottom: 20px;
+    padding-left: 5px;
+    overflow: auto;
+
     .row {
       padding-top: 5px;
     }
+
     .cell {
-      padding-left: 5px;
       padding-right: 5px;
+      padding-left: 5px;
 
       md-select {
         margin: 0 0 24px;
@@ -49,21 +54,23 @@
       }
 
       md-chips-wrap {
-        padding: 0px;
+        padding: 0;
         margin: 0 0 24px;
+
         md-autocomplete {
           height: 30px;
+
           md-autocomplete-wrap {
             height: 30px;
           }
         }
       }
+
       .md-chips .md-chip-input-container input {
-        padding: 2px 2px 2px;
         height: 26px;
+        padding: 2px 2px 2px;
         line-height: 26px;
       }
-
     }
 
     .md-button {

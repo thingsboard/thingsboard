@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.common.data.kv;
 
-/*
-.tb-entity-subtype-list {
-  #entity_subtype_list_chips {
-    .md-chips {
-      padding-bottom: 1px;
-    }
-  }
-  .tb-error-messages {
-    margin-top: -11px;
-    height: 35px;
-    .tb-error-message {
-      padding-left: 1px;
-    }
-  }
+public interface ReadTsKvQuery extends TsKvQuery {
+
+    long getInterval();
+
+    int getLimit();
+
+    Aggregation getAggregation();
+
+    String getOrderBy();
+
 }
-*/

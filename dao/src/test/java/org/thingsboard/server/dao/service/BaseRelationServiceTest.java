@@ -227,6 +227,13 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         Assert.assertTrue(relations.contains(relationA));
         Assert.assertTrue(relations.contains(relationB));
         Assert.assertTrue(relations.contains(relationC));
+
+        //Test from cache
+        relations = relationService.findByQuery(query).get();
+        Assert.assertEquals(3, relations.size());
+        Assert.assertTrue(relations.contains(relationA));
+        Assert.assertTrue(relations.contains(relationB));
+        Assert.assertTrue(relations.contains(relationC));
     }
 
     @Test
@@ -250,6 +257,12 @@ public abstract class BaseRelationServiceTest extends AbstractServiceTest {
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1));
         query.setFilters(Collections.singletonList(new EntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
         List<EntityRelation> relations = relationService.findByQuery(query).get();
+        Assert.assertEquals(2, relations.size());
+        Assert.assertTrue(relations.contains(relationAB));
+        Assert.assertTrue(relations.contains(relationBC));
+
+        //Test from cache
+        relations = relationService.findByQuery(query).get();
         Assert.assertEquals(2, relations.size());
         Assert.assertTrue(relations.contains(relationAB));
         Assert.assertTrue(relations.contains(relationBC));

@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 tb-js-func {
   position: relative;
+
   .tb-disabled {
-    color: rgba(0,0,0,0.38);
+    color: rgba(0, 0, 0, .38);
   }
+
   .fill-height {
     height: 100%;
   }
@@ -25,25 +28,27 @@ tb-js-func {
 
 .tb-js-func-toolbar {
   .md-button.tidy {
-    color: #7B7B7B;
     min-width: 32px;
     min-height: 15px;
-    line-height: 15px;
-    font-size: 0.800rem;
-    margin: 0 5px 0 0;
     padding: 4px;
-    background: rgba(220, 220, 220, 0.35);
+    margin: 0 5px 0 0;
+    font-size: .8rem;
+    line-height: 15px;
+    color: #7b7b7b;
+    background: rgba(220, 220, 220, .35);
   }
 }
 
 .tb-js-func-panel {
-  margin-left: 15px;
-  border: 1px solid #C0C0C0;
   height: calc(100% - 80px);
+  margin-left: 15px;
+  border: 1px solid #c0c0c0;
+
   #tb-javascript-input {
-    min-width: 200px;
     width: 100%;
+    min-width: 200px;
     height: 100%;
+
     &:not(.fill-height) {
       min-height: 200px;
     }

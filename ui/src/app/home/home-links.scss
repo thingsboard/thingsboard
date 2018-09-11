@@ -16,10 +16,11 @@
 @import "../../scss/constants";
 
 .tb-home-links {
-    .md-headline {
-      font-size: 20px;
-      @media (min-width: $layout-breakpoint-xmd) {
-        font-size: 24px;
-      }
+  .md-headline {
+    font-size: 20px;
+
+    @media (min-width: $layout-breakpoint-xmd) {
+      font-size: 24px;
     }
+  }
 }

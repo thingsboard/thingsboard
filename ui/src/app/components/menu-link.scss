@@ -24,9 +24,11 @@
 }
 
 .tb-menu-toggle-list {
-  overflow: hidden;
   position: relative;
   z-index: 1;
-  @include transition(0.75s cubic-bezier(0.35, 0, 0.25, 1));
+  overflow: hidden;
+
+  @include transition(.75s cubic-bezier(.35, 0, .25, 1));
+
   @include transition-property(height);
 }
