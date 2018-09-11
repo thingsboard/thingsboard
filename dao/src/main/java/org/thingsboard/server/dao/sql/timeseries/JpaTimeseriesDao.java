@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -238,7 +239,9 @@ public class JpaTimeseriesDao extends JpaAbstractDaoListeningExecutorService imp
                                 query.getKey(),
                                 query.getStartTs(),
                                 query.getEndTs(),
-                                new PageRequest(0, query.getLimit()))));
+                                new PageRequest(0, query.getLimit(),
+                                        new Sort(Sort.Direction.fromString(
+                                                query.getOrderBy()), "ts")))));
     }
 
     @Override
