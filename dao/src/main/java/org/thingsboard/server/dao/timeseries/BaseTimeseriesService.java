@@ -75,7 +75,10 @@ public class BaseTimeseriesService implements TimeseriesService {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
             Collection<String> matchingKeys = chooseKeysForEntityView(entityView, keys);
             List<ReadTsKvQuery> queries = new ArrayList<>();
-            matchingKeys.forEach(key -> queries.add(new BaseReadTsKvQuery(key, entityView.getStartTs(), entityView.getEndTs())));
+
+            matchingKeys.forEach(key -> queries.add(
+                    new BaseReadTsKvQuery(key, entityView.getStartTs(), entityView.getEndTs(), 1, "ASC")));
+
             return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, queries));
         }
         keys.forEach(key -> futures.add(timeseriesDao.findLatest(entityId, key)));
