@@ -828,7 +828,11 @@
         "select-entity-view": "Select entity view",
         "make-public": "Make entity view public",
         "start-ts": "Start ts",
-        "end-ts": "End ts"
+        "end-ts": "End ts",
+        "client-attributes": "Client attributes",
+        "shared-attributes": "Shared attributes",
+        "server-attributes": "Server attributes",
+        "latest-timeseries": "Latest timeseries"
     },
     "event": {
         "event-type": "Event type",

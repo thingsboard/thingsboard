@@ -62,6 +62,39 @@
             <label translate>entity-view.description</label>
             <textarea ng-model="entityView.additionalInfo.description" rows="2"></textarea>
         </md-input-container>
+        <section layout="column">
+            <label translate class="tb-title no-padding">entity-view.client-attributes</label>
+            <md-chips style="padding-bottom: 15px;"
+                      ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.attributes.cs"
+                      placeholder="{{'entity-view.client-attributes' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+            <label translate class="tb-title no-padding">entity-view.shared-attributes</label>
+            <md-chips style="padding-bottom: 15px;"
+                      ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.attributes.sh"
+                      placeholder="{{'entity-view.shared-attributes' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+            <label translate class="tb-title no-padding">entity-view.server-attributes</label>
+            <md-chips style="padding-bottom: 15px;"
+                      ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.attributes.ss"
+                      placeholder="{{'entity-view.server-attributes' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+            <label translate class="tb-title no-padding">entity-view.latest-timeseries</label>
+            <md-chips ng-required="false"
+                      readonly="!isEdit"
+                      ng-model="entityView.keys.timeseries"
+                      placeholder="{{'entity-view.latest-timeseries' | translate}}"
+                      md-separator-keys="separatorKeys">
+            </md-chips>
+        </section>
         <section layout="row" layout-align="start start">
             <mdp-date-picker ng-model="startTs"
                              mdp-max-date="maxStartTs"

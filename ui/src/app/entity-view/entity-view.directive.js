@@ -20,7 +20,8 @@ import entityViewFieldsetTemplate from './entity-view-fieldset.tpl.html';
 /* eslint-enable import/no-unresolved, import/default */
 
 /*@ngInject*/
-export default function EntityViewDirective($compile, $templateCache, $filter, toast, $translate, types, clipboardService, entityViewService, customerService) {
+export default function EntityViewDirective($compile, $templateCache, $filter, toast, $translate, $mdConstant,
+                                            types, clipboardService, entityViewService, customerService) {
     var linker = function (scope, element) {
         var template = $templateCache.get(entityViewFieldsetTemplate);
         element.html(template);
@@ -31,6 +32,9 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
         scope.assignedCustomer = null;
 
         scope.allowedEntityTypes = [types.entityType.device, types.entityType.asset];
+
+        var semicolon = 186;
+        scope.separatorKeys = [$mdConstant.KEY_CODE.ENTER, $mdConstant.KEY_CODE.COMMA, semicolon];
 
         scope.$watch('entityView', function(newVal) {
             if (newVal) {
@@ -49,6 +53,14 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
                 }
                 scope.startTs = new Date(scope.entityView.startTs);
                 scope.endTs = new Date(scope.entityView.endTs);
+                if (!scope.entityView.keys) {
+                    scope.entityView.keys = {};
+                    scope.entityView.keys.timeseries = [];
+                    scope.entityView.keys.attributes = {};
+                    scope.entityView.keys.attributes.ss = [];
+                    scope.entityView.keys.attributes.cs = [];
+                    scope.entityView.keys.attributes.sh = [];
+                }
             }
         });
 
