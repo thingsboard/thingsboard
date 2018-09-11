@@ -156,8 +156,8 @@ public class ModelConstants {
     public static final String ENTITY_VIEW_TYPE_PROPERTY = DEVICE_TYPE_PROPERTY;
     public static final String ENTITY_VIEW_TENANT_AND_NAME_VIEW_NAME = "entity_view_by_tenant_and_name";
     public static final String ENTITY_VIEW_KEYS_PROPERTY = "keys";
-    public static final String ENTITY_VIEW_TS_BEGIN_PROPERTY = "ts_begin";
-    public static final String ENTITY_VIEW_TS_END_PROPERTY = "ts_end";
+    public static final String ENTITY_VIEW_START_TS_PROPERTY = "start_ts";
+    public static final String ENTITY_VIEW_END_TS_PROPERTY = "end_ts";
     public static final String ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "entity_view_by_tenant_and_search_text";
 

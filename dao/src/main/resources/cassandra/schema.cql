@@ -647,8 +647,8 @@ CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
     customer_id timeuuid,
     name text,
     keys text,
-    ts_begin bigint,
-    ts_end bigint,
+    start_ts bigint,
+    end_ts bigint,
     search_text text,
     additional_info text,
     PRIMARY KEY (id, tenant_id, customer_id)
@@ -657,27 +657,27 @@ CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_name AS
     SELECT *
     from thingsboard.entity_views
-    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND ts_begin IS NOT NULL AND ts_end IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND start_ts IS NOT NULL AND end_ts IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
     PRIMARY KEY (tenant_id, name, id, entity_id, customer_id)
     WITH CLUSTERING ORDER BY (name ASC, id DESC, entity_id DESC, customer_id DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_entity AS
     SELECT *
     from thingsboard.entity_views
-    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND ts_begin IS NOT NULL AND ts_end IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND start_ts IS NOT NULL AND end_ts IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
     PRIMARY KEY (tenant_id, entity_id, id, customer_id, name)
     WITH CLUSTERING ORDER BY (entity_id ASC, customer_id ASC, id DESC, name DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_customer AS
     SELECT *
     from thingsboard.entity_views
-    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND ts_begin IS NOT NULL AND ts_end IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND start_ts IS NOT NULL AND end_ts IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
     PRIMARY KEY (tenant_id, customer_id, id, entity_id, name)
     WITH CLUSTERING ORDER BY (customer_id ASC, id DESC, entity_id DESC, name DESC);
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_customer_and_entity AS
     SELECT *
     from thingsboard.entity_views
-    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND ts_begin IS NOT NULL AND ts_end IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
+    WHERE entity_id IS NOT NULL AND tenant_id IS NOT NULL AND customer_id IS NOT NULL AND keys IS NOT NULL AND start_ts IS NOT NULL AND end_ts IS NOT NULL AND name IS NOT NULL AND id IS NOT NULL
     PRIMARY KEY (tenant_id, customer_id, entity_id, id, name)
     WITH CLUSTERING ORDER BY (customer_id ASC, entity_id DESC, id DESC, name DESC);
