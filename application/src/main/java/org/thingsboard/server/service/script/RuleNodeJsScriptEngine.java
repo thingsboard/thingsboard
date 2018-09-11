@@ -171,10 +171,10 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             if (e.getCause() instanceof ScriptException) {
                 throw (ScriptException)e.getCause();
             } else {
-                throw new ScriptException("Failed to execute js script: " + e.getMessage());
+                throw new ScriptException(e);
             }
         } catch (Exception e) {
-            throw new ScriptException("Failed to execute js script: " + e.getMessage());
+            throw new ScriptException(e);
         }
     }
 

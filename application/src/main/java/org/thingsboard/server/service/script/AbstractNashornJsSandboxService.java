@@ -17,13 +17,13 @@ package org.thingsboard.server.service.script;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import delight.nashornsandbox.NashornSandbox;
 import delight.nashornsandbox.NashornSandboxes;
 import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.EntityId;
 
@@ -45,10 +45,9 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
     private NashornSandbox sandbox;
     private ScriptEngine engine;
     private ExecutorService monitorExecutorService;
-    private ListeningExecutorService evalExecutorService;
 
     private final Map<UUID, String> functionsMap = new ConcurrentHashMap<>();
-    private final Map<BlackListKey, AtomicInteger> blackListedFunctions = new ConcurrentHashMap<>();
+    private final Map<BlackListKey, BlackListInfo> blackListedFunctions = new ConcurrentHashMap<>();
 
     private final Map<String, ScriptInfo> scriptKeyToInfo = new ConcurrentHashMap<>();
     private final Map<UUID, ScriptInfo> scriptIdToInfo = new ConcurrentHashMap<>();
@@ -58,7 +57,6 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
         if (useJsSandbox()) {
             sandbox = NashornSandboxes.create();
             monitorExecutorService = Executors.newFixedThreadPool(getMonitorThreadPoolSize());
-            evalExecutorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
             sandbox.setExecutor(monitorExecutorService);
             sandbox.setMaxCPUTime(getMaxCpuTime());
             sandbox.allowNoBraces(false);
@@ -73,9 +71,6 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
     public void stop() {
         if (monitorExecutorService != null) {
             monitorExecutorService.shutdownNow();
-        }
-        if (evalExecutorService != null) {
-            evalExecutorService.shutdownNow();
         }
     }
 
@@ -124,26 +119,35 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
     public ListenableFuture<Object> invokeFunction(UUID scriptId, EntityId entityId, Object... args) {
         String functionName = functionsMap.get(scriptId);
         if (functionName == null) {
-            return Futures.immediateFailedFuture(new RuntimeException("No compiled script found for scriptId: [" + scriptId + "]!"));
+            String message = "No compiled script found for scriptId: [" + scriptId + "]!";
+            log.warn(message);
+            return Futures.immediateFailedFuture(new RuntimeException(message));
         }
-        if (!isBlackListed(scriptId)) {
-            try {
-                Object result;
-                if (useJsSandbox()) {
-                    result = sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
-                } else {
-                    result = ((Invocable) engine).invokeFunction(functionName, args);
-                }
-                return Futures.immediateFuture(result);
-            } catch (Exception e) {
-                BlackListKey blackListKey = new BlackListKey(scriptId, entityId);
-                blackListedFunctions.computeIfAbsent(blackListKey, key -> new AtomicInteger(0)).incrementAndGet();
-                return Futures.immediateFailedFuture(e);
-            }
+
+        BlackListInfo blackListInfo = blackListedFunctions.get(new BlackListKey(scriptId, entityId));
+        if (blackListInfo != null && blackListInfo.getCount() >= getMaxErrors()) {
+            RuntimeException throwable = new RuntimeException("Script is blacklisted due to maximum error count " + getMaxErrors() + "!", blackListInfo.getCause());
+            throwable.printStackTrace();
+            return Futures.immediateFailedFuture(throwable);
+        }
+
+        try {
+            return invoke(functionName, args);
+        } catch (Exception e) {
+            BlackListKey blackListKey = new BlackListKey(scriptId, entityId);
+            blackListedFunctions.computeIfAbsent(blackListKey, key -> new BlackListInfo()).incrementWithReason(e);
+            return Futures.immediateFailedFuture(e);
+        }
+    }
+
+    private ListenableFuture<Object> invoke(String functionName, Object... args) throws ScriptException, NoSuchMethodException {
+        Object result;
+        if (useJsSandbox()) {
+            result = sandbox.getSandboxedInvocable().invokeFunction(functionName, args);
         } else {
-            return Futures.immediateFailedFuture(
-                    new RuntimeException("Script is blacklisted due to maximum error count " + getMaxErrors() + "!"));
+            result = ((Invocable) engine).invokeFunction(functionName, args);
         }
+        return Futures.immediateFuture(result);
     }
 
     @Override
@@ -181,15 +185,6 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
         return Futures.immediateFuture(null);
     }
 
-
-    private boolean isBlackListed(UUID scriptId) {
-        if (blackListedFunctions.containsKey(scriptId)) {
-            AtomicInteger errorCount = blackListedFunctions.get(scriptId);
-            return errorCount.get() >= getMaxErrors();
-        } else {
-            return false;
-        }
-    }
 
     private String generateJsScript(JsScriptType scriptType, String functionName, String scriptBody, String... argNames) {
         switch (scriptType) {
@@ -233,13 +228,33 @@ public abstract class AbstractNashornJsSandboxService implements JsSandboxServic
 
     @EqualsAndHashCode
     @Getter
+    @RequiredArgsConstructor
     private static class BlackListKey {
         private final UUID scriptId;
         private final EntityId entityId;
 
-        public BlackListKey(UUID scriptId, EntityId entityId) {
-            this.scriptId = scriptId;
-            this.entityId = entityId;
+    }
+
+    @Data
+    private static class BlackListInfo {
+        private final AtomicInteger count;
+        private Exception ex;
+
+        BlackListInfo() {
+            this.count = new AtomicInteger(0);
+        }
+
+        void incrementWithReason(Exception e) {
+            count.incrementAndGet();
+            ex = e;
+        }
+
+        int getCount() {
+            return count.get();
+        }
+
+        Exception getCause() {
+            return ex;
         }
     }
 }
