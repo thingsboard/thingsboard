@@ -15,12 +15,21 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-public interface TsKvQuery {
+import lombok.Data;
 
-    String getKey();
+@Data
+public class BaseDeleteTsKvQuery extends BaseTsKvQuery implements DeleteTsKvQuery {
 
-    long getStartTs();
+    private final Boolean rewriteLatestIfDeleted;
 
-    long getEndTs();
+    public BaseDeleteTsKvQuery(String key, long startTs, long endTs, boolean rewriteLatestIfDeleted) {
+        super(key, startTs, endTs);
+        this.rewriteLatestIfDeleted = rewriteLatestIfDeleted;
+    }
+
+    public BaseDeleteTsKvQuery(String key, long startTs, long endTs) {
+        this(key, startTs, endTs, false);
+    }
+
 
 }
