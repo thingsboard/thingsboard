@@ -100,7 +100,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
                 entityViewRepository.findByTenantIdAndCustomerId(
                         fromTimeUUID(tenantId),
                         fromTimeUUID(customerId),
-                        Objects.toString(pageLink, ""),
+                        Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())
                 ));
@@ -116,7 +116,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
                         fromTimeUUID(tenantId),
                         fromTimeUUID(customerId),
                         fromTimeUUID(entityId),
-                        Objects.toString(pageLink, ""),
+                        Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())
                 ));
