@@ -75,11 +75,11 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
     @Column(name = ModelConstants.ENTITY_VIEW_KEYS_PROPERTY)
     private String keys;
 
-    @Column(name = ModelConstants.ENTITY_VIEW_TS_BEGIN_PROPERTY)
-    private String tsBegin;
+    @Column(name = ModelConstants.ENTITY_VIEW_START_TS_PROPERTY)
+    private long startTs;
 
-    @Column(name = ModelConstants.ENTITY_VIEW_TS_END_PROPERTY)
-    private String tsEnd;
+    @Column(name = ModelConstants.ENTITY_VIEW_END_TS_PROPERTY)
+    private long endTs;
 
     @Column(name = ModelConstants.SEARCH_TEXT_PROPERTY)
     private String searchText;
@@ -114,8 +114,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.tsBegin = entityView.getStartTs() != 0L ? String.valueOf(entityView.getStartTs()) : "0";
-        this.tsEnd = entityView.getEndTs() != 0L ? String.valueOf(entityView.getEndTs()) : "0";
+        this.startTs = entityView.getStartTs() != 0L ? entityView.getStartTs() : 0L;
+        this.endTs = entityView.getEndTs() != 0L ? entityView.getEndTs() : 0L;
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
@@ -144,8 +144,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        entityView.setStartTs(Long.parseLong(tsBegin));
-        entityView.setEndTs(Long.parseLong(tsEnd));
+        entityView.setStartTs(startTs);
+        entityView.setEndTs(endTs);
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }

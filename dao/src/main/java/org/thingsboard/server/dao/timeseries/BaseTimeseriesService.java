@@ -71,13 +71,17 @@ public class BaseTimeseriesService implements TimeseriesService {
         validate(entityId);
         List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(keys.size());
         keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
-        if (false/*entityId.getEntityType().equals(EntityType.ENTITY_VIEW)*/) {
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
-            Collection<String> newKeys = chooseKeysForEntityView(entityView, keys);
-            newKeys.forEach(newKey -> futures.add(timeseriesDao.findLatest(entityView.getEntityId(), newKey)));
-        } else {
-            keys.forEach(key -> futures.add(timeseriesDao.findLatest(entityId, key)));
+            Collection<String> matchingKeys = chooseKeysForEntityView(entityView, keys);
+            List<ReadTsKvQuery> queries = new ArrayList<>();
+
+            matchingKeys.forEach(key -> queries.add(
+                    new BaseReadTsKvQuery(key, entityView.getStartTs(), entityView.getEndTs(), 1, "ASC")));
+
+            return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, queries));
         }
+        keys.forEach(key -> futures.add(timeseriesDao.findLatest(entityId, key)));
         return Futures.allAsList(futures);
     }
 
@@ -150,7 +154,6 @@ public class BaseTimeseriesService implements TimeseriesService {
         return newQueries;
     }
 
-    @Deprecated /*Will be a modified*/
     private Collection<String> chooseKeysForEntityView(EntityView entityView, Collection<String> keys) {
         Collection<String> newKeys = new ArrayList<>();
         entityView.getKeys().getTimeseries()

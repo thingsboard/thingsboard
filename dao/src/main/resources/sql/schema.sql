@@ -260,8 +260,8 @@ CREATE TABLE IF NOT EXISTS entity_views (
     customer_id varchar(31),
     name varchar(255),
     keys varchar(255),
-    ts_begin varchar(255),
-    ts_end varchar(255),
+    start_ts bigint,
+    end_ts bigint,
     search_text varchar(255),
     additional_info varchar
 );
