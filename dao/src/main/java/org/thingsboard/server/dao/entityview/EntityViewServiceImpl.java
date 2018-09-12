@@ -89,7 +89,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Autowired
     private CacheManager cacheManager;
 
-    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
+//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
     @Override
     public EntityView findEntityViewById(EntityViewId entityViewId) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
@@ -105,7 +105,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 .orElse(null);
     }
 
-    @CachePut(cacheNames = ENTITY_VIEW_CACHE)
+//    @CachePut(cacheNames = ENTITY_VIEW_CACHE)
     @Override
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
@@ -130,14 +130,14 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Override
     public void deleteEntityView(EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
-        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
+//        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
         deleteEntityRelations(entityViewId);
         EntityView entityView = entityViewDao.findById(entityViewId.getId());
-        List<Object> list = new ArrayList<>();
-        list.add(entityView.getTenantId());
-        list.add(entityView.getName());
-        cache.evict(list);
+//        List<Object> list = new ArrayList<>();
+//        list.add(entityView.getTenantId());
+//        list.add(entityView.getName());
+//        cache.evict(list);
         entityViewDao.removeById(entityViewId.getId());
     }
 
@@ -150,7 +150,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return new TextPageData<>(entityViews, pageLink);
     }
 
-    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
+//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
     @Override
     public TextPageData<EntityView> findEntityViewByTenantIdAndEntityId(TenantId tenantId, EntityId entityId,
                                                                     TextPageLink pageLink) {
@@ -190,7 +190,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return new TextPageData<>(entityViews, pageLink);
     }
 
-    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #customerId, #entityId, #pageLink}")
+//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #customerId, #entityId, #pageLink}")
     @Override
     public TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(TenantId tenantId,
                                                                                       CustomerId customerId,

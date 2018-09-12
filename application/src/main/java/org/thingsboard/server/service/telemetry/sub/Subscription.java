@@ -34,7 +34,7 @@ public class Subscription {
     private long endTime;
 
     public Subscription(SubscriptionState sub, boolean local) {
-        this(sub, local, null, 0L, 0L);
+        this(sub, local, null);
     }
 
     public Subscription(SubscriptionState sub, boolean local, ServerAddress server) {

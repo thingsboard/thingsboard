@@ -43,7 +43,7 @@ public class BaseReadTsKvQuery extends BaseTsKvQuery implements ReadTsKvQuery {
     }
 
     public BaseReadTsKvQuery(String key, long startTs, long endTs, int limit, String orderBy) {
-        this(key, startTs, endTs, endTs - startTs, limit, Aggregation.AVG, orderBy);
+        this(key, startTs, endTs, endTs - startTs, limit, Aggregation.NONE, orderBy);
     }
 
 }

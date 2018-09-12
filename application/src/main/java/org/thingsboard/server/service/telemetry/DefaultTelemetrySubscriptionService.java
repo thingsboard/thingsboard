@@ -33,11 +33,8 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-//<<<<<<< HEAD
 import org.thingsboard.server.common.data.id.EntityViewId;
-//=======
 import org.thingsboard.server.common.data.id.TenantId;
-//>>>>>>> d909192071880b7af2137333142bc62ece369ec1
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
@@ -108,9 +105,6 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     @Autowired
     private ClusterRpcService rpcService;
 
-    /*@Autowired
-    private EntityViewService entityViewService;*/
-
     @Autowired
     @Lazy
     private DeviceStateService stateService;
@@ -143,17 +137,15 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     @Override
     public void addLocalWsSubscription(String sessionId, EntityId entityId, SubscriptionState sub) {
-        String familyName = entityId.getEntityType().equals(EntityType.ENTITY_VIEW)
-                ? ModelConstants.ENTITY_VIEW_FAMILY_NAME : ModelConstants.DEVICE_FAMILY_NAME;
         Optional<ServerAddress> server = routingService.resolveById(entityId);
         Subscription subscription;
         if (server.isPresent()) {
             ServerAddress address = server.get();
-            log.trace("[{}] Forwarding subscription [{}] for " + familyName + " [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId, address);
+            log.trace("[{}] Forwarding subscription [{}] for [{}] entity [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId.getEntityType().name(), entityId, address);
             subscription = new Subscription(sub, true, address);
             tellNewSubscription(address, sessionId, subscription);
         } else {
-            log.trace("[{}] Registering local subscription [{}] for " + familyName + " [{}]", sessionId, sub.getSubscriptionId(), entityId);
+            log.trace("[{}] Registering local subscription [{}] for [{}] entity [{}]", sessionId, sub.getSubscriptionId(), entityId.getEntityType().name(), entityId);
             subscription = new Subscription(sub, true);
         }
         registerSubscription(sessionId, entityId, subscription);

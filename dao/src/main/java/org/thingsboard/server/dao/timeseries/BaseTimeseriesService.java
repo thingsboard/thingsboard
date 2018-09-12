@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.service.Validator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -61,7 +62,11 @@ public class BaseTimeseriesService implements TimeseriesService {
         queries.forEach(BaseTimeseriesService::validate);
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
-            return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, queries));
+            List<ReadTsKvQuery> filteredQueries =
+                    queries.stream()
+                            .filter(query -> entityView.getKeys().getTimeseries().contains(query.getKey()))
+                            .collect(Collectors.toList());
+            return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, filteredQueries));
         }
         return timeseriesDao.findAllAsync(entityId, queries);
     }
@@ -73,11 +78,12 @@ public class BaseTimeseriesService implements TimeseriesService {
         keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
-            Collection<String> matchingKeys = chooseKeysForEntityView(entityView, keys);
-            List<ReadTsKvQuery> queries = new ArrayList<>();
-
-            matchingKeys.forEach(key -> queries.add(
-                    new BaseReadTsKvQuery(key, entityView.getStartTs(), entityView.getEndTs(), 1, "ASC")));
+            List<String> filteredKeys = new ArrayList<>(keys);
+            filteredKeys.retainAll(entityView.getKeys().getTimeseries());
+            List<ReadTsKvQuery> queries =
+                    filteredKeys.stream()
+                            .map(key -> new BaseReadTsKvQuery(key, entityView.getStartTs(), entityView.getEndTs(), 1, "ASC"))
+                            .collect(Collectors.toList());
 
             return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, queries));
         }
@@ -136,34 +142,11 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     private List<ReadTsKvQuery> updateQueriesForEntityView(EntityView entityView, List<ReadTsKvQuery> queries) {
-        List<ReadTsKvQuery> newQueries = new ArrayList<>();
-        entityView.getKeys().getTimeseries()
-                .forEach(viewKey -> queries
-                        .forEach(query -> {
-                            if (query.getKey().equals(viewKey)) {
-                                if (entityView.getStartTs() == 0 && entityView.getEndTs() == 0) {
-                                    newQueries.add(updateQuery(query.getStartTs(), query.getEndTs(), viewKey, query));
-                                } else if (entityView.getStartTs() == 0 && entityView.getEndTs() != 0) {
-                                    newQueries.add(updateQuery(query.getStartTs(), entityView.getEndTs(), viewKey, query));
-                                } else if (entityView.getStartTs() != 0 && entityView.getEndTs() == 0) {
-                                    newQueries.add(updateQuery(entityView.getStartTs(), query.getEndTs(), viewKey, query));
-                                } else {
-                                    newQueries.add(updateQuery(entityView.getStartTs(), entityView.getEndTs(), viewKey, query));
-                                }
-                            }}));
-        return newQueries;
-    }
-
-    private Collection<String> chooseKeysForEntityView(EntityView entityView, Collection<String> keys) {
-        Collection<String> newKeys = new ArrayList<>();
-        entityView.getKeys().getTimeseries()
-                .forEach(viewKey -> keys
-                        .forEach(key -> {
-                            if (key.equals(viewKey)) {
-                                newKeys.add(key);
-                            }
-                        }));
-        return newKeys;
+        return queries.stream().map(query -> {
+            long startTs = entityView.getStartTs() == 0 ? query.getStartTs() : entityView.getStartTs();
+            long endTs = entityView.getEndTs() == 0 ? query.getEndTs() : entityView.getEndTs();
+            return updateQuery(startTs, endTs, query);
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -205,9 +188,9 @@ public class BaseTimeseriesService implements TimeseriesService {
         }
     }
 
-    private static ReadTsKvQuery updateQuery(Long startTs, Long endTs, String viewKey, ReadTsKvQuery query) {
+    private ReadTsKvQuery updateQuery(Long startTs, Long endTs, ReadTsKvQuery query) {
         return startTs <= query.getStartTs() && endTs >= query.getEndTs() ? query :
-                new BaseReadTsKvQuery(viewKey, startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
+                new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
     }
 
     private static void checkForNonEntityView(EntityId entityId) throws Exception {
