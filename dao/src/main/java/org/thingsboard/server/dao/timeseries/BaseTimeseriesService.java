@@ -64,7 +64,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
             List<ReadTsKvQuery> filteredQueries =
                     queries.stream()
-                            .filter(query -> entityView.getKeys().getTimeseries().contains(query.getKey()))
+                            .filter(query -> entityView.getKeys().getTimeseries().isEmpty() || entityView.getKeys().getTimeseries().contains(query.getKey()))
                             .collect(Collectors.toList());
             return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, filteredQueries));
         }
@@ -79,7 +79,9 @@ public class BaseTimeseriesService implements TimeseriesService {
         if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
             EntityView entityView = entityViewService.findEntityViewById((EntityViewId) entityId);
             List<String> filteredKeys = new ArrayList<>(keys);
-            filteredKeys.retainAll(entityView.getKeys().getTimeseries());
+            if (!entityView.getKeys().getTimeseries().isEmpty()) {
+                filteredKeys.retainAll(entityView.getKeys().getTimeseries());
+            }
             List<ReadTsKvQuery> queries =
                     filteredKeys.stream()
                             .map(key -> new BaseReadTsKvQuery(key, entityView.getStartTs(), entityView.getEndTs(), 1, "ASC"))
@@ -100,11 +102,6 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<Void>> save(EntityId entityId, TsKvEntry tsKvEntry) {
         validate(entityId);
-        try {
-            checkForNonEntityView(entityId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         if (tsKvEntry == null) {
             throw new IncorrectParameterException("Key value entry can't be null");
         }
@@ -115,11 +112,6 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     @Override
     public ListenableFuture<List<Void>> save(EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
-        try {
-            checkForNonEntityView(entityId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size() * INSERTS_PER_ENTRY);
         for (TsKvEntry tsKvEntry : tsKvEntries) {
             if (tsKvEntry == null) {
@@ -131,10 +123,8 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     private void saveAndRegisterFutures(List<ListenableFuture<Void>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
-        try {
-            checkForNonEntityView(entityId);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            throw new IncorrectParameterException("Telemetry data can't be stored for entity view. Only read only");
         }
         futures.add(timeseriesDao.savePartition(entityId, tsKvEntry.getTs(), tsKvEntry.getKey(), ttl));
         futures.add(timeseriesDao.saveLatest(entityId, tsKvEntry));
@@ -145,7 +135,9 @@ public class BaseTimeseriesService implements TimeseriesService {
         return queries.stream().map(query -> {
             long startTs = entityView.getStartTs() == 0 ? query.getStartTs() : entityView.getStartTs();
             long endTs = entityView.getEndTs() == 0 ? query.getEndTs() : entityView.getEndTs();
-            return updateQuery(startTs, endTs, query);
+
+            return startTs <= query.getStartTs() && endTs >= query.getEndTs() ? query :
+                    new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
         }).collect(Collectors.toList());
     }
 
@@ -185,17 +177,6 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("DeleteTsKvQuery can't be null");
         } else if (isBlank(query.getKey())) {
             throw new IncorrectParameterException("Incorrect DeleteTsKvQuery. Key can't be empty");
-        }
-    }
-
-    private ReadTsKvQuery updateQuery(Long startTs, Long endTs, ReadTsKvQuery query) {
-        return startTs <= query.getStartTs() && endTs >= query.getEndTs() ? query :
-                new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
-    }
-
-    private static void checkForNonEntityView(EntityId entityId) throws Exception {
-        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
-            throw new Exception("Entity-views were read only");
         }
     }
 }
