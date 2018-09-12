@@ -105,8 +105,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.startTs = entityView.getStartTs() != 0L ? entityView.getStartTs() : 0L;
-        this.endTs = entityView.getEndTs() != 0L ? entityView.getEndTs() : 0L;
+        this.startTs = entityView.getStartTimeMs();
+        this.endTs = entityView.getEndTimeMs();
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
@@ -141,8 +141,8 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         } catch (IOException e) {
             e.printStackTrace();
         }
-        entityView.setStartTs(startTs);
-        entityView.setEndTs(endTs);
+        entityView.setStartTimeMs(startTs);
+        entityView.setEndTimeMs(endTs);
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }

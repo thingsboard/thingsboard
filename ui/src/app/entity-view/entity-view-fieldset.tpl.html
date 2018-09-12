@@ -95,23 +95,25 @@
                       md-separator-keys="separatorKeys">
             </md-chips>
         </section>
-        <section layout="row" layout-align="start start">
-            <mdp-date-picker ng-model="startTs"
-                             mdp-max-date="maxStartTs"
-                             mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"></mdp-date-picker>
-            <mdp-time-picker ng-model="startTs"
-                             mdp-max-date="maxStartTs"
-                             mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"
-                             mdp-auto-switch="true"></mdp-time-picker>
-        </section>
-        <section layout="row" layout-align="start start">
-            <mdp-date-picker ng-model="endTs"
-                             mdp-min-date="minEndTs"
-                             mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"></mdp-date-picker>
-            <mdp-time-picker ng-model="endTs"
-                             mdp-min-date="minEndTs"
-                             mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"
-                             mdp-auto-switch="true"></mdp-time-picker>
+        <section layout="column">
+            <section layout="row" layout-align="start start">
+                <mdp-date-picker ng-model="startTimeMs"
+                                 mdp-max-date="maxStartTimeTs"
+                                 mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"></mdp-date-picker>
+                <mdp-time-picker ng-model="startTimeMs"
+                                 mdp-max-date="maxStartTimeTs"
+                                 mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"
+                                 mdp-auto-switch="true"></mdp-time-picker>
+            </section>
+            <section layout="row" layout-align="start start">
+                <mdp-date-picker ng-model="endTimeMs"
+                                 mdp-min-date="minEndTimeTs"
+                                 mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"></mdp-date-picker>
+                <mdp-time-picker ng-model="endTimeMs"
+                                 mdp-min-date="minEndTimeTs"
+                                 mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"
+                                 mdp-auto-switch="true"></mdp-time-picker>
+            </section>
         </section>
 	</fieldset>
 </md-content>
