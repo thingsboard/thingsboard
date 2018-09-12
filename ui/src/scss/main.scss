@@ -51,7 +51,7 @@ a {
   text-decoration: none;
   border-bottom: 1px solid rgba(64, 84, 178, .25);
 
-  @include transition(border-bottom .35s);
+  transition: border-bottom .35s;
 }
 
 a:hover,
@@ -550,7 +550,7 @@ $previewSize: 100px !default;
 }
 
 .tb-error-message.ng-animate {
-  @include transition(all .3s cubic-bezier(.55, 0, .55, .2));
+  transition: all .3s cubic-bezier(.55, 0, .55, .2);
 }
 
 .tb-error-message.ng-enter-prepare,
@@ -646,13 +646,13 @@ section.tb-top-header-buttons {
 }
 
 .tb-header-buttons .tb-btn-header {
-  @include animation(tbMoveFromTopFade .3s ease both);
   position: relative !important;
   display: inline-block !important;
+  animation: tbMoveFromTopFade .3s ease both;
 }
 
 .tb-header-buttons .tb-btn-header.ng-hide {
-  @include animation(tbMoveToTopFade .3s ease both);
+  animation: tbMoveToTopFade .3s ease both;
 }
 
 /***********************
@@ -668,19 +668,19 @@ section.tb-footer-buttons {
 }
 
 .tb-footer-buttons .tb-btn-footer {
-  @include animation(tbMoveFromBottomFade .3s ease both);
   position: relative !important;
   display: inline-block !important;
+  animation: tbMoveFromBottomFade .3s ease both;
 }
 
 .tb-footer-buttons .tb-btn-footer.ng-hide {
-  @include animation(tbMoveToBottomFade .3s ease both);
+  animation: tbMoveToBottomFade .3s ease both;
 }
 
 ._md-toast-open-bottom .tb-footer-buttons {
-  @include transition(all .4s cubic-bezier(.25, .8, .25, 1));
+  transition: all .4s cubic-bezier(.25, .8, .25, 1);
 
-  @include transform(translate3d(0, -42px, 0));
+  transform: translate3d(0, -42px, 0);
 }
 
 /***********************

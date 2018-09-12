@@ -15,34 +15,34 @@
  */
 @import "~compass-sass-mixins/lib/animate";
 
-@include keyframes(tbMoveFromTopFade) {
+@keyframes tbMoveFromTopFade {
   from {
     opacity: 0;
 
-    @include transform(translate(0, -100%));
+    transform: translate(0, -100%);
   }
 }
 
-@include keyframes(tbMoveToTopFade) {
+@keyframes tbMoveToTopFade {
   to {
     opacity: 0;
 
-    @include transform(translate(0, -100%));
+    transform: translate(0, -100%);
   }
 }
 
-@include keyframes(tbMoveFromBottomFade) {
+@keyframes tbMoveFromBottomFade {
   from {
     opacity: 0;
 
-    @include transform(translate(0, 100%));
+    transform: translate(0, 100%);
   }
 }
 
-@include keyframes(tbMoveToBottomFade) {
+@keyframes tbMoveToBottomFade {
   to {
     opacity: 0;
 
-    @include transform(translate(0, 150%));
+    transform: translate(0, 150%);
   }
 }

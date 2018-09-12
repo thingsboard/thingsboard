@@ -19,7 +19,7 @@ $edit-toolbar-height: 40px !default;
 
 .tb-editor {
   .tb-split {
-    @include box-sizing(border-box);
+    box-sizing: border-box;
     overflow-x: hidden;
     overflow-y: auto;
   }
