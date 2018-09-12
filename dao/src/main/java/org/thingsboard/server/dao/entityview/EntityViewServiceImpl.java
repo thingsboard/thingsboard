@@ -127,17 +127,17 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                         List<AttributeKvEntry> filteredAttributes =
                                 attributeKvEntries.stream()
                                         .filter(attributeKvEntry -> {
-                                            if (entityView.getStartTs() == 0 && entityView.getEndTs() == 0) {
+                                            if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() == 0) {
                                                 return true;
                                             }
-                                            if (entityView.getEndTs() == 0 && entityView.getStartTs() < attributeKvEntry.getLastUpdateTs()) {
+                                            if (entityView.getEndTimeMs() == 0 && entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()) {
                                                 return true;
                                             }
-                                            if (entityView.getStartTs() == 0 && entityView.getEndTs() > attributeKvEntry.getLastUpdateTs()) {
+                                            if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs()) {
                                                 return true;
                                             }
-                                            return entityView.getStartTs() < attributeKvEntry.getLastUpdateTs()
-                                                    && entityView.getEndTs() > attributeKvEntry.getLastUpdateTs();
+                                            return entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()
+                                                    && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs();
                                         }).collect(Collectors.toList());
                         attributesService.save(entityView.getId(), scope, filteredAttributes);
                     }

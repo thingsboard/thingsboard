@@ -106,6 +106,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private ClusterRpcService rpcService;
 
     @Autowired
+    private EntityViewService entityViewService;
+
+    @Autowired
     @Lazy
     private DeviceStateService stateService;
 
@@ -137,6 +140,10 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     @Override
     public void addLocalWsSubscription(String sessionId, EntityId entityId, SubscriptionState sub) {
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            EntityView entityView = entityViewService.findEntityViewById(new EntityViewId(entityId.getId()));
+            entityId = entityView.getEntityId();
+        }
         Optional<ServerAddress> server = routingService.resolveById(entityId);
         Subscription subscription;
         if (server.isPresent()) {

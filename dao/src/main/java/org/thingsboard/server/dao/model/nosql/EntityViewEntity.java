@@ -114,8 +114,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.startTs = entityView.getStartTs();
-        this.endTs = entityView.getEndTs();
+        this.startTs = entityView.getStartTimeMs();
+        this.endTs = entityView.getEndTimeMs();
         this.searchText = entityView.getSearchText();
         this.additionalInfo = entityView.getAdditionalInfo();
     }
@@ -144,8 +144,8 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        entityView.setStartTs(startTs);
-        entityView.setEndTs(endTs);
+        entityView.setStartTimeMs(startTs);
+        entityView.setEndTimeMs(endTs);
         entityView.setAdditionalInfo(additionalInfo);
         return entityView;
     }

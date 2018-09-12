@@ -84,7 +84,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             }
             List<ReadTsKvQuery> queries =
                     filteredKeys.stream()
-                            .map(key -> new BaseReadTsKvQuery(key, entityView.getStartTs(), entityView.getEndTs(), 1, "ASC"))
+                            .map(key -> new BaseReadTsKvQuery(key, entityView.getStartTimeMs(), entityView.getEndTimeMs(), 1, "ASC"))
                             .collect(Collectors.toList());
 
             return timeseriesDao.findAllAsync(entityView.getEntityId(), updateQueriesForEntityView(entityView, queries));
@@ -133,8 +133,8 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     private List<ReadTsKvQuery> updateQueriesForEntityView(EntityView entityView, List<ReadTsKvQuery> queries) {
         return queries.stream().map(query -> {
-            long startTs = entityView.getStartTs() == 0 ? query.getStartTs() : entityView.getStartTs();
-            long endTs = entityView.getEndTs() == 0 ? query.getEndTs() : entityView.getEndTs();
+            long startTs = entityView.getStartTimeMs() == 0 ? query.getStartTs() : entityView.getStartTimeMs();
+            long endTs = entityView.getEndTimeMs() == 0 ? query.getEndTs() : entityView.getEndTimeMs();
 
             return startTs <= query.getStartTs() && endTs >= query.getEndTs() ? query :
                     new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation());
