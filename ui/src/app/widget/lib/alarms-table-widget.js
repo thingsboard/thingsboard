@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 import './alarms-table-widget.scss';
+import './display-columns-panel.scss';
+import './alarm-status-filter-panel.scss';
 
 /* eslint-disable import/no-unresolved, import/default */
 
 import alarmsTableWidgetTemplate from './alarms-table-widget.tpl.html';
 import alarmDetailsDialogTemplate from '../../alarm/alarm-details-dialog.tpl.html';
+import displayColumnsPanelTemplate from './display-columns-panel.tpl.html';
+import alarmStatusFilterPanelTemplate from './alarm-status-filter-panel.tpl.html';
 
 /* eslint-enable import/no-unresolved, import/default */
 
@@ -45,7 +49,7 @@ function AlarmsTableWidget() {
 }
 
 /*@ngInject*/
-function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDialog, $document, $translate, $q, $timeout, alarmService, utils, types) {
+function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDialog, $mdPanel, $document, $translate, $q, $timeout, alarmService, utils, types) {
     var vm = this;
 
     vm.stylesInfo = {};
@@ -60,6 +64,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     vm.selectedAlarms = []
 
     vm.alarmSource = null;
+    vm.alarmSearchStatus = null;
     vm.allAlarms = [];
 
     vm.currentAlarm = null;
@@ -95,13 +100,19 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     vm.onPaginate = onPaginate;
     vm.onRowClick = onRowClick;
     vm.onActionButtonClick = onActionButtonClick;
+    vm.actionEnabled = actionEnabled;
     vm.isCurrent = isCurrent;
     vm.openAlarmDetails = openAlarmDetails;
     vm.ackAlarms = ackAlarms;
+    vm.ackAlarm = ackAlarm;
     vm.clearAlarms = clearAlarms;
+    vm.clearAlarm = clearAlarm;
 
     vm.cellStyle = cellStyle;
     vm.cellContent = cellContent;
+
+    vm.editAlarmStatusFilter = editAlarmStatusFilter;
+    vm.editColumnsToDisplay = editColumnsToDisplay;
 
     $scope.$watch('vm.ctx', function() {
         if (vm.ctx) {
@@ -158,7 +169,41 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
         vm.ctx.widgetActions = [ vm.searchAction ];
 
-        vm.actionCellDescriptors = vm.ctx.actionsApi.getActionDescriptors('actionCellButton');
+        vm.displayDetails = angular.isDefined(vm.settings.displayDetails) ? vm.settings.displayDetails : true;
+        vm.allowAcknowledgment = angular.isDefined(vm.settings.allowAcknowledgment) ? vm.settings.allowAcknowledgment : true;
+        vm.allowClear = angular.isDefined(vm.settings.allowClear) ? vm.settings.allowClear : true;
+
+        if (vm.displayDetails) {
+            vm.actionCellDescriptors.push(
+                {
+                    displayName: $translate.instant('alarm.details'),
+                    icon: 'more_horiz',
+                    details: true
+                }
+            );
+        }
+
+        if (vm.allowAcknowledgment) {
+            vm.actionCellDescriptors.push(
+                {
+                    displayName: $translate.instant('alarm.acknowledge'),
+                    icon: 'done',
+                    acknowledge: true
+                }
+            );
+        }
+
+        if (vm.allowClear) {
+            vm.actionCellDescriptors.push(
+                {
+                    displayName: $translate.instant('alarm.clear'),
+                    icon: 'clear',
+                    clear: true
+                }
+            );
+        }
+
+        vm.actionCellDescriptors = vm.actionCellDescriptors.concat(vm.ctx.actionsApi.getActionDescriptors('actionCellButton'));
 
         if (vm.settings.alarmsTitle && vm.settings.alarmsTitle.length) {
             vm.alarmsTitle = utils.customTranslation(vm.settings.alarmsTitle, vm.settings.alarmsTitle);
@@ -170,9 +215,6 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
 
         vm.enableSelection = angular.isDefined(vm.settings.enableSelection) ? vm.settings.enableSelection : true;
         vm.searchAction.show = angular.isDefined(vm.settings.enableSearch) ? vm.settings.enableSearch : true;
-        vm.displayDetails = angular.isDefined(vm.settings.displayDetails) ? vm.settings.displayDetails : true;
-        vm.allowAcknowledgment = angular.isDefined(vm.settings.allowAcknowledgment) ? vm.settings.allowAcknowledgment : true;
-        vm.allowClear = angular.isDefined(vm.settings.allowClear) ? vm.settings.allowClear : true;
         if (!vm.allowAcknowledgment && !vm.allowClear) {
             vm.enableSelection = false;
         }
@@ -305,16 +347,35 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
     }
 
     function onActionButtonClick($event, alarm, actionDescriptor) {
-        if ($event) {
-            $event.stopPropagation();
+        if (actionDescriptor.details) {
+            vm.openAlarmDetails($event, alarm);
+        } else if (actionDescriptor.acknowledge) {
+            vm.ackAlarm($event, alarm);
+        } else if (actionDescriptor.clear) {
+            vm.clearAlarm($event, alarm);
+        } else {
+            if ($event) {
+                $event.stopPropagation();
+            }
+            var entityId;
+            var entityName;
+            if (alarm && alarm.originator) {
+                entityId = alarm.originator;
+                entityName = alarm.originatorName;
+            }
+            vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, {alarm: alarm});
         }
-        var entityId;
-        var entityName;
-        if (alarm && alarm.originator) {
-            entityId = alarm.originator;
-            entityName = alarm.originatorName;
+    }
+
+    function actionEnabled(alarm, actionDescriptor) {
+        if (actionDescriptor.acknowledge) {
+            return (alarm.status == types.alarmStatus.activeUnack ||
+                    alarm.status == types.alarmStatus.clearedUnack);
+        } else if (actionDescriptor.clear) {
+            return (alarm.status == types.alarmStatus.activeAck ||
+                    alarm.status == types.alarmStatus.activeUnack);
         }
-        vm.ctx.actionsApi.handleWidgetAction($event, actionDescriptor, entityId, entityName, { alarm: alarm });
+        return true;
     }
 
     function isCurrent(alarm) {
@@ -387,6 +448,25 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         }
     }
 
+    function ackAlarm($event, alarm) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('alarm.aknowledge-alarm-title'))
+            .htmlContent($translate.instant('alarm.aknowledge-alarm-text'))
+            .ariaLabel($translate.instant('alarm.acknowledge'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            alarmService.ackAlarm(alarm.id.id).then(function () {
+                vm.selectedAlarms = [];
+                vm.subscription.update();
+            });
+        });
+    }
+
     function clearAlarms($event) {
         if ($event) {
             $event.stopPropagation();
@@ -420,6 +500,24 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         }
     }
 
+    function clearAlarm($event, alarm) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+        var confirm = $mdDialog.confirm()
+            .targetEvent($event)
+            .title($translate.instant('alarm.clear-alarm-title'))
+            .htmlContent($translate.instant('alarm.clear-alarm-text'))
+            .ariaLabel($translate.instant('alarm.clear'))
+            .cancel($translate.instant('action.no'))
+            .ok($translate.instant('action.yes'));
+        $mdDialog.show(confirm).then(function () {
+            alarmService.clearAlarm(alarm.id.id).then(function () {
+                vm.selectedAlarms = [];
+                vm.subscription.update();
+            });
+        });
+    }
 
     function updateAlarms(preserveSelections) {
         if (!preserveSelections) {
@@ -558,6 +656,54 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         }
     }
 
+    function editAlarmStatusFilter($event) {
+        var element = angular.element($event.target);
+        var position = $mdPanel.newPanelPosition()
+            .relativeTo(element)
+            .addPanelPosition($mdPanel.xPosition.ALIGN_END, $mdPanel.yPosition.BELOW);
+        var config = {
+            attachTo: angular.element($document[0].body),
+            controller: AlarmStatusFilterPanelController,
+            controllerAs: 'vm',
+            templateUrl: alarmStatusFilterPanelTemplate,
+            panelClass: 'tb-alarm-status-filter-panel',
+            position: position,
+            fullscreen: false,
+            locals: {
+                'subscription': vm.subscription
+            },
+            openFrom: $event,
+            clickOutsideToClose: true,
+            escapeToClose: true,
+            focusOnOpen: false
+        };
+        $mdPanel.open(config);
+    }
+
+    function editColumnsToDisplay($event) {
+        var element = angular.element($event.target);
+        var position = $mdPanel.newPanelPosition()
+            .relativeTo(element)
+            .addPanelPosition($mdPanel.xPosition.ALIGN_END, $mdPanel.yPosition.BELOW);
+        var config = {
+            attachTo: angular.element($document[0].body),
+            controller: DisplayColumnsPanelController,
+            controllerAs: 'vm',
+            templateUrl: displayColumnsPanelTemplate,
+            panelClass: 'tb-display-columns-panel',
+            position: position,
+            fullscreen: false,
+            locals: {
+                'columns': vm.alarmSource.dataKeys
+            },
+            openFrom: $event,
+            clickOutsideToClose: true,
+            escapeToClose: true,
+            focusOnOpen: false
+        };
+        $mdPanel.open(config);
+    }
+
     function updateAlarmSource() {
 
         vm.ctx.widgetTitle = utils.createLabelFromDatasource(vm.alarmSource, vm.alarmsTitle);
@@ -570,6 +716,7 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
             var dataKey = vm.alarmSource.dataKeys[d];
 
             dataKey.title = utils.customTranslation(dataKey.label, dataKey.label);
+            dataKey.display = true;
 
             var keySettings = dataKey.settings;
 
@@ -618,4 +765,19 @@ function AlarmsTableWidgetController($element, $scope, $filter, $mdMedia, $mdDia
         }
     }
 
+}
+
+/*@ngInject*/
+function DisplayColumnsPanelController(columns) {  //eslint-disable-line
+
+    var vm = this;
+    vm.columns = columns;
+}
+
+/*@ngInject*/
+function AlarmStatusFilterPanelController(subscription, types) {  //eslint-disable-line
+
+    var vm = this;
+    vm.types = types;
+    vm.subscription = subscription;
 }
