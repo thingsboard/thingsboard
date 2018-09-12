@@ -1255,7 +1255,7 @@
         "email": "电子邮件",
         "email-required": "电子邮件必填。",
         "invalid-email-format": "无效的邮件格式。",
-        "first-name": "名字",
+        "first-name": "姓名",
         "last-name": "姓",
         "description": "描述",
         "default-dashboard": "默认面板",
