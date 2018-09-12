@@ -42,7 +42,7 @@ textarea {
   word-wrap: normal;
   white-space: nowrap;
   direction: ltr;
-  -webkit-font-feature-settings: "liga";
+  -webkit-font-feature-settings: "liga"; /* stylelint-disable-line property-no-vendor-prefix */
 }
 
 a {
