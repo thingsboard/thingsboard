@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.entityview;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -25,20 +24,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -58,12 +52,9 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CACHE;
 import static org.thingsboard.server.common.data.CacheConstants.ENTITY_VIEW_CACHE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -97,7 +88,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Autowired
     private CacheManager cacheManager;
 
-//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
+    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId.getId()}")
     @Override
     public EntityView findEntityViewById(EntityViewId entityViewId) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
@@ -105,6 +96,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return entityViewDao.findById(entityViewId.getId());
     }
 
+    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #name}")
     @Override
     public EntityView findEntityViewByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findEntityViewByTenantIdAndName [{}][{}]", tenantId, name);
@@ -113,7 +105,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 .orElse(null);
     }
 
-//    @CachePut(cacheNames = ENTITY_VIEW_CACHE)
+    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.id, #entityView.tenantId, #entityView.name}")
     @Override
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
@@ -177,14 +169,13 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Override
     public void deleteEntityView(EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
-//        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
+        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
         deleteEntityRelations(entityViewId);
         EntityView entityView = entityViewDao.findById(entityViewId.getId());
-//        List<Object> list = new ArrayList<>();
-//        list.add(entityView.getTenantId());
-//        list.add(entityView.getName());
-//        cache.evict(list);
+        cache.evict(entityView.getId());
+        cache.evict(entityView.getTenantId());
+        cache.evict(entityView.getName());
         entityViewDao.removeById(entityViewId.getId());
     }
 
@@ -197,7 +188,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return new TextPageData<>(entityViews, pageLink);
     }
 
-//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
     @Override
     public TextPageData<EntityView> findEntityViewByTenantIdAndEntityId(TenantId tenantId, EntityId entityId,
                                                                     TextPageLink pageLink) {
@@ -237,7 +227,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return new TextPageData<>(entityViews, pageLink);
     }
 
-//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #customerId, #entityId, #pageLink}")
     @Override
     public TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(TenantId tenantId,
                                                                                       CustomerId customerId,
