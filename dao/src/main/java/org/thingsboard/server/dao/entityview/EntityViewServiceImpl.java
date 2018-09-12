@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.entityview;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -40,10 +42,12 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -53,6 +57,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -87,6 +92,9 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     private CustomerDao customerDao;
 
     @Autowired
+    private AttributesService attributesService;
+
+    @Autowired
     private CacheManager cacheManager;
 
 //    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
@@ -110,7 +118,46 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
         entityViewValidator.validate(entityView);
-        return entityViewDao.save(entityView);
+        EntityView savedEntityView = entityViewDao.save(entityView);
+        copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs());
+        copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs());
+        copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh());
+        return savedEntityView;
+    }
+
+    private void copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys) {
+        if (!keys.isEmpty()) {
+            ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getEntityId(), scope, keys);
+            Futures.addCallback(getAttrFuture, new FutureCallback<List<AttributeKvEntry>>() {
+                @Override
+                public void onSuccess(@Nullable List<AttributeKvEntry> attributeKvEntries) {
+                    if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
+                        List<AttributeKvEntry> filteredAttributes =
+                                attributeKvEntries.stream()
+                                        .filter(attributeKvEntry -> {
+                                            if (entityView.getStartTs() == 0 && entityView.getEndTs() == 0) {
+                                                return true;
+                                            }
+                                            if (entityView.getEndTs() == 0 && entityView.getStartTs() < attributeKvEntry.getLastUpdateTs()) {
+                                                return true;
+                                            }
+                                            if (entityView.getStartTs() == 0 && entityView.getEndTs() > attributeKvEntry.getLastUpdateTs()) {
+                                                return true;
+                                            }
+                                            return entityView.getStartTs() < attributeKvEntry.getLastUpdateTs()
+                                                    && entityView.getEndTs() > attributeKvEntry.getLastUpdateTs();
+                                        }).collect(Collectors.toList());
+                        attributesService.save(entityView.getId(), scope, filteredAttributes);
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable throwable) {
+                    log.error("Failed to fetch [{}] attributes [{}] for [{}] entity [{}]",
+                            scope, keys, entityView.getEntityId().getEntityType().name(), entityView.getEntityId().getId().toString(), throwable);
+                }
+            });
+        }
     }
 
     @Override
