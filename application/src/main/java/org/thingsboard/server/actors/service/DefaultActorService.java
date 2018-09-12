@@ -58,6 +58,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_ACTOR_MESSAGE;
+import static org.thingsboard.server.gen.cluster.ClusterAPIProtos.MessageType.CLUSTER_RPC_FROM_DEVICE_RESPONSE_MESSAGE;
 
 @Service
 @Slf4j

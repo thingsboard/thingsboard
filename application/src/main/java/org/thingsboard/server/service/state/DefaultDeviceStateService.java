@@ -103,7 +103,6 @@ public class DefaultDeviceStateService implements DeviceStateService {
     private AttributesService attributesService;
 
     @Autowired
-    @Lazy
     private ActorService actorService;
 
     @Autowired
