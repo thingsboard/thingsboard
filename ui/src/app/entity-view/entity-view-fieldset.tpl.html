@@ -98,19 +98,19 @@
         <section layout="column">
             <section layout="row" layout-align="start start">
                 <mdp-date-picker ng-model="startTimeMs"
-                                 mdp-max-date="maxStartTimeTs"
+                                 mdp-max-date="maxStartTimeMs"
                                  mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"></mdp-date-picker>
                 <mdp-time-picker ng-model="startTimeMs"
-                                 mdp-max-date="maxStartTimeTs"
+                                 mdp-max-date="maxStartTimeMs"
                                  mdp-placeholder="{{ 'entity-view.start-ts' | translate }}"
                                  mdp-auto-switch="true"></mdp-time-picker>
             </section>
             <section layout="row" layout-align="start start">
                 <mdp-date-picker ng-model="endTimeMs"
-                                 mdp-min-date="minEndTimeTs"
+                                 mdp-min-date="minEndTimeMs"
                                  mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"></mdp-date-picker>
                 <mdp-time-picker ng-model="endTimeMs"
-                                 mdp-min-date="minEndTimeTs"
+                                 mdp-min-date="minEndTimeMs"
                                  mdp-placeholder="{{ 'entity-view.end-ts' | translate }}"
                                  mdp-auto-switch="true"></mdp-time-picker>
             </section>
