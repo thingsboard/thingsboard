@@ -57,7 +57,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -93,15 +92,15 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testFindEntityViewById() throws Exception {
-        EntityView savedView = doPost("/api/entity-view", getNewEntityView("Test entity view"), EntityView.class);
-        EntityView foundView = doGet("/api/entity-view/" + savedView.getId().getId().toString(), EntityView.class);
+        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
+        EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertNotNull(foundView);
         Assert.assertEquals(savedView, foundView);
     }
 
     @Test
     public void testSaveEntityView() throws Exception {
-        EntityView savedView = doPost("/api/entity-view", getNewEntityView("Test entity view"), EntityView.class);
+        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
 
         Assert.assertNotNull(savedView);
         Assert.assertNotNull(savedView.getId());
@@ -112,49 +111,49 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Assert.assertEquals(savedView.getName(), savedView.getName());
 
         savedView.setName("New test entity view");
-        doPost("/api/entity-view", savedView, EntityView.class);
-        EntityView foundEntityView = doGet("/api/entity-view/" + savedView.getId().getId().toString(), EntityView.class);
+        doPost("/api/entityView", savedView, EntityView.class);
+        EntityView foundEntityView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
 
         Assert.assertEquals(foundEntityView.getName(), savedView.getName());
     }
 
     @Test
     public void testDeleteEntityView() throws Exception {
-        EntityView savedView = doPost("/api/entity-view", getNewEntityView("Test entity view"), EntityView.class);
-        doDelete("/api/entity-view/" + savedView.getId().getId().toString())
+        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
+        doDelete("/api/entityView/" + savedView.getId().getId().toString())
                 .andExpect(status().isOk());
-        doGet("/api/entity-view/" + savedView.getId().getId().toString())
+        doGet("/api/entityView/" + savedView.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void testSaveEntityViewWithEmptyName() throws Exception {
-        doPost("/api/entity-view", getNewEntityView("Entity view"))
+        doPost("/api/entityView", getNewEntityView(""))
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Entity-view name should be specified")));
     }
 
     @Test
     public void testAssignAndUnAssignedEntityViewToCustomer() throws Exception {
-        EntityView savedView = doPost("/api/entity-view", getNewEntityView("Test entity view"), EntityView.class);
+        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
         Customer savedCustomer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
         EntityView assignedView = doPost("/api/customer/" + savedCustomer.getId().getId().toString()
-                + "/entity-view/" + savedView.getId().getId().toString(), EntityView.class);
+                + "/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertEquals(savedCustomer.getId(), assignedView.getCustomerId());
 
-        EntityView foundView = doGet("/api/entity-view" + savedView.getId().getId().toString(), EntityView.class);
+        EntityView foundView = doGet("/api/entityView" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertEquals(savedCustomer.getId(), foundView.getCustomerId());
 
-        EntityView unAssignedView = doDelete("/api/customer/entity-view/" + savedView.getId().getId().toString(), EntityView.class);
+        EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
 
-        foundView = doGet("/api/entity-view/" + savedView.getId().getId().toString(), EntityView.class);
+        foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
     }
 
     @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
-        EntityView savedView = doPost("/api/entity-view", getNewEntityView("Test entity view"), EntityView.class);
+        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
         doPost("/api/customer/" + UUIDs.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
@@ -163,38 +162,43 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     public void testAssignEntityViewToCustomerFromDifferentTenant() throws Exception {
         loginSysAdmin();
 
-        Tenant savedAnotherTenant = doPost("/api/tenant", getNewTenant("Different tenant"), Tenant.class);
-        Assert.assertNotNull(savedAnotherTenant);
+        Tenant tenant2 = getNewTenant("Different tenant");
+        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Assert.assertNotNull(savedTenant2);
 
-        User adminAnotherTenant = new User();
-        adminAnotherTenant.setAuthority(Authority.TENANT_ADMIN);
-        adminAnotherTenant.setTenantId(savedAnotherTenant.getId());
-        adminAnotherTenant.setEmail("tenant3@thingsboard.org");
-        adminAnotherTenant.setFirstName("Joe");
-        adminAnotherTenant.setLastName("Downs");
-        createUserAndLogin(adminAnotherTenant, "testPassword1");
+        User tenantAdmin2 = new User();
+        tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin2.setTenantId(savedTenant2.getId());
+        tenantAdmin2.setEmail("tenant3@thingsboard.org");
+        tenantAdmin2.setFirstName("Joe");
+        tenantAdmin2.setLastName("Downs");
+        tenantAdmin2 = createUserAndLogin(tenantAdmin2, "testPassword1");
 
-        Customer savedCustomer = doPost("/api/customer", getNewCustomer("Different customer"), Customer.class);
+        Customer customer = getNewCustomer("Different customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
         login(tenantAdmin.getEmail(), "testPassword1");
 
-        EntityView savedView = doPost("/api/entity-view", getNewEntityView("Test entity view"), EntityView.class);
-        doPost("/api/customer/" + savedCustomer.getId().getId().toString() + "/entity-view/" + savedView.getId().getId().toString())
+        EntityView view = getNewEntityView("Test entity view");
+        EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+
+        doPost("/api/customer/" + savedCustomer.getId().getId().toString() + "/entityView/" + savedView.getId().getId().toString())
                 .andExpect(status().isForbidden());
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedAnotherTenant.getId().getId().toString())
+        doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testGetCustomerEntityViews() throws Exception {
         CustomerId customerId = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class).getId();
-        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entity-views?";
+        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViews?";
 
         List<EntityView> views = new ArrayList<>();
         for (int i = 0; i < 128; i++) {
-            views.add(doPost("/api/customer/" + customerId.getId().toString() + "/entity-view/"
+            views.add(doPost("/api/customer/" + customerId.getId().toString() + "/entityView/"
                     + getNewEntityView("Test entity view " + i).getId().getId().toString(), EntityView.class));
         }
 
@@ -209,11 +213,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testGetCustomerEntityViewsByName() throws Exception {
         CustomerId customerId = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class).getId();
-        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entity-views?";
+        String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViews?";
 
         String name1 = "Entity view name1";
         List<EntityView> namesOfView1 = fillListOf(125, name1, "/api/customer/" + customerId.getId().toString()
-                + "/entity-view/");
+                + "/entityView/");
         List<EntityView> loadedNamesOfView1 = loadListOf(new TextPageLink(15, name1), urlTemplate);
         Collections.sort(namesOfView1, idComparator);
         Collections.sort(loadedNamesOfView1, idComparator);
@@ -221,14 +225,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         String name2 = "Entity view name2";
         List<EntityView> NamesOfView2 = fillListOf(143, name2, "/api/customer/" + customerId.getId().toString()
-                + "/entity-view/");
+                + "/entityView/");
         List<EntityView> loadedNamesOfView2 = loadListOf(new TextPageLink(4, name2), urlTemplate);
         Collections.sort(NamesOfView2, idComparator);
         Collections.sort(loadedNamesOfView2, idComparator);
         Assert.assertEquals(NamesOfView2, loadedNamesOfView2);
 
         for (EntityView view : loadedNamesOfView1) {
-            doDelete("/api/customer/entity-view/" + view.getId().getId().toString()).andExpect(status().isOk());
+            doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
         TextPageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate,
                     new TypeReference<TextPageData<EntityView>>(){}, new TextPageLink(4, name1));
@@ -236,7 +240,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Assert.assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
-            doDelete("/api/customer/entity-view/" + view.getId().getId().toString()).andExpect(status().isOk());
+            doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
         pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<TextPageData<EntityView>>(){},
                 new TextPageLink(4, name2));
@@ -249,9 +253,9 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         List<EntityView> views = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
-            views.add(doPost("/api/entity-view/", getNewEntityView("Test entity view" + i), EntityView.class));
+            views.add(doPost("/api/entityView/", getNewEntityView("Test entity view" + i), EntityView.class));
         }
-        List<EntityView> loadedViews = loadListOf(new TextPageLink(23), "/api/tenant/entity-views?");
+        List<EntityView> loadedViews = loadListOf(new TextPageLink(23), "/api/tenant/entityViews?");
 
         Collections.sort(views, idComparator);
         Collections.sort(loadedViews, idComparator);
@@ -263,30 +267,30 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     public void testGetTenantEntityViewsByName() throws Exception {
         String name1 = "Entity view name1";
         List<EntityView> namesOfView1 = fillListOf(143, name1);
-        List<EntityView> loadedNamesOfView1 = loadListOf(new TextPageLink(15, name1), "/api/tenant/entity-views?");
+        List<EntityView> loadedNamesOfView1 = loadListOf(new TextPageLink(15, name1), "/api/tenant/entityViews?");
         Collections.sort(namesOfView1, idComparator);
         Collections.sort(loadedNamesOfView1, idComparator);
         Assert.assertEquals(namesOfView1, loadedNamesOfView1);
 
         String name2 = "Entity view name2";
         List<EntityView> NamesOfView2 = fillListOf(75, name2);
-        List<EntityView> loadedNamesOfView2 = loadListOf(new TextPageLink(4, name2), "/api/tenant/entity-views?");
+        List<EntityView> loadedNamesOfView2 = loadListOf(new TextPageLink(4, name2), "/api/tenant/entityViews?");
         Collections.sort(NamesOfView2, idComparator);
         Collections.sort(loadedNamesOfView2, idComparator);
         Assert.assertEquals(NamesOfView2, loadedNamesOfView2);
 
         for (EntityView view : loadedNamesOfView1) {
-            doDelete("/api/entity-view/" + view.getId().getId().toString()).andExpect(status().isOk());
+            doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        TextPageData<EntityView> pageData = doGetTypedWithPageLink("/api/tenant/entity-views?",
+        TextPageData<EntityView> pageData = doGetTypedWithPageLink("/api/tenant/entityViews?",
                 new TypeReference<TextPageData<EntityView>>(){}, new TextPageLink(4, name1));
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
-            doDelete("/api/entity-view/" + view.getId().getId().toString()).andExpect(status().isOk());
+            doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        pageData = doGetTypedWithPageLink("/api/tenant/entity-views?", new TypeReference<TextPageData<EntityView>>(){},
+        pageData = doGetTypedWithPageLink("/api/tenant/entityViews?", new TypeReference<TextPageData<EntityView>>(){},
                 new TextPageLink(4, name2));
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -298,7 +302,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setEntityId(testDevice.getId());
         view.setTenantId(savedTenant.getId());
         view.setKeys(new TelemetryEntityView(obj));
-        return doPost("/api/entity-view", view, EntityView.class);
+        return doPost("/api/entityView", view, EntityView.class);
     }
 
     private Customer getNewCustomer(String title) {
@@ -326,7 +330,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         for (int i = 0; i < limit; i++) {
             String fullName = partOfName + ' ' + RandomStringUtils.randomAlphanumeric(15);
             fullName = i % 2 == 0 ? fullName.toLowerCase() : fullName.toUpperCase();
-            viewNames.add(doPost("/api/entity-view", getNewEntityView(fullName), EntityView.class));
+            viewNames.add(doPost("/api/entityView", getNewEntityView(fullName), EntityView.class));
         }
         return viewNames;
     }

@@ -51,7 +51,7 @@ public class EntityViewController extends BaseController {
     public static final String ENTITY_VIEW_ID = "entityViewId";
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entity-view/{entityViewId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/entityView/{entityViewId}", method = RequestMethod.GET)
     @ResponseBody
     public EntityView getEntityViewById(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId)
             throws ThingsboardException {
@@ -66,7 +66,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entity-view", method = RequestMethod.POST)
+    @RequestMapping(value = "/entityView", method = RequestMethod.POST)
     @ResponseBody
     public EntityView saveEntityView(@RequestBody EntityView entityView) throws ThingsboardException {
         try {
@@ -86,7 +86,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/entity-view/{entityViewId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/entityView/{entityViewId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteEntityView(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
@@ -107,7 +107,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/entity-view/{entityViewId}", method = RequestMethod.POST)
+    @RequestMapping(value = "/customer/{customerId}/entityView/{entityViewId}", method = RequestMethod.POST)
     @ResponseBody
     public EntityView assignEntityViewToCustomer(@PathVariable("customerId") String strCustomerId,
                                              @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
@@ -136,7 +136,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/entity-view/{entityViewId}", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/customer/entityView/{entityViewId}", method = RequestMethod.DELETE)
     @ResponseBody
     public EntityView unassignEntityViewFromCustomer(@PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
@@ -164,7 +164,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/customer/{customerId}/entity-views", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/customer/{customerId}/entityViews", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<EntityView> getCustomerEntityViews(
             @PathVariable("customerId") String strCustomerId,
@@ -185,7 +185,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/entity-views", params = {"limit"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/tenant/entityViews", params = {"limit"}, method = RequestMethod.GET)
     @ResponseBody
     public TextPageData<EntityView> getTenantEntityViews(
             @RequestParam int limit,
@@ -202,7 +202,7 @@ public class EntityViewController extends BaseController {
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entity-views", method = RequestMethod.POST)
+    @RequestMapping(value = "/entityViews", method = RequestMethod.POST)
     @ResponseBody
     public List<EntityView> findByQuery(@RequestBody EntityViewSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
