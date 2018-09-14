@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageLink;
@@ -40,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUID;
+import static org.thingsboard.server.common.data.UUIDConverter.fromTimeUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID_STR;
 
 /**
@@ -120,5 +122,11 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())
                 ));
+    }
+
+    @Override
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId) {
+        return service.submit(() -> DaoUtil.convertDataList(
+                entityViewRepository.findAllByTenantIdAndEntityId(UUIDConverter.fromTimeUUID(tenantId), UUIDConverter.fromTimeUUID(entityId))));
     }
 }
