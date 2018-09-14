@@ -54,8 +54,8 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
                 if (scope.entityView.startTimeMs > 0) {
                     scope.startTimeMs = new Date(scope.entityView.startTimeMs);
                 }
-                if (scope.entityView.endTimeTs > 0) {
-                    scope.endTimeTs = new Date(scope.entityView.endTimeTs);
+                if (scope.entityView.endTimeMs > 0) {
+                    scope.endTimeMs = new Date(scope.entityView.endTimeMs);
                 }
                 if (!scope.entityView.keys) {
                     scope.entityView.keys = {};
@@ -78,22 +78,22 @@ export default function EntityViewDirective($compile, $templateCache, $filter, t
             }
         });
 
-        scope.$watch('endTimeTs', function (newDate) {
+        scope.$watch('endTimeMs', function (newDate) {
             if (newDate) {
-                if (newDate.getTime() < scope.minEndTimeTs) {
-                    scope.endTimeTs = angular.copy(scope.minEndTimeTs);
+                if (newDate.getTime() < scope.minEndTimeMs) {
+                    scope.endTimeMs = angular.copy(scope.minEndTimeMs);
                 }
                 updateMinMaxDates();
             }
         });
 
         function updateMinMaxDates() {
-            if (scope.endTimeTs) {
-                scope.maxStartTimeMs = angular.copy(new Date(scope.endTimeTs.getTime()));
-                scope.entityView.endTimeTs = scope.endTimeTs.getTime();
+            if (scope.endTimeMs) {
+                scope.maxStartTimeMs = angular.copy(new Date(scope.endTimeMs.getTime()));
+                scope.entityView.endTimeMs = scope.endTimeMs.getTime();
             }
             if (scope.startTimeMs) {
-                scope.minEndTimeTs = angular.copy(new Date(scope.startTimeMs.getTime()));
+                scope.minEndTimeMs = angular.copy(new Date(scope.startTimeMs.getTime()));
                 scope.entityView.startTimeMs = scope.startTimeMs.getTime();
             }
         }

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.entityview;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.Dao;
@@ -91,4 +93,6 @@ public interface EntityViewDao extends Dao<EntityView> {
                                                                        UUID customerId,
                                                                        UUID entityId,
                                                                        TextPageLink pageLink);
+
+    ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId);
 }

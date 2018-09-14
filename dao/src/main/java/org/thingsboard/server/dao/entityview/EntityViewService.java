@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.*;
@@ -65,4 +66,6 @@ public interface EntityViewService {
     ListenableFuture<EntityView> findEntityViewByIdAsync(EntityViewId entityViewId);
 
     ListenableFuture<List<EntityView>> findEntityViewsByQuery(EntityViewSearchQuery query);
+
+    ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId);
 }

@@ -279,6 +279,14 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return entityViews;
     }
 
+    @Override
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing findEntityViewsByTenantIdAndEntityIdAsync, tenantId [{}], entityId [{}]", tenantId, entityId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(entityId.getId(), "Incorrect entityId" + entityId);
+        return entityViewDao.findEntityViewsByTenantIdAndEntityIdAsync(tenantId.getId(), entityId.getId());
+    }
+
     private DataValidator<EntityView> entityViewValidator =
             new DataValidator<EntityView>() {
 

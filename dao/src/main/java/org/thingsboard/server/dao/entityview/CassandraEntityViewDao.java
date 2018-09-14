@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.entityview;
 
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -103,6 +104,12 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
 
     @Override
     public List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId, UUID customerId, UUID entityId, TextPageLink pageLink) {
+        return null;
+    }
+
+    @Override
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId) {
+        // TODO: implement this
         return null;
     }
 }

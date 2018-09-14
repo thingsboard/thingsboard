@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
 import org.thingsboard.server.dao.util.SqlDao;
@@ -78,4 +79,6 @@ public interface EntityViewRepository extends CrudRepository<EntityViewEntity, S
                                                                  List<String> entityViewsIds);
 
     List<EntityViewEntity> findAllByTenantIdAndIdIn(String tenantId, List<String> entityViewsIds);
+
+    List<EntityViewEntity> findAllByTenantIdAndEntityId(String tenantId, String entityId);
 }
