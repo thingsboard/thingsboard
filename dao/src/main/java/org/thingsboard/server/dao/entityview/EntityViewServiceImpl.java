@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -88,7 +89,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Autowired
     private CacheManager cacheManager;
 
-    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId.getId()}")
     @Override
     public EntityView findEntityViewById(EntityViewId entityViewId) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
@@ -105,7 +105,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 .orElse(null);
     }
 
-    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.id, #entityView.tenantId, #entityView.name}")
+    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.name}")
     @Override
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
@@ -173,9 +173,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
         deleteEntityRelations(entityViewId);
         EntityView entityView = entityViewDao.findById(entityViewId.getId());
-        cache.evict(entityView.getId());
-        cache.evict(entityView.getTenantId());
-        cache.evict(entityView.getName());
+        cache.evict(Arrays.asList(entityView.getTenantId(), entityView.getName()));
         entityViewDao.removeById(entityViewId.getId());
     }
 
@@ -310,9 +308,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
                 @Override
                 protected void validateDataImpl(EntityView entityView) {
-                    if (StringUtils.isEmpty(entityView.getKeys().toString())) {
-                        throw new DataValidationException("Entity view type should be specified!");
-                    }
                     if (StringUtils.isEmpty(entityView.getName())) {
                         throw new DataValidationException("Entity view name should be specified!");
                     }
