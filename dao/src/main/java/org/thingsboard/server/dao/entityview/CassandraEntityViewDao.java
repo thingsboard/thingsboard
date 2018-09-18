@@ -67,49 +67,75 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
 
     @Override
     public List<EntityView> findEntityViewByTenantId(UUID tenantId, TextPageLink pageLink) {
-        log.debug("Try to find entity-views by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
+        log.debug("Try to find entity views by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<EntityViewEntity> entityViewEntities =
                 findPageWithTextSearch(ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Collections.singletonList(eq(ENTITY_VIEW_TENANT_ID_PROPERTY, tenantId)), pageLink);
-
-        log.trace("Found entity-views [{}] by tenantId [{}] and pageLink [{}]", entityViewEntities, tenantId, pageLink);
+                Collections.singletonList(eq(TENANT_ID_PROPERTY, tenantId)), pageLink);
+        log.trace("Found entity views [{}] by tenantId [{}] and pageLink [{}]",
+                entityViewEntities, tenantId, pageLink);
         return DaoUtil.convertDataList(entityViewEntities);
     }
 
     @Override
-    public Optional<EntityView> findEntityViewByTenantIdAndName(UUID tenantId, String entityViewName) {
-        return Optional.ofNullable(DaoUtil.getData(
-                findOneByStatement(select().from(ENTITY_VIEW_TENANT_AND_NAME_VIEW_NAME).where()
-                        .and(eq(ENTITY_VIEW_TENANT_ID_PROPERTY, tenantId))
-                        .and(eq(ENTITY_VIEW_NAME_PROPERTY, entityViewName))))
-        );
+    public Optional<EntityView> findEntityViewByTenantIdAndName(UUID tenantId, String name) {
+        Select.Where query = select().from(ENTITY_VIEW_BY_TENANT_AND_NAME).where();
+        query.and(eq(ENTITY_VIEW_TENANT_ID_PROPERTY, tenantId));
+        query.and(eq(ENTITY_VIEW_NAME_PROPERTY, name));
+        return Optional.ofNullable(DaoUtil.getData(findOneByStatement(query)));
     }
 
     @Override
     public List<EntityView> findEntityViewByTenantIdAndEntityId(UUID tenantId, UUID entityId, TextPageLink pageLink) {
-        log.debug("Try to find entity-views by tenantId [{}], entityId[{}] and pageLink [{}]", tenantId, entityId, pageLink);
-        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(DEVICE_BY_CUSTOMER_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
-                Arrays.asList(eq(DEVICE_CUSTOMER_ID_PROPERTY, entityId),
-                        eq(DEVICE_TENANT_ID_PROPERTY, tenantId)),
+        log.debug("Try to find entity views by tenantId [{}], entityId [{}] and pageLink [{}]",
+                tenantId, entityId, pageLink);
+        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
+                ENTITY_VIEW_BY_TENANT_AND_ENTITY_AND_SEARCH_TEXT,
+                Arrays.asList(eq(CUSTOMER_ID_PROPERTY, entityId), eq(TENANT_ID_PROPERTY, tenantId)),
                 pageLink);
-
-        log.trace("Found entity-views [{}] by tenantId [{}], entityId [{}] and pageLink [{}]", entityViewEntities, tenantId, entityId, pageLink);
+        log.trace("Found entity views [{}] by tenantId [{}], entityId [{}] and pageLink [{}]",
+                entityViewEntities, tenantId, entityId, pageLink);
         return DaoUtil.convertDataList(entityViewEntities);
     }
 
     @Override
     public List<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
-        return null;
+        log.debug("Try to find entity views by tenantId [{}], customerId[{}] and pageLink [{}]",
+                tenantId, customerId, pageLink);
+        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
+                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_SEARCH_TEXT,
+                Arrays.asList(eq(CUSTOMER_ID_PROPERTY, customerId), eq(TENANT_ID_PROPERTY, tenantId)),
+                pageLink);
+        log.trace("Found find entity views [{}] by tenantId [{}], customerId [{}] and pageLink [{}]",
+                entityViewEntities, tenantId, customerId, pageLink);
+        return DaoUtil.convertDataList(entityViewEntities);
     }
 
     @Override
-    public List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId, UUID customerId, UUID entityId, TextPageLink pageLink) {
-        return null;
+    public List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId,
+                                                                              UUID customerId,
+                                                                              UUID entityId,
+                                                                              TextPageLink pageLink) {
+
+        log.debug("Try to find entity views by tenantId [{}], customerId [{}], entityId [{}] and pageLink [{}]",
+                tenantId, customerId, entityId, pageLink);
+        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
+                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_ENTITY_AND_SEARCH_TEXT,
+                Arrays.asList(
+                        eq(TENANT_ID_PROPERTY, tenantId),
+                        eq(CUSTOMER_ID_PROPERTY, customerId),
+                        eq(ENTITY_ID_COLUMN, entityId)),
+                pageLink);
+        log.trace("Found devices [{}] by tenantId [{}], customerId [{}], entityId [{}] and pageLink [{}]",
+                entityViewEntities, tenantId, customerId, entityId, pageLink);
+        return DaoUtil.convertDataList(entityViewEntities);
     }
 
     @Override
     public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId) {
-        // TODO: implement this
-        return null;
+        log.debug("Try to find entity views by tenantId [{}] and entityId [{}]", tenantId, entityId);
+        Select.Where query = select().from(getColumnFamilyName()).where();
+        query.and(eq(TENANT_ID_PROPERTY, tenantId));
+        query.and(eq(ENTITY_ID_COLUMN, entityId));
+        return findListByStatementAsync(query);
     }
 }

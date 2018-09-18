@@ -45,14 +45,12 @@ public class ModelConstants {
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
-    /*public static final String ENTITY_VIEW_ID_PROPERTY = "entity_view_id";*/
 
     public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
     public static final String ENTITY_ID_COLUMN = "entity_id";
     public static final String ATTRIBUTE_TYPE_COLUMN = "attribute_type";
     public static final String ATTRIBUTE_KEY_COLUMN = "attribute_key";
     public static final String LAST_UPDATE_TS_COLUMN = "last_update_ts";
-
 
     /**
      * Cassandra user constants.
@@ -148,18 +146,19 @@ public class ModelConstants {
      * Cassandra entityView constants.
      */
     public static final String ENTITY_VIEW_TABLE_FAMILY_NAME = "entity_views";
-    public static final String ENTITY_VIEW_FAMILY_NAME = "entity-view";
     public static final String ENTITY_VIEW_ENTITY_ID_PROPERTY = ENTITY_ID_COLUMN;
     public static final String ENTITY_VIEW_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ENTITY_VIEW_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
     public static final String ENTITY_VIEW_NAME_PROPERTY = DEVICE_NAME_PROPERTY;
-    public static final String ENTITY_VIEW_TYPE_PROPERTY = DEVICE_TYPE_PROPERTY;
-    public static final String ENTITY_VIEW_TENANT_AND_NAME_VIEW_NAME = "entity_view_by_tenant_and_name";
+    public static final String ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_ENTITY_AND_SEARCH_TEXT = "entity_views_by_tenant_and_customer_and_entity";
+    public static final String ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_SEARCH_TEXT = "entity_views_by_tenant_and_customer";
     public static final String ENTITY_VIEW_KEYS_PROPERTY = "keys";
     public static final String ENTITY_VIEW_START_TS_PROPERTY = "start_ts";
     public static final String ENTITY_VIEW_END_TS_PROPERTY = "end_ts";
     public static final String ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
     public static final String ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "entity_view_by_tenant_and_search_text";
+    public static final String ENTITY_VIEW_BY_TENANT_AND_NAME = "entity_views_by_tenant_and_name";
+    public static final String ENTITY_VIEW_BY_TENANT_AND_ENTITY_AND_SEARCH_TEXT = "entity_view_by_tenant_and_entity";
 
     /**
      * Cassandra audit log constants.

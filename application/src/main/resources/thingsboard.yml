@@ -298,6 +298,9 @@ caffeine:
     assets:
       timeToLiveInMinutes: 1440
       maxSize: 100000
+    entityViews:
+      timeToLiveInMinutes: 1440
+      maxSize: 100000
 
 redis:
   # standalone or cluster

@@ -15,31 +15,27 @@
  */
 package org.thingsboard.server.controller;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.controller.CustomerController.CUSTOMER_ID;
 
 /**
  * Created by Victor Basanets on 8/28/2017.
@@ -109,9 +105,9 @@ public class EntityViewController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/entityView/{entityViewId}", method = RequestMethod.POST)
     @ResponseBody
-    public EntityView assignEntityViewToCustomer(@PathVariable("customerId") String strCustomerId,
+    public EntityView assignEntityViewToCustomer(@PathVariable(CUSTOMER_ID) String strCustomerId,
                                              @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
-        checkParameter("customerId", strCustomerId);
+        checkParameter(CUSTOMER_ID, strCustomerId);
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));

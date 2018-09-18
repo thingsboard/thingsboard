@@ -21,17 +21,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -50,14 +51,14 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
+import static org.thingsboard.server.common.data.CacheConstants.ENTITY_VIEW_CACHE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
-import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -88,7 +89,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Autowired
     private CacheManager cacheManager;
 
-//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
     @Override
     public EntityView findEntityViewById(EntityViewId entityViewId) {
         log.trace("Executing findEntityViewById [{}]", entityViewId);
@@ -96,6 +96,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return entityViewDao.findById(entityViewId.getId());
     }
 
+    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #name}")
     @Override
     public EntityView findEntityViewByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findEntityViewByTenantIdAndName [{}][{}]", tenantId, name);
@@ -104,7 +105,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 .orElse(null);
     }
 
-//    @CachePut(cacheNames = ENTITY_VIEW_CACHE)
+    @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.name}")
     @Override
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
@@ -168,14 +169,11 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     @Override
     public void deleteEntityView(EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
-//        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
+        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
         validateId(entityViewId, INCORRECT_ENTITY_VIEW_ID + entityViewId);
         deleteEntityRelations(entityViewId);
         EntityView entityView = entityViewDao.findById(entityViewId.getId());
-//        List<Object> list = new ArrayList<>();
-//        list.add(entityView.getTenantId());
-//        list.add(entityView.getName());
-//        cache.evict(list);
+        cache.evict(Arrays.asList(entityView.getTenantId(), entityView.getName()));
         entityViewDao.removeById(entityViewId.getId());
     }
 
@@ -188,7 +186,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return new TextPageData<>(entityViews, pageLink);
     }
 
-//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE)
     @Override
     public TextPageData<EntityView> findEntityViewByTenantIdAndEntityId(TenantId tenantId, EntityId entityId,
                                                                     TextPageLink pageLink) {
@@ -228,7 +225,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         return new TextPageData<>(entityViews, pageLink);
     }
 
-//    @Cacheable(cacheNames = ENTITY_VIEW_CACHE, key = "{#tenantId, #customerId, #entityId, #pageLink}")
     @Override
     public TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(TenantId tenantId,
                                                                                       CustomerId customerId,
@@ -312,9 +308,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
                 @Override
                 protected void validateDataImpl(EntityView entityView) {
-                    if (StringUtils.isEmpty(entityView.getKeys().toString())) {
-                        throw new DataValidationException("Entity view type should be specified!");
-                    }
                     if (StringUtils.isEmpty(entityView.getName())) {
                         throw new DataValidationException("Entity view name should be specified!");
                     }
