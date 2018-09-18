@@ -674,7 +674,7 @@ CREATE TABLE IF NOT EXISTS thingsboard.entity_views (
     PRIMARY KEY (id, entity_id, tenant_id, customer_id)
 );
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_name AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_name AS
     SELECT *
     from thingsboard.entity_views
     WHERE tenant_id IS NOT NULL
@@ -696,18 +696,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_sea
     PRIMARY KEY (tenant_id, search_text, id, customer_id, entity_id)
     WITH CLUSTERING ORDER BY (search_text ASC, id DESC, customer_id DESC);
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_entity AS
-    SELECT *
-    from thingsboard.entity_views
-    WHERE tenant_id IS NOT NULL
-      AND customer_id IS NOT NULL
-      AND entity_id IS NOT NULL
-      AND search_text IS NOT NULL
-      AND id IS NOT NULL
-    PRIMARY KEY (tenant_id, entity_id, search_text, id, customer_id)
-    WITH CLUSTERING ORDER BY (entity_id ASC, search_text ASC, id DESC, customer_id DESC);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_customer AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_view_by_tenant_and_customer AS
     SELECT *
     from thingsboard.entity_views
     WHERE tenant_id IS NOT NULL
@@ -717,14 +706,3 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_cu
       AND id IS NOT NULL
     PRIMARY KEY (tenant_id, customer_id, search_text, id, entity_id)
     WITH CLUSTERING ORDER BY (customer_id DESC, search_text ASC, id DESC);
-
-CREATE MATERIALIZED VIEW IF NOT EXISTS thingsboard.entity_views_by_tenant_and_customer_and_entity AS
-    SELECT *
-    from thingsboard.entity_views
-    WHERE tenant_id IS NOT NULL
-      AND customer_id IS NOT NULL
-      AND entity_id IS NOT NULL
-      AND search_text IS NOT NULL
-      AND id IS NOT NULL
-    PRIMARY KEY (tenant_id, customer_id, entity_id, search_text, id)
-    WITH CLUSTERING ORDER BY (customer_id DESC, entity_id ASC, search_text ASC, id DESC);

@@ -57,18 +57,6 @@ public interface EntityViewDao extends Dao<EntityView> {
     Optional<EntityView> findEntityViewByTenantIdAndName(UUID tenantId, String name);
 
     /**
-     * Find entity views by tenantId, entityId and page link.
-     *
-     * @param tenantId the tenantId
-     * @param entityId the entityId
-     * @param pageLink the page link
-     * @return the list of entity view objects
-     */
-    List<EntityView> findEntityViewByTenantIdAndEntityId(UUID tenantId,
-                                                         UUID entityId,
-                                                         TextPageLink pageLink);
-
-    /**
      * Find entity views by tenantId, customerId and page link.
      *
      * @param tenantId the tenantId
@@ -80,19 +68,6 @@ public interface EntityViewDao extends Dao<EntityView> {
                                                             UUID customerId,
                                                             TextPageLink pageLink);
 
-    /**
-     * Find entity views by tenantId, customerId, entityId and page link.
-     *
-     * @param tenantId the tenantId
-     * @param customerId the customerId
-     * @param entityId the entityId
-     * @param pageLink the page link
-     * @return the list of entity view objects
-     */
-    List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId,
-                                                                       UUID customerId,
-                                                                       UUID entityId,
-                                                                       TextPageLink pageLink);
 
     ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(UUID tenantId, UUID entityId);
 }

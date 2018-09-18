@@ -30,11 +30,23 @@ import org.thingsboard.server.dao.model.nosql.EntityViewEntity;
 import org.thingsboard.server.dao.nosql.CassandraAbstractSearchTextDao;
 import org.thingsboard.server.dao.util.NoSqlDao;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static org.thingsboard.server.dao.model.ModelConstants.*;
+import static org.thingsboard.server.dao.model.ModelConstants.CUSTOMER_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_ID_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_SEARCH_TEXT;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_NAME_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_VIEW_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_PROPERTY;
 
 /**
  * Created by Victor Basanets on 9/06/2017.
@@ -85,19 +97,6 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     }
 
     @Override
-    public List<EntityView> findEntityViewByTenantIdAndEntityId(UUID tenantId, UUID entityId, TextPageLink pageLink) {
-        log.debug("Try to find entity views by tenantId [{}], entityId [{}] and pageLink [{}]",
-                tenantId, entityId, pageLink);
-        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
-                ENTITY_VIEW_BY_TENANT_AND_ENTITY_AND_SEARCH_TEXT,
-                Arrays.asList(eq(CUSTOMER_ID_PROPERTY, entityId), eq(TENANT_ID_PROPERTY, tenantId)),
-                pageLink);
-        log.trace("Found entity views [{}] by tenantId [{}], entityId [{}] and pageLink [{}]",
-                entityViewEntities, tenantId, entityId, pageLink);
-        return DaoUtil.convertDataList(entityViewEntities);
-    }
-
-    @Override
     public List<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, TextPageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}], customerId[{}] and pageLink [{}]",
                 tenantId, customerId, pageLink);
@@ -107,26 +106,6 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
                 pageLink);
         log.trace("Found find entity views [{}] by tenantId [{}], customerId [{}] and pageLink [{}]",
                 entityViewEntities, tenantId, customerId, pageLink);
-        return DaoUtil.convertDataList(entityViewEntities);
-    }
-
-    @Override
-    public List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId,
-                                                                              UUID customerId,
-                                                                              UUID entityId,
-                                                                              TextPageLink pageLink) {
-
-        log.debug("Try to find entity views by tenantId [{}], customerId [{}], entityId [{}] and pageLink [{}]",
-                tenantId, customerId, entityId, pageLink);
-        List<EntityViewEntity> entityViewEntities = findPageWithTextSearch(
-                ENTITY_VIEW_BY_TENANT_AND_CUSTOMER_AND_ENTITY_AND_SEARCH_TEXT,
-                Arrays.asList(
-                        eq(TENANT_ID_PROPERTY, tenantId),
-                        eq(CUSTOMER_ID_PROPERTY, customerId),
-                        eq(ENTITY_ID_COLUMN, entityId)),
-                pageLink);
-        log.trace("Found devices [{}] by tenantId [{}], customerId [{}], entityId [{}] and pageLink [{}]",
-                entityViewEntities, tenantId, customerId, entityId, pageLink);
         return DaoUtil.convertDataList(entityViewEntities);
     }
 

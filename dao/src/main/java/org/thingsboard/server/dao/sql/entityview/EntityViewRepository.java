@@ -41,16 +41,6 @@ public interface EntityViewRepository extends CrudRepository<EntityViewEntity, S
                                       Pageable pageable);
 
     @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
-            "AND e.entityId = :entityId " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantIdAndEntityId(@Param("tenantId") String tenantId,
-                                             @Param("entityId") String entityId,
-                                             @Param("textSearch") String textSearch,
-                                             @Param("idOffset") String idOffset,
-                                             Pageable pageable);
-
-    @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
             "AND e.customerId = :customerId " +
             "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:searchText, '%')) " +
             "AND e.id > :idOffset ORDER BY e.id")
@@ -60,25 +50,7 @@ public interface EntityViewRepository extends CrudRepository<EntityViewEntity, S
                                                    @Param("idOffset") String idOffset,
                                                    Pageable pageable);
 
-    @Query("SELECT e FROM EntityViewEntity e WHERE e.tenantId = :tenantId " +
-            "AND e.customerId = :customerId " +
-            "AND e.entityId = :entityId " +
-            "AND LOWER(e.searchText) LIKE LOWER(CONCAT(:textSearch, '%')) " +
-            "AND e.id > :idOffset ORDER BY e.id")
-    List<EntityViewEntity> findByTenantIdAndCustomerIdAndEntityId(@Param("tenantId") String tenantId,
-                                                          @Param("customerId") String customerId,
-                                                          @Param("entityId") String entityId,
-                                                          @Param("textSearch") String textSearch,
-                                                          @Param("idOffset") String idOffset,
-                                                          Pageable pageable);
-
     EntityViewEntity findByTenantIdAndName(String tenantId, String name);
-
-    List<EntityViewEntity> findAllByTenantIdAndCustomerIdAndIdIn(String tenantId,
-                                                                 String customerId,
-                                                                 List<String> entityViewsIds);
-
-    List<EntityViewEntity> findAllByTenantIdAndIdIn(String tenantId, List<String> entityViewsIds);
 
     List<EntityViewEntity> findAllByTenantIdAndEntityId(String tenantId, String entityId);
 }

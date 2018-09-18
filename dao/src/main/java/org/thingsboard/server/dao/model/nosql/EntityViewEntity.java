@@ -24,10 +24,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
@@ -48,6 +52,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ID_PROPERTY;
 @Table(name = ENTITY_VIEW_TABLE_FAMILY_NAME)
 @EqualsAndHashCode
 @ToString
+@Slf4j
 public class EntityViewEntity implements SearchTextEntity<EntityView> {
 
     @PartitionKey(value = 0)
@@ -112,7 +117,7 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         try {
             this.keys = mapper.writeValueAsString(entityView.getKeys());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to serialize entity view keys!", e);
         }
         this.startTs = entityView.getStartTimeMs();
         this.endTs = entityView.getEndTimeMs();
@@ -142,7 +147,7 @@ public class EntityViewEntity implements SearchTextEntity<EntityView> {
         try {
             entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to read entity view keys!", e);
         }
         entityView.setStartTimeMs(startTs);
         entityView.setEndTimeMs(endTs);

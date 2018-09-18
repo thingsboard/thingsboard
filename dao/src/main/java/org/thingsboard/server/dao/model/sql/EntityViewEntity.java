@@ -20,18 +20,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.SearchTextEntity;
 import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Table;
 import java.io.IOException;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
@@ -45,6 +53,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPER
 @Entity
 @TypeDef(name = "json", typeClass = JsonStringType.class)
 @Table(name = ModelConstants.ENTITY_VIEW_TABLE_FAMILY_NAME)
+@Slf4j
 public class EntityViewEntity extends BaseSqlEntity<EntityView> implements SearchTextEntity<EntityView> {
 
     @Column(name = ModelConstants.ENTITY_VIEW_ENTITY_ID_PROPERTY)
@@ -103,7 +112,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         try {
             this.keys = mapper.writeValueAsString(entityView.getKeys());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to serialize entity view keys!", e);
         }
         this.startTs = entityView.getStartTimeMs();
         this.endTs = entityView.getEndTimeMs();
@@ -139,7 +148,7 @@ public class EntityViewEntity extends BaseSqlEntity<EntityView> implements Searc
         try {
             entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to read entity view keys!", e);
         }
         entityView.setStartTimeMs(startTs);
         entityView.setEndTimeMs(endTs);

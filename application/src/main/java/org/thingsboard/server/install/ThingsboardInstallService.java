@@ -93,8 +93,6 @@ public class ThingsboardInstallService {
 
                         databaseUpgradeService.upgradeDatabase("2.0.0");
 
-                        dataUpdateService.updateData("2.0.0");
-
                         log.info("Updating system data...");
 
                         systemDataLoaderService.deleteSystemWidgetBundle("charts");

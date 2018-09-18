@@ -53,7 +53,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
         implements EntityViewDao {
 
     @Autowired
-    EntityViewRepository entityViewRepository;
+    private EntityViewRepository entityViewRepository;
 
     @Override
     protected Class<EntityViewEntity> getEntityClass() {
@@ -82,19 +82,6 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
-    public List<EntityView> findEntityViewByTenantIdAndEntityId(UUID tenantId,
-                                                                UUID entityId,
-                                                                TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
-                entityViewRepository.findByTenantIdAndEntityId(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(entityId),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())));
-    }
-
-    @Override
     public List<EntityView> findEntityViewsByTenantIdAndCustomerId(UUID tenantId,
                                                                    UUID customerId,
                                                                    TextPageLink pageLink) {
@@ -102,22 +89,6 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
                 entityViewRepository.findByTenantIdAndCustomerId(
                         fromTimeUUID(tenantId),
                         fromTimeUUID(customerId),
-                        Objects.toString(pageLink.getTextSearch(), ""),
-                        pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
-                        new PageRequest(0, pageLink.getLimit())
-                ));
-    }
-
-    @Override
-    public List<EntityView> findEntityViewsByTenantIdAndCustomerIdAndEntityId(UUID tenantId,
-                                                                              UUID customerId,
-                                                                              UUID entityId,
-                                                                              TextPageLink pageLink) {
-        return DaoUtil.convertDataList(
-                entityViewRepository.findByTenantIdAndCustomerIdAndEntityId(
-                        fromTimeUUID(tenantId),
-                        fromTimeUUID(customerId),
-                        fromTimeUUID(entityId),
                         Objects.toString(pageLink.getTextSearch(), ""),
                         pageLink.getIdOffset() == null ? NULL_UUID_STR : fromTimeUUID(pageLink.getIdOffset()),
                         new PageRequest(0, pageLink.getLimit())

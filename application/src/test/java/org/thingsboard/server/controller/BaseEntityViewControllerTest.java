@@ -22,7 +22,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
@@ -31,7 +35,10 @@ import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,7 +50,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     private Tenant savedTenant;
     private User tenantAdmin;
     private Device testDevice;
-    private TelemetryEntityView obj;
 
     @Before
     public void beforeTest() throws Exception {
@@ -67,14 +73,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         device.setName("Test device");
         device.setType("default");
         testDevice = doPost("/api/device", device, Device.class);
-        obj = new TelemetryEntityView(
-                Arrays.asList("109L", "209L"),
-                new AttributesEntityView(
-                        Arrays.asList("caKey1", "caKey2"),
-                        Arrays.asList("saKey1", "saKey2", "saKey3"),
-                        Arrays.asList("shKey1", "shKey2", "shKey3", "shKey4")
-                )
-        );
     }
 
     @After
@@ -239,14 +237,16 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
             doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
         TextPageData<EntityView> pageData = doGetTypedWithPageLink(urlTemplate,
-                    new TypeReference<TextPageData<EntityView>>(){}, new TextPageLink(4, name1));
+                new TypeReference<TextPageData<EntityView>>() {
+                }, new TextPageLink(4, name1));
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
             doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<TextPageData<EntityView>>(){},
+        pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<TextPageData<EntityView>>() {
+                },
                 new TextPageLink(4, name2));
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -287,14 +287,16 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
             doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
         TextPageData<EntityView> pageData = doGetTypedWithPageLink("/api/tenant/entityViews?",
-                new TypeReference<TextPageData<EntityView>>(){}, new TextPageLink(4, name1));
+                new TypeReference<TextPageData<EntityView>>() {
+                }, new TextPageLink(4, name1));
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
             doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
         }
-        pageData = doGetTypedWithPageLink("/api/tenant/entityViews?", new TypeReference<TextPageData<EntityView>>(){},
+        pageData = doGetTypedWithPageLink("/api/tenant/entityViews?", new TypeReference<TextPageData<EntityView>>() {
+                },
                 new TextPageLink(4, name2));
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
@@ -305,7 +307,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setEntityId(testDevice.getId());
         view.setTenantId(savedTenant.getId());
         view.setName(name);
-        view.setKeys(new TelemetryEntityView(obj));
+
+        view.setKeys(new TelemetryEntityView(
+                Arrays.asList("109L", "209L"),
+                new AttributesEntityView(
+                        Arrays.asList("caKey1", "caKey2"),
+                        Arrays.asList("saKey1", "saKey2", "saKey3"),
+                        Arrays.asList("shKey1", "shKey2", "shKey3", "shKey4"))));
+
         return doPost("/api/entityView", view, EntityView.class);
     }
 
@@ -346,7 +355,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         List<EntityView> loadedItems = new ArrayList<>();
         TextPageData<EntityView> pageData;
         do {
-            pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<TextPageData<EntityView>>(){}, pageLink);
+            pageData = doGetTypedWithPageLink(urlTemplate, new TypeReference<TextPageData<EntityView>>() {
+            }, pageLink);
             loadedItems.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageData.getNextPageLink();
