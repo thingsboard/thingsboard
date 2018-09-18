@@ -54,7 +54,7 @@ export default function AttributeTableDirective($compile, $templateCache, $rootS
 
         scope.entityType = attrs.entityType;
 
-        if (scope.entityType === types.entityType.device) {
+        if (scope.entityType === types.entityType.device || scope.entityType === types.entityType.entityView) {
             scope.attributeScopes = types.attributesScope;
             scope.attributeScopeSelectionReadonly = false;
         } else {

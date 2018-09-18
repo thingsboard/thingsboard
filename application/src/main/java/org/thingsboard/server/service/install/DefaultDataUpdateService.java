@@ -49,6 +49,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 1.4.0 to 2.0.0 ...");
                 tenantsDefaultRuleChainUpdater.updateEntities(null);
                 break;
+            case "2.0.0":
+                log.info("Updating data from version 2.0.0 to 2.1.1 ...");
+                tenantsDefaultRuleChainUpdater.updateEntities(null);
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }

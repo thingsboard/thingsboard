@@ -327,7 +327,8 @@ export default angular.module('thingsboard.types', [])
                 dashboard: "DASHBOARD",
                 alarm: "ALARM",
                 rulechain: "RULE_CHAIN",
-                rulenode: "RULE_NODE"
+                rulenode: "RULE_NODE",
+                entityView: "ENTITY_VIEW"
             },
             aliasEntityType: {
                 current_customer: "CURRENT_CUSTOMER"
@@ -344,6 +345,12 @@ export default angular.module('thingsboard.types', [])
                     typePlural: 'entity.type-assets',
                     list: 'entity.list-of-assets',
                     nameStartsWith: 'entity.asset-name-starts-with'
+                },
+                "ENTITY_VIEW": {
+                    type: 'entity.type-entity-view',
+                    typePlural: 'entity.type-entity-views',
+                    list: 'entity.list-of-entity-views',
+                    nameStartsWith: 'entity.entity-view-name-starts-with'
                 },
                 "TENANT": {
                     type: 'entity.type-tenant',

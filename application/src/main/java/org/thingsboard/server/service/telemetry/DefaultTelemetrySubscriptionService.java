@@ -29,9 +29,11 @@ import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -48,6 +50,8 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.cluster.SendToClusterMsg;
 import org.thingsboard.server.common.msg.cluster.ServerAddress;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.cluster.ClusterAPIProtos;
 import org.thingsboard.server.service.cluster.routing.ClusterRoutingService;
@@ -102,6 +106,9 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
     private ClusterRpcService rpcService;
 
     @Autowired
+    private EntityViewService entityViewService;
+
+    @Autowired
     @Lazy
     private DeviceStateService stateService;
 
@@ -133,15 +140,19 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
 
     @Override
     public void addLocalWsSubscription(String sessionId, EntityId entityId, SubscriptionState sub) {
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            EntityView entityView = entityViewService.findEntityViewById(new EntityViewId(entityId.getId()));
+            entityId = entityView.getEntityId();
+        }
         Optional<ServerAddress> server = routingService.resolveById(entityId);
         Subscription subscription;
         if (server.isPresent()) {
             ServerAddress address = server.get();
-            log.trace("[{}] Forwarding subscription [{}] for device [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId, address);
+            log.trace("[{}] Forwarding subscription [{}] for [{}] entity [{}] to [{}]", sessionId, sub.getSubscriptionId(), entityId.getEntityType().name(), entityId, address);
             subscription = new Subscription(sub, true, address);
             tellNewSubscription(address, sessionId, subscription);
         } else {
-            log.trace("[{}] Registering local subscription [{}] for device [{}]", sessionId, sub.getSubscriptionId(), entityId);
+            log.trace("[{}] Registering local subscription [{}] for [{}] entity [{}]", sessionId, sub.getSubscriptionId(), entityId.getEntityType().name(), entityId);
             subscription = new Subscription(sub, true);
         }
         registerSubscription(sessionId, entityId, subscription);

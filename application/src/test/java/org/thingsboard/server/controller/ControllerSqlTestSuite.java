@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.server.controller.sql.*SqlTest",
+        "org.thingsboard.server.controller.sql.*Test",
         })
 public class ControllerSqlTestSuite {
 
