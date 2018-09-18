@@ -33,10 +33,6 @@ public class Subscription {
     private long startTime;
     private long endTime;
 
-    public Subscription(SubscriptionState sub, boolean local) {
-        this(sub, local, null);
-    }
-
     public Subscription(SubscriptionState sub, boolean local, ServerAddress server) {
         this(sub, local, server, 0L, 0L);
     }
