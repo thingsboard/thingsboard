@@ -50,6 +50,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     private Tenant savedTenant;
     private User tenantAdmin;
     private Device testDevice;
+    private TelemetryEntityView keys;
 
     @Before
     public void beforeTest() throws Exception {
@@ -73,6 +74,13 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         device.setName("Test device");
         device.setType("default");
         testDevice = doPost("/api/device", device, Device.class);
+
+        keys = new TelemetryEntityView(
+                Arrays.asList("109L", "209L"),
+                new AttributesEntityView(
+                        Arrays.asList("caKey1", "caKey2"),
+                        Arrays.asList("saKey1", "saKey2", "saKey3"),
+                        Arrays.asList("shKey1", "shKey2", "shKey3", "shKey4")));
     }
 
     @After
@@ -108,6 +116,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         EntityView foundEntityView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
 
         Assert.assertEquals(foundEntityView.getName(), savedView.getName());
+        Assert.assertEquals(foundEntityView.getKeys(), keys);
     }
 
     @Test
@@ -308,12 +317,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setTenantId(savedTenant.getId());
         view.setName(name);
 
-        view.setKeys(new TelemetryEntityView(
-                Arrays.asList("109L", "209L"),
-                new AttributesEntityView(
-                        Arrays.asList("caKey1", "caKey2"),
-                        Arrays.asList("saKey1", "saKey2", "saKey3"),
-                        Arrays.asList("shKey1", "shKey2", "shKey3", "shKey4"))));
+        view.setKeys(keys);
 
         return doPost("/api/entityView", view, EntityView.class);
     }
