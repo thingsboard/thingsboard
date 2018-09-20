@@ -17,6 +17,6 @@ package org.thingsboard.server.dao.util;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@ConditionalOnExpression("'${database.type}'=='cassandra' || '${database.ts.type}'=='cassandra'")
+@ConditionalOnExpression("'${database.ts.type}'=='cassandra' || '${database.entities.type}'=='cassandra'")
 public @interface NoSqlAnyDao {
 }

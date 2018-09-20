@@ -151,7 +151,6 @@ quota:
       # Enable Host API Limits
       enabled: "${QUOTA_TENANT_ENABLED:false}"
       # Array of whitelist tenants
-      # Array of whitelist tenants
       whitelist: "${QUOTA_TENANT_WHITELIST:}"
       # Array of blacklist tenants
       blacklist: "${QUOTA_HOST_BLACKLIST:}"
@@ -160,11 +159,10 @@ quota:
         intervalMin: 2
 
 database:
-  type: "${DATABASE_TYPE:sql}" # cassandra OR sql
   entities:
-    type: "${DATABASE_TYPE:sql}" # cassandra OR sql
+    type: "${DATABASE_TS_TYPE:sql}" # cassandra OR sql
   ts:
-    type: "${DATABASE_TYPE:sql}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
+    type: "${DATABASE_CASSANDRA_TYPE:sql}" # cassandra OR sql (for hybrid mode, only this value should be cassandra)
 
 
 # Cassandra driver configuration parameters
