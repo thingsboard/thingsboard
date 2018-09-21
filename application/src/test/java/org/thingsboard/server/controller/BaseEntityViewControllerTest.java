@@ -24,6 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityView;
@@ -98,7 +99,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 .andExpect(status().isOk());
     }
 
-    //@Test
+    @Test
     public void testFindEntityViewById() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
         EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
@@ -106,7 +107,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(savedView, foundView);
     }
 
-    //@Test
+    @Test
     public void testSaveEntityView() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
 
@@ -126,7 +127,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(foundEntityView.getKeys(), telemetry);
     }
 
-    //@Test
+    @Test
     public void testDeleteEntityView() throws Exception {
         EntityView view = getNewSavedEntityView("Test entity view");
         Customer customer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
@@ -140,14 +141,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 .andExpect(status().isNotFound());
     }
 
-    //@Test
+    @Test
     public void testSaveEntityViewWithEmptyName() throws Exception {
         doPost("/api/entityView", new EntityView())
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Entity view name should be specified!")));
     }
 
-    //@Test
+    @Test
     public void testAssignAndUnAssignedEntityViewToCustomer() throws Exception {
         EntityView view = getNewSavedEntityView("Test entity view");
         Customer savedCustomer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
@@ -169,14 +170,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
     }
 
-    //@Test
+    @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
         EntityView savedView = getNewSavedEntityView("Test entity view");
         doPost("/api/customer/" + UUIDs.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
 
-    //@Test
+    @Test
     public void testAssignEntityViewToCustomerFromDifferentTenant() throws Exception {
         loginSysAdmin();
 
@@ -208,7 +209,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 .andExpect(status().isOk());
     }
 
-    //@Test
+    @Test
     public void testGetCustomerEntityViews() throws Exception {
         CustomerId customerId = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class).getId();
         String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViews?";
@@ -227,7 +228,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(views, loadedViews);
     }
 
-    //@Test
+    @Test
     public void testGetCustomerEntityViewsByName() throws Exception {
         CustomerId customerId = doPost("/api/customer", getNewCustomer("Test customer"), Customer.class).getId();
         String urlTemplate = "/api/customer/" + customerId.getId().toString() + "/entityViews?";
@@ -267,7 +268,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(0, pageData.getData().size());
     }
 
-    //@Test
+    @Test
     public void testGetTenantEntityViews() throws Exception {
 
         List<EntityView> views = new ArrayList<>();
@@ -282,7 +283,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(views, loadedViews);
     }
 
-    //@Test
+    @Test
     public void testGetTenantEntityViewsByName() throws Exception {
         String name1 = "Entity view name1";
         List<EntityView> namesOfView1 = fillListOf(143, name1);
@@ -317,7 +318,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(0, pageData.getData().size());
     }
 
-    //@Test
+    @Test
     public void testTheCopyOfAttrsThatMatchWithDeviceCriteriaForTheView() throws Exception {
 
         String viewDeviceId = testDevice.getId().getId().toString();
