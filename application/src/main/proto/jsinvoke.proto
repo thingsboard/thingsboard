@@ -14,13 +14,24 @@
  * limitations under the License.
  */
 syntax = "proto3";
-package discovery;
+package cluster;
 
-option java_package = "org.thingsboard.server.gen.discovery";
-option java_outer_classname = "ServerInstanceProtos";
+option java_package = "org.thingsboard.server.gen.js";
+option java_outer_classname = "JsInvokeProtos";
 
-message ServerInfo {
-  string host = 1;
-  int32 port = 2;
-  int64 ts = 3;
+service JsInvokeRpcService {
+  rpc handleMsgs(stream JsInvokeRequest) returns (stream JsInvokeResponse) {}
 }
+
+message JsInvokeRequest {
+  string scriptId = 1;
+  string scriptBody = 2;
+  repeated string args = 3;
+}
+
+message JsInvokeResponse {
+  string result = 1;
+  string errorName = 2;
+  string errorDetails = 3;
+}
+

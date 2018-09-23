@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.UUID;
 
-public interface JsSandboxService {
+public interface JsInvokeService {
 
     ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames);
 

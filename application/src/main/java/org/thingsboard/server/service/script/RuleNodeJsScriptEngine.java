@@ -37,12 +37,12 @@ import java.util.concurrent.ExecutionException;
 public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final JsSandboxService sandboxService;
+    private final JsInvokeService sandboxService;
 
     private final UUID scriptId;
     private final EntityId entityId;
 
-    public RuleNodeJsScriptEngine(JsSandboxService sandboxService, EntityId entityId, String script, String... argNames) {
+    public RuleNodeJsScriptEngine(JsInvokeService sandboxService, EntityId entityId, String script, String... argNames) {
         this.sandboxService = sandboxService;
         this.entityId = entityId;
         try {

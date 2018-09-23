@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -39,13 +38,13 @@ import static org.junit.Assert.*;
 public class RuleNodeJsScriptEngineTest {
 
     private ScriptEngine scriptEngine;
-    private TestNashornJsSandboxService jsSandboxService;
+    private TestNashornJsInvokeService jsSandboxService;
 
     private EntityId ruleNodeId = new RuleNodeId(UUIDs.timeBased());
 
     @Before
     public void beforeTest() throws Exception {
-        jsSandboxService = new TestNashornJsSandboxService(false, 1, 100, 3);
+        jsSandboxService = new TestNashornJsInvokeService(false, 1, 100, 3);
     }
 
     @After

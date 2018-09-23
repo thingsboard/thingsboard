@@ -40,7 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-public abstract class AbstractNashornJsSandboxService implements JsSandboxService {
+public abstract class AbstractNashornJsInvokeService implements JsInvokeService {
 
     private NashornSandbox sandbox;
     private ScriptEngine engine;

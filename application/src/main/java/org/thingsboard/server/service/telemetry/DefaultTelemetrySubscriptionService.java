@@ -232,7 +232,7 @@ public class DefaultTelemetrySubscriptionService implements TelemetrySubscriptio
                 new SubscriptionState(proto.getSessionId(), proto.getSubscriptionId(),
                         EntityIdFactory.getByTypeAndId(proto.getEntityType(), proto.getEntityId()),
                         TelemetryFeature.valueOf(proto.getType()), proto.getAllKeys(), statesMap, proto.getScope()),
-                false, new ServerAddress(serverAddress.getHost(), serverAddress.getPort()));
+                false, new ServerAddress(serverAddress.getHost(), serverAddress.getPort(), serverAddress.getServerType()));
 
         addRemoteWsSubscription(serverAddress, proto.getSessionId(), subscription);
     }

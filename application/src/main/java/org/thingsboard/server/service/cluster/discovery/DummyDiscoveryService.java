@@ -62,13 +62,5 @@ public class DummyDiscoveryService implements DiscoveryService {
         return Collections.emptyList();
     }
 
-    @Override
-    public boolean addListener(DiscoveryServiceListener listener) {
-        return false;
-    }
 
-    @Override
-    public boolean removeListener(DiscoveryServiceListener listener) {
-        return false;
-    }
 }

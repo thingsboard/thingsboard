@@ -115,8 +115,6 @@ public class DefaultActorService implements ActorService {
         actorContext.setStatsActor(statsActor);
 
         rpcService.init(this);
-
-        discoveryService.addListener(this);
         log.info("Actor system initialized.");
     }
 
@@ -202,7 +200,7 @@ public class DefaultActorService implements ActorService {
 
     @Override
     public void onReceivedMsg(ServerAddress source, ClusterAPIProtos.ClusterMessage msg) {
-        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort());
+        ServerAddress serverAddress = new ServerAddress(source.getHost(), source.getPort(), source.getServerType());
         log.info("Received msg [{}] from [{}]", msg.getMessageType().name(), serverAddress);
         if (log.isDebugEnabled()) {
             log.info("MSG: ", msg);

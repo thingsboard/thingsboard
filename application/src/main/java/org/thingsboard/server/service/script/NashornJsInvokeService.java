@@ -16,29 +16,25 @@
 
 package org.thingsboard.server.service.script;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import delight.nashornsandbox.NashornSandbox;
-import delight.nashornsandbox.NashornSandboxes;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
-import javax.script.ScriptException;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+@Slf4j
+@Service
+public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
 
-public class TestNashornJsSandboxService extends AbstractNashornJsSandboxService {
-
+    @Value("${actors.rule.js_sandbox.use_js_sandbox}")
     private boolean useJsSandbox;
-    private final int monitorThreadPoolSize;
-    private final long maxCpuTime;
-    private final int maxErrors;
 
-    public TestNashornJsSandboxService(boolean useJsSandbox, int monitorThreadPoolSize, long maxCpuTime, int maxErrors) {
-        this.useJsSandbox = useJsSandbox;
-        this.monitorThreadPoolSize = monitorThreadPoolSize;
-        this.maxCpuTime = maxCpuTime;
-        this.maxErrors = maxErrors;
-        init();
-    }
+    @Value("${actors.rule.js_sandbox.monitor_thread_pool_size}")
+    private int monitorThreadPoolSize;
+
+    @Value("${actors.rule.js_sandbox.max_cpu_time}")
+    private long maxCpuTime;
+
+    @Value("${actors.rule.js_sandbox.max_errors}")
+    private int maxErrors;
 
     @Override
     protected boolean useJsSandbox() {
