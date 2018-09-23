@@ -18,6 +18,9 @@ package org.thingsboard.server.controller;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,14 +36,21 @@ import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.common.data.page.TextPageData;
 import org.thingsboard.server.common.data.page.TextPageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -50,12 +60,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     private Tenant savedTenant;
     private User tenantAdmin;
     private Device testDevice;
-    private TelemetryEntityView keys;
+    private TelemetryEntityView telemetry;
 
     @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
-
         idComparator = new IdComparator<>();
 
         savedTenant = doPost("/api/tenant", getNewTenant("My tenant"), Tenant.class);
@@ -67,7 +76,6 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         tenantAdmin.setEmail("tenant2@thingsboard.org");
         tenantAdmin.setFirstName("Joe");
         tenantAdmin.setLastName("Downs");
-
         tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
 
         Device device = new Device();
@@ -75,12 +83,12 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         device.setType("default");
         testDevice = doPost("/api/device", device, Device.class);
 
-        keys = new TelemetryEntityView(
-                Arrays.asList("109L", "209L"),
+        telemetry = new TelemetryEntityView(
+                Arrays.asList("109", "209", "309"),
                 new AttributesEntityView(
-                        Arrays.asList("caKey1", "caKey2"),
-                        Arrays.asList("saKey1", "saKey2", "saKey3"),
-                        Arrays.asList("shKey1", "shKey2", "shKey3", "shKey4")));
+                        Arrays.asList("caValue1", "caValue2", "caValue3", "caValue4"),
+                        Arrays.asList("saValue1", "saValue2", "saValue3", "saValue4"),
+                        Arrays.asList("shValue1", "shValue2", "shValue3", "shValue4")));
     }
 
     @After
@@ -93,35 +101,35 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testFindEntityViewById() throws Exception {
-        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
+        EntityView savedView = getNewSavedEntityView("Test entity view");
         EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertNotNull(foundView);
-        Assert.assertEquals(savedView, foundView);
+        assertEquals(savedView, foundView);
     }
 
     @Test
     public void testSaveEntityView() throws Exception {
-        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
+        EntityView savedView = getNewSavedEntityView("Test entity view");
 
         Assert.assertNotNull(savedView);
         Assert.assertNotNull(savedView.getId());
         Assert.assertTrue(savedView.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedView.getTenantId());
+        assertEquals(savedTenant.getId(), savedView.getTenantId());
         Assert.assertNotNull(savedView.getCustomerId());
-        Assert.assertEquals(NULL_UUID, savedView.getCustomerId().getId());
-        Assert.assertEquals(savedView.getName(), savedView.getName());
+        assertEquals(NULL_UUID, savedView.getCustomerId().getId());
+        assertEquals(savedView.getName(), savedView.getName());
 
         savedView.setName("New test entity view");
         doPost("/api/entityView", savedView, EntityView.class);
         EntityView foundEntityView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
 
-        Assert.assertEquals(foundEntityView.getName(), savedView.getName());
-        Assert.assertEquals(foundEntityView.getKeys(), keys);
+        assertEquals(foundEntityView.getName(), savedView.getName());
+        assertEquals(foundEntityView.getKeys(), telemetry);
     }
 
     @Test
     public void testDeleteEntityView() throws Exception {
-        EntityView view = getNewEntityView("Test entity view");
+        EntityView view = getNewSavedEntityView("Test entity view");
         Customer customer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
         view.setCustomerId(customer.getId());
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
@@ -142,7 +150,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
     @Test
     public void testAssignAndUnAssignedEntityViewToCustomer() throws Exception {
-        EntityView view = getNewEntityView("Test entity view");
+        EntityView view = getNewSavedEntityView("Test entity view");
         Customer savedCustomer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
         view.setCustomerId(savedCustomer.getId());
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
@@ -150,21 +158,21 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         EntityView assignedView = doPost(
                 "/api/customer/" + savedCustomer.getId().getId().toString() + "/entityView/" + savedView.getId().getId().toString(),
                 EntityView.class);
-        Assert.assertEquals(savedCustomer.getId(), assignedView.getCustomerId());
+        assertEquals(savedCustomer.getId(), assignedView.getCustomerId());
 
         EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        Assert.assertEquals(savedCustomer.getId(), foundView.getCustomerId());
+        assertEquals(savedCustomer.getId(), foundView.getCustomerId());
 
         EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
+        assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
 
         foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        Assert.assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
+        assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
     }
 
     @Test
     public void testAssignEntityViewToNonExistentCustomer() throws Exception {
-        EntityView savedView = doPost("/api/entityView", getNewEntityView("Test entity view"), EntityView.class);
+        EntityView savedView = getNewSavedEntityView("Test entity view");
         doPost("/api/customer/" + UUIDs.timeBased().toString() + "/device/" + savedView.getId().getId().toString())
                 .andExpect(status().isNotFound());
     }
@@ -190,8 +198,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         login(tenantAdmin.getEmail(), "testPassword1");
 
-        EntityView view = getNewEntityView("Test entity view");
-        EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+        EntityView savedView = getNewSavedEntityView("Test entity view");
 
         doPost("/api/customer/" + savedCustomer.getId().getId().toString() + "/entityView/" + savedView.getId().getId().toString())
                 .andExpect(status().isForbidden());
@@ -210,7 +217,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         List<EntityView> views = new ArrayList<>();
         for (int i = 0; i < 128; i++) {
             views.add(doPost("/api/customer/" + customerId.getId().toString() + "/entityView/"
-                    + getNewEntityView("Test entity view " + i).getId().getId().toString(), EntityView.class));
+                    + getNewSavedEntityView("Test entity view " + i).getId().getId().toString(), EntityView.class));
         }
 
         List<EntityView> loadedViews = loadListOf(new TextPageLink(23), urlTemplate);
@@ -218,7 +225,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Collections.sort(views, idComparator);
         Collections.sort(loadedViews, idComparator);
 
-        Assert.assertEquals(views, loadedViews);
+        assertEquals(views, loadedViews);
     }
 
     @Test
@@ -232,7 +239,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         List<EntityView> loadedNamesOfView1 = loadListOf(new TextPageLink(15, name1), urlTemplate);
         Collections.sort(namesOfView1, idComparator);
         Collections.sort(loadedNamesOfView1, idComparator);
-        Assert.assertEquals(namesOfView1, loadedNamesOfView1);
+        assertEquals(namesOfView1, loadedNamesOfView1);
 
         String name2 = "Entity view name2";
         List<EntityView> NamesOfView2 = fillListOf(143, name2, "/api/customer/" + customerId.getId().toString()
@@ -240,7 +247,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         List<EntityView> loadedNamesOfView2 = loadListOf(new TextPageLink(4, name2), urlTemplate);
         Collections.sort(NamesOfView2, idComparator);
         Collections.sort(loadedNamesOfView2, idComparator);
-        Assert.assertEquals(NamesOfView2, loadedNamesOfView2);
+        assertEquals(NamesOfView2, loadedNamesOfView2);
 
         for (EntityView view : loadedNamesOfView1) {
             doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
@@ -249,7 +256,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 new TypeReference<TextPageData<EntityView>>() {
                 }, new TextPageLink(4, name1));
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
+        assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
             doDelete("/api/customer/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
@@ -258,7 +265,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 },
                 new TextPageLink(4, name2));
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
+        assertEquals(0, pageData.getData().size());
     }
 
     @Test
@@ -266,14 +273,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
 
         List<EntityView> views = new ArrayList<>();
         for (int i = 0; i < 178; i++) {
-            views.add(doPost("/api/entityView/", getNewEntityView("Test entity view" + i), EntityView.class));
+            views.add(getNewSavedEntityView("Test entity view" + i));
         }
         List<EntityView> loadedViews = loadListOf(new TextPageLink(23), "/api/tenant/entityViews?");
 
         Collections.sort(views, idComparator);
         Collections.sort(loadedViews, idComparator);
 
-        Assert.assertEquals(views, loadedViews);
+        assertEquals(views, loadedViews);
     }
 
     @Test
@@ -283,14 +290,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         List<EntityView> loadedNamesOfView1 = loadListOf(new TextPageLink(15, name1), "/api/tenant/entityViews?");
         Collections.sort(namesOfView1, idComparator);
         Collections.sort(loadedNamesOfView1, idComparator);
-        Assert.assertEquals(namesOfView1, loadedNamesOfView1);
+        assertEquals(namesOfView1, loadedNamesOfView1);
 
         String name2 = "Entity view name2";
         List<EntityView> NamesOfView2 = fillListOf(75, name2);
         List<EntityView> loadedNamesOfView2 = loadListOf(new TextPageLink(4, name2), "/api/tenant/entityViews?");
         Collections.sort(NamesOfView2, idComparator);
         Collections.sort(loadedNamesOfView2, idComparator);
-        Assert.assertEquals(NamesOfView2, loadedNamesOfView2);
+        assertEquals(NamesOfView2, loadedNamesOfView2);
 
         for (EntityView view : loadedNamesOfView1) {
             doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
@@ -299,7 +306,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 new TypeReference<TextPageData<EntityView>>() {
                 }, new TextPageLink(4, name1));
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
+        assertEquals(0, pageData.getData().size());
 
         for (EntityView view : loadedNamesOfView2) {
             doDelete("/api/entityView/" + view.getId().getId().toString()).andExpect(status().isOk());
@@ -308,17 +315,66 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
                 },
                 new TextPageLink(4, name2));
         Assert.assertFalse(pageData.hasNext());
-        Assert.assertEquals(0, pageData.getData().size());
+        assertEquals(0, pageData.getData().size());
     }
 
-    private EntityView getNewEntityView(String name) throws Exception {
+    @Test
+    public void testTheCopyOfAttrsThatMatchWithDeviceCriteriaForTheView() throws Exception {
+
+        String viewDeviceId = testDevice.getId().getId().toString();
+        DeviceCredentials deviceCredentials
+                = doGet("/api/device/" + viewDeviceId + "/credentials", DeviceCredentials.class);
+
+        assertEquals(testDevice.getId(), deviceCredentials.getDeviceId());
+
+        String accessToken = deviceCredentials.getCredentialsId();
+        assertNotNull(accessToken);
+
+        String clientId = MqttAsyncClient.generateClientId();
+        MqttAsyncClient client = new MqttAsyncClient("tcp://localhost:1883", clientId);
+
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setUserName(accessToken);
+        client.connect(options);
+        Thread.sleep(3000);
+
+        MqttMessage message = new MqttMessage();
+        message.setPayload(("{\"caValue1\":\"value1\", \"caValue2\":true, \"caValue3\":42.0, \"caValue4\":73}").getBytes());
+        client.publish("v1/devices/me/attributes", message);
+        Thread.sleep(1000);
+
+        List<String> actualTelemetry =
+                doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId +  "/keys/attributes", List.class);
+        Set<String> actualTelemetrySet = new HashSet<>(actualTelemetry);
+
+        List<String> expectedActualTelemetry = Arrays.asList("caValue1", "caValue2", "caValue3", "caValue4");
+        Set<String> expectedActualTelemetrySet = new HashSet<>(expectedActualTelemetry);
+        assertTrue(actualTelemetrySet.containsAll(expectedActualTelemetrySet));
+        Thread.sleep(1000);
+
+        EntityView savedView = getNewSavedEntityView("Test entity view");
+        String urlOfTelemetryValues = "/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualTelemetrySet);
+        List<Map<String, Object>> values = doGetAsync(urlOfTelemetryValues, List.class);
+
+        assertEquals("value1", getValueOfMap(values, "caValue1"));
+        assertEquals(true, getValueOfMap(values, "caValue2"));
+        assertEquals(42.0, getValueOfMap(values, "caValue3"));
+        assertEquals(73, getValueOfMap(values, "caValue4"));
+    }
+
+    private Object getValueOfMap(List<Map<String, Object>> values, String stringValue) {
+        return values.stream()
+                .filter(value -> value.get("key").equals(stringValue))
+                .findFirst().get().get("value");
+    }
+
+    private EntityView getNewSavedEntityView(String name) throws Exception {
         EntityView view = new EntityView();
         view.setEntityId(testDevice.getId());
         view.setTenantId(savedTenant.getId());
         view.setName(name);
-
-        view.setKeys(keys);
-
+        view.setKeys(telemetry);
         return doPost("/api/entityView", view, EntityView.class);
     }
 
@@ -347,7 +403,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         for (int i = 0; i < limit; i++) {
             String fullName = partOfName + ' ' + RandomStringUtils.randomAlphanumeric(15);
             fullName = i % 2 == 0 ? fullName.toLowerCase() : fullName.toUpperCase();
-            EntityView view = getNewEntityView(fullName);
+            EntityView view = getNewSavedEntityView(fullName);
             Customer customer = getNewCustomer("Test customer " + String.valueOf(Math.random()));
             view.setCustomerId(doPost("/api/customer", customer, Customer.class).getId());
             viewNames.add(doPost("/api/entityView", view, EntityView.class));

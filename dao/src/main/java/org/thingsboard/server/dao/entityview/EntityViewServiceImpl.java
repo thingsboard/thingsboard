@@ -102,14 +102,16 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         log.trace("Executing save entity view [{}]", entityView);
         entityViewValidator.validate(entityView);
         EntityView savedEntityView = entityViewDao.save(entityView);
-        copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs());
-        copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs());
-        copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh());
+        if (savedEntityView.getKeys() != null) {
+            copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs());
+            copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs());
+            copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh());
+        }
         return savedEntityView;
     }
 
     private void copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys) {
-        if (!keys.isEmpty()) {
+        if (keys != null && !keys.isEmpty()) {
             ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getEntityId(), scope, keys);
             Futures.addCallback(getAttrFuture, new FutureCallback<List<AttributeKvEntry>>() {
                 @Override
