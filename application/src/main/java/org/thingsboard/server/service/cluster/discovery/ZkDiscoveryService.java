@@ -143,28 +143,29 @@ public class ZkDiscoveryService implements DiscoveryService, PathChildrenCacheLi
         }
     }
 
-    private boolean reconnectInProgress = false;
-
-    private synchronized ConnectionStateListener checkReconnect(ServerInstance self) {
+    private ConnectionStateListener checkReconnect(ServerInstance self) {
         return (client, newState) -> {
             log.info("[{}:{}] ZK state changed: {}", self.getHost(), self.getPort(), newState);
             if (newState == ConnectionState.LOST) {
-                if (!reconnectInProgress) {
-                    reconnectInProgress = true;
-                    reconnect();
-                }
+                reconnect();
             }
         };
     }
 
-    private void reconnect() {
-        try {
-            client.blockUntilConnected();
-        } catch (InterruptedException e) {
-            log.error("Failed to reconnect to ZK: {}", e.getMessage(), e);
+    private boolean reconnectInProgress = false;
+
+    private synchronized void reconnect() {
+        if (!reconnectInProgress) {
+            reconnectInProgress = true;
+            try {
+                client.blockUntilConnected();
+                publishCurrentServer();
+            } catch (InterruptedException e) {
+                log.error("Failed to reconnect to ZK: {}", e.getMessage(), e);
+            } finally {
+                reconnectInProgress = false;
+            }
         }
-        publishCurrentServer();
-        reconnectInProgress = false;
     }
 
     @Override

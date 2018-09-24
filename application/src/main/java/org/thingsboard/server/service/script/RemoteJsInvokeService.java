@@ -13,48 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.thingsboard.server.service.script;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.EntityId;
+
+import java.util.UUID;
 
 @Slf4j
 @ConditionalOnProperty(prefix = "js", value = "evaluator", havingValue = "local", matchIfMissing = true)
 @Service
-public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
-
-    @Value("${js.local.use_js_sandbox}")
-    private boolean useJsSandbox;
-
-    @Value("${js.local.js_sandbox.monitor_thread_pool_size}")
-    private int monitorThreadPoolSize;
-
-    @Value("${js.local.js_sandbox.max_cpu_time}")
-    private long maxCpuTime;
-
-    @Value("${js.local.js_sandbox.max_errors}")
-    private int maxErrors;
+public class RemoteJsInvokeService implements JsInvokeService {
 
     @Override
-    protected boolean useJsSandbox() {
-        return useJsSandbox;
+    public ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames) {
+        return null;
     }
 
     @Override
-    protected int getMonitorThreadPoolSize() {
-        return monitorThreadPoolSize;
+    public ListenableFuture<Object> invokeFunction(UUID scriptId, EntityId entityId, Object... args) {
+        return null;
     }
 
     @Override
-    protected long getMaxCpuTime() {
-        return maxCpuTime;
+    public ListenableFuture<Void> release(UUID scriptId, EntityId entityId) {
+        return null;
     }
 
-    @Override
-    protected int getMaxErrors() {
-        return maxErrors;
-    }
 }
