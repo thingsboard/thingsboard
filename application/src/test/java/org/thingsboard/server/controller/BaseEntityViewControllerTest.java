@@ -343,18 +343,18 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         client.publish("v1/devices/me/attributes", message);
         Thread.sleep(1000);
 
-        List<String> actualTelemetry =
+        List<String> actualAttributes =
                 doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId +  "/keys/attributes", List.class);
-        Set<String> actualTelemetrySet = new HashSet<>(actualTelemetry);
+        Set<String> actualAttributesSet = new HashSet<>(actualAttributes);
 
-        List<String> expectedActualTelemetry = Arrays.asList("caValue1", "caValue2", "caValue3", "caValue4");
-        Set<String> expectedActualTelemetrySet = new HashSet<>(expectedActualTelemetry);
-        assertTrue(actualTelemetrySet.containsAll(expectedActualTelemetrySet));
+        List<String> expectedActualAttributes = Arrays.asList("caValue1", "caValue2", "caValue3", "caValue4");
+        Set<String> expectedActualAttributesSet = new HashSet<>(expectedActualAttributes);
+        assertTrue(actualAttributesSet.containsAll(expectedActualAttributesSet));
         Thread.sleep(1000);
 
         EntityView savedView = getNewSavedEntityView("Test entity view");
         String urlOfTelemetryValues = "/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualTelemetrySet);
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet);
         List<Map<String, Object>> values = doGetAsync(urlOfTelemetryValues, List.class);
 
         assertEquals("value1", getValueOfMap(values, "caValue1"));
