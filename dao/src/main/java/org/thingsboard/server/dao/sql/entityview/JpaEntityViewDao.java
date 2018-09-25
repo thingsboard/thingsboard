@@ -66,7 +66,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
-    public List<EntityView> findEntityViewByTenantId(UUID tenantId, TextPageLink pageLink) {
+    public List<EntityView> findEntityViewsByTenantId(UUID tenantId, TextPageLink pageLink) {
         return DaoUtil.convertDataList(
                 entityViewRepository.findByTenantId(
                         fromTimeUUID(tenantId),

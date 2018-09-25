@@ -45,7 +45,7 @@ public interface EntityViewDao extends Dao<EntityView> {
      * @param pageLink the page link
      * @return the list of entity view objects
      */
-    List<EntityView> findEntityViewByTenantId(UUID tenantId, TextPageLink pageLink);
+    List<EntityView> findEntityViewsByTenantId(UUID tenantId, TextPageLink pageLink);
 
     /**
      * Find entity views by tenantId and entity view name.

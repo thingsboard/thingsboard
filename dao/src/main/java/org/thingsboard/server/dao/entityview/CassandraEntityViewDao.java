@@ -78,7 +78,7 @@ public class CassandraEntityViewDao extends CassandraAbstractSearchTextDao<Entit
     }
 
     @Override
-    public List<EntityView> findEntityViewByTenantId(UUID tenantId, TextPageLink pageLink) {
+    public List<EntityView> findEntityViewsByTenantId(UUID tenantId, TextPageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}] and pageLink [{}]", tenantId, pageLink);
         List<EntityViewEntity> entityViewEntities =
                 findPageWithTextSearch(ENTITY_VIEW_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME,
