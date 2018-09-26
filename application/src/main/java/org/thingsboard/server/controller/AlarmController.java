@@ -83,7 +83,7 @@ public class AlarmController extends BaseController {
             Alarm savedAlarm = checkNotNull(alarmService.createOrUpdateAlarm(alarm));
             logEntityAction(savedAlarm.getId(), savedAlarm,
                     getCurrentUser().getCustomerId(),
-                    savedAlarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+                    alarm.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
             return savedAlarm;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ALARM), alarm,
