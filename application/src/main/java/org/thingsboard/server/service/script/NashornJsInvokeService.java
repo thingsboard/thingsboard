@@ -29,13 +29,13 @@ public class NashornJsInvokeService extends AbstractNashornJsInvokeService {
     @Value("${js.local.use_js_sandbox}")
     private boolean useJsSandbox;
 
-    @Value("${js.local.js_sandbox.monitor_thread_pool_size}")
+    @Value("${js.local.monitor_thread_pool_size}")
     private int monitorThreadPoolSize;
 
-    @Value("${js.local.js_sandbox.max_cpu_time}")
+    @Value("${js.local.max_cpu_time}")
     private long maxCpuTime;
 
-    @Value("${js.local.js_sandbox.max_errors}")
+    @Value("${js.local.max_errors}")
     private int maxErrors;
 
     @Override

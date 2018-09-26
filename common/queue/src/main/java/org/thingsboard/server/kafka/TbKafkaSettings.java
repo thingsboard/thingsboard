@@ -36,7 +36,7 @@ public class TbKafkaSettings {
     public static final String RESPONSE_TOPIC_HEADER = "responseTopic";
 
 
-    @Value("${kafka.bootstrap.server}")
+    @Value("${kafka.bootstrap.servers}")
     private String servers;
 
     @Value("${kafka.acks}")
@@ -54,7 +54,7 @@ public class TbKafkaSettings {
     @Value("${kafka.buffer.memory}")
     private long bufferMemory;
 
-    @Value("${kafka.other:null}")
+    @Value("${kafka.other:#{null}}")
     private List<TbKafkaProperty> other;
 
     public Properties toProps() {
