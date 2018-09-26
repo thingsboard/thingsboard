@@ -97,10 +97,19 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         log.trace("Executing save entity view [{}]", entityView);
         entityViewValidator.validate(entityView);
         EntityView savedEntityView = entityViewDao.save(entityView);
+        List<ListenableFuture<List<Void>>> futures = new ArrayList<>();
         if (savedEntityView.getKeys() != null) {
-            copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs());
-            copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs());
-            copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh());
+            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.CLIENT_SCOPE, savedEntityView.getKeys().getAttributes().getCs()));
+            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SERVER_SCOPE, savedEntityView.getKeys().getAttributes().getSs()));
+            futures.add(copyAttributesFromEntityToEntityView(savedEntityView, DataConstants.SHARED_SCOPE, savedEntityView.getKeys().getAttributes().getSh()));
+        }
+        for (ListenableFuture<List<Void>> future : futures) {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("Failed to copy attributes to entity view", e);
+                throw new RuntimeException("Failed to copy attributes to entity view", e);
+            }
         }
         return savedEntityView;
     }
@@ -169,9 +178,9 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
     @Override
     public TextPageData<EntityView> findEntityViewsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId,
-                                                                          TextPageLink pageLink) {
+                                                                           TextPageLink pageLink) {
         log.trace("Executing findEntityViewByTenantIdAndCustomerId, tenantId [{}], customerId [{}]," +
-                        " pageLink [{}]", tenantId, customerId, pageLink);
+                " pageLink [{}]", tenantId, customerId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validatePageLink(pageLink, INCORRECT_PAGE_LINK + pageLink);
@@ -246,7 +255,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         log.trace("Executing deleteEntityViewsByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         entityViewDao.findEntityViewsByTenantId(tenantId.getId(), new TextPageLink(DEFAULT_LIMIT)).stream()
-                .map(view ->  view.getId())
+                .map(view -> view.getId())
                 .collect(Collectors.toList())
                 .forEach(id -> cacheEvict(id, cacheManager.getCache(ENTITY_VIEW_CACHE)));
         tenantEntityViewRemover.removeEntities(tenantId);
@@ -258,38 +267,37 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         cache.evict(Arrays.asList(entityView.getTenantId(), entityView.getEntityId()));
     }
 
-    private void copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys) {
+    private ListenableFuture<List<Void>> copyAttributesFromEntityToEntityView(EntityView entityView, String scope, Collection<String> keys) {
         if (keys != null && !keys.isEmpty()) {
             ListenableFuture<List<AttributeKvEntry>> getAttrFuture = attributesService.find(entityView.getEntityId(), scope, keys);
-            Futures.addCallback(getAttrFuture, new FutureCallback<List<AttributeKvEntry>>() {
-                @Override
-                public void onSuccess(@Nullable List<AttributeKvEntry> attributeKvEntries) {
-                    if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
-                        List<AttributeKvEntry> filteredAttributes =
-                                attributeKvEntries.stream()
-                                        .filter(attributeKvEntry -> {
-                                            if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() == 0) {
-                                                return true;
-                                            }
-                                            if (entityView.getEndTimeMs() == 0 && entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()) {
-                                                return true;
-                                            }
-                                            if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs()) {
-                                                return true;
-                                            }
-                                            return entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()
-                                                    && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs();
-                                        }).collect(Collectors.toList());
-                        attributesService.save(entityView.getId(), scope, filteredAttributes);
-                    }
+            return Futures.transform(getAttrFuture, attributeKvEntries -> {
+                List<AttributeKvEntry> filteredAttributes = new ArrayList<>();
+                if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
+                    filteredAttributes =
+                            attributeKvEntries.stream()
+                                    .filter(attributeKvEntry -> {
+                                        if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() == 0) {
+                                            return true;
+                                        }
+                                        if (entityView.getEndTimeMs() == 0 && entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()) {
+                                            return true;
+                                        }
+                                        if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs()) {
+                                            return true;
+                                        }
+                                        return entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()
+                                                && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs();
+                                    }).collect(Collectors.toList());
                 }
-
-                @Override
-                public void onFailure(Throwable throwable) {
-                    log.error("Failed to fetch [{}] attributes [{}] for [{}] entity [{}]",
-                            scope, keys, entityView.getEntityId().getEntityType().name(), entityView.getEntityId().getId().toString(), throwable);
+                try {
+                    return attributesService.save(entityView.getId(), scope, filteredAttributes).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    log.error("Failed to copy attributes to entity view", e);
+                    throw new RuntimeException("Failed to copy attributes to entity view", e);
                 }
             });
+        } else {
+            return Futures.immediateFuture(null);
         }
     }
 
@@ -299,7 +307,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 @Override
                 protected void validateCreate(EntityView entityView) {
                     entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
-                            .ifPresent( e -> {
+                            .ifPresent(e -> {
                                 throw new DataValidationException("Entity view with such name already exists!");
                             });
                 }
@@ -307,7 +315,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 @Override
                 protected void validateUpdate(EntityView entityView) {
                     entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
-                            .ifPresent( e -> {
+                            .ifPresent(e -> {
                                 if (!e.getUuidId().equals(entityView.getUuidId())) {
                                     throw new DataValidationException("Entity view with such name already exists!");
                                 }
