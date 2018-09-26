@@ -165,7 +165,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     private JsonNode executeScript(TbMsg msg) throws ScriptException {
         try {
             String[] inArgs = prepareArgs(msg);
-            String eval = sandboxService.invokeFunction(this.scriptId, this.entityId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
+            String eval = sandboxService.invokeFunction(this.scriptId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
             return mapper.readTree(eval);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ScriptException) {
@@ -179,6 +179,6 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     }
 
     public void destroy() {
-        sandboxService.release(this.scriptId, this.entityId);
+        sandboxService.release(this.scriptId);
     }
 }

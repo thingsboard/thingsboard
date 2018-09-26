@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.kafka;
 
-package org.thingsboard.server.service.script;
+import org.apache.kafka.clients.producer.Partitioner;
+import org.apache.kafka.common.PartitionInfo;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.EntityId;
+import java.util.List;
 
-import java.util.UUID;
+/**
+ * Created by ashvayka on 25.09.18.
+ */
+public interface TbKafkaPartitioner<T> extends Partitioner {
 
-public interface JsInvokeService {
-
-    ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames);
-
-    ListenableFuture<Object> invokeFunction(UUID scriptId, Object... args);
-
-    ListenableFuture<Void> release(UUID scriptId);
+    int partition(String topic, String key, T value, byte[] encodedValue, List<PartitionInfo> partitions);
 
 }

@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.thingsboard.server.service.script;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.kafka.TbKafkaEncoder;
 
-import java.util.UUID;
-
-public interface JsInvokeService {
-
-    ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames);
-
-    ListenableFuture<Object> invokeFunction(UUID scriptId, Object... args);
-
-    ListenableFuture<Void> release(UUID scriptId);
-
+/**
+ * Created by ashvayka on 25.09.18.
+ */
+public class RemoteJsRequestEncoder implements TbKafkaEncoder<JsInvokeProtos.RemoteJsRequest> {
+    @Override
+    public byte[] encode(JsInvokeProtos.RemoteJsRequest value) {
+        return value.toByteArray();
+    }
 }

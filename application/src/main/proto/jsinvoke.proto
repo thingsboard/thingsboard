@@ -14,24 +14,68 @@
  * limitations under the License.
  */
 syntax = "proto3";
-package cluster;
+package js;
 
 option java_package = "org.thingsboard.server.gen.js";
 option java_outer_classname = "JsInvokeProtos";
 
-service JsInvokeRpcService {
-  rpc handleMsgs(stream JsInvokeRequest) returns (stream JsInvokeResponse) {}
+enum JsInvokeErrorCode{
+  COMPILATION_ERROR = 0;
+  RUNTIME_ERROR = 1;
+  CPU_USAGE_ERROR = 2;
+}
+
+message RemoteJsRequest {
+  JsCompileRequest compileRequest = 1;
+  JsInvokeRequest invokeRequest = 2;
+  JsReleaseRequest releaseRequest = 3;
+}
+
+message RemoteJsResponse {
+  JsCompileResponse compileResponse = 1;
+  JsInvokeResponse invokeResponse = 2;
+  JsReleaseResponse releaseResponse = 3;
+}
+
+message JsCompileRequest {
+  int64 scriptIdMSB = 1;
+  int64 scriptIdLSB = 2;
+  string functionName = 3;
+  string scriptBody = 4;
+}
+
+message JsReleaseRequest {
+  int64 scriptIdMSB = 1;
+  int64 scriptIdLSB = 2;
+  string functionName = 3;
+}
+
+message JsReleaseResponse {
+  bool success = 1;
+  int64 scriptIdMSB = 2;
+  int64 scriptIdLSB = 3;
+}
+
+message JsCompileResponse {
+  bool success = 1;
+  int64 scriptIdMSB = 2;
+  int64 scriptIdLSB = 3;
+  JsInvokeErrorCode errorCode = 4;
+  string errorDetails = 5;
 }
 
 message JsInvokeRequest {
-  string scriptId = 1;
-  string scriptBody = 2;
-  repeated string args = 3;
+  int64 scriptIdMSB = 1;
+  int64 scriptIdLSB = 2;
+  string functionName = 3;
+  string scriptBody = 4;
+  repeated string args = 5;
 }
 
 message JsInvokeResponse {
-  string result = 1;
-  string errorName = 2;
-  string errorDetails = 3;
+  bool success = 1;
+  string result = 2;
+  JsInvokeErrorCode errorCode = 3;
+  string errorDetails = 4;
 }
 

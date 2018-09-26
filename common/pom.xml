@@ -37,7 +37,8 @@
     <modules>
         <module>data</module>
         <module>message</module>
-	<module>transport</module>
+        <module>transport</module>
+        <module>queue</module>
     </modules>
 
 </project>

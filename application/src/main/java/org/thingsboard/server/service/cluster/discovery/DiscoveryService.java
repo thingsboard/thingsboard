@@ -26,6 +26,8 @@ public interface DiscoveryService {
 
     void unpublishCurrentServer();
 
+    String getNodeId();
+
     ServerInstance getCurrentServer();
 
     List<ServerInstance> getOtherServers();

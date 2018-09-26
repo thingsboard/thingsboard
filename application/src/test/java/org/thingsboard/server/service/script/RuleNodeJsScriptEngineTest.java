@@ -236,8 +236,8 @@ public class RuleNodeJsScriptEngineTest {
                 startLatch.await();
                 UUID scriptId = jsSandboxService.eval(JsScriptType.RULE_NODE_SCRIPT, code).get();
                 scriptIds.put(scriptId, new Object());
-                jsSandboxService.invokeFunction(scriptId, ruleNodeId, "{}", "{}", "TEXT").get();
-                jsSandboxService.release(scriptId, ruleNodeId).get();
+                jsSandboxService.invokeFunction(scriptId, "{}", "{}", "TEXT").get();
+                jsSandboxService.release(scriptId).get();
             }
         } catch (Throwable th) {
             failedCount.incrementAndGet();

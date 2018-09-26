@@ -13,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.kafka;
 
-package org.thingsboard.server.service.script;
+/**
+ * Created by ashvayka on 25.09.18.
+ */
+public interface TbKafkaEncoder<T> {
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.EntityId;
-
-import java.util.UUID;
-
-public interface JsInvokeService {
-
-    ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames);
-
-    ListenableFuture<Object> invokeFunction(UUID scriptId, Object... args);
-
-    ListenableFuture<Void> release(UUID scriptId);
+    byte[] encode(T value);
 
 }

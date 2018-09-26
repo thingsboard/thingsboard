@@ -43,6 +43,11 @@ public class DummyDiscoveryService implements DiscoveryService {
     }
 
     @Override
+    public String getNodeId() {
+        return null;
+    }
+
+    @Override
     public void publishCurrentServer() {
         //Do nothing
     }

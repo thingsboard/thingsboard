@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.thingsboard.server.kafka;
 
-package org.thingsboard.server.service.script;
+import java.io.IOException;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.id.EntityId;
+/**
+ * Created by ashvayka on 25.09.18.
+ */
+public interface TbKafkaDecoder<T> {
 
-import java.util.UUID;
-
-public interface JsInvokeService {
-
-    ListenableFuture<UUID> eval(JsScriptType scriptType, String scriptBody, String... argNames);
-
-    ListenableFuture<Object> invokeFunction(UUID scriptId, Object... args);
-
-    ListenableFuture<Void> release(UUID scriptId);
+    T decode(byte[] data) throws IOException;
 
 }

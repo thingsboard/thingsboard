@@ -405,8 +405,17 @@ state:
   defaultInactivityTimeoutInSec: 10
   defaultStateCheckIntervalInSec: 10
 
+kafka:
+  enabled: true
+  bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+  acks: "${TB_KAFKA_ACKS:all}"
+  retries: "${TB_KAFKA_RETRIES:1}"
+  batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
+  linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+  buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+
 js:
-  evaluator: "${JS_EVALUATOR:external}" # local/external
+  evaluator: "${JS_EVALUATOR:local}" # local/external
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
@@ -421,3 +430,15 @@ js:
   remote:
     # Use Sandboxed (secured) JVM JavaScript environment
     use_js_sandbox: "${USE_REMOTE_JS_SANDBOX:true}"
+    # JS Eval request topic
+    request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js.eval.requests}"
+    # JS Eval responses topic prefix that is combined with node id
+    response_topic_prefix: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js.eval.responses}"
+    # JS Eval max pending requests
+    max_pending_requests: "${REMOTE_JS_MAX_PENDING_REQUESTS:10000}"
+    # JS Eval max request timeout
+    max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:20000}"
+    # JS response poll interval
+    response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
+    # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
+    max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
