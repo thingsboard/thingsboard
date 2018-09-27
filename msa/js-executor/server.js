@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var config = require('config'),
-    kafka = require('kafka-node'),
-    Consumer = kafka.Consumer,
-    Producer = kafka.Producer,
-    JsMessageConsumer = require('./api/jsMessageConsumer');
 
-var logger = require('./config/logger')('main');
+const config = require('config'),
+      kafka = require('kafka-node'),
+      Consumer = kafka.Consumer,
+      Producer = kafka.Producer,
+      JsMessageConsumer = require('./api/jsMessageConsumer');
 
-var kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
-var kafkaRequestTopic = config.get('kafka.request_topic');
+const logger = require('./config/logger')('main');
+
+const kafkaBootstrapServers = config.get('kafka.bootstrap.servers');
+const kafkaRequestTopic = config.get('kafka.request_topic');
 
 logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
 logger.info('Kafka Requests Topic: %s', kafkaRequestTopic);

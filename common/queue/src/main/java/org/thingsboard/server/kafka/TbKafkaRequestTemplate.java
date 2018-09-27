@@ -94,18 +94,34 @@ public class TbKafkaRequestTemplate<Request, Response> {
                 ConsumerRecords<String, byte[]> responses = responseTemplate.poll(Duration.ofMillis(pollInterval));
                 responses.forEach(response -> {
                     Header requestIdHeader = response.headers().lastHeader(TbKafkaSettings.REQUEST_ID_HEADER);
+                    Response decocedResponse = null;
+                    UUID requestId = null;
                     if (requestIdHeader == null) {
-                        log.error("[{}] Missing requestIdHeader", response);
-                    }
-                    UUID requestId = bytesToUuid(requestIdHeader.value());
-                    ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
-                    if (expectedResponse == null) {
-                        log.trace("[{}] Invalid or stale request", requestId);
-                    } else {
                         try {
-                            expectedResponse.future.set(responseTemplate.decode(response));
+                            decocedResponse = responseTemplate.decode(response);
+                            requestId = responseTemplate.extractRequestId(decocedResponse);
+
                         } catch (IOException e) {
-                            expectedResponse.future.setException(e);
+                            log.error("Failed to decode response", e);
+                        }
+                    } else {
+                        requestId = bytesToUuid(requestIdHeader.value());
+                    }
+                    if (requestId == null) {
+                        log.error("[{}] Missing requestId in header and response", response);
+                    } else {
+                        ResponseMetaData<Response> expectedResponse = pendingRequests.remove(requestId);
+                        if (expectedResponse == null) {
+                            log.trace("[{}] Invalid or stale request", requestId);
+                        } else {
+                            try {
+                                if (decocedResponse == null) {
+                                    decocedResponse = responseTemplate.decode(response);
+                                }
+                                expectedResponse.future.set(decocedResponse);
+                            } catch (IOException e) {
+                                expectedResponse.future.setException(e);
+                            }
                         }
                     }
                 });
@@ -144,6 +160,7 @@ public class TbKafkaRequestTemplate<Request, Response> {
         headers.add(new RecordHeader(TbKafkaSettings.RESPONSE_TOPIC_HEADER, stringToBytes(responseTemplate.getTopic())));
         SettableFuture<Response> future = SettableFuture.create();
         pendingRequests.putIfAbsent(requestId, new ResponseMetaData<>(tickTs + maxRequestTimeout, future));
+        request = requestTemplate.enrich(request, responseTemplate.getTopic(), requestId);
         requestTemplate.send(key, request, headers);
         return future;
     }

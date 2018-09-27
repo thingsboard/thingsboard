@@ -283,6 +283,7 @@
                             <exclude>src/main/scripts/control/**</exclude>
                             <exclude>src/main/scripts/windows/**</exclude>
                             <exclude>src/main/resources/public/static/rulenode/**</exclude>
+                            <exclude>**/*.proto.js</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>

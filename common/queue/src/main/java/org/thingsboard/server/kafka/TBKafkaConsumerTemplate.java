@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -34,11 +35,15 @@ public class TBKafkaConsumerTemplate<T> {
 
     private final KafkaConsumer<String, byte[]> consumer;
     private final TbKafkaDecoder<T> decoder;
+
+    @Builder.Default
+    private TbKafkaRequestIdExtractor<T> requestIdExtractor = ((response) -> null);
+
     @Getter
     private final String topic;
 
     @Builder
-    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
+    private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder, TbKafkaRequestIdExtractor<T> requestIdExtractor,
                                     String clientId, String groupId, String topic,
                                     boolean autoCommit, int autoCommitIntervalMs) {
         Properties props = settings.toProps();
@@ -50,6 +55,7 @@ public class TBKafkaConsumerTemplate<T> {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArrayDeserializer");
         this.consumer = new KafkaConsumer<>(props);
         this.decoder = decoder;
+        this.requestIdExtractor = requestIdExtractor;
         this.topic = topic;
     }
 
@@ -67,5 +73,9 @@ public class TBKafkaConsumerTemplate<T> {
 
     public T decode(ConsumerRecord<String, byte[]> record) throws IOException {
         return decoder.decode(record.value());
+    }
+
+    public UUID extractRequestId(T value) {
+        return requestIdExtractor.extractRequestId(value);
     }
 }

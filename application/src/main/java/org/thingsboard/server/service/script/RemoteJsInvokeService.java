@@ -78,6 +78,22 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         requestBuilder.settings(kafkaSettings);
         requestBuilder.defaultTopic(requestTopic);
         requestBuilder.encoder(new RemoteJsRequestEncoder());
+        requestBuilder.enricher((request, responseTopic, requestId) -> {
+            JsInvokeProtos.RemoteJsRequest.Builder remoteRequest = JsInvokeProtos.RemoteJsRequest.newBuilder();
+            if (request.hasCompileRequest()) {
+                remoteRequest.setCompileRequest(request.getCompileRequest());
+            }
+            if (request.hasInvokeRequest()) {
+                remoteRequest.setInvokeRequest(request.getInvokeRequest());
+            }
+            if (request.hasReleaseRequest()) {
+                remoteRequest.setReleaseRequest(request.getReleaseRequest());
+            }
+            remoteRequest.setResponseTopic(responseTopic);
+            remoteRequest.setRequestIdMSB(requestId.getMostSignificantBits());
+            remoteRequest.setRequestIdLSB(requestId.getLeastSignificantBits());
+            return remoteRequest.build();
+        });
 
         TBKafkaConsumerTemplate.TBKafkaConsumerTemplateBuilder<JsInvokeProtos.RemoteJsResponse> responseBuilder = TBKafkaConsumerTemplate.builder();
         responseBuilder.settings(kafkaSettings);
@@ -87,6 +103,9 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         responseBuilder.autoCommit(true);
         responseBuilder.autoCommitIntervalMs(autoCommitInterval);
         responseBuilder.decoder(new RemoteJsResponseDecoder());
+        responseBuilder.requestIdExtractor((response) -> {
+            return new UUID(response.getRequestIdMSB(), response.getRequestIdLSB());
+        });
 
         TbKafkaRequestTemplate.TbKafkaRequestTemplateBuilder
                 <JsInvokeProtos.RemoteJsRequest, JsInvokeProtos.RemoteJsResponse> builder = TbKafkaRequestTemplate.builder();
@@ -128,7 +147,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
                 return compiledScriptId;
             } else {
                 log.debug("[{}] Failed to compile script due to [{}]: {}", compiledScriptId, compilationResult.getErrorCode().name(), compilationResult.getErrorDetails());
-                throw new RuntimeException(compilationResult.getErrorCode().name());
+                throw new RuntimeException(compilationResult.getErrorDetails());
             }
         });
     }

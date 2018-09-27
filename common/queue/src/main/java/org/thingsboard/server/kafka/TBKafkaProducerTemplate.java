@@ -24,9 +24,13 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.header.Header;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -35,13 +39,18 @@ public class TBKafkaProducerTemplate<T> {
 
     private final KafkaProducer<String, byte[]> producer;
     private final TbKafkaEncoder<T> encoder;
+
+    @Builder.Default
+    private TbKafkaEnricher<T> enricher = ((value, responseTopic, requestId) -> value);
+
     private final TbKafkaPartitioner<T> partitioner;
     private final List<PartitionInfo> partitionInfoList;
     @Getter
     private final String defaultTopic;
 
     @Builder
-    private TBKafkaProducerTemplate(TbKafkaSettings settings, TbKafkaEncoder<T> encoder, TbKafkaPartitioner<T> partitioner, String defaultTopic) {
+    private TBKafkaProducerTemplate(TbKafkaSettings settings, TbKafkaEncoder<T> encoder, TbKafkaEnricher<T> enricher,
+                                    TbKafkaPartitioner<T> partitioner, String defaultTopic) {
         Properties props = settings.toProps();
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
@@ -49,8 +58,13 @@ public class TBKafkaProducerTemplate<T> {
         //Maybe this should not be cached, but we don't plan to change size of partitions
         this.partitionInfoList = producer.partitionsFor(defaultTopic);
         this.encoder = encoder;
+        this.enricher = enricher;
         this.partitioner = partitioner;
         this.defaultTopic = defaultTopic;
+    }
+
+    public T enrich(T value, String responseTopic, UUID requestId) {
+        return enricher.enrich(value, responseTopic, requestId);
     }
 
     public Future<RecordMetadata> send(String key, T value) {

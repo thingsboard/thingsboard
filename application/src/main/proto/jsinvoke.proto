@@ -26,15 +26,20 @@ enum JsInvokeErrorCode {
 }
 
 message RemoteJsRequest {
-  JsCompileRequest compileRequest = 1;
-  JsInvokeRequest invokeRequest = 2;
-  JsReleaseRequest releaseRequest = 3;
+  string responseTopic = 1;
+  int64 requestIdMSB = 2;
+  int64 requestIdLSB = 3;
+  JsCompileRequest compileRequest = 4;
+  JsInvokeRequest invokeRequest = 5;
+  JsReleaseRequest releaseRequest = 6;
 }
 
 message RemoteJsResponse {
-  JsCompileResponse compileResponse = 1;
-  JsInvokeResponse invokeResponse = 2;
-  JsReleaseResponse releaseResponse = 3;
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  JsCompileResponse compileResponse = 3;
+  JsInvokeResponse invokeResponse = 4;
+  JsReleaseResponse releaseResponse = 5;
 }
 
 message JsCompileRequest {
