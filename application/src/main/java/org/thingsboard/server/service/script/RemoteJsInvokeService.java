@@ -96,6 +96,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         builder.maxRequestTimeout(maxRequestsTimeout);
         builder.pollInterval(responsePollDuration);
         kafkaTemplate = builder.build();
+        kafkaTemplate.init();
     }
 
     @PreDestroy
