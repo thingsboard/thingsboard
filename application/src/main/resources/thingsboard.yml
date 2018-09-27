@@ -415,7 +415,7 @@ kafka:
   buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
 
 js:
-  evaluator: "${JS_EVALUATOR:local}" # local/external
+  evaluator: "${JS_EVALUATOR:local}" # local/remote
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
@@ -428,8 +428,6 @@ js:
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
   # Remote JavaScript environment properties
   remote:
-    # Use Sandboxed (secured) JVM JavaScript environment
-    use_js_sandbox: "${USE_REMOTE_JS_SANDBOX:true}"
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js.eval.requests}"
     # JS Eval responses topic prefix that is combined with node id
@@ -437,7 +435,7 @@ js:
     # JS Eval max pending requests
     max_pending_requests: "${REMOTE_JS_MAX_PENDING_REQUESTS:10000}"
     # JS Eval max request timeout
-    max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:20000}"
+    max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
     # JS response poll interval
     response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
