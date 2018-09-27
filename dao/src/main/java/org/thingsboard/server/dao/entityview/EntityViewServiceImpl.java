@@ -228,17 +228,13 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                     filteredAttributes =
                             attributeKvEntries.stream()
                                     .filter(attributeKvEntry -> {
-                                        if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() == 0) {
-                                            return true;
-                                        }
-                                        if (entityView.getEndTimeMs() == 0 && entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()) {
-                                            return true;
-                                        }
-                                        if (entityView.getStartTimeMs() == 0 && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs()) {
-                                            return true;
-                                        }
-                                        return entityView.getStartTimeMs() < attributeKvEntry.getLastUpdateTs()
-                                                && entityView.getEndTimeMs() > attributeKvEntry.getLastUpdateTs();
+                                        long startTime = entityView.getStartTimeMs();
+                                        long endTime = entityView.getEndTimeMs();
+                                        long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
+                                        return startTime == 0 && endTime == 0 ||
+                                                (endTime == 0 && startTime < lastUpdateTs) ||
+                                                (startTime == 0 && endTime > lastUpdateTs) ||
+                                                (startTime < lastUpdateTs && endTime > lastUpdateTs);
                                     }).collect(Collectors.toList());
                 }
                 try {
