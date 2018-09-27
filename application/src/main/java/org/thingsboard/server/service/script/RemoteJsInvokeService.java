@@ -47,9 +47,6 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Autowired
     private TbKafkaSettings kafkaSettings;
 
-    @Value("${js.remote.use_js_sandbox}")
-    private boolean useJsSandbox;
-
     @Value("${js.remote.request_topic}")
     private String requestTopic;
 
@@ -99,8 +96,8 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     }
 
     @PreDestroy
-    public void destroy(){
-        if(kafkaTemplate != null){
+    public void destroy() {
+        if (kafkaTemplate != null) {
             kafkaTemplate.stop();
         }
     }
@@ -138,14 +135,19 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         if (scriptBody == null) {
             return Futures.immediateFailedFuture(new RuntimeException("No script body found for scriptId: [" + scriptId + "]!"));
         }
-        JsInvokeProtos.JsInvokeRequest jsRequest = JsInvokeProtos.JsInvokeRequest.newBuilder()
+        JsInvokeProtos.JsInvokeRequest.Builder jsRequestBuilder = JsInvokeProtos.JsInvokeRequest.newBuilder()
                 .setScriptIdMSB(scriptId.getMostSignificantBits())
                 .setScriptIdLSB(scriptId.getLeastSignificantBits())
                 .setFunctionName(functionName)
-                .setScriptBody(scriptIdToBodysMap.get(scriptId)).build();
+                .setTimeout((int) maxRequestsTimeout)
+                .setScriptBody(scriptIdToBodysMap.get(scriptId));
+
+        for (int i = 0; i < args.length; i++) {
+            jsRequestBuilder.setArgs(i, args[i].toString());
+        }
 
         JsInvokeProtos.RemoteJsRequest jsRequestWrapper = JsInvokeProtos.RemoteJsRequest.newBuilder()
-                .setInvokeRequest(jsRequest)
+                .setInvokeRequest(jsRequestBuilder.build())
                 .build();
 
         ListenableFuture<JsInvokeProtos.RemoteJsResponse> future = kafkaTemplate.post(scriptId.toString(), jsRequestWrapper);

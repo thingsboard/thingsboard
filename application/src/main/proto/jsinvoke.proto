@@ -19,10 +19,10 @@ package js;
 option java_package = "org.thingsboard.server.gen.js";
 option java_outer_classname = "JsInvokeProtos";
 
-enum JsInvokeErrorCode{
+enum JsInvokeErrorCode {
   COMPILATION_ERROR = 0;
   RUNTIME_ERROR = 1;
-  CPU_USAGE_ERROR = 2;
+  TIMEOUT_ERROR = 2;
 }
 
 message RemoteJsRequest {
@@ -69,7 +69,8 @@ message JsInvokeRequest {
   int64 scriptIdLSB = 2;
   string functionName = 3;
   string scriptBody = 4;
-  repeated string args = 5;
+  int32 timeout = 5;
+  repeated string args = 6;
 }
 
 message JsInvokeResponse {
