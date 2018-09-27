@@ -415,7 +415,7 @@ kafka:
   buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
 
 js:
-  evaluator: "${JS_EVALUATOR:local}" # local/remote
+  evaluator: "${JS_EVALUATOR:remote}" # local/remote
   # Built-in JVM JavaScript environment properties
   local:
     # Use Sandboxed (secured) JVM JavaScript environment
@@ -438,5 +438,7 @@ js:
     max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
     # JS response poll interval
     response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
+    # JS response auto commit interval
+    response_auto_commit_interval: "${REMOTE_JS_RESPONSE_AUTO_COMMIT_INTERVAL_MS:100}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"

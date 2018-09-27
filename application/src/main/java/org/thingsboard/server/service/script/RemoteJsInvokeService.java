@@ -59,8 +59,11 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.remote.max_requests_timeout}")
     private long maxRequestsTimeout;
 
-    @Value("${js.remote.response_poll_duration}")
-    private long responsePollDuration;
+    @Value("${js.remote.response_poll_interval}")
+    private int responsePollDuration;
+
+    @Value("${js.remote.response_auto_commit_interval}")
+    private int autoCommitInterval;
 
     @Getter
     @Value("${js.remote.max_errors}")
@@ -82,7 +85,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
         responseBuilder.clientId(discoveryService.getNodeId());
         responseBuilder.groupId("rule-engine-node");
         responseBuilder.autoCommit(true);
-        responseBuilder.autoCommitIntervalMs(100);
+        responseBuilder.autoCommitIntervalMs(autoCommitInterval);
         responseBuilder.decoder(new RemoteJsResponseDecoder());
 
         TbKafkaRequestTemplate.TbKafkaRequestTemplateBuilder

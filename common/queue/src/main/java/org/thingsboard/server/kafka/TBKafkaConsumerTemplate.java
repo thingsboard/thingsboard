@@ -40,7 +40,7 @@ public class TBKafkaConsumerTemplate<T> {
     @Builder
     private TBKafkaConsumerTemplate(TbKafkaSettings settings, TbKafkaDecoder<T> decoder,
                                     String clientId, String groupId, String topic,
-                                    boolean autoCommit, long autoCommitIntervalMs) {
+                                    boolean autoCommit, int autoCommitIntervalMs) {
         Properties props = settings.toProps();
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);

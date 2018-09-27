@@ -46,7 +46,7 @@ public class TbKafkaSettings {
     private int retries;
 
     @Value("${kafka.batch.size}")
-    private long batchSize;
+    private int batchSize;
 
     @Value("${kafka.linger.ms}")
     private long lingerMs;
