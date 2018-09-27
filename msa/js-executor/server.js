@@ -41,7 +41,8 @@ var kafkaClient;
                 { topic: kafkaRequestTopic, partition: 0 }
             ],
             {
-                autoCommit: true
+                autoCommit: true,
+                encoding: 'buffer'
             }
         );
 

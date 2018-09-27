@@ -6,15 +6,17 @@
   "main": "server.js",
   "bin": "server.js",
   "scripts": {
-    "install": "pkg -t node8-linux-x64,node8-win-x64 --out-path ./target . && node install.js",
+    "build-proto": "pbjs -t static-module -w commonjs -o ./api/jsinvoke.js ../../application/src/main/proto/jsinvoke.proto",
+    "install": "npm run build-proto && pkg -t node8-linux-x64,node8-win-x64 --out-path ./target . && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js",
-    "start-prod": "NODE_ENV=production nodemon server.js"
+    "start": "npm run build-proto && nodemon server.js",
+    "start-prod": "npm run build-proto && NODE_ENV=production nodemon server.js"
   },
   "dependencies": {
     "config": "^1.30.0",
     "js-yaml": "^3.12.0",
     "kafka-node": "^3.0.1",
+    "protobufjs": "^6.8.8",
     "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.2.1"
   },

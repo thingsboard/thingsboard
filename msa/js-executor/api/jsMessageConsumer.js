@@ -18,8 +18,37 @@
 
 var logger = require('../config/logger')('JsMessageConsumer');
 
+var js = require('./jsinvoke').js;
+
+
 exports.onJsInvokeMessage = function(message, producer) {
 
-    logger.info('Received message: %s', message);
+    logger.info('Received message: %s', JSON.stringify(message));
+
+    var request = js.RemoteJsRequest.decode(message.value);
+
+    logger.info('Received request: %s', JSON.stringify(request));
+
+    if (request.compileRequest) {
+        var compileResponse = js.JsCompileResponse.create(
+            {
+                errorCode: js.JsInvokeErrorCode.COMPILATION_ERROR,
+                success: false,
+                errorDetails: 'Not Implemented!',
+                scriptIdLSB: request.compileRequest.scriptIdLSB,
+                scriptIdMSB: request.compileRequest.scriptIdMSB
+            }
+        );
+        var response = js.RemoteJsResponse.create(
+            {
+                compileResponse: compileResponse
+            }
+        );
+        var rawResponse = js.RemoteJsResponse.encode(response).finish();
+        sendMessage(producer, rawResponse);
+    }
+}
+
+function sendMessage(producer, rawMessage) {
 
 }
