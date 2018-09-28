@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -39,9 +40,11 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     private final JsSandboxService sandboxService;
 
     private final UUID scriptId;
+    private final EntityId entityId;
 
-    public RuleNodeJsScriptEngine(JsSandboxService sandboxService, String script, String... argNames) {
+    public RuleNodeJsScriptEngine(JsSandboxService sandboxService, EntityId entityId, String script, String... argNames) {
         this.sandboxService = sandboxService;
+        this.entityId = entityId;
         try {
             this.scriptId = this.sandboxService.eval(JsScriptType.RULE_NODE_SCRIPT, script, argNames).get();
         } catch (Exception e) {
@@ -162,20 +165,20 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
     private JsonNode executeScript(TbMsg msg) throws ScriptException {
         try {
             String[] inArgs = prepareArgs(msg);
-            String eval = sandboxService.invokeFunction(this.scriptId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
+            String eval = sandboxService.invokeFunction(this.scriptId, this.entityId, inArgs[0], inArgs[1], inArgs[2]).get().toString();
             return mapper.readTree(eval);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof ScriptException) {
                 throw (ScriptException)e.getCause();
             } else {
-                throw new ScriptException("Failed to execute js script: " + e.getMessage());
+                throw new ScriptException(e);
             }
         } catch (Exception e) {
-            throw new ScriptException("Failed to execute js script: " + e.getMessage());
+            throw new ScriptException(e);
         }
     }
 
     public void destroy() {
-        sandboxService.release(this.scriptId);
+        sandboxService.release(this.scriptId, this.entityId);
     }
 }

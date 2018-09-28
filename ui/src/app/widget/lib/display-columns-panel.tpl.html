@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <!--
 
     Copyright © 2016-2018 The Thingsboard Authors
@@ -16,20 +15,10 @@
     limitations under the License.
 
 -->
-<!DOCTYPE configuration>
-<configuration scan="true" scanPeriod="10 seconds">
 
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <logger name="org.thingsboard.server" level="INFO" />
-    <logger name="akka" level="INFO" />
-
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </root>
-
-</configuration>
+<md-content style="height: 100%" flex layout="column" class="md-padding">
+    <label class="tb-title" translate>entity.columns-to-display</label>
+    <md-checkbox aria-label="{{ 'entity.columns-to-display' | translate }}" ng-repeat="column in vm.columns"
+                 ng-model="column.display">{{ column.title }}
+    </md-checkbox>
+</md-content>

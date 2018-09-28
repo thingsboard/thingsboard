@@ -26,10 +26,8 @@ import org.thingsboard.rule.engine.api.*;
 import org.thingsboard.rule.engine.api.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.BaseTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -39,8 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
+import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.*;
 import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
 
 /**
@@ -64,6 +61,7 @@ public class TbGetTelemetryNode implements TbNode {
     private long endTsOffset;
     private int limit;
     private ObjectMapper mapper;
+    private String fetchMode;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -72,6 +70,7 @@ public class TbGetTelemetryNode implements TbNode {
         startTsOffset = TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
         endTsOffset = TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
         limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? MAX_FETCH_SIZE : 1;
+        fetchMode = config.getFetchMode();
         mapper = new ObjectMapper();
         mapper.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
@@ -96,14 +95,18 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    //TODO: handle direction;
     private List<ReadTsKvQuery> buildQueries() {
         long ts = System.currentTimeMillis();
         long startTs = ts - startTsOffset;
         long endTs = ts - endTsOffset;
-
+        String orderBy;
+        if (fetchMode.equals(FETCH_MODE_FIRST) || fetchMode.equals(FETCH_MODE_ALL)) {
+            orderBy = "ASC";
+        } else {
+            orderBy = "DESC";
+        }
         return tsKeyNames.stream()
-                .map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, limit, NONE))
+                .map(key -> new BaseReadTsKvQuery(key, startTs, endTs, 1, limit, NONE, orderBy))
                 .collect(Collectors.toList());
     }
 
@@ -116,7 +119,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
 
         for (String key : tsKeyNames) {
-            if(resultNode.has(key)){
+            if (resultNode.has(key)) {
                 msg.getMetaData().putValue(key, resultNode.get(key).toString());
             }
         }
@@ -127,11 +130,11 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private void processArray(ObjectNode node, TsKvEntry entry) {
-        if(node.has(entry.getKey())){
+        if (node.has(entry.getKey())) {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             ObjectNode obj = buildNode(entry);
             arrayNode.add(obj);
-        }else {
+        } else {
             ArrayNode arrayNode = mapper.createArrayNode();
             ObjectNode obj = buildNode(entry);
             arrayNode.add(obj);
