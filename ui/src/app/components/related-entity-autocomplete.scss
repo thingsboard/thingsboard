@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-related-entity-autocomplete {
   .tb-not-found {
     display: block;
-    line-height: 1.5;
     height: 48px;
+    line-height: 1.5;
   }
+
   .tb-entity-item {
     display: block;
     height: 48px;
   }
+
   li {
     height: auto !important;
     white-space: normal !important;

@@ -13,30 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .json-form-ace-editor {
-    position: relative;
-    border: 1px solid #C0C0C0;
-    height: 100%;
-    .title-panel {
-        position: absolute;
-        font-size: 0.800rem;
-        font-weight: 500;
-        top: 10px;
-        right: 20px;
-        z-index: 5;
-        label {
-          color: #00acc1;
-          background: rgba(220, 220, 220, 0.35);
-          border-radius: 5px;
-          padding: 4px;
-          text-transform: uppercase;
-        }
-        button.tidy-button {
-          background: rgba(220, 220, 220, 0.35) !important;
-          span {
-             padding: 0px !important;
-             font-size: 12px !important;
-          }
-        }
+  position: relative;
+  height: 100%;
+  border: 1px solid #c0c0c0;
+
+  .title-panel {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    z-index: 5;
+    font-size: .8rem;
+    font-weight: 500;
+
+    label {
+      padding: 4px;
+      color: #00acc1;
+      text-transform: uppercase;
+      background: rgba(220, 220, 220, .35);
+      border-radius: 5px;
     }
+
+    button.tidy-button {
+      background: rgba(220, 220, 220, .35) !important;
+
+      span {
+        padding: 0 !important;
+        font-size: 12px !important;
+      }
+    }
+  }
 }

@@ -18,14 +18,14 @@
 <section layout="column" layout-align="start start">
 	<section layout="row" layout-align="start start">
 	    <mdp-date-picker ng-model="startDate" mdp-placeholder="{{ 'datetime.date-from' | translate }}"
-	       	mdp-max-date="maxStartDate"></mdp-date-picker>
+	       	></mdp-date-picker>
 	    <mdp-time-picker ng-model="startDate" mdp-placeholder="{{ 'datetime.time-from' | translate }}"
-	    	mdp-max-date="maxStartDate" mdp-auto-switch="true"></mdp-time-picker>   	
+	    	mdp-auto-switch="true"></mdp-time-picker>
     </section>
 	<section layout="row" layout-align="start start">
 	    <mdp-date-picker ng-model="endDate" mdp-placeholder="{{ 'datetime.date-to' | translate }}"
-	       	mdp-min-date="minEndDate" mdp-max-date="maxEndDate"></mdp-date-picker>
+	       	></mdp-date-picker>
 	    <mdp-time-picker ng-model="endDate" mdp-placeholder="{{ 'datetime.time-to' | translate }}"
-	    	mdp-min-date="minEndDate" mdp-max-date="maxEndDate" mdp-auto-switch="true"></mdp-time-picker>   	
+	    	mdp-auto-switch="true"></mdp-time-picker>
     </section>
 </section>

@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 md-toast.tb-info-toast .md-toast-content {
-  font-size: 18px;
-  padding: 18px;
   height: 100%;
+  padding: 18px;
+  font-size: 18px;
 }
 
 md-toast.tb-success-toast .md-toast-content {
-  font-size: 18px !important;
-  background-color: green;
   height: 100%;
+  font-size: 18px !important;
+  background-color: #008000;
 }
 
 md-toast.tb-error-toast .md-toast-content {
-  font-size: 18px !important;
-  background-color: maroon;
   height: 100%;
+  font-size: 18px !important;
+  background-color: #800000;
 }

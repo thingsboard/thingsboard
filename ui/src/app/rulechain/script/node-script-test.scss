@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../scss/constants';
+@import "../../../scss/constants";
+
 @import "~compass-sass-mixins/lib/compass";
 
 md-dialog.tb-node-script-test-dialog {
   &.md-dialog-fullscreen {
-    min-height: 100%;
-    min-width: 100%;
-    max-height: 100%;
-    max-width: 100%;
     width: 100%;
+    min-width: 100%;
+    max-width: 100%;
     height: 100%;
+    min-height: 100%;
+    max-height: 100%;
     border-radius: 0;
   }
 
   .tb-split {
     @include box-sizing(border-box);
-    overflow-y: auto;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .ace_editor {
@@ -38,13 +39,13 @@ md-dialog.tb-node-script-test-dialog {
   }
 
   .tb-content {
-    border: 1px solid #C0C0C0;
     padding-top: 5px;
     padding-left: 5px;
+    border: 1px solid #c0c0c0;
   }
 
   .gutter {
-    background-color: #eeeeee;
+    background-color: #eee;
 
     background-repeat: no-repeat;
     background-position: 50%;
@@ -52,21 +53,23 @@ md-dialog.tb-node-script-test-dialog {
 
   .gutter.gutter-horizontal {
     cursor: col-resize;
-    background-image: url('../../../../node_modules/split.js/grips/vertical.png');
+    background-image: url("../../../../node_modules/split.js/grips/vertical.png");
   }
 
   .gutter.gutter-vertical {
     cursor: row-resize;
-    background-image: url('../../../../node_modules/split.js/grips/horizontal.png');
+    background-image: url("../../../../node_modules/split.js/grips/horizontal.png");
   }
 
-  .tb-split.tb-split-horizontal, .gutter.gutter-horizontal {
-    height: 100%;
+  .tb-split.tb-split-horizontal,
+  .gutter.gutter-horizontal {
     float: left;
+    height: 100%;
   }
 
   .tb-split.tb-split-vertical {
     display: flex;
+
     .tb-split.tb-content {
       height: 100%;
     }
@@ -74,42 +77,44 @@ md-dialog.tb-node-script-test-dialog {
 
   div.tb-editor-area-title-panel {
     position: absolute;
-    font-size: 0.800rem;
-    font-weight: 500;
     top: 13px;
     right: 40px;
     z-index: 5;
+    font-size: .8rem;
+    font-weight: 500;
+
     &.tb-js-function {
       right: 80px;
     }
+
     label {
-      color: #00acc1;
-      background: rgba(220, 220, 220, 0.35);
-      border-radius: 5px;
       padding: 4px;
+      color: #00acc1;
       text-transform: uppercase;
+      background: rgba(220, 220, 220, .35);
+      border-radius: 5px;
     }
+
     .md-button {
-      color: #7B7B7B;
       min-width: 32px;
       min-height: 15px;
-      line-height: 15px;
-      font-size: 0.800rem;
-      margin: 0;
       padding: 4px;
-      background: rgba(220, 220, 220, 0.35);
+      margin: 0;
+      font-size: .8rem;
+      line-height: 15px;
+      color: #7b7b7b;
+      background: rgba(220, 220, 220, .35);
     }
   }
 
   .tb-resize-container {
-    overflow-y: auto;
-    height: 100%;
-    width: 100%;
     position: relative;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
 
     .ace_editor {
       height: 100%;
     }
   }
-
 }

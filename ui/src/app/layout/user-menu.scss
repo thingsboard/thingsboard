@@ -13,28 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 div.tb-user-info {
   line-height: 1.5;
+
   span {
-    text-transform: none;
     text-align: left;
+    text-transform: none;
   }
+
   span.tb-user-display-name {
-    font-size: 0.800rem;
+    font-size: .8rem;
     font-weight: 300;
-    letter-spacing: 0.008em;
+    letter-spacing: .008em;
   }
+
   span.tb-user-authority {
-    font-size: 0.800rem;
+    font-size: .8rem;
     font-weight: 300;
-    letter-spacing: 0.005em;
-    opacity: 0.8;
+    letter-spacing: .005em;
+    opacity: .8;
   }
 }
 
 md-icon.tb-mini-avatar {
+  width: 36px;
+  height: 36px;
   margin: auto 8px;
   font-size: 36px;
-  height: 36px;
-  width: 36px;
 }

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-entity-filter {
 
+.tb-entity-filter {
   #relationsQueryFilter {
     padding-top: 20px;
+
     tb-entity-select {
       min-height: 92px;
     }
@@ -24,12 +25,13 @@
 
   .tb-root-state-entity-switch {
     padding-left: 10px;
+
     .root-state-entity-switch {
       margin: 0;
     }
+
     .root-state-entity-label {
       margin: 5px 0;
     }
   }
-
 }

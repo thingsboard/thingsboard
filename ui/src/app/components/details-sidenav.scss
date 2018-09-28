@@ -13,47 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../scss/constants';
+@import "../../scss/constants";
 
 .tb-details-title {
-  font-size: 1.000rem;
-  @media (min-width: $layout-breakpoint-gt-sm) {
-    font-size: 1.600rem;
-  }
-  font-weight: 400;
-  text-transform: uppercase;
+  width: inherit;
   margin: 20px 8px 0 0;
   overflow: hidden;
+  font-size: 1rem;
+  font-weight: 400;
   text-overflow: ellipsis;
+  text-transform: uppercase;
   white-space: nowrap;
-  width: inherit;
+
+  @media (min-width: $layout-breakpoint-gt-sm) {
+    font-size: 1.6rem;
+  }
 }
 
 .tb-details-subtitle {
-  font-size: 1.000rem;
+  width: inherit;
   margin: 10px 0;
-  opacity: 0.8;
   overflow: hidden;
+  font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
-  width: inherit;
+  opacity: .8;
 }
 
 md-sidenav.tb-sidenav-details {
   .md-toolbar-tools {
-      min-height: 100px;
-      max-height: 120px;
-      height: 100%;
+    height: 100%;
+    min-height: 100px;
+    max-height: 120px;
   }
+  z-index: 59 !important;
   width: 100% !important;
   max-width: 100% !important;
-  z-index: 59 !important;
+
   @media (min-width: $layout-breakpoint-gt-sm) {
     width: 80% !important;
   }
+
   @media (min-width: $layout-breakpoint-gt-md) {
     width: 65% !important;
   }
+
   tb-dashboard {
     md-content {
       background-color: $primary-hue-3;

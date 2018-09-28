@@ -63,11 +63,15 @@ class ThingsboardSchemaForm extends React.Component {
 
         this.onChange = this.onChange.bind(this);
         this.onColorClick = this.onColorClick.bind(this);
+        this.hasConditions = false;
     }
 
     onChange(key, val) {
         //console.log('SchemaForm.onChange', key, val);
         this.props.onModelChange(key, val);
+        if (this.hasConditions) {
+            this.forceUpdate();
+        }
     }
 
     onColorClick(event, key, val) {
@@ -81,8 +85,11 @@ class ThingsboardSchemaForm extends React.Component {
             console.log('Invalid field: \"' + form.key[0] + '\"!');
             return null;
         }
-        if(form.condition && eval(form.condition) === false) {
-            return null;
+        if(form.condition) {
+            this.hasConditions = true;
+            if (eval(form.condition) === false) {
+                return null;
+            }
         }
         return <Field model={model} form={form} key={index} onChange={onChange} onColorClick={onColorClick} mapper={mapper} builder={this.builder}/>
     }

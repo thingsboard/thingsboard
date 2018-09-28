@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .tb-kv-map {
   span.no-data-found {
     position: relative;
+    display: flex;
     height: 40px;
     text-transform: uppercase;
-    display: flex;
+
     &.disabled {
-      color: rgba(0,0,0,0.38);
+      color: rgba(0, 0, 0, .38);
     }
   }
 }

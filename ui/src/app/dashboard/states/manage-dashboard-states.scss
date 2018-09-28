@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 .manage-dashboard-states {
   table.md-table {
     tbody {
       tr {
         td {
           &.tb-action-cell {
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            min-width: 100px;
-            max-width: 100px;
-            width: 100px;
           }
         }
       }

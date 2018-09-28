@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../scss/constants';
+@import "../../scss/constants";
 
 .tb-default-dashboard {
   .tb-default-dashboard-label {
     padding-bottom: 8px;
   }
+
   tb-dashboard-autocomplete {
     @media (min-width: $layout-breakpoint-sm) {
       padding-right: 12px;
     }
+
     @media (max-width: $layout-breakpoint-sm) {
       padding-bottom: 12px;
     }

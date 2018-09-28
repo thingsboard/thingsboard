@@ -29,23 +29,31 @@
 .tb-breadcrumb {
   font-size: 18px !important;
   font-weight: 400 !important;
-  h1, a, span {
+
+  h1,
+  a,
+  span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
   a {
     border: none;
-    opacity: 0.75;
-    @include transition(opacity 0.35s);
+    opacity: .75;
+
+    @include transition(opacity .35s);
   }
-  a:hover, a:focus {
-    opacity: 1;
+
+  a:hover,
+  a:focus {
     text-decoration: none !important;
     border: none;
+    opacity: 1;
   }
+
   .divider {
-    padding: 0px 30px;
+    padding: 0 30px;
   }
 }
 
@@ -54,21 +62,22 @@ md-sidenav.tb-site-sidenav {
 }
 
 md-icon.tb-logo-title {
-  height: 36px;
   width: 200px;
+  height: 36px;
 }
 
 .tb-nav-header {
-  flex-shrink: 0;
   z-index: 2;
+  flex-shrink: 0;
   white-space: nowrap;
 }
 
 .tb-nav-header-toolbar {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-  flex-shrink: 0;
   z-index: 2;
+  flex-shrink: 0;
   white-space: nowrap;
+  border-bottom: 1px solid rgba(0, 0, 0, .12);
+
   .md-toolbar-tools {
     flex-basis: auto;
   }

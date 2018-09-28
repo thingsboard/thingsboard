@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../scss/constants';
+@import "../../scss/constants";
 
 
 .extension-table {
-
   md-input-container .md-errors-spacer {
     min-height: 0;
   }
 
-  /*&.tb-data-table table.md-table tbody tr td.tb-action-cell,
+  /*
+  &.tb-data-table table.md-table tbody tr td.tb-action-cell,
   &.tb-data-table table.md-table.md-row-select tbody tr td.tb-action-cell {
     width: 114px;
-  }*/
+  }
+  */
+
   .sync-widget {
     max-height: 90px;
     overflow: hidden;
   }
+
   .toolbar-widget {
     min-height: 39px;
     max-height: 39px;
@@ -37,11 +40,13 @@
 }
 
 .extension__syncStatus--black {
-  color: #000000!important;
+  color: #000 !important;
 }
+
 .extension__syncStatus--green {
-  color: #228634!important;
+  color: #228634 !important;
 }
+
 .extension__syncStatus--red {
-  color: #862222!important;
+  color: #862222 !important;
 }
