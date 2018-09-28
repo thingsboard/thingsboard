@@ -50,6 +50,7 @@ import java.util.Set;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -329,9 +330,8 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         Thread.sleep(1000);
 
         EntityView savedView = getNewSavedEntityView("Test entity view");
-        String urlOfTelemetryValues = "/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualAttributesSet);
-        List<Map<String, Object>> values = doGetAsync(urlOfTelemetryValues, List.class);
+        List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
 
         assertEquals("value1", getValue(values, "caValue1"));
         assertEquals(true, getValue(values, "caValue2"));
@@ -348,7 +348,7 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertTrue(actualAttributesSet.containsAll(expectedActualAttributesSet));
         Thread.sleep(1000);
 
-        List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/DEVICE/" + testDevice.getId().getId().toString() +
+        List<Map<String, Object>> valueTelemetryOfDevices = doGetAsync("/api/plugins/telemetry/DEVICE/" + testDevice.getId().getId().toString() +
                 "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
 
         EntityView view = new EntityView();
@@ -356,19 +356,13 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         view.setTenantId(savedTenant.getId());
         view.setName("Test entity view");
         view.setKeys(telemetry);
-        view.setStartTimeMs((long) getValue(values, "lastUpdateTs") * 10);
-        view.setEndTimeMs((long) getValue(values, "lastUpdateTs") / 10);
+        view.setStartTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") * 10);
+        view.setEndTimeMs((long) getValue(valueTelemetryOfDevices, "lastActivityTime") / 10);
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
 
-        String urlOfTelemetryValues = "/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
-                "/values/attributes?keys=" + String.join(",", actualAttributesSet);
-        values = doGetAsync(urlOfTelemetryValues, List.class);
-
-
-        assertEquals("value1", getValue(values, "caValue1"));
-        assertEquals(true, getValue(values, "caValue2"));
-        assertEquals(42.0, getValue(values, "caValue3"));
-        assertEquals(73, getValue(values, "caValue4"));
+        List<Map<String, Object>> values = doGetAsync("/api/plugins/telemetry/ENTITY_VIEW/" + savedView.getId().getId().toString() +
+                "/values/attributes?keys=" + String.join(",", actualAttributesSet), List.class);
+        assertEquals(0, values.size());
     }
 
     private Set<String> getAttributesByKeys(String stringKV) throws Exception {
@@ -396,15 +390,11 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         return new HashSet<>(doGetAsync("/api/plugins/telemetry/DEVICE/" + viewDeviceId +  "/keys/attributes", List.class));
     }
 
-    /*private Object getLastTs(List<Map<String, Object>> values) {
-        return values.stream()
-                .filter(value -> value.get("key");
-    }
-*/
     private Object getValue(List<Map<String, Object>> values, String stringValue) {
-        return values.stream()
-                .filter(value -> value.get("key").equals(stringValue))
-                .findFirst().get().get("value");
+        return values.size() == 0 ? null :
+                values.stream()
+                        .filter(value -> value.get("key").equals(stringValue))
+                        .findFirst().get().get("value");
     }
 
     private EntityView getNewSavedEntityView(String name) throws Exception {
