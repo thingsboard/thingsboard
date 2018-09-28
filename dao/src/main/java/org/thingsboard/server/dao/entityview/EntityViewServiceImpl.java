@@ -233,8 +233,8 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                                         long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
                                         return startTime == 0 && endTime == 0 ||
                                                 (endTime == 0 && startTime < lastUpdateTs) ||
-                                                (startTime == 0 && endTime > lastUpdateTs) ||
-                                                (startTime < lastUpdateTs && endTime > lastUpdateTs);
+                                                (startTime == 0 && endTime > lastUpdateTs)
+                                                ? true : startTime < lastUpdateTs && endTime > lastUpdateTs;
                                     }).collect(Collectors.toList());
                 }
                 try {
