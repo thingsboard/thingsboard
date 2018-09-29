@@ -244,6 +244,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     grantedQoSList.add(getMinSupportedQos(reqQoS));
                 } else if (topicName.equals(GATEWAY_ATTRIBUTES_TOPIC)) {
                     grantedQoSList.add(getMinSupportedQos(reqQoS));
+                } else if (topicName.equals(GATEWAY_RPC_TOPIC)) {
+                    grantedQoSList.add(getMinSupportedQos(reqQoS));
                 } else {
                     log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topicName, reqQoS);
                     grantedQoSList.add(FAILURE.value());
